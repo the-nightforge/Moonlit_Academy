@@ -92,7 +92,7 @@ Không cần AI. Chơi mỗi encounter vài lần, ghi vào `docs/playtest-notes
 > Đọc `01-combat-rules.md` mục 4.1, 4.3, 4.4, 5.1–5.4. Dựng deck có lá Song Hành, điều kiện đánh (hai owner còn sống, không ai Đóng Băng), `actor` (kể cả kế thừa trong `conditional`), dọn sau lá tấn công, nội tại không áp cho lá Song Hành. Làm test T78–T87.
 
 ### Bước 2.5 — F03 và F02
-> Đọc `01-combat-rules.md` mục 8 và 10.1. Thêm bộ đếm `freezesApplied`, `buffsStolen` và nội tại `doubleDamageVsFrozen`, `stealBonus`. Làm test T88–T90 và T69.
+> Đọc `01-combat-rules.md` mục 8 và 10.1. Thêm nội tại `doubleDamageVsFrozen`, `stealBonus` (không áp cho lá Song Hành). Bộ đếm `buffsStolen` (bước 2.3) và `freezesApplied` (bước 2.4) đã có. Làm test T88–T90 và T69.
 
 ### Bước 2.6 — Boss và tag theo pha
 > Đọc `01-combat-rules.md` mục 4.5, 7.1, 9.1–9.2. Thêm `bloodMoonOverride` khi công bố ý định. Kiểm tra boss `enc_04` và chi phí theo tag. Làm test T91–T93. Sau đó chạy toàn bộ T01–T94.

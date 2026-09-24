@@ -1,11 +1,27 @@
 import { activeMoonModifiers } from "./moon";
 import { hasStatus } from "./statuses";
-import type { CombatState, GameData } from "./types/index";
+import type { CardInstance, CombatState, GameData, HeroState } from "./types/index";
+
+/** Heroes owning a card instance: one, or two for a bond card. */
+export function cardOwners(state: CombatState, instance: CardInstance): (HeroState | undefined)[] {
+  return instance.ownerIds.map((ownerId) => state.heroes.find((hero) => hero.defId === ownerId));
+}
+
+/** Rejection reason tied to the card's owners, or null. */
+export function ownerError(state: CombatState, instance: CardInstance): string | null {
+  const owners = cardOwners(state, instance);
+  if (owners.some((owner) => !owner?.alive)) return "card is broken (owner is dead)";
+  if (owners.some((owner) => owner !== undefined && hasStatus(owner, "freeze"))) {
+    return "owner is frozen";
+  }
+  return null;
+}
 
 export function isFreeByPassive(data: GameData, state: CombatState, instanceId: string): boolean {
   const instance = state.cards[instanceId];
-  if (!instance) return false;
-  const owner = state.heroes.find((hero) => hero.defId === instance.ownerIds[0]);
+  // Level-up passives never apply to bond cards.
+  if (!instance || instance.ownerIds.length !== 1) return false;
+  const [owner] = cardOwners(state, instance);
   if (!owner?.leveledUp || !owner.freeCardActive || owner.freeCardUsedThisTurn) return false;
   return data.heroes[owner.defId]?.levelUp.passive.type === "firstOwnCardFreeEachTurn";
 }
@@ -47,8 +63,7 @@ export function isCardPlayable(data: GameData, state: CombatState, instanceId: s
   const instance = state.cards[instanceId];
   const card = instance ? data.cards[instance.cardId] : undefined;
   if (!instance || !card || !state.hand.includes(instanceId)) return false;
-  const owner = state.heroes.find((hero) => hero.defId === instance.ownerIds[0]);
-  if (!owner?.alive || hasStatus(owner, "freeze")) return false;
+  if (ownerError(state, instance) !== null) return false;
   if (card.requiresBloodMoon && state.bloodMoonRounds === 0) return false;
   if (state.moonPower < getEffectiveCost(data, state, instanceId)) return false;
   if (card.target !== "none" && getValidTargets(data, state, instanceId).length === 0) return false;

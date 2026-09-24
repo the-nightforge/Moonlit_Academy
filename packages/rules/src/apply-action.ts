@@ -1,14 +1,17 @@
 import { cloneState } from "./clone";
 import { resolveEffects } from "./effects";
-import { getEffectiveCost, getValidTargets, isFreeByPassive } from "./queries";
-import { hasStatus, removeStatus } from "./statuses";
+import { cardOwners, getEffectiveCost, getValidTargets, isFreeByPassive, ownerError } from "./queries";
+import { removeStatus } from "./statuses";
 import { runEndTurn } from "./turn";
 import type {
   Action,
   ActionResult,
+  CardDef,
   CombatEvent,
   CombatState,
+  Effect,
   GameData,
+  HeroState,
 } from "./types/index";
 
 export function getPlayCardError(
@@ -22,9 +25,8 @@ export function getPlayCardError(
   }
   const card = data.cards[instance.cardId];
   if (!card) return "unknown card";
-  const owner = state.heroes.find((hero) => hero.defId === instance.ownerIds[0]);
-  if (!owner?.alive) return "card is broken (owner is dead)";
-  if (hasStatus(owner, "freeze")) return "owner is frozen";
+  const ownerProblem = ownerError(state, instance);
+  if (ownerProblem !== null) return ownerProblem;
   if (card.requiresBloodMoon && state.bloodMoonRounds === 0) return "requires blood moon";
   if (state.moonPower < getEffectiveCost(data, state, action.instanceId)) {
     return "not enough moonPower";
@@ -48,7 +50,8 @@ function playCard(
 ): void {
   const instance = state.cards[action.instanceId]!;
   const card = data.cards[instance.cardId]!;
-  const owner = state.heroes.find((hero) => hero.defId === instance.ownerIds[0])!;
+  const owners = cardOwners(state, instance) as HeroState[];
+  const owner = owners[0]!;
   const freeByPassive = isFreeByPassive(data, state, instance.instanceId);
   const cost = getEffectiveCost(data, state, instance.instanceId);
 
@@ -67,15 +70,35 @@ function playCard(
     data,
     state,
     card.effects,
-    { source: owner, card, chosenId: action.targetId },
+    { source: owner, actors: owners, card, chosenId: action.targetId },
     events,
   );
 
   if (card.type === "attack") {
-    removeStatus(owner, "empower", events);
-    removeStatus(owner, "stealth", events);
+    for (const attacker of attackCleanupTargets(card, owners)) {
+      removeStatus(attacker, "empower", events);
+      removeStatus(attacker, "stealth", events);
+    }
   }
   state.discardPile.push(instance.instanceId);
+}
+
+/** Owner(s) losing empower/stealth after an attack card: a bond card's damage actors. */
+function attackCleanupTargets(card: CardDef, owners: HeroState[]): HeroState[] {
+  if (!card.bond) return owners;
+  const damageActors = new Set<number>();
+  const walk = (effects: Effect[], inherited: number): void => {
+    for (const effect of effects) {
+      const actor = effect.actor ?? inherited;
+      if (effect.type === "damage") damageActors.add(actor);
+      if (effect.type === "conditional") {
+        walk(effect.then, actor);
+        walk(effect.else ?? [], actor);
+      }
+    }
+  };
+  walk(card.effects, 0);
+  return owners.filter((_, index) => damageActors.has(index));
 }
 
 export function applyAction(data: GameData, state: CombatState, action: Action): ActionResult {

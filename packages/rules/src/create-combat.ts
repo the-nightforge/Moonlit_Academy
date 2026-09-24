@@ -40,6 +40,14 @@ export function createCombat(
       drawPile.push(instanceId);
     }
   }
+  const team = new Set(setup.heroIds);
+  let bondCounter = 0;
+  for (const card of Object.values(data.cards)) {
+    if (!card.bond || !card.bond.owners.every((ownerId) => team.has(ownerId))) continue;
+    const instanceId = `bond${String(++bondCounter).padStart(2, "0")}`;
+    cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [...card.bond.owners] };
+    drawPile.push(instanceId);
+  }
   let rngState = setup.seed;
   const shuffled = shuffle(drawPile, rngState);
   rngState = shuffled.rngState;

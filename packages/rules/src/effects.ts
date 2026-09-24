@@ -29,7 +29,10 @@ import type {
 } from "./types/index";
 
 export interface EffectContext {
+  /** The acting unit of the current effect. */
   source: UnitState;
+  /** Card owners; `effect.actor` indexes them (bond cards). */
+  actors?: HeroState[];
   card?: CardDef;
   intentKind?: IntentKind;
   chosenId?: string;
@@ -87,7 +90,7 @@ export function computeDamageAmount(
     if (ctx.card !== undefined) {
       flat += statusValue(ctx.source, "empower");
       if (markFromSource(target, ctx.source.id)) flat += 3;
-      if (ctx.source.side === "hero") {
+      if (ctx.source.side === "hero" && !ctx.card.bond) {
         const hero = ctx.source as HeroState;
         const passive = data.heroes[hero.defId]?.levelUp.passive;
         if (hero.leveledUp && passive?.type === "attackDamageBonus") {
@@ -252,7 +255,12 @@ export function resolveEffect(
     case "applyStatus": {
       const bonus = effect.status === "stealth" ? moonStealthDurationBonus(data, state) : 0;
       let targets = resolveTargets(state, effect.to, ctx);
-      if (effect.status === "regen" && ctx.card !== undefined && ctx.source.side === "hero") {
+      if (
+        effect.status === "regen" &&
+        ctx.card !== undefined &&
+        !ctx.card.bond &&
+        ctx.source.side === "hero"
+      ) {
         const hero = ctx.source as HeroState;
         if (
           hero.leveledUp &&
@@ -262,7 +270,11 @@ export function resolveEffect(
         }
       }
       for (const target of targets) {
+        const newFreeze = effect.status === "freeze" && !hasStatus(target, "freeze");
         applyStatus(target, effect.status, effect.amount + bonus, ctx.source.id, events);
+        if (newFreeze && ctx.source.side === "hero") {
+          bumpCounter(data, ctx.source as HeroState, "freezesApplied", 1);
+        }
       }
       return;
     }
@@ -371,15 +383,20 @@ export function resolveEffects(
   events: CombatEvent[],
 ): void {
   for (const effect of effects) {
-    resolveEffect(data, state, effect, ctx, events);
+    // Nested effects without their own actor inherit the enclosing one via ctx.
+    const effectCtx =
+      effect.actor !== undefined && ctx.actors
+        ? { ...ctx, source: ctx.actors[effect.actor]! }
+        : ctx;
+    resolveEffect(data, state, effect, effectCtx, events);
     processDeaths(data, state, events, {
-      id: ctx.source.id,
+      id: effectCtx.source.id,
       cardDamage: ctx.card !== undefined && effect.type === "damage",
     });
     checkLevelUps(data, state, events);
     if (checkCombatEnd(state, events)) return;
     // An actor that died mid-resolution (e.g. to reflect) stops its card or intent.
-    if (!ctx.source.alive) return;
+    if ((ctx.actors ?? [ctx.source]).some((actor) => !actor.alive)) return;
   }
 }
 
