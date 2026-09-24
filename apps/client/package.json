@@ -9,6 +9,10 @@
   },
   "dependencies": {
     "data": "workspace:*",
+    "phaser": "^4.2.1",
     "rules": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^8.3.0"
   }
 }
