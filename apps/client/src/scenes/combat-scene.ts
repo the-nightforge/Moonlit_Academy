@@ -1,10 +1,16 @@
 import Phaser from "phaser";
-import { getEffectiveCost, isCardPlayable } from "rules";
+import {
+  applyAction,
+  getEffectiveCost,
+  getPlayCardError,
+  getValidTargets,
+  isCardPlayable,
+} from "rules";
 import type {
+  Action,
   CombatState,
   EnemyState,
   GameData,
-  HeroState,
   StatusInstance,
 } from "rules";
 import { session } from "../session";
@@ -22,9 +28,29 @@ const HEIGHT = 720;
 const CARD_W = 110;
 const CARD_H = 160;
 
+const ERROR_LABELS: [RegExp, string][] = [
+  [/not the player turn/, "Chưa tới lượt người chơi"],
+  [/not in hand/, "Lá không còn trên tay"],
+  [/broken/, "Tàn Chiêu — chủ lá đã ngã"],
+  [/frozen/, "Chủ lá đang Đóng Băng"],
+  [/moonPower/, "Không đủ Nguyệt Lực"],
+  [/no target/, "Lá này không cần mục tiêu"],
+  [/requires a target/, "Cần chọn mục tiêu"],
+  [/invalid target/, "Mục tiêu không hợp lệ"],
+];
+
+function errorLabel(error: string): string {
+  return ERROR_LABELS.find(([pattern]) => pattern.test(error))?.[1] ?? error;
+}
+
 export class CombatScene extends Phaser.Scene {
   private gameData!: GameData;
   private state!: CombatState;
+  private root!: Phaser.GameObjects.Container;
+  private targeting: string | null = null;
+  private validTargetIds = new Set<string>();
+  private cardViews = new Map<string, Phaser.GameObjects.Container>();
+  private errorText?: Phaser.GameObjects.Text;
 
   constructor() {
     super("combat");
@@ -33,19 +59,132 @@ export class CombatScene extends Phaser.Scene {
   create() {
     this.gameData = session.data;
     this.state = session.state;
+    this.root = this.add.container(0, 0);
+    this.input.mouse?.disableContextMenu();
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.rightButtonDown()) this.cancelTargeting();
+    });
+    this.input.keyboard?.on("keydown-ESC", () => this.cancelTargeting());
+    this.input.keyboard?.on("keydown-E", () => this.dispatch({ type: "endTurn" }));
+    this.renderAll();
+  }
+
+  // ---- action pipeline ----
+
+  private dispatch(action: Action): boolean {
+    const result = applyAction(this.gameData, this.state, action);
+    if (!result.ok) {
+      this.showError(result.error);
+      return false;
+    }
+    session.state = result.state;
+    session.events.push(...result.events);
+    this.state = result.state;
+    this.targeting = null;
+    this.renderAll();
+    return true;
+  }
+
+  private onCardClicked(instanceId: string) {
+    if (this.state.status !== "playerTurn") return;
+    if (this.targeting === instanceId) {
+      this.cancelTargeting();
+      return;
+    }
+    const instance = this.state.cards[instanceId]!;
+    const card = this.gameData.cards[instance.cardId]!;
+    if (!isCardPlayable(this.gameData, this.state, instanceId)) {
+      const probeTarget =
+        card.target === "none"
+          ? undefined
+          : getValidTargets(this.gameData, this.state, instanceId)[0] ?? "enemy:0";
+      const error = getPlayCardError(this.gameData, this.state, {
+        type: "playCard",
+        instanceId,
+        ...(probeTarget !== undefined ? { targetId: probeTarget } : {}),
+      });
+      this.shakeCard(instanceId);
+      this.showError(error ?? "Không đánh được");
+      return;
+    }
+    if (card.target === "none") {
+      this.dispatch({ type: "playCard", instanceId });
+      return;
+    }
+    this.targeting = instanceId;
+    this.validTargetIds = new Set(getValidTargets(this.gameData, this.state, instanceId));
+    this.renderAll();
+  }
+
+  private onUnitClicked(unitId: string) {
+    if (this.targeting === null || !this.validTargetIds.has(unitId)) return;
+    this.dispatch({ type: "playCard", instanceId: this.targeting, targetId: unitId });
+  }
+
+  private cancelTargeting() {
+    if (this.targeting === null) return;
+    this.targeting = null;
+    this.validTargetIds.clear();
+    this.renderAll();
+  }
+
+  private shakeCard(instanceId: string) {
+    const view = this.cardViews.get(instanceId);
+    if (!view) return;
+    this.tweens.add({ targets: view, x: view.x + 7, duration: 45, yoyo: true, repeat: 3 });
+  }
+
+  private showError(error: string) {
+    this.errorText?.destroy();
+    const text = this.add
+      .text(WIDTH / 2, 525, errorLabel(error), {
+        fontFamily: FONT,
+        fontSize: "15px",
+        color: "#ff8080",
+      })
+      .setOrigin(0.5);
+    this.errorText = text;
+    this.tweens.add({
+      targets: text,
+      alpha: 0,
+      delay: 900,
+      duration: 800,
+      onComplete: () => text.destroy(),
+    });
+  }
+
+  // ---- rendering ----
+
+  private renderAll() {
+    this.root.removeAll(true);
+    this.cardViews.clear();
+    this.errorText = undefined;
     this.renderTopBar();
     this.renderMoonWheel();
     this.renderEnemies();
     this.renderHeroes();
     this.renderBottomBar();
+    if (this.targeting !== null) this.renderTargetingHint();
+    if (this.state.status === "won" || this.state.status === "lost") {
+      this.renderCombatEnd();
+    }
   }
 
-  private text(x: number, y: number, content: string, size = 14, color: string = COLORS.text) {
-    return this.add.text(x, y, content, {
+  private text(
+    x: number,
+    y: number,
+    content: string,
+    size = 14,
+    color: string = COLORS.text,
+    parent?: Phaser.GameObjects.Container,
+  ) {
+    const t = this.add.text(x, y, content, {
       fontFamily: FONT,
       fontSize: `${size}px`,
       color,
     });
+    (parent ?? this.root).add(t);
+    return t;
   }
 
   private renderTopBar() {
@@ -61,15 +200,23 @@ export class CombatScene extends Phaser.Scene {
       const x = WIDTH / 2 + (index - 3.5) * 36;
       const active = index === this.state.moonIndex;
       if (active) {
-        this.add.circle(x, y, 16, COLORS.panelBorder, 0.6);
+        const halo = this.add.circle(x, y, 16, COLORS.panelBorder, 0.6);
+        this.root.add(halo);
       }
       this.text(x, y, phase.icon, active ? 22 : 15)
         .setOrigin(0.5)
         .setAlpha(active ? 1 : 0.45);
     });
-    const next = this.gameData.moonPhases[(this.state.moonIndex + 1) % this.gameData.moonPhases.length]!;
+    const next =
+      this.gameData.moonPhases[(this.state.moonIndex + 1) % this.gameData.moonPhases.length]!;
     const effect = next.modifiers.map(describeModifier).join(", ") || "—";
-    this.text(WIDTH / 2 + 190, y, `→ kế tiếp: ${next.icon} ${effect}`, 12, COLORS.dimText).setOrigin(0, 0.5);
+    this.text(
+      WIDTH / 2 + 190,
+      y,
+      `→ kế tiếp: ${next.icon} ${effect}`,
+      12,
+      COLORS.dimText,
+    ).setOrigin(0, 0.5);
   }
 
   private hpBar(
@@ -79,17 +226,24 @@ export class CombatScene extends Phaser.Scene {
     hp: number,
     maxHp: number,
     fill: number,
+    parent: Phaser.GameObjects.Container,
   ) {
     const height = 14;
-    this.add.rectangle(x, y, width, height, COLORS.hpTrack).setOrigin(0, 0.5);
+    parent.add(this.add.rectangle(x, y, width, height, COLORS.hpTrack).setOrigin(0, 0.5));
     const fillWidth = Math.max(0, (hp / maxHp) * width);
     if (fillWidth > 0) {
-      this.add.rectangle(x, y, fillWidth, height, fill).setOrigin(0, 0.5);
+      parent.add(this.add.rectangle(x, y, fillWidth, height, fill).setOrigin(0, 0.5));
     }
-    this.text(x + width / 2, y, `${hp}/${maxHp}`, 10).setOrigin(0.5);
+    this.text(x + width / 2, y, `${hp}/${maxHp}`, 10, COLORS.text, parent).setOrigin(0.5);
   }
 
-  private statusChips(x: number, y: number, statuses: StatusInstance[], maxWidth: number) {
+  private statusChips(
+    x: number,
+    y: number,
+    statuses: StatusInstance[],
+    maxWidth: number,
+    parent: Phaser.GameObjects.Container,
+  ) {
     let cursor = x;
     let row = y;
     for (const status of statuses) {
@@ -99,40 +253,10 @@ export class CombatScene extends Phaser.Scene {
         cursor = x;
         row += 20;
       }
-      this.add.rectangle(cursor, row, chipWidth, 16, 0x0a0e20).setOrigin(0, 0.5);
-      this.text(cursor + chipWidth / 2, row, label, 10, "#cfd6f0").setOrigin(0.5, 0.5);
+      parent.add(this.add.rectangle(cursor, row, chipWidth, 16, 0x0a0e20).setOrigin(0, 0.5));
+      this.text(cursor + chipWidth / 2, row, label, 10, "#cfd6f0", parent).setOrigin(0.5, 0.5);
       cursor += chipWidth + 4;
     }
-  }
-
-  private unitDeadOverlay(x: number, y: number, w: number, h: number) {
-    this.add.rectangle(x, y, w, h, 0x000000, 0.55).setOrigin(0.5);
-    this.text(x, y, "Ngã", 20, "#ffffff").setOrigin(0.5);
-  }
-
-  private renderEnemies() {
-    const enemies = this.state.enemies;
-    const panelW = 220;
-    const panelH = 140;
-    enemies.forEach((enemy, index) => {
-      const cx = (WIDTH / (enemies.length + 1)) * (index + 1);
-      this.renderIntent(enemy, cx, 118);
-      const cy = 205;
-      this.add
-        .rectangle(cx, cy, panelW, panelH, COLORS.panelEnemy)
-        .setStrokeStyle(1, COLORS.panelBorder);
-      const def = this.gameData.enemies[enemy.defId]!;
-      this.text(cx, cy - panelH / 2 + 16, def.name, 15).setOrigin(0.5);
-      this.hpBar(cx - panelW / 2 + 14, cy - 14, panelW - 28, enemy.hp, enemy.maxHp, COLORS.hpFillEnemy);
-      if (enemy.armor > 0) {
-        this.text(cx - panelW / 2 + 14, cy + 12, `🛡 ${enemy.armor}`, 12, COLORS.armor);
-      }
-      this.statusChips(cx - panelW / 2 + 14, cy + 38, enemy.statuses, panelW - 28);
-      if (!enemy.alive) this.unitDeadOverlay(cx, cy, panelW, panelH);
-      else if (enemy.statuses.some((s) => s.id === "stealth")) {
-        this.add.rectangle(cx, cy, panelW, panelH, 0x8899ff, 0.12).setOrigin(0.5);
-      }
-    });
   }
 
   private renderIntent(enemy: EnemyState, x: number, y: number) {
@@ -146,6 +270,58 @@ export class CombatScene extends Phaser.Scene {
     this.text(x, y, `${icon} ${intent.name} → ${targetName}`, 13).setOrigin(0.5);
   }
 
+  private unitPanelHit(
+    panel: Phaser.GameObjects.Rectangle,
+    w: number,
+    h: number,
+    unitId: string,
+  ) {
+    const selectable = this.targeting !== null && this.validTargetIds.has(unitId);
+    panel.setInteractive({
+      hitArea: new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      useHandCursor: selectable,
+    });
+    panel.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) this.onUnitClicked(unitId);
+    });
+  }
+
+  private renderEnemies() {
+    const enemies = this.state.enemies;
+    const panelW = 220;
+    const panelH = 140;
+    enemies.forEach((enemy, index) => {
+      const cx = (WIDTH / (enemies.length + 1)) * (index + 1);
+      this.renderIntent(enemy, cx, 118);
+      const cy = 205;
+      const c = this.add.container(cx, cy);
+      this.root.add(c);
+      const isValidTarget = this.validTargetIds.has(enemy.id);
+      const panel = this.add.rectangle(0, 0, panelW, panelH, COLORS.panelEnemy);
+      panel.setStrokeStyle(
+        this.targeting && isValidTarget ? 2 : 1,
+        this.targeting && isValidTarget ? COLORS.goldFill : COLORS.panelBorder,
+      );
+      c.add(panel);
+      const def = this.gameData.enemies[enemy.defId]!;
+      this.text(0, -panelH / 2 + 16, def.name, 15, COLORS.text, c).setOrigin(0.5);
+      this.hpBar(-panelW / 2 + 14, -14, panelW - 28, enemy.hp, enemy.maxHp, COLORS.hpFillEnemy, c);
+      if (enemy.armor > 0) {
+        this.text(-panelW / 2 + 14, 12, `🛡 ${enemy.armor}`, 12, COLORS.armor, c);
+      }
+      this.statusChips(-panelW / 2 + 14, 38, enemy.statuses, panelW - 28, c);
+      if (!enemy.alive) {
+        c.add(this.add.rectangle(0, 0, panelW, panelH, 0x000000, 0.55));
+        this.text(0, 0, "Ngã", 20, "#ffffff", c).setOrigin(0.5);
+      } else if (enemy.statuses.some((s) => s.id === "stealth")) {
+        c.add(this.add.rectangle(0, 0, panelW, panelH, 0x8899ff, 0.12));
+      }
+      if (this.targeting && !isValidTarget) c.setAlpha(0.4);
+      this.unitPanelHit(panel, panelW, panelH, enemy.id);
+    });
+  }
+
   private renderHeroes() {
     const heroes = this.state.heroes;
     const panelW = 240;
@@ -153,23 +329,44 @@ export class CombatScene extends Phaser.Scene {
     heroes.forEach((hero, index) => {
       const cx = (WIDTH / (heroes.length + 1)) * (index + 1);
       const cy = 445;
-      const border = hero.leveledUp ? COLORS.goldFill : COLORS.panelBorder;
-      this.add
-        .rectangle(cx, cy, panelW, panelH, COLORS.panelHero)
-        .setStrokeStyle(hero.leveledUp ? 2 : 1, border);
+      const c = this.add.container(cx, cy);
+      this.root.add(c);
+      const isValidTarget = this.validTargetIds.has(hero.id);
+      const panel = this.add.rectangle(0, 0, panelW, panelH, COLORS.panelHero);
+      panel.setStrokeStyle(
+        this.targeting && isValidTarget ? 2 : hero.leveledUp ? 2 : 1,
+        this.targeting && isValidTarget
+          ? COLORS.goldFill
+          : hero.leveledUp
+            ? COLORS.goldFill
+            : COLORS.panelBorder,
+      );
+      c.add(panel);
       const def = this.gameData.heroes[hero.defId]!;
       const star = hero.leveledUp ? " ★" : "";
-      this.text(cx, cy - panelH / 2 + 18, `${def.name}${star}`, 16, hero.leveledUp ? COLORS.gold : COLORS.text).setOrigin(0.5);
-      this.hpBar(cx - panelW / 2 + 16, cy - 30, panelW - 32, hero.hp, hero.maxHp, COLORS.hpFillHero);
+      this.text(
+        0,
+        -panelH / 2 + 18,
+        `${def.name}${star}`,
+        16,
+        hero.leveledUp ? COLORS.gold : COLORS.text,
+        c,
+      ).setOrigin(0.5);
+      this.hpBar(-panelW / 2 + 16, -30, panelW - 32, hero.hp, hero.maxHp, COLORS.hpFillHero, c);
       if (hero.armor > 0) {
-        this.text(cx - panelW / 2 + 16, cy - 4, `🛡 ${hero.armor}`, 12, COLORS.armor);
+        this.text(-panelW / 2 + 16, -4, `🛡 ${hero.armor}`, 12, COLORS.armor, c);
       }
-      this.statusChips(cx - panelW / 2 + 16, cy + 22, hero.statuses, panelW - 32);
+      this.statusChips(-panelW / 2 + 16, 22, hero.statuses, panelW - 32, c);
       const progress = hero.leveledUp
-        ? `${def.levelUp.name}`
+        ? def.levelUp.name
         : `${def.levelUp.name} ${hero.levelUpCounter}/${def.levelUp.threshold}`;
-      this.text(cx, cy + panelH / 2 - 20, progress, 11, COLORS.dimText).setOrigin(0.5);
-      if (!hero.alive) this.unitDeadOverlay(cx, cy, panelW, panelH);
+      this.text(0, panelH / 2 - 20, progress, 11, COLORS.dimText, c).setOrigin(0.5);
+      if (!hero.alive) {
+        c.add(this.add.rectangle(0, 0, panelW, panelH, 0x000000, 0.55));
+        this.text(0, 0, "Ngã", 20, "#ffffff", c).setOrigin(0.5);
+      }
+      if (this.targeting && !isValidTarget) c.setAlpha(0.4);
+      this.unitPanelHit(panel, panelW, panelH, hero.id);
     });
   }
 
@@ -180,9 +377,19 @@ export class CombatScene extends Phaser.Scene {
     const broken = !owner?.alive;
     const playable = isCardPlayable(this.gameData, this.state, instanceId);
     const container = this.add.container(x, y);
+    this.root.add(container);
+    this.cardViews.set(instanceId, container);
 
     const bg = this.add.rectangle(0, 0, CARD_W, CARD_H, broken ? 0x30303a : 0x141b33);
-    bg.setStrokeStyle(2, broken ? COLORS.dead : (OWNER_COLORS[instance.ownerId] ?? COLORS.panelBorder));
+    const isValidTarget = this.targeting === instanceId;
+    bg.setStrokeStyle(
+      isValidTarget ? 3 : 2,
+      broken
+        ? COLORS.dead
+        : isValidTarget
+          ? COLORS.goldFill
+          : (OWNER_COLORS[instance.ownerId] ?? COLORS.panelBorder),
+    );
     container.add(bg);
 
     const effectiveCost = getEffectiveCost(this.gameData, this.state, instanceId);
@@ -199,22 +406,18 @@ export class CombatScene extends Phaser.Scene {
         .setOrigin(0.5),
     );
     if (effectiveCost < card.cost) {
-      const base = this.add
-        .text(-CARD_W / 2 + 30, -CARD_H / 2 + 14, `${card.cost}`, {
-          fontFamily: FONT,
-          fontSize: "10px",
-          color: COLORS.dimText,
-        })
-        .setOrigin(0, 0.5);
-      const strike = this.add.rectangle(
-        -CARD_W / 2 + 34,
-        -CARD_H / 2 + 14,
-        10,
-        1,
-        0xffffff,
-        0.7,
+      container.add(
+        this.add
+          .text(-CARD_W / 2 + 30, -CARD_H / 2 + 14, `${card.cost}`, {
+            fontFamily: FONT,
+            fontSize: "10px",
+            color: COLORS.dimText,
+          })
+          .setOrigin(0, 0.5),
       );
-      container.add([base, strike]);
+      container.add(
+        this.add.rectangle(-CARD_W / 2 + 34, -CARD_H / 2 + 14, 10, 1, 0xffffff, 0.7),
+      );
     }
 
     container.add(
@@ -243,17 +446,64 @@ export class CombatScene extends Phaser.Scene {
     if (broken) {
       container.add(
         this.add
-          .text(0, 0, "Tàn Chiêu", {
-            fontFamily: FONT,
-            fontSize: "14px",
-            color: "#bbbbbb",
-          })
+          .text(0, 0, "Tàn Chiêu", { fontFamily: FONT, fontSize: "14px", color: "#bbbbbb" })
           .setOrigin(0.5),
       );
-    } else if (!playable) {
+    } else if (!playable && !isValidTarget) {
       container.setAlpha(0.5);
     }
+
+    container.setInteractive({
+      hitArea: new Phaser.Geom.Rectangle(-CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      useHandCursor: true,
+    });
+    container.on("pointerover", () => {
+      if (!broken && this.state.status === "playerTurn") {
+        container.setScale(1.15);
+        container.y = y - 18;
+        container.setDepth(10);
+      }
+    });
+    container.on("pointerout", () => {
+      container.setScale(1);
+      container.y = y;
+      container.setDepth(0);
+    });
+    container.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) this.onCardClicked(instanceId);
+    });
     return container;
+  }
+
+  private renderTargetingHint() {
+    const card = this.gameData.cards[this.state.cards[this.targeting!]!.cardId]!;
+    this.text(
+      WIDTH / 2,
+      92,
+      `Chọn mục tiêu cho ${card.name} — chuột phải / Esc để hủy`,
+      13,
+      COLORS.gold,
+    ).setOrigin(0.5);
+  }
+
+  private renderCombatEnd() {
+    const won = this.state.status === "won";
+    this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.65));
+    this.text(
+      WIDTH / 2,
+      HEIGHT / 2 - 30,
+      won ? "THẮNG" : "THUA",
+      56,
+      won ? COLORS.gold : "#cc5555",
+    ).setOrigin(0.5);
+    this.text(
+      WIDTH / 2,
+      HEIGHT / 2 + 30,
+      won ? "Vọng Nguyệt Thư Viện còn đứng." : "Thư viện đã bị xâm chiếm.",
+      16,
+      COLORS.dimText,
+    ).setOrigin(0.5);
   }
 
   private renderBottomBar() {
@@ -274,7 +524,15 @@ export class CombatScene extends Phaser.Scene {
 
     const btnX = 1150;
     const btnY = 660;
-    this.add.rectangle(btnX, btnY, 190, 56, COLORS.button).setStrokeStyle(1, COLORS.goldFill);
+    const btn = this.add.rectangle(btnX, btnY, 190, 56, COLORS.button);
+    btn.setStrokeStyle(1, COLORS.goldFill);
+    btn.setInteractive({ useHandCursor: true });
+    btn.on("pointerover", () => btn.setFillStyle(0x3a5090));
+    btn.on("pointerout", () => btn.setFillStyle(COLORS.button));
+    btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) this.dispatch({ type: "endTurn" });
+    });
+    this.root.add(btn);
     this.text(btnX, btnY, "KẾT THÚC LƯỢT", 15).setOrigin(0.5);
   }
 }

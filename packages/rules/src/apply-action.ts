@@ -11,7 +11,7 @@ import type {
   GameData,
 } from "./types/index";
 
-function validatePlayCard(
+export function getPlayCardError(
   data: GameData,
   state: CombatState,
   action: { type: "playCard"; instanceId: string; targetId?: string },
@@ -83,7 +83,7 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
   }
   switch (action.type) {
     case "playCard": {
-      const error = validatePlayCard(data, state, action);
+      const error = getPlayCardError(data, state, action);
       if (error !== null) return { ok: false, error };
       const next = cloneState(state);
       const events: CombatEvent[] = [];
