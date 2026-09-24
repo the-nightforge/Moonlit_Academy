@@ -16,7 +16,8 @@
 | Kết liễu | `kill` | Gây đòn làm địch ngã |
 | Lá bài (định nghĩa) | `cardDef` / `CardDef` | Trong `cards.json` |
 | Lá bài (trong trận) | `cardInstance` | Có `instanceId` |
-| Chủ của lá | `owner`, `ownerId` | |
+| Chủ của lá | `owner`, `ownerId`, `ownerIds` | Lá Song Hành có 2 chủ (`bond.owners`) |
+| Đơn vị hành động | `actor` | Đơn vị thực hiện một effect; lá Song Hành chọn bằng `actor: 0 \| 1` |
 | Lá tấn công | `type: "attack"` | |
 | Lá kỹ năng | `type: "skill"` | |
 | Tàn Chiêu | `brokenCard`, `isBroken` | Lá của Hero đã ngã |
@@ -56,7 +57,9 @@
 | Sức Mạnh | `strength` |
 | Tích Lực | `empower` |
 | Đóng Băng | `freeze` |
+| Phản Đòn | `reflect` |
 | Giải Trừ | `cleanse` |
+| Cướp buff | `stealBuff` |
 | Buff / Debuff | `buff` / `debuff` |
 
 ## Nguyệt Luân
@@ -73,7 +76,9 @@
 | Trăng Khuyết Cuối | `waningGibbous` |
 | Hạ Huyền | `lastQuarter` |
 | Lưỡi Liềm Cuối | `waningCrescent` |
-| Huyết Nguyệt | `bloodMoon` |
+| Huyết Nguyệt | `bloodMoon`, `bloodMoonRounds`, `bloodMoonChanged` |
+| Lá cần Huyết Nguyệt | `requiresBloodMoon` |
+| Ý định Huyết Nguyệt | `bloodMoonOverride` |
 | Đổi Vận | `shiftMoon` |
 | Hiệu ứng của pha | `moonModifier` |
 
@@ -92,6 +97,10 @@
 | Bạch Lộ | `bachLo` |
 | Xích Diên | `xichDien` |
 | Trung lập | `neutral` |
+| Mưu Lược (từ khóa Thanh Loan) | tag `scheme` |
+| Hộ Thể (từ khóa Huyền Vũ) | tag `ward` |
+| Điều Hòa (từ khóa Bạch Lộ) | tag `harmony` |
+| Cấm Thuật (từ khóa Xích Diên) | tag `forbidden` |
 | Nhóm vai trò | `archetype`: `vanguard`, `striker`, `controller`, `support`, `specialist` |
 | Độ hiếm | `rarity`: `common`, `rare`, `epic`, `legendary` |
 

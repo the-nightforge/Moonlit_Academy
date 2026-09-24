@@ -48,9 +48,12 @@ Prototype dùng **art tạm**: hình chữ nhật màu + tên. Mục tiêu là �
 - **Không đánh được** (thiếu Nguyệt Lực, chủ Đóng Băng): làm mờ 50%.
 - **Tàn Chiêu**: xám hoàn toàn, có dấu nứt hoặc chữ "Tàn Chiêu".
 - Hover: phóng to 1.2×, nhấc lên, hiện mô tả đầy đủ.
+- **Lá Song Hành [GĐ2]:** viền hai màu (màu của cả 2 Hero), nhãn nhỏ "Song Hành". Thành Tàn Chiêu khi một trong hai Hero ngã; mờ khi một trong hai Hero Đóng Băng.
+- **Lá cần Huyết Nguyệt [GĐ2]:** khi không Huyết Nguyệt thì làm mờ như lá không đánh được (lý do lấy từ `rules`).
 
 ### Hero / Kẻ địch
-- Thanh HP có số, giáp (🛡 + số), danh sách trạng thái dạng nhãn ngắn kèm số (`Ẩn 1`, `Hồi 3`, `Yếu 2`). Hover nhãn → hiện mô tả trạng thái.
+- Thanh HP có số, giáp (🛡 + số), danh sách trạng thái dạng nhãn ngắn kèm số (`Ẩn 1`, `Hồi 3`, `Yếu 2`, `Phản 2` **[GĐ2]**). Hover nhãn → hiện mô tả trạng thái.
+- Nhãn trạng thái hiển thị **theo thứ tự `statuses[]`** — đây là thứ tự bị Cướp buff **[GĐ2]**.
 - Hero: dòng tiến độ thăng cấp (`Liệt Hỏa 12/15`). Đã thăng cấp → dấu ★ và viền vàng.
 - Hero ngã: xám, chữ "Ngã".
 - Kẻ địch Ẩn Thân: bán trong suốt.
@@ -64,6 +67,11 @@ Prototype dùng **art tạm**: hình chữ nhật màu + tên. Mục tiêu là �
 - Dãy 8 biểu tượng, pha hiện tại phóng to và sáng.
 - Dòng "kế tiếp: [pha] [hiệu ứng]" để người chơi lên kế hoạch.
 - Hover một pha → hiện hiệu ứng của pha đó.
+- **Huyết Nguyệt [GĐ2]:** khi `bloodMoonRounds > 0`: nền đỏ tối, icon 🔴 **cạnh** bánh xe kèm số lượt còn lại. Pha hiện tại vẫn hiển thị và vẫn tiến bình thường.
+
+### Màn chọn đội [GĐ2]
+- Trước trận: chọn 3 trong số các Hero có trong `heroes.json` và chọn encounter.
+- Hiện các lá Song Hành sẽ được thêm vào deck theo đội đang chọn.
 
 ## 4. Tương tác
 
@@ -87,11 +95,12 @@ Client giữ một **hàng đợi event**, phát lần lượt, mỗi event mộ
 | `cardsDrawn` | Lá bay từ chồng rút vào tay, lệch nhau | 80 ms/lá |
 | `cardPlayed` | Lá bay lên giữa màn hình, phóng to, rồi mờ dần | 300 ms |
 | `damageDealt` | Mục tiêu rung + chớp đỏ, số damage bay lên (hiện phần bị giáp chặn màu xám) | 350 ms |
-| `hpLost` | Chớp tím, số bay lên | 250 ms |
+| `hpLost` | Chớp tím, số bay lên. `cause: "reflect"`: tia phản từ mục tiêu về nguồn; `cause: "bloodMoon"`: chớp đỏ trên mọi Hero cùng lúc | 250 ms |
 | `healed` | Chớp xanh lá, số `+N` bay lên | 300 ms |
 | `armorGained` | Biểu tượng khiên phóng to | 200 ms |
-| `statusApplied` / `statusRemoved` | Nhãn trạng thái bật ra / mờ đi | 150 ms |
+| `statusApplied` / `statusRemoved` | Nhãn trạng thái bật ra / mờ đi. Cướp buff (`statusRemoved` rồi `statusApplied` cùng status, liên tiếp): nhãn bay từ mục tiêu sang người cướp | 150 ms |
 | `moonShifted` | Bánh xe trăng xoay, màu nền đổi dần | 500 ms |
+| `bloodMoonChanged` **[GĐ2]** | Bật/tắt nền đỏ, cập nhật số lượt Huyết Nguyệt | 500 ms |
 | `intentRevealed` | Biểu tượng ý định bật ra | 150 ms |
 | `intentExecuted` | Kẻ địch lao nhẹ về phía mục tiêu | 250 ms |
 | `heroLeveledUp` | Khung Hero lật 180°, viền vàng, particle, tên dạng thăng cấp hiện giữa màn hình | 1000 ms |
@@ -105,7 +114,7 @@ Sau khi phát hết event, **vẽ lại toàn bộ UI từ state mới** để t
 Bảng ẩn/hiện bằng phím `` ` ``:
 - Seed hiện tại + nút chơi lại với cùng seed.
 - Chọn encounter.
-- Nút: +3 Nguyệt Lực, rút 1 lá, đặt pha trăng bất kỳ, giết kẻ địch, đặt HP Hero.
+- Nút: +3 Nguyệt Lực, rút 1 lá, đặt pha trăng bất kỳ, giết kẻ địch, đặt HP Hero, đặt `bloodMoonRounds` **[GĐ2]**.
 - Log event dạng chữ.
 
 Các nút debug gọi hàm debug riêng trong client (thao tác state trực tiếp), **không** thêm vào `Action` chính thức.

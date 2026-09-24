@@ -18,9 +18,12 @@ export type MoonPhaseId =
 
 export type StatusId =
   | "stealth" | "taunt" | "weak" | "vulnerable" | "mark"
-  | "burn" | "regen" | "strength" | "empower" | "freeze";
+  | "burn" | "regen" | "strength" | "empower" | "freeze"
+  | "reflect";                                             // GĐ2
 
-export type CardTag = "attack" | "assassin" | "control" | "moon" | "heal" | "forbidden";
+export type CardTag =
+  | "attack" | "assassin" | "control" | "moon" | "heal" | "forbidden"
+  | "scheme" | "ward" | "harmony";                         // GĐ2: từ khóa phe
 ```
 
 ### 1.2 Hero — `heroes.json`
@@ -37,12 +40,16 @@ export interface HeroDef {
   art: { portrait: string; levelUp: string }; // đường dẫn ảnh, prototype có thể để trống ""
 }
 
-export type LevelUpCounter = "damageTaken" | "turnsWithAllyRegen" | "enemiesKilled";
+export type LevelUpCounter =
+  | "damageTaken" | "turnsWithAllyRegen" | "enemiesKilled"
+  | "freezesApplied" | "buffsStolen";                      // GĐ2: F03, F02
 
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
   | { type: "regenSpreadsToAllAllies" }
-  | { type: "firstOwnCardFreeEachTurn" };
+  | { type: "firstOwnCardFreeEachTurn" }
+  | { type: "doubleDamageVsFrozen" }                       // GĐ2: F03
+  | { type: "stealBonus" };                                // GĐ2: F02
 
 export interface LevelUpDef {
   name: string;             // "Liệt Hỏa"
@@ -61,13 +68,15 @@ export type CardTarget = "none" | "enemy" | "ally";
 export interface CardDef {
   id: string;               // "m05_liet_hoa_xung_phong"
   name: string;
-  ownerId: string;          // "m05"
+  ownerId?: string;         // "m05" — lá thường
+  bond?: { owners: [string, string] };  // GĐ2: lá Song Hành; đúng một trong ownerId / bond
   cost: number;
   type: CardType;
   tags: CardTag[];
   target: CardTarget;
   effects: Effect[];
   text: string;             // mô tả hiển thị
+  requiresBloodMoon?: boolean;          // GĐ2: chỉ hợp lệ khi tags có "forbidden"
 }
 ```
 
@@ -75,26 +84,33 @@ export interface CardDef {
 ```ts
 export type TargetRef = "self" | "chosen" | "allEnemies" | "allAllies";
 
-export type Effect =
+// GĐ2: mọi effect có thể có `actor?: 0 | 1` (index vào bond.owners, mặc định 0),
+// chỉ hợp lệ trên lá Song Hành. Effect trong then/else không có actor thì kế thừa
+// actor của conditional chứa nó.
+export type Effect = (
   | { type: "damage"; amount: number; to: TargetRef; hits?: number }   // hits mặc định 1
   | { type: "heal"; amount: number; to: TargetRef }
   | { type: "loseHp"; amount: number; to: TargetRef }
   | { type: "gainArmor"; amount: number; to: TargetRef }
   | { type: "removeArmor"; to: TargetRef }
   | { type: "applyStatus"; status: StatusId; amount: number; to: TargetRef }
-      // amount = thời hạn (loại Thời hạn), số tầng (Cộng dồn), giá trị (strength/empower), bỏ qua với freeze
+      // amount = thời hạn (loại Thời hạn), số tầng (Cộng dồn), giá trị (strength/empower/reflect), bỏ qua với freeze
   | { type: "cleanse"; to: TargetRef }                                   // gỡ mọi debuff
   | { type: "draw"; amount: number }
   | { type: "gainMoonPower"; amount: number }
   | { type: "shiftMoon"; amount: number }                                // âm = lùi pha
-  | { type: "conditional"; condition: Condition; then: Effect[]; else?: Effect[] };
+  | { type: "stealBuff"; count: number }                                 // GĐ2: từ mục tiêu chosen
+  | { type: "bloodMoon"; rounds: number }                                // GĐ2
+  | { type: "conditional"; condition: Condition; then: Effect[]; else?: Effect[] }
+) & { actor?: 0 | 1 };
 
 export type Condition =
   | { type: "selfHpBelow"; ratio: number }          // hp / maxHp < ratio (nhỏ hơn hẳn)
   | { type: "targetHpAtOrBelow"; ratio: number }    // hp / maxHp <= ratio, mục tiêu chosen
   | { type: "selfHasStatus"; status: StatusId }
   | { type: "targetHasStatus"; status: StatusId }
-  | { type: "moonPhaseIs"; phase: MoonPhaseId };
+  | { type: "moonPhaseIs"; phase: MoonPhaseId }
+  | { type: "bloodMoonActive" };                    // GĐ2: bloodMoonRounds > 0
 ```
 
 **Quy tắc mở rộng:** thêm loại effect mới = thêm vào union + thêm `case` trong hàm `resolveEffect` + thêm test. Không viết logic riêng cho từng lá bài.
@@ -118,6 +134,7 @@ export interface EnemyDef {
   maxHp: number;
   intentPattern: IntentDef[];
   moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];
+  bloodMoonOverride?: IntentDef;  // GĐ2: ưu tiên hơn moonOverrides khi đang Huyết Nguyệt
   art: { portrait: string };
 }
 ```
@@ -156,7 +173,7 @@ export interface MoonPhaseDef {
 ```ts
 export interface StatusInstance {
   id: StatusId;
-  value: number;            // thời hạn / số tầng / giá trị tùy loại; freeze dùng 1
+  value: number;            // thời hạn / số tầng / giá trị tùy loại; freeze dùng 1; reflect = HP phản
   sourceId?: string;        // mark: id Hero đã đánh dấu
 }
 
@@ -187,9 +204,9 @@ export interface EnemyState extends UnitState {
 }
 
 export interface CardInstance {
-  instanceId: string;       // "c01"
+  instanceId: string;       // "c01"; lá Song Hành: "bond01"
   cardId: string;
-  ownerId: string;          // id Hero, ví dụ "m05"
+  ownerIds: string[];       // id Hero, ví dụ ["m05"]; lá Song Hành: 2 id theo thứ tự bond.owners
 }
 
 export type CombatStatus = "playerTurn" | "enemyTurn" | "won" | "lost";
@@ -198,7 +215,7 @@ export interface CombatState {
   status: CombatStatus;
   round: number;
   moonIndex: number;        // 0–7
-  bloodMoonRounds: number;  // GĐ2, prototype luôn 0
+  bloodMoonRounds: number;  // > 0 = đang Huyết Nguyệt (01 mục 7.4)
   moonPower: number;
   heroes: HeroState[];
   enemies: EnemyState[];
@@ -227,7 +244,7 @@ export type CombatEvent =
   | { type: "cardPlayed"; instanceId: string; targetId?: string; cost: number }
   | { type: "cardDiscarded"; instanceIds: string[] }
   | { type: "damageDealt"; sourceId: string; targetId: string; amount: number; blocked: number; hpLost: number }
-  | { type: "hpLost"; targetId: string; amount: number; cause: "loseHp" | "burn" }
+  | { type: "hpLost"; targetId: string; amount: number; cause: "loseHp" | "burn" | "reflect" | "bloodMoon" }
   | { type: "healed"; targetId: string; amount: number }
   | { type: "armorGained"; targetId: string; amount: number }
   | { type: "armorRemoved"; targetId: string }
@@ -235,6 +252,7 @@ export type CombatEvent =
   | { type: "statusRemoved"; targetId: string; status: StatusId }
   | { type: "moonPowerChanged"; value: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
+  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }   // GĐ2; rounds 0 = hết
   | { type: "intentRevealed"; enemyId: string; intentId: string; targetId: string | null }
   | { type: "intentExecuted"; enemyId: string; intentId: string; targetId: string | null }
   | { type: "intentFizzled"; enemyId: string; intentId: string }
@@ -297,6 +315,9 @@ export function isCardPlayable(data: GameData, state: CombatState, instanceId: s
 
 Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
 - `cardIds` của Hero trỏ tới lá tồn tại và lá đó có `ownerId` đúng Hero.
+- **[GĐ2]** Mỗi lá có **đúng một** trong `ownerId` / `bond`. `bond.owners` là 2 Hero tồn tại, khác nhau.
+- **[GĐ2]** `actor` chỉ xuất hiện trên effect của lá có `bond` (kể cả effect lồng trong `conditional`).
+- **[GĐ2]** `requiresBloodMoon: true` chỉ hợp lệ khi `tags` có `"forbidden"`.
 - Lá có `target: "enemy" | "ally"` phải có ít nhất một effect `to: "chosen"`; lá `target: "none"` không được có `to: "chosen"`.
 - Ý định có effect `to: "chosen"` phải có `targeting`.
 - `moonPhases` đủ 8 phần tử, `index` 0–7 không trùng.

@@ -97,3 +97,73 @@ Quy ước trong bảng: kẻ địch "Khôi Lỗi" = `puppet_guard` (HP 42), "�
 | T58 | Trận đã thắng | Bất kỳ hành động nào | Bị từ chối |
 | T59 | Chỉ còn F04 HP 3, bị đánh 9 | `endTurn` | `status = lost` |
 | T60 | Lá test có 2 effect (damage 99 → gainArmor 5), chỉ còn 1 kẻ địch | `playCard` | Dừng ngay sau effect đầu, effect thứ hai không chạy |
+
+---
+
+## Giai đoạn 2
+
+Quy ước thêm: "Boss" = `moon_ape` (HP 140, `enc_04`). F03 = Tần Sương, F02 = Diệp Linh Lung. Đội phải có Hero sở hữu lá được dùng (ví dụ `heroIds: ["m05", "f03", "f02"]`). Bối cảnh thiết kế: `09-phase2-spec.md`.
+
+### G. Phản Đòn
+
+| Mã | Thiết lập | Hành động | Kết quả mong đợi |
+|---|---|---|---|
+| T61 | F03 `reflect 2`, 0 giáp; Khôi Lỗi Trọng Kích nhắm F03 | `endTurn` | F03 mất 9; Khôi Lỗi mất 2 HP; `hpLost` cause `reflect` ngay sau `damageDealt` |
+| T62 | F03 20 giáp + `reflect 2`; Khôi Lỗi Trọng Kích nhắm F03 | `endTurn` | `blocked 9`, `hpLost 0`; Khôi Lỗi vẫn mất 2 |
+| T63 | Hero `reflect 2`; Ảnh Hồ Song Trảo (3 × 2) nhắm Hero đó | `endTurn` | Ảnh Hồ mất 4 (phản mỗi hit) |
+| T64 | Hero có `reflect 2` khi lượt kẻ địch kết thúc | Bắt đầu lượt người chơi | `reflect` bị gỡ cùng giáp |
+| T65 | Boss `reflect 3`, F03 HP 3 | Băng Phách Liên Kích → Boss | F03 ngã sau hit 1; hit 2 không xảy ra; lá vào `discardPile` |
+| T66 | M06 `reflect 2`; Khôi Lỗi HP 2 đánh M06 | `endTurn` | Khôi Lỗi ngã, `killerId` = M06; bộ đếm `enemiesKilled` của M06 không đổi |
+
+### H. Cướp buff
+
+| Mã | Thiết lập | Hành động | Kết quả mong đợi |
+|---|---|---|---|
+| T67 | Khôi Lỗi `strength 2` rồi `regen 1` (thứ tự đó) | Diện Đoạt → Khôi Lỗi | Khôi Lỗi mất `strength`, còn `regen`; F02 `strength 2`; `buffsStolen = 1` |
+| T68 | F02 `strength 1`; Khôi Lỗi `strength 2` | Diện Đoạt → Khôi Lỗi | F02 `strength 3` |
+| T69 | F02 đã thăng cấp; Khôi Lỗi `strength 2` | Diện Đoạt → Khôi Lỗi | F02 `strength 3` (+1 từ nội tại) |
+| T70 | Khôi Lỗi không có buff | Diện Đoạt → Khôi Lỗi | Không có `statusRemoved`/`statusApplied`; bộ đếm không đổi |
+
+### I. Huyết Nguyệt
+
+| Mã | Thiết lập | Hành động | Kết quả mong đợi |
+|---|---|---|---|
+| T71 | `moonIndex 1` | Đổi Vận Chú | `bloodMoonRounds 2`, `moonIndex 2`; event `bloodMoonChanged` cause `card` |
+| T72 | `bloodMoonRounds 1`, kẻ địch bị vô hiệu | `endTurn` | Cuối vòng: 0, `bloodMoonChanged` cause `roundEnd`; đầu lượt mới không Hero nào mất HP |
+| T73 | `bloodMoonRounds 2`, kẻ địch bị vô hiệu | `endTurn` | Đầu lượt mới: mỗi Hero còn sống mất 2 HP (`hpLost` cause `bloodMoon`) sau tick trạng thái; M05 `damageTaken +2` |
+| T74 | `bloodMoonRounds 0`, Phệ Hồn trên tay | `playCard` | Từ chối `"requires blood moon"`; `isCardPlayable = false` |
+| T75 | `bloodMoonRounds 1`, Phệ Hồn → Khôi Lỗi | `playCard` | F02 mất 3 HP; Khôi Lỗi HP 42 → 26 |
+| T76 | `bloodMoonRounds 3` | Đổi Vận Chú | Vẫn 3; không có `bloodMoonChanged` |
+| T77 | Chỉ còn F02 HP 2, `bloodMoonRounds 2`, kẻ địch bị vô hiệu | `endTurn` | `status = lost` |
+
+### J. Song Hành
+
+| Mã | Thiết lập | Hành động | Kết quả mong đợi |
+|---|---|---|---|
+| T78 | `createCombat` M05, F03, M06, `enc_01`, seed 42 | — | 16 lá: `c01`–`c15` + `bond01` (Băng Hỏa Tranh Phong) |
+| T79 | `createCombat` M05, F04, M06 | — | 15 lá, không có lá Song Hành (T01 không đổi) |
+| T80 | `createCombat` M05, F03, F04 | — | `bond01` Băng Hỏa Tranh Phong, `bond02` Tuyết Trung Tống Thán |
+| T81 | F03 đã ngã, Băng Hỏa Tranh Phong trên tay | `playCard` | Từ chối (Tàn Chiêu) |
+| T82 | M05 đang Đóng Băng | Băng Hỏa Tranh Phong | Từ chối |
+| T83 | Khôi Lỗi không Đóng Băng; M05 và F03 đều có `empower 2` | Băng Hỏa Tranh Phong → Khôi Lỗi | 10 damage, `sourceId` M05; Khôi Lỗi bị `freeze`; F03 `freezesApplied = 1`; `empower` của M05 bị gỡ, của F03 còn |
+| T84 | Khôi Lỗi đang Đóng Băng | Băng Hỏa Tranh Phong → Khôi Lỗi | 14 damage; không áp thêm `freeze`; `freezesApplied` không đổi |
+| T85 | M05 đã thăng cấp | Băng Hỏa Tranh Phong → Khôi Lỗi (không Đóng Băng) | 8 damage (không +3) |
+| T86 | Khôi Lỗi `strength 1` | Ảnh Đấu → Khôi Lỗi | F02 `strength 1`; M06 `stealth 1`, không bị gỡ sau lá |
+| T87 | M06 đã thăng cấp, chưa đánh lá nào trong lượt | `getEffectiveCost` Ảnh Đấu | 1 (không miễn phí) |
+
+### K. F03
+
+| Mã | Thiết lập | Hành động | Kết quả mong đợi |
+|---|---|---|---|
+| T88 | F03 đã thăng cấp; Khôi Lỗi đang Đóng Băng | Băng Phách Liên Kích → Khôi Lỗi | 2 hit × 8 |
+| T89 | Khôi Lỗi đang Đóng Băng | Hàn Ấn → Khôi Lỗi | Không có `statusApplied`; `freezesApplied` không đổi |
+| T90 | `enc_02`, `moonPower` đủ | Hàn Ấn lên 3 Ảnh Hồ khác nhau | F03 thăng cấp sau lá thứ 3 |
+
+### L. Kẻ địch, tag và dữ liệu
+
+| Mã | Thiết lập | Hành động | Kết quả mong đợi |
+|---|---|---|---|
+| T91 | `enc_04`, `bloodMoonRounds 2`, pha kế là `full` | `endTurn` | Boss công bố `bloodMoonOverride` (không phải override `full`); `patternIndex +1` |
+| T92 | `enc_04`, boss công bố override `lastQuarter` | `endTurn`, rồi Sương Trảm → Boss | Boss có `reflect 3` trong lượt người chơi; F03 mất 3 HP; đầu lượt kẻ địch kế tiếp `reflect` bị gỡ |
+| T93 | Pha Hạ Huyền; rồi pha Trăng Tròn | `getEffectiveCost` | Hạ Huyền: Hổ Gầm 0, Phong Tuyết Chướng 1. Trăng Tròn: Thảo Dược 0 |
+| T94 | Dữ liệu lá có cả `ownerId` và `bond`; lá thường có `actor`; `requiresBloodMoon` trên lá không `forbidden` | Nạp dữ liệu | Mỗi trường hợp báo lỗi schema |

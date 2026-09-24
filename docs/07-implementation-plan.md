@@ -1,4 +1,4 @@
-# 07 — Kế hoạch code (Giai đoạn 0–1)
+# 07 — Kế hoạch code (Giai đoạn 0–2)
 
 Mỗi bước là **một phiên làm việc** với AI. Dán prompt mẫu (chỉnh nếu cần), để AI làm xong, **tự chạy thử**, commit, rồi mới sang bước sau.
 
@@ -75,10 +75,43 @@ Không cần AI. Chơi mỗi encounter vài lần, ghi vào `docs/playtest-notes
 
 ---
 
-## Sau giai đoạn 1
+## Giai đoạn 2 — Chiều sâu
+
+Đặc tả: `09-phase2-spec.md`. Luật đã đưa vào `01` (các mục **[GĐ2]**), kiểu dữ liệu vào `02`, test vào `06` (T61–T94).
+
+### Bước 2.1 — Cập nhật tài liệu
+Đưa đặc tả `09` vào `01`, `02`, `04`, `05`, `06`, `07`. *(Đã xong.)*
+
+### Bước 2.2 — Schema và dữ liệu
+> Đọc `02-data-schema.md` (các mục GĐ2) và `09-phase2-spec.md` mục 1, 4.1, 5, 6. Mở rộng type trong `packages/rules/src/types/` và schema zod: tag `scheme`/`ward`/`harmony`, status `reflect`, effect `stealBuff`/`bloodMoon` + `actor`, condition `bloodMoonActive`, `CardDef.bond`/`requiresBloodMoon`, `CardInstance.ownerIds`, counter/passive mới, `EnemyDef.bloodMoonOverride`, event `bloodMoonChanged`, `hpLost.cause` mới. Thêm các kiểm tra chéo GĐ2 ở `02` mục 6. Thêm dữ liệu: F03, F02, 13 lá mới, gắn tag 4 lá cũ, `costModifierForTag` cho `full`/`lastQuarter`, boss `moon_ape`, `enc_04`, `strength 1` cho Thủ Thế. Đổi code đang dùng `ownerId` sang `ownerIds` nhưng **chưa** thêm luật mới (effect mới có thể `throw` "not implemented"). Làm test T94; toàn bộ T01–T60 vẫn pass (sửa test bị ảnh hưởng bởi Thủ Thế nếu có).
+
+### Bước 2.3 — Phản Đòn, Cướp buff, Huyết Nguyệt
+> Đọc `01-combat-rules.md` mục 3.1, 5.1, 6.1, 6.4, 6.5, 7.4, 9.3, 9.4, 10.5. Thêm `reflect` (kích hoạt mỗi hit, gỡ cùng giáp, dừng lá/ý định khi nguồn ngã), `stealBuff`, `bloodMoon`, `bloodMoonActive`, mất HP đầu lượt, giảm cuối vòng, `requiresBloodMoon`. Làm test T61–T77.
+
+### Bước 2.4 — Lá Song Hành
+> Đọc `01-combat-rules.md` mục 4.1, 4.3, 4.4, 5.1–5.4. Dựng deck có lá Song Hành, điều kiện đánh (hai owner còn sống, không ai Đóng Băng), `actor` (kể cả kế thừa trong `conditional`), dọn sau lá tấn công, nội tại không áp cho lá Song Hành. Làm test T78–T87.
+
+### Bước 2.5 — F03 và F02
+> Đọc `01-combat-rules.md` mục 8 và 10.1. Thêm bộ đếm `freezesApplied`, `buffsStolen` và nội tại `doubleDamageVsFrozen`, `stealBonus`. Làm test T88–T90 và T69.
+
+### Bước 2.6 — Boss và tag theo pha
+> Đọc `01-combat-rules.md` mục 4.5, 7.1, 9.1–9.2. Thêm `bloodMoonOverride` khi công bố ý định. Kiểm tra boss `enc_04` và chi phí theo tag. Làm test T91–T93. Sau đó chạy toàn bộ T01–T94.
+
+**Mốc kiểm tra:** mọi kịch bản T01–T94 có test và pass.
+
+### Bước 2.7 — UI giai đoạn 2
+> Đọc `05-ui-combat-screen.md` (các mục GĐ2). Thêm màn chọn đội (3 trong 5 Hero + encounter), lá Song Hành, hiển thị Huyết Nguyệt, nhãn `Phản`, animation cướp buff và `bloodMoonChanged`, nút debug `bloodMoonRounds`.
+
+### Bước 2.8 — Chơi thử giai đoạn 2
+Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), chơi thử, ghi vào `docs/playtest-notes.md`, chỉnh số liệu trong JSON, chạy lại test.
+
+**Hoàn thành giai đoạn 2 khi:** đánh thắng được `enc_04` với ít nhất 2 đội hình khác nhau, và Song Hành / Huyết Nguyệt tạo ra quyết định đáng kể theo ghi chú chơi thử.
+
+---
+
+## Sau giai đoạn 2
 
 Viết tài liệu cho giai đoạn tiếp theo **dựa trên ghi chú chơi thử**, theo thứ tự trong `00-gdd.md` mục 12:
-- Giai đoạn 2: đặc tả Song Hành, từ khóa 4 Viện, boss, Huyết Nguyệt.
 - Giai đoạn 3: đặc tả roguelike.
 - Giai đoạn 4: kinh tế gacha, cấu trúc tài khoản, API server.
 - Giai đoạn 5–6: giao thức mạng PvP và co-op.
