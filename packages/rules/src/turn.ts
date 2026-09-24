@@ -2,7 +2,8 @@ import { drawCards } from "./draw";
 import { checkCombatEnd, tickUnitStatuses } from "./effects";
 import { runEnemyTurn } from "./enemy-turn";
 import { announceIntents } from "./intent";
-import { DURATION_STATUSES, removeStatus } from "./statuses";
+import { bumpCounter, checkLevelUps } from "./levelup";
+import { DURATION_STATUSES, hasStatus, removeStatus } from "./statuses";
 import type { CombatEvent, CombatState, GameData } from "./types/index";
 
 export function startPlayerTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
@@ -14,6 +15,18 @@ export function startPlayerTurn(data: GameData, state: CombatState, events: Comb
       events.push({ type: "armorRemoved", targetId: hero.id });
     }
   }
+  const anyAllyRegen = state.heroes.some(
+    (hero) => hero.alive && hasStatus(hero, "regen"),
+  );
+  for (const hero of state.heroes) {
+    if (!hero.alive) continue;
+    if (anyAllyRegen) bumpCounter(data, hero, "turnsWithAllyRegen", 1);
+    hero.freeCardUsedThisTurn = false;
+    hero.freeCardActive =
+      hero.leveledUp &&
+      data.heroes[hero.defId]?.levelUp.passive.type === "firstOwnCardFreeEachTurn";
+  }
+  checkLevelUps(data, state, events);
   for (const hero of state.heroes) {
     if (!hero.alive) continue;
     tickUnitStatuses(data, state, hero, events);
