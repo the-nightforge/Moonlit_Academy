@@ -2,6 +2,7 @@ import { cloneState } from "./clone";
 import { resolveEffects } from "./effects";
 import { getEffectiveCost, getValidTargets, isFreeByPassive } from "./queries";
 import { hasStatus, removeStatus } from "./statuses";
+import { runEndTurn } from "./turn";
 import type {
   Action,
   ActionResult,
@@ -89,8 +90,12 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
       playCard(data, next, action, events);
       return { ok: true, state: next, events };
     }
-    case "endTurn":
-      return { ok: false, error: "endTurn is not implemented yet" };
+    case "endTurn": {
+      const next = cloneState(state);
+      const events: CombatEvent[] = [];
+      runEndTurn(data, next, events);
+      return { ok: true, state: next, events };
+    }
     default: {
       const exhaustive: never = action;
       return { ok: false, error: `unknown action ${JSON.stringify(exhaustive)}` };

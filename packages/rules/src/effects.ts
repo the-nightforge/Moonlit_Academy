@@ -5,7 +5,7 @@ import {
   moonHealMultiplier,
   moonStealthDurationBonus,
 } from "./moon";
-import { applyStatus, cleanseDebuffs, hasStatus, statusValue } from "./statuses";
+import { applyStatus, cleanseDebuffs, getStatus, hasStatus, removeStatus, statusValue } from "./statuses";
 import type {
   CardDef,
   CombatEvent,
@@ -217,8 +217,14 @@ export function resolveEffect(
       }
       return;
     }
-    case "shiftMoon":
-      throw new Error(`effect "${effect.type}" is not implemented yet`);
+    case "shiftMoon": {
+      const from = state.moonIndex;
+      state.moonIndex =
+        (((state.moonIndex + effect.amount) % data.moonPhases.length) + data.moonPhases.length) %
+        data.moonPhases.length;
+      events.push({ type: "moonShifted", from, to: state.moonIndex, cause: "card" });
+      return;
+    }
     default: {
       const exhaustive: never = effect;
       throw new Error(`unknown effect: ${JSON.stringify(exhaustive)}`);
@@ -226,7 +232,7 @@ export function resolveEffect(
   }
 }
 
-function processDeaths(
+export function processDeaths(
   state: CombatState,
   events: CombatEvent[],
   killerId: string | undefined,
@@ -246,7 +252,8 @@ function processDeaths(
   }
 }
 
-function checkCombatEnd(state: CombatState, events: CombatEvent[]): boolean {
+export function checkCombatEnd(state: CombatState, events: CombatEvent[]): boolean {
+  if (state.status === "won" || state.status === "lost") return true;
   if (state.enemies.every((enemy) => !enemy.alive)) {
     state.status = "won";
     events.push({ type: "combatEnded", result: "won" });
@@ -271,5 +278,36 @@ export function resolveEffects(
     resolveEffect(data, state, effect, ctx, events);
     processDeaths(state, events, ctx.source.id);
     if (checkCombatEnd(state, events)) return;
+  }
+}
+
+export function tickUnitStatuses(
+  data: GameData,
+  state: CombatState,
+  unit: UnitState,
+  events: CombatEvent[],
+): void {
+  const burn = getStatus(unit, "burn");
+  if (burn) {
+    const lost = Math.min(unit.hp, burn.value);
+    unit.hp -= lost;
+    events.push({ type: "hpLost", targetId: unit.id, amount: lost, cause: "burn" });
+    burn.value -= 1;
+    if (burn.value <= 0) removeStatus(unit, "burn", events);
+    processDeaths(state, events, undefined);
+    if (!unit.alive) return;
+  }
+  const regen = getStatus(unit, "regen");
+  if (regen) {
+    const healed = Math.min(
+      unit.maxHp - unit.hp,
+      Math.floor(regen.value * moonHealMultiplier(data, state)),
+    );
+    if (healed > 0) {
+      unit.hp += healed;
+      events.push({ type: "healed", targetId: unit.id, amount: healed });
+    }
+    regen.value -= 1;
+    if (regen.value <= 0) removeStatus(unit, "regen", events);
   }
 }

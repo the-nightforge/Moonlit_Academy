@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "../src/index";
-import { instanceIdOf, makeTestCombat, setHand } from "./helpers";
+import { idleEnemies, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand } from "./helpers";
 
 function play(data: Parameters<typeof applyAction>[0], state: Parameters<typeof applyAction>[1], cardId: string, targetId?: string) {
   return applyAction(data, state, {
@@ -115,5 +115,47 @@ describe("statuses", () => {
     expect(statuses).toContain("stealth");
     expect(statuses).toContain("regen");
     expect(result.state.heroes[2]?.hp).toBe(22);
+  });
+
+  it("T39: armor is cleared before the burn tick at turn start", () => {
+    const { data, state } = makeTestCombat({
+      setup: (s) => {
+        s.heroes[0]!.armor = 5;
+        s.heroes[0]!.statuses.push({ id: "burn", value: 3 });
+        idleEnemies(s);
+      },
+    });
+    const result = applyAction(data, state, { type: "endTurn" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.heroes[0]?.armor).toBe(0);
+    expect(result.state.heroes[0]?.hp).toBe(37);
+    expect(result.state.heroes[0]?.statuses).toContainEqual({ id: "burn", value: 2 });
+  });
+
+  it("T40: regen heals each player turn start until it runs out", () => {
+    const { data, state } = makeTestCombat({
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        s.moonIndex = 6;
+        s.heroes[0]!.hp = 30;
+        s.heroes[0]!.statuses.push({ id: "regen", value: 3 });
+      },
+    });
+
+    const expectations: [number, number | undefined][] = [
+      [33, 2],
+      [35, 1],
+      [36, undefined],
+    ];
+    let current = state;
+    for (const [hp, regen] of expectations) {
+      const result = applyAction(data, current, { type: "endTurn" });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      current = result.state;
+      expect(current.heroes[0]?.hp).toBe(hp);
+      expect(current.heroes[0]?.statuses.find((s) => s.id === "regen")?.value).toBe(regen);
+    }
   });
 });

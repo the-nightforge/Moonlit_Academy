@@ -1,6 +1,7 @@
 import { loadGameData } from "data";
-import type { CardDef, CombatEvent, CombatState, GameData } from "../src/index";
+import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "../src/index";
 import { createCombat } from "../src/index";
+import { idleIntent } from "./fixtures";
 
 export function testData(): GameData {
   return loadGameData();
@@ -10,6 +11,7 @@ export interface TestCombatOverrides {
   heroIds?: [string, string, string];
   encounterId?: string;
   seed?: number;
+  mutateData?: (data: GameData) => void;
   setup?: (state: CombatState) => void;
 }
 
@@ -19,6 +21,7 @@ export function makeTestCombat(overrides: TestCombatOverrides = {}): {
   events: CombatEvent[];
 } {
   const data = testData();
+  overrides.mutateData?.(data);
   const { state, events } = createCombat(data, {
     heroIds: overrides.heroIds ?? ["m05", "f04", "m06"],
     encounterId: overrides.encounterId ?? "enc_01",
@@ -48,6 +51,28 @@ export function setHand(state: CombatState, cardIds: string[]): void {
       }
     }
     state.hand.push(id);
+  }
+}
+
+export function setIntent(
+  state: CombatState,
+  position: number,
+  intent: IntentDef,
+  targetId: string | null,
+): void {
+  state.enemies[position]!.currentIntent = { intent, targetId };
+}
+
+export function idleEnemies(state: CombatState): void {
+  for (const enemy of state.enemies) {
+    enemy.currentIntent = { intent: idleIntent, targetId: null };
+  }
+}
+
+export function makeEnemiesIdle(data: GameData): void {
+  for (const def of Object.values(data.enemies)) {
+    def.intentPattern = [idleIntent];
+    def.moonOverrides = [];
   }
 }
 

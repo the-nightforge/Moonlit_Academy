@@ -8,6 +8,14 @@ export const DEBUFF_STATUSES: ReadonlySet<StatusId> = new Set([
   "mark",
 ]);
 
+export const DURATION_STATUSES: ReadonlySet<StatusId> = new Set([
+  "stealth",
+  "taunt",
+  "weak",
+  "vulnerable",
+  "mark",
+]);
+
 export function hasStatus(unit: UnitState, status: StatusId): boolean {
   return unit.statuses.some((entry) => entry.id === status);
 }

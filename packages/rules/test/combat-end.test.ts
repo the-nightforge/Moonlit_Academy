@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { applyAction } from "../src/index";
-import { killThenArmorCard } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setHand } from "./helpers";
+import { applyAction, isCardPlayable } from "../src/index";
+import { idleIntent, killThenArmorCard } from "./fixtures";
+import { injectCard, instanceIdOf, makeTestCombat, setHand, setIntent } from "./helpers";
 
 describe("combat end", () => {
   it("T57: killing the last enemy wins the combat", () => {
@@ -64,5 +64,69 @@ describe("combat end", () => {
     expect(result.state.status).toBe("won");
     expect(result.state.heroes[0]?.armor).toBe(0);
     expect(result.events.some((event) => event.type === "armorGained")).toBe(false);
+  });
+
+  it("T55: a dead hero's cards become broken", () => {
+    const { data, state } = makeTestCombat();
+    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    state.heroes[2]!.hp = 5;
+    setIntent(state, 0, heavy, "hero:m06");
+    setIntent(state, 1, idleIntent, null);
+
+    const result = applyAction(data, state, { type: "endTurn" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.heroes[2]?.alive).toBe(false);
+    expect(
+      result.events.some((e) => e.type === "unitDied" && e.unitId === "hero:m06"),
+    ).toBe(true);
+
+    const m06Card = instanceIdOf(result.state, "m06_am_tien");
+    result.state.hand.push(m06Card);
+    expect(isCardPlayable(data, result.state, m06Card)).toBe(false);
+    const attempt = applyAction(data, result.state, {
+      type: "playCard",
+      instanceId: m06Card,
+      targetId: "enemy:0",
+    });
+    expect(attempt.ok).toBe(false);
+  });
+
+  it("T56: a dead hero cannot be targeted by ally cards", () => {
+    const { data, state } = makeTestCombat();
+    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    state.heroes[2]!.hp = 5;
+    setIntent(state, 0, heavy, "hero:m06");
+    setIntent(state, 1, idleIntent, null);
+
+    const result = applyAction(data, state, { type: "endTurn" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    setHand(result.state, ["f04_thao_duoc"]);
+    const attempt = applyAction(data, result.state, {
+      type: "playCard",
+      instanceId: instanceIdOf(result.state, "f04_thao_duoc"),
+      targetId: "hero:m06",
+    });
+    expect(attempt.ok).toBe(false);
+  });
+
+  it("T59: losing the last hero loses the combat", () => {
+    const { data, state } = makeTestCombat();
+    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    state.heroes[0]!.alive = false;
+    state.heroes[0]!.hp = 0;
+    state.heroes[2]!.alive = false;
+    state.heroes[2]!.hp = 0;
+    state.heroes[1]!.hp = 3;
+    setIntent(state, 0, heavy, "hero:f04");
+    setIntent(state, 1, idleIntent, null);
+
+    const result = applyAction(data, state, { type: "endTurn" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.status).toBe("lost");
+    expect(result.events.at(-1)).toMatchObject({ type: "combatEnded", result: "lost" });
   });
 });
