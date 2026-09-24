@@ -15,7 +15,15 @@ import type {
   GameData,
   StatusInstance,
 } from "rules";
-import { session } from "../session";
+import { cycleEncounter, restartSession, session } from "../session";
+import {
+  debugAddMoonPower,
+  debugAdjustHeroHp,
+  debugDrawCards,
+  debugKillEnemy,
+  debugSetMoon,
+  describeEvent,
+} from "../debug";
 import { animateEvent } from "../ui/event-animator";
 import {
   COLORS,
@@ -58,6 +66,7 @@ export class CombatScene extends Phaser.Scene {
   private unitViews = new Map<string, Phaser.GameObjects.Container>();
   private errorText?: Phaser.GameObjects.Text;
   private inputLocked = false;
+  private debugVisible = false;
 
   constructor() {
     super("combat");
@@ -74,6 +83,12 @@ export class CombatScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-ESC", () => this.cancelTargeting());
     this.input.keyboard?.on("keydown-E", () => {
       if (!this.inputLocked) this.dispatch({ type: "endTurn" });
+    });
+    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (event.code === "Backquote") {
+        this.debugVisible = !this.debugVisible;
+        this.renderAll();
+      }
     });
     this.renderAll();
   }
@@ -208,6 +223,20 @@ export class CombatScene extends Phaser.Scene {
     if (this.state.status === "won" || this.state.status === "lost") {
       this.renderCombatEnd();
     }
+    this.renderDebugPanel();
+  }
+
+  private restart(seed?: number, encounterId?: string): void {
+    restartSession(seed, encounterId);
+    this.syncFromSession();
+  }
+
+  private syncFromSession(): void {
+    this.state = session.state;
+    this.targeting = null;
+    this.validTargetIds.clear();
+    this.inputLocked = false;
+    this.renderAll();
   }
 
   private text(
@@ -560,6 +589,116 @@ export class CombatScene extends Phaser.Scene {
       16,
       COLORS.dimText,
     ).setOrigin(0.5);
+    this.endScreenButton(WIDTH / 2 - 100, HEIGHT / 2 + 90, "Chơi lại", () => this.restart());
+    this.endScreenButton(WIDTH / 2 + 100, HEIGHT / 2 + 90, "Trận khác", () => {
+      cycleEncounter(1);
+      this.syncFromSession();
+    });
+  }
+
+  private endScreenButton(
+    x: number,
+    y: number,
+    label: string,
+    onClick: () => void,
+  ): void {
+    const btn = this.add.rectangle(x, y, 160, 42, COLORS.button);
+    btn.setStrokeStyle(1, COLORS.goldFill);
+    btn.setInteractive({ useHandCursor: true });
+    btn.on("pointerover", () => btn.setFillStyle(0x3a5090));
+    btn.on("pointerout", () => btn.setFillStyle(COLORS.button));
+    btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) onClick();
+    });
+    this.root.add(btn);
+    this.text(x, y, label, 14).setOrigin(0.5);
+  }
+
+  private debugButton(
+    x: number,
+    y: number,
+    width: number,
+    label: string,
+    onClick: () => void,
+    fontSize = 11,
+  ): void {
+    const btn = this.add.rectangle(x, y, width, 22, COLORS.button).setOrigin(0, 0.5);
+    btn.setInteractive({ useHandCursor: true });
+    btn.on("pointerover", () => btn.setFillStyle(0x3a5090));
+    btn.on("pointerout", () => btn.setFillStyle(COLORS.button));
+    btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) onClick();
+    });
+    this.root.add(btn);
+    this.text(x + width / 2, y, label, fontSize).setOrigin(0.5);
+  }
+
+  private renderDebugPanel(): void {
+    if (!this.debugVisible) return;
+    const x = WIDTH - 336;
+    this.root.add(
+      this.add
+        .rectangle(x + 168, HEIGHT / 2, 336, HEIGHT - 16, 0x0a0e20, 0.93)
+        .setStrokeStyle(1, COLORS.panelBorder),
+    );
+    let y = 30;
+    const line = (label: string, size = 12) => {
+      this.text(x + 14, y, label, size);
+      y += 20;
+    };
+    line(`DEBUG — seed ${session.seed} · ${session.encounterId}`, 13);
+    this.debugButton(x + 14, y + 10, 100, "Chơi lại", () => this.restart());
+    this.debugButton(x + 124, y + 10, 80, "Seed +1", () => this.restart(session.seed + 1));
+    this.debugButton(x + 214, y + 10, 90, "Trận kế ▸", () => {
+      cycleEncounter(1);
+      this.syncFromSession();
+    });
+    y += 36;
+    this.debugButton(x + 14, y + 10, 110, "+3 Nguyệt Lực", () => {
+      debugAddMoonPower();
+      this.renderAll();
+    });
+    this.debugButton(x + 134, y + 10, 80, "Rút 1 lá", () => {
+      debugDrawCards(1);
+      this.renderAll();
+    });
+    y += 36;
+    line("Đặt pha:");
+    this.gameData.moonPhases.forEach((phase, index) => {
+      this.debugButton(x + 14 + index * 38, y + 8, 32, phase.icon, () => {
+        debugSetMoon(index);
+        this.renderAll();
+      });
+    });
+    y += 32;
+    line("HP Hero:");
+    this.state.heroes.forEach((hero, index) => {
+      const def = this.gameData.heroes[hero.defId]!;
+      this.text(x + 14, y + 8, `${def.name} ${hero.hp}/${hero.maxHp}`, 11);
+      this.debugButton(x + 200, y + 8, 44, "-5", () => {
+        debugAdjustHeroHp(index, -5);
+        this.renderAll();
+      });
+      this.debugButton(x + 250, y + 8, 44, "+5", () => {
+        debugAdjustHeroHp(index, 5);
+        this.renderAll();
+      });
+      y += 28;
+    });
+    this.state.enemies.forEach((enemy, index) => {
+      if (!enemy.alive) return;
+      const def = this.gameData.enemies[enemy.defId]!;
+      this.debugButton(x + 14, y + 8, 180, `Giết: ${def.name}`, () => {
+        debugKillEnemy(index);
+        this.renderAll();
+      }, 10);
+      y += 28;
+    });
+    y += 6;
+    line("— Sự kiện —", 11);
+    for (const event of session.events.slice(-14)) {
+      line(describeEvent(this.state, this.gameData, event), 10);
+    }
   }
 
   private renderBottomBar() {
