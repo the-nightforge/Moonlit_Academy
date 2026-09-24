@@ -24,6 +24,7 @@ import type {
   GameData,
   HeroState,
   IntentKind,
+  LevelUpPassive,
   TargetRef,
   UnitState,
 } from "./types/index";
@@ -76,6 +77,13 @@ function markFromSource(target: UnitState, sourceId: string): boolean {
   );
 }
 
+/** Level-up passive of the acting hero for this card; never applies to bond cards. */
+function cardPassive(data: GameData, ctx: EffectContext): LevelUpPassive | undefined {
+  if (ctx.card === undefined || ctx.card.bond || ctx.source.side !== "hero") return undefined;
+  const hero = ctx.source as HeroState;
+  return hero.leveledUp ? data.heroes[hero.defId]?.levelUp.passive : undefined;
+}
+
 export function computeDamageAmount(
   data: GameData,
   state: CombatState,
@@ -84,19 +92,14 @@ export function computeDamageAmount(
   base: number,
 ): number {
   const attack = isAttackSource(ctx);
+  const passive = cardPassive(data, ctx);
   let flat = base;
   if (attack) {
     flat += statusValue(ctx.source, "strength");
     if (ctx.card !== undefined) {
       flat += statusValue(ctx.source, "empower");
       if (markFromSource(target, ctx.source.id)) flat += 3;
-      if (ctx.source.side === "hero" && !ctx.card.bond) {
-        const hero = ctx.source as HeroState;
-        const passive = data.heroes[hero.defId]?.levelUp.passive;
-        if (hero.leveledUp && passive?.type === "attackDamageBonus") {
-          flat += passive.amount;
-        }
-      }
+      if (passive?.type === "attackDamageBonus") flat += passive.amount;
     }
   }
   let multiplier = 1;
@@ -105,6 +108,7 @@ export function computeDamageAmount(
   }
   if (hasStatus(ctx.source, "weak")) multiplier *= 0.75;
   if (hasStatus(target, "vulnerable")) multiplier *= 1.5;
+  if (passive?.type === "doubleDamageVsFrozen" && hasStatus(target, "freeze")) multiplier *= 2;
   return Math.max(0, Math.floor(flat * multiplier));
 }
 
@@ -257,17 +261,9 @@ export function resolveEffect(
       let targets = resolveTargets(state, effect.to, ctx);
       if (
         effect.status === "regen" &&
-        ctx.card !== undefined &&
-        !ctx.card.bond &&
-        ctx.source.side === "hero"
+        cardPassive(data, ctx)?.type === "regenSpreadsToAllAllies"
       ) {
-        const hero = ctx.source as HeroState;
-        if (
-          hero.leveledUp &&
-          data.heroes[hero.defId]?.levelUp.passive.type === "regenSpreadsToAllAllies"
-        ) {
-          targets = [...new Set([...targets, ...state.heroes.filter((h) => h.alive)])];
-        }
+        targets = [...new Set([...targets, ...state.heroes.filter((h) => h.alive)])];
       }
       for (const target of targets) {
         const newFreeze = effect.status === "freeze" && !hasStatus(target, "freeze");
@@ -298,9 +294,10 @@ export function resolveEffect(
       const stolen = target.statuses
         .filter((entry) => !DEBUFF_STATUSES.has(entry.id))
         .slice(0, effect.count);
+      const bonus = cardPassive(data, ctx)?.type === "stealBonus" ? 1 : 0;
       for (const entry of stolen) {
         removeStatus(target, entry.id, events);
-        applyStatus(ctx.source, entry.id, entry.value, ctx.source.id, events);
+        applyStatus(ctx.source, entry.id, entry.value + bonus, ctx.source.id, events);
         if (ctx.source.side === "hero") {
           bumpCounter(data, ctx.source as HeroState, "buffsStolen", 1);
         }
