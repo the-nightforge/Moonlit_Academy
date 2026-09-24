@@ -1,0 +1,35 @@
+import type { CardDef, IntentDef } from "../../src/index";
+
+export const idleIntent: IntentDef = {
+  id: "idle",
+  name: "Nghỉ",
+  kind: "special",
+  effects: [],
+};
+
+export const drawTwoCard: CardDef = {
+  id: "test_draw_two",
+  name: "Test Draw Two",
+  ownerId: "f04",
+  cost: 0,
+  type: "skill",
+  tags: [],
+  target: "none",
+  effects: [{ type: "draw", amount: 2 }],
+  text: "Rút 2 lá (test).",
+};
+
+export const killThenArmorCard: CardDef = {
+  id: "test_kill_then_armor",
+  name: "Test Kill Then Armor",
+  ownerId: "m05",
+  cost: 0,
+  type: "skill",
+  tags: [],
+  target: "enemy",
+  effects: [
+    { type: "damage", amount: 99, to: "chosen" },
+    { type: "gainArmor", amount: 5, to: "self" },
+  ],
+  text: "Gây 99 damage rồi nhận 5 giáp (test).",
+};

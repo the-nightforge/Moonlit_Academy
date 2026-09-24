@@ -1,12 +1,9 @@
 import { loadGameData } from "data";
-import type { CombatEvent, CombatState, GameData } from "../src/index";
+import type { CardDef, CombatEvent, CombatState, GameData } from "../src/index";
 import { createCombat } from "../src/index";
 
-let cachedData: GameData | undefined;
-
 export function testData(): GameData {
-  cachedData ??= loadGameData();
-  return cachedData;
+  return loadGameData();
 }
 
 export interface TestCombatOverrides {
@@ -52,4 +49,12 @@ export function setHand(state: CombatState, cardIds: string[]): void {
     }
     state.hand.push(id);
   }
+}
+
+export function injectCard(state: CombatState, data: GameData, card: CardDef): string {
+  data.cards[card.id] = card;
+  const instanceId = `test_${card.id}`;
+  state.cards[instanceId] = { instanceId, cardId: card.id, ownerId: card.ownerId };
+  state.hand.push(instanceId);
+  return instanceId;
 }
