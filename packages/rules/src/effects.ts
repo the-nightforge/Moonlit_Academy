@@ -6,7 +6,15 @@ import {
   moonHealMultiplier,
   moonStealthDurationBonus,
 } from "./moon";
-import { applyStatus, cleanseDebuffs, getStatus, hasStatus, removeStatus, statusValue } from "./statuses";
+import {
+  applyStatus,
+  cleanseDebuffs,
+  DEBUFF_STATUSES,
+  getStatus,
+  hasStatus,
+  removeStatus,
+  statusValue,
+} from "./statuses";
 import type {
   CardDef,
   CombatEvent,
@@ -97,6 +105,20 @@ export function computeDamageAmount(
   return Math.max(0, Math.floor(flat * multiplier));
 }
 
+/** HP loss that ignores armor and multipliers (loseHp, burn, reflect, blood moon). */
+export function loseHp(
+  data: GameData,
+  unit: UnitState,
+  amount: number,
+  cause: "loseHp" | "burn" | "reflect" | "bloodMoon",
+  events: CombatEvent[],
+): void {
+  const lost = Math.min(unit.hp, amount);
+  unit.hp -= lost;
+  if (unit.side === "hero") bumpCounter(data, unit as HeroState, "damageTaken", lost);
+  events.push({ type: "hpLost", targetId: unit.id, amount: lost, cause });
+}
+
 function dealDamage(
   data: GameData,
   state: CombatState,
@@ -119,6 +141,16 @@ function dealDamage(
     blocked,
     hpLost,
   });
+
+  const reflect = statusValue(target, "reflect");
+  if (amount <= 0 || reflect <= 0) return;
+  loseHp(data, ctx.source, reflect, "reflect", events);
+  if (ctx.source.hp > 0) return;
+  // Both deaths resolve right after this hit, each credited to its own killer.
+  if (target.alive && target.hp <= 0) {
+    killUnit(data, state, target, events, { id: ctx.source.id, cardDamage: ctx.card !== undefined });
+  }
+  killUnit(data, state, ctx.source, events, { id: target.id, cardDamage: false });
 }
 
 function evalCondition(
@@ -143,7 +175,7 @@ function evalCondition(
     case "moonPhaseIs":
       return data.moonPhases[state.moonIndex]!.id === condition.phase;
     case "bloodMoonActive":
-      throw new Error("condition bloodMoonActive: not implemented (step 2.3)");
+      return state.bloodMoonRounds > 0;
   }
 }
 
@@ -160,6 +192,7 @@ export function resolveEffect(
       for (const target of resolveTargets(state, effect.to, ctx)) {
         for (let hit = 0; hit < hits && target.alive && target.hp > 0; hit++) {
           dealDamage(data, state, ctx, target, effect.amount, events);
+          if (!ctx.source.alive) return;
         }
       }
       return;
@@ -180,12 +213,7 @@ export function resolveEffect(
     }
     case "loseHp": {
       for (const target of resolveTargets(state, effect.to, ctx)) {
-        const lost = Math.min(target.hp, effect.amount);
-        target.hp -= lost;
-        if (target.side === "hero") {
-          bumpCounter(data, target as HeroState, "damageTaken", lost);
-        }
-        events.push({ type: "hpLost", targetId: target.id, amount: lost, cause: "loseHp" });
+        loseHp(data, target, effect.amount, "loseHp", events);
       }
       return;
     }
@@ -252,9 +280,29 @@ export function resolveEffect(
       events.push({ type: "moonShifted", from, to: state.moonIndex, cause: "card" });
       return;
     }
-    case "stealBuff":
-    case "bloodMoon":
-      throw new Error(`effect ${effect.type}: not implemented (step 2.3)`);
+    case "stealBuff": {
+      const [target] = resolveTargets(state, "chosen", ctx);
+      if (!target) return;
+      const stolen = target.statuses
+        .filter((entry) => !DEBUFF_STATUSES.has(entry.id))
+        .slice(0, effect.count);
+      for (const entry of stolen) {
+        removeStatus(target, entry.id, events);
+        applyStatus(ctx.source, entry.id, entry.value, ctx.source.id, events);
+        if (ctx.source.side === "hero") {
+          bumpCounter(data, ctx.source as HeroState, "buffsStolen", 1);
+        }
+      }
+      return;
+    }
+    case "bloodMoon": {
+      const rounds = Math.max(state.bloodMoonRounds, effect.rounds);
+      if (rounds !== state.bloodMoonRounds) {
+        state.bloodMoonRounds = rounds;
+        events.push({ type: "bloodMoonChanged", rounds, cause: "card" });
+      }
+      return;
+    }
     default: {
       const exhaustive: never = effect;
       throw new Error(`unknown effect: ${JSON.stringify(exhaustive)}`);
@@ -266,24 +314,37 @@ export function processDeaths(
   data: GameData,
   state: CombatState,
   events: CombatEvent[],
-  killer: { id: string; cardDamage: boolean } | undefined,
+  killer: Killer | undefined,
 ): void {
   for (const unit of [...state.heroes, ...state.enemies]) {
-    if (unit.alive && unit.hp <= 0) {
-      unit.hp = 0;
-      unit.alive = false;
-      unit.statuses = [];
-      unit.armor = 0;
-      events.push({
-        type: "unitDied",
-        unitId: unit.id,
-        ...(killer !== undefined ? { killerId: killer.id } : {}),
-      });
-      if (killer?.cardDamage && unit.side === "enemy") {
-        const killerHero = state.heroes.find((hero) => hero.id === killer.id);
-        if (killerHero) bumpCounter(data, killerHero, "enemiesKilled", 1);
-      }
-    }
+    if (unit.alive && unit.hp <= 0) killUnit(data, state, unit, events, killer);
+  }
+}
+
+interface Killer {
+  id: string;
+  cardDamage: boolean;
+}
+
+function killUnit(
+  data: GameData,
+  state: CombatState,
+  unit: UnitState,
+  events: CombatEvent[],
+  killer: Killer | undefined,
+): void {
+  unit.hp = 0;
+  unit.alive = false;
+  unit.statuses = [];
+  unit.armor = 0;
+  events.push({
+    type: "unitDied",
+    unitId: unit.id,
+    ...(killer !== undefined ? { killerId: killer.id } : {}),
+  });
+  if (killer?.cardDamage && unit.side === "enemy") {
+    const killerHero = state.heroes.find((hero) => hero.id === killer.id);
+    if (killerHero) bumpCounter(data, killerHero, "enemiesKilled", 1);
   }
 }
 
@@ -317,6 +378,8 @@ export function resolveEffects(
     });
     checkLevelUps(data, state, events);
     if (checkCombatEnd(state, events)) return;
+    // An actor that died mid-resolution (e.g. to reflect) stops its card or intent.
+    if (!ctx.source.alive) return;
   }
 }
 
@@ -328,12 +391,9 @@ export function tickUnitStatuses(
 ): void {
   const burn = getStatus(unit, "burn");
   if (burn) {
-    const lost = Math.min(unit.hp, burn.value);
-    unit.hp -= lost;
-    events.push({ type: "hpLost", targetId: unit.id, amount: lost, cause: "burn" });
+    loseHp(data, unit, burn.value, "burn", events);
     burn.value -= 1;
     if (burn.value <= 0) removeStatus(unit, "burn", events);
-    if (unit.side === "hero") bumpCounter(data, unit as HeroState, "damageTaken", lost);
     processDeaths(data, state, events, undefined);
     checkLevelUps(data, state, events);
     if (!unit.alive) return;

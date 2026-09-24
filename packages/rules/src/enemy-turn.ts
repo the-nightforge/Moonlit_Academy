@@ -23,6 +23,7 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
       enemy.armor = 0;
       events.push({ type: "armorRemoved", targetId: enemy.id });
     }
+    removeStatus(enemy, "reflect", events);
   }
   for (const enemy of state.enemies) {
     if (!enemy.alive) continue;

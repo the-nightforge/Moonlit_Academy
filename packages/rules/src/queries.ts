@@ -49,6 +49,7 @@ export function isCardPlayable(data: GameData, state: CombatState, instanceId: s
   if (!instance || !card || !state.hand.includes(instanceId)) return false;
   const owner = state.heroes.find((hero) => hero.defId === instance.ownerIds[0]);
   if (!owner?.alive || hasStatus(owner, "freeze")) return false;
+  if (card.requiresBloodMoon && state.bloodMoonRounds === 0) return false;
   if (state.moonPower < getEffectiveCost(data, state, instanceId)) return false;
   if (card.target !== "none" && getValidTargets(data, state, instanceId).length === 0) return false;
   return true;

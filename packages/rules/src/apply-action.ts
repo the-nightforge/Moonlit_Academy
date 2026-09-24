@@ -25,6 +25,7 @@ export function getPlayCardError(
   const owner = state.heroes.find((hero) => hero.defId === instance.ownerIds[0]);
   if (!owner?.alive) return "card is broken (owner is dead)";
   if (hasStatus(owner, "freeze")) return "owner is frozen";
+  if (card.requiresBloodMoon && state.bloodMoonRounds === 0) return "requires blood moon";
   if (state.moonPower < getEffectiveCost(data, state, action.instanceId)) {
     return "not enough moonPower";
   }
