@@ -40,7 +40,11 @@ importers:
         specifier: ~4.6.5
         version: 4.6.5
 
-  packages/rules: {}
+  packages/rules:
+    devDependencies:
+      data:
+        specifier: workspace:*
+        version: link:../data
 
 packages:
 
