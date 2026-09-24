@@ -182,7 +182,7 @@ Roster mở rộng thêm **F03 Tần Sương** và **F02 Diệp Linh Lung** (m�
 |---|---|---|---|---|---|---|
 | *Băng Hỏa Tranh Phong* (`bond_bang_hoa_tranh_phong`) | M05, F03 | 2 | attack | `attack` | enemy | Nếu mục tiêu đang `freeze`: 14 damage (actor 0). Ngược lại: 8 damage (actor 0), rồi áp `freeze` lên mục tiêu (actor 1). Dùng `then`/`else`. |
 | *Ảnh Đấu* (`bond_anh_dau`) | M06, F02 | 1 | skill | — | enemy | `stealBuff 1` từ mục tiêu (actor 1 — F02 nhận), rồi M06 nhận `stealth 1` (`to: "self"`, actor 0). |
-| *Tuyết Trung Tống Thán* (`bond_tuyet_trung_tong_than`) | F03, F04 | 1 | skill | `control`, `harmony` | enemy | Áp `freeze` lên mục tiêu (actor 0), rồi F04 nhận `regen 2` (`to: "self"`, actor 1). |
+| *Tuyết Trung Tống Thán* (`bond_tuyet_trung_tong_than`) | F03, F04 | 1 | skill | `control` (bản đầu có thêm `harmony`, bỏ ở mục 13) | enemy | Áp `freeze` lên mục tiêu (actor 0), rồi F04 nhận `regen 2` (`to: "self"`, actor 1). |
 
 *Ảnh Đấu* là `skill` nên Ẩn Thân của M06 không bị gỡ ở bước dọn.
 
@@ -408,3 +408,25 @@ Cấm Thuật (tự mất HP); tăng HP chỉ làm đội thắng ít hơn trong
 - `06`: thêm **T95** — Khôi Lỗi `strength 2`, *Ảnh Tập* → Khôi Lỗi: F02 cướp
   `strength 2` rồi gây 6 + 2 = **8** damage.
 - Chạy lại playtest, cập nhật `playtest-notes.md`.
+
+---
+
+## 13. Đóng Băng và boss sau playtest 2.8 — **đã duyệt**
+
+Playtest 2.8 ghi nhận đội m05+f03+f04 thắng boss 3/3 nhờ khóa Đóng Băng, các
+đội khác 2/9. Đã thử (playtest với data sửa tạm, 4 đội × 4 trận × 3 seed):
+
+| Phương án | m05+f03+f04 thắng (boss) | Lá Song Hành đã đánh | Đội khác |
+|---|---|---|---|
+| Hiện tại | 11/12 (3/3) | 51 | — |
+| *Tuyết Trung* giá 1 → 2 | 10/12 (2/3) | 37 | không đổi |
+| *Tuyết Trung* bỏ tag `harmony` | 10/12 (2/3) | 48 | không đổi |
+| Mức trần: bỏ mọi Đóng Băng | 5/12 (0/3) | 32 | boss 0/12 với mọi đội |
+
+**Quyết định:**
+
+1. *Tuyết Trung Tống Thán* **bỏ tag `harmony`**: vẫn giá 1, vẫn 0 ở Bán Nguyệt
+   (`control`), không còn 0 ở Trăng Tròn.
+2. **Không thêm luật boss kháng Đóng Băng.** Không có băng thì không đội nào thắng
+   boss trong sim — băng là cách phản đòn chính, không phải lỗi. Vấn đề còn lại
+   (boss khó với đội không có băng, trận boss dài) để playtest tay.

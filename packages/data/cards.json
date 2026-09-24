@@ -393,7 +393,7 @@
     "bond": { "owners": ["f03", "f04"] },
     "cost": 1,
     "type": "skill",
-    "tags": ["control", "harmony"],
+    "tags": ["control"],
     "target": "enemy",
     "effects": [
       { "type": "applyStatus", "status": "freeze", "amount": 1, "to": "chosen" },

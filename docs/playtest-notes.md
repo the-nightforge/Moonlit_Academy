@@ -140,11 +140,9 @@ Có: 0–4 lần/trận. Boss (pha Hạ Huyền) và *Phong Tuyết Chướng* �
 ## Đề xuất chỉnh tiếp (chưa áp dụng — cần quyết định thiết kế)
 
 - [x] **F02:** đã xử lý — xem "Điều chỉnh F02" bên dưới.
-- [ ] **Boss vs Đóng Băng:** cần cơ chế kháng (ví dụ boss miễn Đóng Băng ở lượt
-      ngay sau khi vừa bị băng) — là **luật mới**, phải thêm vào `01` + test.
-- [ ] **Tuyết Trung Tống Thán:** cân nhắc giá 2, hoặc bỏ tag `harmony` để không
-      còn 0 ở Trăng Tròn.
-- [ ] **Độ dài trận boss:** sau khi xử lý Đóng Băng, đo lại; mục tiêu ≤ 12 vòng.
+- [x] **Boss vs Đóng Băng:** không thêm luật — xem "Đóng Băng và boss" bên dưới.
+- [x] **Tuyết Trung Tống Thán:** đã bỏ tag `harmony`.
+- [ ] **Độ dài trận boss:** vẫn 12–37 vòng — để playtest tay (heuristic chơi chậm hơn người).
 
 ## Điểm cần theo dõi khi playtest tay
 
@@ -174,3 +172,20 @@ Hai đội không có F02 không đổi. Tổng: **34/48** trận thắng.
 
 F02 vẫn thường ngã — chấp nhận như rủi ro của phe Cấm Thuật (thử HP 30: F02 sống
 7/24 nhưng đội thắng ít hơn). Theo dõi khi chơi tay.
+
+## Đóng Băng và boss (`09` mục 13, đã duyệt)
+
+Thử bỏ **mọi** Đóng Băng khỏi lá (mức trần của luật "boss kháng băng"): **không
+đội nào thắng boss** (0/12). Đóng Băng là cách phản đòn chính với boss, không phải
+lỗi → **không thêm luật kháng băng**.
+
+Đã chỉnh *Tuyết Trung Tống Thán*: bỏ tag `harmony` (vẫn giá 1, vẫn 0 ở Bán
+Nguyệt nhờ `control`, không còn 0 ở Trăng Tròn).
+
+| Đội | Trước | Sau |
+|---|---|---|
+| m05+f03+f04 | 11/12 (boss 3/3), 51 lá Song Hành | **10/12 (boss 2/3)**, 48 lá Song Hành |
+| Ba đội còn lại | 7/12 · 10/12 · 6/12 | không đổi |
+
+Tổng: **33/48** trận thắng. Còn mở cho playtest tay: boss khó với đội không có
+băng (m05+f04+m06 0/3, m06+f02+f03 0/3) và trận boss dài.
