@@ -1,0 +1,25 @@
+[
+  {
+    "index": 0, "id": "new", "name": "Trăng Non", "icon": "🌑",
+    "modifiers": [
+      { "type": "damageMultiplierForTag", "tag": "assassin", "multiplier": 1.5 },
+      { "type": "stealthDurationBonus", "amount": 1 }
+    ]
+  },
+  { "index": 1, "id": "waxingCrescent", "name": "Lưỡi Liềm Đầu", "icon": "🌒", "modifiers": [] },
+  {
+    "index": 2, "id": "firstQuarter", "name": "Bán Nguyệt", "icon": "🌓",
+    "modifiers": [{ "type": "costModifierForTag", "tag": "control", "amount": -1, "min": 0 }]
+  },
+  { "index": 3, "id": "waxingGibbous", "name": "Trăng Khuyết Đầu", "icon": "🌔", "modifiers": [] },
+  {
+    "index": 4, "id": "full", "name": "Trăng Tròn", "icon": "🌕",
+    "modifiers": [{ "type": "healMultiplier", "multiplier": 2 }]
+  },
+  { "index": 5, "id": "waningGibbous", "name": "Trăng Khuyết Cuối", "icon": "🌖", "modifiers": [] },
+  {
+    "index": 6, "id": "lastQuarter", "name": "Hạ Huyền", "icon": "🌗",
+    "modifiers": [{ "type": "armorMultiplier", "multiplier": 1.5 }]
+  },
+  { "index": 7, "id": "waningCrescent", "name": "Lưỡi Liềm Cuối", "icon": "🌘", "modifiers": [] }
+]

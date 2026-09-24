@@ -1,0 +1,75 @@
+[
+  {
+    "id": "puppet_guard",
+    "name": "Khôi Lỗi Canh Thư",
+    "maxHp": 42,
+    "intentPattern": [
+      {
+        "id": "heavy_strike",
+        "name": "Trọng Kích",
+        "kind": "attack",
+        "targeting": "random",
+        "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }]
+      },
+      {
+        "id": "guard_stance",
+        "name": "Thủ Thế",
+        "kind": "attackDefend",
+        "targeting": "lowestHp",
+        "effects": [
+          { "type": "gainArmor", "amount": 8, "to": "self" },
+          { "type": "damage", "amount": 4, "to": "chosen" }
+        ]
+      },
+      {
+        "id": "heavy_strike_2",
+        "name": "Trọng Kích",
+        "kind": "attack",
+        "targeting": "random",
+        "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }]
+      }
+    ],
+    "art": { "portrait": "" }
+  },
+  {
+    "id": "shadow_fox",
+    "name": "Ảnh Hồ",
+    "maxHp": 24,
+    "intentPattern": [
+      {
+        "id": "twin_claw",
+        "name": "Song Trảo",
+        "kind": "attack",
+        "targeting": "lowestHp",
+        "effects": [{ "type": "damage", "amount": 3, "hits": 2, "to": "chosen" }]
+      },
+      {
+        "id": "illusion",
+        "name": "Huyễn Thuật",
+        "kind": "debuff",
+        "targeting": "highestHp",
+        "effects": [{ "type": "applyStatus", "status": "weak", "amount": 2, "to": "chosen" }]
+      },
+      {
+        "id": "maul",
+        "name": "Cắn Xé",
+        "kind": "attack",
+        "targeting": "random",
+        "effects": [{ "type": "damage", "amount": 7, "to": "chosen" }]
+      }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "full",
+        "intent": {
+          "id": "moon_illusion",
+          "name": "Huyễn Nguyệt",
+          "kind": "special",
+          "targeting": "lowestHp",
+          "effects": [{ "type": "damage", "amount": 12, "to": "chosen" }]
+        }
+      }
+    ],
+    "art": { "portrait": "" }
+  }
+]

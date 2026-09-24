@@ -1,0 +1,71 @@
+[
+  {
+    "id": "m05",
+    "name": "Hoắc Liệt",
+    "faction": "huyenVu",
+    "archetype": "vanguard",
+    "rarity": "legendary",
+    "maxHp": 40,
+    "cardIds": [
+      "m05_liet_hoa_xung_phong",
+      "m05_ho_gam",
+      "m05_thuong_pha",
+      "m05_tran_bac_huyet_tinh",
+      "m05_bat_khuat"
+    ],
+    "levelUp": {
+      "name": "Liệt Hỏa",
+      "description": "Mọi đòn từ lá tấn công của Hoắc Liệt gây thêm 3 damage.",
+      "counter": "damageTaken",
+      "threshold": 15,
+      "passive": { "type": "attackDamageBonus", "amount": 3 }
+    },
+    "art": { "portrait": "", "levelUp": "" }
+  },
+  {
+    "id": "f04",
+    "name": "Ôn Như Ý",
+    "faction": "bachLo",
+    "archetype": "support",
+    "rarity": "rare",
+    "maxHp": 30,
+    "cardIds": [
+      "f04_thao_duoc",
+      "f04_bach_thao_huong",
+      "f04_linh_chi_ho_the",
+      "f04_tinh_tam_tra",
+      "f04_nguyet_quang_dan"
+    ],
+    "levelUp": {
+      "name": "Bách Thảo",
+      "description": "Khi lá của Ôn Như Ý áp Hồi Phục, mọi Hero còn sống đều nhận Hồi Phục.",
+      "counter": "turnsWithAllyRegen",
+      "threshold": 3,
+      "passive": { "type": "regenSpreadsToAllAllies" }
+    },
+    "art": { "portrait": "", "levelUp": "" }
+  },
+  {
+    "id": "m06",
+    "name": "Tô Dạ",
+    "faction": "neutral",
+    "archetype": "striker",
+    "rarity": "epic",
+    "maxHp": 28,
+    "cardIds": [
+      "m06_anh_bo",
+      "m06_am_tien",
+      "m06_doat_menh",
+      "m06_nguyet_anh_an",
+      "m06_song_nhan_loan_vu"
+    ],
+    "levelUp": {
+      "name": "Vô Nguyệt",
+      "description": "Từ lượt sau: lá đầu tiên của Tô Dạ mỗi lượt có chi phí 0.",
+      "counter": "enemiesKilled",
+      "threshold": 1,
+      "passive": { "type": "firstOwnCardFreeEachTurn" }
+    },
+    "art": { "portrait": "", "levelUp": "" }
+  }
+]

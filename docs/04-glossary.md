@@ -1,0 +1,117 @@
+# 04 — Thuật ngữ Việt ↔ Code
+
+**Quy tắc:** khái niệm dùng tiếng Anh `camelCase`; tên riêng (phe, Hero) dùng ID không dấu. Chữ hiển thị tiếng Việt luôn lấy từ dữ liệu. **Không tạo tên khác cho cùng một khái niệm.**
+
+## Chiến đấu
+
+| Tiếng Việt | Code | Ghi chú |
+|---|---|---|
+| Trận đấu | `combat` | `CombatState` |
+| Vòng | `round` | 1 lượt người chơi + 1 lượt kẻ địch |
+| Lượt | `turn` | `playerTurn`, `enemyTurn` |
+| Hero | `hero` | |
+| Kẻ địch | `enemy` | |
+| Đơn vị | `unit` | Hero hoặc kẻ địch |
+| Ngã | `died`, `alive: false` | |
+| Kết liễu | `kill` | Gây đòn làm địch ngã |
+| Lá bài (định nghĩa) | `cardDef` / `CardDef` | Trong `cards.json` |
+| Lá bài (trong trận) | `cardInstance` | Có `instanceId` |
+| Chủ của lá | `owner`, `ownerId` | |
+| Lá tấn công | `type: "attack"` | |
+| Lá kỹ năng | `type: "skill"` | |
+| Tàn Chiêu | `brokenCard`, `isBroken` | Lá của Hero đã ngã |
+| Chồng rút | `drawPile` | |
+| Bài trên tay | `hand` | |
+| Chồng bỏ | `discardPile` | |
+| Rút bài | `draw` | |
+| Xáo bài | `shuffle` | |
+| Hiệu ứng | `effect` | |
+| Điều kiện | `condition` | |
+| Mục tiêu | `target` | |
+| Nguyệt Lực | `moonPower` | Tài nguyên đánh bài |
+| Chi phí | `cost` | |
+| Ý định | `intent` | |
+| Chuỗi ý định | `intentPattern` | |
+| Cách chọn mục tiêu | `targeting` | |
+| Sự kiện | `event` / `CombatEvent` | Cho animation |
+| Hành động | `action` / `Action` | Người chơi gửi |
+| Thắng / Thua | `won` / `lost` | |
+
+## Chỉ số và trạng thái
+
+| Tiếng Việt | Code |
+|---|---|
+| HP / máu | `hp`, `maxHp` |
+| Giáp | `armor` |
+| Hồi máu | `heal` |
+| Mất HP | `loseHp` |
+| Trạng thái | `status` |
+| Ẩn Thân | `stealth` |
+| Khiêu Khích | `taunt` |
+| Suy Yếu | `weak` |
+| Dễ Vỡ | `vulnerable` |
+| Đánh Dấu | `mark` |
+| Thiêu Đốt | `burn` |
+| Hồi Phục (theo lượt) | `regen` |
+| Sức Mạnh | `strength` |
+| Tích Lực | `empower` |
+| Đóng Băng | `freeze` |
+| Giải Trừ | `cleanse` |
+| Buff / Debuff | `buff` / `debuff` |
+
+## Nguyệt Luân
+
+| Tiếng Việt | Code |
+|---|---|
+| Nguyệt Luân | `moon`, `moonIndex` |
+| Pha trăng | `moonPhase` |
+| Trăng Non | `new` |
+| Lưỡi Liềm Đầu | `waxingCrescent` |
+| Bán Nguyệt | `firstQuarter` |
+| Trăng Khuyết Đầu | `waxingGibbous` |
+| Trăng Tròn | `full` |
+| Trăng Khuyết Cuối | `waningGibbous` |
+| Hạ Huyền | `lastQuarter` |
+| Lưỡi Liềm Cuối | `waningCrescent` |
+| Huyết Nguyệt | `bloodMoon` |
+| Đổi Vận | `shiftMoon` |
+| Hiệu ứng của pha | `moonModifier` |
+
+## Hero và phát triển
+
+| Tiếng Việt | Code |
+|---|---|
+| Thăng cấp (trong trận) | `levelUp` |
+| Bộ đếm thăng cấp | `levelUpCounter` |
+| Ngưỡng | `threshold` |
+| Nội tại | `passive` |
+| Song Hành | `bond`, `bondCard` |
+| Phe / Viện | `faction` |
+| Thanh Loan | `thanhLoan` |
+| Huyền Vũ | `huyenVu` |
+| Bạch Lộ | `bachLo` |
+| Xích Diên | `xichDien` |
+| Trung lập | `neutral` |
+| Nhóm vai trò | `archetype`: `vanguard`, `striker`, `controller`, `support`, `specialist` |
+| Độ hiếm | `rarity`: `common`, `rare`, `epic`, `legendary` |
+
+## Hệ thống sau này (chưa code)
+
+| Tiếng Việt | Code |
+|---|---|
+| Binh Khí | `weapon` |
+| Nguyệt Bảo | `relic` |
+| Kỳ Vật | `runRelic` |
+| Tinh Hồn | `constellation` |
+| Tinh Luyện | `refinement` |
+| Cộng Minh | `resonance` |
+| Nguyệt Ngọc | `moonJade` |
+| Nguyệt Tinh | `moonStar` |
+| Huyền Thiết | `darkIron` |
+| Nguyệt Trần | `moonDust` |
+| Vinh Dự | `honor` |
+| Banner gacha | `banner` |
+| Bảo hiểm (pity) | `pity` |
+| Đấu Trường Công Bằng | `fairArena` |
+| Hợp Kích | `coopCombo` |
+| Lượt chơi roguelike | `run` |
