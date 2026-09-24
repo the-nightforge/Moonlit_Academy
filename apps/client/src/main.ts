@@ -1,16 +1,5 @@
 import Phaser from "phaser";
-
-class HelloScene extends Phaser.Scene {
-  create() {
-    this.add
-      .text(640, 360, "Vọng Nguyệt Thư Viện", {
-        fontFamily: '"Times New Roman", serif',
-        fontSize: "48px",
-        color: "#e8e0c8",
-      })
-      .setOrigin(0.5);
-  }
-}
+import { CombatScene } from "./scenes/combat-scene";
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -21,5 +10,5 @@ new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [HelloScene],
+  scene: [CombatScene],
 });
