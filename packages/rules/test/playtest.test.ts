@@ -22,7 +22,13 @@ interface SimResult {
   state: CombatState;
   actions: number;
   cardsPlayed: number;
+  levelUps: { heroId: string; round: number }[];
+  moonGuidePlays: number;
 }
+
+const moonGuideId = Object.values(data.cards).find(
+  (card) => card.name === "Nguyệt Quang Dẫn",
+)?.id;
 
 // Greedy heuristic: play the first playable card (first valid target),
 // end turn when nothing is playable. Not optimal — a floor for difficulty.
@@ -30,6 +36,8 @@ function simulate(gameData: GameData, encounterId: string, seed: number): SimRes
   let { state } = createCombat(gameData, { heroIds: HEROES, encounterId, seed });
   let actions = 0;
   let cardsPlayed = 0;
+  const levelUps: { heroId: string; round: number }[] = [];
+  let moonGuidePlays = 0;
 
   while (state.status === "playerTurn" && state.round <= MAX_ROUNDS && actions < MAX_ACTIONS) {
     let played = false;
@@ -46,10 +54,22 @@ function simulate(gameData: GameData, encounterId: string, seed: number): SimRes
         });
         if (!result.ok) continue;
         state = result.state;
+        for (const event of result.events) {
+          if (event.type === "heroLeveledUp") {
+            levelUps.push({ heroId: event.heroId, round: state.round });
+          }
+        }
+        if (card.id === moonGuideId) moonGuidePlays += 1;
       } else {
         const result = applyAction(gameData, state, { type: "playCard", instanceId });
         if (!result.ok) continue;
         state = result.state;
+        for (const event of result.events) {
+          if (event.type === "heroLeveledUp") {
+            levelUps.push({ heroId: event.heroId, round: state.round });
+          }
+        }
+        if (card.id === moonGuideId) moonGuidePlays += 1;
       }
       actions += 1;
       cardsPlayed += 1;
@@ -60,10 +80,15 @@ function simulate(gameData: GameData, encounterId: string, seed: number): SimRes
       const result = applyAction(gameData, state, { type: "endTurn" });
       if (!result.ok) break;
       state = result.state;
+      for (const event of result.events) {
+        if (event.type === "heroLeveledUp") {
+          levelUps.push({ heroId: event.heroId, round: state.round });
+        }
+      }
       actions += 1;
     }
   }
-  return { state, actions, cardsPlayed };
+  return { state, actions, cardsPlayed, levelUps, moonGuidePlays };
 }
 
 function summarize(sim: SimResult) {
@@ -72,6 +97,10 @@ function summarize(sim: SimResult) {
     kết_quả: state.status,
     vòng: state.round,
     lá_đánh: sim.cardsPlayed,
+    NQ_Dẫn: sim.moonGuidePlays,
+    thăng_cấp:
+      sim.levelUps.map((l) => `${l.heroId.replace("hero:", "")}@v${l.round}`).join(" ") ||
+      "—",
     hero: state.heroes
       .map((hero) => `${hero.defId}:${hero.alive ? `${hero.hp}/${hero.maxHp}` : "ngã"}`)
       .join(" "),
@@ -85,13 +114,10 @@ describe("playtest", () => {
   const seeds = [42, 7, 2024];
   for (const encounterId of Object.keys(data.encounters)) {
     it(`${encounterId} hoàn tất trong ${MAX_ROUNDS} vòng`, () => {
-      const rows = seeds.map((seed) => ({
-        seed,
-        ...summarize(simulate(data, encounterId, seed)),
-      }));
+      const sims = seeds.map((seed) => simulate(data, encounterId, seed));
       console.log(`\n=== ${encounterId} ===`);
-      console.table(rows);
-      for (const sim of seeds.map((seed) => simulate(data, encounterId, seed))) {
+      console.table(sims.map((sim, index) => ({ seed: seeds[index], ...summarize(sim) })));
+      for (const sim of sims) {
         expect(
           sim.state.status === "won" ||
             sim.state.status === "lost" ||
