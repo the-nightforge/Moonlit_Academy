@@ -36,7 +36,7 @@ export function createCombat(
         throw new Error(`createCombat: hero "${hero.id}" references missing card "${cardId}"`);
       }
       const instanceId = `c${String(++counter).padStart(2, "0")}`;
-      cards[instanceId] = { instanceId, cardId, ownerId: hero.id };
+      cards[instanceId] = { instanceId, cardId, ownerIds: [hero.id] };
       drawPile.push(instanceId);
     }
   }

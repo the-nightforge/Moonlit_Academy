@@ -13,8 +13,12 @@ const moonPhaseIdSchema = z.enum([
 const statusIdSchema = z.enum([
   "stealth", "taunt", "weak", "vulnerable", "mark",
   "burn", "regen", "strength", "empower", "freeze",
+  "reflect",
 ]);
-const cardTagSchema = z.enum(["attack", "assassin", "control", "moon", "heal", "forbidden"]);
+const cardTagSchema = z.enum([
+  "attack", "assassin", "control", "moon", "heal", "forbidden",
+  "scheme", "ward", "harmony",
+]);
 const targetRefSchema = z.enum(["self", "chosen", "allEnemies", "allAllies"]);
 const targetingSchema = z.enum(["random", "lowestHp", "highestHp", "front"]);
 const intentKindSchema = z.enum(["attack", "defend", "buff", "debuff", "attackDefend", "special"]);
@@ -25,23 +29,28 @@ const conditionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("selfHasStatus"), status: statusIdSchema }),
   z.object({ type: z.literal("targetHasStatus"), status: statusIdSchema }),
   z.object({ type: z.literal("moonPhaseIs"), phase: moonPhaseIdSchema }),
+  z.object({ type: z.literal("bloodMoonActive") }),
 ]);
 
 const intAmount = z.number().int();
+const actor = z.union([z.literal(0), z.literal(1)]).optional();
 
 export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
   z.discriminatedUnion("type", [
-    z.object({ type: z.literal("damage"), amount: intAmount, to: targetRefSchema, hits: z.number().int().positive().optional() }),
-    z.object({ type: z.literal("heal"), amount: intAmount, to: targetRefSchema }),
-    z.object({ type: z.literal("loseHp"), amount: intAmount, to: targetRefSchema }),
-    z.object({ type: z.literal("gainArmor"), amount: intAmount, to: targetRefSchema }),
-    z.object({ type: z.literal("removeArmor"), to: targetRefSchema }),
-    z.object({ type: z.literal("applyStatus"), status: statusIdSchema, amount: intAmount, to: targetRefSchema }),
-    z.object({ type: z.literal("cleanse"), to: targetRefSchema }),
-    z.object({ type: z.literal("draw"), amount: z.number().int().positive() }),
-    z.object({ type: z.literal("gainMoonPower"), amount: intAmount }),
-    z.object({ type: z.literal("shiftMoon"), amount: intAmount }),
+    z.object({ actor, type: z.literal("damage"), amount: intAmount, to: targetRefSchema, hits: z.number().int().positive().optional() }),
+    z.object({ actor, type: z.literal("heal"), amount: intAmount, to: targetRefSchema }),
+    z.object({ actor, type: z.literal("loseHp"), amount: intAmount, to: targetRefSchema }),
+    z.object({ actor, type: z.literal("gainArmor"), amount: intAmount, to: targetRefSchema }),
+    z.object({ actor, type: z.literal("removeArmor"), to: targetRefSchema }),
+    z.object({ actor, type: z.literal("applyStatus"), status: statusIdSchema, amount: intAmount, to: targetRefSchema }),
+    z.object({ actor, type: z.literal("cleanse"), to: targetRefSchema }),
+    z.object({ actor, type: z.literal("draw"), amount: z.number().int().positive() }),
+    z.object({ actor, type: z.literal("gainMoonPower"), amount: intAmount }),
+    z.object({ actor, type: z.literal("shiftMoon"), amount: intAmount }),
+    z.object({ actor, type: z.literal("stealBuff"), count: z.number().int().positive() }),
+    z.object({ actor, type: z.literal("bloodMoon"), rounds: z.number().int().positive() }),
     z.object({
+      actor,
       type: z.literal("conditional"),
       condition: conditionSchema,
       then: z.array(effectSchema),
@@ -54,6 +63,8 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("attackDamageBonus"), amount: intAmount }),
   z.object({ type: z.literal("regenSpreadsToAllAllies") }),
   z.object({ type: z.literal("firstOwnCardFreeEachTurn") }),
+  z.object({ type: z.literal("doubleDamageVsFrozen") }),
+  z.object({ type: z.literal("stealBonus") }),
 ]);
 
 export const heroDefSchema = z.object({
@@ -67,7 +78,10 @@ export const heroDefSchema = z.object({
   levelUp: z.object({
     name: z.string().min(1),
     description: z.string(),
-    counter: z.enum(["damageTaken", "turnsWithAllyRegen", "enemiesKilled"]),
+    counter: z.enum([
+      "damageTaken", "turnsWithAllyRegen", "enemiesKilled",
+      "freezesApplied", "buffsStolen",
+    ]),
     threshold: z.number().int().positive(),
     passive: levelUpPassiveSchema,
   }),
@@ -77,13 +91,15 @@ export const heroDefSchema = z.object({
 export const cardDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
-  ownerId: idSchema,
+  ownerId: idSchema.optional(),
+  bond: z.object({ owners: z.tuple([idSchema, idSchema]) }).optional(),
   cost: z.number().int().nonnegative(),
   type: z.enum(["attack", "skill"]),
   tags: z.array(cardTagSchema),
   target: z.enum(["none", "enemy", "ally"]),
   effects: z.array(effectSchema).min(1),
   text: z.string(),
+  requiresBloodMoon: z.boolean().optional(),
 });
 
 export const intentDefSchema = z.object({
@@ -100,6 +116,7 @@ export const enemyDefSchema = z.object({
   maxHp: z.number().int().positive(),
   intentPattern: z.array(intentDefSchema).min(1),
   moonOverrides: z.array(z.object({ phase: moonPhaseIdSchema, intent: intentDefSchema })).optional(),
+  bloodMoonOverride: intentDefSchema.optional(),
   art: z.object({ portrait: z.string() }),
 });
 

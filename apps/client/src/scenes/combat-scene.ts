@@ -458,7 +458,8 @@ export class CombatScene extends Phaser.Scene {
   private renderCard(instanceId: string, x: number, y: number) {
     const instance = this.state.cards[instanceId]!;
     const card = this.gameData.cards[instance.cardId]!;
-    const owner = this.state.heroes.find((hero) => hero.defId === instance.ownerId);
+    const ownerId = instance.ownerIds[0]!;
+    const owner = this.state.heroes.find((hero) => hero.defId === ownerId);
     const broken = !owner?.alive;
     const playable = isCardPlayable(this.gameData, this.state, instanceId);
     const container = this.add.container(x, y);
@@ -473,7 +474,7 @@ export class CombatScene extends Phaser.Scene {
         ? COLORS.dead
         : isValidTarget
           ? COLORS.goldFill
-          : (OWNER_COLORS[instance.ownerId] ?? COLORS.panelBorder),
+          : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
     );
     container.add(bg);
 

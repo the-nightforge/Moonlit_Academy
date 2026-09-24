@@ -142,6 +142,8 @@ function evalCondition(
     }
     case "moonPhaseIs":
       return data.moonPhases[state.moonIndex]!.id === condition.phase;
+    case "bloodMoonActive":
+      throw new Error("condition bloodMoonActive: not implemented (step 2.3)");
   }
 }
 
@@ -250,6 +252,9 @@ export function resolveEffect(
       events.push({ type: "moonShifted", from, to: state.moonIndex, cause: "card" });
       return;
     }
+    case "stealBuff":
+    case "bloodMoon":
+      throw new Error(`effect ${effect.type}: not implemented (step 2.3)`);
     default: {
       const exhaustive: never = effect;
       throw new Error(`unknown effect: ${JSON.stringify(exhaustive)}`);

@@ -67,5 +67,51 @@
       "passive": { "type": "firstOwnCardFreeEachTurn" }
     },
     "art": { "portrait": "", "levelUp": "" }
+  },
+  {
+    "id": "f03",
+    "name": "Tần Sương",
+    "faction": "huyenVu",
+    "archetype": "striker",
+    "rarity": "epic",
+    "maxHp": 32,
+    "cardIds": [
+      "f03_suong_tram",
+      "f03_han_an",
+      "f03_bang_phach_lien_kich",
+      "f03_phong_tuyet_chuong",
+      "f03_tuyet_han"
+    ],
+    "levelUp": {
+      "name": "Hàn Sơn Kiếm",
+      "description": "Damage từ lá của Tần Sương lên kẻ địch đang Đóng Băng tăng gấp đôi.",
+      "counter": "freezesApplied",
+      "threshold": 3,
+      "passive": { "type": "doubleDamageVsFrozen" }
+    },
+    "art": { "portrait": "", "levelUp": "" }
+  },
+  {
+    "id": "f02",
+    "name": "Diệp Linh Lung",
+    "faction": "xichDien",
+    "archetype": "specialist",
+    "rarity": "epic",
+    "maxHp": 26,
+    "cardIds": [
+      "f02_dien_doat",
+      "f02_huyet_tram",
+      "f02_anh_tap",
+      "f02_doi_van_chu",
+      "f02_phe_hon"
+    ],
+    "levelUp": {
+      "name": "Thiên Diện",
+      "description": "Mỗi buff Diệp Linh Lung cướp bằng lá của mình được thêm 1.",
+      "counter": "buffsStolen",
+      "threshold": 3,
+      "passive": { "type": "stealBonus" }
+    },
+    "art": { "portrait": "", "levelUp": "" }
   }
 ]

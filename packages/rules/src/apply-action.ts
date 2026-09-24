@@ -22,7 +22,7 @@ export function getPlayCardError(
   }
   const card = data.cards[instance.cardId];
   if (!card) return "unknown card";
-  const owner = state.heroes.find((hero) => hero.defId === instance.ownerId);
+  const owner = state.heroes.find((hero) => hero.defId === instance.ownerIds[0]);
   if (!owner?.alive) return "card is broken (owner is dead)";
   if (hasStatus(owner, "freeze")) return "owner is frozen";
   if (state.moonPower < getEffectiveCost(data, state, action.instanceId)) {
@@ -47,7 +47,7 @@ function playCard(
 ): void {
   const instance = state.cards[action.instanceId]!;
   const card = data.cards[instance.cardId]!;
-  const owner = state.heroes.find((hero) => hero.defId === instance.ownerId)!;
+  const owner = state.heroes.find((hero) => hero.defId === instance.ownerIds[0])!;
   const freeByPassive = isFreeByPassive(data, state, instance.instanceId);
   const cost = getEffectiveCost(data, state, instance.instanceId);
 

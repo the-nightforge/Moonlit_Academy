@@ -103,6 +103,8 @@ export function describeEvent(
       return `Nguyệt Lực = ${event.value}`;
     case "moonShifted":
       return `Pha ${event.from} → ${event.to}`;
+    case "bloodMoonChanged":
+      return `Huyết Nguyệt còn ${event.rounds} vòng (${event.cause})`;
     case "intentRevealed":
       return `${name(event.enemyId)} công bố ${event.intentId}`;
     case "intentExecuted":

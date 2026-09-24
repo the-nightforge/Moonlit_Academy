@@ -25,6 +25,8 @@ export const OWNER_COLORS: Record<string, number> = {
   m05: 0xd05454,
   f04: 0x6fbf73,
   m06: 0x9a8fb8,
+  f03: 0x7fc8e8,
+  f02: 0xb04a8a,
 };
 
 export const STATUS_LABELS: Record<StatusId, string> = {
@@ -38,6 +40,7 @@ export const STATUS_LABELS: Record<StatusId, string> = {
   strength: "Mạnh",
   empower: "Tích",
   freeze: "Băng",
+  reflect: "Phản",
 };
 
 export const PHASE_BG: Record<MoonPhaseId, number> = {
@@ -67,6 +70,9 @@ const TAG_LABELS: Record<CardTag, string> = {
   heal: "hồi phục",
   moon: "nguyệt",
   forbidden: "cấm",
+  scheme: "mưu lược",
+  ward: "hộ thể",
+  harmony: "điều hòa",
 };
 
 export function describeModifier(modifier: MoonModifier): string {

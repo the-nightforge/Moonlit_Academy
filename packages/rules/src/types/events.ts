@@ -12,7 +12,7 @@ export type CombatEvent =
   | { type: "cardPlayed"; instanceId: string; targetId?: string; cost: number }
   | { type: "cardDiscarded"; instanceIds: string[] }
   | { type: "damageDealt"; sourceId: string; targetId: string; amount: number; blocked: number; hpLost: number }
-  | { type: "hpLost"; targetId: string; amount: number; cause: "loseHp" | "burn" }
+  | { type: "hpLost"; targetId: string; amount: number; cause: "loseHp" | "burn" | "reflect" | "bloodMoon" }
   | { type: "healed"; targetId: string; amount: number }
   | { type: "armorGained"; targetId: string; amount: number }
   | { type: "armorRemoved"; targetId: string }
@@ -20,6 +20,7 @@ export type CombatEvent =
   | { type: "statusRemoved"; targetId: string; status: StatusId }
   | { type: "moonPowerChanged"; value: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
+  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }
   | { type: "intentRevealed"; enemyId: string; intentId: string; targetId: string | null }
   | { type: "intentExecuted"; enemyId: string; intentId: string; targetId: string | null }
   | { type: "intentFizzled"; enemyId: string; intentId: string }

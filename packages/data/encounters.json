@@ -1,5 +1,6 @@
 [
   { "id": "enc_01", "name": "Hành Lang Tàng Thư Các", "enemyIds": ["puppet_guard", "shadow_fox"] },
   { "id": "enc_02", "name": "Rừng Trúc Đêm", "enemyIds": ["shadow_fox", "shadow_fox", "shadow_fox"] },
-  { "id": "enc_03", "name": "Cổng Đá Học Viện", "enemyIds": ["puppet_guard", "puppet_guard"] }
+  { "id": "enc_03", "name": "Cổng Đá Học Viện", "enemyIds": ["puppet_guard", "puppet_guard"] },
+  { "id": "enc_04", "name": "Vọng Nguyệt Đài", "enemyIds": ["moon_ape"] }
 ]
