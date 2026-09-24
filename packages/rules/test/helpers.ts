@@ -79,7 +79,8 @@ export function makeEnemiesIdle(data: GameData): void {
 export function injectCard(state: CombatState, data: GameData, card: CardDef): string {
   data.cards[card.id] = card;
   const instanceId = `test_${card.id}`;
-  state.cards[instanceId] = { instanceId, cardId: card.id, ownerId: card.ownerId };
+  const ownerIds = card.bond ? [...card.bond.owners] : [card.ownerId!];
+  state.cards[instanceId] = { instanceId, cardId: card.id, ownerIds };
   state.hand.push(instanceId);
   return instanceId;
 }

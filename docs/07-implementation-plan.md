@@ -77,7 +77,7 @@ Không cần AI. Chơi mỗi encounter vài lần, ghi vào `docs/playtest-notes
 
 ## Giai đoạn 2 — Chiều sâu
 
-Đặc tả: `09-phase2-spec.md`. Luật đã đưa vào `01` (các mục **[GĐ2]**), kiểu dữ liệu vào `02`, test vào `06` (T61–T94).
+Đặc tả: `09-phase2-spec.md`. Luật đã đưa vào `01` (các mục **[GĐ2]**), kiểu dữ liệu vào `02`, test vào `06` (T61–T95).
 
 ### Bước 2.1 — Cập nhật tài liệu
 Đưa đặc tả `09` vào `01`, `02`, `04`, `05`, `06`, `07`. *(Đã xong.)*
@@ -92,12 +92,12 @@ Không cần AI. Chơi mỗi encounter vài lần, ghi vào `docs/playtest-notes
 > Đọc `01-combat-rules.md` mục 4.1, 4.3, 4.4, 5.1–5.4. Dựng deck có lá Song Hành, điều kiện đánh (hai owner còn sống, không ai Đóng Băng), `actor` (kể cả kế thừa trong `conditional`), dọn sau lá tấn công, nội tại không áp cho lá Song Hành. Làm test T78–T87.
 
 ### Bước 2.5 — F03 và F02
-> Đọc `01-combat-rules.md` mục 8 và 10.1. Thêm bộ đếm `freezesApplied`, `buffsStolen` và nội tại `doubleDamageVsFrozen`, `stealBonus`. Làm test T88–T90 và T69.
+> Đọc `01-combat-rules.md` mục 8 và 10.1. Thêm nội tại `doubleDamageVsFrozen`, `stealBonus` (không áp cho lá Song Hành). Bộ đếm `buffsStolen` (bước 2.3) và `freezesApplied` (bước 2.4) đã có. Làm test T88–T90 và T69.
 
 ### Bước 2.6 — Boss và tag theo pha
-> Đọc `01-combat-rules.md` mục 4.5, 7.1, 9.1–9.2. Thêm `bloodMoonOverride` khi công bố ý định. Kiểm tra boss `enc_04` và chi phí theo tag. Làm test T91–T93. Sau đó chạy toàn bộ T01–T94.
+> Đọc `01-combat-rules.md` mục 4.5, 7.1, 9.1–9.2. Thêm `bloodMoonOverride` khi công bố ý định. Kiểm tra boss `enc_04` và chi phí theo tag. Làm test T91–T93. Sau đó chạy toàn bộ T01–T95.
 
-**Mốc kiểm tra:** mọi kịch bản T01–T94 có test và pass.
+**Mốc kiểm tra:** mọi kịch bản T01–T95 có test và pass.
 
 ### Bước 2.7 — UI giai đoạn 2
 > Đọc `05-ui-combat-screen.md` (các mục GĐ2). Thêm màn chọn đội (3 trong 5 Hero + encounter), lá Song Hành, hiển thị Huyết Nguyệt, nhãn `Phản`, animation cướp buff và `bloodMoonChanged`, nút debug `bloodMoonRounds`.

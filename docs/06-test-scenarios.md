@@ -102,7 +102,7 @@ Quy ước trong bảng: kẻ địch "Khôi Lỗi" = `puppet_guard` (HP 42), "�
 
 ## Giai đoạn 2
 
-Quy ước thêm: "Boss" = `moon_ape` (HP 140, `enc_04`). F03 = Tần Sương, F02 = Diệp Linh Lung. Đội phải có Hero sở hữu lá được dùng (ví dụ `heroIds: ["m05", "f03", "f02"]`). Bối cảnh thiết kế: `09-phase2-spec.md`.
+Quy ước thêm: "Boss" = `moon_ape` (HP 110, `enc_04`). F03 = Tần Sương, F02 = Diệp Linh Lung. Đội phải có Hero sở hữu lá được dùng (ví dụ `heroIds: ["m05", "f03", "f02"]`). Bối cảnh thiết kế: `09-phase2-spec.md`.
 
 ### G. Phản Đòn
 
@@ -123,6 +123,7 @@ Quy ước thêm: "Boss" = `moon_ape` (HP 140, `enc_04`). F03 = Tần Sương, F
 | T68 | F02 `strength 1`; Khôi Lỗi `strength 2` | Diện Đoạt → Khôi Lỗi | F02 `strength 3` |
 | T69 | F02 đã thăng cấp; Khôi Lỗi `strength 2` | Diện Đoạt → Khôi Lỗi | F02 `strength 3` (+1 từ nội tại) |
 | T70 | Khôi Lỗi không có buff | Diện Đoạt → Khôi Lỗi | Không có `statusRemoved`/`statusApplied`; bộ đếm không đổi |
+| T95 | Khôi Lỗi `strength 2` | Ảnh Tập → Khôi Lỗi | F02 cướp `strength 2` trước, rồi gây 6 + 2 = **8** damage (Khôi Lỗi HP 42 → 34) |
 
 ### I. Huyết Nguyệt
 

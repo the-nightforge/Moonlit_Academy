@@ -20,10 +20,10 @@ describe("loadGameData", () => {
   it("loads the real data files into GameData keyed by id", () => {
     const data = loadGameData();
 
-    expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06"]);
-    expect(Object.keys(data.cards)).toHaveLength(15);
-    expect(Object.keys(data.enemies)).toEqual(["puppet_guard", "shadow_fox"]);
-    expect(Object.keys(data.encounters)).toEqual(["enc_01", "enc_02", "enc_03"]);
+    expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02"]);
+    expect(Object.keys(data.cards)).toHaveLength(28);
+    expect(Object.keys(data.enemies)).toEqual(["puppet_guard", "shadow_fox", "moon_ape"]);
+    expect(Object.keys(data.encounters)).toEqual(["enc_01", "enc_02", "enc_03", "enc_04"]);
 
     expect(data.moonPhases).toHaveLength(8);
     expect(data.moonPhases[0]?.id).toBe("new");
@@ -32,6 +32,9 @@ describe("loadGameData", () => {
     expect(data.heroes["m05"]?.name).toBe("Hoắc Liệt");
     expect(data.cards["m05_ho_gam"]?.ownerId).toBe("m05");
     expect(data.enemies["shadow_fox"]?.moonOverrides?.[0]?.phase).toBe("full");
+    expect(data.cards["bond_anh_dau"]?.bond?.owners).toEqual(["m06", "f02"]);
+    expect(data.cards["f02_phe_hon"]?.requiresBloodMoon).toBe(true);
+    expect(data.enemies["moon_ape"]?.bloodMoonOverride?.id).toBe("ape_blood_frenzy");
   });
 });
 
@@ -91,5 +94,46 @@ describe("parseGameData validation", () => {
     const raw = rawData();
     raw.encounters[0].enemyIds[0] = "no_such_enemy";
     expect(() => parseGameData(raw)).toThrowError(/no_such_enemy/);
+  });
+
+  it("T94: rejects a card with both ownerId and bond", () => {
+    const raw = rawData();
+    raw.cards.find((c: any) => c.id === "bond_anh_dau").ownerId = "m06";
+    expect(() => parseGameData(raw)).toThrowError(/bond_anh_dau.*exactly one of ownerId or bond/);
+  });
+
+  it("T94: rejects a card with neither ownerId nor bond", () => {
+    const raw = rawData();
+    delete raw.cards.find((c: any) => c.id === "m05_ho_gam").ownerId;
+    expect(() => parseGameData(raw)).toThrowError(/m05_ho_gam.*exactly one of ownerId or bond/);
+  });
+
+  it("T94: rejects actor on a regular card, including inside a conditional", () => {
+    const raw = rawData();
+    const card = raw.cards.find((c: any) => c.id === "m05_liet_hoa_xung_phong");
+    card.effects[0].else[0].actor = 1;
+    expect(() => parseGameData(raw)).toThrowError(/m05_liet_hoa_xung_phong.*actor/);
+  });
+
+  it("T94: rejects actor on an enemy intent", () => {
+    const raw = rawData();
+    raw.enemies[0].intentPattern[0].effects[0].actor = 0;
+    expect(() => parseGameData(raw)).toThrowError(/heavy_strike.*actor/);
+  });
+
+  it("T94: rejects requiresBloodMoon on a card without the forbidden tag", () => {
+    const raw = rawData();
+    raw.cards.find((c: any) => c.id === "m05_thuong_pha").requiresBloodMoon = true;
+    expect(() => parseGameData(raw)).toThrowError(/m05_thuong_pha.*forbidden/);
+  });
+
+  it("T94: rejects a bond with a missing or duplicated owner", () => {
+    const missing = rawData();
+    missing.cards.find((c: any) => c.id === "bond_anh_dau").bond.owners[1] = "no_such_hero";
+    expect(() => parseGameData(missing)).toThrowError(/no_such_hero/);
+
+    const duplicated = rawData();
+    duplicated.cards.find((c: any) => c.id === "bond_anh_dau").bond.owners = ["m06", "m06"];
+    expect(() => parseGameData(duplicated)).toThrowError(/bond_anh_dau.*different/);
   });
 });

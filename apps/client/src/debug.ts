@@ -38,6 +38,12 @@ export function debugSetMoon(index: number): void {
   session.events.push({ type: "moonShifted", from, to: session.state.moonIndex, cause: "card" });
 }
 
+export function debugSetBloodMoon(rounds: number): void {
+  if (session.state.bloodMoonRounds === rounds) return;
+  session.state.bloodMoonRounds = rounds;
+  session.events.push({ type: "bloodMoonChanged", rounds, cause: "card" });
+}
+
 export function debugKillEnemy(index: number): void {
   const enemy = session.state.enemies[index];
   if (!enemy?.alive) return;
@@ -103,6 +109,8 @@ export function describeEvent(
       return `Nguyệt Lực = ${event.value}`;
     case "moonShifted":
       return `Pha ${event.from} → ${event.to}`;
+    case "bloodMoonChanged":
+      return `Huyết Nguyệt còn ${event.rounds} vòng (${event.cause})`;
     case "intentRevealed":
       return `${name(event.enemyId)} công bố ${event.intentId}`;
     case "intentExecuted":

@@ -6,7 +6,15 @@ import {
   moonHealMultiplier,
   moonStealthDurationBonus,
 } from "./moon";
-import { applyStatus, cleanseDebuffs, getStatus, hasStatus, removeStatus, statusValue } from "./statuses";
+import {
+  applyStatus,
+  cleanseDebuffs,
+  DEBUFF_STATUSES,
+  getStatus,
+  hasStatus,
+  removeStatus,
+  statusValue,
+} from "./statuses";
 import type {
   CardDef,
   CombatEvent,
@@ -16,12 +24,16 @@ import type {
   GameData,
   HeroState,
   IntentKind,
+  LevelUpPassive,
   TargetRef,
   UnitState,
 } from "./types/index";
 
 export interface EffectContext {
+  /** The acting unit of the current effect. */
   source: UnitState;
+  /** Card owners; `effect.actor` indexes them (bond cards). */
+  actors?: HeroState[];
   card?: CardDef;
   intentKind?: IntentKind;
   chosenId?: string;
@@ -65,6 +77,13 @@ function markFromSource(target: UnitState, sourceId: string): boolean {
   );
 }
 
+/** Level-up passive of the acting hero for this card; never applies to bond cards. */
+function cardPassive(data: GameData, ctx: EffectContext): LevelUpPassive | undefined {
+  if (ctx.card === undefined || ctx.card.bond || ctx.source.side !== "hero") return undefined;
+  const hero = ctx.source as HeroState;
+  return hero.leveledUp ? data.heroes[hero.defId]?.levelUp.passive : undefined;
+}
+
 export function computeDamageAmount(
   data: GameData,
   state: CombatState,
@@ -73,19 +92,14 @@ export function computeDamageAmount(
   base: number,
 ): number {
   const attack = isAttackSource(ctx);
+  const passive = cardPassive(data, ctx);
   let flat = base;
   if (attack) {
     flat += statusValue(ctx.source, "strength");
     if (ctx.card !== undefined) {
       flat += statusValue(ctx.source, "empower");
       if (markFromSource(target, ctx.source.id)) flat += 3;
-      if (ctx.source.side === "hero") {
-        const hero = ctx.source as HeroState;
-        const passive = data.heroes[hero.defId]?.levelUp.passive;
-        if (hero.leveledUp && passive?.type === "attackDamageBonus") {
-          flat += passive.amount;
-        }
-      }
+      if (passive?.type === "attackDamageBonus") flat += passive.amount;
     }
   }
   let multiplier = 1;
@@ -94,7 +108,22 @@ export function computeDamageAmount(
   }
   if (hasStatus(ctx.source, "weak")) multiplier *= 0.75;
   if (hasStatus(target, "vulnerable")) multiplier *= 1.5;
+  if (passive?.type === "doubleDamageVsFrozen" && hasStatus(target, "freeze")) multiplier *= 2;
   return Math.max(0, Math.floor(flat * multiplier));
+}
+
+/** HP loss that ignores armor and multipliers (loseHp, burn, reflect, blood moon). */
+export function loseHp(
+  data: GameData,
+  unit: UnitState,
+  amount: number,
+  cause: "loseHp" | "burn" | "reflect" | "bloodMoon",
+  events: CombatEvent[],
+): void {
+  const lost = Math.min(unit.hp, amount);
+  unit.hp -= lost;
+  if (unit.side === "hero") bumpCounter(data, unit as HeroState, "damageTaken", lost);
+  events.push({ type: "hpLost", targetId: unit.id, amount: lost, cause });
 }
 
 function dealDamage(
@@ -119,6 +148,16 @@ function dealDamage(
     blocked,
     hpLost,
   });
+
+  const reflect = statusValue(target, "reflect");
+  if (amount <= 0 || reflect <= 0) return;
+  loseHp(data, ctx.source, reflect, "reflect", events);
+  if (ctx.source.hp > 0) return;
+  // Both deaths resolve right after this hit, each credited to its own killer.
+  if (target.alive && target.hp <= 0) {
+    killUnit(data, state, target, events, { id: ctx.source.id, cardDamage: ctx.card !== undefined });
+  }
+  killUnit(data, state, ctx.source, events, { id: target.id, cardDamage: false });
 }
 
 function evalCondition(
@@ -142,6 +181,8 @@ function evalCondition(
     }
     case "moonPhaseIs":
       return data.moonPhases[state.moonIndex]!.id === condition.phase;
+    case "bloodMoonActive":
+      return state.bloodMoonRounds > 0;
   }
 }
 
@@ -158,6 +199,7 @@ export function resolveEffect(
       for (const target of resolveTargets(state, effect.to, ctx)) {
         for (let hit = 0; hit < hits && target.alive && target.hp > 0; hit++) {
           dealDamage(data, state, ctx, target, effect.amount, events);
+          if (!ctx.source.alive) return;
         }
       }
       return;
@@ -178,12 +220,7 @@ export function resolveEffect(
     }
     case "loseHp": {
       for (const target of resolveTargets(state, effect.to, ctx)) {
-        const lost = Math.min(target.hp, effect.amount);
-        target.hp -= lost;
-        if (target.side === "hero") {
-          bumpCounter(data, target as HeroState, "damageTaken", lost);
-        }
-        events.push({ type: "hpLost", targetId: target.id, amount: lost, cause: "loseHp" });
+        loseHp(data, target, effect.amount, "loseHp", events);
       }
       return;
     }
@@ -222,17 +259,18 @@ export function resolveEffect(
     case "applyStatus": {
       const bonus = effect.status === "stealth" ? moonStealthDurationBonus(data, state) : 0;
       let targets = resolveTargets(state, effect.to, ctx);
-      if (effect.status === "regen" && ctx.card !== undefined && ctx.source.side === "hero") {
-        const hero = ctx.source as HeroState;
-        if (
-          hero.leveledUp &&
-          data.heroes[hero.defId]?.levelUp.passive.type === "regenSpreadsToAllAllies"
-        ) {
-          targets = [...new Set([...targets, ...state.heroes.filter((h) => h.alive)])];
-        }
+      if (
+        effect.status === "regen" &&
+        cardPassive(data, ctx)?.type === "regenSpreadsToAllAllies"
+      ) {
+        targets = [...new Set([...targets, ...state.heroes.filter((h) => h.alive)])];
       }
       for (const target of targets) {
+        const newFreeze = effect.status === "freeze" && !hasStatus(target, "freeze");
         applyStatus(target, effect.status, effect.amount + bonus, ctx.source.id, events);
+        if (newFreeze && ctx.source.side === "hero") {
+          bumpCounter(data, ctx.source as HeroState, "freezesApplied", 1);
+        }
       }
       return;
     }
@@ -250,6 +288,30 @@ export function resolveEffect(
       events.push({ type: "moonShifted", from, to: state.moonIndex, cause: "card" });
       return;
     }
+    case "stealBuff": {
+      const [target] = resolveTargets(state, "chosen", ctx);
+      if (!target) return;
+      const stolen = target.statuses
+        .filter((entry) => !DEBUFF_STATUSES.has(entry.id))
+        .slice(0, effect.count);
+      const bonus = cardPassive(data, ctx)?.type === "stealBonus" ? 1 : 0;
+      for (const entry of stolen) {
+        removeStatus(target, entry.id, events);
+        applyStatus(ctx.source, entry.id, entry.value + bonus, ctx.source.id, events);
+        if (ctx.source.side === "hero") {
+          bumpCounter(data, ctx.source as HeroState, "buffsStolen", 1);
+        }
+      }
+      return;
+    }
+    case "bloodMoon": {
+      const rounds = Math.max(state.bloodMoonRounds, effect.rounds);
+      if (rounds !== state.bloodMoonRounds) {
+        state.bloodMoonRounds = rounds;
+        events.push({ type: "bloodMoonChanged", rounds, cause: "card" });
+      }
+      return;
+    }
     default: {
       const exhaustive: never = effect;
       throw new Error(`unknown effect: ${JSON.stringify(exhaustive)}`);
@@ -261,24 +323,37 @@ export function processDeaths(
   data: GameData,
   state: CombatState,
   events: CombatEvent[],
-  killer: { id: string; cardDamage: boolean } | undefined,
+  killer: Killer | undefined,
 ): void {
   for (const unit of [...state.heroes, ...state.enemies]) {
-    if (unit.alive && unit.hp <= 0) {
-      unit.hp = 0;
-      unit.alive = false;
-      unit.statuses = [];
-      unit.armor = 0;
-      events.push({
-        type: "unitDied",
-        unitId: unit.id,
-        ...(killer !== undefined ? { killerId: killer.id } : {}),
-      });
-      if (killer?.cardDamage && unit.side === "enemy") {
-        const killerHero = state.heroes.find((hero) => hero.id === killer.id);
-        if (killerHero) bumpCounter(data, killerHero, "enemiesKilled", 1);
-      }
-    }
+    if (unit.alive && unit.hp <= 0) killUnit(data, state, unit, events, killer);
+  }
+}
+
+interface Killer {
+  id: string;
+  cardDamage: boolean;
+}
+
+function killUnit(
+  data: GameData,
+  state: CombatState,
+  unit: UnitState,
+  events: CombatEvent[],
+  killer: Killer | undefined,
+): void {
+  unit.hp = 0;
+  unit.alive = false;
+  unit.statuses = [];
+  unit.armor = 0;
+  events.push({
+    type: "unitDied",
+    unitId: unit.id,
+    ...(killer !== undefined ? { killerId: killer.id } : {}),
+  });
+  if (killer?.cardDamage && unit.side === "enemy") {
+    const killerHero = state.heroes.find((hero) => hero.id === killer.id);
+    if (killerHero) bumpCounter(data, killerHero, "enemiesKilled", 1);
   }
 }
 
@@ -305,13 +380,20 @@ export function resolveEffects(
   events: CombatEvent[],
 ): void {
   for (const effect of effects) {
-    resolveEffect(data, state, effect, ctx, events);
+    // Nested effects without their own actor inherit the enclosing one via ctx.
+    const effectCtx =
+      effect.actor !== undefined && ctx.actors
+        ? { ...ctx, source: ctx.actors[effect.actor]! }
+        : ctx;
+    resolveEffect(data, state, effect, effectCtx, events);
     processDeaths(data, state, events, {
-      id: ctx.source.id,
+      id: effectCtx.source.id,
       cardDamage: ctx.card !== undefined && effect.type === "damage",
     });
     checkLevelUps(data, state, events);
     if (checkCombatEnd(state, events)) return;
+    // An actor that died mid-resolution (e.g. to reflect) stops its card or intent.
+    if ((ctx.actors ?? [ctx.source]).some((actor) => !actor.alive)) return;
   }
 }
 
@@ -323,12 +405,9 @@ export function tickUnitStatuses(
 ): void {
   const burn = getStatus(unit, "burn");
   if (burn) {
-    const lost = Math.min(unit.hp, burn.value);
-    unit.hp -= lost;
-    events.push({ type: "hpLost", targetId: unit.id, amount: lost, cause: "burn" });
+    loseHp(data, unit, burn.value, "burn", events);
     burn.value -= 1;
     if (burn.value <= 0) removeStatus(unit, "burn", events);
-    if (unit.side === "hero") bumpCounter(data, unit as HeroState, "damageTaken", lost);
     processDeaths(data, state, events, undefined);
     checkLevelUps(data, state, events);
     if (!unit.alive) return;

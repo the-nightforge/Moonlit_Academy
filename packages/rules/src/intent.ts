@@ -39,9 +39,10 @@ export function announceIntents(data: GameData, state: CombatState, events: Comb
   for (const enemy of state.enemies) {
     if (!enemy.alive) continue;
     const def = data.enemies[enemy.defId]!;
-    const override = def.moonOverrides?.find((entry) => entry.phase === phaseId);
-    const intent =
-      override?.intent ?? def.intentPattern[enemy.patternIndex % def.intentPattern.length]!;
+    const override =
+      (state.bloodMoonRounds > 0 ? def.bloodMoonOverride : undefined) ??
+      def.moonOverrides?.find((entry) => entry.phase === phaseId)?.intent;
+    const intent = override ?? def.intentPattern[enemy.patternIndex % def.intentPattern.length]!;
     enemy.patternIndex += 1;
     const targetId = intent.targeting !== undefined ? chooseHeroTarget(state, intent.targeting) : null;
     enemy.currentIntent = { intent, targetId };

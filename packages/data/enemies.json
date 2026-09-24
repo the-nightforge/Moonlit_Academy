@@ -18,7 +18,8 @@
         "targeting": "lowestHp",
         "effects": [
           { "type": "gainArmor", "amount": 8, "to": "self" },
-          { "type": "damage", "amount": 4, "to": "chosen" }
+          { "type": "damage", "amount": 4, "to": "chosen" },
+          { "type": "applyStatus", "status": "regen", "amount": 2, "to": "self" }
         ]
       },
       {
@@ -70,6 +71,78 @@
         }
       }
     ],
+    "art": { "portrait": "" }
+  },
+  {
+    "id": "moon_ape",
+    "name": "Thần Viên Trấn Nguyệt",
+    "maxHp": 110,
+    "intentPattern": [
+      {
+        "id": "ape_crush",
+        "name": "Trấn Sơn Quyền",
+        "kind": "attack",
+        "targeting": "lowestHp",
+        "effects": [{ "type": "damage", "amount": 12, "to": "chosen" }]
+      },
+      {
+        "id": "ape_guard",
+        "name": "Nguyệt Giáp",
+        "kind": "defend",
+        "effects": [
+          { "type": "gainArmor", "amount": 8, "to": "self" },
+          { "type": "applyStatus", "status": "regen", "amount": 1, "to": "self" }
+        ]
+      },
+      {
+        "id": "ape_roar",
+        "name": "Hống Nguyệt",
+        "kind": "attack",
+        "effects": [{ "type": "damage", "amount": 6, "to": "allEnemies" }]
+      }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "full",
+        "intent": {
+          "id": "ape_moon_bathe",
+          "name": "Tắm Nguyệt",
+          "kind": "buff",
+          "effects": [
+            { "type": "heal", "amount": 14, "to": "self" },
+            { "type": "cleanse", "to": "self" }
+          ]
+        }
+      },
+      {
+        "phase": "new",
+        "intent": {
+          "id": "ape_dark_strike",
+          "name": "Ám Nguyệt Kích",
+          "kind": "attack",
+          "targeting": "highestHp",
+          "effects": [{ "type": "damage", "amount": 16, "to": "chosen" }]
+        }
+      },
+      {
+        "phase": "lastQuarter",
+        "intent": {
+          "id": "ape_mirror_shell",
+          "name": "Kính Nguyệt Giáp",
+          "kind": "defend",
+          "effects": [
+            { "type": "gainArmor", "amount": 14, "to": "self" },
+            { "type": "applyStatus", "status": "reflect", "amount": 3, "to": "self" }
+          ]
+        }
+      }
+    ],
+    "bloodMoonOverride": {
+      "id": "ape_blood_frenzy",
+      "name": "Huyết Nguyệt Cuồng",
+      "kind": "attack",
+      "effects": [{ "type": "damage", "amount": 10, "to": "allEnemies" }]
+    },
     "art": { "portrait": "" }
   }
 ]

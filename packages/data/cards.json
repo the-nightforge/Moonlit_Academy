@@ -23,7 +23,7 @@
     "ownerId": "m05",
     "cost": 1,
     "type": "skill",
-    "tags": ["control"],
+    "tags": ["control", "ward"],
     "target": "none",
     "effects": [
       { "type": "applyStatus", "status": "taunt", "amount": 1, "to": "self" },
@@ -83,7 +83,7 @@
     "ownerId": "f04",
     "cost": 1,
     "type": "skill",
-    "tags": ["heal"],
+    "tags": ["heal", "harmony"],
     "target": "ally",
     "effects": [{ "type": "heal", "amount": 5, "to": "chosen" }],
     "text": "Hồi 5 HP cho 1 Hero."
@@ -94,7 +94,7 @@
     "ownerId": "f04",
     "cost": 1,
     "type": "skill",
-    "tags": ["heal"],
+    "tags": ["heal", "harmony"],
     "target": "ally",
     "effects": [{ "type": "applyStatus", "status": "regen", "amount": 3, "to": "chosen" }],
     "text": "Áp 3 Hồi Phục cho 1 Hero."
@@ -116,7 +116,7 @@
     "ownerId": "f04",
     "cost": 1,
     "type": "skill",
-    "tags": ["heal"],
+    "tags": ["heal", "harmony"],
     "target": "ally",
     "effects": [
       { "type": "cleanse", "to": "chosen" },
@@ -206,5 +206,199 @@
     "target": "none",
     "effects": [{ "type": "damage", "amount": 5, "to": "allEnemies" }],
     "text": "Gây 5 damage lên mọi kẻ địch."
+  },
+  {
+    "id": "f03_suong_tram",
+    "name": "Sương Trảm",
+    "ownerId": "f03",
+    "cost": 1,
+    "type": "attack",
+    "tags": ["attack"],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": { "type": "targetHasStatus", "status": "freeze" },
+        "then": [{ "type": "damage", "amount": 8, "to": "chosen" }],
+        "else": [{ "type": "damage", "amount": 5, "to": "chosen" }]
+      }
+    ],
+    "text": "Gây 5 damage. Nếu mục tiêu đang Đóng Băng: gây 8."
+  },
+  {
+    "id": "f03_han_an",
+    "name": "Hàn Ấn",
+    "ownerId": "f03",
+    "cost": 1,
+    "type": "skill",
+    "tags": ["control"],
+    "target": "enemy",
+    "effects": [{ "type": "applyStatus", "status": "freeze", "amount": 1, "to": "chosen" }],
+    "text": "Đóng Băng 1 kẻ địch."
+  },
+  {
+    "id": "f03_bang_phach_lien_kich",
+    "name": "Băng Phách Liên Kích",
+    "ownerId": "f03",
+    "cost": 2,
+    "type": "attack",
+    "tags": ["attack"],
+    "target": "enemy",
+    "effects": [{ "type": "damage", "amount": 4, "hits": 2, "to": "chosen" }],
+    "text": "Gây 4 damage 2 lần."
+  },
+  {
+    "id": "f03_phong_tuyet_chuong",
+    "name": "Phong Tuyết Chướng",
+    "ownerId": "f03",
+    "cost": 2,
+    "type": "skill",
+    "tags": ["ward"],
+    "target": "none",
+    "effects": [
+      { "type": "gainArmor", "amount": 6, "to": "self" },
+      { "type": "applyStatus", "status": "reflect", "amount": 2, "to": "self" }
+    ],
+    "text": "Nhận 6 giáp và Phản Đòn 2."
+  },
+  {
+    "id": "f03_tuyet_han",
+    "name": "Tuyệt Hàn",
+    "ownerId": "f03",
+    "cost": 3,
+    "type": "attack",
+    "tags": ["attack"],
+    "target": "enemy",
+    "effects": [
+      { "type": "damage", "amount": 9, "to": "chosen" },
+      {
+        "type": "conditional",
+        "condition": { "type": "bloodMoonActive" },
+        "then": [{ "type": "applyStatus", "status": "freeze", "amount": 1, "to": "chosen" }]
+      }
+    ],
+    "text": "Gây 9 damage. Huyết Nguyệt: Đóng Băng mục tiêu."
+  },
+  {
+    "id": "f02_dien_doat",
+    "name": "Diện Đoạt",
+    "ownerId": "f02",
+    "cost": 1,
+    "type": "skill",
+    "tags": [],
+    "target": "enemy",
+    "effects": [{ "type": "stealBuff", "count": 1 }],
+    "text": "Cướp 1 buff của kẻ địch."
+  },
+  {
+    "id": "f02_huyet_tram",
+    "name": "Huyết Trâm",
+    "ownerId": "f02",
+    "cost": 1,
+    "type": "attack",
+    "tags": ["attack", "forbidden"],
+    "target": "enemy",
+    "effects": [
+      { "type": "loseHp", "amount": 2, "to": "self" },
+      { "type": "damage", "amount": 9, "to": "chosen" }
+    ],
+    "text": "Mất 2 HP. Gây 9 damage."
+  },
+  {
+    "id": "f02_anh_tap",
+    "name": "Ảnh Tập",
+    "ownerId": "f02",
+    "cost": 1,
+    "type": "attack",
+    "tags": ["attack", "assassin"],
+    "target": "enemy",
+    "effects": [
+      { "type": "stealBuff", "count": 1 },
+      {
+        "type": "conditional",
+        "condition": { "type": "selfHpBelow", "ratio": 0.5 },
+        "then": [{ "type": "damage", "amount": 10, "to": "chosen" }],
+        "else": [{ "type": "damage", "amount": 6, "to": "chosen" }]
+      }
+    ],
+    "text": "Cướp 1 buff. Gây 6 damage; HP dưới 50%: gây 10."
+  },
+  {
+    "id": "f02_doi_van_chu",
+    "name": "Đổi Vận Chú",
+    "ownerId": "f02",
+    "cost": 2,
+    "type": "skill",
+    "tags": ["moon"],
+    "target": "none",
+    "effects": [
+      { "type": "bloodMoon", "rounds": 2 },
+      { "type": "shiftMoon", "amount": 1 }
+    ],
+    "text": "Kích hoạt Huyết Nguyệt 2 vòng. Đổi Vận: trăng tiến 1 pha."
+  },
+  {
+    "id": "f02_phe_hon",
+    "name": "Phệ Hồn",
+    "ownerId": "f02",
+    "cost": 3,
+    "type": "attack",
+    "tags": ["attack", "forbidden"],
+    "target": "enemy",
+    "requiresBloodMoon": true,
+    "effects": [
+      { "type": "loseHp", "amount": 3, "to": "self" },
+      { "type": "damage", "amount": 16, "to": "chosen" }
+    ],
+    "text": "Chỉ đánh được khi Huyết Nguyệt. Mất 3 HP. Gây 16 damage."
+  },
+  {
+    "id": "bond_bang_hoa_tranh_phong",
+    "name": "Băng Hỏa Tranh Phong",
+    "bond": { "owners": ["m05", "f03"] },
+    "cost": 2,
+    "type": "attack",
+    "tags": ["attack"],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": { "type": "targetHasStatus", "status": "freeze" },
+        "then": [{ "type": "damage", "amount": 14, "to": "chosen" }],
+        "else": [
+          { "type": "damage", "amount": 8, "to": "chosen" },
+          { "type": "applyStatus", "status": "freeze", "amount": 1, "to": "chosen", "actor": 1 }
+        ]
+      }
+    ],
+    "text": "Gây 8 và Đóng Băng. Nếu mục tiêu đang Đóng Băng: gây 14."
+  },
+  {
+    "id": "bond_anh_dau",
+    "name": "Ảnh Đấu",
+    "bond": { "owners": ["m06", "f02"] },
+    "cost": 1,
+    "type": "skill",
+    "tags": [],
+    "target": "enemy",
+    "effects": [
+      { "type": "stealBuff", "count": 1, "actor": 1 },
+      { "type": "applyStatus", "status": "stealth", "amount": 1, "to": "self" }
+    ],
+    "text": "Cướp 1 buff của mục tiêu. Tô Dạ Ẩn Thân 1 vòng."
+  },
+  {
+    "id": "bond_tuyet_trung_tong_than",
+    "name": "Tuyết Trung Tống Thán",
+    "bond": { "owners": ["f03", "f04"] },
+    "cost": 1,
+    "type": "skill",
+    "tags": ["control"],
+    "target": "enemy",
+    "effects": [
+      { "type": "applyStatus", "status": "freeze", "amount": 1, "to": "chosen" },
+      { "type": "applyStatus", "status": "regen", "amount": 2, "to": "self", "actor": 1 }
+    ],
+    "text": "Tần Sương Đóng Băng 1 kẻ địch. Ôn Như Ý nhận 2 Hồi Phục."
   }
 ]

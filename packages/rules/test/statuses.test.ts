@@ -133,6 +133,25 @@ describe("statuses", () => {
     expect(result.state.heroes[0]?.statuses).toContainEqual({ id: "burn", value: 2 });
   });
 
+  it("T41: regen ticking under a full moon heals double", () => {
+    const { data, state } = makeTestCombat({
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        s.moonIndex = 3;
+        s.heroes[0]!.hp = 30;
+        s.heroes[0]!.statuses.push({ id: "regen", value: 3 });
+      },
+    });
+    idleEnemies(state);
+
+    const result = applyAction(data, state, { type: "endTurn" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.moonIndex).toBe(4);
+    expect(result.events).toContainEqual({ type: "healed", targetId: "hero:m05", amount: 6 });
+    expect(result.state.heroes[0]?.hp).toBe(36);
+  });
+
   it("T40: regen heals each player turn start until it runs out", () => {
     const { data, state } = makeTestCombat({
       mutateData: makeEnemiesIdle,

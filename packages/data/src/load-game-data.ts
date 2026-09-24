@@ -7,11 +7,20 @@ import enemiesJson from "../enemies.json";
 import encountersJson from "../encounters.json";
 import moonPhasesJson from "../moon-phases.json";
 
+function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
+  return effects.some(
+    (effect) =>
+      test(effect) ||
+      (effect.type === "conditional" &&
+        (someEffect(effect.then, test) || someEffect(effect.else ?? [], test))),
+  );
+}
+
 function effectsUseChosen(effects: Effect[]): boolean {
-  return effects.some((effect) =>
-    effect.type === "conditional"
-      ? effectsUseChosen(effect.then) || (effect.else !== undefined && effectsUseChosen(effect.else))
-      : "to" in effect && effect.to === "chosen",
+  // stealBuff always takes from the chosen target.
+  return someEffect(
+    effects,
+    (effect) => effect.type === "stealBuff" || ("to" in effect && effect.to === "chosen"),
   );
 }
 
@@ -49,8 +58,25 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   }
 
   for (const card of cards) {
-    if (!heroById.has(card.ownerId)) {
+    if ((card.ownerId === undefined) === (card.bond === undefined)) {
+      errors.push(`card "${card.id}": must have exactly one of ownerId or bond`);
+    }
+    if (card.ownerId !== undefined && !heroById.has(card.ownerId)) {
       errors.push(`card "${card.id}": ownerId references missing hero "${card.ownerId}"`);
+    }
+    if (card.bond !== undefined) {
+      const [first, second] = card.bond.owners;
+      if (first === second) errors.push(`card "${card.id}": bond owners must be different heroes`);
+      for (const ownerId of card.bond.owners) {
+        if (!heroById.has(ownerId)) {
+          errors.push(`card "${card.id}": bond owner references missing hero "${ownerId}"`);
+        }
+      }
+    } else if (someEffect(card.effects, (effect) => effect.actor !== undefined)) {
+      errors.push(`card "${card.id}": actor is only allowed on bond cards`);
+    }
+    if (card.requiresBloodMoon && !card.tags.includes("forbidden")) {
+      errors.push(`card "${card.id}": requiresBloodMoon requires tag "forbidden"`);
     }
     const usesChosen = effectsUseChosen(card.effects);
     if (card.target === "none" && usesChosen) {
@@ -65,10 +91,14 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     const intents = [
       ...enemy.intentPattern,
       ...(enemy.moonOverrides ?? []).map((override) => override.intent),
+      ...(enemy.bloodMoonOverride ? [enemy.bloodMoonOverride] : []),
     ];
     for (const intent of intents) {
       if (effectsUseChosen(intent.effects) && intent.targeting === undefined) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": has to "chosen" effects but no targeting`);
+      }
+      if (someEffect(intent.effects, (effect) => effect.actor !== undefined)) {
+        errors.push(`enemy "${enemy.id}" intent "${intent.id}": actor is only allowed on bond cards`);
       }
     }
   }

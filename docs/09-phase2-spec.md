@@ -9,7 +9,7 @@ nghĩ" hơn (focus-fire, canh pha, đọc ý định) — các cơ chế mới p
 quyết định có nghĩa mỗi lượt, không chỉ tăng số liệu.
 
 **Trạng thái: đã duyệt (2026-09-24).** Luật đã đưa vào `01-combat-rules.md`
-(các mục **[GĐ2]**), kiểu dữ liệu vào `02`, test vào `06` (T61–T94), các bước
+(các mục **[GĐ2]**), kiểu dữ liệu vào `02`, test vào `06` (T61–T95), các bước
 vào `07`. Khi có khác biệt, **`01` là chuẩn**; tài liệu này giữ bối cảnh và lý do
 thiết kế. Các điểm từng đánh dấu **[cần duyệt]** đã được duyệt (mục 11).
 
@@ -182,7 +182,7 @@ Roster mở rộng thêm **F03 Tần Sương** và **F02 Diệp Linh Lung** (m�
 |---|---|---|---|---|---|---|
 | *Băng Hỏa Tranh Phong* (`bond_bang_hoa_tranh_phong`) | M05, F03 | 2 | attack | `attack` | enemy | Nếu mục tiêu đang `freeze`: 14 damage (actor 0). Ngược lại: 8 damage (actor 0), rồi áp `freeze` lên mục tiêu (actor 1). Dùng `then`/`else`. |
 | *Ảnh Đấu* (`bond_anh_dau`) | M06, F02 | 1 | skill | — | enemy | `stealBuff 1` từ mục tiêu (actor 1 — F02 nhận), rồi M06 nhận `stealth 1` (`to: "self"`, actor 0). |
-| *Tuyết Trung Tống Thán* (`bond_tuyet_trung_tong_than`) | F03, F04 | 1 | skill | `control`, `harmony` | enemy | Áp `freeze` lên mục tiêu (actor 0), rồi F04 nhận `regen 2` (`to: "self"`, actor 1). |
+| *Tuyết Trung Tống Thán* (`bond_tuyet_trung_tong_than`) | F03, F04 | 1 | skill | `control` (bản đầu có thêm `harmony`, bỏ ở mục 13) | enemy | Áp `freeze` lên mục tiêu (actor 0), rồi F04 nhận `regen 2` (`to: "self"`, actor 1). |
 
 *Ảnh Đấu* là `skill` nên Ẩn Thân của M06 không bị gỡ ở bước dọn.
 
@@ -216,17 +216,17 @@ giai đoạn 1.
 ### 5.2 F02 Diệp Linh Lung — Epic, Xích Diên, Specialist
 
 - HP 26.
-- Bộ đếm `buffsStolen`, ngưỡng 3: +1 mỗi buff được chuyển bởi `stealBuff` có
+- Bộ đếm `buffsStolen`, ngưỡng 2 (bản đầu 3, hạ ở mục 12): +1 mỗi buff được chuyển bởi `stealBuff` có
   đơn vị hành động là F02 (lá của F02 hoặc *Ảnh Đấu*).
 - Nội tại `stealBonus` (*Thiên Diện*): mỗi buff F02 cướp bằng lá của F02 (không
   tính lá Song Hành) được thêm **+1 `value`** (+1 tầng / thời hạn / giá trị).
-- Nguồn buff để cướp: Khôi Lỗi (`strength`, mục 6.3), boss (`regen`, `reflect`).
+- Nguồn buff để cướp: Khôi Lỗi (`regen`, mục 6.3), boss (`regen`, `reflect`).
 
 | Lá (id) | Giá | Loại | Tag | Mục tiêu | Hiệu ứng |
 |---|---|---|---|---|---|
 | *Diện Đoạt* (`f02_dien_doat`) | 1 | skill | — | enemy | `stealBuff 1` |
 | *Huyết Trâm* (`f02_huyet_tram`) | 1 | attack | `attack`, `forbidden` | enemy | F02 mất 2 HP, rồi 9 damage |
-| *Ảnh Tập* (`f02_anh_tap`) | 1 | attack | `attack`, `assassin` | enemy | Nếu HP của F02 dưới 50%: 10 damage; ngược lại: 6 |
+| *Ảnh Tập* (`f02_anh_tap`) | 1 | attack | `attack`, `assassin` | enemy | `stealBuff 1`, rồi: nếu HP của F02 dưới 50%: 10 damage; ngược lại: 6 (thêm cướp ở mục 12) |
 | *Đổi Vận Chú* (`f02_doi_van_chu`) | 2 | skill | `moon` | none | `bloodMoon 2`, rồi `shiftMoon +1` |
 | *Phệ Hồn* (`f02_phe_hon`) | 3 | attack | `attack`, `forbidden` | enemy | `requiresBloodMoon`. F02 mất 3 HP, rồi 16 damage |
 
@@ -239,7 +239,7 @@ giai đoạn 1.
 
 ### 6.1 Boss — Thần Viên Trấn Nguyệt
 
-`enc_04` (*Vọng Nguyệt Đài*): 1 boss (`moon_ape`), HP 140. Không có giáp mở
+`enc_04` (*Vọng Nguyệt Đài*): 1 boss (`moon_ape`), HP 110 (bản đầu 140, hạ sau playtest 2.8). Không có giáp mở
 đầu (`01` mục 2: mọi đơn vị bắt đầu với 0 giáp).
 
 Mẫu ý định (xoay vòng):
@@ -273,10 +273,12 @@ nội tại M06 không có tác dụng ở `enc_04`. Chấp nhận.
 ### 6.3 Khôi Lỗi Canh Thư có buff
 
 `puppet_guard` / `guard_stance` (Thủ Thế) thêm effect
-`applyStatus strength 1 to self`. Mỗi lần Thủ Thế, Khôi Lỗi được +1 Sức Mạnh
-vĩnh viễn. Đây là mục tiêu cướp buff ở `enc_01`/`enc_03` và tạo quyết định
-"cướp sớm hay giết nhanh". Test và mốc playtest có Khôi Lỗi dùng ≥2 ý định cần
-cập nhật.
+`applyStatus regen 2 to self`. Đây là mục tiêu cướp buff ở `enc_01`/`enc_03` và
+tạo quyết định "cướp sớm hay giết nhanh".
+
+*Sau playtest 2.8:* bản đầu dùng `strength 1`, nhưng Sức Mạnh vĩnh viễn cộng dồn
+mỗi 3 vòng trên cả hai Khôi Lỗi làm đội mặc định thua `enc_03` cả 3 seed. Đổi sang
+`regen 2` (không tích lũy) đưa về 2/3 thắng như giai đoạn 1. Xem `playtest-notes.md`.
 
 ---
 
@@ -310,7 +312,7 @@ cập nhật.
 | `LevelUpCounter` (+ enum `counter` trong `heroDefSchema`) | + `freezesApplied`, `buffsStolen` |
 | `LevelUpPassive` | + `doubleDamageVsFrozen`, `stealBonus` |
 | `EnemyDef` | + `bloodMoonOverride?` |
-| Data | `heroes.json` + f03, f02; `cards.json` + 10 lá Hero + 3 lá Song Hành, gắn tag 4 lá (mục 1.1); `moon-phases.json` `full`/`lastQuarter` thêm `costModifierForTag`; `enemies.json` + boss, `guard_stance` + strength; `encounters.json` + `enc_04` |
+| Data | `heroes.json` + f03, f02; `cards.json` + 10 lá Hero + 3 lá Song Hành, gắn tag 4 lá (mục 1.1); `moon-phases.json` `full`/`lastQuarter` thêm `costModifierForTag`; `enemies.json` + boss, `guard_stance` + regen 2; `encounters.json` + `enc_04` |
 | Glossary | + `reflect` = Phản Đòn, `scheme` = Mưu Lược, `ward` = Hộ Thể, `harmony` = Điều Hòa, `forbidden` = Cấm Thuật, `stealBuff` = Cướp buff, `bloodMoonChanged` |
 
 ### 8.1 Tài liệu khác đã cập nhật (bước 2.1)
@@ -321,7 +323,7 @@ cập nhật.
 | `02-data-schema.md` | Theo bảng mục 8 + kiểm tra chéo ở mục 6 |
 | `04-glossary.md` | Theo bảng mục 8, thêm `actor` (Đơn vị hành động) |
 | `05-ui-combat-screen.md` | Theo mục 7 |
-| `06-test-scenarios.md` | Thêm T61–T94 (phần "Giai đoạn 2") |
+| `06-test-scenarios.md` | Thêm T61–T95 (phần "Giai đoạn 2") |
 | `07-implementation-plan.md` | Thêm các bước 2.1–2.8 |
 
 ---
@@ -332,7 +334,7 @@ Xem `07-implementation-plan.md`, bước 2.1–2.8.
 
 ## 10. Kịch bản test
 
-Xem `06-test-scenarios.md`, phần "Giai đoạn 2" (T61–T94).
+Xem `06-test-scenarios.md`, phần "Giai đoạn 2" (T61–T95).
 
 ## 11. Quyết định đã duyệt (2026-09-24)
 
@@ -343,6 +345,88 @@ Xem `06-test-scenarios.md`, phần "Giai đoạn 2" (T61–T94).
 4. **Nội tại thăng cấp không áp cho lá Song Hành; bộ đếm vẫn tính** (mục 4.3).
 5. **Phản Đòn**: gỡ cùng giáp; kích hoạt cả khi giáp chặn hết (mục 2.1).
 6. **Tag theo pha**: Hạ Huyền `ward` −1, Trăng Tròn `harmony` −1 (mục 1.2).
-7. **Khôi Lỗi thêm `strength 1`** ở Thủ Thế (mục 6.3).
+7. **Khôi Lỗi thêm buff** ở Thủ Thế (mục 6.3) — đổi từ `strength 1` sang `regen 2` sau playtest 2.8.
 8. **Boss** — *Thần Viên Trấn Nguyệt*, `enc_04` *Vọng Nguyệt Đài*.
-9. Số liệu lá mới/boss (HP 140, damage…) là điểm khởi đầu — chỉnh sau playtest 2.8.
+9. Số liệu lá mới/boss là điểm khởi đầu. Playtest 2.8 đã hạ HP boss 140 → 110.
+
+---
+
+## 12. Điều chỉnh F02 sau playtest 2.8 — **đã duyệt: (a) + (b)**
+
+### 12.1 Vấn đề
+
+Playtest 2.8 (`playtest-notes.md`): F02 **thăng cấp 0/24 trận** và **ngã 23/24
+trận**. Mỗi trận chỉ cướp được tối đa **1** buff, trong khi cần 3. Nguyên nhân là
+cấu trúc, không phải số liệu:
+
+- F02 chỉ có 1 lá cướp (*Diện Đoạt*) trong deck 15–16 lá → khoảng 3 vòng mới rút
+  được một lần; khi mục tiêu không có buff thì lá bị phí.
+- Buff của địch hiếm: Khôi Lỗi có `regen 2` mỗi 3 vòng, Ảnh Hồ không có buff.
+
+Đã thử và loại (chạy playtest với data sửa tạm):
+
+| Thử | Kết quả | Lý do loại |
+|---|---|---|
+| Chỉ hạ ngưỡng 3 → 2 | F02 thăng 0/24 | Tối đa 1 lần cướp/trận nên không đạt được |
+| Chỉ tăng HP 26 → 30 | Sống 6/24, thăng 0/24 | Không thêm cơ hội cướp |
+| Ảnh Hồ thêm `regen 2` ở *Cắn Xé* | Cướp 6 → 7 | Gần như không tác dụng, lại đổi kẻ địch giai đoạn 1 |
+
+### 12.2 Đề xuất
+
+**(a) *Ảnh Tập* cướp 1 buff trước khi đánh:**
+
+| Lá | Giá | Loại | Tag | Mục tiêu | Hiệu ứng mới |
+|---|---|---|---|---|---|
+| *Ảnh Tập* (`f02_anh_tap`) | 1 | attack | `attack`, `assassin` | enemy | `stealBuff 1`, rồi: nếu HP của F02 dưới 50%: 10 damage; ngược lại: 6 |
+
+- F02 có **2 lá cướp**, và *Ảnh Tập* không bao giờ bị phí (vẫn gây damage khi
+  mục tiêu không có buff).
+- Cướp **trước** damage: nếu cướp được `strength` thì đòn đánh của chính lá đó
+  được cộng luôn — thưởng cho việc nhắm đúng mục tiêu.
+- Chỉ đổi dữ liệu (`stealBuff` đã có), không thêm luật.
+
+**(b) Ngưỡng `buffsStolen` 3 → 2** (lệch GDD "Cướp 3 buff"; ghi chú trong `01`
+§8 giống F04 4 → 3).
+
+### 12.3 Số liệu (playtest 2.8, 24 trận có F02)
+
+| Phương án | Thắng m05+f03+f02 / m06+f02+f03 | F02 sống | F02 thăng cấp | Lần cướp |
+|---|---|---|---|---|
+| Hiện tại | 10/12 · 4/12 | 1/24 | 0/24 | 6 |
+| (a) | 10/12 · 6/12 | 3/24 | 1/24 | 16 |
+| **(a) + (b)** — đề xuất | 10/12 · 6/12 | 3/24 | 4/24 | 16 |
+| (a) + (b) + HP 30 | 9/12 · 5/12 | 7/24 | 4/24 | 18 |
+
+Đội không có F02 không đổi. F02 vẫn hay ngã, nhưng đó là rủi ro chủ ý của phe
+Cấm Thuật (tự mất HP); tăng HP chỉ làm đội thắng ít hơn trong sim.
+
+### 12.4 Việc cần làm khi duyệt
+
+- `cards.json`: *Ảnh Tập* thêm `stealBuff`, cập nhật `text`.
+- `heroes.json`: F02 `threshold` 3 → 2 (nếu duyệt (b)); cập nhật mô tả.
+- `01` §8: bảng F02 ngưỡng 2 + ghi chú lệch GDD (nếu duyệt (b)).
+- `06`: thêm **T95** — Khôi Lỗi `strength 2`, *Ảnh Tập* → Khôi Lỗi: F02 cướp
+  `strength 2` rồi gây 6 + 2 = **8** damage.
+- Chạy lại playtest, cập nhật `playtest-notes.md`.
+
+---
+
+## 13. Đóng Băng và boss sau playtest 2.8 — **đã duyệt**
+
+Playtest 2.8 ghi nhận đội m05+f03+f04 thắng boss 3/3 nhờ khóa Đóng Băng, các
+đội khác 2/9. Đã thử (playtest với data sửa tạm, 4 đội × 4 trận × 3 seed):
+
+| Phương án | m05+f03+f04 thắng (boss) | Lá Song Hành đã đánh | Đội khác |
+|---|---|---|---|
+| Hiện tại | 11/12 (3/3) | 51 | — |
+| *Tuyết Trung* giá 1 → 2 | 10/12 (2/3) | 37 | không đổi |
+| *Tuyết Trung* bỏ tag `harmony` | 10/12 (2/3) | 48 | không đổi |
+| Mức trần: bỏ mọi Đóng Băng | 5/12 (0/3) | 32 | boss 0/12 với mọi đội |
+
+**Quyết định:**
+
+1. *Tuyết Trung Tống Thán* **bỏ tag `harmony`**: vẫn giá 1, vẫn 0 ở Bán Nguyệt
+   (`control`), không còn 0 ở Trăng Tròn.
+2. **Không thêm luật boss kháng Đóng Băng.** Không có băng thì không đội nào thắng
+   boss trong sim — băng là cách phản đòn chính, không phải lỗi. Vấn đề còn lại
+   (boss khó với đội không có băng, trận boss dài) để playtest tay.

@@ -35,7 +35,8 @@ export interface EnemyState extends UnitState {
 export interface CardInstance {
   instanceId: string;
   cardId: string;
-  ownerId: string;
+  /** One hero id; two for a bond card, in `bond.owners` order. */
+  ownerIds: string[];
 }
 
 export type CombatStatus = "playerTurn" | "enemyTurn" | "won" | "lost";

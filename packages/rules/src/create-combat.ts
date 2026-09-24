@@ -2,6 +2,7 @@ import { announceIntents } from "./intent";
 import { shuffle } from "./rng";
 import { startPlayerTurn } from "./turn";
 import type {
+  CardDef,
   CardInstance,
   CombatEvent,
   CombatSetup,
@@ -10,6 +11,13 @@ import type {
   GameData,
   HeroState,
 } from "./types/index";
+
+/** Bond cards whose owners are both in the team, in cards.json order. */
+export function bondCardsForTeam(data: GameData, heroIds: readonly string[]): CardDef[] {
+  return Object.values(data.cards).filter(
+    (card) => card.bond !== undefined && card.bond.owners.every((ownerId) => heroIds.includes(ownerId)),
+  );
+}
 
 export function createCombat(
   data: GameData,
@@ -36,10 +44,15 @@ export function createCombat(
         throw new Error(`createCombat: hero "${hero.id}" references missing card "${cardId}"`);
       }
       const instanceId = `c${String(++counter).padStart(2, "0")}`;
-      cards[instanceId] = { instanceId, cardId, ownerId: hero.id };
+      cards[instanceId] = { instanceId, cardId, ownerIds: [hero.id] };
       drawPile.push(instanceId);
     }
   }
+  bondCardsForTeam(data, setup.heroIds).forEach((card, index) => {
+    const instanceId = `bond${String(index + 1).padStart(2, "0")}`;
+    cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [...card.bond!.owners] };
+    drawPile.push(instanceId);
+  });
   let rngState = setup.seed;
   const shuffled = shuffle(drawPile, rngState);
   rngState = shuffled.rngState;

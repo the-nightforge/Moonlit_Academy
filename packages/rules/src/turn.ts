@@ -1,10 +1,12 @@
 import { drawCards } from "./draw";
-import { checkCombatEnd, tickUnitStatuses } from "./effects";
+import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "./effects";
 import { runEnemyTurn } from "./enemy-turn";
 import { announceIntents } from "./intent";
 import { bumpCounter, checkLevelUps } from "./levelup";
 import { DURATION_STATUSES, hasStatus, removeStatus } from "./statuses";
 import type { CombatEvent, CombatState, GameData } from "./types/index";
+
+const BLOOD_MOON_HP_LOSS = 2;
 
 export function startPlayerTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
   state.status = "playerTurn";
@@ -14,6 +16,7 @@ export function startPlayerTurn(data: GameData, state: CombatState, events: Comb
       hero.armor = 0;
       events.push({ type: "armorRemoved", targetId: hero.id });
     }
+    removeStatus(hero, "reflect", events);
   }
   const anyAllyRegen = state.heroes.some(
     (hero) => hero.alive && hasStatus(hero, "regen"),
@@ -32,6 +35,15 @@ export function startPlayerTurn(data: GameData, state: CombatState, events: Comb
     tickUnitStatuses(data, state, hero, events);
     if (checkCombatEnd(state, events)) return;
   }
+  if (state.bloodMoonRounds > 0) {
+    for (const hero of state.heroes) {
+      if (!hero.alive) continue;
+      loseHp(data, hero, BLOOD_MOON_HP_LOSS, "bloodMoon", events);
+      processDeaths(data, state, events, undefined);
+      checkLevelUps(data, state, events);
+      if (checkCombatEnd(state, events)) return;
+    }
+  }
   if (checkCombatEnd(state, events)) return;
   state.moonPower = 3;
   drawCards(state, 5, events);
@@ -48,6 +60,10 @@ export function endRound(data: GameData, state: CombatState, events: CombatEvent
   const from = state.moonIndex;
   state.moonIndex = (state.moonIndex + 1) % data.moonPhases.length;
   events.push({ type: "moonShifted", from, to: state.moonIndex, cause: "roundEnd" });
+  if (state.bloodMoonRounds > 0) {
+    state.bloodMoonRounds -= 1;
+    events.push({ type: "bloodMoonChanged", rounds: state.bloodMoonRounds, cause: "roundEnd" });
+  }
   state.round += 1;
   announceIntents(data, state, events);
 }
