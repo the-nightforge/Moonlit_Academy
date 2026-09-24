@@ -5,6 +5,7 @@ import {
   getPlayCardError,
   getValidTargets,
   isCardPlayable,
+  previewEnemyIntent,
 } from "rules";
 import type {
   Action,
@@ -21,6 +22,7 @@ import {
   FONT,
   INTENT_ICONS,
   OWNER_COLORS,
+  PHASE_BG,
   STATUS_LABELS,
   describeModifier,
 } from "../ui/theme";
@@ -188,6 +190,12 @@ export class CombatScene extends Phaser.Scene {
   private renderAll() {
     this.root.removeAll(true);
     this.cardViews.clear();
+    const phase = this.gameData.moonPhases[this.state.moonIndex]!;
+    this.root.add(
+      this.add
+        .rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, PHASE_BG[phase.id])
+        .setDepth(-10),
+    );
     this.unitAnchors.clear();
     this.unitViews.clear();
     this.errorText = undefined;
@@ -294,12 +302,24 @@ export class CombatScene extends Phaser.Scene {
   private renderIntent(enemy: EnemyState, x: number, y: number) {
     const intent = enemy.currentIntent?.intent;
     if (!intent || !enemy.alive) return;
+    const preview = previewEnemyIntent(this.gameData, this.state, enemy);
     const icon = INTENT_ICONS[intent.kind];
-    const target = enemy.currentIntent?.targetId
-      ? this.state.heroes.find((hero) => hero.id === enemy.currentIntent!.targetId)
-      : undefined;
-    const targetName = target ? this.gameData.heroes[target.defId]!.name : "—";
-    this.text(x, y, `${icon} ${intent.name} → ${targetName}`, 13).setOrigin(0.5);
+    let label = `${icon} ${intent.name}`;
+    const firstDamage = preview?.damages[0];
+    if (firstDamage) {
+      label += ` ${firstDamage.amount}`;
+      if (firstDamage.hits > 1) label += `×${firstDamage.hits}`;
+    }
+    if (preview?.fizzles) {
+      label += " → (hụt)";
+    } else if (preview?.targetId) {
+      const target = this.state.heroes.find((hero) => hero.id === preview.targetId);
+      label += ` → ${target ? this.gameData.heroes[target.defId]!.name : "—"}`;
+    } else if ((preview?.damages.length ?? 0) > 0) {
+      label += " → tất cả";
+    }
+    if (preview?.skipped) label = `❄ ${label}`;
+    this.text(x, y, label, 13).setOrigin(0.5).setAlpha(preview?.skipped ? 0.55 : 1);
   }
 
   private unitPanelHit(

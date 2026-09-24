@@ -1,4 +1,4 @@
-import type { CardTag, IntentKind, MoonModifier, StatusId } from "rules";
+import type { CardTag, IntentKind, MoonModifier, MoonPhaseId, StatusId } from "rules";
 
 export const FONT = '"Segoe UI", "Noto Sans", Arial, sans-serif';
 
@@ -38,6 +38,17 @@ export const STATUS_LABELS: Record<StatusId, string> = {
   strength: "Mạnh",
   empower: "Tích",
   freeze: "Băng",
+};
+
+export const PHASE_BG: Record<MoonPhaseId, number> = {
+  new: 0x070a18,
+  waxingCrescent: 0x0b1026,
+  firstQuarter: 0x0d1430,
+  waxingGibbous: 0x101838,
+  full: 0x1c2650,
+  waningGibbous: 0x141a3c,
+  lastQuarter: 0x0e1330,
+  waningCrescent: 0x090d20,
 };
 
 export const INTENT_ICONS: Record<IntentKind, string> = {

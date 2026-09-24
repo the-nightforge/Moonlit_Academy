@@ -3,7 +3,7 @@ import { chooseHeroTarget } from "./intent";
 import { hasStatus, removeStatus } from "./statuses";
 import type { CombatEvent, CombatState, GameData, Targeting } from "./types/index";
 
-function reresolveTarget(
+export function reresolveTarget(
   state: CombatState,
   announcedTargetId: string | null,
   targeting: Targeting,

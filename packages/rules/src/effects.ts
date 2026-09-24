@@ -65,14 +65,13 @@ function markFromSource(target: UnitState, sourceId: string): boolean {
   );
 }
 
-function dealDamage(
+export function computeDamageAmount(
   data: GameData,
   state: CombatState,
   ctx: EffectContext,
   target: UnitState,
   base: number,
-  events: CombatEvent[],
-): void {
+): number {
   const attack = isAttackSource(ctx);
   let flat = base;
   if (attack) {
@@ -95,7 +94,18 @@ function dealDamage(
   }
   if (hasStatus(ctx.source, "weak")) multiplier *= 0.75;
   if (hasStatus(target, "vulnerable")) multiplier *= 1.5;
-  const amount = Math.max(0, Math.floor(flat * multiplier));
+  return Math.max(0, Math.floor(flat * multiplier));
+}
+
+function dealDamage(
+  data: GameData,
+  state: CombatState,
+  ctx: EffectContext,
+  target: UnitState,
+  base: number,
+  events: CombatEvent[],
+): void {
+  const amount = computeDamageAmount(data, state, ctx, target, base);
   const blocked = Math.min(target.armor, amount);
   target.armor -= blocked;
   const hpLost = Math.min(target.hp, amount - blocked);
