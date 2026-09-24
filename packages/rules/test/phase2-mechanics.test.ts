@@ -114,7 +114,7 @@ describe("reflect", () => {
     const f03 = hero(result.state, "f03");
     expect(f03.alive).toBe(false);
     expect(result.events.filter((e) => e.type === "damageDealt")).toHaveLength(1);
-    expect(result.state.enemies[0]?.hp).toBe(136);
+    expect(result.state.enemies[0]?.hp).toBe(106);
     expect(result.events).toContainEqual({ type: "unitDied", unitId: "hero:f03", killerId: "enemy:0" });
     expect(result.state.discardPile).toContain(instanceIdOf(result.state, "f03_bang_phach_lien_kich"));
   });
@@ -172,6 +172,23 @@ describe("stealBuff", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(hero(result.state, "f02").statuses).toEqual([{ id: "strength", value: 3 }]);
+  });
+
+  it("T95: Ảnh Tập steals first, so a stolen strength boosts its own hit", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: PHASE2_TEAM,
+      setup: (s) => setHand(s, ["f02_anh_tap"]),
+    });
+    state.enemies[0]!.statuses.push({ id: "strength", value: 2 });
+
+    const result = play(data, state, "f02_anh_tap", "enemy:0");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(hero(result.state, "f02").statuses).toEqual([{ id: "strength", value: 2 }]);
+    expect(result.events).toContainEqual(
+      expect.objectContaining({ type: "damageDealt", sourceId: "hero:f02", targetId: "enemy:0", amount: 8 }),
+    );
+    expect(result.state.enemies[0]?.hp).toBe(34);
   });
 
   it("T70: nothing happens when the target has no buff", () => {

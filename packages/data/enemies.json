@@ -19,7 +19,7 @@
         "effects": [
           { "type": "gainArmor", "amount": 8, "to": "self" },
           { "type": "damage", "amount": 4, "to": "chosen" },
-          { "type": "applyStatus", "status": "strength", "amount": 1, "to": "self" }
+          { "type": "applyStatus", "status": "regen", "amount": 2, "to": "self" }
         ]
       },
       {
@@ -76,7 +76,7 @@
   {
     "id": "moon_ape",
     "name": "Thần Viên Trấn Nguyệt",
-    "maxHp": 140,
+    "maxHp": 110,
     "intentPattern": [
       {
         "id": "ape_crush",

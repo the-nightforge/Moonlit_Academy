@@ -313,6 +313,7 @@
     "tags": ["attack", "assassin"],
     "target": "enemy",
     "effects": [
+      { "type": "stealBuff", "count": 1 },
       {
         "type": "conditional",
         "condition": { "type": "selfHpBelow", "ratio": 0.5 },
@@ -320,7 +321,7 @@
         "else": [{ "type": "damage", "amount": 6, "to": "chosen" }]
       }
     ],
-    "text": "Gây 6 damage. Nếu HP của Diệp Linh Lung dưới 50%: gây 10."
+    "text": "Cướp 1 buff. Gây 6 damage; HP dưới 50%: gây 10."
   },
   {
     "id": "f02_doi_van_chu",
