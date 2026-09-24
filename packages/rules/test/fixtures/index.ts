@@ -19,6 +19,18 @@ export const drawTwoCard: CardDef = {
   text: "Rút 2 lá (test).",
 };
 
+export const rewindMoonCard: CardDef = {
+  id: "test_rewind_moon",
+  name: "Test Rewind Moon",
+  ownerId: "f04",
+  cost: 0,
+  type: "skill",
+  tags: ["moon"],
+  target: "none",
+  effects: [{ type: "shiftMoon", amount: -1 }],
+  text: "Đổi Vận: trăng lùi 1 pha (test).",
+};
+
 export const killThenArmorCard: CardDef = {
   id: "test_kill_then_armor",
   name: "Test Kill Then Armor",
