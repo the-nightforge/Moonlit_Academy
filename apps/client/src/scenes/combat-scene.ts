@@ -8,12 +8,14 @@ import {
 } from "rules";
 import type {
   Action,
+  CombatEvent,
   CombatState,
   EnemyState,
   GameData,
   StatusInstance,
 } from "rules";
 import { session } from "../session";
+import { animateEvent } from "../ui/event-animator";
 import {
   COLORS,
   FONT,
@@ -50,7 +52,10 @@ export class CombatScene extends Phaser.Scene {
   private targeting: string | null = null;
   private validTargetIds = new Set<string>();
   private cardViews = new Map<string, Phaser.GameObjects.Container>();
+  private unitAnchors = new Map<string, { x: number; y: number }>();
+  private unitViews = new Map<string, Phaser.GameObjects.Container>();
   private errorText?: Phaser.GameObjects.Text;
+  private inputLocked = false;
 
   constructor() {
     super("combat");
@@ -65,13 +70,16 @@ export class CombatScene extends Phaser.Scene {
       if (pointer.rightButtonDown()) this.cancelTargeting();
     });
     this.input.keyboard?.on("keydown-ESC", () => this.cancelTargeting());
-    this.input.keyboard?.on("keydown-E", () => this.dispatch({ type: "endTurn" }));
+    this.input.keyboard?.on("keydown-E", () => {
+      if (!this.inputLocked) this.dispatch({ type: "endTurn" });
+    });
     this.renderAll();
   }
 
   // ---- action pipeline ----
 
   private dispatch(action: Action): boolean {
+    if (this.inputLocked) return false;
     const result = applyAction(this.gameData, this.state, action);
     if (!result.ok) {
       this.showError(result.error);
@@ -79,14 +87,31 @@ export class CombatScene extends Phaser.Scene {
     }
     session.state = result.state;
     session.events.push(...result.events);
-    this.state = result.state;
     this.targeting = null;
-    this.renderAll();
+    this.inputLocked = true;
+    const events = result.events;
+    const newState = result.state;
+    void this.playEvents(events).then(() => {
+      this.state = newState;
+      this.renderAll();
+      this.inputLocked = false;
+    });
     return true;
   }
 
+  private async playEvents(events: CombatEvent[]) {
+    for (const event of events) {
+      await animateEvent(this, event, {
+        gameData: this.gameData,
+        state: this.state,
+        unitAnchors: this.unitAnchors,
+        unitViews: this.unitViews,
+      });
+    }
+  }
+
   private onCardClicked(instanceId: string) {
-    if (this.state.status !== "playerTurn") return;
+    if (this.inputLocked || this.state.status !== "playerTurn") return;
     if (this.targeting === instanceId) {
       this.cancelTargeting();
       return;
@@ -117,12 +142,17 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private onUnitClicked(unitId: string) {
-    if (this.targeting === null || !this.validTargetIds.has(unitId)) return;
+    if (
+      this.inputLocked ||
+      this.targeting === null ||
+      !this.validTargetIds.has(unitId)
+    )
+      return;
     this.dispatch({ type: "playCard", instanceId: this.targeting, targetId: unitId });
   }
 
   private cancelTargeting() {
-    if (this.targeting === null) return;
+    if (this.inputLocked || this.targeting === null) return;
     this.targeting = null;
     this.validTargetIds.clear();
     this.renderAll();
@@ -158,6 +188,8 @@ export class CombatScene extends Phaser.Scene {
   private renderAll() {
     this.root.removeAll(true);
     this.cardViews.clear();
+    this.unitAnchors.clear();
+    this.unitViews.clear();
     this.errorText = undefined;
     this.renderTopBar();
     this.renderMoonWheel();
@@ -297,6 +329,8 @@ export class CombatScene extends Phaser.Scene {
       const cy = 205;
       const c = this.add.container(cx, cy);
       this.root.add(c);
+      this.unitAnchors.set(enemy.id, { x: cx, y: cy });
+      this.unitViews.set(enemy.id, c);
       const isValidTarget = this.validTargetIds.has(enemy.id);
       const panel = this.add.rectangle(0, 0, panelW, panelH, COLORS.panelEnemy);
       panel.setStrokeStyle(
@@ -331,6 +365,8 @@ export class CombatScene extends Phaser.Scene {
       const cy = 445;
       const c = this.add.container(cx, cy);
       this.root.add(c);
+      this.unitAnchors.set(hero.id, { x: cx, y: cy });
+      this.unitViews.set(hero.id, c);
       const isValidTarget = this.validTargetIds.has(hero.id);
       const panel = this.add.rectangle(0, 0, panelW, panelH, COLORS.panelHero);
       panel.setStrokeStyle(
@@ -530,7 +566,7 @@ export class CombatScene extends Phaser.Scene {
     btn.on("pointerover", () => btn.setFillStyle(0x3a5090));
     btn.on("pointerout", () => btn.setFillStyle(COLORS.button));
     btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-      if (pointer.button === 0) this.dispatch({ type: "endTurn" });
+      if (pointer.button === 0 && !this.inputLocked) this.dispatch({ type: "endTurn" });
     });
     this.root.add(btn);
     this.text(btnX, btnY, "KẾT THÚC LƯỢT", 15).setOrigin(0.5);
