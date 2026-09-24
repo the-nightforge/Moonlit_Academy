@@ -9,5 +9,9 @@
   "scripts": {
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "rules": "workspace:*",
+    "zod": "~4.6.5"
   }
 }
