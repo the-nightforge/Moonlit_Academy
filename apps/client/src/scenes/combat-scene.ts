@@ -30,12 +30,13 @@ import {
   BLOOD_MOON_BG,
   BLOOD_MOON_TEXT,
   COLORS,
-  FONT,
+  TEXT_BASE,
   INTENT_ICONS,
   OWNER_COLORS,
   PHASE_BG,
   STATUS_LABELS,
   describeModifier,
+  useDesignCamera,
 } from "../ui/theme";
 
 const WIDTH = 1280;
@@ -82,6 +83,7 @@ export class CombatScene extends Phaser.Scene {
     this.targeting = null;
     this.validTargetIds.clear();
     this.inputLocked = false;
+    useDesignCamera(this);
     this.root = this.add.container(0, 0);
     this.input.mouse?.disableContextMenu();
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
@@ -190,7 +192,7 @@ export class CombatScene extends Phaser.Scene {
     this.errorText?.destroy();
     const text = this.add
       .text(WIDTH / 2, 525, errorLabel(error), {
-        fontFamily: FONT,
+        ...TEXT_BASE,
         fontSize: "15px",
         color: "#ff8080",
       })
@@ -252,7 +254,7 @@ export class CombatScene extends Phaser.Scene {
     parent?: Phaser.GameObjects.Container,
   ) {
     const t = this.add.text(x, y, content, {
-      fontFamily: FONT,
+      ...TEXT_BASE,
       fontSize: `${size}px`,
       color,
     });
@@ -504,7 +506,7 @@ export class CombatScene extends Phaser.Scene {
       container.add(
         this.add
           .text(CARD_W / 2 - 8, -CARD_H / 2 + 10, "Song Hành", {
-            fontFamily: FONT,
+            ...TEXT_BASE,
             fontSize: "9px",
             color: COLORS.gold,
           })
@@ -519,7 +521,7 @@ export class CombatScene extends Phaser.Scene {
     container.add(
       this.add
         .text(-CARD_W / 2 + 14, -CARD_H / 2 + 14, `${effectiveCost}`, {
-          fontFamily: FONT,
+          ...TEXT_BASE,
           fontSize: "14px",
           color: effectiveCost < card.cost ? COLORS.costCheap : COLORS.text,
         })
@@ -529,7 +531,7 @@ export class CombatScene extends Phaser.Scene {
       container.add(
         this.add
           .text(-CARD_W / 2 + 30, -CARD_H / 2 + 14, `${card.cost}`, {
-            fontFamily: FONT,
+            ...TEXT_BASE,
             fontSize: "10px",
             color: COLORS.dimText,
           })
@@ -543,7 +545,7 @@ export class CombatScene extends Phaser.Scene {
     container.add(
       this.add
         .text(0, -20, card.name, {
-          fontFamily: FONT,
+          ...TEXT_BASE,
           fontSize: "13px",
           color: COLORS.text,
           align: "center",
@@ -554,7 +556,7 @@ export class CombatScene extends Phaser.Scene {
     container.add(
       this.add
         .text(0, 42, card.text, {
-          fontFamily: FONT,
+          ...TEXT_BASE,
           fontSize: "9px",
           color: COLORS.dimText,
           align: "center",
@@ -566,7 +568,7 @@ export class CombatScene extends Phaser.Scene {
     if (broken) {
       container.add(
         this.add
-          .text(0, 0, "Tàn Chiêu", { fontFamily: FONT, fontSize: "14px", color: "#bbbbbb" })
+          .text(0, 0, "Tàn Chiêu", { ...TEXT_BASE, fontSize: "14px", color: "#bbbbbb" })
           .setOrigin(0.5),
       );
     } else if (!playable && !isValidTarget) {

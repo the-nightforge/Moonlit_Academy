@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { bondCardsForTeam } from "rules";
 import { restartSession, session } from "../session";
 import type { Team } from "../session";
-import { COLORS, FACTION_LABELS, FONT, OWNER_COLORS } from "../ui/theme";
+import { COLORS, FACTION_LABELS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
 
 const WIDTH = 1280;
 const HERO_W = 220;
@@ -20,12 +20,13 @@ export class TeamSelectScene extends Phaser.Scene {
   create() {
     this.picked = [...session.heroIds];
     this.encounterId = session.encounterId;
+    useDesignCamera(this);
     this.root = this.add.container(0, 0);
     this.render();
   }
 
   private text(x: number, y: number, content: string, size = 14, color: string = COLORS.text) {
-    const t = this.add.text(x, y, content, { fontFamily: FONT, fontSize: `${size}px`, color });
+    const t = this.add.text(x, y, content, { ...TEXT_BASE, fontSize: `${size}px`, color });
     this.root.add(t);
     return t;
   }
@@ -78,7 +79,7 @@ export class TeamSelectScene extends Phaser.Scene {
       this.root.add(
         this.add
           .text(x, y - 4, hero.levelUp.description, {
-            fontFamily: FONT,
+            ...TEXT_BASE,
             fontSize: "11px",
             color: COLORS.dimText,
             align: "center",

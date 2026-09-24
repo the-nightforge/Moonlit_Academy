@@ -1,6 +1,36 @@
+import type Phaser from "phaser";
 import type { CardTag, Faction, IntentKind, MoonModifier, MoonPhaseId, StatusId } from "rules";
 
 export const FONT = '"Segoe UI", "Noto Sans", Arial, sans-serif';
+
+/** Layout is authored in design pixels (1280×720). */
+export const DESIGN_WIDTH = 1280;
+export const DESIGN_HEIGHT = 720;
+
+/**
+ * Canvas pixels per design pixel. Sized from the screen's physical pixels so the
+ * FIT-scaled canvas is downsampled (sharp), never upsampled (blurry).
+ * Floor 2: screen size can read wrong at startup (hidden/embedded views).
+ * ponytail: fixed at startup, not on resize; cap 3 bounds GPU memory.
+ */
+export const RENDER_SCALE = Math.min(
+  3,
+  Math.max(
+    2,
+    Math.ceil(
+      window.devicePixelRatio *
+        Math.min(window.screen.width / DESIGN_WIDTH, window.screen.height / DESIGN_HEIGHT),
+    ),
+  ),
+);
+
+/** Base style for every Text object: rasterized at RENDER_SCALE so it stays crisp. */
+export const TEXT_BASE = { fontFamily: FONT, resolution: RENDER_SCALE } as const;
+
+/** Lets a scene keep using design-pixel coordinates on the high-resolution canvas. */
+export function useDesignCamera(scene: Phaser.Scene): void {
+  scene.cameras.main.setZoom(RENDER_SCALE).centerOn(DESIGN_WIDTH / 2, DESIGN_HEIGHT / 2);
+}
 
 export const COLORS = {
   background: 0x0b1026,

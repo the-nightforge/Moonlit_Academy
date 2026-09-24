@@ -1,6 +1,6 @@
 import type Phaser from "phaser";
 import type { CombatEvent, CombatState, GameData } from "rules";
-import { FONT, STATUS_LABELS } from "./theme";
+import { STATUS_LABELS, TEXT_BASE } from "./theme";
 
 const WIDTH = 1280;
 
@@ -22,7 +22,7 @@ function floatText(
 ): Promise<void> {
   return new Promise((resolve) => {
     const text = scene.add
-      .text(x, y, content, { fontFamily: FONT, fontSize: `${size}px`, color })
+      .text(x, y, content, { ...TEXT_BASE, fontSize: `${size}px`, color })
       .setOrigin(0.5)
       .setDepth(100);
     scene.tweens.add({
@@ -113,7 +113,7 @@ function flyLabel(
 ): Promise<void> {
   return new Promise((resolve) => {
     const text = scene.add
-      .text(from.x, from.y - 62, content, { fontFamily: FONT, fontSize: "15px", color: "#ffd97f" })
+      .text(from.x, from.y - 62, content, { ...TEXT_BASE, fontSize: "15px", color: "#ffd97f" })
       .setOrigin(0.5)
       .setDepth(100);
     scene.tweens.add({
