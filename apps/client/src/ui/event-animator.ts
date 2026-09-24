@@ -68,11 +68,119 @@ function instant(): Promise<void> {
   return Promise.resolve();
 }
 
+type HpLostEvent = Extract<CombatEvent, { type: "hpLost" }>;
+
+const HP_LOSS_LABELS: Record<HpLostEvent["cause"], string> = {
+  loseHp: "",
+  burn: "Đốt ",
+  reflect: "Phản ",
+  bloodMoon: "Huyết ",
+};
+
+function isBloodMoonLoss(
+  event: CombatEvent | undefined,
+): event is HpLostEvent & { cause: "bloodMoon" } {
+  return event?.type === "hpLost" && event.cause === "bloodMoon";
+}
+
+/** A line from one unit to another that fades out (reflect). */
+function beam(
+  scene: Phaser.Scene,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+): Promise<void> {
+  return new Promise((resolve) => {
+    const g = scene.add.graphics().setDepth(96);
+    g.lineStyle(3, 0x9fd4ff, 1).lineBetween(from.x, from.y, to.x, to.y);
+    scene.tweens.add({
+      targets: g,
+      alpha: 0,
+      duration: 250,
+      onComplete: () => {
+        g.destroy();
+        resolve();
+      },
+    });
+  });
+}
+
+/** A status label flying from the victim to the thief (stealBuff). */
+function flyLabel(
+  scene: Phaser.Scene,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  content: string,
+): Promise<void> {
+  return new Promise((resolve) => {
+    const text = scene.add
+      .text(from.x, from.y - 62, content, { fontFamily: FONT, fontSize: "15px", color: "#ffd97f" })
+      .setOrigin(0.5)
+      .setDepth(100);
+    scene.tweens.add({
+      targets: text,
+      x: to.x,
+      y: to.y - 62,
+      duration: 350,
+      ease: "Sine.easeInOut",
+      onComplete: () => {
+        text.destroy();
+        resolve();
+      },
+    });
+  });
+}
+
+/**
+ * Plays events in order. A few sequences read as one beat:
+ * statusRemoved + statusApplied of the same status on another unit (a steal),
+ * consecutive blood moon HP losses (together), and reflect after its hit.
+ */
+export async function playEventQueue(
+  scene: Phaser.Scene,
+  events: CombatEvent[],
+  ctx: AnimContext,
+): Promise<void> {
+  for (let i = 0; i < events.length; i++) {
+    const event = events[i]!;
+    const next = events[i + 1];
+    if (
+      event.type === "statusRemoved" &&
+      next?.type === "statusApplied" &&
+      next.status === event.status &&
+      next.targetId !== event.targetId
+    ) {
+      const from = ctx.unitAnchors.get(event.targetId);
+      const to = ctx.unitAnchors.get(next.targetId);
+      if (from && to) {
+        await flyLabel(scene, from, to, `${STATUS_LABELS[next.status]} ${next.value}`);
+        i++;
+        continue;
+      }
+    }
+    if (isBloodMoonLoss(event)) {
+      const group: HpLostEvent[] = [event];
+      while (isBloodMoonLoss(events[i + 1])) group.push(events[++i] as HpLostEvent);
+      await Promise.all(group.map((loss) => animateEvent(scene, loss, ctx)));
+      continue;
+    }
+    const previous = events[i - 1];
+    if (event.type === "hpLost" && event.cause === "reflect" && previous?.type === "damageDealt") {
+      const from = ctx.unitAnchors.get(previous.targetId);
+      const to = ctx.unitAnchors.get(event.targetId);
+      if (from && to) {
+        await Promise.all([beam(scene, from, to), animateEvent(scene, event, ctx)]);
+        continue;
+      }
+    }
+    await animateEvent(scene, event, ctx);
+  }
+}
+
 function moonX(index: number): number {
   return WIDTH / 2 + (index - 3.5) * 36;
 }
 
-export function animateEvent(
+function animateEvent(
   scene: Phaser.Scene,
   event: CombatEvent,
   ctx: AnimContext,
@@ -149,11 +257,31 @@ export function animateEvent(
     case "hpLost": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
-      const cause = event.cause === "burn" ? "Đốt " : "";
+      const bloodMoon = event.cause === "bloodMoon";
       return Promise.all([
-        flash(scene, anchor.x, anchor.y, 200, 130, 0x8a2be2, 200),
-        floatText(scene, anchor.x, anchor.y - 50, `${cause}-${event.amount}`, "#c07fff", 18, 250),
+        flash(scene, anchor.x, anchor.y, 200, 130, bloodMoon ? 0xc01030 : 0x8a2be2, 200),
+        floatText(
+          scene,
+          anchor.x,
+          anchor.y - 50,
+          `${HP_LOSS_LABELS[event.cause]}-${event.amount}`,
+          bloodMoon ? "#ff5a5a" : "#c07fff",
+          18,
+          250,
+        ),
       ]).then(() => undefined);
+    }
+    case "bloodMoonChanged": {
+      if (event.rounds === 0) {
+        return floatText(scene, WIDTH / 2, 300, "Huyết Nguyệt tan", "#cfd6f0", 22, 500);
+      }
+      if (event.cause === "card") {
+        return Promise.all([
+          flash(scene, WIDTH / 2, 360, WIDTH, 720, 0x8b0000, 500),
+          floatText(scene, WIDTH / 2, 300, "🔴 Huyết Nguyệt!", "#ff5a5a", 30, 500),
+        ]).then(() => undefined);
+      }
+      return floatText(scene, WIDTH / 2, 300, `Huyết Nguyệt còn ${event.rounds} vòng`, "#ff5a5a", 18, 500);
     }
     case "healed": {
       const anchor = anchorOf(event.targetId);

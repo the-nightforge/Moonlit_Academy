@@ -38,6 +38,12 @@ export function debugSetMoon(index: number): void {
   session.events.push({ type: "moonShifted", from, to: session.state.moonIndex, cause: "card" });
 }
 
+export function debugSetBloodMoon(rounds: number): void {
+  if (session.state.bloodMoonRounds === rounds) return;
+  session.state.bloodMoonRounds = rounds;
+  session.events.push({ type: "bloodMoonChanged", rounds, cause: "card" });
+}
+
 export function debugKillEnemy(index: number): void {
   const enemy = session.state.enemies[index];
   if (!enemy?.alive) return;

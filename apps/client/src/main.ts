@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { CombatScene } from "./scenes/combat-scene";
+import { TeamSelectScene } from "./scenes/team-select-scene";
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -10,5 +11,5 @@ new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [CombatScene],
+  scene: [TeamSelectScene, CombatScene],
 });

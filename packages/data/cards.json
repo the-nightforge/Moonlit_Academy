@@ -370,7 +370,7 @@
         ]
       }
     ],
-    "text": "Hoắc Liệt gây 8 damage, rồi Tần Sương Đóng Băng mục tiêu. Nếu mục tiêu đang Đóng Băng: Hoắc Liệt gây 14 damage."
+    "text": "Gây 8 và Đóng Băng. Nếu mục tiêu đang Đóng Băng: gây 14."
   },
   {
     "id": "bond_anh_dau",
@@ -384,7 +384,7 @@
       { "type": "stealBuff", "count": 1, "actor": 1 },
       { "type": "applyStatus", "status": "stealth", "amount": 1, "to": "self" }
     ],
-    "text": "Diệp Linh Lung cướp 1 buff của mục tiêu. Tô Dạ Ẩn Thân 1 vòng."
+    "text": "Cướp 1 buff của mục tiêu. Tô Dạ Ẩn Thân 1 vòng."
   },
   {
     "id": "bond_tuyet_trung_tong_than",

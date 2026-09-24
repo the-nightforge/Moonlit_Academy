@@ -21,11 +21,14 @@ import {
   debugAdjustHeroHp,
   debugDrawCards,
   debugKillEnemy,
+  debugSetBloodMoon,
   debugSetMoon,
   describeEvent,
 } from "../debug";
-import { animateEvent } from "../ui/event-animator";
+import { playEventQueue } from "../ui/event-animator";
 import {
+  BLOOD_MOON_BG,
+  BLOOD_MOON_TEXT,
   COLORS,
   FONT,
   INTENT_ICONS,
@@ -45,6 +48,7 @@ const ERROR_LABELS: [RegExp, string][] = [
   [/not in hand/, "Lá không còn trên tay"],
   [/broken/, "Tàn Chiêu — chủ lá đã ngã"],
   [/frozen/, "Chủ lá đang Đóng Băng"],
+  [/blood moon/, "Cần Huyết Nguyệt"],
   [/moonPower/, "Không đủ Nguyệt Lực"],
   [/no target/, "Lá này không cần mục tiêu"],
   [/requires a target/, "Cần chọn mục tiêu"],
@@ -75,6 +79,9 @@ export class CombatScene extends Phaser.Scene {
   create() {
     this.gameData = session.data;
     this.state = session.state;
+    this.targeting = null;
+    this.validTargetIds.clear();
+    this.inputLocked = false;
     this.root = this.add.container(0, 0);
     this.input.mouse?.disableContextMenu();
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
@@ -116,15 +123,13 @@ export class CombatScene extends Phaser.Scene {
     return true;
   }
 
-  private async playEvents(events: CombatEvent[]) {
-    for (const event of events) {
-      await animateEvent(this, event, {
-        gameData: this.gameData,
-        state: this.state,
-        unitAnchors: this.unitAnchors,
-        unitViews: this.unitViews,
-      });
-    }
+  private playEvents(events: CombatEvent[]): Promise<void> {
+    return playEventQueue(this, events, {
+      gameData: this.gameData,
+      state: this.state,
+      unitAnchors: this.unitAnchors,
+      unitViews: this.unitViews,
+    });
   }
 
   private onCardClicked(instanceId: string) {
@@ -206,10 +211,9 @@ export class CombatScene extends Phaser.Scene {
     this.root.removeAll(true);
     this.cardViews.clear();
     const phase = this.gameData.moonPhases[this.state.moonIndex]!;
+    const background = this.state.bloodMoonRounds > 0 ? BLOOD_MOON_BG : PHASE_BG[phase.id];
     this.root.add(
-      this.add
-        .rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, PHASE_BG[phase.id])
-        .setDepth(-10),
+      this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, background).setDepth(-10),
     );
     this.unitAnchors.clear();
     this.unitViews.clear();
@@ -286,6 +290,15 @@ export class CombatScene extends Phaser.Scene {
       12,
       COLORS.dimText,
     ).setOrigin(0, 0.5);
+    if (this.state.bloodMoonRounds > 0) {
+      this.text(
+        WIDTH / 2 - 170,
+        y,
+        `🔴 Huyết Nguyệt · còn ${this.state.bloodMoonRounds} vòng`,
+        13,
+        BLOOD_MOON_TEXT,
+      ).setOrigin(1, 0.5);
+    }
   }
 
   private hpBar(
@@ -358,8 +371,9 @@ export class CombatScene extends Phaser.Scene {
     unitId: string,
   ) {
     const selectable = this.targeting !== null && this.validTargetIds.has(unitId);
+    // A Rectangle's hit area is in local space measured from its top-left corner.
     panel.setInteractive({
-      hitArea: new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
+      hitArea: new Phaser.Geom.Rectangle(0, 0, w, h),
       hitAreaCallback: Phaser.Geom.Rectangle.Contains,
       useHandCursor: selectable,
     });
@@ -458,9 +472,10 @@ export class CombatScene extends Phaser.Scene {
   private renderCard(instanceId: string, x: number, y: number) {
     const instance = this.state.cards[instanceId]!;
     const card = this.gameData.cards[instance.cardId]!;
-    const ownerId = instance.ownerIds[0]!;
-    const owner = this.state.heroes.find((hero) => hero.defId === ownerId);
-    const broken = !owner?.alive;
+    const [ownerId, partnerId] = instance.ownerIds as [string, string | undefined];
+    const broken = instance.ownerIds.some(
+      (id) => !this.state.heroes.find((hero) => hero.defId === id)?.alive,
+    );
     const playable = isCardPlayable(this.gameData, this.state, instanceId);
     const container = this.add.container(x, y);
     this.root.add(container);
@@ -477,6 +492,25 @@ export class CombatScene extends Phaser.Scene {
           : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
     );
     container.add(bg);
+    if (partnerId !== undefined) {
+      // Bond card: second owner's color as an inner border.
+      if (!broken && !isValidTarget) {
+        container.add(
+          this.add
+            .rectangle(0, 0, CARD_W - 8, CARD_H - 8)
+            .setStrokeStyle(2, OWNER_COLORS[partnerId] ?? COLORS.panelBorder),
+        );
+      }
+      container.add(
+        this.add
+          .text(CARD_W / 2 - 8, -CARD_H / 2 + 10, "Song Hành", {
+            fontFamily: FONT,
+            fontSize: "9px",
+            color: COLORS.gold,
+          })
+          .setOrigin(1, 0.5),
+      );
+    }
 
     const effectiveCost = getEffectiveCost(this.gameData, this.state, instanceId);
     const badge = this.add.circle(-CARD_W / 2 + 14, -CARD_H / 2 + 14, 12, 0x0a0e20);
@@ -590,11 +624,14 @@ export class CombatScene extends Phaser.Scene {
       16,
       COLORS.dimText,
     ).setOrigin(0.5);
-    this.endScreenButton(WIDTH / 2 - 100, HEIGHT / 2 + 90, "Chơi lại", () => this.restart());
-    this.endScreenButton(WIDTH / 2 + 100, HEIGHT / 2 + 90, "Trận khác", () => {
+    this.endScreenButton(WIDTH / 2 - 180, HEIGHT / 2 + 90, "Chơi lại", () => this.restart());
+    this.endScreenButton(WIDTH / 2, HEIGHT / 2 + 90, "Trận khác", () => {
       cycleEncounter(1);
       this.syncFromSession();
     });
+    this.endScreenButton(WIDTH / 2 + 180, HEIGHT / 2 + 90, "Chọn đội", () =>
+      this.scene.start("team-select"),
+    );
   }
 
   private endScreenButton(
@@ -655,6 +692,15 @@ export class CombatScene extends Phaser.Scene {
       this.syncFromSession();
     });
     y += 36;
+    this.debugButton(x + 14, y + 10, 100, "Chọn đội", () => this.scene.start("team-select"));
+    this.text(x + 128, y + 10, "Huyết Nguyệt:", 11).setOrigin(0, 0.5);
+    [0, 1, 2, 3].forEach((rounds, index) => {
+      this.debugButton(x + 214 + index * 28, y + 10, 24, `${rounds}`, () => {
+        debugSetBloodMoon(rounds);
+        this.renderAll();
+      });
+    });
+    y += 36;
     this.debugButton(x + 14, y + 10, 110, "+3 Nguyệt Lực", () => {
       debugAddMoonPower();
       this.renderAll();
@@ -697,7 +743,7 @@ export class CombatScene extends Phaser.Scene {
     });
     y += 6;
     line("— Sự kiện —", 11);
-    for (const event of session.events.slice(-14)) {
+    for (const event of session.events.slice(-12)) {
       line(describeEvent(this.state, this.gameData, event), 10);
     }
   }

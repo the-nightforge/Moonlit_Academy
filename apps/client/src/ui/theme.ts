@@ -1,4 +1,4 @@
-import type { CardTag, IntentKind, MoonModifier, MoonPhaseId, StatusId } from "rules";
+import type { CardTag, Faction, IntentKind, MoonModifier, MoonPhaseId, StatusId } from "rules";
 
 export const FONT = '"Segoe UI", "Noto Sans", Arial, sans-serif';
 
@@ -42,6 +42,18 @@ export const STATUS_LABELS: Record<StatusId, string> = {
   freeze: "Băng",
   reflect: "Phản",
 };
+
+export const FACTION_LABELS: Record<Faction, string> = {
+  thanhLoan: "Thanh Loan Viện",
+  huyenVu: "Huyền Vũ Viện",
+  bachLo: "Bạch Lộ Viện",
+  xichDien: "Xích Diên Viện",
+  neutral: "Trung lập",
+};
+
+/** Blood moon overrides the phase background. */
+export const BLOOD_MOON_BG = 0x2a0710;
+export const BLOOD_MOON_TEXT = "#ff5a5a";
 
 export const PHASE_BG: Record<MoonPhaseId, number> = {
   new: 0x070a18,
