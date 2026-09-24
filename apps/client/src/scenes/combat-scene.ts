@@ -25,6 +25,7 @@ import {
   debugSetMoon,
   describeEvent,
 } from "../debug";
+import manifest from "virtual:assets-manifest";
 import { playEventQueue } from "../ui/event-animator";
 import {
   BLOOD_MOON_BG,
@@ -75,6 +76,14 @@ export class CombatScene extends Phaser.Scene {
 
   constructor() {
     super("combat");
+  }
+
+  preload() {
+    for (const [category, files] of Object.entries(manifest)) {
+      for (const [key, url] of Object.entries(files)) {
+        this.load.image(`${category}:${key}`, url);
+      }
+    }
   }
 
   create() {
@@ -366,6 +375,33 @@ export class CombatScene extends Phaser.Scene {
     this.text(x, y, label, 13).setOrigin(0.5).setAlpha(preview?.skipped ? 0.55 : 1);
   }
 
+  // Draws a texture cover-fitted into a w×h box centered at (x, y).
+  // Returns null when the texture is missing so callers can fall back.
+  private coverImage(
+    key: string,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    parent: Phaser.GameObjects.Container,
+  ): Phaser.GameObjects.Image | null {
+    if (!this.textures.exists(key)) return null;
+    const source = this.textures.get(key).getSourceImage();
+    const scale = Math.max(w / source.width, h / source.height);
+    const cropW = Math.min(source.width, w / scale);
+    const cropH = Math.min(source.height, h / scale);
+    const img = this.add.image(x, y, key);
+    img.setScale(scale);
+    img.setCrop(
+      (source.width - cropW) / 2,
+      (source.height - cropH) / 2,
+      cropW,
+      cropH,
+    );
+    parent.add(img);
+    return img;
+  }
+
   private unitPanelHit(
     panel: Phaser.GameObjects.Rectangle,
     w: number,
@@ -403,6 +439,17 @@ export class CombatScene extends Phaser.Scene {
         this.targeting && isValidTarget ? COLORS.goldFill : COLORS.panelBorder,
       );
       c.add(panel);
+      const enemyArt = this.coverImage(
+        `enemies:${enemy.defId}`,
+        0,
+        0,
+        panelW - 6,
+        panelH - 6,
+        c,
+      );
+      if (enemyArt) {
+        c.add(this.add.rectangle(0, 0, panelW - 6, panelH - 6, 0x0a0e20, 0.45));
+      }
       const def = this.gameData.enemies[enemy.defId]!;
       this.text(0, -panelH / 2 + 16, def.name, 15, COLORS.text, c).setOrigin(0.5);
       this.hpBar(-panelW / 2 + 14, -14, panelW - 28, enemy.hp, enemy.maxHp, COLORS.hpFillEnemy, c);
@@ -443,6 +490,18 @@ export class CombatScene extends Phaser.Scene {
             : COLORS.panelBorder,
       );
       c.add(panel);
+      const upKey = `heroes:${hero.defId}_up`;
+      const heroArt = this.coverImage(
+        hero.leveledUp && this.textures.exists(upKey) ? upKey : `heroes:${hero.defId}`,
+        0,
+        0,
+        panelW - 6,
+        panelH - 6,
+        c,
+      );
+      if (heroArt) {
+        c.add(this.add.rectangle(0, 0, panelW - 6, panelH - 6, 0x0a0e20, 0.45));
+      }
       const def = this.gameData.heroes[hero.defId]!;
       const star = hero.leveledUp ? " ★" : "";
       this.text(
@@ -494,6 +553,12 @@ export class CombatScene extends Phaser.Scene {
           : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
     );
     container.add(bg);
+    const cardArt =
+      this.coverImage(`cards:${instance.cardId}`, 0, 0, CARD_W - 6, CARD_H - 6, container) ??
+      this.coverImage(`heroes:${ownerId}`, 0, 0, CARD_W - 6, CARD_H - 6, container);
+    if (cardArt) {
+      container.add(this.add.rectangle(0, 0, CARD_W - 6, CARD_H - 6, 0x0a0e20, 0.5));
+    }
     if (partnerId !== undefined) {
       // Bond card: second owner's color as an inner border.
       if (!broken && !isValidTarget) {

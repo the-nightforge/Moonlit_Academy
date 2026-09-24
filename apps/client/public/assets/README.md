@@ -7,6 +7,9 @@ Mọi file `.png/.jpg/.webp` đã được Git LFS theo dõi tự động.
 
 ## Quy ước đặt tên — luôn khớp ID trong `data/*.json`
 
+Đuôi `.png` / `.jpg` / `.webp` đều được — client tự quét thư mục này lúc
+build/dev, không cần khai báo gì thêm.
+
 | Thư mục | File | Nội dung | Tỉ lệ / size gợi ý |
 |---|---|---|---|
 | `heroes/` | `<heroId>.png` | Splash art nửa người (doc 08) | 2:3, ~768×1152 |
