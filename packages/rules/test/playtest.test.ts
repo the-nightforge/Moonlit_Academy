@@ -14,7 +14,7 @@ import {
 } from "../src/index";
 
 const data = loadGameData();
-const HEROES = ["m05", "f04", "m06"];
+const HEROES: [string, string, string] = ["m05", "f04", "m06"];
 const MAX_ROUNDS = 50;
 const MAX_ACTIONS = 5000;
 
