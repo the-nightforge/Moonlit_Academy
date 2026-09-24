@@ -1,6 +1,11 @@
 import { drawCards } from "./draw";
-import { moonArmorMultiplier, moonCardDamageMultiplier, moonHealMultiplier } from "./moon";
-import { hasStatus, statusValue } from "./statuses";
+import {
+  moonArmorMultiplier,
+  moonCardDamageMultiplier,
+  moonHealMultiplier,
+  moonStealthDurationBonus,
+} from "./moon";
+import { applyStatus, cleanseDebuffs, hasStatus, statusValue } from "./statuses";
 import type {
   CardDef,
   CombatEvent,
@@ -199,8 +204,19 @@ export function resolveEffect(
       resolveEffects(data, state, branch, ctx, events);
       return;
     }
-    case "applyStatus":
-    case "cleanse":
+    case "applyStatus": {
+      const bonus = effect.status === "stealth" ? moonStealthDurationBonus(data, state) : 0;
+      for (const target of resolveTargets(state, effect.to, ctx)) {
+        applyStatus(target, effect.status, effect.amount + bonus, ctx.source.id, events);
+      }
+      return;
+    }
+    case "cleanse": {
+      for (const target of resolveTargets(state, effect.to, ctx)) {
+        cleanseDebuffs(target, events);
+      }
+      return;
+    }
     case "shiftMoon":
       throw new Error(`effect "${effect.type}" is not implemented yet`);
     default: {

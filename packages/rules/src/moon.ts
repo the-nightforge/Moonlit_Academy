@@ -22,6 +22,14 @@ export function moonHealMultiplier(data: GameData, state: CombatState): number {
   return multiplier;
 }
 
+export function moonStealthDurationBonus(data: GameData, state: CombatState): number {
+  let bonus = 0;
+  for (const modifier of activeMoonModifiers(data, state)) {
+    if (modifier.type === "stealthDurationBonus") bonus += modifier.amount;
+  }
+  return bonus;
+}
+
 export function moonArmorMultiplier(data: GameData, state: CombatState): number {
   let multiplier = 1;
   for (const modifier of activeMoonModifiers(data, state)) {
