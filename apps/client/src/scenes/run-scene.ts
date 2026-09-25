@@ -16,6 +16,7 @@ export class RunScene extends Phaser.Scene {
   private root!: Phaser.GameObjects.Container;
   private showDeck = false;
   private lastGainedRelic: string | undefined;
+  private relicTooltip: Phaser.GameObjects.Container | null = null;
 
   constructor() {
     super("run");
@@ -76,6 +77,7 @@ export class RunScene extends Phaser.Scene {
 
   private render() {
     this.root.removeAll(true);
+    this.relicTooltip = null;
     this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, COLORS.background));
     switch (this.run.status) {
       case "map":
@@ -111,13 +113,44 @@ export class RunScene extends Phaser.Scene {
     });
     const relics =
       this.run.runRelicIds.map((id) => session.data.runRelics[id]?.name ?? id).join(" · ") || "—";
-    this.text(WIDTH / 2, 16, `Kỳ Vật: ${relics}`, 13, COLORS.dimText).setOrigin(0.5, 0);
+    const relicText = this.text(WIDTH / 2, 16, `Kỳ Vật: ${relics}`, 13, COLORS.dimText).setOrigin(0.5, 0);
+    relicText.setInteractive({ useHandCursor: true });
+    relicText.on("pointerover", () => this.showRelicTooltip());
+    relicText.on("pointerout", () => this.hideRelicTooltip());
     const deck = this.text(WIDTH - 24, 16, `Deck ${this.run.deck.length} lá ▾`, 14, COLORS.gold).setOrigin(1, 0);
     deck.setInteractive({ useHandCursor: true });
     deck.on("pointerup", () => {
       this.showDeck = !this.showDeck;
       this.render();
     });
+  }
+
+  private showRelicTooltip() {
+    this.hideRelicTooltip();
+    if (this.run.runRelicIds.length === 0) return;
+    const lines = this.run.runRelicIds.map((id) => {
+      const relic = session.data.runRelics[id];
+      return relic ? `${relic.name}: ${relic.text}` : id;
+    });
+    const tip = this.add.container(WIDTH / 2, 44);
+    const texts = lines.map((line, index) =>
+      this.add
+        .text(0, index * 20, line, { ...TEXT_BASE, fontSize: "12px", color: COLORS.text })
+        .setOrigin(0.5, 0),
+    );
+    const height = lines.length * 20 + 12;
+    const width = Math.max(...lines.map((line) => line.length)) * 7 + 24;
+    const bg = this.add
+      .rectangle(0, height / 2 - 6, width, height, COLORS.panelHero)
+      .setStrokeStyle(1, COLORS.panelBorder);
+    tip.add([bg, ...texts]);
+    this.root.add(tip);
+    this.relicTooltip = tip;
+  }
+
+  private hideRelicTooltip() {
+    this.relicTooltip?.destroy();
+    this.relicTooltip = null;
   }
 
   private renderMap() {
