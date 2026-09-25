@@ -34,7 +34,7 @@ cấp Hero.
   hoặc nhịp nhánh (rải Hồi Phục → Tụ Dược).
 - Lá khóa là **lối chơi khác, không mạnh hơn** (GDD §7.1).
 - Đường cong 12 lá ≈ 2 lá cost 0–1, 4 lá 2–3, 4 lá 4–5, 2 lá 6–8; bộ miễn phí có
-  ≥ 2 lá cost ≤ 3. `copies` khởi điểm: cost 0–1 → 3, 2–4 → 2, 5+ → 1.
+  ≥ 2 lá cost ≤ 3. `copies` khởi điểm theo quy tắc sau chỉnh số GĐ 4a: cost 0–4 → 3, 5+ → 2 (ngoại lệ: Huyết Khế 2, Nguyệt Lộ 2 — Dưỡng Nguyệt cộng dồn, Vĩnh Đông 1 — Đóng Băng toàn bộ).
 - Số liệu là khởi điểm; chốt ở bước 4b.7.
 
 ---
@@ -147,6 +147,8 @@ Việt, một câu mỗi mục. Client hiện khi di chuột lên lá.
 
 `heroes.json`: `cardIds` = 6 lá miễn phí; `rewardCardIds` → **`lockedCardIds`** (6
 lá). Pool của Hero = `cardIds + lockedCardIds` (12, không trùng, cùng `ownerId`).
+Thêm `branches: [{ name, cardIds }, { name, cardIds }]` — tên nhánh (chữ người chơi)
+và 6 lá mỗi nhánh; hợp hai nhánh = pool 12 lá (màn xếp deck nhóm lá theo nhánh).
 
 Ký hiệu cột **Đích**: `—` = `target: "none"`, `E` = kẻ địch, `A` = đồng minh.
 Nhãn: Giữ / Sửa (giữ id, đổi cơ chế) / Mới. Hiệu ứng viết theo effect: "HT≥n" =
@@ -158,67 +160,67 @@ Nhãn: Giữ / Sửa (giữ id, đổi cơ chế) / Mới. Hiệu ứng viết t
 |---|---|---|---|---|---|---|---|---|
 | `m05_tran_bac_huyet_tinh` | Trấn Bắc Huyết Tính | HC | Miễn phí | Giữ | 0·3 | — | | Mất 3 HP; Cường Hóa 4 bản thân |
 | `m05_thuong_pha` | Thương Phá | — | Miễn phí | Sửa (số) | 1·3 | E | attack | Xóa giáp mục tiêu; 3 damage |
-| `m05_ho_gam` | Hổ Gầm | TV | Miễn phí | Giữ | 2·2 | — | control, ward | Khiêu Khích 1; giáp 5 |
-| `m05_bat_khuat` | Bất Khuất | HC | Miễn phí | Sửa | 3·2 | — | heal | HP < 50%: hồi 10 + Sức Mạnh 1; ngược lại hồi 4 |
-| `m05_liet_hoa_xung_phong` | Liệt Hỏa Xung Phong | HC | Miễn phí | Giữ | 4·2 | E | attack | 8 damage; HP < 50%: 12 |
-| `m05_bat_dong_nhu_son` | Bất Động Như Sơn | TV | Miễn phí | Giữ | 4·2 | — | ward | Giáp 10; Phản Đòn 3 |
-| `m05_huyet_chien` | Huyết Chiến | HC | Khóa | Sửa | 2·2 | E | attack | Phẫn Huyết 0.5 |
-| `m05_thiet_bich` | Thiết Bích | TV | Khóa | Sửa | 3·2 | — | ward | Mọi Hero giáp 4; HT≥1: 7 |
-| `m05_no_hoa_lien_hoan` | Nộ Hỏa Liên Hoàn | HC | Khóa | Sửa | 5·1 | E | attack | 3 damage ×3; LH≥2: ×5 |
-| `m05_lo_luyen` | Lò Luyện | HC | Khóa | Mới | 5·1 | E | attack | 8 damage; HT≥1: 14; HT≥2: 20 |
-| `m05_huyet_thuan` | Huyết Thuẫn | TV | Khóa | Mới | 6·1 | — | heal, ward | Hồi 8 (Dư Sinh); Khiêu Khích 1; Phản Đòn 4 |
-| `m05_liet_hoa_phan_thien` | Liệt Hỏa Phần Thiên | HC | Khóa | Mới | 8·1 | — | attack | Mất 6 HP; Phẫn Huyết 1.0 lên mọi kẻ địch |
+| `m05_ho_gam` | Hổ Gầm | TV | Miễn phí | Giữ | 2·3 | — | control, ward | Khiêu Khích 1; giáp 5 |
+| `m05_bat_khuat` | Bất Khuất | HC | Miễn phí | Sửa | 3·3 | — | heal | HP < 50%: hồi 10 + Sức Mạnh 1; ngược lại hồi 4 |
+| `m05_liet_hoa_xung_phong` | Liệt Hỏa Xung Phong | HC | Miễn phí | Giữ | 4·3 | E | attack | 8 damage; HP < 50%: 12 |
+| `m05_bat_dong_nhu_son` | Bất Động Như Sơn | TV | Miễn phí | Giữ | 4·3 | — | ward | Giáp 10; Phản Đòn 3 |
+| `m05_huyet_chien` | Huyết Chiến | HC | Khóa | Sửa | 2·3 | E | attack | Phẫn Huyết 0.5 |
+| `m05_thiet_bich` | Thiết Bích | TV | Khóa | Sửa | 3·3 | — | ward | Mọi Hero giáp 4; HT≥1: 7 |
+| `m05_no_hoa_lien_hoan` | Nộ Hỏa Liên Hoàn | HC | Khóa | Sửa | 5·2 | E | attack | 3 damage ×3; LH≥2: ×5 |
+| `m05_lo_luyen` | Lò Luyện | HC | Khóa | Mới | 5·2 | E | attack | 8 damage; HT≥1: 14; HT≥2: 20 |
+| `m05_huyet_thuan` | Huyết Thuẫn | TV | Khóa | Mới | 6·2 | — | heal, ward | Hồi 8 (Dư Sinh); Khiêu Khích 1; Phản Đòn 4 |
+| `m05_liet_hoa_phan_thien` | Liệt Hỏa Phần Thiên | HC | Khóa | Mới | 8·2 | — | attack | Mất 6 HP; Phẫn Huyết 1.0 lên mọi kẻ địch |
 
 ### 3.3 F04 Ôn Như Ý — *Bách Thảo* (BT) · *Tĩnh Tâm* (TT)
 
 | id | Tên | Nhánh | Mở | Nhãn | Cost·Bản | Đích | Tag | Hiệu ứng |
 |---|---|---|---|---|---|---|---|---|
-| `f04_bach_thao_huong` | Bách Thảo Hương | BT | Miễn phí | Sửa | 2·2 | A | heal, harmony | Hồi Phục 3; mục tiêu đã có Hồi Phục: 5 |
-| `f04_linh_chi_ho_the` | Linh Chi Hộ Thể | BT | Miễn phí | Sửa | 2·2 | A | heal | Tụ Dược ×1; giáp 4 |
-| `f04_hoi_xuan_tan` | Hồi Xuân Tán | BT | Miễn phí | Sửa | 4·2 | — | heal, harmony | Mọi Hero Hồi Phục 2; HT≥1: 4 |
-| `f04_thao_duoc` | Thảo Dược | TT | Miễn phí | Sửa | 2·2 | A | heal, harmony | Hồi 5 (Dư Sinh) |
-| `f04_tinh_tam_tra` | Tịnh Tâm Trà | TT | Miễn phí | Sửa | 3·2 | A | heal, harmony | Giải trừ; hồi 3 (Dư Sinh); Chiêm Bài 2 |
-| `f04_nguyet_quang_dan` | Nguyệt Quang Dẫn | TT | Miễn phí | Giữ | 4·2 | — | moon | Trăng tiến 1 pha; Chiêm Bài 3 |
+| `f04_bach_thao_huong` | Bách Thảo Hương | BT | Miễn phí | Sửa | 2·3 | A | heal, harmony | Hồi Phục 3; mục tiêu đã có Hồi Phục: 5 |
+| `f04_linh_chi_ho_the` | Linh Chi Hộ Thể | BT | Miễn phí | Sửa | 2·3 | A | heal | Tụ Dược ×1; giáp 4 |
+| `f04_hoi_xuan_tan` | Hồi Xuân Tán | BT | Miễn phí | Sửa | 4·3 | — | heal, harmony | Mọi Hero Hồi Phục 2; HT≥1: 4 |
+| `f04_thao_duoc` | Thảo Dược | TT | Miễn phí | Sửa | 2·3 | A | heal, harmony | Hồi 5 (Dư Sinh) |
+| `f04_tinh_tam_tra` | Tịnh Tâm Trà | TT | Miễn phí | Sửa | 3·3 | A | heal, harmony | Giải trừ; hồi 3 (Dư Sinh); Chiêm Bài 2 |
+| `f04_nguyet_quang_dan` | Nguyệt Quang Dẫn | TT | Miễn phí | Giữ | 4·3 | — | moon | Trăng tiến 1 pha; Chiêm Bài 3 |
 | `f04_xuan_phong` | Xuân Phong | BT | Khóa | Mới | 1·3 | A | heal, harmony | Hồi Phục 2 lên mục tiêu; LH≥2: lên mọi Hero |
-| `f04_thanh_tam_chu` | Thanh Tâm Chú | BT | Khóa | Sửa | 4·2 | — | harmony | Giải trừ mọi Hero; mọi Hero Hồi Phục 1; Chiêm Bài 3 |
-| `f04_bach_hoa_tu_duoc` | Bách Hoa Tụ Dược | BT | Khóa | Mới | 6·1 | — | heal, harmony | Tụ Dược ×2 lên mọi Hero |
-| `f04_bang_tam_quyet` | Băng Tâm Quyết | TT | Khóa | Sửa | 2·2 | E | control, harmony | Suy Yếu 2; Tỏa Nguyệt 1 |
-| `f04_nguyet_lo` | Nguyệt Lộ | TT | Khóa | Sửa | 4·1 | A | heal, moon | Dưỡng Nguyệt 1; hồi 3 |
-| `f04_tinh_tam_quyet` | Tĩnh Tâm Quyết | TT | Khóa | Mới | 6·1 | — | heal, harmony | Mọi Hero hồi 5 (Dư Sinh); giải trừ mọi Hero |
+| `f04_thanh_tam_chu` | Thanh Tâm Chú | BT | Khóa | Sửa | 4·3 | — | harmony | Giải trừ mọi Hero; mọi Hero Hồi Phục 1; Chiêm Bài 3 |
+| `f04_bach_hoa_tu_duoc` | Bách Hoa Tụ Dược | BT | Khóa | Mới | 6·2 | — | heal, harmony | Tụ Dược ×2 lên mọi Hero |
+| `f04_bang_tam_quyet` | Băng Tâm Quyết | TT | Khóa | Sửa | 2·3 | E | control, harmony | Suy Yếu 2; Tỏa Nguyệt 1 |
+| `f04_nguyet_lo` | Nguyệt Lộ | TT | Khóa | Sửa | 4·2 | A | heal, moon | Dưỡng Nguyệt 1; hồi 3 |
+| `f04_tinh_tam_quyet` | Tĩnh Tâm Quyết | TT | Khóa | Mới | 6·2 | — | heal, harmony | Mọi Hero hồi 5 (Dư Sinh); giải trừ mọi Hero |
 
 ### 3.4 M06 Tô Dạ — *Ẩn Sát* (ẨS) · *Liên Hoàn* (LH)
 
 | id | Tên | Nhánh | Mở | Nhãn | Cost·Bản | Đích | Tag | Hiệu ứng |
 |---|---|---|---|---|---|---|---|---|
 | `m06_anh_bo` | Ảnh Bộ | ẨS | Miễn phí | Sửa | 1·3 | — | assassin | Ẩn Thân 1; Cường Hóa 2 |
-| `m06_am_tien` | Ám Tiễn | ẨS | Miễn phí | Giữ | 2·2 | E | attack, assassin | 6 damage; đang Ẩn Thân: 10 |
-| `m06_doat_menh` | Đoạt Mệnh | ẨS | Miễn phí | Giữ | 4·2 | E | attack, assassin | 7 damage; mục tiêu HP ≤ 30%: 20 |
+| `m06_am_tien` | Ám Tiễn | ẨS | Miễn phí | Giữ | 2·3 | E | attack, assassin | 6 damage; đang Ẩn Thân: 10 |
+| `m06_doat_menh` | Đoạt Mệnh | ẨS | Miễn phí | Giữ | 4·3 | E | attack, assassin | 7 damage; mục tiêu HP ≤ 30%: 20 |
 | `m06_phi_tieu` | Phi Tiêu | LH | Miễn phí | Mới | 0·3 | E | attack | 2 damage; LH≥2: 2 ×2 |
-| `m06_nguyet_anh_an` | Nguyệt Ảnh Ấn | LH | Miễn phí | Giữ | 2·2 | E | control | Đánh Dấu 2 |
-| `m06_song_nhan_loan_vu` | Song Nhận Loạn Vũ | LH | Miễn phí | Sửa | 3·2 | — | attack, assassin | 3 damage mọi kẻ địch; LH≥2: 6 |
-| `m06_tang_anh_thich` | Tàng Ảnh Thích | ẨS | Khóa | Giữ | 2·2 | E | attack, assassin | 4 damage; đang Ẩn Thân: 4 ×3 |
-| `m06_anh_phan_than` | Ảnh Phân Thân | ẨS | Khóa | Sửa | 4·2 | E | assassin | Ẩn Thân 2; Tỏa Nguyệt 2 |
-| `m06_tuyet_menh` | Tuyệt Mệnh | ẨS | Khóa | Sửa | 6·1 | E | attack, assassin | 12 damage; HT≥2: 30 |
-| `m06_doc_tieu` | Độc Tiêu | LH | Khóa | Sửa | 2·2 | E | control | Dễ Vỡ 2; LH≥2: thêm Đánh Dấu 2 |
-| `m06_anh_toc` | Ảnh Tốc | LH | Khóa | Mới | 2·2 | — | assassin | +2 Nguyệt Lực; LH≥3: +4 |
-| `m06_loan_anh` | Loạn Ảnh | LH | Khóa | Mới | 5·1 | E | attack, assassin | 2 damage ×2; LH≥2: ×4; LH≥4: ×6 |
+| `m06_nguyet_anh_an` | Nguyệt Ảnh Ấn | LH | Miễn phí | Giữ | 2·3 | E | control | Đánh Dấu 2 |
+| `m06_song_nhan_loan_vu` | Song Nhận Loạn Vũ | LH | Miễn phí | Sửa | 3·3 | — | attack, assassin | 3 damage mọi kẻ địch; LH≥2: 6 |
+| `m06_tang_anh_thich` | Tàng Ảnh Thích | ẨS | Khóa | Giữ | 2·3 | E | attack, assassin | 4 damage; đang Ẩn Thân: 4 ×3 |
+| `m06_anh_phan_than` | Ảnh Phân Thân | ẨS | Khóa | Sửa | 4·3 | E | assassin | Ẩn Thân 2; Tỏa Nguyệt 2 |
+| `m06_tuyet_menh` | Tuyệt Mệnh | ẨS | Khóa | Sửa | 6·2 | E | attack, assassin | 12 damage; HT≥2: 30 |
+| `m06_doc_tieu` | Độc Tiêu | LH | Khóa | Sửa | 2·3 | E | control | Dễ Vỡ 2; LH≥2: thêm Đánh Dấu 2 |
+| `m06_anh_toc` | Ảnh Tốc | LH | Khóa | Mới | 2·3 | — | assassin | +2 Nguyệt Lực; LH≥3: +4 |
+| `m06_loan_anh` | Loạn Ảnh | LH | Khóa | Mới | 5·2 | E | attack, assassin | 2 damage ×2; LH≥2: ×4; LH≥4: ×6 |
 
 ### 3.5 F03 Tần Sương — *Băng Phong* (BP) · *Hàn Kiếm* (HK)
 
 | id | Tên | Nhánh | Mở | Nhãn | Cost·Bản | Đích | Tag | Hiệu ứng |
 |---|---|---|---|---|---|---|---|---|
-| `f03_han_an` | Hàn Ấn | BP | Miễn phí | Giữ | 2·2 | E | control | Đóng Băng 1 |
-| `f03_phong_tuyet_chuong` | Phong Tuyết Chướng | BP | Miễn phí | Sửa | 4·2 | — | ward | Mọi Hero giáp 4; Tỏa Nguyệt 1 mọi kẻ địch |
-| `f03_tuyet_vu` | Tuyết Vũ | BP | Miễn phí | Sửa | 4·2 | — | attack | 3 damage mọi kẻ địch; Tỏa Nguyệt 1 mọi kẻ địch |
-| `f03_suong_tram` | Sương Trảm | HK | Miễn phí | Giữ | 2·2 | E | attack | 5 damage; mục tiêu Đóng Băng: 8 |
-| `f03_bang_phach_lien_kich` | Băng Phách Liên Kích | HK | Miễn phí | Sửa | 4·2 | E | attack | 3 damage ×2; HT≥1: ×4 |
-| `f03_tuyet_han` | Tuyệt Hàn | HK | Miễn phí | Sửa | 5·1 | E | attack | 9 damage; HT≥1: Đóng Băng mục tiêu |
+| `f03_han_an` | Hàn Ấn | BP | Miễn phí | Giữ | 2·3 | E | control | Đóng Băng 1 |
+| `f03_phong_tuyet_chuong` | Phong Tuyết Chướng | BP | Miễn phí | Sửa | 4·3 | — | ward | Mọi Hero giáp 4; Tỏa Nguyệt 1 mọi kẻ địch |
+| `f03_tuyet_vu` | Tuyết Vũ | BP | Miễn phí | Sửa | 4·3 | — | attack | 3 damage mọi kẻ địch; Tỏa Nguyệt 1 mọi kẻ địch |
+| `f03_suong_tram` | Sương Trảm | HK | Miễn phí | Giữ | 2·3 | E | attack | 5 damage; mục tiêu Đóng Băng: 8 |
+| `f03_bang_phach_lien_kich` | Băng Phách Liên Kích | HK | Miễn phí | Sửa | 4·3 | E | attack | 3 damage ×2; HT≥1: ×4 |
+| `f03_tuyet_han` | Tuyệt Hàn | HK | Miễn phí | Sửa | 5·2 | E | attack | 9 damage; HT≥1: Đóng Băng mục tiêu |
 | `f03_bang_cham` | Băng Châm | BP | Khóa | Mới | 1·3 | E | attack | 2 damage; Tỏa Nguyệt 1 |
-| `f03_han_khi_nhap_mach` | Hàn Khí Nhập Mạch | BP | Khóa | Mới | 2·2 | E | control | Tỏa Nguyệt 3 |
+| `f03_han_khi_nhap_mach` | Hàn Khí Nhập Mạch | BP | Khóa | Mới | 2·3 | E | control | Tỏa Nguyệt 3 |
 | `f03_vinh_dong` | Vĩnh Đông | BP | Khóa | Mới | 8·1 | — | control | Đóng Băng mọi kẻ địch; Tỏa Nguyệt 2 mọi kẻ địch |
-| `f03_han_phong` | Hàn Phong | HK | Khóa | Sửa | 2·2 | E | control | Dễ Vỡ 2 lên mục tiêu; HT≥1: lên mọi kẻ địch |
-| `f03_bang_toai` | Băng Toái | HK | Khóa | Sửa | 5·1 | E | attack | Mục tiêu Đóng Băng: 18 damage + giải trừ mục tiêu (phá băng); ngược lại 6 |
-| `f03_han_son_nhat_kiem` | Hàn Sơn Nhất Kiếm | HK | Khóa | Mới | 7·1 | E | attack | 10 damage; HT≥1: 18; HT≥2: 26 + Đóng Băng |
+| `f03_han_phong` | Hàn Phong | HK | Khóa | Sửa | 2·3 | E | control | Dễ Vỡ 2 lên mục tiêu; HT≥1: lên mọi kẻ địch |
+| `f03_bang_toai` | Băng Toái | HK | Khóa | Sửa | 5·2 | E | attack | Mục tiêu Đóng Băng: 18 damage + giải trừ mục tiêu (phá băng); ngược lại 6 |
+| `f03_han_son_nhat_kiem` | Hàn Sơn Nhất Kiếm | HK | Khóa | Mới | 7·2 | E | attack | 10 damage; HT≥1: 18; HT≥2: 26 + Đóng Băng |
 
 `f03_suong_giap` **bị bỏ** (trùng Phong Tuyết Chướng).
 
@@ -226,18 +228,18 @@ Nhãn: Giữ / Sửa (giữ id, đổi cơ chế) / Mới. Hiệu ứng viết t
 
 | id | Tên | Nhánh | Mở | Nhãn | Cost·Bản | Đích | Tag | Hiệu ứng |
 |---|---|---|---|---|---|---|---|---|
-| `f02_dien_doat` | Diện Đoạt | TD | Miễn phí | Sửa | 2·2 | E | scheme | Cướp 1 buff; Đoạt Nguyệt 1 |
-| `f02_anh_tap` | Ảnh Tập | TD | Miễn phí | Giữ | 2·2 | E | attack, assassin | Cướp 1 buff; 6 damage; HP < 50%: 10 |
-| `f02_dien_cu` | Diện Cụ | TD | Miễn phí | Sửa | 3·2 | E | scheme | Đoạt Nguyệt 2; Chiêm Bài 2 |
-| `f02_huyet_tram` | Huyết Trâm | HN | Miễn phí | Sửa | 2·2 | E | attack, forbidden | Huyết Nguyệt: 9 damage; ngược lại mất 2 HP + 9 damage |
-| `f02_doi_van_chu` | Đổi Vận Chú | HN | Miễn phí | Giữ | 4·2 | — | moon | Huyết Nguyệt 2; trăng tiến 1 pha |
-| `f02_phe_hon` | Phệ Hồn | HN | Miễn phí | Giữ | 6·1 | E | attack, forbidden | Chỉ khi Huyết Nguyệt. Mất 3 HP; 16 damage |
+| `f02_dien_doat` | Diện Đoạt | TD | Miễn phí | Sửa | 2·3 | E | scheme | Cướp 1 buff; Đoạt Nguyệt 1 |
+| `f02_anh_tap` | Ảnh Tập | TD | Miễn phí | Giữ | 2·3 | E | attack, assassin | Cướp 1 buff; 6 damage; HP < 50%: 10 |
+| `f02_dien_cu` | Diện Cụ | TD | Miễn phí | Sửa | 3·3 | E | scheme | Đoạt Nguyệt 2; Chiêm Bài 2 |
+| `f02_huyet_tram` | Huyết Trâm | HN | Miễn phí | Sửa | 2·3 | E | attack, forbidden | Huyết Nguyệt: 9 damage; ngược lại mất 2 HP + 9 damage |
+| `f02_doi_van_chu` | Đổi Vận Chú | HN | Miễn phí | Giữ | 4·3 | — | moon | Huyết Nguyệt 2; trăng tiến 1 pha |
+| `f02_phe_hon` | Phệ Hồn | HN | Miễn phí | Giữ | 6·2 | E | attack, forbidden | Chỉ khi Huyết Nguyệt. Mất 3 HP; 16 damage |
 | `f02_vong_nguyet_thu` | Vọng Nguyệt Thủ | TD | Khóa | Mới | 1·3 | E | scheme | Đoạt Nguyệt 1; LH≥2: Đoạt Nguyệt 3 |
-| `f02_thien_dien` | Thiên Diện | TD | Khóa | Mới | 4·2 | E | scheme | Cướp 1 buff; HT≥1: cướp 3 |
-| `f02_doat_hon_thich` | Đoạt Hồn Thích | TD | Khóa | Sửa | 5·1 | E | attack, scheme | Cướp 2 buff; Đoạt Nguyệt 2; 6 damage |
+| `f02_thien_dien` | Thiên Diện | TD | Khóa | Mới | 4·3 | E | scheme | Cướp 1 buff; HT≥1: cướp 3 |
+| `f02_doat_hon_thich` | Đoạt Hồn Thích | TD | Khóa | Sửa | 5·2 | E | attack, scheme | Cướp 2 buff; Đoạt Nguyệt 2; 6 damage |
 | `f02_huyet_khe` | Huyết Khế | HN | Khóa | Giữ | 0·2 | — | forbidden | Mất 3 HP; +4 Nguyệt Lực |
-| `f02_ta_nguyet_chu` | Tà Nguyệt Chú | HN | Khóa | Giữ | 0·2 | — | forbidden, moon | Mất 4 HP; Huyết Nguyệt 1 |
-| `f02_huyet_nguyet_than_cong` | Huyết Nguyệt Thần Công | HN | Khóa | Mới | 7·1 | — | attack, forbidden | Chỉ khi Huyết Nguyệt. Mất 4 HP; 5 damage ×2 mọi kẻ địch; Huyết Nguyệt ≥ 3 vòng |
+| `f02_ta_nguyet_chu` | Tà Nguyệt Chú | HN | Khóa | Giữ | 0·3 | — | forbidden, moon | Mất 4 HP; Huyết Nguyệt 1 |
+| `f02_huyet_nguyet_than_cong` | Huyết Nguyệt Thần Công | HN | Khóa | Mới | 7·2 | — | attack, forbidden | Chỉ khi Huyết Nguyệt. Mất 4 HP; 5 damage ×2 mọi kẻ địch; Huyết Nguyệt ≥ 3 vòng |
 
 ### 3.7 Lá Song Hành
 
@@ -349,7 +351,7 @@ theo thứ tự trên (rỗng = hợp lệ).
 
 | Hàm | Luật |
 |---|---|
-| `starterDeck(data, heroIds)` | "Bộ cơ bản": `cardIds` miễn phí của 3 Hero theo thứ tự đội; không lưu trong hồ sơ |
+| `starterDeck(data, heroIds): string[]` | Lá của "Bộ cơ bản": `cardIds` miễn phí của 3 Hero theo thứ tự đội; không lưu trong hồ sơ (tên hiển thị do client đặt) |
 | `saveDeck(data, profile, draft)` | `draft.id` rỗng → deck mới, `id = "d" + (số lớn nhất hiện có + 1)`; có `id` → ghi đè. Lỗi: `"invalid name"`, `"too many decks"` (khi tạo mới lúc đã có `maxDecks`), `"unknown deck"` (ghi đè `id` không có). Deck không hợp lệ **vẫn lưu được** |
 | `deleteDeck(profile, deckId)` | Lỗi `"unknown deck"` |
 
