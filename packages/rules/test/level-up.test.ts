@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, getEffectiveCost } from "../src/index";
-import { idleIntent } from "./fixtures";
+import { idleIntent, strike9Intent } from "./fixtures";
 import { makeEnemiesIdle, makeTestCombat, setHand, setIntent, instanceIdOf } from "./helpers";
 
 describe("hero level up", () => {
@@ -43,7 +43,7 @@ describe("hero level up", () => {
 
   it("T48: damageTaken counts only real HP lost, not blocked damage", () => {
     const { data, state } = makeTestCombat();
-    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    const heavy = strike9Intent;
     state.heroes[0]!.armor = 5;
     setIntent(state, 0, heavy, "hero:m05");
     setIntent(state, 1, idleIntent, null);

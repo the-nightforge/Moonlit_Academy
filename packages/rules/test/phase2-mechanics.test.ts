@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CombatState, GameData } from "../src/index";
 import { applyAction, isCardPlayable } from "../src/index";
-import { idleIntent } from "./fixtures";
+import { idleIntent, strike9Intent } from "./fixtures";
 import {
   idleEnemies,
   instanceIdOf,
@@ -29,7 +29,7 @@ describe("reflect", () => {
   it("T61: a hit on a reflecting hero makes the attacker lose HP", () => {
     const { data, state } = makeTestCombat({ heroIds: PHASE2_TEAM });
     hero(state, "f03").statuses.push({ id: "reflect", value: 2 });
-    setIntent(state, 0, data.enemies["puppet_guard"]!.intentPattern[0]!, "hero:f03");
+    setIntent(state, 0, strike9Intent, "hero:f03");
     setIntent(state, 1, idleIntent, null);
 
     const result = applyAction(data, state, { type: "endTurn" });
@@ -51,7 +51,7 @@ describe("reflect", () => {
     const f03 = hero(state, "f03");
     f03.armor = 20;
     f03.statuses.push({ id: "reflect", value: 2 });
-    setIntent(state, 0, data.enemies["puppet_guard"]!.intentPattern[0]!, "hero:f03");
+    setIntent(state, 0, strike9Intent, "hero:f03");
     setIntent(state, 1, idleIntent, null);
 
     const result = applyAction(data, state, { type: "endTurn" });
@@ -123,7 +123,7 @@ describe("reflect", () => {
     const { data, state } = makeTestCombat();
     hero(state, "m06").statuses.push({ id: "reflect", value: 2 });
     state.enemies[0]!.hp = 2;
-    setIntent(state, 0, data.enemies["puppet_guard"]!.intentPattern[0]!, "hero:m06");
+    setIntent(state, 0, strike9Intent, "hero:m06");
     setIntent(state, 1, idleIntent, null);
 
     const result = applyAction(data, state, { type: "endTurn" });

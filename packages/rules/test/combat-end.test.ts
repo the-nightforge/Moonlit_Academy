@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, isCardPlayable } from "../src/index";
-import { idleIntent, killThenArmorCard } from "./fixtures";
+import { idleIntent, killThenArmorCard, strike9Intent } from "./fixtures";
 import { injectCard, instanceIdOf, makeTestCombat, setHand, setIntent } from "./helpers";
 
 describe("combat end", () => {
@@ -68,7 +68,7 @@ describe("combat end", () => {
 
   it("T55: a dead hero's cards become broken", () => {
     const { data, state } = makeTestCombat();
-    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    const heavy = strike9Intent;
     state.heroes[2]!.hp = 5;
     setIntent(state, 0, heavy, "hero:m06");
     setIntent(state, 1, idleIntent, null);
@@ -94,7 +94,7 @@ describe("combat end", () => {
 
   it("T56: a dead hero cannot be targeted by ally cards", () => {
     const { data, state } = makeTestCombat();
-    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    const heavy = strike9Intent;
     state.heroes[2]!.hp = 5;
     setIntent(state, 0, heavy, "hero:m06");
     setIntent(state, 1, idleIntent, null);
@@ -114,7 +114,7 @@ describe("combat end", () => {
 
   it("T59: losing the last hero loses the combat", () => {
     const { data, state } = makeTestCombat();
-    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    const heavy = strike9Intent;
     state.heroes[0]!.alive = false;
     state.heroes[0]!.hp = 0;
     state.heroes[2]!.alive = false;

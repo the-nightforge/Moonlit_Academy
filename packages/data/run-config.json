@@ -3,14 +3,14 @@
   "floorWidth": { "min": 2, "max": 3 },
   "floorRules": [
     { "floors": [1], "type": "combat" },
-    { "floors": [2, 3], "weights": { "combat": 80, "rest": 20 } },
+    { "floors": [2, 3], "weights": { "combat": 70, "rest": 30 } },
     { "floors": [4], "type": "treasure" },
     { "floors": [5, 6], "weights": { "combat": 60, "elite": 25, "rest": 15 } },
     { "floors": [7], "type": "rest" },
     { "floors": [8], "type": "boss" }
   ],
-  "restHealRatio": 0.3,
-  "reviveHpRatio": 0.25,
+  "restHealRatio": 0.4,
+  "reviveHpRatio": 0.4,
   "rewardCardChoices": 3,
   "minDeckSize": 10
 }

@@ -45,3 +45,12 @@ export const killThenArmorCard: CardDef = {
   ],
   text: "Gây 99 damage rồi nhận 5 giáp (test).",
 };
+
+/** Fixed 9-damage single-target attack, so rule tests do not track enemy balance. */
+export const strike9Intent: IntentDef = {
+  id: "test_strike_9",
+  name: "Test Strike 9",
+  kind: "attack",
+  targeting: "random",
+  effects: [{ type: "damage", amount: 9, to: "chosen" }],
+};

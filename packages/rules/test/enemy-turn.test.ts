@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, getValidTargets } from "../src/index";
-import { idleIntent } from "./fixtures";
+import { idleIntent, strike9Intent } from "./fixtures";
 import { instanceIdOf, makeTestCombat, setHand, setIntent } from "./helpers";
 
 describe("enemy turn", () => {
   it("T15: weak reduces enemy damage dealt to 75%", () => {
     const { data, state } = makeTestCombat();
-    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    const heavy = strike9Intent;
     setIntent(state, 0, heavy, "hero:m05");
     state.enemies[0]!.statuses.push({ id: "weak", value: 1 });
     setIntent(state, 1, idleIntent, null);
@@ -19,7 +19,7 @@ describe("enemy turn", () => {
 
   it("T17: weak and vulnerable stack multiplicatively", () => {
     const { data, state } = makeTestCombat();
-    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    const heavy = strike9Intent;
     setIntent(state, 0, heavy, "hero:m05");
     state.enemies[0]!.statuses.push({ id: "weak", value: 1 });
     state.heroes[0]!.statuses.push({ id: "vulnerable", value: 1 });
@@ -35,7 +35,7 @@ describe("enemy turn", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => setHand(s, ["m05_ho_gam"]),
     });
-    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    const heavy = strike9Intent;
     setIntent(state, 0, heavy, "hero:m06");
     setIntent(state, 1, idleIntent, null);
     const played = applyAction(data, state, {
@@ -57,7 +57,7 @@ describe("enemy turn", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => setHand(s, ["m06_anh_bo"]),
     });
-    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    const heavy = strike9Intent;
     setIntent(state, 0, heavy, "hero:m06");
     setIntent(state, 1, idleIntent, null);
     const played = applyAction(data, state, {

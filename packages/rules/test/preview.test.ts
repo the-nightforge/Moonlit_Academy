@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { previewEnemyIntent } from "../src/index";
 import { makeTestCombat, setIntent } from "./helpers";
-import { idleIntent } from "./fixtures";
+import { idleIntent, strike9Intent } from "./fixtures";
 
 describe("previewEnemyIntent", () => {
   it("keeps the announced target when it is alive and visible", () => {
     const { data, state } = makeTestCombat();
-    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    const heavy = strike9Intent;
     setIntent(state, 0, heavy, "hero:m05");
 
     const preview = previewEnemyIntent(data, state, state.enemies[0]!);
@@ -18,7 +18,7 @@ describe("previewEnemyIntent", () => {
 
   it("re-resolves through taunt without consuming rng state", () => {
     const { data, state } = makeTestCombat();
-    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    const heavy = strike9Intent;
     setIntent(state, 0, heavy, "hero:m06");
     state.heroes[0]!.statuses.push({ id: "taunt", value: 1 });
     const rngBefore = state.rngState;
@@ -30,7 +30,7 @@ describe("previewEnemyIntent", () => {
 
   it("shows reduced damage when the enemy is weak and target vulnerable", () => {
     const { data, state } = makeTestCombat();
-    const heavy = data.enemies["puppet_guard"]!.intentPattern[0]!;
+    const heavy = strike9Intent;
     setIntent(state, 0, heavy, "hero:m05");
     state.enemies[0]!.statuses.push({ id: "weak", value: 1 });
     state.heroes[0]!.statuses.push({ id: "vulnerable", value: 1 });

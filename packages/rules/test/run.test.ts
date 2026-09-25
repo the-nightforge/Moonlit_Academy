@@ -87,8 +87,8 @@ describe("run lifecycle", () => {
     f04!.hp = 0;
     f04!.alive = false;
     const { run: won, runEvents } = winCombat(data, entered);
-    expect(won.heroes.map((h) => h.hp)).toEqual([25, 8, 28]);
-    expect(runEvents).toContainEqual({ type: "heroRevived", heroId: "f04", hp: 8 });
+    expect(won.heroes.map((h) => h.hp)).toEqual([25, 12, 28]);
+    expect(runEvents).toContainEqual({ type: "heroRevived", heroId: "f04", hp: 12 });
     expect(won.status).toBe("reward");
     expect(won.combat).toBeNull();
     const choices = won.pendingReward!.cardChoices;
@@ -137,15 +137,15 @@ describe("run lifecycle", () => {
     expect(won.status).toBe("reward");
   });
 
-  it("T109: resting heals 30% max HP, capped", () => {
+  it("T109: resting heals 40% max HP, capped", () => {
     const { data, run } = newRun();
     const nodeId = forceFirstNode(run, "rest");
     const resting = act(data, run, { type: "chooseNode", nodeId }).run;
     expect(resting.status).toBe("rest");
     resting.heroes[0]!.hp = 20;
     const { run: healed, runEvents } = act(data, resting, { type: "rest", choice: "heal" });
-    expect(healed.heroes.map((h) => h.hp)).toEqual([32, 30, 28]);
-    expect(runEvents).toEqual([{ type: "restHealed", heroId: "m05", amount: 12 }]);
+    expect(healed.heroes.map((h) => h.hp)).toEqual([36, 30, 28]);
+    expect(runEvents).toEqual([{ type: "restHealed", heroId: "m05", amount: 16 }]);
     expect(healed.status).toBe("map");
   });
 

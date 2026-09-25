@@ -118,14 +118,14 @@ interface CombatSetup {
   "floorWidth": { "min": 2, "max": 3 },
   "floorRules": [
     { "floors": [1], "type": "combat" },
-    { "floors": [2, 3], "weights": { "combat": 80, "rest": 20 } },
+    { "floors": [2, 3], "weights": { "combat": 70, "rest": 30 } },
     { "floors": [4], "type": "treasure" },
     { "floors": [5, 6], "weights": { "combat": 60, "elite": 25, "rest": 15 } },
     { "floors": [7], "type": "rest" },
     { "floors": [8], "type": "boss" }
   ],
-  "restHealRatio": 0.3,
-  "reviveHpRatio": 0.25,
+  "restHealRatio": 0.4,
+  "reviveHpRatio": 0.4,
   "rewardCardChoices": 3,
   "minDeckSize": 10
 }
@@ -458,11 +458,11 @@ Test bản đồ kiểm tra **tính chất** trên nhiều seed (ví dụ seed 1
 | T102 | `createRun` M05/F04/M06, seed 42 | — | `map`, deck 15 lá, HP đầy, không Kỳ Vật, `position = null` |
 | T103 | Lượt chơi mới | `chooseNode` một nút tầng 2; rồi một nút tầng 1 | Nút tầng 2 bị từ chối, state không đổi; nút tầng 1 hợp lệ |
 | T104 | F04 HP 20/30 trong `RunState` | Vào nút trận | `combat`; F04 trong trận HP 20; deck trận = `run.deck` |
-| T105 | Thắng trận, F04 đã ngã, M05 còn 25/40 | (trận kết thúc) | M05 25/40; F04 sống lại **8**/30; `reward` với 3 lá từ pool đội, không lá nào đã có trong deck |
+| T105 | Thắng trận, F04 đã ngã, M05 còn 25/40 | (trận kết thúc) | M05 25/40; F04 sống lại **12**/30; `reward` với 3 lá từ pool đội, không lá nào đã có trong deck |
 | T106 | `reward` | `pickCard` lá đầu; lượt khác `pickCard(null)` | Deck 16 → `map`; deck 15 → `map` |
 | T107 | `reward` | `pickCard` lá không nằm trong `cardChoices` | Bị từ chối |
 | T108 | Thắng Tinh Anh | (trận kết thúc) | Nhận 1 Kỳ Vật chưa có (`runRelicGained`) + 3 lá |
-| T109 | `rest`, M05 20/40 | `rest heal` | M05 32/40 (+12); Hero đầy máu không vượt `maxHp` |
+| T109 | `rest`, M05 20/40 | `rest heal` | M05 36/40 (+16); Hero đầy máu không vượt `maxHp` |
 | T110 | `rest`, deck 11 lá | `removeCard` lá có trong deck; lượt khác deck 10 lá | Deck 10 → `map`; deck 10 thì bị từ chối |
 | T111 | Vào Kho Báu | `continue` | Nhận 1 Kỳ Vật khi vào; `continue` → `map` |
 | T112 | Thắng boss / thua một trận | Bất kỳ hành động sau đó | `won` / `lost`, `runEnded`; mọi hành động bị từ chối |

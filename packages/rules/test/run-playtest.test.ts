@@ -26,30 +26,52 @@ const SEEDS = [1, 2, 3, 4, 5];
 const MAX_STEPS = 20000;
 const MAX_COMBAT_ROUNDS = 60;
 
-// Greedy floor: first playable card with its first valid target, else end turn.
+// First playable card; focus the lowest-HP enemy, or the ally with the lowest HP ratio.
 function combatAction(gameData: GameData, state: CombatState): Action {
   for (const instanceId of state.hand) {
     if (!isCardPlayable(gameData, state, instanceId)) continue;
     const card = gameData.cards[state.cards[instanceId]!.cardId]!;
     if (card.target === "none") return { type: "playCard", instanceId };
-    const targetId = getValidTargets(gameData, state, instanceId)[0];
+    const units: { id: string; hp: number; maxHp: number }[] =
+      card.target === "enemy" ? state.enemies : state.heroes;
+    const score = (id: string) => {
+      const unit = units.find((u) => u.id === id)!;
+      return card.target === "enemy" ? unit.hp : unit.hp / unit.maxHp;
+    };
+    const targetId = getValidTargets(gameData, state, instanceId).sort((a, b) => score(a) - score(b))[0];
     if (targetId !== undefined) return { type: "playCard", instanceId, targetId };
   }
   return { type: "endTurn" };
 }
 
+function hpRatio(run: RunState): number {
+  const hp = run.heroes.reduce((sum, h) => sum + h.hp, 0);
+  return hp / run.heroes.reduce((sum, h) => sum + h.maxHp, 0);
+}
+
+// Healthy: fight, then treasure, then rest, elite last. Below 60% HP: rest first, elite never if avoidable.
+function nodeScore(run: RunState, nodeId: string): number {
+  const low = hpRatio(run) < 0.6;
+  const type = findNode(run, nodeId)!.type;
+  if (type === "rest") return low ? 0 : 2;
+  if (type === "treasure") return 1;
+  if (type === "elite") return low ? 9 : 3;
+  return low ? 5 : 1;
+}
+
 function runAction(gameData: GameData, run: RunState): RunAction {
   switch (run.status) {
     case "map":
-      return { type: "chooseNode", nodeId: reachableNodeIds(run)[0]! };
+      return {
+        type: "chooseNode",
+        nodeId: reachableNodeIds(run).sort((a, b) => nodeScore(run, a) - nodeScore(run, b))[0]!,
+      };
     case "combat":
       return { type: "combat", action: combatAction(gameData, run.combat!) };
     case "reward":
       return { type: "pickCard", cardId: run.pendingReward!.cardChoices[0] ?? null };
     case "rest": {
-      const hp = run.heroes.reduce((sum, h) => sum + h.hp, 0);
-      const maxHp = run.heroes.reduce((sum, h) => sum + h.maxHp, 0);
-      if (hp < 0.6 * maxHp || run.deck.length <= gameData.runConfig.minDeckSize) {
+      if (hpRatio(run) < 0.6 || run.deck.length <= gameData.runConfig.minDeckSize) {
         return { type: "rest", choice: "heal" };
       }
       const cheapest = [...run.deck].sort(

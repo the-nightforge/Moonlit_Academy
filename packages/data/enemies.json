@@ -9,7 +9,7 @@
         "name": "Trọng Kích",
         "kind": "attack",
         "targeting": "random",
-        "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }]
+        "effects": [{ "type": "damage", "amount": 7, "to": "chosen" }]
       },
       {
         "id": "guard_stance",
@@ -27,7 +27,7 @@
         "name": "Trọng Kích",
         "kind": "attack",
         "targeting": "random",
-        "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }]
+        "effects": [{ "type": "damage", "amount": 7, "to": "chosen" }]
       }
     ],
     "art": { "portrait": "" }
@@ -56,7 +56,7 @@
         "name": "Cắn Xé",
         "kind": "attack",
         "targeting": "random",
-        "effects": [{ "type": "damage", "amount": 7, "to": "chosen" }]
+        "effects": [{ "type": "damage", "amount": 5, "to": "chosen" }]
       }
     ],
     "moonOverrides": [
@@ -67,7 +67,7 @@
           "name": "Huyễn Nguyệt",
           "kind": "special",
           "targeting": "lowestHp",
-          "effects": [{ "type": "damage", "amount": 12, "to": "chosen" }]
+          "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }]
         }
       }
     ],
@@ -172,7 +172,7 @@
         "effects": [
           {
             "type": "damage",
-            "amount": 8,
+            "amount": 6,
             "to": "chosen"
           }
         ]

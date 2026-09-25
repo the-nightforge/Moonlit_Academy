@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CombatEvent, CombatState, GameData, RunRelicDef } from "../src/index";
 import { applyAction } from "../src/index";
-import { idleIntent } from "./fixtures";
+import { idleIntent, strike9Intent } from "./fixtures";
 import { idleEnemies, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand, setIntent } from "./helpers";
 
 function play(data: GameData, state: CombatState, cardId: string, targetId?: string) {
@@ -24,7 +24,7 @@ describe("run relic hooks", () => {
   it("T115: combatStart armor lasts through the first enemy turn", () => {
     const { data, state } = makeTestCombat({ runRelicIds: ["nguyet_giap_phu"] });
     expect(state.heroes.map((h) => h.armor)).toEqual([5, 5, 5]);
-    setIntent(state, 0, data.enemies["puppet_guard"]!.intentPattern[0]!, "hero:m05");
+    setIntent(state, 0, strike9Intent, "hero:m05");
     setIntent(state, 1, idleIntent, null);
     const result = applyAction(data, state, { type: "endTurn" });
     expect(result.ok).toBe(true);
@@ -126,7 +126,7 @@ describe("run relic hooks", () => {
     hero(state, "m06").hp = 5;
     hero(state, "m05").hp = 20;
     hero(state, "f04").hp = 20;
-    setIntent(state, 0, data.enemies["puppet_guard"]!.intentPattern[0]!, "hero:m06");
+    setIntent(state, 0, strike9Intent, "hero:m06");
     setIntent(state, 1, idleIntent, null);
     const result = applyAction(data, state, { type: "endTurn" });
     expect(result.ok).toBe(true);

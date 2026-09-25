@@ -261,3 +261,58 @@ Không lượt nào chạm trần 60 vòng hay 20000 bước — mọi trận đ
 - [ ] Người chơi thật (focus-fire, giữ hồi máu, né Tinh Anh) có lật được chuỗi
       thua của heuristic không, hay attrition vẫn quá nặng?
 - [ ] Hero hồi sinh 25% HP có bao giờ "cứu" được lượt không?
+
+## Điều chỉnh attrition (đã duyệt)
+
+Đo từng đề xuất ở trên bằng ablation 4 đội × 20 seed = 80 lượt, với cả heuristic
+tham lam lẫn heuristic "khôn" (focus-fire địch ít HP nhất, hồi đồng minh thấp %
+nhất, về Nghỉ Chân khi HP < 60%, né Tinh Anh khi yếu):
+
+| Biến thể | Tham lam | Khôn | Khôn: tới tầng ≥5 |
+|---|---|---|---|
+| Data cũ | 1/80 | 6/80 | 16 |
+| `puppet_guard` HP 36 | 2 | 7 | 19 |
+| `shadow_fox` HP 20 | 0 | 6 | 22 |
+| Hồi sinh 0.4 | 4 | 5 | 17 |
+| Nghỉ 0.4 + rest weight 30 | 4 | 10 | 28 |
+| enc_02/03 `minFloor` 2 | 0 | 6 | 16 |
+| HP mọi địch thường ×0.8 | 3 | 7 | 24 |
+| Damage địch thường (9→7, 7→5, 8→6) | 3 | 12 | 31 |
+| 4 đề xuất trên + `minFloor` 2 | 4 | 14 | 38 |
+| **Damage + Nghỉ 0.4/w30 + Hồi sinh 0.4** | **7** | **20** | **49** |
+
+Kết luận: attrition đến từ **damage địch**, không phải HP địch — hạ HP chỉ rút ngắn
+trận, còn HP mất mỗi trận (thứ cộng dồn qua lượt) gần như giữ nguyên. Đã áp dụng:
+
+- `puppet_guard` Trọng Kích 9 → 7 (cả hai lượt); `shadow_fox` Vồ 7 → 5 (Trăng Tròn
+  12 → 9); `book_wraith` 8 → 6. Song Trảo 3×2, Giáp, Hồi Phục giữ nguyên.
+- `restHealRatio` 0.3 → 0.4; tầng 2–3 weights `combat 80 / rest 20` → `70 / 30`;
+  `reviveHpRatio` 0.25 → 0.4. Cập nhật T105/T109 trong `06` và `10`.
+- `run-playtest.test.ts` chuyển sang heuristic khôn (tham lam không phân biệt được
+  thiết kế với sàn kỹ năng: cùng data cho ~⅓ số lượt thắng).
+- Test luật dùng intent cố định `strike9Intent` (fixtures) thay cho Trọng Kích của
+  Khôi Lỗi, để chỉnh cân bằng không làm vỡ test luật.
+
+### Kết quả sau chỉnh (`run-playtest`, seed 1–5)
+
+| Đội | Thắng | Thua | Kẹt | Tầng TB | Trận/lượt | Deck cuối | Kỳ Vật |
+|---|---|---|---|---|---|---|---|
+| m05+f04+m06 | 1 | 3 | 1 (boss) | 6.4 | 3.8 | 17.0 | 0.8 |
+| m05+f03+f02 | 1 | 4 | 0 | 6.2 | 3.6 | 17.4 | 0.8 |
+| m06+f02+f03 | 0 | 5 | 0 | 5.0 | 3.0 | 17.0 | 0.6 |
+| m05+f03+f04 | 4 | 1 | 0 | 6.6 | 4.2 | 16.6 | 0.8 |
+
+Tổng: **6/20 thắng** (trước 0/20), tầng TB 6.05 (trước 2.35). 11/20 lượt tới boss.
+
+Playtest per-encounter giai đoạn 2 (heuristic tham lam, không đổi): enc_01–03 giờ
+thắng 34/36 (trước 29/36); boss không đổi (data boss không chỉnh).
+
+### Còn mở
+
+- [ ] **Boss là kẻ kết liễu chính** khi lượt đi sâu (4 thua + 1 kẹt > 60 vòng ở tầng
+      8, đều là đội không có hai nguồn Đóng Băng). Giờ đã đo được — xem lại độ
+      khó / độ dài boss ở vòng sau.
+- [ ] **m06+f02+f03 0/5** (ablation: 0/20 ở mọi biến thể): vấn đề của đội (không
+      hồi máu, F02 tự mất HP), không phải cấu trúc lượt chơi.
+- [ ] Encounter "dễ" cho tầng 1 (Ảnh Hồ ×2, Khôi Lỗi ×1) chỉ thêm +3/80 trong
+      ablation — chưa làm.
