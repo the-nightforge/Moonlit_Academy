@@ -48,7 +48,7 @@ export function createCombat(
     for (let copy = 0; copy < card.copies; copy++) {
       deckIndex += 1;
       const instanceId = `c${String(deckIndex).padStart(2, "0")}`;
-      cards[instanceId] = { instanceId, cardId, ownerIds: [card.ownerId] };
+      cards[instanceId] = { instanceId, cardId, ownerIds: [card.ownerId], heldTurns: 0 };
       drawPile.push(instanceId);
     }
   }
@@ -57,7 +57,7 @@ export function createCombat(
     for (let copy = 0; copy < card.copies; copy++) {
       bondIndex += 1;
       const instanceId = `bond${String(bondIndex).padStart(2, "0")}`;
-      cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [...card.bond!.owners] };
+      cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [...card.bond!.owners], heldTurns: 0 };
       drawPile.push(instanceId);
     }
   }
@@ -109,6 +109,8 @@ export function createCombat(
     bloodMoonRounds: 0,
     moonPower: 0,
     moonReserve: 0,
+    moonPowerBonus: 0,
+    cardsPlayedThisTurn: 0,
     heroes,
     enemies,
     cards,

@@ -33,11 +33,13 @@ describe("bond deck construction", () => {
       instanceId: "bond01",
       cardId: "bond_bang_hoa_tranh_phong",
       ownerIds: ["m05", "f03"],
+      heldTurns: 0,
     });
     expect(state.cards["bond02"]).toEqual({
       instanceId: "bond02",
       cardId: "bond_bang_hoa_tranh_phong",
       ownerIds: ["m05", "f03"],
+      heldTurns: 0,
     });
     expect(state.drawPile.length + state.hand.length).toBe(total);
   });

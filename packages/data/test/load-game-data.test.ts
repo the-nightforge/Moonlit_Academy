@@ -7,6 +7,7 @@ import moonPhasesJson from "../moon-phases.json";
 import runRelicsJson from "../run-relics.json";
 import runConfigJson from "../run-config.json";
 import combatConfigJson from "../combat-config.json";
+import keywordsJson from "../keywords.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -19,6 +20,7 @@ function rawData(): any {
     runRelics: runRelicsJson,
     runConfig: runConfigJson,
     combatConfig: combatConfigJson,
+    keywords: keywordsJson,
   }));
 }
 
@@ -221,5 +223,19 @@ describe("parseGameData validation", () => {
     const guide = raw.cards.find((card: any) => card.id === "f04_nguyet_quang_dan");
     guide.effects.reverse();
     expect(() => parseGameData(raw)).toThrowError(/chooseCard must be the last/);
+  });
+
+  it("T157: rejects card-only keywords in enemy intents and relic hooks, and unknown card keywords", () => {
+    const intent = rawData();
+    intent.enemies[0].intents[0].effects.push({ type: "drainMoonPower", amount: 1, to: "chosen" });
+    expect(() => parseGameData(intent)).toThrowError(/card-only keyword/);
+
+    const hook = rawData();
+    hook.runRelics[0].hooks[0].effects.push({ type: "missingHpDamage", ratio: 1, to: "allEnemies" });
+    expect(() => parseGameData(hook)).toThrowError(/card-only keyword/);
+
+    const keyword = rawData();
+    keyword.cards[0].keywords = ["no_such_keyword"];
+    expect(() => parseGameData(keyword)).toThrowError(/unknown keyword/);
   });
 });

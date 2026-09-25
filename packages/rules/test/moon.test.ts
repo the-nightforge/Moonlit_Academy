@@ -190,7 +190,6 @@ describe("moon phases", () => {
       },
     });
     const instanceId = injectCard(state, data, rewindMoonCard);
-    state.hand.push(instanceId);
     const result = applyAction(data, state, { type: "playCard", instanceId });
     expect(result.ok).toBe(true);
     if (!result.ok) return;

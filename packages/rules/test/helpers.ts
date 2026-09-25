@@ -104,7 +104,7 @@ export function injectCard(state: CombatState, data: GameData, card: CardDef): s
   data.cards[card.id] = card;
   const instanceId = `test_${card.id}`;
   const ownerIds = card.bond ? [...card.bond.owners] : [card.ownerId!];
-  state.cards[instanceId] = { instanceId, cardId: card.id, ownerIds };
+  state.cards[instanceId] = { instanceId, cardId: card.id, ownerIds, heldTurns: 0 };
   state.hand.push(instanceId);
   return instanceId;
 }

@@ -125,6 +125,8 @@ export function describeEvent(
       return `Huyết Nguyệt còn ${event.rounds} vòng (${event.cause})`;
     case "intentsRevealed":
       return `${name(event.enemyId)} báo ${event.intents.map((i) => i.intentId).join(", ") || "Tụ Lực"} (NL ${event.moonPower})`;
+    case "intentsCancelled":
+      return `${name(event.enemyId)} bị hủy ${event.intentIds.join(", ")}`;
     case "intentExecuted":
       return `${name(event.enemyId)} thực hiện ${event.intentId} → ${name(event.targetId)}`;
     case "intentSkipped":

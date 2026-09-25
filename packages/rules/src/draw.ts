@@ -4,6 +4,7 @@ import type { CombatEvent, CombatState, GameData } from "./types/index";
 export function drawCards(state: CombatState, count: number, events: CombatEvent[]): void {
   const drawn = state.drawPile.splice(0, Math.max(0, count));
   if (drawn.length === 0) return;
+  for (const id of drawn) state.cards[id]!.heldTurns = 0;
   state.hand.push(...drawn);
   events.push({ type: "cardsDrawn", instanceIds: drawn });
 }

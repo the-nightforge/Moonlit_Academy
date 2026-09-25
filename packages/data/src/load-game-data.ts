@@ -9,6 +9,7 @@ import moonPhasesJson from "../moon-phases.json";
 import runRelicsJson from "../run-relics.json";
 import runConfigJson from "../run-config.json";
 import combatConfigJson from "../combat-config.json";
+import keywordsJson from "../keywords.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -28,7 +29,8 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig } = parsed;
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig, keywords } =
+    parsed;
   const errors: string[] = [];
 
   const groups = [
@@ -37,6 +39,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     ["enemies", enemies],
     ["encounters", encounters],
     ["runRelics", runRelics],
+    ["keywords", keywords],
   ] as const;
   for (const [label, defs] of groups) {
     const seen = new Set<string>();
@@ -49,6 +52,17 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   const heroById = new Map(heroes.map((hero) => [hero.id, hero]));
   const cardById = new Map(cards.map((card) => [card.id, card]));
   const enemyById = new Map(enemies.map((enemy) => [enemy.id, enemy]));
+  const keywordIds = new Set(keywords.map((keyword) => keyword.id));
+
+  /** Effects and conditions only usable on player cards (`13` §2.3). */
+  const cardOnly = (effect: Effect): boolean =>
+    effect.type === "drainMoonPower" ||
+    effect.type === "gainMoonPowerPerTurn" ||
+    effect.type === "burstRegen" ||
+    (effect.type === "heal" && effect.overflow !== undefined) ||
+    (effect.type === "conditional" &&
+      (effect.condition.type === "heldTurnsAtLeast" ||
+        effect.condition.type === "cardsPlayedThisTurnAtLeast"));
 
   const nestedChoose = (effects: Effect[]) =>
     effects.some(
@@ -100,6 +114,15 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     if ((chooseIndex >= 0 && chooseIndex !== card.effects.length - 1) || nestedChoose(card.effects)) {
       errors.push(`card "${card.id}": chooseCard must be the last top-level effect`);
     }
+    for (const id of card.keywords ?? []) {
+      if (!keywordIds.has(id)) errors.push(`card "${card.id}": unknown keyword "${id}"`);
+    }
+    if (
+      card.target !== "enemy" &&
+      someEffect(card.effects, (e) => e.type === "drainMoonPower" && e.to === "chosen")
+    ) {
+      errors.push(`card "${card.id}": drainMoonPower to "chosen" needs target "enemy"`);
+    }
   }
 
   for (const enemy of enemies) {
@@ -125,6 +148,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       }
       if (someEffect(intent.effects, (effect) => effect.type === "chooseCard")) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": chooseCard is not allowed`);
+      }
+      if (someEffect(intent.effects, cardOnly)) {
+        errors.push(`enemy "${enemy.id}" intent "${intent.id}": card-only keyword`);
       }
     }
   }
@@ -209,6 +235,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(hook.effects, (effect) => effect.type === "chooseCard")) {
         errors.push(`${label}: effects must not use chooseCard`);
       }
+      if (someEffect(hook.effects, (e) => cardOnly(e) || e.type === "missingHpDamage")) {
+        errors.push(`${label}: card-only keyword`);
+      }
       if (
         someEffect(
           hook.effects,
@@ -235,7 +264,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig, keywords } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -246,6 +275,7 @@ export function parseGameData(raw: unknown): GameData {
     runRelics: Object.fromEntries(runRelics.map((relic) => [relic.id, relic])),
     runConfig,
     combatConfig,
+    keywords: Object.fromEntries(keywords.map((keyword) => [keyword.id, keyword])),
   };
 }
 
@@ -259,5 +289,6 @@ export function loadGameData(): GameData {
     runRelics: runRelicsJson,
     runConfig: runConfigJson,
     combatConfig: combatConfigJson,
+    keywords: keywordsJson,
   });
 }
