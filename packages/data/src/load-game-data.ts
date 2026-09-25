@@ -6,6 +6,8 @@ import cardsJson from "../cards.json";
 import enemiesJson from "../enemies.json";
 import encountersJson from "../encounters.json";
 import moonPhasesJson from "../moon-phases.json";
+import runRelicsJson from "../run-relics.json";
+import runConfigJson from "../run-config.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -25,7 +27,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases } = parsed;
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig } = parsed;
   const errors: string[] = [];
 
   const groups = [
@@ -33,6 +35,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     ["cards", cards],
     ["enemies", enemies],
     ["encounters", encounters],
+    ["runRelics", runRelics],
   ] as const;
   for (const [label, defs] of groups) {
     const seen = new Set<string>();
@@ -120,6 +123,76 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
   }
 
+  for (const hero of heroes) {
+    for (const cardId of hero.rewardCardIds) {
+      const card = cardById.get(cardId);
+      if (!card) {
+        errors.push(`hero "${hero.id}": rewardCardIds references missing card "${cardId}"`);
+      } else if (card.ownerId !== hero.id) {
+        errors.push(`hero "${hero.id}": reward card "${cardId}" has ownerId "${card.ownerId}"`);
+      } else if (hero.cardIds.includes(cardId)) {
+        errors.push(`hero "${hero.id}": reward card "${cardId}" is also a starting card`);
+      }
+    }
+  }
+
+  const byTier = (tier: string) => encounters.filter((encounter) => encounter.tier === tier);
+  if (byTier("boss").length !== 1) {
+    errors.push(`encounters: expected exactly 1 boss encounter, got ${byTier("boss").length}`);
+  }
+  if (!byTier("normal").some((encounter) => (encounter.minFloor ?? 1) <= 1)) {
+    errors.push(`encounters: need a normal encounter with minFloor 1`);
+  }
+  if (byTier("elite").length === 0) errors.push(`encounters: need at least 1 elite encounter`);
+
+  const { floors, floorWidth, floorRules } = runConfig;
+  if (floorWidth.max < floorWidth.min || floorWidth.max > 2 * floorWidth.min) {
+    errors.push(`runConfig: floorWidth needs min <= max <= 2 x min`);
+  }
+  for (let floor = 1; floor <= floors; floor++) {
+    const count = floorRules.filter((rule) => rule.floors.includes(floor)).length;
+    if (count !== 1) errors.push(`runConfig: floor ${floor} has ${count} floorRules (expected 1)`);
+  }
+  for (const rule of floorRules) {
+    if (rule.floors.some((floor) => floor < 1 || floor > floors)) {
+      errors.push(`runConfig: floorRules reference a floor outside 1..${floors}`);
+    }
+    const allowsBoss = "type" in rule ? rule.type === "boss" : (rule.weights.boss ?? 0) > 0;
+    if (allowsBoss && rule.floors.some((floor) => floor !== floors)) {
+      errors.push(`runConfig: boss nodes are only allowed on floor ${floors}`);
+    }
+  }
+  const lastRule = floorRules.find((rule) => rule.floors.includes(floors));
+  if (!lastRule || !("type" in lastRule) || lastRule.type !== "boss") {
+    errors.push(`runConfig: floor ${floors} must be type "boss"`);
+  }
+
+  for (const relic of runRelics) {
+    for (const [index, hook] of (relic.hooks ?? []).entries()) {
+      const label = `runRelic "${relic.id}" hook ${index}`;
+      if (someEffect(hook.effects, (effect) => "to" in effect && effect.to === "chosen")) {
+        errors.push(`${label}: effects must not use to "chosen"`);
+      }
+      if (someEffect(hook.effects, (effect) => effect.type === "stealBuff")) {
+        errors.push(`${label}: effects must not use stealBuff`);
+      }
+      if (someEffect(hook.effects, (effect) => effect.actor !== undefined)) {
+        errors.push(`${label}: effects must not use actor`);
+      }
+      if (
+        someEffect(
+          hook.effects,
+          (effect) => effect.type === "conditional" && effect.condition.type.startsWith("target"),
+        )
+      ) {
+        errors.push(`${label}: conditions must not reference a target`);
+      }
+      if (hook.on.type === "heroDied" && hook.actor === "trigger") {
+        errors.push(`${label}: heroDied cannot use actor "trigger"`);
+      }
+    }
+  }
+
   return errors;
 }
 
@@ -132,13 +205,15 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases } = parsed.data;
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig } = parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
     cards: Object.fromEntries(cards.map((card) => [card.id, card])),
     enemies: Object.fromEntries(enemies.map((enemy) => [enemy.id, enemy])),
     encounters: Object.fromEntries(encounters.map((encounter) => [encounter.id, encounter])),
     moonPhases: [...moonPhases].sort((a, b) => a.index - b.index),
+    runRelics: Object.fromEntries(runRelics.map((relic) => [relic.id, relic])),
+    runConfig,
   };
 }
 
@@ -149,5 +224,7 @@ export function loadGameData(): GameData {
     enemies: enemiesJson,
     encounters: encountersJson,
     moonPhases: moonPhasesJson,
+    runRelics: runRelicsJson,
+    runConfig: runConfigJson,
   });
 }

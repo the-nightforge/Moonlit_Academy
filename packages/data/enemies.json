@@ -144,5 +144,157 @@
       "effects": [{ "type": "damage", "amount": 10, "to": "allEnemies" }]
     },
     "art": { "portrait": "" }
+  },
+  {
+    "id": "book_wraith",
+    "name": "Thư Hồn",
+    "maxHp": 32,
+    "intentPattern": [
+      {
+        "id": "wraith_curse",
+        "name": "Nguyền Thư",
+        "kind": "debuff",
+        "targeting": "random",
+        "effects": [
+          {
+            "type": "applyStatus",
+            "status": "vulnerable",
+            "amount": 2,
+            "to": "chosen"
+          }
+        ]
+      },
+      {
+        "id": "wraith_strike",
+        "name": "Thư Kích",
+        "kind": "attack",
+        "targeting": "lowestHp",
+        "effects": [
+          {
+            "type": "damage",
+            "amount": 8,
+            "to": "chosen"
+          }
+        ]
+      },
+      {
+        "id": "wraith_mend",
+        "name": "Tự Tu",
+        "kind": "buff",
+        "effects": [
+          {
+            "type": "applyStatus",
+            "status": "regen",
+            "amount": 3,
+            "to": "self"
+          }
+        ]
+      }
+    ],
+    "art": {
+      "portrait": ""
+    }
+  },
+  {
+    "id": "black_guard",
+    "name": "Hắc Giáp Vệ",
+    "maxHp": 70,
+    "intentPattern": [
+      {
+        "id": "black_cleave",
+        "name": "Hắc Trảm",
+        "kind": "attack",
+        "targeting": "lowestHp",
+        "effects": [
+          {
+            "type": "damage",
+            "amount": 14,
+            "to": "chosen"
+          }
+        ]
+      },
+      {
+        "id": "black_bulwark",
+        "name": "Hắc Thuẫn",
+        "kind": "defend",
+        "effects": [
+          {
+            "type": "gainArmor",
+            "amount": 12,
+            "to": "self"
+          },
+          {
+            "type": "applyStatus",
+            "status": "regen",
+            "amount": 3,
+            "to": "self"
+          }
+        ]
+      },
+      {
+        "id": "black_sweep",
+        "name": "Hoành Tảo",
+        "kind": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "amount": 7,
+            "to": "allEnemies"
+          }
+        ]
+      }
+    ],
+    "art": {
+      "portrait": ""
+    }
+  },
+  {
+    "id": "fox_king",
+    "name": "Hồ Vương",
+    "maxHp": 50,
+    "intentPattern": [
+      {
+        "id": "fox_king_veil",
+        "name": "Huyễn Ảnh",
+        "kind": "buff",
+        "effects": [
+          {
+            "type": "applyStatus",
+            "status": "stealth",
+            "amount": 2,
+            "to": "self"
+          }
+        ]
+      },
+      {
+        "id": "fox_king_claw",
+        "name": "Vương Trảo",
+        "kind": "attack",
+        "targeting": "highestHp",
+        "effects": [
+          {
+            "type": "damage",
+            "amount": 10,
+            "to": "chosen"
+          }
+        ]
+      },
+      {
+        "id": "fox_king_howl",
+        "name": "Hồ Khiếu",
+        "kind": "debuff",
+        "effects": [
+          {
+            "type": "applyStatus",
+            "status": "weak",
+            "amount": 2,
+            "to": "allEnemies"
+          }
+        ]
+      }
+    ],
+    "art": {
+      "portrait": ""
+    }
   }
 ]

@@ -75,6 +75,7 @@ export const heroDefSchema = z.object({
   rarity: raritySchema,
   maxHp: z.number().int().positive(),
   cardIds: z.array(idSchema).length(5),
+  rewardCardIds: z.array(idSchema),
   levelUp: z.object({
     name: z.string().min(1),
     description: z.string(),
@@ -124,6 +125,8 @@ export const encounterDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
   enemyIds: z.array(idSchema).min(1).max(3),
+  tier: z.enum(["normal", "elite", "boss"]),
+  minFloor: z.number().int().positive().optional(),
 });
 
 const moonModifierSchema = z.discriminatedUnion("type", [
@@ -142,10 +145,73 @@ export const moonPhaseDefSchema = z.object({
   modifiers: z.array(moonModifierSchema),
 });
 
+const nodeTypeSchema = z.enum(["combat", "elite", "rest", "treasure", "boss"]);
+
+const hookTriggerSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("combatStart") }),
+  z.object({ type: z.literal("playerTurnStart") }),
+  z.object({ type: z.literal("playerTurnEnd") }),
+  z.object({
+    type: z.literal("cardPlayed"),
+    tag: cardTagSchema.optional(),
+    cardType: z.enum(["attack", "skill"]).optional(),
+  }),
+  z.object({ type: z.literal("enemyKilled") }),
+  z.object({ type: z.literal("heroDied") }),
+  z.object({ type: z.literal("moonPhaseEntered"), phase: moonPhaseIdSchema.optional() }),
+  z.object({ type: z.literal("bloodMoonStarted") }),
+]);
+
+export const runRelicDefSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1),
+  text: z.string(),
+  modifiers: z.array(moonModifierSchema).optional(),
+  hooks: z
+    .array(
+      z.object({
+        on: hookTriggerSchema,
+        actor: z.enum(["trigger", "each", "lowestHp", "front"]),
+        every: z.number().int().min(2).optional(),
+        effects: z.array(effectSchema).min(1),
+      }),
+    )
+    .optional(),
+});
+
+const floorsSchema = z.array(z.number().int().positive()).min(1);
+const weightSchema = z.number().positive().optional();
+
+export const runConfigSchema = z.object({
+  floors: z.number().int().min(2),
+  floorWidth: z.object({ min: z.number().int().min(2), max: z.number().int().min(2) }),
+  floorRules: z.array(
+    z.union([
+      z.object({ floors: floorsSchema, type: nodeTypeSchema }),
+      z.object({
+        floors: floorsSchema,
+        weights: z.object({
+          combat: weightSchema,
+          elite: weightSchema,
+          rest: weightSchema,
+          treasure: weightSchema,
+          boss: weightSchema,
+        }),
+      }),
+    ]),
+  ),
+  restHealRatio: z.number().gt(0).lte(1),
+  reviveHpRatio: z.number().gt(0).lte(1),
+  rewardCardChoices: z.number().int().positive(),
+  minDeckSize: z.number().int().positive(),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
   enemies: z.array(enemyDefSchema),
   encounters: z.array(encounterDefSchema),
   moonPhases: z.array(moonPhaseDefSchema),
+  runRelics: z.array(runRelicDefSchema),
+  runConfig: runConfigSchema,
 });

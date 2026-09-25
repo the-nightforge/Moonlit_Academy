@@ -1,4 +1,6 @@
-import type { CardDef, EnemyDef, EncounterDef, HeroDef, MoonPhaseDef } from "./static";
+import type {
+  CardDef, EnemyDef, EncounterDef, HeroDef, MoonPhaseDef, RunConfig, RunRelicDef,
+} from "./static";
 import type { CombatState } from "./state";
 import type { CombatEvent } from "./events";
 
@@ -8,6 +10,8 @@ export interface GameData {
   enemies: Record<string, EnemyDef>;
   encounters: Record<string, EncounterDef>;
   moonPhases: MoonPhaseDef[];
+  runRelics: Record<string, RunRelicDef>;
+  runConfig: RunConfig;
 }
 
 export interface CombatSetup {
