@@ -168,3 +168,56 @@ Quy ước thêm: "Boss" = `moon_ape` (HP 110, `enc_04`). F03 = Tần Sương, F
 | T92 | `enc_04`, boss công bố override `lastQuarter` | `endTurn`, rồi Sương Trảm → Boss | Boss có `reflect 3` trong lượt người chơi; F03 mất 3 HP; đầu lượt kẻ địch kế tiếp `reflect` bị gỡ |
 | T93 | Pha Hạ Huyền; rồi pha Trăng Tròn | `getEffectiveCost` | Hạ Huyền: Hổ Gầm 0, Phong Tuyết Chướng 1. Trăng Tròn: Thảo Dược 0 |
 | T94 | Dữ liệu lá có cả `ownerId` và `bond`; lá thường có `actor`; `requiresBloodMoon` trên lá không `forbidden` | Nạp dữ liệu | Mỗi trường hợp báo lỗi schema |
+
+---
+
+## Giai đoạn 3
+
+Quy ước thêm: test bản đồ kiểm tra **tính chất** trên seed 1–50. Test lượt chơi dùng đội M05/F04/M06, seed 42 trừ khi ghi khác; "thắng trận" trong test = cho mọi kẻ địch `burn 999` rồi `endTurn`. Bối cảnh: `10-phase3-spec.md`.
+
+### M. Bản đồ
+
+| Mã | Kiểm tra |
+|---|---|
+| T96 | Tầng 1–7 có 2–3 nút; tầng 8 có đúng 1 nút `boss` |
+| T97 | Mọi nút (trừ boss) có ≥1 `next`; mọi nút từ tầng 2 có ≥1 cạnh vào; mọi nút đi tới được từ tầng 1 |
+| T98 | Không cạnh cắt nhau: với hai nút cùng tầng lane a < b, lane lớn nhất trong `next` của a ≤ lane nhỏ nhất trong `next` của b |
+| T99 | Loại nút đúng `floorRules`; trên tầng trộn, không nút `elite`/`rest` nào có cha cùng loại |
+| T100 | Trận gán đúng tier và `minFloor`; không trùng trận của nút cha (khi còn lựa chọn khác) |
+| T101 | Cùng seed → bản đồ giống hệt; 10 seed khác nhau cho ra ít nhất 2 bản đồ khác nhau |
+
+### N. Lượt chơi
+
+| Mã | Thiết lập | Hành động | Kết quả mong đợi |
+|---|---|---|---|
+| T102 | `createRun` M05/F04/M06, seed 42 | — | `map`, deck 15 lá, HP đầy, không Kỳ Vật, `position = null` |
+| T103 | Lượt chơi mới | `chooseNode` một nút tầng 2; rồi một nút tầng 1 | Nút tầng 2 bị từ chối, state không đổi; nút tầng 1 hợp lệ |
+| T104 | F04 HP 20/30 trong `RunState` | Vào nút trận | `combat`; F04 trong trận HP 20; deck trận = `run.deck` |
+| T105 | Thắng trận, F04 đã ngã, M05 còn 25/40 | (trận kết thúc) | M05 25/40; F04 sống lại **8**/30; `reward` với 3 lá từ pool đội, không lá nào đã có trong deck |
+| T106 | `reward` | `pickCard` lá đầu; lượt khác `pickCard(null)` | Deck 16 → `map`; deck 15 → `map` |
+| T107 | `reward` | `pickCard` lá không nằm trong `cardChoices` | Bị từ chối |
+| T108 | Thắng Tinh Anh | (trận kết thúc) | Nhận 1 Kỳ Vật chưa có (`runRelicGained`) + 3 lá |
+| T109 | `rest`, M05 20/40 | `rest heal` | M05 32/40 (+12); Hero đầy máu không vượt `maxHp` |
+| T110 | `rest`, deck 11 lá | `removeCard` lá có trong deck; lượt khác deck 10 lá | Deck 10 → `map`; deck 10 thì bị từ chối |
+| T111 | Vào Kho Báu | `continue` | Nhận 1 Kỳ Vật khi vào; `continue` → `map` |
+| T112 | Thắng boss / thua một trận | Bất kỳ hành động sau đó | `won` / `lost`, `runEnded`; mọi hành động bị từ chối |
+| T113 | Hai lượt chơi cùng seed | Cùng chuỗi hành động (có trận, thưởng, Nghỉ Chân) | `RunState` và event giống hệt |
+| T114 | Deck đã có 11/12 lá thưởng của đội | Thắng trận | `cardChoices` có 1 lá; pool rỗng và không có Kỳ Vật → thẳng `map` |
+
+### O. Hook Kỳ Vật (trận với `runRelicIds`)
+
+| Mã | Kỳ Vật | Kết quả mong đợi |
+|---|---|---|
+| T115 | Nguyệt Giáp Phù | Sau `createCombat`: mọi Hero 5 giáp, còn trong lượt người chơi đầu và đỡ đòn lượt địch đầu |
+| T116 | Thanh Loan Vũ | Lượt 1: tay 5 lá; lượt 2: tay 6 lá; lượt 3: 5 lá |
+| T117 | Tam Tuyệt Kiếm Phổ | Lá tấn công thứ 3 trong trận cho +1 Nguyệt Lực; lá kỹ năng không đếm |
+| T118 | Hàn Ngọc | Đánh Nguyệt Ảnh Ấn (`control`) → M06 +3 giáp; lá Song Hành `control` → `owners[0]` nhận giáp |
+| T119 | Huyết Ấn | Hero kết liễu bằng lá hồi 4; kẻ địch ngã vì Thiêu Đốt → không ai hồi |
+| T120 | Tàn Hồn Đăng | Một Hero ngã → hai Hero còn lại hồi 6 |
+| T121 | Bạch Lộ Hương Túi | Vào Trăng Tròn qua cuối vòng **và** qua Đổi Vận: Hero máu thấp nhất hồi 6 (×2 nhờ Trăng Tròn = 12) |
+| T122 | Huyết Nguyệt Phù | Đổi Vận Chú: mọi Hero `strength 1`; gia hạn Huyết Nguyệt đang bật: không kích hoạt |
+| T123 | Ảnh Nguyệt Châu | Ám Tiễn ở Trăng Non: floor(6 × 1.5 × 1.25) = 11 |
+| T124 | Kỳ Vật test: `combatStart`, `front`: 5 damage `allEnemies` | Hero có `strength 3`: mỗi kẻ địch mất 5 (không cộng Sức Mạnh) |
+| T125 | Kỳ Vật test: `enemyKilled`, `front`: 99 damage `allEnemies` | Chỉ một lượt `runRelicTriggered` (không đệ quy) |
+| T126 | Hai Kỳ Vật cùng `combatStart` | `runRelicTriggered` theo thứ tự `runRelicIds` |
+| T127 | Dữ liệu Kỳ Vật dùng `to: "chosen"` / `stealBuff` / `actor` / `heroDied` + `trigger` | Mỗi trường hợp lỗi khi nạp |

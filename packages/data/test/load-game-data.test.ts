@@ -4,6 +4,8 @@ import cardsJson from "../cards.json";
 import enemiesJson from "../enemies.json";
 import encountersJson from "../encounters.json";
 import moonPhasesJson from "../moon-phases.json";
+import runRelicsJson from "../run-relics.json";
+import runConfigJson from "../run-config.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -13,6 +15,8 @@ function rawData(): any {
     enemies: enemiesJson,
     encounters: encountersJson,
     moonPhases: moonPhasesJson,
+    runRelics: runRelicsJson,
+    runConfig: runConfigJson,
   }));
 }
 
@@ -21,9 +25,19 @@ describe("loadGameData", () => {
     const data = loadGameData();
 
     expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02"]);
-    expect(Object.keys(data.cards)).toHaveLength(28);
-    expect(Object.keys(data.enemies)).toEqual(["puppet_guard", "shadow_fox", "moon_ape"]);
-    expect(Object.keys(data.encounters)).toEqual(["enc_01", "enc_02", "enc_03", "enc_04"]);
+    expect(Object.keys(data.cards)).toHaveLength(48);
+    expect(Object.keys(data.enemies)).toEqual([
+      "puppet_guard", "shadow_fox", "moon_ape", "book_wraith", "black_guard", "fox_king",
+    ]);
+    expect(Object.keys(data.encounters)).toEqual([
+      "enc_01", "enc_02", "enc_03", "enc_04", "enc_05", "enc_06", "enc_elite_01", "enc_elite_02",
+    ]);
+    expect(Object.keys(data.runRelics)).toHaveLength(10);
+    expect(data.runConfig.floors).toBe(8);
+    expect(data.heroes["m05"]?.rewardCardIds).toEqual([
+      "m05_thiet_bich", "m05_no_hoa_lien_hoan", "m05_bat_dong_nhu_son", "m05_huyet_chien",
+    ]);
+    expect(data.encounters["enc_elite_01"]).toMatchObject({ tier: "elite", minFloor: 5 });
 
     expect(data.moonPhases).toHaveLength(8);
     expect(data.moonPhases[0]?.id).toBe("new");
@@ -135,5 +149,47 @@ describe("parseGameData validation", () => {
     const duplicated = rawData();
     duplicated.cards.find((c: any) => c.id === "bond_anh_dau").bond.owners = ["m06", "m06"];
     expect(() => parseGameData(duplicated)).toThrowError(/bond_anh_dau.*different/);
+  });
+
+  it("rejects a reward card owned by another hero", () => {
+    const raw = rawData();
+    raw.heroes[0].rewardCardIds[0] = "f04_thao_duoc";
+    expect(() => parseGameData(raw)).toThrowError(/m05.*f04_thao_duoc/);
+  });
+
+  it("rejects encounters without exactly one boss", () => {
+    const raw = rawData();
+    raw.encounters.find((e: any) => e.id === "enc_04").tier = "normal";
+    expect(() => parseGameData(raw)).toThrowError(/boss/);
+  });
+
+  it("rejects a runConfig floor without a rule", () => {
+    const raw = rawData();
+    raw.runConfig.floorRules = raw.runConfig.floorRules.filter((r: any) => !r.floors.includes(7));
+    expect(() => parseGameData(raw)).toThrowError(/floor 7/);
+  });
+
+  it("T127: rejects run relic effects that target a chosen unit", () => {
+    const raw = rawData();
+    raw.runRelics.find((r: any) => r.id === "nguyet_giap_phu").hooks[0].effects[0].to = "chosen";
+    expect(() => parseGameData(raw)).toThrowError(/nguyet_giap_phu.*chosen/);
+  });
+
+  it("T127: rejects stealBuff in run relic effects", () => {
+    const raw = rawData();
+    raw.runRelics.find((r: any) => r.id === "huyet_an").hooks[0].effects = [{ type: "stealBuff", count: 1 }];
+    expect(() => parseGameData(raw)).toThrowError(/huyet_an.*stealBuff/);
+  });
+
+  it("T127: rejects actor in run relic effects", () => {
+    const raw = rawData();
+    raw.runRelics.find((r: any) => r.id === "han_ngoc").hooks[0].effects[0].actor = 1;
+    expect(() => parseGameData(raw)).toThrowError(/han_ngoc.*actor/);
+  });
+
+  it("T127: rejects heroDied hooks with actor trigger", () => {
+    const raw = rawData();
+    raw.runRelics.find((r: any) => r.id === "tan_hon_dang").hooks[0].actor = "trigger";
+    expect(() => parseGameData(raw)).toThrowError(/tan_hon_dang.*heroDied/);
   });
 });

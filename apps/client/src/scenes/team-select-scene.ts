@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { bondCardsForTeam } from "rules";
-import { restartSession, session } from "../session";
+import { restartSession, session, startRun } from "../session";
 import type { Team } from "../session";
 import { COLORS, FACTION_LABELS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
 
@@ -11,6 +11,7 @@ const HERO_H = 250;
 export class TeamSelectScene extends Phaser.Scene {
   private picked: string[] = [];
   private encounterId = "";
+  private mode: "run" | "single" = "run";
   private root!: Phaser.GameObjects.Container;
 
   constructor() {
@@ -99,22 +100,41 @@ export class TeamSelectScene extends Phaser.Scene {
             .join("   ·   ");
     this.text(WIDTH / 2, 416, bondLine, 15, bonds.length > 0 ? COLORS.gold : COLORS.dimText).setOrigin(0.5);
 
-    this.text(WIDTH / 2, 470, "Trận:", 14, COLORS.dimText).setOrigin(0.5);
-    const encounters = Object.values(data.encounters);
-    const encSpacing = 230;
-    const encStart = WIDTH / 2 - ((encounters.length - 1) * encSpacing) / 2;
-    encounters.forEach((encounter, index) => {
-      this.button(encStart + index * encSpacing, 506, 210, encounter.name, encounter.id === this.encounterId, () => {
-        this.encounterId = encounter.id;
-        this.render();
-      });
+    this.button(WIDTH / 2 - 120, 470, 200, "Lượt chơi", this.mode === "run", () => {
+      this.mode = "run";
+      this.render();
+    });
+    this.button(WIDTH / 2 + 120, 470, 200, "Trận lẻ", this.mode === "single", () => {
+      this.mode = "single";
+      this.render();
     });
 
+    if (this.mode === "single") {
+      const encounters = Object.values(data.encounters);
+      const perRow = 4;
+      const encSpacing = 230;
+      encounters.forEach((encounter, index) => {
+        const col = index % perRow;
+        const row = Math.floor(index / perRow);
+        const x = WIDTH / 2 + (col - (perRow - 1) / 2) * encSpacing;
+        this.button(x, 520 + row * 44, 210, encounter.name, encounter.id === this.encounterId, () => {
+          this.encounterId = encounter.id;
+          this.render();
+        });
+      });
+    }
+
     const ready = this.picked.length === 3;
-    this.button(WIDTH / 2, 600, 220, ready ? "BẮT ĐẦU" : `Chọn thêm ${3 - this.picked.length} Hero`, ready, () => {
+    this.button(WIDTH / 2, 640, 220, ready ? "BẮT ĐẦU" : `Chọn thêm ${3 - this.picked.length} Hero`, ready, () => {
       if (!ready) return;
-      restartSession(session.seed, this.encounterId, [...this.picked] as Team);
-      this.scene.start("combat");
+      const team = [...this.picked] as Team;
+      if (this.mode === "run") {
+        startRun(team);
+        this.scene.start("run");
+      } else {
+        restartSession(session.seed, this.encounterId, team);
+        this.scene.start("combat");
+      }
     });
   }
 }

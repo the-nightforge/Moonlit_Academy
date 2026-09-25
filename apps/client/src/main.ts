@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { CombatScene } from "./scenes/combat-scene";
+import { RunScene } from "./scenes/run-scene";
 import { TeamSelectScene } from "./scenes/team-select-scene";
 import { DESIGN_HEIGHT, DESIGN_WIDTH, RENDER_SCALE } from "./ui/theme";
 
@@ -13,5 +14,5 @@ new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [TeamSelectScene, CombatScene],
+  scene: [TeamSelectScene, CombatScene, RunScene],
 });

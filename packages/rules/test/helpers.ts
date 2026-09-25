@@ -11,6 +11,9 @@ export interface TestCombatOverrides {
   heroIds?: [string, string, string];
   encounterId?: string;
   seed?: number;
+  deckCardIds?: string[];
+  heroes?: { hp: number; maxHp: number }[];
+  runRelicIds?: string[];
   mutateData?: (data: GameData) => void;
   setup?: (state: CombatState) => void;
 }
@@ -26,6 +29,9 @@ export function makeTestCombat(overrides: TestCombatOverrides = {}): {
     heroIds: overrides.heroIds ?? ["m05", "f04", "m06"],
     encounterId: overrides.encounterId ?? "enc_01",
     seed: overrides.seed ?? 42,
+    deckCardIds: overrides.deckCardIds,
+    heroes: overrides.heroes,
+    runRelicIds: overrides.runRelicIds,
   });
   overrides.setup?.(state);
   return { data, state, events };

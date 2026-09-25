@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import type { CardTag, Faction, IntentKind, MoonModifier, MoonPhaseId, StatusId } from "rules";
+import type { CardTag, Faction, IntentKind, MoonModifier, MoonPhaseId, NodeType, StatusId } from "rules";
 
 export const FONT = '"Segoe UI", "Noto Sans", Arial, sans-serif';
 
@@ -103,6 +103,14 @@ export const INTENT_ICONS: Record<IntentKind, string> = {
   debuff: "✦",
   buff: "⬆",
   special: "★",
+};
+
+export const NODE_ICONS: Record<NodeType, string> = {
+  combat: "⚔",
+  elite: "☠",
+  rest: "🏮",
+  treasure: "🎁",
+  boss: "🌕",
 };
 
 const TAG_LABELS: Record<CardTag, string> = {

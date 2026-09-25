@@ -54,4 +54,7 @@ export interface CombatState {
   hand: string[];
   discardPile: string[];
   rngState: number;
+  runRelicIds: string[];
+  /** Per-combat hook counters, keyed "<relicId>#<hookIndex>". */
+  runRelicCounters: Record<string, number>;
 }

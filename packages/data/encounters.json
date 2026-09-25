@@ -1,6 +1,10 @@
 [
-  { "id": "enc_01", "name": "Hành Lang Tàng Thư Các", "enemyIds": ["puppet_guard", "shadow_fox"] },
-  { "id": "enc_02", "name": "Rừng Trúc Đêm", "enemyIds": ["shadow_fox", "shadow_fox", "shadow_fox"] },
-  { "id": "enc_03", "name": "Cổng Đá Học Viện", "enemyIds": ["puppet_guard", "puppet_guard"] },
-  { "id": "enc_04", "name": "Vọng Nguyệt Đài", "enemyIds": ["moon_ape"] }
+  { "id": "enc_01", "name": "Hành Lang Tàng Thư Các", "enemyIds": ["puppet_guard", "shadow_fox"], "tier": "normal" },
+  { "id": "enc_02", "name": "Rừng Trúc Đêm", "enemyIds": ["shadow_fox", "shadow_fox", "shadow_fox"], "tier": "normal" },
+  { "id": "enc_03", "name": "Cổng Đá Học Viện", "enemyIds": ["puppet_guard", "puppet_guard"], "tier": "normal" },
+  { "id": "enc_04", "name": "Vọng Nguyệt Đài", "enemyIds": ["moon_ape"], "tier": "boss" },
+  { "id": "enc_05", "name": "Thư Lâu Tầng Hai", "enemyIds": ["puppet_guard", "book_wraith"], "tier": "normal", "minFloor": 3 },
+  { "id": "enc_06", "name": "Mê Cung Sách Cấm", "enemyIds": ["book_wraith", "book_wraith", "shadow_fox"], "tier": "normal", "minFloor": 5 },
+  { "id": "enc_elite_01", "name": "Cổng Hắc Giáp", "enemyIds": ["black_guard"], "tier": "elite", "minFloor": 5 },
+  { "id": "enc_elite_02", "name": "Hang Hồ Vương", "enemyIds": ["fox_king", "shadow_fox"], "tier": "elite", "minFloor": 5 }
 ]

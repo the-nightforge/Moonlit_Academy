@@ -2,7 +2,7 @@
 
 Tài liệu này mô tả **chính xác** cách một trận đấu vận hành. Code trong `packages/rules` phải tuân theo từng mục. Thuật ngữ theo `04-glossary.md`.
 
-Phạm vi: giai đoạn 1–2 (PvE offline). Các mục đánh dấu **[GĐ2]** thuộc giai đoạn 2 (bối cảnh và lý do thiết kế: `09-phase2-spec.md`).
+Phạm vi: giai đoạn 1–3 (PvE offline). Các mục đánh dấu **[GĐ2]** / **[GĐ3]** thuộc giai đoạn 2 / 3 (bối cảnh: `09-phase2-spec.md`, `10-phase3-spec.md`). Luật lượt chơi: `11-run-rules.md`.
 
 ---
 
@@ -24,12 +24,13 @@ Phạm vi: giai đoạn 1–2 (PvE offline). Các mục đánh dấu **[GĐ2]** 
 
 Theo thứ tự:
 
-1. Tạo card instance cho 15 lá kỹ năng (`c01`–`c15`), rồi các lá Song Hành (`bond01`, `bond02`…, mục 4.4), xếp vào `drawPile`, **xáo bằng RNG**.
-2. Mọi Hero và kẻ địch: `hp = maxHp`, `armor = 0`, không trạng thái.
+1. Tạo card instance cho 15 lá kỹ năng (`c01`–`c15`), rồi các lá Song Hành (`bond01`, `bond02`…, mục 4.4), xếp vào `drawPile`, **xáo bằng RNG**. **[GĐ3]** Nếu `CombatSetup.deckCardIds` có: dùng danh sách đó thay cho `cardIds` của 3 Hero (chủ lá = `ownerId`, phải thuộc đội).
+2. Mọi Hero và kẻ địch: `hp = maxHp`, `armor = 0`, không trạng thái. **[GĐ3]** Nếu `CombatSetup.heroes` có: `hp`/`maxHp` của Hero lấy từ đó.
 3. Nguyệt Luân bắt đầu ở **pha 1 (Lưỡi Liềm Đầu)**.
 4. `round = 1`.
 5. **Kẻ địch công bố ý định** (mục 9.2).
 6. Bắt đầu **lượt người chơi** (mục 3).
+7. **[GĐ3]** Kích hoạt hook Kỳ Vật `combatStart` (§13), sau các hook `playerTurnStart` của lượt 1.
 
 ---
 
@@ -44,6 +45,7 @@ Theo thứ tự:
 6. Đặt `moonPower = 3`.
 7. **Rút 5 lá** (mục 4.2).
 8. Hero đang **Đóng Băng**: các lá của Hero đó (kể cả lá Song Hành có Hero đó là owner) không đánh được trong lượt này.
+9. **[GĐ3]** Kích hoạt hook Kỳ Vật `playerTurnStart` (§13).
 
 ### 3.2 Trong lượt
 Người chơi thực hiện bất kỳ số lượng hành động nào:
@@ -51,6 +53,7 @@ Người chơi thực hiện bất kỳ số lượng hành động nào:
 - `endTurn`: kết thúc lượt.
 
 ### 3.3 Cuối lượt người chơi (theo thứ tự)
+0. **[GĐ3]** Kích hoạt hook Kỳ Vật `playerTurnEnd` (§13). Nếu trận kết thúc: dừng.
 1. Bỏ toàn bộ bài trên tay vào `discardPile`.
 2. Hero bị Đóng Băng trong lượt này: gỡ trạng thái Đóng Băng.
 3. Chuyển sang lượt kẻ địch.
@@ -116,6 +119,7 @@ Hành động `playCard` bị **từ chối** (trả về lỗi, state không đ
    - Gỡ **Tích Lực** của chủ lá (nếu có).
    - Gỡ **Ẩn Thân** của chủ lá (nếu có). *Tấn công làm lộ vị trí.*
    - Lá Song Hành: "chủ lá" ở bước này là mọi owner làm đơn vị hành động của ít nhất một effect `damage` trong định nghĩa lá (kể cả trong nhánh `conditional`), xác định từ dữ liệu, không phụ thuộc nhánh đã chạy.
+4b. **[GĐ3]** Kích hoạt hook Kỳ Vật `cardPlayed` (§13).
 5. Chuyển lá vào `discardPile`.
 
 ### 5.3 Tham chiếu mục tiêu trong effect
@@ -194,6 +198,8 @@ Trạng thái bị gỡ khi thời hạn/số tầng/giá trị về 0.
 | 5 | `waningGibbous` | 🌖 Trăng Khuyết Cuối | — |
 | 6 | `lastQuarter` | 🌗 Hạ Huyền | Giáp nhận được **×1.5**. Lá có tag `ward`: chi phí **−1** (tối thiểu 0) **[GĐ2]** |
 | 7 | `waningCrescent` | 🌘 Lưỡi Liềm Cuối | — |
+
+**[GĐ3]** Modifier của Kỳ Vật đang có cộng thêm vào modifier của pha hiện tại (§13).
 
 Hiệu ứng pha áp dụng cho **cả hai phe** (trừ khi hiệu ứng chỉ nói về tag lá bài, vốn chỉ có ở Hero).
 
@@ -356,4 +362,82 @@ healed = min(maxHp − hp, floor(amount × hệ số hồi máu của pha))
 
 ## 12. Chưa có trong prototype
 
-Crit, Binh Khí, Nguyệt Bảo, Kỳ Vật, Mê Hoặc, triệu hồi, hàng trước/sau. Không code các phần này ở giai đoạn 1–2.
+Crit, Binh Khí, Nguyệt Bảo, Mê Hoặc, triệu hồi, hàng trước/sau. Không code các phần này ở giai đoạn 1–2.
+
+---
+
+## 13. Kỳ Vật [GĐ3]
+
+### 13.1 Định nghĩa
+
+```ts
+interface RunRelicDef {
+  id: string; name: string; text: string;
+  modifiers?: MoonModifier[];
+  hooks?: RunRelicHook[];
+}
+interface RunRelicHook {
+  on: HookTrigger;
+  actor: "trigger" | "each" | "lowestHp" | "front";
+  every?: number;   // ≥ 2; kích hoạt khi bộ đếm của hook chia hết cho every
+  effects: Effect[];
+}
+type HookTrigger =
+  | { type: "combatStart" }
+  | { type: "playerTurnStart" }
+  | { type: "playerTurnEnd" }
+  | { type: "cardPlayed"; tag?: CardTag; cardType?: CardType }
+  | { type: "enemyKilled" }
+  | { type: "heroDied" }
+  | { type: "moonPhaseEntered"; phase?: MoonPhaseId }
+  | { type: "bloodMoonStarted" };
+```
+
+`CombatState` thêm `runRelicIds: string[]` và `runRelicCounters: Record<string, number>`
+(khóa `"<relicId>#<chỉ số hook>"`, reset mỗi trận).
+
+### 13.2 Thời điểm kích hoạt
+
+| Trigger | Thời điểm | Hero `trigger` |
+|---|---|---|
+| `combatStart` | Cuối `createCombat`: sau khi lượt người chơi đầu tiên đã bắt đầu (đã rút bài) **và** sau các hook `playerTurnStart` của lượt đó | — |
+| `playerTurnStart` | Cuối bước đầu lượt (`01` §3.1), sau khi rút bài | — |
+| `playerTurnEnd` | Đầu cuối lượt (`01` §3.3), trước khi bỏ bài | — |
+| `cardPlayed` | Sau bước dọn (`01` §5.2.4), trước khi lá vào chồng bỏ; chỉ khi lá khớp `tag` / `cardType` (nếu có) | Chủ lá; lá Song Hành: `owners[0]` |
+| `enemyKilled` | Sau khi effect hoặc tick gây ra cái chết giải quyết xong; mỗi kẻ địch ngã một lần, theo thứ tự ngã | Hero kết liễu (`killerId` là Hero); không có → hook `trigger` không chạy |
+| `heroDied` | Như trên, cho Hero ngã | Không dùng được |
+| `moonPhaseEntered` | Ngay sau mỗi `moonShifted` (cuối vòng hoặc Đổi Vận); chỉ khi pha mới khớp `phase` (nếu có) | — |
+| `bloodMoonStarted` | Ngay sau `bloodMoonChanged` làm `bloodMoonRounds` đi từ 0 lên > 0 | — |
+
+Hook `combatStart` chạy ở lượt 1 nên giáp nhận được còn tới hết lượt địch đầu.
+
+### 13.3 Đơn vị hành động của effect Kỳ Vật
+
+- `trigger`: Hero ở cột cuối bảng trên.
+- `each`: chạy toàn bộ `effects` một lần cho mỗi Hero còn sống (vị trí 0 → 2),
+  Hero đó là đơn vị hành động (`to: "self"` = Hero đó). Bộ đếm `every` vẫn chỉ
+  tăng **một** lần cho mỗi trigger, không phải mỗi Hero.
+- `lowestHp` / `front`: một Hero còn sống (hòa → vị trí nhỏ hơn).
+- Không có Hero phù hợp → hook không chạy (bộ đếm vẫn tăng).
+
+### 13.4 Luật
+
+- Damage từ Kỳ Vật **không phải đòn tấn công** và không đến từ lá: không cộng
+  Sức Mạnh, Tích Lực, Đánh Dấu, nội tại thăng cấp; không tính `enemiesKilled`.
+  Suy Yếu của đơn vị hành động và Dễ Vỡ của mục tiêu vẫn áp dụng; Phản Đòn vẫn
+  kích hoạt (nguồn là Hero đơn vị hành động).
+- Effect Kỳ Vật **không được** dùng `to: "chosen"`, `stealBuff`, `actor`, hay
+  (lồng trong `conditional`) condition `target…`. `heroDied` không được dùng
+  `actor: "trigger"`. Vi phạm → lỗi khi nạp dữ liệu.
+- **Bộ đếm:** mỗi lần trigger khớp, bộ đếm của hook +1; hook chạy khi không có
+  `every`, hoặc khi bộ đếm chia hết cho `every`.
+- **Thứ tự:** các hook cùng một lần trigger chạy theo thứ tự `runRelicIds`, rồi
+  thứ tự trong `hooks`. Mỗi lần chạy phát `runRelicTriggered { runRelicId }`
+  trước event của các effect.
+- **Không đệ quy:** trigger phát sinh bên trong effect của Kỳ Vật không kích hoạt
+  hook nào.
+- Sau mỗi effect vẫn xử lý ngã, thăng cấp, thắng/thua như `01` §5.2. Trận kết
+  thúc → dừng ngay, bỏ qua hook còn lại.
+- **Modifier:** `activeMoonModifiers` đổi thành `activeModifiers` = modifier của
+  pha trăng + modifier của mọi Kỳ Vật đang có. Chi phí theo tag, damage theo tag,
+  hệ số hồi / giáp, thưởng Ẩn Thân tự áp dụng; các hệ số nhân với nhau.

@@ -6,6 +6,7 @@ import {
   moonHealMultiplier,
   moonStealthDurationBonus,
 } from "./moon";
+import { fireEventHooks } from "./run-relic-hooks";
 import {
   applyStatus,
   cleanseDebuffs,
@@ -37,6 +38,8 @@ export interface EffectContext {
   card?: CardDef;
   intentKind?: IntentKind;
   chosenId?: string;
+  /** Set for run relic effects and nested conditional branches: do not fire hooks here. */
+  noHooks?: boolean;
 }
 
 function findUnit(state: CombatState, unitId: string | undefined): UnitState | undefined {
@@ -253,7 +256,7 @@ export function resolveEffect(
       const branch = evalCondition(data, state, effect.condition, ctx)
         ? effect.then
         : (effect.else ?? []);
-      resolveEffects(data, state, branch, ctx, events);
+      resolveEffects(data, state, branch, { ...ctx, noHooks: true }, events);
       return;
     }
     case "applyStatus": {
@@ -380,6 +383,8 @@ export function resolveEffects(
   events: CombatEvent[],
 ): void {
   for (const effect of effects) {
+    const start = events.length;
+    const bloodMoonBefore = state.bloodMoonRounds;
     // Nested effects without their own actor inherit the enclosing one via ctx.
     const effectCtx =
       effect.actor !== undefined && ctx.actors
@@ -392,6 +397,10 @@ export function resolveEffects(
     });
     checkLevelUps(data, state, events);
     if (checkCombatEnd(state, events)) return;
+    if (!ctx.noHooks) {
+      fireEventHooks(data, state, events, start, bloodMoonBefore);
+      if (checkCombatEnd(state, events)) return;
+    }
     // An actor that died mid-resolution (e.g. to reflect) stops its card or intent.
     if ((ctx.actors ?? [ctx.source]).some((actor) => !actor.alive)) return;
   }

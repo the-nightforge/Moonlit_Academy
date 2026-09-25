@@ -36,6 +36,7 @@ export interface HeroDef {
   rarity: Rarity;
   maxHp: number;
   cardIds: string[];        // đúng 5 lá
+  rewardCardIds: string[];  // GĐ3: lá thưởng (không trùng cardIds, ownerId = Hero này)
   levelUp: LevelUpDef;
   art: { portrait: string; levelUp: string }; // đường dẫn ảnh, prototype có thể để trống ""
 }
@@ -145,6 +146,8 @@ export interface EncounterDef {
   id: string;
   name: string;
   enemyIds: string[];       // 1–3, theo vị trí
+  tier: "normal" | "elite" | "boss";  // GĐ3
+  minFloor?: number;                  // GĐ3, mặc định 1
 }
 ```
 
@@ -224,6 +227,8 @@ export interface CombatState {
   hand: string[];
   discardPile: string[];
   rngState: number;
+  runRelicIds: string[];                  // GĐ3
+  runRelicCounters: Record<string, number>;  // GĐ3: "<relicId>#<hookIndex>"
 }
 ```
 
@@ -259,6 +264,7 @@ export type CombatEvent =
   | { type: "intentSkipped"; enemyId: string; reason: "freeze" }
   | { type: "heroLeveledUp"; heroId: string; name: string }
   | { type: "unitDied"; unitId: string; killerId?: string }
+  | { type: "runRelicTriggered"; runRelicId: string }   // GĐ3
   | { type: "combatEnded"; result: "won" | "lost" };
 ```
 
@@ -275,12 +281,17 @@ export interface GameData {
   enemies: Record<string, EnemyDef>;
   encounters: Record<string, EncounterDef>;
   moonPhases: MoonPhaseDef[];     // đúng 8 phần tử, theo index
+  runRelics: Record<string, RunRelicDef>;  // GĐ3
+  runConfig: RunConfig;                    // GĐ3
 }
 
 export interface CombatSetup {
   heroIds: [string, string, string];
   encounterId: string;
   seed: number;
+  deckCardIds?: string[];                    // mặc định: cardIds của 3 Hero
+  heroes?: { hp: number; maxHp: number }[];  // mặc định: hp = maxHp của HeroDef
+  runRelicIds?: string[];                    // mặc định: []
 }
 
 export type ActionResult =
@@ -322,5 +333,105 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
 - Ý định có effect `to: "chosen"` phải có `targeting`.
 - `moonPhases` đủ 8 phần tử, `index` 0–7 không trùng.
 - `enemyIds` của encounter trỏ tới kẻ địch tồn tại, 1–3 phần tử.
+- **[GĐ3]** `rewardCardIds` trỏ tới lá tồn tại, `ownerId` = Hero đó, không trùng `cardIds`.
+- **[GĐ3]** Đúng 1 trận `boss`; ≥1 trận `normal` có `minFloor` ≤ 1; ≥1 trận `elite`.
+- **[GĐ3]** `runConfig`: mỗi tầng 1..`floors` có đúng 1 `floorRules`; tầng cuối là `boss` và chỉ tầng cuối có `boss`; `floorWidth.min ≤ max ≤ 2 × min`.
+- **[GĐ3]** Effect Kỳ Vật không dùng `to: "chosen"`, `stealBuff`, `actor`, condition `target…`; `heroDied` không dùng `actor: "trigger"`.
 
 Dữ liệu sai → báo lỗi rõ ràng ngay khi khởi động, không chạy game với dữ liệu lỗi.
+
+---
+
+## 7. Lượt chơi [GĐ3]
+
+```ts
+type RunStatus = "map" | "combat" | "reward" | "rest" | "treasure" | "won" | "lost";
+
+interface RunState {
+  status: RunStatus;
+  rngState: number;
+  heroes: { defId: string; hp: number; maxHp: number }[];  // theo thứ tự heroIds
+  deck: string[];              // cardId, không gồm lá Song Hành
+  runRelicIds: string[];       // theo thứ tự nhận
+  map: RunMap;
+  position: string | null;     // nút hiện tại; null = chưa vào tầng 1
+  combat: CombatState | null;
+  pendingReward: { cardChoices: string[]; runRelicId?: string } | null;
+}
+```
+
+```json
+{
+  "floors": 8,
+  "floorWidth": { "min": 2, "max": 3 },
+  "floorRules": [
+    { "floors": [1], "type": "combat" },
+    { "floors": [2, 3], "weights": { "combat": 80, "rest": 20 } },
+    { "floors": [4], "type": "treasure" },
+    { "floors": [5, 6], "weights": { "combat": 60, "elite": 25, "rest": 15 } },
+    { "floors": [7], "type": "rest" },
+    { "floors": [8], "type": "boss" }
+  ],
+  "restHealRatio": 0.3,
+  "reviveHpRatio": 0.25,
+  "rewardCardChoices": 3,
+  "minDeckSize": 10
+}
+```
+
+```ts
+type NodeType = "combat" | "elite" | "rest" | "treasure" | "boss";
+interface MapNode {
+  id: string;          // "f3n1" = tầng 3, lane 1
+  floor: number;       // 1..floors
+  lane: number;        // 0..width-1
+  type: NodeType;
+  next: string[];      // id nút tầng sau, theo lane tăng dần
+  encounterId?: string;// có với combat / elite / boss
+}
+interface RunMap { floors: MapNode[][] }  // floors[i] = tầng i+1, theo lane
+```
+
+```ts
+type RunAction =
+  | { type: "chooseNode"; nodeId: string }
+  | { type: "combat"; action: Action }
+  | { type: "pickCard"; cardId: string | null }
+  | { type: "rest"; choice: "heal" }
+  | { type: "rest"; choice: "removeCard"; cardId: string }
+  | { type: "continue" };
+```
+
+```ts
+type RunEvent =
+  | { type: "nodeEntered"; nodeId: string; nodeType: NodeType }
+  | { type: "cardAdded"; cardId: string }
+  | { type: "cardRemoved"; cardId: string }
+  | { type: "runRelicGained"; runRelicId: string }
+  | { type: "heroRevived"; heroId: string; hp: number }      // heroId = defId ("m05")
+  | { type: "restHealed"; heroId: string; amount: number }
+  | { type: "runEnded"; result: "won" | "lost" };
+```
+
+```ts
+interface RunRelicDef {
+  id: string; name: string; text: string;
+  modifiers?: MoonModifier[];
+  hooks?: RunRelicHook[];
+}
+interface RunRelicHook {
+  on: HookTrigger;
+  actor: "trigger" | "each" | "lowestHp" | "front";
+  every?: number;   // ≥ 2; kích hoạt khi bộ đếm của hook chia hết cho every
+  effects: Effect[];
+}
+type HookTrigger =
+  | { type: "combatStart" }
+  | { type: "playerTurnStart" }
+  | { type: "playerTurnEnd" }
+  | { type: "cardPlayed"; tag?: CardTag; cardType?: CardType }
+  | { type: "enemyKilled" }
+  | { type: "heroDied" }
+  | { type: "moonPhaseEntered"; phase?: MoonPhaseId }
+  | { type: "bloodMoonStarted" };
+```

@@ -1,4 +1,6 @@
-import type { CardDef, EnemyDef, EncounterDef, HeroDef, MoonPhaseDef } from "./static";
+import type {
+  CardDef, EnemyDef, EncounterDef, HeroDef, MoonPhaseDef, RunConfig, RunRelicDef,
+} from "./static";
 import type { CombatState } from "./state";
 import type { CombatEvent } from "./events";
 
@@ -8,12 +10,19 @@ export interface GameData {
   enemies: Record<string, EnemyDef>;
   encounters: Record<string, EncounterDef>;
   moonPhases: MoonPhaseDef[];
+  runRelics: Record<string, RunRelicDef>;
+  runConfig: RunConfig;
 }
 
 export interface CombatSetup {
   heroIds: [string, string, string];
   encounterId: string;
   seed: number;
+  /** Default: the three heroes' `cardIds`. Each card's owner must be in the team. */
+  deckCardIds?: string[];
+  /** Default: every hero at full HP. */
+  heroes?: { hp: number; maxHp: number }[];
+  runRelicIds?: string[];
 }
 
 export type ActionResult =

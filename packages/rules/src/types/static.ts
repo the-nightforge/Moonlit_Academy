@@ -42,6 +42,8 @@ export interface HeroDef {
   rarity: Rarity;
   maxHp: number;
   cardIds: string[];
+  /** Cards this hero can learn in a run; not in `cardIds`. */
+  rewardCardIds: string[];
   levelUp: LevelUpDef;
   art: { portrait: string; levelUp: string };
 }
@@ -114,10 +116,15 @@ export interface EnemyDef {
   art: { portrait: string };
 }
 
+export type EncounterTier = "normal" | "elite" | "boss";
+
 export interface EncounterDef {
   id: string;
   name: string;
   enemyIds: string[];
+  tier: EncounterTier;
+  /** Earliest map floor this encounter may appear on; default 1. */
+  minFloor?: number;
 }
 
 export type MoonModifier =
@@ -133,4 +140,49 @@ export interface MoonPhaseDef {
   name: string;
   icon: string;
   modifiers: MoonModifier[];
+}
+
+export type NodeType = "combat" | "elite" | "rest" | "treasure" | "boss";
+
+export type FloorRule =
+  | { floors: number[]; type: NodeType }
+  | { floors: number[]; weights: Partial<Record<NodeType, number>> };
+
+export interface RunConfig {
+  floors: number;
+  floorWidth: { min: number; max: number };
+  floorRules: FloorRule[];
+  restHealRatio: number;
+  reviveHpRatio: number;
+  rewardCardChoices: number;
+  minDeckSize: number;
+}
+
+export type HookTrigger =
+  | { type: "combatStart" }
+  | { type: "playerTurnStart" }
+  | { type: "playerTurnEnd" }
+  | { type: "cardPlayed"; tag?: CardTag; cardType?: CardType }
+  | { type: "enemyKilled" }
+  | { type: "heroDied" }
+  | { type: "moonPhaseEntered"; phase?: MoonPhaseId }
+  | { type: "bloodMoonStarted" };
+
+export type RunRelicActor = "trigger" | "each" | "lowestHp" | "front";
+
+export interface RunRelicHook {
+  on: HookTrigger;
+  actor: RunRelicActor;
+  /** Fires only when this hook's per-combat counter is a multiple of `every`. */
+  every?: number;
+  effects: Effect[];
+}
+
+export interface RunRelicDef {
+  id: string;
+  name: string;
+  text: string;
+  /** Always-on, combined with the moon phase's modifiers. */
+  modifiers?: MoonModifier[];
+  hooks?: RunRelicHook[];
 }

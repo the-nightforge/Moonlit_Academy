@@ -37,6 +37,15 @@
 | Sự kiện | `event` / `CombatEvent` | Cho animation |
 | Hành động | `action` / `Action` | Người chơi gửi |
 | Thắng / Thua | `won` / `lost` | |
+| Lượt chơi roguelike | `run` | |
+| Bản đồ | `map`, `RunMap` | Lượt chơi roguelike |
+| Nút | `node`, `MapNode` | |
+| Tầng | `floor` | |
+| Trận thường / Tinh Anh / Boss (tier) | `normal` / `elite` / `boss` | `EncounterDef.tier` |
+| Nghỉ Chân | `rest` | Loại nút |
+| Kho Báu | `treasure` | Loại nút |
+| Lá thưởng | `rewardCard`, `rewardCardIds` | |
+| Hook (Kỳ Vật) | `hook`, `HookTrigger` | Thời điểm Kỳ Vật kích hoạt |
 
 ## Chỉ số và trạng thái
 
@@ -103,6 +112,7 @@
 | Cấm Thuật (từ khóa Xích Diên) | tag `forbidden` |
 | Nhóm vai trò | `archetype`: `vanguard`, `striker`, `controller`, `support`, `specialist` |
 | Độ hiếm | `rarity`: `common`, `rare`, `epic`, `legendary` |
+| Kỳ Vật | `runRelic` |
 
 ## Hệ thống sau này (chưa code)
 
@@ -110,7 +120,6 @@
 |---|---|
 | Binh Khí | `weapon` |
 | Nguyệt Bảo | `relic` |
-| Kỳ Vật | `runRelic` |
 | Tinh Hồn | `constellation` |
 | Tinh Luyện | `refinement` |
 | Cộng Minh | `resonance` |
@@ -123,4 +132,3 @@
 | Bảo hiểm (pity) | `pity` |
 | Đấu Trường Công Bằng | `fairArena` |
 | Hợp Kích | `coopCombo` |
-| Lượt chơi roguelike | `run` |
