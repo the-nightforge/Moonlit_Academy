@@ -899,11 +899,10 @@ export class CombatScene extends Phaser.Scene {
 
   private renderBottomBar() {
     const power = this.state.moonPower;
-    const reserve = this.state.moonReserve;
-    const base = Math.max(0, power - reserve);
+    const reserve = Math.min(this.state.moonReserve, power);
     this.text(30, 545, "Nguyệt Lực", 13, COLORS.dimText);
-    this.text(30, 566, "◉".repeat(base), 16, COLORS.gold);
-    if (reserve > 0) this.text(30 + base * 12, 566, "◈".repeat(reserve), 16, COLORS.costCheap);
+    this.text(30, 566, "◉".repeat(power - reserve), 16, COLORS.gold);
+    if (reserve > 0) this.text(30 + (power - reserve) * 12, 566, "◈".repeat(reserve), 16, COLORS.costCheap);
     this.text(30, 592, reserve > 0 ? `${power} (Dự Trữ ${reserve})` : `${power}`, 12, COLORS.dimText);
 
     const hand = this.state.hand;

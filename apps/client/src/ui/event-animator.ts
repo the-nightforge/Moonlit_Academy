@@ -417,8 +417,14 @@ function animateEvent(
       return floatText(scene, WIDTH / 2, 300, "CẠN BÀI", "#ff8080", 28, 700);
     case "cardsPurged":
       return floatText(scene, 1120, 548, `-${event.instanceIds.length} lá (Tán Chiêu)`, "#8b93b8", 12, 300);
-    case "moonReserveChanged":
-      return instant();
+    case "moonReserveChanged": {
+      if (event.side === "hero") {
+        return floatText(scene, 100, 530, `Dự Trữ ${event.value}`, "#7fd4ff", 13, 250);
+      }
+      const anchor = event.enemyId !== undefined ? anchorOf(event.enemyId) : undefined;
+      if (!anchor) return instant();
+      return floatText(scene, anchor.x, anchor.y - 95, `Dự Trữ ${event.value}`, "#7fd4ff", 11, 150);
+    }
     default:
       return instant();
   }
