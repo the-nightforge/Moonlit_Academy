@@ -221,3 +221,33 @@ Quy ước thêm: test bản đồ kiểm tra **tính chất** trên seed 1–50
 | T125 | Kỳ Vật test: `enemyKilled`, `front`: 99 damage `allEnemies` | Chỉ một lượt `runRelicTriggered` (không đệ quy) |
 | T126 | Hai Kỳ Vật cùng `combatStart` | `runRelicTriggered` theo thứ tự `runRelicIds` |
 | T127 | Dữ liệu Kỳ Vật dùng `to: "chosen"` / `stealBuff` / `actor` / `heroDied` + `trigger` | Mỗi trường hợp lỗi khi nạp |
+
+---
+
+## Giai đoạn 4a
+
+Bối cảnh thiết kế: `12-phase4a-spec.md`. Test luật dùng fixture cố định (`strike9Intent`, v.v.), không phụ thuộc số cân bằng. Helper `setIntent` → `setPlan(state, pos, plan)`. Các test hiện có dựa vào bỏ tay / rút 5 / Nguyệt Lực 3 / `currentIntent` được viết lại theo luật mới (giữ mã cũ nếu kịch bản còn nghĩa).
+
+| Mã | Kịch bản |
+|---|---|
+| T128 | Nguyệt Lực gốc 3, 4, … 8, 8 theo vòng |
+| T129 | Dự Trữ = min(3, dư); quỹ vượt trần (8 + 3 = 11); `gainMoonPower` dư cũng tối đa 3 |
+| T130 | Địch Đóng Băng: bỏ cả chuỗi, Dự Trữ về 0 |
+| T131 | Giữ tay qua lượt; rút bù đủ 6; chồng hết thì rút được bao nhiêu hay bấy nhiêu |
+| T132 | Cuối lượt chỉ bỏ Tàn Chiêu; lá Hero bị Đóng Băng và lá cần Huyết Nguyệt ở lại |
+| T133 | Chồng bài có đúng `copies` bản mỗi lá (kể cả Song Hành), `instanceId` duy nhất |
+| T134 | Không xáo lại chồng bỏ; không có `deckShuffled` giữa trận |
+| T135 | Cạn Bài: tay rỗng + chồng rỗng đầu lượt → thua; tay còn lá → chưa thua |
+| T136 | Tán Chiêu: Hero ngã → mọi bản trong chồng (kể cả Song Hành) sang chồng bỏ; lá trên tay bị bỏ cuối lượt |
+| T137 | Đổi Bài: rút thay trước rồi xáo; lá đổi không quay lại tay; mảng rỗng không tiêu RNG |
+| T138 | Đổi Bài: > 2 lá, lá không trên tay, trùng, đổi lần 2 → bị từ chối; `playCard`/`endTurn` bị chặn khi `mulligan` |
+| T139 | Chuỗi: ưu tiên chiêu đắt nhất khi đủ tiền và vòng trước chưa dùng; tối đa 3; mỗi chiêu 1 lần/vòng |
+| T140 | Chuỗi: bốc có trọng số theo seed — cùng seed ra cùng chuỗi |
+| T141 | Tụ Lực: không đủ tiền → chuỗi rỗng, quỹ vào Dự Trữ (tối đa 3) |
+| T142 | Override pha trăng / Huyết Nguyệt đứng đầu chuỗi, cost 0, vẫn chọn thêm chiêu |
+| T143 | Địch chết giữa chuỗi → chiêu còn lại bị hủy; Khiêu Khích / Ẩn Thân chọn lại mục tiêu từng chiêu |
+| T144 | Chiêm Bài: `choosing`, `chooseCard` hợp lệ, 2 lá xuống đáy theo thứ tự; Action khác bị chặn |
+| T145 | Chiêm Bài: chồng 1 lá → lấy luôn; chồng rỗng → không tác dụng |
+| T146 | M06 thăng cấp: lá riêng đầu tiên −3 (tối thiểu 0), sau giảm theo pha; không áp lá Song Hành |
+| T147 | Tất định: cùng seed + cùng chuỗi Action (có Đổi Bài, Chiêm Bài) → cùng state và event |
+| T148 | Schema: `copies` ∈ {1,2,3}; `intents` ≥ 1, cost ≥ 0; `start ≤ cap`; `chooseCard` chỉ ở cuối lá; config hợp lệ |

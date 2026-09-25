@@ -9,7 +9,7 @@ luật (bước 4a.1): luật trận đấu vào `01`, schema vào `02`, thuật
 test vào `06`, bước vào `07`. Khi có khác biệt, `01` là chuẩn; tài liệu này giữ
 bối cảnh và lý do thiết kế.
 
-**Trạng thái:** thiết kế đã duyệt, chưa đưa vào tài liệu luật.
+**Trạng thái:** đã đưa vào `00`, `01`, `02`, `04`, `06`, `07` (bước 4a.1).
 
 ---
 

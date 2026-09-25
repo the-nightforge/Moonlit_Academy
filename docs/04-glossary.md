@@ -21,18 +21,24 @@
 | Lá tấn công | `type: "attack"` | |
 | Lá kỹ năng | `type: "skill"` | |
 | Tàn Chiêu | `brokenCard`, `isBroken` | Lá của Hero đã ngã |
+| Tán Chiêu | `cardsPurged` | Mọi bản lá của Hero ngã bị loại khỏi chồng bài |
 | Chồng rút | `drawPile` | |
 | Bài trên tay | `hand` | |
 | Chồng bỏ | `discardPile` | |
 | Rút bài | `draw` | |
 | Xáo bài | `shuffle` | |
+| Đổi Bài | `mulligan` | Đổi tối đa 2 lá ở tay đầu trận |
+| Chiêm Bài | `chooseCard` | Xem N lá trên cùng chồng bài, lấy 1, các lá còn lại xuống đáy |
+| Cạn Bài | `deckedOut` | Chồng bài và tay đều rỗng đầu lượt → thua |
 | Hiệu ứng | `effect` | |
 | Điều kiện | `condition` | |
 | Mục tiêu | `target` | |
 | Nguyệt Lực | `moonPower` | Tài nguyên đánh bài |
+| Nguyệt Lực Dự Trữ | `moonReserve` | Nguyệt Lực chưa dùng mang sang lượt sau, tối đa 3 |
 | Chi phí | `cost` | |
 | Ý định | `intent` | |
-| Chuỗi ý định | `intentPattern` | |
+| Chuỗi ý định | `intents`, `plannedIntents` | GĐ 4a: thay `intentPattern`; `intents` là bộ chiêu có `cost`, `plannedIntents` là chuỗi đã lên |
+| Tụ Lực | chuỗi ý định rỗng | Kẻ địch không đủ Nguyệt Lực cho chiêu nào, bỏ lượt |
 | Cách chọn mục tiêu | `targeting` | |
 | Sự kiện | `event` / `CombatEvent` | Cho animation |
 | Hành động | `action` / `Action` | Người chơi gửi |

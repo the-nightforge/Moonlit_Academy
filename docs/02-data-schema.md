@@ -35,7 +35,7 @@ export interface HeroDef {
   archetype: Archetype;
   rarity: Rarity;
   maxHp: number;
-  cardIds: string[];        // đúng 5 lá
+  cardIds: string[];        // đúng 6 lá (GĐ 4a)
   rewardCardIds: string[];  // GĐ3: lá thưởng (không trùng cardIds, ownerId = Hero này)
   levelUp: LevelUpDef;
   art: { portrait: string; levelUp: string }; // đường dẫn ảnh, prototype có thể để trống ""
@@ -48,7 +48,7 @@ export type LevelUpCounter =
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
   | { type: "regenSpreadsToAllAllies" }
-  | { type: "firstOwnCardFreeEachTurn" }
+  | { type: "firstOwnCardDiscount"; amount: number }       // GĐ4a: M06 (thay firstOwnCardFreeEachTurn)
   | { type: "doubleDamageVsFrozen" }                       // GĐ2: F03
   | { type: "stealBonus" };                                // GĐ2: F02
 
@@ -72,6 +72,7 @@ export interface CardDef {
   ownerId?: string;         // "m05" — lá thường
   bond?: { owners: [string, string] };  // GĐ2: lá Song Hành; đúng một trong ownerId / bond
   cost: number;
+  copies: 1 | 2 | 3;        // GĐ4a: số bản của lá trong chồng bài (bắt buộc, designer đặt tay)
   type: CardType;
   tags: CardTag[];
   target: CardTarget;
@@ -97,8 +98,8 @@ export type Effect = (
   | { type: "applyStatus"; status: StatusId; amount: number; to: TargetRef }
       // amount = thời hạn (loại Thời hạn), số tầng (Cộng dồn), giá trị (strength/empower/reflect), bỏ qua với freeze
   | { type: "cleanse"; to: TargetRef }                                   // gỡ mọi debuff
-  | { type: "draw"; amount: number }
-  | { type: "gainMoonPower"; amount: number }
+  | { type: "chooseCard"; look: number }                                 // GĐ4a: Chiêm Bài, look ≥ 1; thay "draw"
+  | { type: "gainMoonPower"; amount: number }                            // cộng thẳng vào quỹ lượt
   | { type: "shiftMoon"; amount: number }                                // âm = lùi pha
   | { type: "stealBuff"; count: number }                                 // GĐ2: từ mục tiêu chosen
   | { type: "bloodMoon"; rounds: number }                                // GĐ2
@@ -116,6 +117,8 @@ export type Condition =
 
 **Quy tắc mở rộng:** thêm loại effect mới = thêm vào union + thêm `case` trong hàm `resolveEffect` + thêm test. Không viết logic riêng cho từng lá bài.
 
+**[GĐ4a]** `chooseCard` chỉ được là **effect cuối cùng** trong `effects` của một lá (không nằm trong `conditional`); **không** dùng trong chiêu địch hay hook Kỳ Vật.
+
 ### 1.5 Kẻ địch — `enemies.json`
 ```ts
 export type Targeting = "random" | "lowestHp" | "highestHp" | "front";
@@ -129,13 +132,18 @@ export interface IntentDef {
   effects: Effect[];        // "self" = chính kẻ địch, "chosen" = Hero mục tiêu
 }
 
+export interface EnemyIntentDef extends IntentDef {
+  cost: number;           // GĐ4a: số nguyên ≥ 0 — Nguyệt Lực địch trả để đánh chiêu
+}
+
 export interface EnemyDef {
   id: string;               // "puppet_guard"
   name: string;
   maxHp: number;
-  intentPattern: IntentDef[];
-  moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];
-  bloodMoonOverride?: IntentDef;  // GĐ2: ưu tiên hơn moonOverrides khi đang Huyết Nguyệt
+  intents: EnemyIntentDef[];        // GĐ4a: ≥ 1 (thay intentPattern)
+  moonPower: { start: number; cap: number };   // GĐ4a: start ≤ cap; perRound dùng chung của CombatConfig
+  moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];   // intent không có cost
+  bloodMoonOverride?: IntentDef;  // GĐ2: ưu tiên hơn moonOverrides khi đang Huyết Nguyệt; không có cost
   art: { portrait: string };
 }
 ```
@@ -169,6 +177,31 @@ export interface MoonPhaseDef {
 }
 ```
 
+### 1.8 Cấu hình trận đấu — `combat-config.json` [GĐ4a]
+```json
+{
+  "moonPower": { "start": 3, "perRound": 1, "cap": 8 },
+  "moonReserveMax": 3,
+  "handSize": 6,
+  "maxMulligan": 2,
+  "maxIntentsPerRound": 3,
+  "bloodMoonHpLoss": 2
+}
+```
+
+```ts
+export interface CombatConfig {
+  moonPower: { start: number; perRound: number; cap: number };
+  moonReserveMax: number; // Nguyệt Lực Dự Trữ tối đa
+  handSize: number;       // số lá trên tay, ≥ 1
+  maxMulligan: number;    // số lá đổi tối đa khi Đổi Bài
+  maxIntentsPerRound: number;  // số chiêu tối đa trong chuỗi của một kẻ địch
+  bloodMoonHpLoss: number;     // HP mỗi Hero mất đầu lượt khi Huyết Nguyệt
+}
+```
+
+Mọi số nguyên ≥ 0; `moonPower.start ≤ moonPower.cap`; `handSize ≥ 1`. `GameData` thêm `combatConfig` (mục 4).
+
 ---
 
 ## 2. Trạng thái trận đấu (runtime)
@@ -196,14 +229,17 @@ export interface HeroState extends UnitState {
   side: "hero";
   levelUpCounter: number;
   leveledUp: boolean;
-  freeCardUsedThisTurn: boolean;   // cho nội tại M06
-  freeCardActive: boolean;         // true từ lượt sau khi M06 thăng cấp
+  firstCardDiscountUsedThisTurn: boolean;   // GĐ4a: cho nội tại M06 (tên cũ: freeCardUsedThisTurn)
+  firstCardDiscountActive: boolean;         // GĐ4a: true từ lượt sau khi M06 thăng cấp
 }
 
 export interface EnemyState extends UnitState {
   side: "enemy";
-  patternIndex: number;
-  currentIntent: { intent: IntentDef; targetId: string | null } | null;
+  // GĐ4a: bỏ patternIndex, currentIntent
+  plannedIntents: { intent: IntentDef; cost: number; targetId: string | null }[];
+  lastIntentIds: string[];   // chuỗi đã lên vòng trước
+  moonPower: number;         // quỹ của vòng đã lên chuỗi
+  moonReserve: number;       // Dự Trữ sẽ mang sang vòng sau
 }
 
 export interface CardInstance {
@@ -212,14 +248,16 @@ export interface CardInstance {
   ownerIds: string[];       // id Hero, ví dụ ["m05"]; lá Song Hành: 2 id theo thứ tự bond.owners
 }
 
-export type CombatStatus = "playerTurn" | "enemyTurn" | "won" | "lost";
+export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost";   // GĐ4a: mulligan, choosing
 
 export interface CombatState {
   status: CombatStatus;
   round: number;
   moonIndex: number;        // 0–7
   bloodMoonRounds: number;  // > 0 = đang Huyết Nguyệt (01 mục 7.4)
-  moonPower: number;
+  moonPower: number;        // quỹ hiện tại của người chơi (gốc + Dự Trữ + cộng thêm)
+  moonReserve: number;      // GĐ4a: Dự Trữ mang vào lượt này (để UI hiển thị)
+  pendingChoice: { kind: "chooseCard"; options: string[] } | null;   // GĐ4a: Chiêm Bài đang chờ chọn
   heroes: HeroState[];
   enemies: EnemyState[];
   cards: Record<string, CardInstance>;  // theo instanceId
@@ -238,14 +276,33 @@ export interface CombatState {
 
 ```ts
 export type Action =
+  | { type: "mulligan"; instanceIds: string[] }        // GĐ4a: Đổi Bài (01 §2.1)
   | { type: "playCard"; instanceId: string; targetId?: string }
+  | { type: "chooseCard"; instanceId: string }         // GĐ4a: Chiêm Bài (01 §3.2)
   | { type: "endTurn" };
+```
 
+Action hợp lệ theo `status` **[GĐ4a]**:
+
+| `status` | Action hợp lệ | Lỗi khác |
+|---|---|---|
+| `mulligan` | `mulligan` | `"mulligan pending"` |
+| `playerTurn` | `playCard`, `endTurn` | `mulligan` → `"mulligan already done"`; `chooseCard` → `"no pending choice"` |
+| `choosing` | `chooseCard` | `"choice pending"` |
+| `enemyTurn` / `won` / `lost` | — | như hiện tại |
+
+```ts
 export type CombatEvent =
   | { type: "combatStarted" }
   | { type: "turnStarted"; side: "hero" | "enemy"; round: number }
   | { type: "cardsDrawn"; instanceIds: string[] }
-  | { type: "deckShuffled" }
+  | { type: "deckShuffled" }                       // GĐ4a: chỉ khi xáo lúc tạo trận và sau Đổi Bài (không còn xáo chồng bỏ)
+  | { type: "mulliganed"; returned: string[]; drawn: string[] }    // GĐ4a
+  | { type: "choiceOpened"; options: string[] }                    // GĐ4a
+  | { type: "cardChosen"; instanceId: string; bottomed: string[] } // GĐ4a
+  | { type: "deckedOut" }                          // GĐ4a: ngay trước combatEnded { result: "lost" }
+  | { type: "cardsPurged"; heroId: string; instanceIds: string[] } // GĐ4a: Tán Chiêu
+  | { type: "moonReserveChanged"; side: "hero" | "enemy"; enemyId?: string; value: number }  // GĐ4a
   | { type: "cardPlayed"; instanceId: string; targetId?: string; cost: number }
   | { type: "cardDiscarded"; instanceIds: string[] }
   | { type: "damageDealt"; sourceId: string; targetId: string; amount: number; blocked: number; hpLost: number }
@@ -258,10 +315,10 @@ export type CombatEvent =
   | { type: "moonPowerChanged"; value: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
   | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }   // GĐ2; rounds 0 = hết
-  | { type: "intentRevealed"; enemyId: string; intentId: string; targetId: string | null }
-  | { type: "intentExecuted"; enemyId: string; intentId: string; targetId: string | null }
-  | { type: "intentFizzled"; enemyId: string; intentId: string }
-  | { type: "intentSkipped"; enemyId: string; reason: "freeze" }
+  | { type: "intentsRevealed"; enemyId: string; moonPower: number; intents: { intentId: string; cost: number; targetId: string | null }[] }  // GĐ4a: một event cho cả chuỗi mỗi địch (thay intentRevealed); chuỗi rỗng = Tụ Lực
+  | { type: "intentExecuted"; enemyId: string; intentId: string; targetId: string | null }   // một event mỗi chiêu trong chuỗi
+  | { type: "intentFizzled"; enemyId: string; intentId: string }                             // một event mỗi chiêu trong chuỗi
+  | { type: "intentSkipped"; enemyId: string; reason: "freeze" }                             // một event cho cả chuỗi bị bỏ
   | { type: "heroLeveledUp"; heroId: string; name: string }
   | { type: "unitDied"; unitId: string; killerId?: string }
   | { type: "runRelicTriggered"; runRelicId: string }   // GĐ3
@@ -283,6 +340,7 @@ export interface GameData {
   moonPhases: MoonPhaseDef[];     // đúng 8 phần tử, theo index
   runRelics: Record<string, RunRelicDef>;  // GĐ3
   runConfig: RunConfig;                    // GĐ3
+  combatConfig: CombatConfig;              // GĐ4a (mục 1.8)
 }
 
 export interface CombatSetup {
@@ -337,6 +395,8 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
 - **[GĐ3]** Đúng 1 trận `boss`; ≥1 trận `normal` có `minFloor` ≤ 1; ≥1 trận `elite`.
 - **[GĐ3]** `runConfig`: mỗi tầng 1..`floors` có đúng 1 `floorRules`; tầng cuối là `boss` và chỉ tầng cuối có `boss`; `floorWidth.min ≤ max ≤ 2 × min`.
 - **[GĐ3]** Effect Kỳ Vật không dùng `to: "chosen"`, `stealBuff`, `actor`, condition `target…`; `heroDied` không dùng `actor: "trigger"`.
+- **[GĐ4a]** `copies` ∈ {1, 2, 3}; `intents` ≥ 1 phần tử, `cost` của chiêu là số nguyên ≥ 0; `EnemyDef.moonPower.start ≤ cap`; `combatConfig` hợp lệ (mọi số nguyên ≥ 0, `moonPower.start ≤ cap`, `handSize ≥ 1`).
+- **[GĐ4a]** `chooseCard` chỉ được là **effect cuối cùng** trong `effects` của một lá (không nằm trong `conditional`); không dùng trong `EnemyIntentDef`, `moonOverrides`/`bloodMoonOverride` hay hook Kỳ Vật.
 
 Dữ liệu sai → báo lỗi rõ ràng ngay khi khởi động, không chạy game với dữ liệu lỗi.
 
