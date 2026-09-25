@@ -137,19 +137,14 @@ Có: 0–4 lần/trận. Boss (pha Hạ Huyền) và *Phong Tuyết Chướng* �
   giai đoạn 1 dù không có Hero mới (Hổ Gầm rẻ hơn ở Hạ Huyền, lá hồi của F04 rẻ
   hơn ở Trăng Tròn).
 
-## Đề xuất chỉnh tiếp (chưa áp dụng — cần quyết định thiết kế)
-
-- [x] **F02:** đã xử lý — xem "Điều chỉnh F02" bên dưới.
-- [x] **Boss vs Đóng Băng:** không thêm luật — xem "Đóng Băng và boss" bên dưới.
-- [x] **Tuyết Trung Tống Thán:** đã bỏ tag `harmony`.
-- [ ] **Độ dài trận boss:** vẫn 12–37 vòng — để playtest tay (heuristic chơi chậm hơn người).
-
 ## Điểm cần theo dõi khi playtest tay
 
 - [ ] Huyết Nguyệt: người chơi có chủ động để dành Đổi Vận Chú + Phệ Hồn không?
 - [ ] Cướp buff (Diện Đoạt, Ảnh Đấu) có đáng một lượt không?
 - [ ] Lá Song Hành có dễ nhận ra trên tay (viền 2 màu, nhãn) không?
 - [ ] Animation cướp buff, tia Phản Đòn, Huyết Nguyệt có rõ không?
+- [ ] Trận boss còn quá dài không? (12–37 vòng standalone; đã giảm damage/heal
+      boss ở Phase 3 nhưng độ dài chưa đo lại)
 
 ## Điều chỉnh F02 (`09` mục 12, đã duyệt)
 
@@ -199,18 +194,14 @@ Playtest scripted: `packages/rules/test/run-playtest.test.ts`. Heuristic "khôn"
 nhất, hồi đồng minh thấp % nhất; lá thưởng đầu tiên. 4 đội × seed 1–5. Đây là
 **sàn kỹ năng** — người chơi thật chơi tốt hơn.
 
-Lượt chạy đầu (heuristic tham lam, trước khi chỉnh): **0/20 thắng**, tầng TB
-2.35/8 — mọi lượt chết trước khi thấy Tinh Anh/boss.
-
-Tổng: **0/20 lượt thắng, 20 thua, 0 kẹt.** Tầng trung bình đạt được: 2.35/8.
-Không lượt nào chạm trần 60 vòng hay 20000 bước — mọi trận đấu kết thúc trong
-3–15 vòng. Không có lỗi `run action rejected`.
+Lượt chạy đầu (heuristic tham lam, trước khi chỉnh): **0/20 thắng, 0 kẹt**,
+tầng TB 2.35/8 — mọi lượt chết trước khi thấy Tinh Anh/boss.
 
 ## Điều chỉnh đã áp dụng
 
-Đo từng đề xuất ở trên bằng ablation 4 đội × 20 seed = 80 lượt, với cả heuristic
-tham lam lẫn heuristic "khôn" (focus-fire địch ít HP nhất, hồi đồng minh thấp %
-nhất, về Nghỉ Chân khi HP < 60%, né Tinh Anh khi yếu):
+Ablation 4 đội × 20 seed = 80 lượt, với cả heuristic tham lam lẫn heuristic
+"khôn" (focus-fire địch ít HP nhất, hồi đồng minh thấp % nhất, về Nghỉ Chân khi
+HP < 60%, né Tinh Anh khi yếu):
 
 | Biến thể | Tham lam | Khôn | Khôn: tới tầng ≥5 |
 |---|---|---|---|
@@ -232,31 +223,49 @@ trận, còn HP mất mỗi trận (thứ cộng dồn qua lượt) gần như g
   12 → 9); `book_wraith` 8 → 6. Song Trảo 3×2, Giáp, Hồi Phục giữ nguyên.
 - `restHealRatio` 0.3 → 0.4; tầng 2–3 weights `combat 80 / rest 20` → `70 / 30`;
   `reviveHpRatio` 0.25 → 0.4. Cập nhật T105/T109 trong `06` và `10`.
+- Boss `moon_ape`: `ape_crush` 12 → 10, `ape_dark_strike` 16 → 13,
+  `ape_moon_bathe` heal 14 → 8 (giữ `cleanse` — counter Đóng Băng). Trước chỉnh,
+  boss là kẻ kết liễu chính khi lượt đi sâu (4 thua + 1 kẹt > 60 vòng ở tầng 8);
+  sau chỉnh còn 2 thua, 0 kẹt.
 - `run-playtest.test.ts` chuyển sang heuristic khôn (tham lam không phân biệt được
   thiết kế với sàn kỹ năng: cùng data cho ~⅓ số lượt thắng).
 - Test luật dùng intent cố định `strike9Intent` (fixtures) thay cho Trọng Kích của
   Khôi Lỗi, để chỉnh cân bằng không làm vỡ test luật.
 
-### Kết quả sau chỉnh (`run-playtest`, seed 1–5)
+### Kết quả (`run-playtest`, seed 1–5)
 
-| Đội | Thắng | Thua | Kẹt | Tầng TB | Trận/lượt | Deck cuối | Kỳ Vật |
-|---|---|---|---|---|---|---|---|
-| m05+f04+m06 | 1 | 3 | 1 (boss) | 6.4 | 3.8 | 17.0 | 0.8 |
-| m05+f03+f02 | 1 | 4 | 0 | 6.2 | 3.6 | 17.4 | 0.8 |
-| m06+f02+f03 | 0 | 5 | 0 | 5.0 | 3.0 | 17.0 | 0.6 |
-| m05+f03+f04 | 4 | 1 | 0 | 6.6 | 4.2 | 16.6 | 0.8 |
+| Đội | Trước chỉnh | Sau attrition | Sau chỉnh boss |
+|---|---|---|---|
+| m05+f04+m06 | 0/5 (tầng TB 2.0) | 1/5 (6.4) | **3/5** (6.4) |
+| m05+f03+f02 | 0/5 (2.2) | 1/5 (6.2) | **2/5** (6.2) |
+| m06+f02+f03 | 0/5 (2.0) | 0/5 (5.0) | **0/5** (5.0) |
+| m05+f03+f04 | 0/5 (3.2) | 4/5 (6.6) | **4/5** (6.6) |
+| **Tổng** | **0/20** (2.35) | **6/20** (6.05) | **9/20** (6.05) |
 
-Tổng: **6/20 thắng** (trước 0/20), tầng TB 6.05 (trước 2.35). 11/20 lượt tới boss.
+Sau chỉnh boss: 11/20 lượt tới tầng 8; boss thắng 9, thua 2; **0 lượt kẹt**.
 
-Playtest per-encounter giai đoạn 2 (heuristic tham lam, không đổi): enc_01–03 giờ
-thắng 34/36 (trước 29/36); boss không đổi (data boss không chỉnh).
+Playtest per-encounter giai đoạn 2 (heuristic tham lam, không đổi): enc_01–03
+thắng 34/36 (trước 29/36).
 
 ### Còn mở
 
-- [ ] **Boss là kẻ kết liễu chính** khi lượt đi sâu (4 thua + 1 kẹt > 60 vòng ở tầng
-      8, đều là đội không có hai nguồn Đóng Băng). Giờ đã đo được — xem lại độ
-      khó / độ dài boss ở vòng sau.
-- [ ] **m06+f02+f03 0/5** (ablation: 0/20 ở mọi biến thể): vấn đề của đội (không
-      hồi máu, F02 tự mất HP), không phải cấu trúc lượt chơi.
-- [ ] Encounter "dễ" cho tầng 1 (Ảnh Hồ ×2, Khôi Lỗi ×1) chỉ thêm +3/80 trong
-      ablation — chưa làm.
+- [ ] **Boss vẫn kết liễu đội không hồi máu** — 2/11 lượt tới tầng 8 thua
+      (m05+f03+f02 seed 5; m06+f02+f03 seed 2 — cả hai đội không có lá hồi).
+      Nhẹ hơn trước (5/11) nhưng chưa hết — quyết định tiếp bằng chơi tay.
+- [ ] **m06+f02+f03 0/5** (0/20 ở mọi ablation) — quyết định: **không chỉnh**,
+      coi như đội hard-mode; vấn đề của đội (không hồi máu, F02 tự mất HP),
+      không phải cấu trúc lượt chơi. Xác nhận bằng chơi tay.
+- [ ] **Tầng 1 còn khắc nghiệt**: seed 1 hạ cả 4 đội ở tầng 1–2 (enc_02 mở,
+      Ảnh Hồ ×3). Encounter dễ tầng 1 (Ảnh Hồ ×2 / Khôi Lỗi ×1) đã cân nhắc —
+      ablation chỉ +3/80, tạm bỏ qua.
+
+## Điểm cần theo dõi khi chơi tay
+
+- [ ] Bản đồ đọc có dễ không; có muốn đi đường Tinh Anh không?
+- [ ] Lá thưởng có tạo lựa chọn thật không?
+- [ ] Kỳ Vật có cảm nhận được trong trận không?
+- [ ] Một lượt chơi dài bao lâu?
+- [ ] Người chơi thật (focus-fire, giữ hồi máu, né Tinh Anh) có lật được seed 1
+      / đội m06+f02+f03 không, hay attrition vẫn quá nặng?
+- [ ] Boss còn quá khắc nghiệt với đội không có hồi máu / chỉ một nguồn Đóng
+      Băng không?
