@@ -118,3 +118,22 @@ Bảng ẩn/hiện bằng phím `` ` ``:
 - Log event dạng chữ.
 
 Các nút debug gọi hàm debug riêng trong client (thao tác state trực tiếp), **không** thêm vào `Action` chính thức.
+
+## 7. Lượt chơi [GĐ3]
+
+- **Màn chọn đội**: thêm chế độ **Lượt chơi** (mới, mặc định) và **Trận lẻ**
+  (như hiện tại, giữ để debug). Lượt chơi ẩn phần chọn trận.
+- **Màn bản đồ**: tầng xếp từ dưới lên; biểu tượng nút ⚔ trận thường, ☠ Tinh
+  Anh, 🏮 Nghỉ Chân, 🎁 Kho Báu, 🌕 boss; cạnh vẽ bằng đường thẳng; nút hiện tại
+  đánh dấu, nút đi được sáng lên. Thanh trên: HP 3 Hero, thanh Kỳ Vật (hover:
+  tên + mô tả), nút xem deck.
+- **Màn chiến đấu**: như hiện tại + thanh Kỳ Vật; biểu tượng chớp khi có
+  `runRelicTriggered`. Hết trận → màn tương ứng (thưởng / kết thúc).
+- **Màn thưởng**: 3 lá (render như lá trên tay) + nút "Bỏ qua"; hiện Kỳ Vật vừa
+  nhận nếu có.
+- **Màn Nghỉ Chân**: "Hồi máu" (hiện số HP mỗi Hero sẽ hồi) hoặc "Bỏ 1 lá" (danh
+  sách deck; khóa khi deck = `minDeckSize`).
+- **Màn Kho Báu**: Kỳ Vật nhận được + "Tiếp tục".
+- **Màn kết thúc lượt chơi**: thắng / thua, tầng đạt được → về màn chọn đội.
+- Client chỉ gửi `RunAction` và vẽ lại từ `RunState`; không sinh bản đồ, phần
+  thưởng hay tính HP. Số HP hồi ở Nghỉ Chân lấy từ hàm hỗ trợ trong `rules`.

@@ -9,6 +9,8 @@ Thiết kế được chốt qua brainstorming (2026-09-24). Khi đưa vào tài
 `11-run-rules.md`. Khi có khác biệt, `01`/`11` là chuẩn; tài liệu này giữ bối
 cảnh và lý do thiết kế.
 
+**Trạng thái:** đã đưa vào `01` §13, `11`, `02`, `04`, `05`, `06`, `07` (bước 3.1).
+
 ---
 
 ## 0. Phạm vi

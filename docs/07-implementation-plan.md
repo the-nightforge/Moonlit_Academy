@@ -1,4 +1,4 @@
-# 07 — Kế hoạch code (Giai đoạn 0–2)
+# 07 — Kế hoạch code (Giai đoạn 0–3)
 
 Mỗi bước là **một phiên làm việc** với AI. Dán prompt mẫu (chỉnh nếu cần), để AI làm xong, **tự chạy thử**, commit, rồi mới sang bước sau.
 
@@ -109,9 +109,30 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ---
 
-## Sau giai đoạn 2
+## Giai đoạn 3 — Roguelike
+
+Đặc tả: `10-phase3-spec.md`. Luật: `01` §13 (Kỳ Vật), `11-run-rules.md` (lượt chơi). Test: `06` T96–T127. Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-24-phase3-roguelike.md`.
+
+### Bước 3.1 — Cập nhật tài liệu *(Task 1)*
+### Bước 3.2 — Schema và dữ liệu *(Task 2)*
+> Thêm type/schema/kiểm tra chéo cho `rewardCardIds`, `tier`/`minFloor`, Kỳ Vật, `runConfig`; thêm 20 lá thưởng, 3 kẻ địch, 4 trận, `run-relics.json`, `run-config.json`. Làm T127.
+### Bước 3.3 — Trận đấu nhận dữ liệu lượt chơi và hook Kỳ Vật *(Task 3–4)*
+> `CombatSetup` nhận deck/HP/Kỳ Vật; `activeModifiers`; hệ thống hook theo `01` §13. Làm T115–T126.
+### Bước 3.4 — Sinh bản đồ *(Task 5)*
+> `generateMap` theo `11` §2. Làm T96–T101.
+### Bước 3.5 — State machine lượt chơi *(Task 6)*
+> `createRun` / `applyRunAction` theo `11` §3. Làm T102–T114.
+### Bước 3.6 — Client *(Task 7)*
+> Chế độ Lượt chơi, màn bản đồ / thưởng / Nghỉ Chân / Kho Báu / kết thúc, thanh Kỳ Vật.
+### Bước 3.7 — Playtest *(Task 8)*
+> Playtest scripted trọn lượt chơi + ghi chú.
+
+**Hoàn thành giai đoạn 3 khi:** chơi được trọn một lượt chơi trên client, T96–T127 pass, playtest cho thấy lượt chơi thắng được với ít nhất 2 đội hình.
+
+---
+
+## Sau giai đoạn 3
 
 Viết tài liệu cho giai đoạn tiếp theo **dựa trên ghi chú chơi thử**, theo thứ tự trong `00-gdd.md` mục 12:
-- Giai đoạn 3: đặc tả roguelike.
 - Giai đoạn 4: kinh tế gacha, cấu trúc tài khoản, API server.
 - Giai đoạn 5–6: giao thức mạng PvP và co-op.
