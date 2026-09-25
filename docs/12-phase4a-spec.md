@@ -32,9 +32,10 @@ chồng bài.
 - Cost cũ **nhân đôi** cả hệ (lá, giảm cost theo pha, `gainMoonPower`) để giữ
   tương quan đã cân bằng ở GĐ 2–3; nhịp trận mới đến từ đường cong Nguyệt Lực.
 
-**Ràng buộc thiết kế cho sau này:** PvP (chưa làm) nên kéo dài **8–12 vòng**. Đồng
-hồ Cạn Bài (~12–13 vòng với chồng ~30 bản) được chọn để khớp ràng buộc này — đổi
-`handSize`, `copies` hay đường cong Nguyệt Lực phải giữ đồng hồ trong khoảng đó.
+**Ràng buộc thiết kế cho sau này:** PvP (chưa làm) nên kéo dài **8–12 vòng**. Trận thường
+PvE cũng 8–12 vòng. Đồng hồ Cạn Bài (~16 vòng với chồng ~37 bản) được chọn dài hơn
+cả hai để trận kết thúc bằng HP, Cạn Bài chỉ là giới hạn cuối — đổi `handSize`,
+`copies` hay đường cong Nguyệt Lực phải giữ đồng hồ trên 12 vòng.
 
 ---
 
@@ -305,45 +306,45 @@ tiêu RNG. Client cộng damage dự kiến từ cả chuỗi.
 ### 5.1 Cost và `copies` của 48 lá
 
 Quy tắc khởi điểm: **cost mới = cost cũ × 2**, lá có `draw` (nay `chooseCard`) +1.
-`copies`: cost 0–1 → 3, 2–3 → 2, 4+ → 1. Số chốt lại ở bước 4a.9.
+`copies`: cost 0–1 → 3, 2–4 → 2, 5+ → 1. Số chốt lại ở bước 4a.9.
 
 | id | Tên | Vai trò (4a) | Cost cũ | Cost mới | `copies` |
 |---|---|---|---|---|---|
-| `m05_liet_hoa_xung_phong` | Liệt Hỏa Xung Phong | khởi đầu | 2 | 4 | 1 |
+| `m05_liet_hoa_xung_phong` | Liệt Hỏa Xung Phong | khởi đầu | 2 | 4 | 2 |
 | `m05_ho_gam` | Hổ Gầm | khởi đầu | 1 | 2 | 2 |
 | `m05_thuong_pha` | Thương Phá | khởi đầu | 1 | 2 | 2 |
 | `m05_tran_bac_huyet_tinh` | Trấn Bắc Huyết Tính | khởi đầu | 0 | 0 | 3 |
-| `m05_bat_khuat` | Bất Khuất | khởi đầu | 2 | 4 | 1 |
-| `m05_bat_dong_nhu_son` | Bất Động Như Sơn | **khởi đầu (mới)** | 2 | 4 | 1 |
+| `m05_bat_khuat` | Bất Khuất | khởi đầu | 2 | 4 | 2 |
+| `m05_bat_dong_nhu_son` | Bất Động Như Sơn | **khởi đầu (mới)** | 2 | 4 | 2 |
 | `f04_thao_duoc` | Thảo Dược | khởi đầu | 1 | 2 | 2 |
 | `f04_bach_thao_huong` | Bách Thảo Hương | khởi đầu | 1 | 2 | 2 |
 | `f04_linh_chi_ho_the` | Linh Chi Hộ Thể | khởi đầu | 1 | 2 | 2 |
 | `f04_tinh_tam_tra` | Tịnh Tâm Trà | khởi đầu | 1 | 2 | 2 |
 | `f04_nguyet_quang_dan` | Nguyệt Quang Dẫn | khởi đầu | 2 | 5 | 1 |
-| `f04_hoi_xuan_tan` | Hồi Xuân Tán | **khởi đầu (mới)** | 2 | 4 | 1 |
+| `f04_hoi_xuan_tan` | Hồi Xuân Tán | **khởi đầu (mới)** | 2 | 4 | 2 |
 | `m06_anh_bo` | Ảnh Bộ | khởi đầu | 1 | 2 | 2 |
 | `m06_am_tien` | Ám Tiễn | khởi đầu | 1 | 2 | 2 |
-| `m06_doat_menh` | Đoạt Mệnh | khởi đầu | 2 | 4 | 1 |
+| `m06_doat_menh` | Đoạt Mệnh | khởi đầu | 2 | 4 | 2 |
 | `m06_nguyet_anh_an` | Nguyệt Ảnh Ấn | khởi đầu | 1 | 2 | 2 |
-| `m06_song_nhan_loan_vu` | Song Nhận Loạn Vũ | khởi đầu | 2 | 4 | 1 |
+| `m06_song_nhan_loan_vu` | Song Nhận Loạn Vũ | khởi đầu | 2 | 4 | 2 |
 | `m06_tang_anh_thich` | Tàng Ảnh Thích | **khởi đầu (mới)** | 1 | 2 | 2 |
 | `f03_suong_tram` | Sương Trảm | khởi đầu | 1 | 2 | 2 |
 | `f03_han_an` | Hàn Ấn | khởi đầu | 1 | 2 | 2 |
-| `f03_bang_phach_lien_kich` | Băng Phách Liên Kích | khởi đầu | 2 | 4 | 1 |
-| `f03_phong_tuyet_chuong` | Phong Tuyết Chướng | khởi đầu | 2 | 4 | 1 |
+| `f03_bang_phach_lien_kich` | Băng Phách Liên Kích | khởi đầu | 2 | 4 | 2 |
+| `f03_phong_tuyet_chuong` | Phong Tuyết Chướng | khởi đầu | 2 | 4 | 2 |
 | `f03_tuyet_han` | Tuyệt Hàn | khởi đầu | 3 | 6 | 1 |
-| `f03_tuyet_vu` | Tuyết Vũ | **khởi đầu (mới)** | 2 | 4 | 1 |
+| `f03_tuyet_vu` | Tuyết Vũ | **khởi đầu (mới)** | 2 | 4 | 2 |
 | `f02_dien_doat` | Diện Đoạt | khởi đầu | 1 | 2 | 2 |
 | `f02_huyet_tram` | Huyết Trâm | khởi đầu | 1 | 2 | 2 |
 | `f02_anh_tap` | Ảnh Tập | khởi đầu | 1 | 2 | 2 |
-| `f02_doi_van_chu` | Đổi Vận Chú | khởi đầu | 2 | 4 | 1 |
+| `f02_doi_van_chu` | Đổi Vận Chú | khởi đầu | 2 | 4 | 2 |
 | `f02_phe_hon` | Phệ Hồn | khởi đầu | 3 | 6 | 1 |
 | `f02_huyet_khe` | Huyết Khế | **khởi đầu (mới)** | 0 | 0 | 3 |
-| `bond_bang_hoa_tranh_phong` | Băng Hỏa Tranh Phong | Song Hành | 2 | 4 | 1 |
+| `bond_bang_hoa_tranh_phong` | Băng Hỏa Tranh Phong | Song Hành | 2 | 4 | 2 |
 | `bond_anh_dau` | Ảnh Đấu | Song Hành | 1 | 2 | 2 |
 | `bond_tuyet_trung_tong_than` | Tuyết Trung Tống Thán | Song Hành | 1 | 2 | 2 |
-| `m05_thiet_bich` | Thiết Bích | thưởng | 2 | 4 | 1 |
-| `m05_no_hoa_lien_hoan` | Nộ Hỏa Liên Hoàn | thưởng | 2 | 4 | 1 |
+| `m05_thiet_bich` | Thiết Bích | thưởng | 2 | 4 | 2 |
+| `m05_no_hoa_lien_hoan` | Nộ Hỏa Liên Hoàn | thưởng | 2 | 4 | 2 |
 | `m05_huyet_chien` | Huyết Chiến | thưởng | 1 | 2 | 2 |
 | `f04_bang_tam_quyet` | Băng Tâm Quyết | thưởng | 1 | 2 | 2 |
 | `f04_thanh_tam_chu` | Thanh Tâm Chú | thưởng | 1 | 3 | 2 |
@@ -352,10 +353,10 @@ Quy tắc khởi điểm: **cost mới = cost cũ × 2**, lá có `draw` (nay `c
 | `m06_anh_phan_than` | Ảnh Phân Thân | thưởng | 2 | 5 | 1 |
 | `m06_tuyet_menh` | Tuyệt Mệnh | thưởng | 3 | 6 | 1 |
 | `f03_suong_giap` | Sương Giáp | thưởng | 1 | 2 | 2 |
-| `f03_bang_toai` | Băng Toái | thưởng | 2 | 4 | 1 |
+| `f03_bang_toai` | Băng Toái | thưởng | 2 | 4 | 2 |
 | `f03_han_phong` | Hàn Phong | thưởng | 1 | 2 | 2 |
 | `f02_dien_cu` | Diện Cụ | thưởng | 1 | 3 | 2 |
-| `f02_doat_hon_thich` | Đoạt Hồn Thích | thưởng | 2 | 4 | 1 |
+| `f02_doat_hon_thich` | Đoạt Hồn Thích | thưởng | 2 | 4 | 2 |
 | `f02_ta_nguyet_chu` | Tà Nguyệt Chú | thưởng | 0 | 0 | 3 |
 
 Theo dõi khi chỉnh: *Huyết Khế* (0 cost, 3 bản, +4 Nguyệt Lực) có thể quá mạnh
@@ -379,10 +380,10 @@ với Dự Trữ — ứng viên đầu tiên để hạ `copies`.
 
 | Đội | Lá độc nhất | Bản trong chồng | Cost TB |
 |---|---|---|---|
-| m05+f04+m06 | 18 | 30 | 2.7 |
-| m05+f03+f02 | 19 | 30 | 3.1 |
-| m06+f02+f03 | 19 | 31 | 3.0 |
-| m05+f03+f04 | 20 | 31 | 3.1 |
+| m05+f04+m06 | 18 | 36 | 2.7 |
+| m05+f03+f02 | 19 | 38 | 3.1 |
+| m06+f02+f03 | 19 | 37 | 3.0 |
+| m05+f03+f04 | 20 | 39 | 3.1 |
 
 Lượt chơi: `RunState.deck` giữ danh sách id (không đổi cấu trúc); lá thưởng thêm
 1 id; Nghỉ Chân bỏ 1 id = bỏ mọi bản của lá đó. `minDeckSize` (10 id) giữ nguyên.
@@ -451,7 +452,7 @@ Nguyệt* 9 → **7**.
 | `fox_king_claw` | Vương Trảo | 3 | 10 damage *(highestHp)* |
 | `fox_king_nine_tails` | Cửu Vĩ Trảm | 5 | 3 damage ×4; mục tiêu đang Suy Yếu: 5 ×4 *(lowestHp)* |
 
-**Nguyệt Viên `moon_ape`** (Boss) — HP 110 → **90**, 3→8. Giữ 3 override pha trăng
+**Nguyệt Viên `moon_ape`** (Boss) — HP 110 (giữ nguyên; đo ở 4a.9 rồi quyết), 3→8. Giữ 3 override pha trăng
 (*Tắm Nguyệt*, *Ám Nguyệt Kích*, *Kính Nguyệt Giáp*) và *Huyết Nguyệt Cuồng*.
 
 | id | Tên | Cost | Hiệu ứng |
@@ -461,6 +462,9 @@ Nguyệt* 9 → **7**.
 | `ape_crush` | Nguyệt Chùy | 4 | 12 damage *(lowestHp)* |
 | `ape_roar` | Gầm Vang | 4 | 6 damage mọi Hero |
 | `ape_heaven_strike` | Thiên Nguyệt Kích | 8 | 20 damage; Dễ Vỡ 2 *(highestHp)* |
+
+Trận thường 8–12 vòng dài hơn hiện tại (5–8) trong khi Nguyệt Lực người chơi gần
+gấp đôi → HP địch thường nhiều khả năng phải tăng; chốt ở 4a.9.
 
 Nguyên tắc chỉnh: damage mỗi vòng của địch **đầu trận thấp hơn**, **giữa trận
 tương đương**, **cuối trận cao hơn** hiện tại — soi gương đường cong Nguyệt Lực
@@ -540,8 +544,8 @@ Dự Trữ trung bình; số chiêu địch mỗi vòng.
 
 | Mục tiêu | Ngưỡng |
 |---|---|
-| Trận thường | 5–8 vòng |
-| Boss | 8–11 vòng |
+| Trận thường và Tinh Anh | 8–12 vòng |
+| Boss | Đo và báo cáo (số vòng, tỉ lệ thắng, Cạn Bài); người dùng quyết mục tiêu sau |
 | Thua vì Cạn Bài | < 10% số trận |
 | Kẹt tay | < 10% số lượt |
 | Thắng lượt chơi (heuristic khôn) | 25–40% |
