@@ -123,8 +123,8 @@ export function describeEvent(
       return `Pha ${event.from} → ${event.to}`;
     case "bloodMoonChanged":
       return `Huyết Nguyệt còn ${event.rounds} vòng (${event.cause})`;
-    case "intentRevealed":
-      return `${name(event.enemyId)} công bố ${event.intentId}`;
+    case "intentsRevealed":
+      return `${name(event.enemyId)} báo ${event.intents.map((i) => i.intentId).join(", ") || "Tụ Lực"} (NL ${event.moonPower})`;
     case "intentExecuted":
       return `${name(event.enemyId)} thực hiện ${event.intentId} → ${name(event.targetId)}`;
     case "intentSkipped":

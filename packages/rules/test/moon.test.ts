@@ -197,7 +197,7 @@ describe("moon phases", () => {
     expect(result.state.moonIndex).toBe(7);
   });
 
-  it("T31: moon overrides apply at the new phase and patternIndex still advances", () => {
+  it("T31: moon overrides apply at the new phase and lead the announced chain", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 3;
@@ -208,8 +208,8 @@ describe("moon phases", () => {
     if (!result.ok) return;
     expect(result.state.moonIndex).toBe(4);
     const fox = result.state.enemies[1]!;
-    expect(fox.currentIntent?.intent.id).toBe("moon_illusion");
-    expect(fox.patternIndex).toBe(2);
+    expect(fox.plannedIntents[0]?.intent.id).toBe("moon_illusion");
+    expect(fox.plannedIntents[0]?.cost).toBe(0);
   });
 
   it("T32: a card-shifted moon changes which intent is announced", () => {
@@ -238,7 +238,7 @@ describe("moon phases", () => {
     if (!result.ok) return;
     expect(result.state.moonIndex).toBe(5);
     const fox = result.state.enemies[1]!;
-    expect(fox.currentIntent?.intent.id).toBe("illusion");
-    expect(fox.currentIntent?.intent.id).not.toBe("moon_illusion");
+    expect(fox.plannedIntents[0]?.intent.id).toBe("fox_shadow_kill");
+    expect(fox.plannedIntents[0]?.intent.id).not.toBe("moon_illusion");
   });
 });

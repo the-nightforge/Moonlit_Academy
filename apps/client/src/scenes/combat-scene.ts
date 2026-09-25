@@ -383,26 +383,29 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderIntent(enemy: EnemyState, x: number, y: number) {
-    const intent = enemy.currentIntent?.intent;
-    if (!intent || !enemy.alive) return;
+    if (!enemy.alive) return;
     const preview = previewEnemyIntent(this.gameData, this.state, enemy);
-    const icon = INTENT_ICONS[intent.kind];
-    let label = `${icon} ${intent.name}`;
-    const firstDamage = preview?.damages[0];
-    if (firstDamage) {
-      label += ` ${firstDamage.amount}`;
-      if (firstDamage.hits > 1) label += `×${firstDamage.hits}`;
-    }
-    if (preview?.fizzles) {
-      label += " → (hụt)";
-    } else if (preview?.targetId) {
-      const target = this.state.heroes.find((hero) => hero.id === preview.targetId);
-      label += ` → ${target ? this.gameData.heroes[target.defId]!.name : "—"}`;
-    } else if ((preview?.damages.length ?? 0) > 0) {
-      label += " → tất cả";
-    }
-    if (preview?.skipped) label = `❄ ${label}`;
-    this.text(x, y, label, 13).setOrigin(0.5).setAlpha(preview?.skipped ? 0.55 : 1);
+    if (!preview) return;
+    const lines = enemy.plannedIntents.map((planned, index) => {
+      const intentPreview = preview.intents[index]!;
+      let label = `${INTENT_ICONS[planned.intent.kind]} ${planned.intent.name} (${planned.cost})`;
+      const damage = intentPreview.damages[0];
+      if (damage) label += ` ${damage.amount}${damage.hits > 1 ? `×${damage.hits}` : ""}`;
+      if (intentPreview.fizzles) {
+        label += " → (hụt)";
+      } else if (intentPreview.targetId) {
+        const target = this.state.heroes.find((hero) => hero.id === intentPreview.targetId);
+        label += ` → ${target ? this.gameData.heroes[target.defId]!.name : "—"}`;
+      } else if (intentPreview.damages.length > 0) {
+        label += " → tất cả";
+      }
+      return label;
+    });
+    const text = lines.length === 0 ? "⋯ Tụ Lực" : lines.join("\n");
+    this.text(x, y, preview.skipped ? `❄ ${text}` : text, 12)
+      .setOrigin(0.5, 1)
+      .setAlign("center")
+      .setAlpha(preview.skipped ? 0.55 : 1);
   }
 
   // Draws a texture cover-fitted into a w×h box centered at (x, y).
@@ -456,7 +459,7 @@ export class CombatScene extends Phaser.Scene {
     const panelH = 140;
     enemies.forEach((enemy, index) => {
       const cx = (WIDTH / (enemies.length + 1)) * (index + 1);
-      this.renderIntent(enemy, cx, 118);
+      this.renderIntent(enemy, cx, 132);
       const cy = 205;
       const c = this.add.container(cx, cy);
       this.root.add(c);

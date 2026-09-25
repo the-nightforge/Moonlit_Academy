@@ -108,11 +108,14 @@ export interface IntentDef {
   effects: Effect[];
 }
 
+export type EnemyIntentDef = IntentDef & { cost: number };
+
 export interface EnemyDef {
   id: string;
   name: string;
   maxHp: number;
-  intentPattern: IntentDef[];
+  intents: EnemyIntentDef[];
+  moonPower: { start: number; cap: number };
   moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];
   bloodMoonOverride?: IntentDef;
   art: { portrait: string };

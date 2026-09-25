@@ -67,7 +67,7 @@ describe("reflect", () => {
     const { data, state } = makeTestCombat({ heroIds: PHASE2_TEAM });
     hero(state, "f03").statuses.push({ id: "reflect", value: 2 });
     setIntent(state, 0, idleIntent, null);
-    setIntent(state, 1, data.enemies["shadow_fox"]!.intentPattern[0]!, "hero:f03");
+    setIntent(state, 1, data.enemies["shadow_fox"]!.intents.find((i) => i.id === "twin_claw")!, "hero:f03");
 
     const result = applyAction(data, state, { type: "endTurn" });
     expect(result.ok).toBe(true);

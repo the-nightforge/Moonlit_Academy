@@ -1,5 +1,5 @@
 import { drawCards } from "./draw";
-import { announceIntents } from "./intent";
+import { planEnemyIntents } from "./intent";
 import { shuffle } from "./rng";
 import type {
   CardDef,
@@ -95,8 +95,10 @@ export function createCombat(
       armor: 0,
       statuses: [],
       alive: true,
-      patternIndex: 0,
-      currentIntent: null,
+      plannedIntents: [],
+      lastIntentIds: [],
+      moonPower: 0,
+      moonReserve: 0,
     };
   });
 
@@ -119,7 +121,7 @@ export function createCombat(
     runRelicCounters: {},
   };
 
-  announceIntents(data, state, events);
+  planEnemyIntents(data, state, events);
   drawCards(state, data.combatConfig.handSize, events);
   return { state, events };
 }

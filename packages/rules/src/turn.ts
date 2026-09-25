@@ -1,7 +1,7 @@
 import { refillHand } from "./draw";
 import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "./effects";
 import { runEnemyTurn } from "./enemy-turn";
-import { announceIntents } from "./intent";
+import { planEnemyIntents } from "./intent";
 import { bumpCounter, checkLevelUps } from "./levelup";
 import { baseMoonPower } from "./moon-power";
 import { cardOwners } from "./queries";
@@ -82,7 +82,7 @@ export function endRound(data: GameData, state: CombatState, events: CombatEvent
     events.push({ type: "bloodMoonChanged", rounds: state.bloodMoonRounds, cause: "roundEnd" });
   }
   state.round += 1;
-  announceIntents(data, state, events);
+  planEnemyIntents(data, state, events);
 }
 
 export function runEndTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {

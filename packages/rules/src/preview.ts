@@ -5,6 +5,7 @@ import type {
   CombatState,
   EnemyState,
   GameData,
+  PlannedIntent,
   UnitState,
 } from "./types/index";
 
@@ -15,30 +16,31 @@ export interface IntentDamagePreview {
 }
 
 export interface IntentPreview {
+  intentId: string;
+  cost: number;
   targetId: string | null;
-  skipped: boolean;
   fizzles: boolean;
   damages: IntentDamagePreview[];
 }
 
-export function previewEnemyIntent(
+export interface EnemyPlanPreview {
+  skipped: boolean;
+  intents: IntentPreview[];
+}
+
+function previewIntent(
   data: GameData,
   state: CombatState,
   enemy: EnemyState,
-): IntentPreview | null {
-  const current = enemy.currentIntent;
-  if (!current || !enemy.alive) return null;
-  const intent = current.intent;
-  const skipped = hasStatus(enemy, "freeze");
-
+  planned: PlannedIntent,
+): IntentPreview {
+  const intent = planned.intent;
   let targetId: string | null = null;
   let fizzles = false;
   if (intent.targeting !== undefined) {
-    const previewState = { ...state };
-    targetId = reresolveTarget(previewState, current.targetId, intent.targeting);
+    targetId = reresolveTarget({ ...state }, planned.targetId, intent.targeting);
     fizzles = targetId === null;
   }
-
   const ctx: EffectContext = {
     source: enemy,
     intentKind: intent.kind,
@@ -49,9 +51,7 @@ export function previewEnemyIntent(
     if (effect.type !== "damage") continue;
     let targets: UnitState[] = [];
     if (effect.to === "chosen") {
-      const target = [...state.heroes, ...state.enemies].find(
-        (unit) => unit.id === targetId,
-      );
+      const target = [...state.heroes, ...state.enemies].find((unit) => unit.id === targetId);
       targets = target?.alive ? [target] : [];
     } else if (effect.to === "allEnemies") {
       targets = state.heroes.filter((hero) => hero.alive);
@@ -68,5 +68,18 @@ export function previewEnemyIntent(
       });
     }
   }
-  return { targetId, skipped, fizzles, damages };
+  return { intentId: intent.id, cost: planned.cost, targetId, fizzles, damages };
+}
+
+/** The announced chain as the player will see it; never consumes RNG. */
+export function previewEnemyIntent(
+  data: GameData,
+  state: CombatState,
+  enemy: EnemyState,
+): EnemyPlanPreview | null {
+  if (!enemy.alive) return null;
+  return {
+    skipped: hasStatus(enemy, "freeze"),
+    intents: enemy.plannedIntents.map((planned) => previewIntent(data, state, enemy, planned)),
+  };
 }

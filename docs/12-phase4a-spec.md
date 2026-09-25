@@ -49,7 +49,7 @@ cả hai để trận kết thúc bằng HP, Cạn Bài chỉ là giới hạn c
 | `rules/src/create-combat.ts` | Chồng bài theo `copies`, tay đầu 6, trạng thái `mulligan` |
 | `rules/src/draw.ts` | Không xáo lại chồng bỏ; `chooseCard` |
 | `rules/src/apply-action.ts` | Action `mulligan`, `chooseCard`; chặn Action theo `status` |
-| `rules/src/intent.ts` → `enemy-plan.ts` | Lên chuỗi chiêu theo Nguyệt Lực (§4) |
+| `rules/src/intent.ts` | `planEnemyIntents` thay `announceIntents`; chuỗi chiêu theo Nguyệt Lực (§4) |
 | `rules/src/enemy-turn.ts` | Thi hành chuỗi, Dự Trữ địch |
 | `rules/src/effects.ts` | `chooseCard`; Tán Chiêu khi Hero ngã; passive M06 |
 | `rules/src/preview.ts` | `previewEnemyIntent` trả về cả chuỗi |
@@ -407,8 +407,8 @@ Nguyệt* 9 → **7**.
 | id | Tên | Cost | Hiệu ứng |
 |---|---|---|---|
 | `twin_claw` | Song Trảo | 1 | 2 damage ×2 *(lowestHp)* |
-| `illusion` | Huyễn Ảnh | 1 | Suy Yếu 2 *(highestHp)* |
-| `maul` | Vồ | 1 | 5 damage *(random)* |
+| `illusion` | Huyễn Thuật | 1 | Suy Yếu 2 *(highestHp)* |
+| `maul` | Cắn Xé | 1 | 5 damage *(random)* |
 | `fox_vanish` | Ẩn Hình | 1 | Tự Ẩn Thân 1; 2 damage *(random)* |
 | `fox_shadow_kill` | Ảnh Sát | 2 | 3 damage ×2; mục tiêu đang Suy Yếu: ×3 *(lowestHp)* |
 
@@ -426,9 +426,9 @@ Nguyệt* 9 → **7**.
 
 | id | Tên | Cost | Hiệu ứng |
 |---|---|---|---|
-| `wraith_curse` | Nguyền | 1 | Dễ Vỡ 2 *(random)* |
+| `wraith_curse` | Nguyền Thư | 1 | Dễ Vỡ 2 *(random)* |
 | `wraith_mend` | Tự Tu | 1 | Hồi Phục 3 (bản thân) |
-| `wraith_strike` | Hồn Kích | 1 | 6 damage *(lowestHp)* |
+| `wraith_strike` | Thư Kích | 1 | 6 damage *(lowestHp)* |
 | `wraith_burn` | Thiêu Thư | 2 | Thiêu Đốt 2 mọi Hero |
 | `wraith_seal` | Phong Ấn | 3 | Đóng Băng 1 Hero *(highestHp)* |
 
@@ -439,15 +439,15 @@ Nguyệt* 9 → **7**.
 | `black_roar` | Chấn Hồn | 1 | Suy Yếu 1 mọi Hero |
 | `black_bulwark` | Hắc Thuẫn | 2 | Giáp 12; Hồi Phục 3 |
 | `black_rage` | Thịnh Nộ | 2 | Sức Mạnh 2 (bản thân) |
-| `black_sweep` | Quét Ngang | 3 | 7 damage mọi Hero |
+| `black_sweep` | Hoành Tảo | 3 | 7 damage mọi Hero |
 | `black_cleave` | Hắc Trảm | 5 | 16 damage *(lowestHp)* |
 
 **Hồ Vương `fox_king`** (Tinh Anh) — HP 50, 2→5.
 
 | id | Tên | Cost | Hiệu ứng |
 |---|---|---|---|
-| `fox_king_veil` | Ảnh Mạc | 1 | Tự Ẩn Thân 2 |
-| `fox_king_howl` | Tru Hống | 2 | Suy Yếu 2 mọi Hero |
+| `fox_king_veil` | Huyễn Ảnh | 1 | Tự Ẩn Thân 2 |
+| `fox_king_howl` | Hồ Khiếu | 2 | Suy Yếu 2 mọi Hero |
 | `fox_king_feast` | Huyết Hồ | 2 | Hồi 8 HP (bản thân) |
 | `fox_king_claw` | Vương Trảo | 3 | 10 damage *(highestHp)* |
 | `fox_king_nine_tails` | Cửu Vĩ Trảm | 5 | 3 damage ×4; mục tiêu đang Suy Yếu: 5 ×4 *(lowestHp)* |
@@ -457,10 +457,10 @@ Nguyệt* 9 → **7**.
 
 | id | Tên | Cost | Hiệu ứng |
 |---|---|---|---|
-| `ape_guard` | Viên Thủ | 2 | Giáp 8; Hồi Phục 1 |
+| `ape_guard` | Nguyệt Giáp | 2 | Giáp 8; Hồi Phục 1 |
 | `ape_rage` | Cuồng Nộ | 2 | Sức Mạnh 2 (bản thân) |
-| `ape_crush` | Nguyệt Chùy | 4 | 12 damage *(lowestHp)* |
-| `ape_roar` | Gầm Vang | 4 | 6 damage mọi Hero |
+| `ape_crush` | Trấn Sơn Quyền | 4 | 12 damage *(lowestHp)* |
+| `ape_roar` | Hống Nguyệt | 4 | 6 damage mọi Hero |
 | `ape_heaven_strike` | Thiên Nguyệt Kích | 8 | 20 damage; Dễ Vỡ 2 *(highestHp)* |
 
 Trận thường 8–12 vòng dài hơn hiện tại (5–8) trong khi Nguyệt Lực người chơi gần

@@ -76,18 +76,26 @@ export function setIntent(
   intent: IntentDef,
   targetId: string | null,
 ): void {
-  state.enemies[position]!.currentIntent = { intent, targetId };
+  setPlan(state, position, [{ intent, targetId }]);
+}
+
+export function setPlan(
+  state: CombatState,
+  position: number,
+  plan: { intent: IntentDef; targetId: string | null }[],
+): void {
+  state.enemies[position]!.plannedIntents = plan.map((entry) => ({ ...entry, cost: 0 }));
 }
 
 export function idleEnemies(state: CombatState): void {
   for (const enemy of state.enemies) {
-    enemy.currentIntent = { intent: idleIntent, targetId: null };
+    enemy.plannedIntents = [{ intent: idleIntent, cost: 0, targetId: null }];
   }
 }
 
 export function makeEnemiesIdle(data: GameData): void {
   for (const def of Object.values(data.enemies)) {
-    def.intentPattern = [idleIntent];
+    def.intents = [{ ...idleIntent, cost: 0 }];
     def.moonOverrides = [];
   }
 }

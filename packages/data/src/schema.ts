@@ -112,11 +112,19 @@ export const intentDefSchema = z.object({
   effects: z.array(effectSchema).min(1),
 });
 
+export const enemyIntentDefSchema = intentDefSchema.extend({
+  cost: z.number().int().nonnegative(),
+});
+
 export const enemyDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
   maxHp: z.number().int().positive(),
-  intentPattern: z.array(intentDefSchema).min(1),
+  intents: z.array(enemyIntentDefSchema).min(1),
+  moonPower: z.object({
+    start: z.number().int().nonnegative(),
+    cap: z.number().int().nonnegative(),
+  }),
   moonOverrides: z.array(z.object({ phase: moonPhaseIdSchema, intent: intentDefSchema })).optional(),
   bloodMoonOverride: intentDefSchema.optional(),
   art: z.object({ portrait: z.string() }),

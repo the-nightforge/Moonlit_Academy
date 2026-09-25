@@ -36,39 +36,40 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
   }
   for (const enemy of state.enemies) {
     if (!enemy.alive) continue;
+    enemy.lastIntentIds = enemy.plannedIntents.map((planned) => planned.intent.id);
     if (hasStatus(enemy, "freeze")) {
       events.push({ type: "intentSkipped", enemyId: enemy.id, reason: "freeze" });
       removeStatus(enemy, "freeze", events);
+      if (enemy.moonReserve !== 0) {
+        enemy.moonReserve = 0;
+        events.push({ type: "moonReserveChanged", side: "enemy", enemyId: enemy.id, value: 0 });
+      }
       continue;
     }
-    const current = enemy.currentIntent;
-    if (!current) continue;
-    const intent = current.intent;
-    let targetId: string | null = null;
-    if (intent.targeting !== undefined) {
-      targetId = reresolveTarget(state, current.targetId, intent.targeting);
-      if (targetId === null) {
-        events.push({ type: "intentFizzled", enemyId: enemy.id, intentId: intent.id });
-        continue;
+    for (const planned of enemy.plannedIntents) {
+      if (!enemy.alive) break;
+      const intent = planned.intent;
+      let targetId: string | null = null;
+      if (intent.targeting !== undefined) {
+        targetId = reresolveTarget(state, planned.targetId, intent.targeting);
+        if (targetId === null) {
+          events.push({ type: "intentFizzled", enemyId: enemy.id, intentId: intent.id });
+          continue;
+        }
       }
+      events.push({ type: "intentExecuted", enemyId: enemy.id, intentId: intent.id, targetId });
+      resolveEffects(
+        data,
+        state,
+        intent.effects,
+        {
+          source: enemy,
+          intentKind: intent.kind,
+          ...(targetId !== null ? { chosenId: targetId } : {}),
+        },
+        events,
+      );
+      if (state.status !== "enemyTurn") return;
     }
-    events.push({
-      type: "intentExecuted",
-      enemyId: enemy.id,
-      intentId: intent.id,
-      targetId,
-    });
-    resolveEffects(
-      data,
-      state,
-      intent.effects,
-      {
-        source: enemy,
-        intentKind: intent.kind,
-        ...(targetId !== null ? { chosenId: targetId } : {}),
-      },
-      events,
-    );
-    if (state.status !== "enemyTurn") return;
   }
 }

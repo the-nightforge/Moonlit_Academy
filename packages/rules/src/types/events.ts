@@ -29,7 +29,12 @@ export type CombatEvent =
   | { type: "cardChosen"; instanceId: string; bottomed: string[] }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
   | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }
-  | { type: "intentRevealed"; enemyId: string; intentId: string; targetId: string | null }
+  | {
+      type: "intentsRevealed";
+      enemyId: string;
+      moonPower: number;
+      intents: { intentId: string; cost: number; targetId: string | null }[];
+    }
   | { type: "intentExecuted"; enemyId: string; intentId: string; targetId: string | null }
   | { type: "intentFizzled"; enemyId: string; intentId: string }
   | { type: "intentSkipped"; enemyId: string; reason: "freeze" }

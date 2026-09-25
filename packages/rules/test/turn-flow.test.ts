@@ -63,7 +63,7 @@ describe("turn flow", () => {
     expect(types).not.toContain("cardDiscarded");
     expect(types).toContain("intentExecuted");
     expect(types).toContain("moonShifted");
-    expect(types).toContain("intentRevealed");
+    expect(types).toContain("intentsRevealed");
     expect(types).not.toContain("cardsDrawn");
   });
 });

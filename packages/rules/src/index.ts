@@ -5,6 +5,7 @@ export { applyAction } from "./apply-action";
 export { getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
 export { getMulliganError, getPlayCardError } from "./apply-action";
 export { previewEnemyIntent } from "./preview";
+export { planEnemyIntents } from "./intent";
 export { drawCards, refillHand } from "./draw";
 export { generateMap } from "./run/map";
 export {
@@ -15,4 +16,4 @@ export {
   reachableNodeIds,
   restHealAmounts,
 } from "./run/run";
-export type { IntentPreview, IntentDamagePreview } from "./preview";
+export type { EnemyPlanPreview, IntentPreview, IntentDamagePreview } from "./preview";

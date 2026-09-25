@@ -26,10 +26,21 @@ export interface HeroState extends UnitState {
   firstCardDiscountActive: boolean;
 }
 
+export interface PlannedIntent {
+  intent: IntentDef;
+  cost: number;
+  targetId: string | null;
+}
+
 export interface EnemyState extends UnitState {
   side: "enemy";
-  patternIndex: number;
-  currentIntent: { intent: IntentDef; targetId: string | null } | null;
+  plannedIntents: PlannedIntent[];
+  /** Ids of the chain executed last round (the most expensive one may not lead again). */
+  lastIntentIds: string[];
+  /** Fund the current chain was planned with (base + reserve). */
+  moonPower: number;
+  /** Reserve carried into the next plan. */
+  moonReserve: number;
 }
 
 export interface CardInstance {

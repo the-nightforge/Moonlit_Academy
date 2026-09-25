@@ -103,8 +103,16 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   }
 
   for (const enemy of enemies) {
+    if (enemy.moonPower.start > enemy.moonPower.cap) {
+      errors.push(`enemy "${enemy.id}": moonPower start must be <= cap`);
+    }
+    const intentIds = new Set<string>();
+    for (const intent of enemy.intents) {
+      if (intentIds.has(intent.id)) errors.push(`enemy "${enemy.id}": duplicate intent id "${intent.id}"`);
+      intentIds.add(intent.id);
+    }
     const intents = [
-      ...enemy.intentPattern,
+      ...enemy.intents,
       ...(enemy.moonOverrides ?? []).map((override) => override.intent),
       ...(enemy.bloodMoonOverride ? [enemy.bloodMoonOverride] : []),
     ];

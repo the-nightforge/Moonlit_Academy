@@ -90,7 +90,7 @@ describe("parseGameData validation", () => {
 
   it("rejects an intent with to:chosen but no targeting", () => {
     const raw = rawData();
-    delete raw.enemies[0].intentPattern[0].targeting;
+    delete raw.enemies[0].intents[1].targeting;
     expect(() => parseGameData(raw)).toThrowError(/heavy_strike/);
   });
 
@@ -133,7 +133,7 @@ describe("parseGameData validation", () => {
 
   it("T94: rejects actor on an enemy intent", () => {
     const raw = rawData();
-    raw.enemies[0].intentPattern[0].effects[0].actor = 0;
+    raw.enemies[0].intents[1].effects[0].actor = 0;
     expect(() => parseGameData(raw)).toThrowError(/heavy_strike.*actor/);
   });
 
@@ -205,6 +205,15 @@ describe("parseGameData validation", () => {
     const raw = rawData();
     raw.cards[0].copies = 4;
     expect(() => parseGameData(raw)).toThrowError(/copies/);
+  });
+
+  it("T148: rejects an enemy without intents or with start above cap", () => {
+    const empty = rawData();
+    empty.enemies[0].intents = [];
+    expect(() => parseGameData(empty)).toThrowError();
+    const inverted = rawData();
+    inverted.enemies[0].moonPower = { start: 4, cap: 2 };
+    expect(() => parseGameData(inverted)).toThrowError(/moonPower start must be <= cap/);
   });
 
   it("T148: rejects chooseCard that is not the last top-level card effect", () => {

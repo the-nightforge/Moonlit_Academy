@@ -343,10 +343,11 @@ function animateEvent(
         });
       });
     }
-    case "intentRevealed": {
+    case "intentsRevealed": {
       const anchor = anchorOf(event.enemyId);
       if (!anchor) return instant();
-      return floatText(scene, anchor.x, anchor.y - 110, "Ý định mới", "#cfd6f0", 12, 150);
+      const label = event.intents.length === 0 ? "Tụ Lực" : "Ý định mới";
+      return floatText(scene, anchor.x, anchor.y - 110, label, "#cfd6f0", 12, 150);
     }
     case "intentExecuted": {
       const anchor = anchorOf(event.enemyId);

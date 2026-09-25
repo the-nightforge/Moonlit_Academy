@@ -3,32 +3,27 @@
     "id": "puppet_guard",
     "name": "Khôi Lỗi Canh Thư",
     "maxHp": 42,
-    "intentPattern": [
-      {
-        "id": "heavy_strike",
-        "name": "Trọng Kích",
-        "kind": "attack",
-        "targeting": "random",
-        "effects": [{ "type": "damage", "amount": 7, "to": "chosen" }]
-      },
-      {
-        "id": "guard_stance",
-        "name": "Thủ Thế",
-        "kind": "attackDefend",
-        "targeting": "lowestHp",
+    "moonPower": { "start": 1, "cap": 3 },
+    "intents": [
+      { "id": "guard_stance", "name": "Thủ Thế", "kind": "defend", "cost": 1,
         "effects": [
           { "type": "gainArmor", "amount": 8, "to": "self" },
-          { "type": "damage", "amount": 4, "to": "chosen" },
           { "type": "applyStatus", "status": "regen", "amount": 2, "to": "self" }
-        ]
-      },
-      {
-        "id": "heavy_strike_2",
-        "name": "Trọng Kích",
-        "kind": "attack",
-        "targeting": "random",
-        "effects": [{ "type": "damage", "amount": 7, "to": "chosen" }]
-      }
+        ] },
+      { "id": "heavy_strike", "name": "Trọng Kích", "kind": "attack", "targeting": "random", "cost": 1,
+        "effects": [{ "type": "damage", "amount": 7, "to": "chosen" }] },
+      { "id": "puppet_mirror_guard", "name": "Phản Giáp", "kind": "defend", "cost": 1,
+        "effects": [
+          { "type": "gainArmor", "amount": 5, "to": "self" },
+          { "type": "applyStatus", "status": "reflect", "amount": 3, "to": "self" }
+        ] },
+      { "id": "puppet_quake", "name": "Chấn Địa", "kind": "attack", "cost": 2,
+        "effects": [{ "type": "damage", "amount": 3, "to": "allEnemies" }] },
+      { "id": "puppet_siege", "name": "Phá Thành", "kind": "attack", "targeting": "highestHp", "cost": 3,
+        "effects": [
+          { "type": "removeArmor", "to": "chosen" },
+          { "type": "damage", "amount": 11, "to": "chosen" }
+        ] }
     ],
     "art": { "portrait": "" }
   },
@@ -36,28 +31,28 @@
     "id": "shadow_fox",
     "name": "Ảnh Hồ",
     "maxHp": 24,
-    "intentPattern": [
-      {
-        "id": "twin_claw",
-        "name": "Song Trảo",
-        "kind": "attack",
-        "targeting": "lowestHp",
-        "effects": [{ "type": "damage", "amount": 3, "hits": 2, "to": "chosen" }]
-      },
-      {
-        "id": "illusion",
-        "name": "Huyễn Thuật",
-        "kind": "debuff",
-        "targeting": "highestHp",
-        "effects": [{ "type": "applyStatus", "status": "weak", "amount": 2, "to": "chosen" }]
-      },
-      {
-        "id": "maul",
-        "name": "Cắn Xé",
-        "kind": "attack",
-        "targeting": "random",
-        "effects": [{ "type": "damage", "amount": 5, "to": "chosen" }]
-      }
+    "moonPower": { "start": 1, "cap": 2 },
+    "intents": [
+      { "id": "twin_claw", "name": "Song Trảo", "kind": "attack", "targeting": "lowestHp", "cost": 1,
+        "effects": [{ "type": "damage", "amount": 2, "hits": 2, "to": "chosen" }] },
+      { "id": "illusion", "name": "Huyễn Thuật", "kind": "debuff", "targeting": "highestHp", "cost": 1,
+        "effects": [{ "type": "applyStatus", "status": "weak", "amount": 2, "to": "chosen" }] },
+      { "id": "maul", "name": "Cắn Xé", "kind": "attack", "targeting": "random", "cost": 1,
+        "effects": [{ "type": "damage", "amount": 5, "to": "chosen" }] },
+      { "id": "fox_vanish", "name": "Ẩn Hình", "kind": "attack", "targeting": "random", "cost": 1,
+        "effects": [
+          { "type": "applyStatus", "status": "stealth", "amount": 1, "to": "self" },
+          { "type": "damage", "amount": 2, "to": "chosen" }
+        ] },
+      { "id": "fox_shadow_kill", "name": "Ảnh Sát", "kind": "attack", "targeting": "lowestHp", "cost": 2,
+        "effects": [
+          {
+            "type": "conditional",
+            "condition": { "type": "targetHasStatus", "status": "weak" },
+            "then": [{ "type": "damage", "amount": 3, "hits": 3, "to": "chosen" }],
+            "else": [{ "type": "damage", "amount": 3, "hits": 2, "to": "chosen" }]
+          }
+        ] }
     ],
     "moonOverrides": [
       {
@@ -67,7 +62,7 @@
           "name": "Huyễn Nguyệt",
           "kind": "special",
           "targeting": "lowestHp",
-          "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }]
+          "effects": [{ "type": "damage", "amount": 7, "to": "chosen" }]
         }
       }
     ],
@@ -77,29 +72,24 @@
     "id": "moon_ape",
     "name": "Thần Viên Trấn Nguyệt",
     "maxHp": 110,
-    "intentPattern": [
-      {
-        "id": "ape_crush",
-        "name": "Trấn Sơn Quyền",
-        "kind": "attack",
-        "targeting": "lowestHp",
-        "effects": [{ "type": "damage", "amount": 10, "to": "chosen" }]
-      },
-      {
-        "id": "ape_guard",
-        "name": "Nguyệt Giáp",
-        "kind": "defend",
+    "moonPower": { "start": 3, "cap": 8 },
+    "intents": [
+      { "id": "ape_guard", "name": "Nguyệt Giáp", "kind": "defend", "cost": 2,
         "effects": [
           { "type": "gainArmor", "amount": 8, "to": "self" },
           { "type": "applyStatus", "status": "regen", "amount": 1, "to": "self" }
-        ]
-      },
-      {
-        "id": "ape_roar",
-        "name": "Hống Nguyệt",
-        "kind": "attack",
-        "effects": [{ "type": "damage", "amount": 6, "to": "allEnemies" }]
-      }
+        ] },
+      { "id": "ape_rage", "name": "Cuồng Nộ", "kind": "buff", "cost": 2,
+        "effects": [{ "type": "applyStatus", "status": "strength", "amount": 2, "to": "self" }] },
+      { "id": "ape_crush", "name": "Trấn Sơn Quyền", "kind": "attack", "targeting": "lowestHp", "cost": 4,
+        "effects": [{ "type": "damage", "amount": 12, "to": "chosen" }] },
+      { "id": "ape_roar", "name": "Hống Nguyệt", "kind": "attack", "cost": 4,
+        "effects": [{ "type": "damage", "amount": 6, "to": "allEnemies" }] },
+      { "id": "ape_heaven_strike", "name": "Thiên Nguyệt Kích", "kind": "attack", "targeting": "highestHp", "cost": 8,
+        "effects": [
+          { "type": "damage", "amount": 20, "to": "chosen" },
+          { "type": "applyStatus", "status": "vulnerable", "amount": 2, "to": "chosen" }
+        ] }
     ],
     "moonOverrides": [
       {
@@ -149,47 +139,18 @@
     "id": "book_wraith",
     "name": "Thư Hồn",
     "maxHp": 32,
-    "intentPattern": [
-      {
-        "id": "wraith_curse",
-        "name": "Nguyền Thư",
-        "kind": "debuff",
-        "targeting": "random",
-        "effects": [
-          {
-            "type": "applyStatus",
-            "status": "vulnerable",
-            "amount": 2,
-            "to": "chosen"
-          }
-        ]
-      },
-      {
-        "id": "wraith_strike",
-        "name": "Thư Kích",
-        "kind": "attack",
-        "targeting": "lowestHp",
-        "effects": [
-          {
-            "type": "damage",
-            "amount": 6,
-            "to": "chosen"
-          }
-        ]
-      },
-      {
-        "id": "wraith_mend",
-        "name": "Tự Tu",
-        "kind": "buff",
-        "effects": [
-          {
-            "type": "applyStatus",
-            "status": "regen",
-            "amount": 3,
-            "to": "self"
-          }
-        ]
-      }
+    "moonPower": { "start": 1, "cap": 3 },
+    "intents": [
+      { "id": "wraith_curse", "name": "Nguyền Thư", "kind": "debuff", "targeting": "random", "cost": 1,
+        "effects": [{ "type": "applyStatus", "status": "vulnerable", "amount": 2, "to": "chosen" }] },
+      { "id": "wraith_mend", "name": "Tự Tu", "kind": "buff", "cost": 1,
+        "effects": [{ "type": "applyStatus", "status": "regen", "amount": 3, "to": "self" }] },
+      { "id": "wraith_strike", "name": "Thư Kích", "kind": "attack", "targeting": "lowestHp", "cost": 1,
+        "effects": [{ "type": "damage", "amount": 6, "to": "chosen" }] },
+      { "id": "wraith_burn", "name": "Thiêu Thư", "kind": "debuff", "cost": 2,
+        "effects": [{ "type": "applyStatus", "status": "burn", "amount": 2, "to": "allEnemies" }] },
+      { "id": "wraith_seal", "name": "Phong Ấn", "kind": "debuff", "targeting": "highestHp", "cost": 3,
+        "effects": [{ "type": "applyStatus", "status": "freeze", "amount": 1, "to": "chosen" }] }
     ],
     "art": {
       "portrait": ""
@@ -199,50 +160,21 @@
     "id": "black_guard",
     "name": "Hắc Giáp Vệ",
     "maxHp": 70,
-    "intentPattern": [
-      {
-        "id": "black_cleave",
-        "name": "Hắc Trảm",
-        "kind": "attack",
-        "targeting": "lowestHp",
+    "moonPower": { "start": 2, "cap": 5 },
+    "intents": [
+      { "id": "black_roar", "name": "Chấn Hồn", "kind": "debuff", "cost": 1,
+        "effects": [{ "type": "applyStatus", "status": "weak", "amount": 1, "to": "allEnemies" }] },
+      { "id": "black_bulwark", "name": "Hắc Thuẫn", "kind": "defend", "cost": 2,
         "effects": [
-          {
-            "type": "damage",
-            "amount": 14,
-            "to": "chosen"
-          }
-        ]
-      },
-      {
-        "id": "black_bulwark",
-        "name": "Hắc Thuẫn",
-        "kind": "defend",
-        "effects": [
-          {
-            "type": "gainArmor",
-            "amount": 12,
-            "to": "self"
-          },
-          {
-            "type": "applyStatus",
-            "status": "regen",
-            "amount": 3,
-            "to": "self"
-          }
-        ]
-      },
-      {
-        "id": "black_sweep",
-        "name": "Hoành Tảo",
-        "kind": "attack",
-        "effects": [
-          {
-            "type": "damage",
-            "amount": 7,
-            "to": "allEnemies"
-          }
-        ]
-      }
+          { "type": "gainArmor", "amount": 12, "to": "self" },
+          { "type": "applyStatus", "status": "regen", "amount": 3, "to": "self" }
+        ] },
+      { "id": "black_rage", "name": "Thịnh Nộ", "kind": "buff", "cost": 2,
+        "effects": [{ "type": "applyStatus", "status": "strength", "amount": 2, "to": "self" }] },
+      { "id": "black_sweep", "name": "Hoành Tảo", "kind": "attack", "cost": 3,
+        "effects": [{ "type": "damage", "amount": 7, "to": "allEnemies" }] },
+      { "id": "black_cleave", "name": "Hắc Trảm", "kind": "attack", "targeting": "lowestHp", "cost": 5,
+        "effects": [{ "type": "damage", "amount": 16, "to": "chosen" }] }
     ],
     "art": {
       "portrait": ""
@@ -252,46 +184,25 @@
     "id": "fox_king",
     "name": "Hồ Vương",
     "maxHp": 50,
-    "intentPattern": [
-      {
-        "id": "fox_king_veil",
-        "name": "Huyễn Ảnh",
-        "kind": "buff",
+    "moonPower": { "start": 2, "cap": 5 },
+    "intents": [
+      { "id": "fox_king_veil", "name": "Huyễn Ảnh", "kind": "buff", "cost": 1,
+        "effects": [{ "type": "applyStatus", "status": "stealth", "amount": 2, "to": "self" }] },
+      { "id": "fox_king_howl", "name": "Hồ Khiếu", "kind": "debuff", "cost": 2,
+        "effects": [{ "type": "applyStatus", "status": "weak", "amount": 2, "to": "allEnemies" }] },
+      { "id": "fox_king_feast", "name": "Huyết Hồ", "kind": "buff", "cost": 2,
+        "effects": [{ "type": "heal", "amount": 8, "to": "self" }] },
+      { "id": "fox_king_claw", "name": "Vương Trảo", "kind": "attack", "targeting": "highestHp", "cost": 3,
+        "effects": [{ "type": "damage", "amount": 10, "to": "chosen" }] },
+      { "id": "fox_king_nine_tails", "name": "Cửu Vĩ Trảm", "kind": "attack", "targeting": "lowestHp", "cost": 5,
         "effects": [
           {
-            "type": "applyStatus",
-            "status": "stealth",
-            "amount": 2,
-            "to": "self"
+            "type": "conditional",
+            "condition": { "type": "targetHasStatus", "status": "weak" },
+            "then": [{ "type": "damage", "amount": 5, "hits": 4, "to": "chosen" }],
+            "else": [{ "type": "damage", "amount": 3, "hits": 4, "to": "chosen" }]
           }
-        ]
-      },
-      {
-        "id": "fox_king_claw",
-        "name": "Vương Trảo",
-        "kind": "attack",
-        "targeting": "highestHp",
-        "effects": [
-          {
-            "type": "damage",
-            "amount": 10,
-            "to": "chosen"
-          }
-        ]
-      },
-      {
-        "id": "fox_king_howl",
-        "name": "Hồ Khiếu",
-        "kind": "debuff",
-        "effects": [
-          {
-            "type": "applyStatus",
-            "status": "weak",
-            "amount": 2,
-            "to": "allEnemies"
-          }
-        ]
-      }
+        ] }
     ],
     "art": {
       "portrait": ""

@@ -38,18 +38,18 @@ describe("createCombat", () => {
 
     expect(state.enemies.map((enemy) => enemy.defId)).toEqual(["puppet_guard", "shadow_fox"]);
     for (const enemy of state.enemies) {
-      expect(enemy.currentIntent).not.toBeNull();
-      expect(enemy.patternIndex).toBe(1);
+      const def = data.enemies[enemy.defId]!;
+      expect(enemy.moonPower).toBe(def.moonPower.start);
+      const spent = enemy.plannedIntents.reduce((sum, planned) => sum + planned.cost, 0);
+      expect(spent).toBeLessThanOrEqual(enemy.moonPower);
     }
-    expect(state.enemies[0]?.currentIntent?.intent.id).toBe("heavy_strike");
-    expect(state.enemies[1]?.currentIntent?.intent.id).toBe("twin_claw");
 
     const eventTypes = events.map((event) => event.type);
     expect(eventTypes).toContain("combatStarted");
     expect(eventTypes).toContain("deckShuffled");
     expect(eventTypes).toContain("turnStarted");
     expect(eventTypes).toContain("cardsDrawn");
-    expect(events.filter((event) => event.type === "intentRevealed")).toHaveLength(2);
+    expect(events.filter((event) => event.type === "intentsRevealed")).toHaveLength(2);
   });
 
   it("T02: same seed produces identical drawPile and hand", () => {
