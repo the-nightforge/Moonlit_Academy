@@ -2,7 +2,7 @@
 
 Tài liệu này mô tả **chính xác** cách một trận đấu vận hành. Code trong `packages/rules` phải tuân theo từng mục. Thuật ngữ theo `04-glossary.md`.
 
-Phạm vi: giai đoạn 1–4a (PvE offline). Các mục đánh dấu **[GĐ2]** / **[GĐ3]** thuộc giai đoạn 2 / 3 (bối cảnh: `09-phase2-spec.md`, `10-phase3-spec.md`, `12-phase4a-spec.md`). Luật lượt chơi: `11-run-rules.md`.
+Phạm vi: giai đoạn 1–4b (PvE offline). Các mục đánh dấu **[GĐ2]** / **[GĐ3]** / **[GĐ4a]** / **[GĐ4b]** thuộc giai đoạn 2 / 3 / 4a / 4b (bối cảnh: `09-phase2-spec.md`, `10-phase3-spec.md`, `12-phase4a-spec.md`, `13-phase4b-spec.md`). Luật lượt chơi: `11-run-rules.md`. Luật hồ sơ, Tu Luyện và deck: `14-meta-rules.md`.
 
 ---
 
@@ -52,13 +52,15 @@ Action `{ type: "mulligan", instanceIds }`:
 3. **Kích hoạt trạng thái đầu lượt** của từng Hero theo vị trí 0 → 2: Thiêu Đốt, rồi Hồi Phục (mục 6).
 4. **Huyết Nguyệt [GĐ2]:** nếu `bloodMoonRounds > 0`, từng Hero còn sống (vị trí 0 → 2) mất `bloodMoonHpLoss` HP (`combatConfig`, mặc định 2; mục 7.4); xử lý ngã và thăng cấp như tick Thiêu Đốt.
 5. Kiểm tra thắng/thua (mục 11).
-6. `moonPower = base(round) + moonReserve`; event `moonPowerChanged`. **Gốc của vòng** `r`: `base(r) = min(cap, start + (r − 1) × perRound)` theo `combatConfig.moonPower`; quỹ lượt **được vượt** `cap` (tối đa `cap + moonReserveMax`); `gainMoonPower` cộng thẳng vào quỹ.
+6. `cardsPlayedThisTurn = 0` (Liên Hoàn, mục 5.3) **[GĐ4b]**. `moonPower = base(round) + moonReserve + moonPowerBonus`; event `moonPowerChanged`. **Gốc của vòng** `r`: `base(r) = min(cap, start + (r − 1) × perRound)` theo `combatConfig.moonPower`; quỹ lượt **được vượt** `cap` (`cap + moonReserveMax`, cộng thêm `moonPowerBonus` không trần); `gainMoonPower` cộng thẳng vào quỹ. `moonPowerBonus` là quỹ cộng thêm mỗi đầu lượt từ Dưỡng Nguyệt (xem dưới) **[GĐ4b]**.
 7. **Rút bù:** rút tới khi tay có `handSize` lá hoặc chồng rỗng (mục 4.2, `cardsDrawn`).
 8. **Cạn Bài:** nếu tay rỗng **và** chồng rỗng → event `deckedOut`, thua (mục 11).
 9. Hero đang **Đóng Băng**: các lá của Hero đó (kể cả lá Song Hành có Hero đó là owner) không đánh được trong lượt này.
 10. **[GĐ3]** Kích hoạt hook Kỳ Vật `playerTurnStart` (§13).
 
 Vòng 1 đi qua đủ các bước (bước 7 thường không rút gì vì tay đã đủ `handSize` lá sau Đổi Bài).
+
+**[GĐ4b] Dưỡng Nguyệt** (effect `gainMoonPowerPerTurn { amount }`, chỉ trên lá bài): `moonPowerBonus += amount` — từ lượt sau, mỗi đầu lượt quỹ được cộng thêm `moonPowerBonus` (bước 6). Không có trần; cộng dồn qua mọi lần dùng; giữ tới hết trận.
 
 ### 3.2 Trong lượt
 Người chơi thực hiện bất kỳ số lượng hành động nào:
@@ -78,9 +80,10 @@ Người chơi thực hiện bất kỳ số lượng hành động nào:
 ### 3.3 Cuối lượt người chơi (theo thứ tự)
 0. **[GĐ3]** Kích hoạt hook Kỳ Vật `playerTurnEnd` (§13). Nếu trận kết thúc: dừng.
 1. **Không bỏ tay.** Chỉ bỏ các lá **Tàn Chiêu** (có owner đã ngã) vào `discardPile` → `cardDiscarded`. Lá cần Huyết Nguyệt và lá của Hero bị Đóng Băng ở lại tay.
-2. `moonReserve = min(moonReserveMax, moonPower)`; event `moonReserveChanged`.
-3. Hero bị Đóng Băng trong lượt này: gỡ trạng thái Đóng Băng.
-4. Chuyển sang lượt kẻ địch (mục 9.3), rồi cuối vòng (mục 9.4).
+2. Mọi lá còn trên tay: `heldTurns += 1` (Tích Tụ, mục 4.1) **[GĐ4b]**.
+3. `moonReserve = min(moonReserveMax, moonPower)`; event `moonReserveChanged`.
+4. Hero bị Đóng Băng trong lượt này: gỡ trạng thái Đóng Băng.
+5. Chuyển sang lượt kẻ địch (mục 9.3), rồi cuối vòng (mục 9.4).
 
 ---
 
@@ -89,6 +92,7 @@ Người chơi thực hiện bất kỳ số lượng hành động nào:
 ### 4.1 Card instance
 - Mỗi lá trong deck sinh `copies` bản (mục 2); mỗi bản là một card instance có `instanceId` duy nhất trỏ tới `cardId` trong dữ liệu.
 - Một lá **thuộc về** Hero `ownerId` của nó. Lá Song Hành thuộc về **cả hai** Hero trong `bond.owners` (mục 4.4). Card instance lưu `ownerIds` (1 hoặc 2 phần tử).
+- **[GĐ4b]** Card instance lưu `heldTurns` — số lượt lá đã nằm trên tay (Tích Tụ): `heldTurns = 0` mỗi khi bản lá **vào tay** (rút bù, Chiêm Bài, lá thay trong Đổi Bài); `heldTurns += 1` cuối lượt người chơi cho mọi lá còn trên tay (mục 3.3).
 
 ### 4.2 Rút bài
 - Rút từng lá một từ đỉnh `drawPile` (phần tử đầu).
@@ -144,6 +148,7 @@ Hành động `playCard` bị **từ chối** (trả về lỗi, state không đ
    - Lá Song Hành: "chủ lá" ở bước này là mọi owner làm đơn vị hành động của ít nhất một effect `damage` trong định nghĩa lá (kể cả trong nhánh `conditional`), xác định từ dữ liệu, không phụ thuộc nhánh đã chạy.
 4b. **[GĐ3]** Kích hoạt hook Kỳ Vật `cardPlayed` (§13).
 5. Chuyển lá vào `discardPile`.
+6. `cardsPlayedThisTurn += 1` (Liên Hoàn, mục 5.3) **[GĐ4b]** — sau hook `cardPlayed`, nên lá đang đánh không tự đếm mình.
 
 ### 5.3 Tham chiếu mục tiêu trong effect
 **Đơn vị hành động** của một effect: chủ lá (Hero), chính kẻ địch đang thực hiện chiêu, hoặc với lá Song Hành là `owners[actor]` (mục 5.4).
@@ -158,6 +163,9 @@ Hành động `playCard` bị **từ chối** (trả về lỗi, state không đ
 Nếu mục tiêu `chosen` đã ngã trước khi tới effect đó: bỏ qua effect đó.
 
 Condition `selfHpBelow`, `selfHasStatus` xét đơn vị hành động của effect `conditional`.
+
+- **[GĐ4b]** Condition `heldTurnsAtLeast { turns }` (Tích Tụ): đúng khi `heldTurns` của bản lá đang đánh ≥ `turns`; ngoài lá bài (chiêu địch, hook Kỳ Vật) luôn sai.
+- **[GĐ4b]** Condition `cardsPlayedThisTurnAtLeast { count }` (Liên Hoàn): đúng khi `cardsPlayedThisTurn ≥ count`.
 
 ### 5.4 Giải quyết lá Song Hành [GĐ2]
 - Mỗi effect có field tùy chọn `actor: 0 | 1` (mặc định 0). Đơn vị hành động của effect = `owners[actor]`. Nó quyết định: `sourceId`, `to: "self"`, phe của `allAllies`/`allEnemies`, condition `self…`, người nhận `stealBuff`, bộ đếm thăng cấp.
@@ -332,6 +340,17 @@ Effect có `to: "allEnemies"` từ phía kẻ địch đánh trúng mọi Hero c
 4. Kẻ địch lên chuỗi mới (mục 9.2).
 5. Bắt đầu lượt người chơi.
 
+### 9.5 Tỏa Nguyệt / Đoạt Nguyệt [GĐ4b]
+
+Effect `drainMoonPower { amount, to, steal? }` (chỉ trên lá bài; `to` chỉ `chosen` hoặc `allEnemies`), với mỗi kẻ địch còn sống trong `to`:
+
+1. `drained = min(amount, enemy.moonPower)`; `enemy.moonPower -= drained`.
+2. Trong khi tổng `cost` của `plannedIntents` > `enemy.moonPower`: bỏ chiêu **cuối** chuỗi. Các chiêu bị bỏ → một event `intentsCancelled` (theo thứ tự bị bỏ). Chiêu override (cost 0) không bao giờ làm tổng vượt quỹ nên chỉ bị bỏ khi mọi chiêu sau nó đã bị bỏ — thực tế không bao giờ.
+3. `enemy.moonReserve = min(moonReserveMax, enemy.moonPower − tổng cost còn lại)`; `moonReserveChanged` nếu đổi.
+4. `steal: true` (Đoạt Nguyệt): `state.moonPower += drained` (tổng các địch) → `moonPowerChanged`.
+
+Không tiêu RNG. Địch bị Đóng Băng vẫn bị rút bình thường.
+
 ---
 
 ## 10. Damage, hồi máu, mất HP
@@ -382,6 +401,15 @@ healed = min(maxHp − hp, floor(amount × hệ số hồi máu của pha))
 - Không kích hoạt bởi `loseHp`, Thiêu Đốt, Huyết Nguyệt hay chính Phản Đòn (không đệ quy).
 - Xử lý ngã ngay sau hit đó (10.4). Nếu nguồn ngã: dừng lá (5.2 bước 3) hoặc chiêu (9.3 bước 3). Kiểm tra thắng/thua như thường.
 - Hero mất HP do Phản Đòn: tính vào `damageTaken` như mọi lần mất HP.
+
+### 10.6 Phẫn Huyết [GĐ4b]
+- Effect `missingHpDamage { ratio, to, hits? }`: mỗi hit, damage gốc `floor((source.maxHp − source.hp) × ratio)` tính **lúc hit**, rồi qua công thức damage bình thường (mục 10.1: Sức Mạnh, Cường Hóa, Đánh Dấu, nội tại, pha trăng, Suy Yếu, Dễ Vỡ). Được dùng trong chiêu địch.
+
+### 10.7 Dư Sinh [GĐ4b]
+- Effect `heal` có `overflow: "armor"` (chỉ trên lá bài): `raw = floor(amount × hệ số hồi)`, `healed = min(maxHp − hp, raw)`, `overflow = raw − healed`; nếu `overflow > 0`: mục tiêu nhận `floor(overflow × hệ số giáp)` giáp (`armorGained`).
+
+### 10.8 Tụ Dược [GĐ4b]
+- Effect `burstRegen { multiplier, to }` (chỉ trên lá bài): với mỗi mục tiêu có Hồi Phục `v`: hồi `floor(v × multiplier × hệ số hồi)` (không Dư Sinh), rồi gỡ Hồi Phục (`statusRemoved`). Không có Hồi Phục → không tác dụng.
 
 ---
 

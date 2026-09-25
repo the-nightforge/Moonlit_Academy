@@ -217,9 +217,9 @@ Cấp **lẻ** mở **lựa chọn** (dùng được trong PvP), cấp **chẵn*
 
 | Cấp | Loại | Nội dung | PvP |
 |---|---|---|---|
-| Tinh Hồn 1 | Lựa chọn | Mở 1 lá kỹ năng thay thế | ✅ |
+| Tinh Hồn 1 | Lựa chọn | Mở ngay 1 lá khóa (không cần Tu Luyện) | ✅ |
 | Tinh Hồn 2 | Sức mạnh | Điều kiện thăng cấp dễ hơn | ❌ |
-| Tinh Hồn 3 | Lựa chọn | Mở thêm 1 lá thay thế | ✅ |
+| Tinh Hồn 3 | Lựa chọn | Mở ngay thêm 1 lá khóa (không cần Tu Luyện) | ✅ |
 | Tinh Hồn 4 | Sức mạnh | Lá chủ lực thành bản "+" | ❌ |
 | Tinh Hồn 5 | Lựa chọn | Mở dạng thăng cấp thứ hai (chọn trước trận) | ✅ |
 | Tinh Hồn 6 | Hiển thị | Art thăng cấp riêng, khung card đặc biệt, hiệu ứng lật bài | ✅ Hiển thị |
