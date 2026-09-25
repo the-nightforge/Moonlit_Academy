@@ -83,7 +83,7 @@
         "name": "Trấn Sơn Quyền",
         "kind": "attack",
         "targeting": "lowestHp",
-        "effects": [{ "type": "damage", "amount": 12, "to": "chosen" }]
+        "effects": [{ "type": "damage", "amount": 10, "to": "chosen" }]
       },
       {
         "id": "ape_guard",
@@ -109,7 +109,7 @@
           "name": "Tắm Nguyệt",
           "kind": "buff",
           "effects": [
-            { "type": "heal", "amount": 14, "to": "self" },
+            { "type": "heal", "amount": 8, "to": "self" },
             { "type": "cleanse", "to": "self" }
           ]
         }
@@ -121,7 +121,7 @@
           "name": "Ám Nguyệt Kích",
           "kind": "attack",
           "targeting": "highestHp",
-          "effects": [{ "type": "damage", "amount": 16, "to": "chosen" }]
+          "effects": [{ "type": "damage", "amount": 13, "to": "chosen" }]
         }
       },
       {
