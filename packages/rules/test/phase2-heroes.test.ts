@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { CombatState, GameData } from "../src/index";
 import { applyAction } from "../src/index";
-import { instanceIdOf, makeTestCombat, setHand } from "./helpers";
+import { stealOneCard, twoHitCard } from "./fixtures";
+import { injectCard, instanceIdOf, makeTestCombat, setHand } from "./helpers";
 
 const TEAM: [string, string, string] = ["m05", "f03", "f02"];
 
@@ -19,14 +20,12 @@ function hero(state: CombatState, defId: string) {
 
 describe("F02 Diệp Linh Lung", () => {
   it("T69: a leveled-up F02 gets +1 on each buff she steals", () => {
-    const { data, state } = makeTestCombat({
-      heroIds: TEAM,
-      setup: (s) => setHand(s, ["f02_dien_doat"]),
-    });
+    const { data, state } = makeTestCombat({ heroIds: TEAM });
+    injectCard(state, data, stealOneCard);
     hero(state, "f02").leveledUp = true;
     state.enemies[0]!.statuses.push({ id: "strength", value: 2 });
 
-    const result = play(data, state, "f02_dien_doat", "enemy:0");
+    const result = play(data, state, stealOneCard.id, "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(hero(result.state, "f02").statuses).toEqual([{ id: "strength", value: 3 }]);
@@ -35,7 +34,11 @@ describe("F02 Diệp Linh Lung", () => {
   it("stealBonus does not apply to the bond card Ảnh Đấu", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "m06", "f02"],
-      setup: (s) => setHand(s, ["bond_anh_dau"]),
+      setup: (s) => {
+        s.moonPower = 10;
+        s.enemies[0]!.moonPower = 3;
+        setHand(s, ["bond_anh_dau"]);
+      },
     });
     hero(state, "f02").leveledUp = true;
     state.enemies[0]!.statuses.push({ id: "strength", value: 2 });
@@ -44,22 +47,19 @@ describe("F02 Diệp Linh Lung", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(hero(result.state, "f02").statuses).toEqual([{ id: "strength", value: 2 }]);
+    expect(result.state.enemies[0]?.moonPower).toBe(2);
+    expect(result.state.moonPower).toBe(9);
   });
 });
 
 describe("F03 Tần Sương", () => {
   it("T88: a leveled-up F03 deals double damage to a frozen target", () => {
-    const { data, state } = makeTestCombat({
-      heroIds: TEAM,
-      setup: (s) => {
-        s.moonPower = 11;
-        setHand(s, ["f03_bang_phach_lien_kich"]);
-      },
-    });
+    const { data, state } = makeTestCombat({ heroIds: TEAM });
+    injectCard(state, data, twoHitCard);
     hero(state, "f03").leveledUp = true;
     state.enemies[0]!.statuses.push({ id: "freeze", value: 1 });
 
-    const result = play(data, state, "f03_bang_phach_lien_kich", "enemy:0");
+    const result = play(data, state, twoHitCard.id, "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const hits = result.events.filter((e) => e.type === "damageDealt");

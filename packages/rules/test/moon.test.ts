@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, getEffectiveCost } from "../src/index";
-import { rewindMoonCard } from "./fixtures";
+import { armorSixCard, healFiveCard, rewindMoonCard, stealthOneCard } from "./fixtures";
 import { injectCard, instanceIdOf, makeTestCombat, setHand } from "./helpers";
 
 describe("moon phases", () => {
@@ -45,12 +45,12 @@ describe("moon phases", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 0;
-        setHand(s, ["m06_anh_bo"]);
       },
     });
+    const stealth = injectCard(state, data, stealthOneCard);
     const result = applyAction(data, state, {
       type: "playCard",
-      instanceId: instanceIdOf(state, "m06_anh_bo"),
+      instanceId: stealth,
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -73,12 +73,12 @@ describe("moon phases", () => {
       setup: (s) => {
         s.moonIndex = 4;
         s.heroes[1]!.hp = 20;
-        setHand(s, ["f04_thao_duoc"]);
       },
     });
+    const heal = injectCard(state, data, healFiveCard);
     const result = applyAction(data, state, {
       type: "playCard",
-      instanceId: instanceIdOf(state, "f04_thao_duoc"),
+      instanceId: heal,
       targetId: "hero:f04",
     });
     expect(result.ok).toBe(true);
@@ -92,12 +92,12 @@ describe("moon phases", () => {
       setup: (s) => {
         s.moonIndex = 4;
         s.heroes[1]!.hp = 25;
-        setHand(s, ["f04_thao_duoc"]);
       },
     });
+    const heal = injectCard(state, data, healFiveCard);
     const result = applyAction(data, state, {
       type: "playCard",
-      instanceId: instanceIdOf(state, "f04_thao_duoc"),
+      instanceId: heal,
       targetId: "hero:f04",
     });
     expect(result.ok).toBe(true);
@@ -110,12 +110,13 @@ describe("moon phases", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 6;
-        setHand(s, ["f04_linh_chi_ho_the", "m05_ho_gam"]);
+        setHand(s, ["m05_ho_gam"]);
       },
     });
+    const armor = injectCard(state, data, armorSixCard);
     const armored = applyAction(data, state, {
       type: "playCard",
-      instanceId: instanceIdOf(state, "f04_linh_chi_ho_the"),
+      instanceId: armor,
       targetId: "hero:m06",
     });
     expect(armored.ok).toBe(true);
@@ -136,9 +137,10 @@ describe("moon phases", () => {
         s.moonIndex = 3;
         s.moonPower = 11;
         s.heroes[1]!.hp = 20;
-        setHand(s, ["f04_nguyet_quang_dan", "f04_thao_duoc"]);
+        setHand(s, ["f04_nguyet_quang_dan"]);
       },
     });
+    const heal = injectCard(state, data, healFiveCard);
     const shifted = applyAction(data, state, {
       type: "playCard",
       instanceId: instanceIdOf(state, "f04_nguyet_quang_dan"),
@@ -158,7 +160,7 @@ describe("moon phases", () => {
     if (!picked.ok) return;
     const healed = applyAction(data, picked.state, {
       type: "playCard",
-      instanceId: instanceIdOf(picked.state, "f04_thao_duoc"),
+      instanceId: heal,
       targetId: "hero:f04",
     });
     expect(healed.ok).toBe(true);

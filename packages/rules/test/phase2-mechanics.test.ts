@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { CombatState, GameData } from "../src/index";
 import { applyAction, isCardPlayable } from "../src/index";
-import { idleIntent, strike9Intent } from "./fixtures";
+import { idleIntent, stealOneCard, strike9Intent, twoHitCard } from "./fixtures";
 import {
   idleEnemies,
+  injectCard,
   instanceIdOf,
   makeEnemiesIdle,
   makeTestCombat,
@@ -103,15 +104,12 @@ describe("reflect", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
       encounterId: "enc_04",
-      setup: (s) => {
-        s.moonPower = 11;
-        setHand(s, ["f03_bang_phach_lien_kich"]);
-      },
     });
+    const twoHit = injectCard(state, data, twoHitCard);
     hero(state, "f03").hp = 3;
     state.enemies[0]!.statuses.push({ id: "reflect", value: 3 });
 
-    const result = play(data, state, "f03_bang_phach_lien_kich", "enemy:0");
+    const result = play(data, state, twoHitCard.id, "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const f03 = hero(result.state, "f03");
@@ -119,7 +117,7 @@ describe("reflect", () => {
     expect(result.events.filter((e) => e.type === "damageDealt")).toHaveLength(1);
     expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 4);
     expect(result.events).toContainEqual({ type: "unitDied", unitId: "hero:f03", killerId: "enemy:0" });
-    expect(result.state.discardPile).toContain(instanceIdOf(result.state, "f03_bang_phach_lien_kich"));
+    expect(result.state.discardPile).toContain(twoHit);
   });
 
   it("T66: an enemy killed by reflect credits the reflector but not enemiesKilled", () => {
@@ -141,13 +139,11 @@ describe("reflect", () => {
 
 describe("stealBuff", () => {
   it("T67: steals the first buff in status order and counts it", () => {
-    const { data, state } = makeTestCombat({
-      heroIds: PHASE2_TEAM,
-      setup: (s) => setHand(s, ["f02_dien_doat"]),
-    });
+    const { data, state } = makeTestCombat({ heroIds: PHASE2_TEAM });
+    injectCard(state, data, stealOneCard);
     state.enemies[0]!.statuses.push({ id: "strength", value: 2 }, { id: "regen", value: 1 });
 
-    const result = play(data, state, "f02_dien_doat", "enemy:0");
+    const result = play(data, state, stealOneCard.id, "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.enemies[0]?.statuses).toEqual([{ id: "regen", value: 1 }]);
@@ -164,14 +160,12 @@ describe("stealBuff", () => {
   });
 
   it("T68: a stolen buff merges with the same buff on the thief", () => {
-    const { data, state } = makeTestCombat({
-      heroIds: PHASE2_TEAM,
-      setup: (s) => setHand(s, ["f02_dien_doat"]),
-    });
+    const { data, state } = makeTestCombat({ heroIds: PHASE2_TEAM });
+    injectCard(state, data, stealOneCard);
     hero(state, "f02").statuses.push({ id: "strength", value: 1 });
     state.enemies[0]!.statuses.push({ id: "strength", value: 2 });
 
-    const result = play(data, state, "f02_dien_doat", "enemy:0");
+    const result = play(data, state, stealOneCard.id, "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(hero(result.state, "f02").statuses).toEqual([{ id: "strength", value: 3 }]);
@@ -195,13 +189,11 @@ describe("stealBuff", () => {
   });
 
   it("T70: nothing happens when the target has no buff", () => {
-    const { data, state } = makeTestCombat({
-      heroIds: PHASE2_TEAM,
-      setup: (s) => setHand(s, ["f02_dien_doat"]),
-    });
+    const { data, state } = makeTestCombat({ heroIds: PHASE2_TEAM });
+    injectCard(state, data, stealOneCard);
     state.enemies[0]!.statuses.push({ id: "weak", value: 1 });
 
-    const result = play(data, state, "f02_dien_doat", "enemy:0");
+    const result = play(data, state, stealOneCard.id, "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(

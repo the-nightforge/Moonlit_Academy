@@ -34,6 +34,11 @@ export interface LevelUpDef {
   passive: LevelUpPassive;
 }
 
+export interface HeroBranch {
+  name: string;
+  cardIds: string[];
+}
+
 export interface HeroDef {
   id: string;
   name: string;
@@ -42,8 +47,10 @@ export interface HeroDef {
   rarity: Rarity;
   maxHp: number;
   cardIds: string[];
-  /** Cards this hero can learn in a run; not in `cardIds`. */
-  rewardCardIds: string[];
+  /** Mastery-unlocked cards; with cardIds forms the 12-card pool. */
+  lockedCardIds: string[];
+  /** Two build paths; their cardIds partition the 12-card pool. */
+  branches: [HeroBranch, HeroBranch];
   levelUp: LevelUpDef;
   art: { portrait: string; levelUp: string };
 }

@@ -1,23 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, isCardPlayable } from "../src/index";
-import { idleIntent, killThenArmorCard, strike9Intent } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setHand, setIntent } from "./helpers";
+import { aoeFiveCard, healFiveCard, idleIntent, killThenArmorCard, strike9Intent } from "./fixtures";
+import { injectCard, instanceIdOf, makeTestCombat, setIntent } from "./helpers";
 
 describe("combat end", () => {
   it("T57: killing the last enemy wins the combat", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
         s.enemies[0]!.alive = false;
         s.enemies[0]!.hp = 0;
         s.enemies[1]!.hp = 5;
-        setHand(s, ["m06_song_nhan_loan_vu"]);
       },
     });
-    const result = applyAction(data, state, {
-      type: "playCard",
-      instanceId: instanceIdOf(state, "m06_song_nhan_loan_vu"),
-    });
+    const aoe = injectCard(state, data, aoeFiveCard);
+    const result = applyAction(data, state, { type: "playCard", instanceId: aoe });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.status).toBe("won");
@@ -28,23 +24,20 @@ describe("combat end", () => {
   it("T58: actions are rejected after the combat ended", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
         s.enemies[0]!.alive = false;
         s.enemies[0]!.hp = 0;
         s.enemies[1]!.hp = 5;
-        setHand(s, ["m06_song_nhan_loan_vu", "f04_thao_duoc"]);
       },
     });
-    const won = applyAction(data, state, {
-      type: "playCard",
-      instanceId: instanceIdOf(state, "m06_song_nhan_loan_vu"),
-    });
+    const aoe = injectCard(state, data, aoeFiveCard);
+    const heal = injectCard(state, data, healFiveCard);
+    const won = applyAction(data, state, { type: "playCard", instanceId: aoe });
     expect(won.ok).toBe(true);
     if (!won.ok) return;
 
     const play = applyAction(data, won.state, {
       type: "playCard",
-      instanceId: instanceIdOf(won.state, "f04_thao_duoc"),
+      instanceId: heal,
       targetId: "hero:m05",
     });
     expect(play.ok).toBe(false);
@@ -105,10 +98,10 @@ describe("combat end", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    setHand(result.state, ["f04_thao_duoc"]);
+    const heal = injectCard(result.state, data, healFiveCard);
     const attempt = applyAction(data, result.state, {
       type: "playCard",
-      instanceId: instanceIdOf(result.state, "f04_thao_duoc"),
+      instanceId: heal,
       targetId: "hero:m06",
     });
     expect(attempt.ok).toBe(false);

@@ -49,7 +49,7 @@ function loseCombat(data: GameData, run: RunState) {
 }
 
 function teamRewardPool(data: GameData): string[] {
-  return DEFAULT_TEAM.flatMap((id) => data.heroes[id]!.rewardCardIds);
+  return DEFAULT_TEAM.flatMap((id) => data.heroes[id]!.lockedCardIds);
 }
 
 describe("run lifecycle", () => {
@@ -217,9 +217,11 @@ describe("run lifecycle", () => {
   it("T114: reward choices shrink with the pool; an empty pool skips the reward", () => {
     const { data, run } = newRun();
     const pool = teamRewardPool(data);
-    run.deck.push(...pool.slice(0, 8));
+    run.deck.push(...pool.slice(0, pool.length - 1));
     const entered = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) }).run;
-    expect(winCombat(data, entered).run.pendingReward!.cardChoices).toEqual([pool[8]]);
+    expect(winCombat(data, entered).run.pendingReward!.cardChoices).toEqual([
+      pool[pool.length - 1],
+    ]);
 
     const full = newRun();
     full.run.deck.push(...pool);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, getEffectiveCost } from "../src/index";
-import { idleIntent, strike9Intent } from "./fixtures";
-import { makeEnemiesIdle, makeTestCombat, setHand, setIntent, instanceIdOf } from "./helpers";
+import { idleIntent, regenThreeCard, stealthOneCard, strike9Intent } from "./fixtures";
+import { injectCard, makeEnemiesIdle, makeTestCombat, setHand, setIntent, instanceIdOf } from "./helpers";
 
 describe("hero level up", () => {
   it("T46: damageTaken counter levels M05 up mid-card", () => {
@@ -78,12 +78,12 @@ describe("hero level up", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.heroes[1]!.leveledUp = true;
-        setHand(s, ["f04_bach_thao_huong"]);
       },
     });
+    const regen = injectCard(state, data, regenThreeCard);
     const result = applyAction(data, state, {
       type: "playCard",
-      instanceId: instanceIdOf(state, "f04_bach_thao_huong"),
+      instanceId: regen,
       targetId: "hero:m05",
     });
     expect(result.ok).toBe(true);
@@ -98,9 +98,10 @@ describe("hero level up", () => {
       setup: (s) => {
         s.moonPower = 11;
         s.enemies[0]!.hp = 5;
-        setHand(s, ["m06_am_tien", "m06_anh_bo"]);
+        setHand(s, ["m06_am_tien"]);
       },
     });
+    const stealth = injectCard(state, data, { ...stealthOneCard, cost: 2 });
     const killed = applyAction(data, state, {
       type: "playCard",
       instanceId: instanceIdOf(state, "m06_am_tien"),
@@ -114,7 +115,7 @@ describe("hero level up", () => {
 
     const played = applyAction(data, killed.state, {
       type: "playCard",
-      instanceId: instanceIdOf(killed.state, "m06_anh_bo"),
+      instanceId: stealth,
     });
     expect(played.ok).toBe(true);
     if (!played.ok) return;
@@ -132,11 +133,12 @@ describe("hero level up", () => {
     const next = applyAction(data, state, { type: "endTurn" });
     expect(next.ok).toBe(true);
     if (!next.ok) return;
-    setHand(next.state, ["m06_anh_bo", "m06_am_tien"]);
+    setHand(next.state, ["m06_am_tien"]);
+    const stealth = injectCard(next.state, data, { ...stealthOneCard, cost: 2 });
 
     const free = applyAction(data, next.state, {
       type: "playCard",
-      instanceId: instanceIdOf(next.state, "m06_anh_bo"),
+      instanceId: stealth,
     });
     expect(free.ok).toBe(true);
     if (!free.ok) return;

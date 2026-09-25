@@ -9,6 +9,9 @@ import { makeTestCombat, setIntent } from "./helpers";
 import { strike9Intent } from "./fixtures";
 
 function pickAction(data: GameData, state: CombatState): Action {
+  if (state.status === "choosing" && state.pendingChoice) {
+    return { type: "chooseCard", instanceId: state.pendingChoice.options[0]! };
+  }
   for (const instanceId of state.hand) {
     if (!isCardPlayable(data, state, instanceId)) continue;
     const card = data.cards[state.cards[instanceId]!.cardId]!;

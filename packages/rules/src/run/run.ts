@@ -98,7 +98,7 @@ function gainRunRelic(data: GameData, run: RunState, runEvents: RunEvent[]): str
 
 function drawCardChoices(data: GameData, run: RunState): string[] {
   const pool = run.heroes
-    .flatMap((hero) => data.heroes[hero.defId]!.rewardCardIds)
+    .flatMap((hero) => data.heroes[hero.defId]!.lockedCardIds)
     .filter((cardId) => !run.deck.includes(cardId));
   const shuffled = shuffle(pool, run.rngState);
   run.rngState = shuffled.rngState;

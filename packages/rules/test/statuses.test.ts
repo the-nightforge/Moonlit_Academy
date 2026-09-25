@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "../src/index";
-import { idleEnemies, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand } from "./helpers";
+import { armorBreakCard, cleanseHealCard } from "./fixtures";
+import { idleEnemies, injectCard, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand } from "./helpers";
 
 function play(data: Parameters<typeof applyAction>[0], state: Parameters<typeof applyAction>[1], cardId: string, targetId?: string) {
   return applyAction(data, state, {
@@ -56,16 +57,16 @@ describe("statuses", () => {
         setHand(s, [
           "m05_tran_bac_huyet_tinh",
           "m05_liet_hoa_xung_phong",
-          "m05_thuong_pha",
         ]);
       },
     });
+    injectCard(state, data, armorBreakCard);
     const first = play(data, state, "m05_tran_bac_huyet_tinh");
     if (!first.ok) throw new Error("setup failed");
     const second = play(data, first.state, "m05_liet_hoa_xung_phong", "enemy:0");
     if (!second.ok) throw new Error("setup failed");
 
-    const third = play(data, second.state, "m05_thuong_pha", "enemy:0");
+    const third = play(data, second.state, armorBreakCard.id, "enemy:0");
     expect(third.ok).toBe(true);
     if (!third.ok) return;
     const damage = third.events.find((e) => e.type === "damageDealt");
@@ -76,9 +77,10 @@ describe("statuses", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonPower = 11;
-        setHand(s, ["m06_nguyet_anh_an", "m06_am_tien", "m05_thuong_pha"]);
+        setHand(s, ["m06_nguyet_anh_an", "m06_am_tien"]);
       },
     });
+    injectCard(state, data, armorBreakCard);
     const marked = play(data, state, "m06_nguyet_anh_an", "enemy:0");
     expect(marked.ok).toBe(true);
     if (!marked.ok) return;
@@ -93,7 +95,7 @@ describe("statuses", () => {
     if (!arrow.ok) return;
     expect(arrow.events.find((e) => e.type === "damageDealt")).toMatchObject({ amount: 9 });
 
-    const spear = play(data, arrow.state, "m05_thuong_pha", "enemy:0");
+    const spear = play(data, arrow.state, armorBreakCard.id, "enemy:0");
     expect(spear.ok).toBe(true);
     if (!spear.ok) return;
     const damage = spear.events.find((e) => e.type === "damageDealt");
@@ -110,10 +112,10 @@ describe("statuses", () => {
           { id: "stealth", value: 1 },
           { id: "regen", value: 2 },
         );
-        setHand(s, ["f04_tinh_tam_tra"]);
       },
     });
-    const result = play(data, state, "f04_tinh_tam_tra", "hero:m06");
+    injectCard(state, data, cleanseHealCard);
+    const result = play(data, state, cleanseHealCard.id, "hero:m06");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const statuses = result.state.heroes[2]!.statuses.map((s) => s.id);

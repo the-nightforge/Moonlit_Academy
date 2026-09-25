@@ -173,15 +173,28 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   }
 
   for (const hero of heroes) {
-    for (const cardId of hero.rewardCardIds) {
+    for (const cardId of hero.lockedCardIds) {
       const card = cardById.get(cardId);
       if (!card) {
-        errors.push(`hero "${hero.id}": rewardCardIds references missing card "${cardId}"`);
+        errors.push(`hero "${hero.id}": lockedCardIds references missing card "${cardId}"`);
       } else if (card.ownerId !== hero.id) {
-        errors.push(`hero "${hero.id}": reward card "${cardId}" has ownerId "${card.ownerId}"`);
+        errors.push(`hero "${hero.id}": locked card "${cardId}" has ownerId "${card.ownerId}"`);
       } else if (hero.cardIds.includes(cardId)) {
-        errors.push(`hero "${hero.id}": reward card "${cardId}" is also a starting card`);
+        errors.push(`hero "${hero.id}": locked card "${cardId}" is also a starting card`);
       }
+    }
+    const pool = new Set([...hero.cardIds, ...hero.lockedCardIds]);
+    const branchCards = hero.branches.flatMap((branch) => branch.cardIds);
+    if (
+      new Set(branchCards).size !== branchCards.length ||
+      branchCards.some((id) => !pool.has(id)) ||
+      branchCards.length !== pool.size
+    ) {
+      errors.push(`hero "${hero.id}": branches must split the 12-card pool exactly`);
+    }
+    const cheapFree = hero.cardIds.filter((id) => (cardById.get(id)?.cost ?? 99) <= 3).length;
+    if (cheapFree < 2) {
+      errors.push(`hero "${hero.id}": needs at least 2 free cards with cost <= 3`);
     }
   }
 

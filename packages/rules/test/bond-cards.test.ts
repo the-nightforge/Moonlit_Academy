@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { CombatState, GameData } from "../src/index";
 import { applyAction, createCombat, getEffectiveCost, isCardPlayable } from "../src/index";
-import { instanceIdOf, makeTestCombat, setHand, testData } from "./helpers";
+import { stealthOneCard } from "./fixtures";
+import { injectCard, instanceIdOf, makeTestCombat, setHand, testData } from "./helpers";
 
 function play(data: GameData, state: CombatState, cardId: string, targetId?: string) {
   return applyAction(data, state, {
@@ -158,10 +159,14 @@ describe("bond resolution", () => {
     expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 8);
   });
 
-  it("T86: Ảnh Đấu gives the stolen buff to F02 and keeps M06 stealthed", () => {
+  it("T86: Ảnh Đấu gives the stolen buff to F02, Đoạt Nguyệt 1, and keeps M06 stealthed", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "m06", "f02"],
-      setup: (s) => setHand(s, ["bond_anh_dau"]),
+      setup: (s) => {
+        s.moonPower = 10;
+        s.enemies[0]!.moonPower = 3;
+        setHand(s, ["bond_anh_dau"]);
+      },
     });
     state.enemies[0]!.statuses.push({ id: "strength", value: 1 });
 
@@ -171,19 +176,22 @@ describe("bond resolution", () => {
     expect(hero(result.state, "f02").statuses).toEqual([{ id: "strength", value: 1 }]);
     expect(hero(result.state, "f02").levelUpCounter).toBe(1);
     expect(hero(result.state, "m06").statuses).toEqual([{ id: "stealth", value: 1 }]);
+    expect(result.state.enemies[0]?.moonPower).toBe(2);
+    expect(result.state.moonPower).toBe(9);
   });
 
   it("T87: M06's first-card discount does not apply to a bond card", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "m06", "f02"],
-      setup: (s) => setHand(s, ["bond_anh_dau", "m06_anh_bo"]),
+      setup: (s) => setHand(s, ["bond_anh_dau"]),
     });
+    const stealth = injectCard(state, data, { ...stealthOneCard, cost: 2 });
     const m06 = hero(state, "m06");
     m06.leveledUp = true;
     m06.firstCardDiscountActive = true;
 
     expect(getEffectiveCost(data, state, instanceIdOf(state, "bond_anh_dau"))).toBe(2);
-    expect(getEffectiveCost(data, state, instanceIdOf(state, "m06_anh_bo"))).toBe(0);
+    expect(getEffectiveCost(data, state, stealth)).toBe(0);
   });
 
   it("F04's regen spread does not apply to a bond card", () => {

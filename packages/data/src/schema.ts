@@ -73,6 +73,11 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("stealBonus") }),
 ]);
 
+const branchSchema = z.object({
+  name: z.string().min(1),
+  cardIds: z.array(idSchema).length(6),
+});
+
 export const heroDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
@@ -81,7 +86,8 @@ export const heroDefSchema = z.object({
   rarity: raritySchema,
   maxHp: z.number().int().positive(),
   cardIds: z.array(idSchema).length(6),
-  rewardCardIds: z.array(idSchema),
+  lockedCardIds: z.array(idSchema).length(6),
+  branches: z.tuple([branchSchema, branchSchema]),
   levelUp: z.object({
     name: z.string().min(1),
     description: z.string(),
