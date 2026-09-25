@@ -223,7 +223,7 @@ Vòng 1 đi qua đủ các bước (bước 7 thường không rút gì vì tay 
     còn lại **xuống đáy chồng theo thứ tự `options`**, `status = "playerTurn"`, event
     `cardChosen`. Vì `chooseCard` luôn là effect cuối, không còn effect nào chờ.
   - Tay luôn còn chỗ vì lá đang đánh đã rời tay (tay ≤ `handSize − 1`).
-- `cardPlayed`-hook Kỳ Vật chạy sau khi lá **và** lựa chọn (nếu có) xong.
+- Khi Chiêm Bài mở lựa chọn, phần còn lại của việc đánh lá (gỡ Cường Hóa/Ẩn Thân của lá tấn công, hook Kỳ Vật `cardPlayed`, lá vào chồng bỏ) **chạy ngay**, không chờ người chơi chọn — các bước đó không phụ thuộc lá được chọn, nên không cần lưu "phần việc còn lại".
 
 ### 3.6 Cuối lượt người chơi
 
@@ -306,7 +306,7 @@ tiêu RNG. Client cộng damage dự kiến từ cả chuỗi.
 ### 5.1 Cost và `copies` của 48 lá
 
 Quy tắc khởi điểm: **cost mới = cost cũ × 2**, lá có `draw` (nay `chooseCard`) +1.
-`copies`: cost 0–1 → 3, 2–4 → 2, 5+ → 1. Số chốt lại ở bước 4a.9.
+`copies`: cost 0–1 → 3, 2–4 → 2, 5+ → 1. Số chốt lại ở bước 4a.8.
 
 | id | Tên | Vai trò (4a) | Cost cũ | Cost mới | `copies` |
 |---|---|---|---|---|---|
@@ -399,7 +399,7 @@ Lượt chơi: `RunState.deck` giữ danh sách id (không đổi cấu trúc); 
 ### 5.5 Kẻ địch
 
 HP giữ nguyên trừ boss. Mọi chiêu chỉ dùng effect/trạng thái đã có. Số khởi điểm,
-chốt ở 4a.9. *(T)* = `targeting`.
+chốt ở 4a.8. *(T)* = `targeting`.
 
 **Ảnh Hồ `shadow_fox`** — HP 24, Nguyệt Lực 1→2. Override Trăng Tròn: *Huyễn
 Nguyệt* 9 → **7**.
@@ -452,7 +452,7 @@ Nguyệt* 9 → **7**.
 | `fox_king_claw` | Vương Trảo | 3 | 10 damage *(highestHp)* |
 | `fox_king_nine_tails` | Cửu Vĩ Trảm | 5 | 3 damage ×4; mục tiêu đang Suy Yếu: 5 ×4 *(lowestHp)* |
 
-**Nguyệt Viên `moon_ape`** (Boss) — HP 110 (giữ nguyên; đo ở 4a.9 rồi quyết), 3→8. Giữ 3 override pha trăng
+**Nguyệt Viên `moon_ape`** (Boss) — HP 110 (giữ nguyên; đo ở 4a.8 rồi quyết), 3→8. Giữ 3 override pha trăng
 (*Tắm Nguyệt*, *Ám Nguyệt Kích*, *Kính Nguyệt Giáp*) và *Huyết Nguyệt Cuồng*.
 
 | id | Tên | Cost | Hiệu ứng |
@@ -464,7 +464,7 @@ Nguyệt* 9 → **7**.
 | `ape_heaven_strike` | Thiên Nguyệt Kích | 8 | 20 damage; Dễ Vỡ 2 *(highestHp)* |
 
 Trận thường 8–12 vòng dài hơn hiện tại (5–8) trong khi Nguyệt Lực người chơi gần
-gấp đôi → HP địch thường nhiều khả năng phải tăng; chốt ở 4a.9.
+gấp đôi → HP địch thường nhiều khả năng phải tăng; chốt ở 4a.8.
 
 Nguyên tắc chỉnh: damage mỗi vòng của địch **đầu trận thấp hơn**, **giữa trận
 tương đương**, **cuối trận cao hơn** hiện tại — soi gương đường cong Nguyệt Lực
@@ -495,40 +495,40 @@ người chơi.
 
 ## 7. Test
 
-Mã mới từ **T120** (đưa vào `06` ở bước 4a.1). Test luật dùng fixture cố định
+Mã mới từ **T128** (đưa vào `06` ở bước 4a.1). Test luật dùng fixture cố định
 (`strike9Intent`, v.v.), không phụ thuộc số cân bằng. Helper `setIntent` →
 `setPlan(state, pos, plan)`.
 
 | Mã | Kịch bản |
 |---|---|
-| T120 | Nguyệt Lực gốc 3, 4, … 8, 8 theo vòng |
-| T121 | Dự Trữ = min(3, dư); quỹ vượt trần (8 + 3 = 11); `gainMoonPower` dư cũng tối đa 3 |
-| T122 | Địch Đóng Băng: bỏ cả chuỗi, Dự Trữ về 0 |
-| T123 | Giữ tay qua lượt; rút bù đủ 6; chồng hết thì rút được bao nhiêu hay bấy nhiêu |
-| T124 | Cuối lượt chỉ bỏ Tàn Chiêu; lá Hero bị Đóng Băng và lá cần Huyết Nguyệt ở lại |
-| T125 | Chồng bài có đúng `copies` bản mỗi lá (kể cả Song Hành), `instanceId` duy nhất |
-| T126 | Không xáo lại chồng bỏ; không có `deckShuffled` giữa trận |
-| T127 | Cạn Bài: tay rỗng + chồng rỗng đầu lượt → thua; tay còn lá → chưa thua |
-| T128 | Tán Chiêu: Hero ngã → mọi bản trong chồng (kể cả Song Hành) sang chồng bỏ; lá trên tay bị bỏ cuối lượt |
-| T129 | Đổi Bài: rút thay trước rồi xáo; lá đổi không quay lại tay; mảng rỗng không tiêu RNG |
-| T130 | Đổi Bài: > 2 lá, lá không trên tay, trùng, đổi lần 2 → bị từ chối; `playCard`/`endTurn` bị chặn khi `mulligan` |
-| T131 | Chuỗi: ưu tiên chiêu đắt nhất khi đủ tiền và vòng trước chưa dùng; tối đa 3; mỗi chiêu 1 lần/vòng |
-| T132 | Chuỗi: bốc có trọng số theo seed — cùng seed ra cùng chuỗi |
-| T133 | Tụ Lực: không đủ tiền → chuỗi rỗng, quỹ vào Dự Trữ (tối đa 3) |
-| T134 | Override pha trăng / Huyết Nguyệt đứng đầu chuỗi, cost 0, vẫn chọn thêm chiêu |
-| T135 | Địch chết giữa chuỗi → chiêu còn lại bị hủy; Khiêu Khích / Ẩn Thân chọn lại mục tiêu từng chiêu |
-| T136 | Chiêm Bài: `choosing`, `chooseCard` hợp lệ, 2 lá xuống đáy theo thứ tự; Action khác bị chặn |
-| T137 | Chiêm Bài: chồng 1 lá → lấy luôn; chồng rỗng → không tác dụng |
-| T138 | M06 thăng cấp: lá riêng đầu tiên −3 (tối thiểu 0), sau giảm theo pha; không áp lá Song Hành |
-| T139 | Tất định: cùng seed + cùng chuỗi Action (có Đổi Bài, Chiêm Bài) → cùng state và event |
-| T140 | Schema: `copies` ∈ {1,2,3}; `intents` ≥ 1, cost ≥ 0; `start ≤ cap`; `chooseCard` chỉ ở cuối lá; config hợp lệ |
+| T128 | Nguyệt Lực gốc 3, 4, … 8, 8 theo vòng |
+| T129 | Dự Trữ = min(3, dư); quỹ vượt trần (8 + 3 = 11); `gainMoonPower` dư cũng tối đa 3 |
+| T130 | Địch Đóng Băng: bỏ cả chuỗi, Dự Trữ về 0 |
+| T131 | Giữ tay qua lượt; rút bù đủ 6; chồng hết thì rút được bao nhiêu hay bấy nhiêu |
+| T132 | Cuối lượt chỉ bỏ Tàn Chiêu; lá Hero bị Đóng Băng và lá cần Huyết Nguyệt ở lại |
+| T133 | Chồng bài có đúng `copies` bản mỗi lá (kể cả Song Hành), `instanceId` duy nhất |
+| T134 | Không xáo lại chồng bỏ; không có `deckShuffled` giữa trận |
+| T135 | Cạn Bài: tay rỗng + chồng rỗng đầu lượt → thua; tay còn lá → chưa thua |
+| T136 | Tán Chiêu: Hero ngã → mọi bản trong chồng (kể cả Song Hành) sang chồng bỏ; lá trên tay bị bỏ cuối lượt |
+| T137 | Đổi Bài: rút thay trước rồi xáo; lá đổi không quay lại tay; mảng rỗng không tiêu RNG |
+| T138 | Đổi Bài: > 2 lá, lá không trên tay, trùng, đổi lần 2 → bị từ chối; `playCard`/`endTurn` bị chặn khi `mulligan` |
+| T139 | Chuỗi: ưu tiên chiêu đắt nhất khi đủ tiền và vòng trước chưa dùng; tối đa 3; mỗi chiêu 1 lần/vòng |
+| T140 | Chuỗi: bốc có trọng số theo seed — cùng seed ra cùng chuỗi |
+| T141 | Tụ Lực: không đủ tiền → chuỗi rỗng, quỹ vào Dự Trữ (tối đa 3) |
+| T142 | Override pha trăng / Huyết Nguyệt đứng đầu chuỗi, cost 0, vẫn chọn thêm chiêu |
+| T143 | Địch chết giữa chuỗi → chiêu còn lại bị hủy; Khiêu Khích / Ẩn Thân chọn lại mục tiêu từng chiêu |
+| T144 | Chiêm Bài: `choosing`, `chooseCard` hợp lệ, 2 lá xuống đáy theo thứ tự; Action khác bị chặn |
+| T145 | Chiêm Bài: chồng 1 lá → lấy luôn; chồng rỗng → không tác dụng |
+| T146 | M06 thăng cấp: lá riêng đầu tiên −3 (tối thiểu 0), sau giảm theo pha; không áp lá Song Hành |
+| T147 | Tất định: cùng seed + cùng chuỗi Action (có Đổi Bài, Chiêm Bài) → cùng state và event |
+| T148 | Schema: `copies` ∈ {1,2,3}; `intents` ≥ 1, cost ≥ 0; `start ≤ cap`; `chooseCard` chỉ ở cuối lá; config hợp lệ |
 
 Các test hiện có dựa vào bỏ tay / rút 5 / Nguyệt Lực 3 / `currentIntent` được viết
 lại theo luật mới (giữ mã cũ nếu kịch bản còn nghĩa).
 
 ---
 
-## 8. Mô phỏng và mục tiêu (bước 4a.9)
+## 8. Mô phỏng và mục tiêu (bước 4a.8)
 
 Heuristic (cả `playtest.test.ts` và `run-playtest.test.ts`):
 - **Đổi Bài:** đổi tối đa 2 lá có cost > 5.
@@ -565,7 +565,7 @@ ghi vào `playtest-notes.md` mục "Phase 4a".
 - `04-glossary.md`: Nguyệt Lực Dự Trữ (`moonReserve`), Đổi Bài (`mulligan`), Chiêm
   Bài (`chooseCard`), Cạn Bài (`deckedOut`), Tán Chiêu (`cardsPurged`), Tụ Lực (chuỗi
   rỗng).
-- `06-test-scenarios.md`: T120–T140.
+- `06-test-scenarios.md`: T128–T148.
 - `07-implementation-plan.md`: mục Giai đoạn 4a (§10).
 
 ---
@@ -575,11 +575,12 @@ ghi vào `playtest-notes.md` mục "Phase 4a".
 | Bước | Nội dung |
 |---|---|
 | 4a.1 | Cập nhật tài liệu (§9) |
-| 4a.2 | Schema + `combat-config.json` + `copies` + `intents[]`/`moonPower` địch + data khởi điểm (§5); loader và test schema (T140) |
-| 4a.3 | Lượt mới: Nguyệt Lực tăng dần + Dự Trữ người chơi, giữ tay, rút bù, bỏ Tàn Chiêu (T120, T121, T123, T124) |
-| 4a.4 | Chồng bài theo `copies`, không xáo lại, Cạn Bài, Tán Chiêu (T125–T128) |
-| 4a.5 | Đổi Bài: trạng thái `mulligan`, Action (T129, T130) |
-| 4a.6 | AI địch: lên chuỗi, thi hành, Dự Trữ địch, xem trước (T122, T131–T135) |
-| 4a.7 | Chiêm Bài, passive M06, Kỳ Vật, effect scale (T136–T139) |
-| 4a.8 | Client (§6) |
-| 4a.9 | Mô phỏng + chỉnh số (qua duyệt) + `playtest-notes.md` |
+| 4a.2 | Thang Nguyệt Lực: `combat-config.json`, Nguyệt Lực tăng dần + Dự Trữ người chơi, nhân đôi cost / giảm cost theo pha / `gainMoonPower`, passive M06 (T128, T129, T146, T148 config) |
+| 4a.3 | Tay và chồng bài: giữ tay, rút bù, bỏ Tàn Chiêu, `copies`, deck 6 lá/Hero, không xáo lại, Cạn Bài, Tán Chiêu (T131–T136, T148 copies) |
+| 4a.4 | Đổi Bài: trạng thái `mulligan`, Action (T137, T138) |
+| 4a.5 | Chiêm Bài: effect, trạng thái `choosing`, Action, Kỳ Vật Thanh Loan Vũ (T144, T145, T148 chooseCard) |
+| 4a.6 | AI địch: schema `intents`/`moonPower`, bộ chiêu mới, lên chuỗi, thi hành, Dự Trữ địch, xem trước; tất định (T130, T139–T143, T147, T148 intents) |
+| 4a.7 | Client (§6) |
+| 4a.8 | Mô phỏng + chỉnh số (qua duyệt) + `playtest-notes.md` |
+
+Mỗi bước gom thay đổi luật cùng phần data phụ thuộc để `pnpm test` xanh sau từng bước.
