@@ -106,6 +106,9 @@ export function fireEventHooks(
   bloodMoonBefore: number,
 ): void {
   if (state.runRelicIds.length === 0) return;
+  // Sampled before any hook effects below run: bloodMoonStarted only reacts to
+  // the scanned effect's own 0→active transition, never a relic-internal one.
+  const bloodMoonAfter = state.bloodMoonRounds;
   for (const event of events.slice(from)) {
     if (isOver(state)) return;
     if (event.type === "unitDied") {
@@ -123,7 +126,7 @@ export function fireEventHooks(
       });
     }
   }
-  if (!isOver(state) && bloodMoonBefore === 0 && state.bloodMoonRounds > 0) {
+  if (!isOver(state) && bloodMoonBefore === 0 && bloodMoonAfter > 0) {
     runRelicHooks(data, state, events, { type: "bloodMoonStarted" });
   }
 }

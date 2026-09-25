@@ -255,4 +255,26 @@ describe("run relic hooks", () => {
     });
     expect(triggered(events)).toEqual(["test_b", "test_a"]);
   });
+
+  it("a blood moon started inside a relic effect does not fire bloodMoonStarted", () => {
+    const starter: RunRelicDef = {
+      id: "test_blood_starter",
+      name: "Test",
+      text: "",
+      hooks: [{ on: { type: "enemyKilled" }, actor: "front", effects: [{ type: "bloodMoon", rounds: 1 }] }],
+    };
+    const { data, state } = makeTestCombat({
+      runRelicIds: [starter.id, "huyet_nguyet_phu"],
+      mutateData: (d) => {
+        d.runRelics[starter.id] = starter;
+      },
+      setup: (s) => setHand(s, ["m05_thuong_pha"]),
+    });
+    state.enemies[0]!.hp = 5;
+    const result = play(data, state, "m05_thuong_pha", "enemy:0");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.bloodMoonRounds).toBe(1);
+    expect(triggered(result.events)).toEqual(["test_blood_starter"]);
+  });
 });
