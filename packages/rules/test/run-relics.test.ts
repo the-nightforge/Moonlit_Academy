@@ -40,15 +40,15 @@ describe("run relic hooks", () => {
       mutateData: makeEnemiesIdle,
       setup: idleEnemies,
     });
-    expect(state.hand).toHaveLength(5);
+    expect(state.hand).toHaveLength(6);
     const second = applyAction(data, state, { type: "endTurn" });
     expect(second.ok).toBe(true);
     if (!second.ok) return;
-    expect(second.state.hand).toHaveLength(6);
+    expect(second.state.hand).toHaveLength(7);
     const third = applyAction(data, second.state, { type: "endTurn" });
     expect(third.ok).toBe(true);
     if (!third.ok) return;
-    expect(third.state.hand).toHaveLength(5);
+    expect(third.state.hand).toHaveLength(7);
   });
 
   it("T117: every third attack card grants 2 moon power", () => {

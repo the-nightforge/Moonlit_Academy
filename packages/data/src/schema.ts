@@ -74,7 +74,7 @@ export const heroDefSchema = z.object({
   archetype: archetypeSchema,
   rarity: raritySchema,
   maxHp: z.number().int().positive(),
-  cardIds: z.array(idSchema).length(5),
+  cardIds: z.array(idSchema).length(6),
   rewardCardIds: z.array(idSchema),
   levelUp: z.object({
     name: z.string().min(1),
@@ -95,6 +95,7 @@ export const cardDefSchema = z.object({
   ownerId: idSchema.optional(),
   bond: z.object({ owners: z.tuple([idSchema, idSchema]) }).optional(),
   cost: z.number().int().nonnegative(),
+  copies: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   type: z.enum(["attack", "skill"]),
   tags: z.array(cardTagSchema),
   target: z.enum(["none", "enemy", "ally"]),

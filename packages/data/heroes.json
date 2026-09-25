@@ -11,12 +11,12 @@
       "m05_ho_gam",
       "m05_thuong_pha",
       "m05_tran_bac_huyet_tinh",
-      "m05_bat_khuat"
+      "m05_bat_khuat",
+      "m05_bat_dong_nhu_son"
     ],
     "rewardCardIds": [
       "m05_thiet_bich",
       "m05_no_hoa_lien_hoan",
-      "m05_bat_dong_nhu_son",
       "m05_huyet_chien"
     ],
     "levelUp": {
@@ -40,10 +40,10 @@
       "f04_bach_thao_huong",
       "f04_linh_chi_ho_the",
       "f04_tinh_tam_tra",
-      "f04_nguyet_quang_dan"
+      "f04_nguyet_quang_dan",
+      "f04_hoi_xuan_tan"
     ],
     "rewardCardIds": [
-      "f04_hoi_xuan_tan",
       "f04_bang_tam_quyet",
       "f04_thanh_tam_chu",
       "f04_nguyet_lo"
@@ -69,10 +69,10 @@
       "m06_am_tien",
       "m06_doat_menh",
       "m06_nguyet_anh_an",
-      "m06_song_nhan_loan_vu"
+      "m06_song_nhan_loan_vu",
+      "m06_tang_anh_thich"
     ],
     "rewardCardIds": [
-      "m06_tang_anh_thich",
       "m06_doc_tieu",
       "m06_anh_phan_than",
       "m06_tuyet_menh"
@@ -98,13 +98,13 @@
       "f03_han_an",
       "f03_bang_phach_lien_kich",
       "f03_phong_tuyet_chuong",
-      "f03_tuyet_han"
+      "f03_tuyet_han",
+      "f03_tuyet_vu"
     ],
     "rewardCardIds": [
       "f03_suong_giap",
       "f03_bang_toai",
-      "f03_han_phong",
-      "f03_tuyet_vu"
+      "f03_han_phong"
     ],
     "levelUp": {
       "name": "Hàn Sơn Kiếm",
@@ -127,10 +127,10 @@
       "f02_huyet_tram",
       "f02_anh_tap",
       "f02_doi_van_chu",
-      "f02_phe_hon"
+      "f02_phe_hon",
+      "f02_huyet_khe"
     ],
     "rewardCardIds": [
-      "f02_huyet_khe",
       "f02_dien_cu",
       "f02_doat_hon_thich",
       "f02_ta_nguyet_chu"

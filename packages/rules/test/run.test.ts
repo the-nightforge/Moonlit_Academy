@@ -76,7 +76,7 @@ describe("run lifecycle", () => {
     const { run: next } = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) });
     expect(next.status).toBe("combat");
     expect(next.combat!.heroes[1]!.hp).toBe(20);
-    expect(Object.values(next.combat!.cards).map((c) => c.cardId).sort()).toEqual([...run.deck].sort());
+    expect([...new Set(Object.values(next.combat!.cards).map((c) => c.cardId))].sort()).toEqual([...run.deck].sort());
   });
 
   it("T105: winning carries HP, revives fallen heroes and offers 3 reward cards", () => {
@@ -106,12 +106,12 @@ describe("run lifecycle", () => {
     const reward = winCombat(data, entered).run;
     const pick = reward.pendingReward!.cardChoices[0]!;
     const picked = act(data, reward, { type: "pickCard", cardId: pick });
-    expect(picked.run.deck).toHaveLength(16);
+    expect(picked.run.deck).toHaveLength(19);
     expect(picked.run.deck).toContain(pick);
     expect(picked.run.status).toBe("map");
     expect(picked.runEvents).toEqual([{ type: "cardAdded", cardId: pick }]);
     const skipped = act(data, reward, { type: "pickCard", cardId: null });
-    expect(skipped.run.deck).toHaveLength(15);
+    expect(skipped.run.deck).toHaveLength(18);
     expect(skipped.run.status).toBe("map");
   });
 
@@ -210,9 +210,9 @@ describe("run lifecycle", () => {
   it("T114: reward choices shrink with the pool; an empty pool skips the reward", () => {
     const { data, run } = newRun();
     const pool = teamRewardPool(data);
-    run.deck.push(...pool.slice(0, 11));
+    run.deck.push(...pool.slice(0, 8));
     const entered = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) }).run;
-    expect(winCombat(data, entered).run.pendingReward!.cardChoices).toEqual([pool[11]]);
+    expect(winCombat(data, entered).run.pendingReward!.cardChoices).toEqual([pool[8]]);
 
     const full = newRun();
     full.run.deck.push(...pool);

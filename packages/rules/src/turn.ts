@@ -1,9 +1,10 @@
-import { drawCards } from "./draw";
+import { refillHand } from "./draw";
 import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "./effects";
 import { runEnemyTurn } from "./enemy-turn";
 import { announceIntents } from "./intent";
 import { bumpCounter, checkLevelUps } from "./levelup";
 import { baseMoonPower } from "./moon-power";
+import { cardOwners } from "./queries";
 import { fireEventHooks, runRelicHooks } from "./run-relic-hooks";
 import { DURATION_STATUSES, hasStatus, removeStatus } from "./statuses";
 import type { CombatEvent, CombatState, GameData } from "./types/index";
@@ -54,7 +55,12 @@ export function startPlayerTurn(data: GameData, state: CombatState, events: Comb
   const curve = data.combatConfig.moonPower;
   state.moonPower = baseMoonPower(curve, curve.perRound, state.round) + state.moonReserve;
   events.push({ type: "moonPowerChanged", value: state.moonPower });
-  drawCards(state, 5, events);
+  refillHand(data, state, events);
+  if (state.hand.length === 0 && state.drawPile.length === 0) {
+    state.status = "lost";
+    events.push({ type: "deckedOut" }, { type: "combatEnded", result: "lost" });
+    return;
+  }
   runRelicHooks(data, state, events, { type: "playerTurnStart" });
 }
 
@@ -89,11 +95,13 @@ export function runEndTurn(data: GameData, state: CombatState, events: CombatEve
     state.moonReserve = reserve;
     events.push({ type: "moonReserveChanged", side: "hero", value: reserve });
   }
-  if (state.hand.length > 0) {
-    const discarded = [...state.hand];
-    state.discardPile.push(...discarded);
-    state.hand = [];
-    events.push({ type: "cardDiscarded", instanceIds: discarded });
+  const broken = state.hand.filter((id) =>
+    cardOwners(state, state.cards[id]!).some((owner) => !owner?.alive),
+  );
+  if (broken.length > 0) {
+    state.hand = state.hand.filter((id) => !broken.includes(id));
+    state.discardPile.push(...broken);
+    events.push({ type: "cardDiscarded", instanceIds: broken });
   }
   for (const hero of state.heroes) removeStatus(hero, "freeze", events);
   runEnemyTurn(data, state, events);

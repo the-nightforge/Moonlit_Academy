@@ -51,37 +51,19 @@ describe("turn flow", () => {
 
   it("T07: endTurn runs the full round cycle", () => {
     const { data, state } = makeTestCombat();
+    const hand = [...state.hand];
     const result = applyAction(data, state, { type: "endTurn" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.round).toBe(2);
     expect(result.state.moonIndex).toBe(2);
     expect(result.state.moonPower).toBe(4 + 3);
-    expect(result.state.hand).toHaveLength(5);
-    expect(result.state.discardPile).toHaveLength(5);
-    expect(result.state.drawPile).toHaveLength(5);
+    expect(result.state.hand).toEqual(hand);
     const types = result.events.map((e) => e.type);
-    expect(types).toContain("cardDiscarded");
+    expect(types).not.toContain("cardDiscarded");
     expect(types).toContain("intentExecuted");
     expect(types).toContain("moonShifted");
     expect(types).toContain("intentRevealed");
-    expect(types).toContain("cardsDrawn");
-  });
-
-  it("T08: empty drawPile reshuffles the discard pile", () => {
-    const { data, state } = makeTestCombat();
-    const all = [...state.drawPile, ...state.hand];
-    const topTwo = all.slice(0, 2);
-    state.drawPile = topTwo;
-    state.hand = all.slice(2, 7);
-    state.discardPile = all.slice(7);
-
-    const result = applyAction(data, state, { type: "endTurn" });
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.state.hand).toHaveLength(5);
-    expect(result.events.some((e) => e.type === "deckShuffled")).toBe(true);
-    const drawn = result.events.find((e) => e.type === "cardsDrawn");
-    expect(drawn?.type === "cardsDrawn" && drawn.instanceIds.slice(0, 2)).toEqual(topTwo);
+    expect(types).not.toContain("cardsDrawn");
   });
 });

@@ -358,6 +358,15 @@ function killUnit(
     const killerHero = state.heroes.find((hero) => hero.id === killer.id);
     if (killerHero) bumpCounter(data, killerHero, "enemiesKilled", 1);
   }
+  if (unit.side === "hero") {
+    const defId = (unit as HeroState).defId;
+    const purged = state.drawPile.filter((id) => state.cards[id]!.ownerIds.includes(defId));
+    if (purged.length > 0) {
+      state.drawPile = state.drawPile.filter((id) => !purged.includes(id));
+      state.discardPile.push(...purged);
+      events.push({ type: "cardsPurged", heroId: unit.id, instanceIds: purged });
+    }
+  }
 }
 
 export function checkCombatEnd(state: CombatState, events: CombatEvent[]): boolean {

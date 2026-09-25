@@ -37,7 +37,7 @@ describe("loadGameData", () => {
     expect(Object.keys(data.runRelics)).toHaveLength(10);
     expect(data.runConfig.floors).toBe(8);
     expect(data.heroes["m05"]?.rewardCardIds).toEqual([
-      "m05_thiet_bich", "m05_no_hoa_lien_hoan", "m05_bat_dong_nhu_son", "m05_huyet_chien",
+      "m05_thiet_bich", "m05_no_hoa_lien_hoan", "m05_huyet_chien",
     ]);
     expect(data.encounters["enc_elite_01"]).toMatchObject({ tier: "elite", minFloor: 5 });
 
@@ -199,5 +199,11 @@ describe("parseGameData validation", () => {
     const raw = rawData();
     raw.combatConfig.moonPower.start = 9;
     expect(() => parseGameData(raw)).toThrowError(/moonPower start must be <= cap/);
+  });
+
+  it("T148: rejects a card with copies outside 1..3", () => {
+    const raw = rawData();
+    raw.cards[0].copies = 4;
+    expect(() => parseGameData(raw)).toThrowError(/copies/);
   });
 });

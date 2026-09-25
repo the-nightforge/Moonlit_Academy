@@ -19,8 +19,11 @@ describe("combat setup from a run", () => {
       heroes: [{ hp: 20, maxHp: 40 }, { hp: 30, maxHp: 30 }, { hp: 5, maxHp: 28 }],
       runRelicIds: ["anh_nguyet_chau"],
     });
-    expect(Object.keys(state.cards)).toHaveLength(16);
-    expect(state.cards["c16"]).toEqual({ instanceId: "c16", cardId: "m05_huyet_chien", ownerIds: ["m05"] });
+    const deckSize = deck.reduce((total, cardId) => total + data.cards[cardId]!.copies, 0);
+    expect(Object.keys(state.cards)).toHaveLength(deckSize);
+    const huyetChien = Object.values(state.cards).filter((i) => i.cardId === "m05_huyet_chien");
+    expect(huyetChien).toHaveLength(data.cards["m05_huyet_chien"]!.copies);
+    expect(huyetChien[0]?.ownerIds).toEqual(["m05"]);
     expect(state.heroes.map((h) => [h.hp, h.maxHp])).toEqual([[20, 40], [30, 30], [5, 28]]);
     expect(state.runRelicIds).toEqual(["anh_nguyet_chau"]);
     expect(state.runRelicCounters).toEqual({});

@@ -4,6 +4,7 @@
     "name": "Liệt Hỏa Xung Phong",
     "ownerId": "m05",
     "cost": 4,
+    "copies": 2,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -22,6 +23,7 @@
     "name": "Hổ Gầm",
     "ownerId": "m05",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": ["control", "ward"],
     "target": "none",
@@ -36,6 +38,7 @@
     "name": "Thương Phá",
     "ownerId": "m05",
     "cost": 2,
+    "copies": 2,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -50,6 +53,7 @@
     "name": "Trấn Bắc Huyết Tính",
     "ownerId": "m05",
     "cost": 0,
+    "copies": 3,
     "type": "skill",
     "tags": [],
     "target": "none",
@@ -64,6 +68,7 @@
     "name": "Bất Khuất",
     "ownerId": "m05",
     "cost": 4,
+    "copies": 2,
     "type": "skill",
     "tags": ["heal"],
     "target": "none",
@@ -82,6 +87,7 @@
     "name": "Thảo Dược",
     "ownerId": "f04",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": ["heal", "harmony"],
     "target": "ally",
@@ -93,6 +99,7 @@
     "name": "Bách Thảo Hương",
     "ownerId": "f04",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": ["heal", "harmony"],
     "target": "ally",
@@ -104,6 +111,7 @@
     "name": "Linh Chi Hộ Thể",
     "ownerId": "f04",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": [],
     "target": "ally",
@@ -115,6 +123,7 @@
     "name": "Tịnh Tâm Trà",
     "ownerId": "f04",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": ["heal", "harmony"],
     "target": "ally",
@@ -129,6 +138,7 @@
     "name": "Nguyệt Quang Dẫn",
     "ownerId": "f04",
     "cost": 5,
+    "copies": 1,
     "type": "skill",
     "tags": ["moon"],
     "target": "none",
@@ -143,6 +153,7 @@
     "name": "Ảnh Bộ",
     "ownerId": "m06",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": ["assassin"],
     "target": "none",
@@ -154,6 +165,7 @@
     "name": "Ám Tiễn",
     "ownerId": "m06",
     "cost": 2,
+    "copies": 2,
     "type": "attack",
     "tags": ["attack", "assassin"],
     "target": "enemy",
@@ -172,6 +184,7 @@
     "name": "Đoạt Mệnh",
     "ownerId": "m06",
     "cost": 4,
+    "copies": 2,
     "type": "attack",
     "tags": ["attack", "assassin"],
     "target": "enemy",
@@ -190,6 +203,7 @@
     "name": "Nguyệt Ảnh Ấn",
     "ownerId": "m06",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": ["control"],
     "target": "enemy",
@@ -201,6 +215,7 @@
     "name": "Song Nhận Loạn Vũ",
     "ownerId": "m06",
     "cost": 4,
+    "copies": 2,
     "type": "attack",
     "tags": ["attack", "assassin"],
     "target": "none",
@@ -212,6 +227,7 @@
     "name": "Sương Trảm",
     "ownerId": "f03",
     "cost": 2,
+    "copies": 2,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -230,6 +246,7 @@
     "name": "Hàn Ấn",
     "ownerId": "f03",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": ["control"],
     "target": "enemy",
@@ -241,6 +258,7 @@
     "name": "Băng Phách Liên Kích",
     "ownerId": "f03",
     "cost": 4,
+    "copies": 2,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -252,6 +270,7 @@
     "name": "Phong Tuyết Chướng",
     "ownerId": "f03",
     "cost": 4,
+    "copies": 2,
     "type": "skill",
     "tags": ["ward"],
     "target": "none",
@@ -266,6 +285,7 @@
     "name": "Tuyệt Hàn",
     "ownerId": "f03",
     "cost": 6,
+    "copies": 1,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -284,6 +304,7 @@
     "name": "Diện Đoạt",
     "ownerId": "f02",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": [],
     "target": "enemy",
@@ -295,6 +316,7 @@
     "name": "Huyết Trâm",
     "ownerId": "f02",
     "cost": 2,
+    "copies": 2,
     "type": "attack",
     "tags": ["attack", "forbidden"],
     "target": "enemy",
@@ -309,6 +331,7 @@
     "name": "Ảnh Tập",
     "ownerId": "f02",
     "cost": 2,
+    "copies": 2,
     "type": "attack",
     "tags": ["attack", "assassin"],
     "target": "enemy",
@@ -328,6 +351,7 @@
     "name": "Đổi Vận Chú",
     "ownerId": "f02",
     "cost": 4,
+    "copies": 2,
     "type": "skill",
     "tags": ["moon"],
     "target": "none",
@@ -342,6 +366,7 @@
     "name": "Phệ Hồn",
     "ownerId": "f02",
     "cost": 6,
+    "copies": 1,
     "type": "attack",
     "tags": ["attack", "forbidden"],
     "target": "enemy",
@@ -357,6 +382,7 @@
     "name": "Băng Hỏa Tranh Phong",
     "bond": { "owners": ["m05", "f03"] },
     "cost": 4,
+    "copies": 2,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -378,6 +404,7 @@
     "name": "Ảnh Đấu",
     "bond": { "owners": ["m06", "f02"] },
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": [],
     "target": "enemy",
@@ -392,6 +419,7 @@
     "name": "Tuyết Trung Tống Thán",
     "bond": { "owners": ["f03", "f04"] },
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": ["control"],
     "target": "enemy",
@@ -406,6 +434,7 @@
     "name": "Thiết Bích",
     "ownerId": "m05",
     "cost": 4,
+    "copies": 2,
     "type": "skill",
     "tags": [
       "ward"
@@ -431,6 +460,7 @@
     "name": "Nộ Hỏa Liên Hoàn",
     "ownerId": "m05",
     "cost": 4,
+    "copies": 2,
     "type": "attack",
     "tags": [
       "attack"
@@ -451,6 +481,7 @@
     "name": "Bất Động Như Sơn",
     "ownerId": "m05",
     "cost": 4,
+    "copies": 2,
     "type": "skill",
     "tags": [
       "ward"
@@ -476,6 +507,7 @@
     "name": "Huyết Chiến",
     "ownerId": "m05",
     "cost": 2,
+    "copies": 2,
     "type": "attack",
     "tags": [
       "attack"
@@ -511,6 +543,7 @@
     "name": "Hồi Xuân Tán",
     "ownerId": "f04",
     "cost": 4,
+    "copies": 2,
     "type": "skill",
     "tags": [
       "heal",
@@ -531,6 +564,7 @@
     "name": "Băng Tâm Quyết",
     "ownerId": "f04",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": [
       "control",
@@ -552,6 +586,7 @@
     "name": "Thanh Tâm Chú",
     "ownerId": "f04",
     "cost": 3,
+    "copies": 2,
     "type": "skill",
     "tags": [
       "harmony"
@@ -574,6 +609,7 @@
     "name": "Nguyệt Lộ",
     "ownerId": "f04",
     "cost": 0,
+    "copies": 3,
     "type": "skill",
     "tags": [
       "heal"
@@ -606,6 +642,7 @@
     "name": "Tàng Ảnh Thích",
     "ownerId": "m06",
     "cost": 2,
+    "copies": 2,
     "type": "attack",
     "tags": [
       "attack",
@@ -643,6 +680,7 @@
     "name": "Độc Tiêu",
     "ownerId": "m06",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": [
       "control"
@@ -663,6 +701,7 @@
     "name": "Ảnh Phân Thân",
     "ownerId": "m06",
     "cost": 5,
+    "copies": 1,
     "type": "skill",
     "tags": [
       "assassin"
@@ -687,6 +726,7 @@
     "name": "Tuyệt Mệnh",
     "ownerId": "m06",
     "cost": 6,
+    "copies": 1,
     "type": "attack",
     "tags": [
       "attack",
@@ -723,6 +763,7 @@
     "name": "Sương Giáp",
     "ownerId": "f03",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": [
       "ward"
@@ -748,6 +789,7 @@
     "name": "Băng Toái",
     "ownerId": "f03",
     "cost": 4,
+    "copies": 2,
     "type": "attack",
     "tags": [
       "attack"
@@ -783,6 +825,7 @@
     "name": "Hàn Phong",
     "ownerId": "f03",
     "cost": 2,
+    "copies": 2,
     "type": "skill",
     "tags": [
       "control"
@@ -809,6 +852,7 @@
     "name": "Tuyết Vũ",
     "ownerId": "f03",
     "cost": 4,
+    "copies": 2,
     "type": "attack",
     "tags": [
       "attack"
@@ -829,6 +873,7 @@
     "name": "Huyết Khế",
     "ownerId": "f02",
     "cost": 0,
+    "copies": 3,
     "type": "skill",
     "tags": [
       "forbidden"
@@ -852,6 +897,7 @@
     "name": "Diện Cụ",
     "ownerId": "f02",
     "cost": 3,
+    "copies": 2,
     "type": "skill",
     "tags": [
       "assassin"
@@ -876,6 +922,7 @@
     "name": "Đoạt Hồn Thích",
     "ownerId": "f02",
     "cost": 4,
+    "copies": 2,
     "type": "attack",
     "tags": [
       "attack",
@@ -916,6 +963,7 @@
     "name": "Tà Nguyệt Chú",
     "ownerId": "f02",
     "cost": 0,
+    "copies": 3,
     "type": "skill",
     "tags": [
       "forbidden",

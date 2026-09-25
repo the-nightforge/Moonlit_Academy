@@ -5,7 +5,7 @@ export { applyAction } from "./apply-action";
 export { getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
 export { getPlayCardError } from "./apply-action";
 export { previewEnemyIntent } from "./preview";
-export { drawCards } from "./draw";
+export { drawCards, refillHand } from "./draw";
 export { generateMap } from "./run/map";
 export {
   applyRunAction,

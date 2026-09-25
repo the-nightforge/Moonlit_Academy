@@ -39,21 +39,29 @@ export function createCombat(
   const cards: Record<string, CardInstance> = {};
   const drawPile: string[] = [];
   const deckCardIds = setup.deckCardIds ?? heroDefs.flatMap((hero) => hero.cardIds);
-  deckCardIds.forEach((cardId, index) => {
+  let deckIndex = 0;
+  for (const cardId of deckCardIds) {
     const card = data.cards[cardId];
     if (!card) throw new Error(`createCombat: deck references missing card "${cardId}"`);
     if (card.ownerId === undefined || !setup.heroIds.includes(card.ownerId)) {
       throw new Error(`createCombat: deck card "${cardId}" is not owned by a hero in the team`);
     }
-    const instanceId = `c${String(index + 1).padStart(2, "0")}`;
-    cards[instanceId] = { instanceId, cardId, ownerIds: [card.ownerId] };
-    drawPile.push(instanceId);
-  });
-  bondCardsForTeam(data, setup.heroIds).forEach((card, index) => {
-    const instanceId = `bond${String(index + 1).padStart(2, "0")}`;
-    cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [...card.bond!.owners] };
-    drawPile.push(instanceId);
-  });
+    for (let copy = 0; copy < card.copies; copy++) {
+      deckIndex += 1;
+      const instanceId = `c${String(deckIndex).padStart(2, "0")}`;
+      cards[instanceId] = { instanceId, cardId, ownerIds: [card.ownerId] };
+      drawPile.push(instanceId);
+    }
+  }
+  let bondIndex = 0;
+  for (const card of bondCardsForTeam(data, setup.heroIds)) {
+    for (let copy = 0; copy < card.copies; copy++) {
+      bondIndex += 1;
+      const instanceId = `bond${String(bondIndex).padStart(2, "0")}`;
+      cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [...card.bond!.owners] };
+      drawPile.push(instanceId);
+    }
+  }
   let rngState = setup.seed;
   const shuffled = shuffle(drawPile, rngState);
   rngState = shuffled.rngState;

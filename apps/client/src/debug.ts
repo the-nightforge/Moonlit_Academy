@@ -109,6 +109,10 @@ export function describeEvent(
       return `Nguyệt Lực = ${event.value}`;
     case "moonReserveChanged":
       return `Dự Trữ ${event.side === "hero" ? "người chơi" : name(event.enemyId)} = ${event.value}`;
+    case "deckedOut":
+      return "Cạn Bài";
+    case "cardsPurged":
+      return `Tán Chiêu: ${name(event.heroId)} mất ${event.instanceIds.length} lá trong chồng`;
     case "moonShifted":
       return `Pha ${event.from} → ${event.to}`;
     case "bloodMoonChanged":

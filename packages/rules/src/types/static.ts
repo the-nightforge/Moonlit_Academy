@@ -59,6 +59,8 @@ export interface CardDef {
   /** Bond card: belongs to both heroes. */
   bond?: { owners: [string, string] };
   cost: number;
+  /** Instances of this card in the draw pile (weak cards get more). */
+  copies: 1 | 2 | 3;
   type: CardType;
   tags: CardTag[];
   target: CardTarget;

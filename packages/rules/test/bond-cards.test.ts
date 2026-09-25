@@ -20,22 +20,32 @@ function deckIds(state: CombatState): string[] {
 }
 
 describe("bond deck construction", () => {
+  const instanceCount = (data: GameData, heroIds: string[], extra: string[] = []) =>
+    [...heroIds.flatMap((id) => data.heroes[id]!.cardIds), ...extra]
+      .reduce((total, cardId) => total + data.cards[cardId]!.copies, 0);
+
   it("T78: a team with one bond pair gets that bond card as bond01", () => {
     const data = testData();
     const { state } = createCombat(data, { heroIds: ["m05", "f03", "m06"], encounterId: "enc_01", seed: 42 });
-    expect(Object.keys(state.cards)).toHaveLength(16);
+    const total = instanceCount(data, ["m05", "f03", "m06"], ["bond_bang_hoa_tranh_phong"]);
+    expect(Object.keys(state.cards)).toHaveLength(total);
     expect(state.cards["bond01"]).toEqual({
       instanceId: "bond01",
       cardId: "bond_bang_hoa_tranh_phong",
       ownerIds: ["m05", "f03"],
     });
-    expect(state.drawPile.length + state.hand.length).toBe(16);
+    expect(state.cards["bond02"]).toEqual({
+      instanceId: "bond02",
+      cardId: "bond_bang_hoa_tranh_phong",
+      ownerIds: ["m05", "f03"],
+    });
+    expect(state.drawPile.length + state.hand.length).toBe(total);
   });
 
   it("T79: the default team has no bond card", () => {
     const data = testData();
     const { state } = createCombat(data, { heroIds: ["m05", "f04", "m06"], encounterId: "enc_01", seed: 42 });
-    expect(deckIds(state)).toHaveLength(15);
+    expect(deckIds(state)).toHaveLength(instanceCount(data, ["m05", "f04", "m06"]));
     expect(deckIds(state).some((id) => id.startsWith("bond"))).toBe(false);
   });
 
@@ -43,8 +53,10 @@ describe("bond deck construction", () => {
     const data = testData();
     const { state } = createCombat(data, { heroIds: ["m05", "f03", "f04"], encounterId: "enc_01", seed: 42 });
     expect(state.cards["bond01"]?.cardId).toBe("bond_bang_hoa_tranh_phong");
-    expect(state.cards["bond02"]?.cardId).toBe("bond_tuyet_trung_tong_than");
-    expect(state.cards["bond02"]?.ownerIds).toEqual(["f03", "f04"]);
+    expect(state.cards["bond02"]?.cardId).toBe("bond_bang_hoa_tranh_phong");
+    expect(state.cards["bond03"]?.cardId).toBe("bond_tuyet_trung_tong_than");
+    expect(state.cards["bond03"]?.ownerIds).toEqual(["f03", "f04"]);
+    expect(state.cards["bond04"]?.cardId).toBe("bond_tuyet_trung_tong_than");
   });
 });
 

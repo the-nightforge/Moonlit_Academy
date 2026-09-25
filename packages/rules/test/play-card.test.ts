@@ -46,7 +46,7 @@ describe("playCard validation", () => {
 });
 
 describe("draw", () => {
-  it("T09: drawn cards beyond 10 go straight to the discard pile", () => {
+  it("T09: drawn cards are not capped by hand size", () => {
     const { data, state } = makeTestCombat({
       setup: (s) =>
         setHand(s, [
@@ -67,9 +67,8 @@ describe("draw", () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.hand).toHaveLength(10);
-    const discarded = result.events.find((event) => event.type === "cardDiscarded");
-    expect(discarded).toBeDefined();
-    expect(result.state.discardPile).toHaveLength(discardBefore + 2);
+    expect(result.state.hand).toHaveLength(11);
+    expect(result.events.some((event) => event.type === "cardDiscarded")).toBe(false);
+    expect(result.state.discardPile).toHaveLength(discardBefore + 1);
   });
 });

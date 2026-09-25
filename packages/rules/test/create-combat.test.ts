@@ -3,7 +3,7 @@ import { makeTestCombat } from "./helpers";
 
 describe("createCombat", () => {
   it("T01: initializes the combat state per spec", () => {
-    const { state, events } = makeTestCombat();
+    const { data, state, events } = makeTestCombat();
 
     expect(state.status).toBe("playerTurn");
     expect(state.round).toBe(1);
@@ -11,10 +11,13 @@ describe("createCombat", () => {
     expect(state.moonPower).toBe(3);
     expect(state.bloodMoonRounds).toBe(0);
 
-    expect(state.hand).toHaveLength(5);
-    expect(state.drawPile).toHaveLength(10);
+    const deckSize = ["m05", "f04", "m06"]
+      .flatMap((heroId) => data.heroes[heroId]!.cardIds)
+      .reduce((total, cardId) => total + data.cards[cardId]!.copies, 0);
+    expect(state.hand).toHaveLength(6);
+    expect(state.drawPile).toHaveLength(deckSize - 6);
     expect(state.discardPile).toHaveLength(0);
-    expect(Object.keys(state.cards)).toHaveLength(15);
+    expect(Object.keys(state.cards)).toHaveLength(deckSize);
 
     expect(state.heroes.map((hero) => hero.defId)).toEqual(["m05", "f04", "m06"]);
     expect(state.heroes.map((hero) => [hero.hp, hero.maxHp])).toEqual([
