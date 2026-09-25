@@ -1,4 +1,4 @@
-import { activeMoonModifiers } from "./moon";
+import { activeModifiers } from "./moon";
 import { hasStatus } from "./statuses";
 import type { CardInstance, CombatState, GameData, HeroState } from "./types/index";
 
@@ -33,7 +33,7 @@ export function getEffectiveCost(data: GameData, state: CombatState, instanceId:
   if (isFreeByPassive(data, state, instanceId)) return 0;
   let cost = card.cost;
   let floor = 0;
-  for (const modifier of activeMoonModifiers(data, state)) {
+  for (const modifier of activeModifiers(data, state)) {
     if (modifier.type === "costModifierForTag" && card.tags.includes(modifier.tag)) {
       cost += modifier.amount;
       floor = Math.max(floor, modifier.min);
