@@ -221,4 +221,31 @@ describe("run lifecycle", () => {
     expect(done.status).toBe("map");
     expect(done.pendingReward).toBeNull();
   });
+
+  it("a combat ended by a combatStart relic hook flows through finishCombat", () => {
+    const data = testData();
+    data.runRelics["test_annihilate"] = {
+      id: "test_annihilate",
+      name: "Test",
+      text: "",
+      hooks: [
+        {
+          on: { type: "combatStart" },
+          actor: "front",
+          effects: [{ type: "damage", amount: 999, to: "allEnemies" }],
+        },
+      ],
+    };
+    const run = createRun(data, { heroIds: DEFAULT_TEAM, seed: 42 }).run;
+    run.runRelicIds.push("test_annihilate");
+    const result = applyRunAction(data, run, { type: "chooseNode", nodeId: firstNodeId(run) });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.run.status).toBe("reward");
+    expect(result.run.combat).toBeNull();
+    expect(result.events).toContainEqual({
+      type: "runRelicTriggered",
+      runRelicId: "test_annihilate",
+    });
+  });
 });

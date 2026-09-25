@@ -131,6 +131,11 @@ function enterNode(
       });
       run.combat = created.state;
       events.push(...created.events);
+      // A relic hook may have ended the combat during setup (combatStart/playerTurnStart).
+      if (created.state.status === "won" || created.state.status === "lost") {
+        finishCombat(data, run, runEvents);
+        return;
+      }
       run.status = "combat";
       return;
     }
