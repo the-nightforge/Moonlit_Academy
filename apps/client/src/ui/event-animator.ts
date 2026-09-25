@@ -400,6 +400,10 @@ function animateEvent(
         });
       });
     }
+    case "runRelicTriggered": {
+      const name = ctx.gameData.runRelics[event.runRelicId]?.name ?? event.runRelicId;
+      return floatText(scene, WIDTH / 2, 250, `✦ ${name}`, "#9fd4ff", 18, 400);
+    }
     case "combatEnded":
       return instant();
     default:

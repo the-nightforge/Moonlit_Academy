@@ -1,6 +1,6 @@
 import { loadGameData } from "data";
-import { createCombat } from "rules";
-import type { CombatEvent, CombatState, GameData } from "rules";
+import { createCombat, createRun } from "rules";
+import type { CombatEvent, CombatState, GameData, RunState } from "rules";
 
 export type Team = [string, string, string];
 
@@ -13,6 +13,7 @@ export interface CombatSession {
   seed: number;
   encounterId: string;
   heroIds: Team;
+  run: RunState | null;
 }
 
 export function newCombatSession(
@@ -22,7 +23,7 @@ export function newCombatSession(
 ): CombatSession {
   const data = loadGameData();
   const { state, events } = createCombat(data, { heroIds, encounterId, seed });
-  return { data, state, events, seed, encounterId, heroIds };
+  return { data, state, events, seed, encounterId, heroIds, run: null };
 }
 
 export const session: CombatSession = newCombatSession();
@@ -37,7 +38,15 @@ export function restartSession(
   session.encounterId = fresh.encounterId;
   session.heroIds = fresh.heroIds;
   session.state = fresh.state;
+  session.run = null;
   session.events.push(...fresh.events);
+}
+
+/** Starts a roguelike run; combat state is taken from the run when a fight begins. */
+export function startRun(heroIds: Team, seed = session.seed): void {
+  session.heroIds = heroIds;
+  session.seed = seed;
+  session.run = createRun(session.data, { heroIds, seed }).run;
 }
 
 export function cycleEncounter(direction = 1): string {

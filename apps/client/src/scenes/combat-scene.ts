@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import {
   applyAction,
+  applyRunAction,
   getEffectiveCost,
   getPlayCardError,
   getValidTargets,
@@ -115,18 +116,33 @@ export class CombatScene extends Phaser.Scene {
 
   private dispatch(action: Action): boolean {
     if (this.inputLocked) return false;
-    const result = applyAction(this.gameData, this.state, action);
+    const run = session.run;
+    const result = run
+      ? applyRunAction(this.gameData, run, { type: "combat", action })
+      : applyAction(this.gameData, this.state, action);
     if (!result.ok) {
       this.showError(result.error);
       return false;
     }
-    session.state = result.state;
+    let newState: CombatState = this.state;
+    let backToRun = false;
+    if ("run" in result) {
+      session.run = result.run;
+      backToRun = result.run.combat === null;
+      newState = result.run.combat ?? this.state;
+    } else {
+      newState = result.state;
+    }
+    session.state = newState;
     session.events.push(...result.events);
     this.targeting = null;
     this.inputLocked = true;
     const events = result.events;
-    const newState = result.state;
     void this.playEvents(events).then(() => {
+      if (backToRun) {
+        this.scene.start("run");
+        return;
+      }
       this.state = newState;
       this.renderAll();
       this.inputLocked = false;
@@ -273,6 +289,12 @@ export class CombatScene extends Phaser.Scene {
 
   private renderTopBar() {
     this.text(24, 14, `Vòng ${this.state.round}`, 16);
+    if (this.state.runRelicIds.length > 0) {
+      const names = this.state.runRelicIds
+        .map((id) => this.gameData.runRelics[id]?.name ?? id)
+        .join(" · ");
+      this.text(24, 36, `Kỳ Vật: ${names}`, 11, COLORS.dimText);
+    }
     const phase = this.gameData.moonPhases[this.state.moonIndex]!;
     this.text(WIDTH / 2, 14, `( ${phase.icon} ${phase.name} )`, 16).setOrigin(0.5, 0);
     this.text(WIDTH - 24, 14, "⚙", 18, COLORS.dimText).setOrigin(1, 0);
