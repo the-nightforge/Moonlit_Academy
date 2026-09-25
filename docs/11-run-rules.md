@@ -4,7 +4,9 @@ Tài liệu này mô tả **chính xác** cách một lượt chơi vận hành,
 
 ---
 
-## 1. `RunState`
+## 1. Dữ liệu và trạng thái
+
+### 1.1 `RunState`
 
 ```ts
 type RunStatus = "map" | "combat" | "reward" | "rest" | "treasure" | "won" | "lost";
@@ -26,9 +28,7 @@ interface RunState {
   `runRelicIds = []`, sinh bản đồ, `status = "map"`, `position = null`.
 - `RunState` là JSON thuần; lưu `localStorage` để sau.
 
----
-
-## 2. Nối với trận đấu
+### 1.2 Nối với trận đấu
 
 ```ts
 interface CombatSetup {
@@ -46,9 +46,7 @@ interface CombatSetup {
 - **Seed trận** = `floor(value × 2³²)` với `value` lấy từ `nextRandom(run.rngState)` khi vào nút trận.
 - Thăng cấp Hero vẫn reset mỗi trận (`01` §8).
 
----
-
-## 3. `run-config.json`
+### 1.3 `run-config.json`
 
 ```json
 {
@@ -73,7 +71,7 @@ Mọi số liệu là điểm khởi đầu, chỉnh sau playtest 3.7.
 
 ---
 
-## 4. Bản đồ
+## 2. Bản đồ
 
 ```ts
 type NodeType = "combat" | "elite" | "rest" | "treasure" | "boss";
@@ -88,7 +86,7 @@ interface MapNode {
 interface RunMap { floors: MapNode[][] }  // floors[i] = tầng i+1, theo lane
 ```
 
-### 4.1 Kích thước và cạnh
+### 2.1 Kích thước và cạnh
 
 - Tầng 1..`floors`−1: số nút ngẫu nhiên trong `floorWidth`. Tầng cuối (boss): 1 nút.
 - Giữa hai tầng liền nhau, mỗi nút nối tới một **dải liền nhau** 1–2 nút tầng
@@ -100,14 +98,14 @@ interface RunMap { floors: MapNode[][] }  // floors[i] = tầng i+1, theo lane
   - mọi đường đi đều tới boss.
 - Nút tầng áp chót nối hết vào nút boss.
 
-### 4.2 Loại nút
+### 2.2 Loại nút
 
 - Theo `floorRules`: tầng có `type` → mọi nút loại đó; tầng có `weights` → chọn
   theo trọng số.
 - Trên tầng có `weights`: nút `elite` hoặc `rest` **không** được có nút cha cùng
   loại; nếu trúng thì chọn lại trong các loại còn lại (theo trọng số của chúng).
 
-### 4.3 Gán trận
+### 2.3 Gán trận
 
 Gán ngay khi sinh bản đồ (cùng seed → cùng trận):
 
@@ -118,7 +116,7 @@ Gán ngay khi sinh bản đồ (cùng seed → cùng trận):
   đều trùng thì bỏ qua ràng buộc này.
 - UI chỉ hiện loại nút, không hiện trước trận.
 
-### 4.4 Thứ tự dùng RNG của lượt chơi
+### 2.4 Thứ tự dùng RNG của lượt chơi
 
 1. `createRun`: sinh bản đồ (độ rộng từng tầng → cạnh → loại nút → trận).
 2. Vào nút trận: lấy seed trận.
@@ -127,9 +125,9 @@ Gán ngay khi sinh bản đồ (cùng seed → cùng trận):
 
 ---
 
-## 5. Vòng đời lượt chơi
+## 3. Vòng đời lượt chơi
 
-### 5.1 Hành động
+### 3.1 Hành động
 
 ```ts
 type RunAction =
@@ -143,8 +141,8 @@ type RunAction =
 
 | Hành động | Hợp lệ khi | Kết quả |
 |---|---|---|
-| `chooseNode` | `map`; nút thuộc `next` của `position` (hoặc tầng 1 nếu `position = null`) | `position` = nút. `combat`/`elite`/`boss` → tạo trận (mục 2), `combat`. `rest` → `rest`. `treasure` → nhận 1 Kỳ Vật (mục 5.4), `treasure` |
-| `combat` | `combat` | Chuyển tiếp `applyAction`; lỗi của trận trả về nguyên văn. Trận kết thúc → mục 5.2 |
+| `chooseNode` | `map`; nút thuộc `next` của `position` (hoặc tầng 1 nếu `position = null`) | `position` = nút. `combat`/`elite`/`boss` → tạo trận (mục 1.2), `combat`. `rest` → `rest`. `treasure` → nhận 1 Kỳ Vật (mục 3.4), `treasure` |
+| `combat` | `combat` | Chuyển tiếp `applyAction`; lỗi của trận trả về nguyên văn. Trận kết thúc → mục 3.2 |
 | `pickCard` | `reward`; `cardId` thuộc `cardChoices` hoặc `null` | Thêm lá vào `deck` (hoặc bỏ qua), xóa `pendingReward` → `map` |
 | `rest heal` | `rest` | Mỗi Hero hồi `floor(maxHp × restHealRatio)`, không quá `maxHp` → `map` |
 | `rest removeCard` | `rest`; `cardId` có trong `deck`; `deck.length > minDeckSize` | Bỏ **một** bản của lá đó khỏi `deck` → `map` |
@@ -153,29 +151,29 @@ type RunAction =
 - Hành động không hợp lệ bị từ chối, state không đổi (lỗi tiếng Anh, như trận đấu).
 - `won` / `lost`: mọi hành động bị từ chối.
 
-### 5.2 Khi trận kết thúc
+### 3.2 Khi trận kết thúc
 
 - **Thua** → `status = "lost"`.
 - **Thắng:**
   1. HP: Hero còn sống giữ HP cuối trận; Hero đã ngã sống lại với
      `max(1, ceil(maxHp × reviveHpRatio))` (event `heroRevived`).
   2. Nút `boss` → `status = "won"`.
-  3. Ngược lại: tạo `pendingReward` (mục 5.3), `combat = null`. Nếu không có
+  3. Ngược lại: tạo `pendingReward` (mục 3.3), `combat = null`. Nếu không có
      lá nào để chọn và không có Kỳ Vật → thẳng `map`; ngược lại → `reward`.
 
-### 5.3 Lá thưởng
+### 3.3 Lá thưởng
 
 - Pool = hợp `rewardCardIds` của 3 Hero trong đội, **trừ** lá đã có trong `deck`.
 - Rút `rewardCardChoices` lá khác nhau bằng RNG của lượt chơi (ít hơn nếu pool
   không đủ). Lá đã bỏ ở Nghỉ Chân có thể xuất hiện lại.
-- Nút `elite`: thêm 1 Kỳ Vật (mục 5.4) vào `pendingReward.runRelicId`, **nhận
+- Nút `elite`: thêm 1 Kỳ Vật (mục 3.4) vào `pendingReward.runRelicId`, **nhận
   ngay** (event `runRelicGained`); màn thưởng chỉ hiển thị.
 
-### 5.4 Nhận Kỳ Vật
+### 3.4 Nhận Kỳ Vật
 
 Rút ngẫu nhiên trong các Kỳ Vật **chưa có**. Hết Kỳ Vật → không nhận gì.
 
-### 5.5 Event
+### 3.5 Event
 
 ```ts
 type RunEvent =
