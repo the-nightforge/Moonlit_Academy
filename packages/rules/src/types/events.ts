@@ -25,6 +25,7 @@ export type CombatEvent =
   | { type: "intentExecuted"; enemyId: string; intentId: string; targetId: string | null }
   | { type: "intentFizzled"; enemyId: string; intentId: string }
   | { type: "intentSkipped"; enemyId: string; reason: "freeze" }
+  | { type: "runRelicTriggered"; runRelicId: string }
   | { type: "heroLeveledUp"; heroId: string; name: string }
   | { type: "unitDied"; unitId: string; killerId?: string }
   | { type: "combatEnded"; result: "won" | "lost" };

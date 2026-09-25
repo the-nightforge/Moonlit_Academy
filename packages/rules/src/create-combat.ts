@@ -1,5 +1,6 @@
 import { announceIntents } from "./intent";
 import { shuffle } from "./rng";
+import { runRelicHooks } from "./run-relic-hooks";
 import { startPlayerTurn } from "./turn";
 import type {
   CardDef,
@@ -111,5 +112,6 @@ export function createCombat(
 
   announceIntents(data, state, events);
   startPlayerTurn(data, state, events);
+  runRelicHooks(data, state, events, { type: "combatStart" });
   return { state, events };
 }

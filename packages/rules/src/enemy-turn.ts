@@ -1,5 +1,6 @@
 import { checkCombatEnd, resolveEffects, tickUnitStatuses } from "./effects";
 import { chooseHeroTarget } from "./intent";
+import { fireEventHooks } from "./run-relic-hooks";
 import { hasStatus, removeStatus } from "./statuses";
 import type { CombatEvent, CombatState, GameData, Targeting } from "./types/index";
 
@@ -27,7 +28,10 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
   }
   for (const enemy of state.enemies) {
     if (!enemy.alive) continue;
+    const start = events.length;
     tickUnitStatuses(data, state, enemy, events);
+    if (checkCombatEnd(state, events)) return;
+    fireEventHooks(data, state, events, start, state.bloodMoonRounds);
     if (checkCombatEnd(state, events)) return;
   }
   for (const enemy of state.enemies) {

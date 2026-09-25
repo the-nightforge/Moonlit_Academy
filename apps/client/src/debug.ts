@@ -119,6 +119,8 @@ export function describeEvent(
       return `${name(event.enemyId)} bỏ qua (${event.reason})`;
     case "intentFizzled":
       return `${name(event.enemyId)} hụt`;
+    case "runRelicTriggered":
+      return `Kỳ Vật: ${data.runRelics[event.runRelicId]?.name ?? event.runRelicId}`;
     case "heroLeveledUp":
       return `${name(event.heroId)} thăng cấp: ${event.name}`;
     case "unitDied":

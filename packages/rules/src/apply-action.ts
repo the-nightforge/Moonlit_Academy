@@ -1,6 +1,7 @@
 import { cloneState } from "./clone";
 import { resolveEffects } from "./effects";
 import { cardOwners, getEffectiveCost, getValidTargets, isFreeByPassive, ownerError } from "./queries";
+import { runRelicHooks } from "./run-relic-hooks";
 import { removeStatus } from "./statuses";
 import { runEndTurn } from "./turn";
 import type {
@@ -80,6 +81,7 @@ function playCard(
       removeStatus(attacker, "stealth", events);
     }
   }
+  runRelicHooks(data, state, events, { type: "cardPlayed", card, heroId: owner.id });
   state.discardPile.push(instance.instanceId);
 }
 
