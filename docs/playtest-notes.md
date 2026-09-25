@@ -189,3 +189,75 @@ Nguyệt nhờ `control`, không còn 0 ở Trăng Tròn).
 
 Tổng: **33/48** trận thắng. Còn mở cho playtest tay: boss khó với đội không có
 băng (m05+f04+m06 0/3, m06+f02+f03 0/3) và trận boss dài.
+
+---
+
+# Playtest Notes — Phase 3 (bước 3.7)
+
+Playtest scripted: `packages/rules/test/run-playtest.test.ts`. Heuristic: nút đi được đầu tiên, lá thưởng đầu tiên, Nghỉ Chân hồi nếu tổng HP < 60% (còn lại bỏ lá rẻ nhất), trong trận đánh lá đánh được đầu tiên. 4 đội × seed 1–5.
+
+| Đội | Thắng | Thua | Kẹt (> 60 vòng) | Tầng trung bình | Trận/lượt | Deck cuối | Kỳ Vật |
+|---|---|---|---|---|---|---|---|
+| m05+f04+m06 | 0 | 5 | 0 | 2.0 | 1.8 | 15.8 | 0 |
+| m05+f03+f02 | 0 | 5 | 0 | 2.2 | 2.0 | 16.0 | 0 |
+| m06+f02+f03 | 0 | 5 | 0 | 2.0 | 1.8 | 15.8 | 0 |
+| m05+f03+f04 | 0 | 5 | 0 | 3.2 | 2.4 | 16.2 | 0.4 |
+
+Tổng: **0/20 lượt thắng, 20 thua, 0 kẹt.** Tầng trung bình đạt được: 2.35/8.
+Không lượt nào chạm trần 60 vòng hay 20000 bước — mọi trận đấu kết thúc trong
+3–15 vòng. Không có lỗi `run action rejected`.
+
+## Quan sát
+
+- **Không đội nào thắng nổi một seed.** Trung bình mỗi lượt chỉ đánh 2.0 trận
+  rồi chết ở tầng 2.35 — xa tầng 7 (Nghỉ Chân chắc chắn) và tầng 8 (boss). Boss
+  `moon_ape` và cả hai encounter Tinh Anh **chưa hề được đánh** trong 20 lượt.
+- Bản đồ chỉ phụ thuộc seed → 5 seed = 5 bản đồ; 4/5 seed mở bằng **enc_02
+  (Ảnh Hồ ×3)**, seed 2 mở bằng enc_03. enc_02 là "máy rút máu" tầng 1: thắng
+  xong thường chỉ còn 1–2 Hero đứng, tổng HP ~30–60%; 3/20 lượt chết ngay trận
+  đầu ở full HP (cả 3 đều gặp enc_02).
+- **Kẻ kết liễu nhiều nhất: enc_03 (Khôi Lỗi ×2, 42 HP + Giáp 8 + Hồi Phục 2) —
+  9/20 lượt**, hầu hết là trận thứ hai khi party đã yếu. Tiếp theo enc_02 (6/20),
+  enc_01 (4/20), enc_06 (1/20 — lượt sâu nhất, tầng 6).
+- **Hồi sinh 25% HP gần như vô dụng:** 16/20 lượt có `heroRevived`, Hero sống
+  lại với 7–10 HP rồi bị địch `targeting: lowestHp` dồn chết lại ngay — không
+  lượt nào có hồi sinh mà thoát được chuỗi thua.
+- Lá thưởng và Kỳ Vật **chưa đổi được kết quả**: mỗi trận thắng chỉ +1 lá
+  (deck cuối TB ~16/15 gốc), và chỉ 2/20 lượt (đội m05+f03+f04) đến được tầng 4
+  lấy Kỳ Vật trước khi chết.
+- Nghỉ Chân: chỉ **5/20 lượt** gặp (trọng số rest 20% ở tầng 2–3 + heuristic
+  luôn đi nút đầu tiên). 4/5 chọn hồi máu (HP < 60%), 1/5 bỏ lá rẻ nhất. Các
+  lượt có nghỉ đi sâu hơn (tầng TB 4.0 vs 1.8 của lượt không nghỉ — một phần do
+  sống lâu nên mới gặp nghỉ) nhưng vẫn chết ngay trận sau — `restHealRatio`
+  0.3 chưa đủ bù HP đã mất.
+- Heuristic là **sàn kỹ năng** (không focus-fire, không giữ hồi máu, không căn
+  pha trăng): giai đoạn 2 thắng 33/48 (~69%) mỗi trận ở full HP, nhưng lượt chơi
+  đòi thắng 5–6 trận liên tiếp với HP cộng dồn → 0/20 phản ánh cả độ khó
+  attrition lẫn sàn kỹ năng.
+
+## Đề xuất chỉnh (chưa áp dụng — cần duyệt)
+
+- **`puppet_guard` maxHp 42 → 36** (lặp lại đề xuất giai đoạn 1): enc_03 kết
+  liễu 9/20 lượt, trận kéo 3–9 vòng nhờ Giáp + Hồi Phục trong khi party chỉ còn
+  nửa HP.
+- **`shadow_fox` maxHp 24 → 20** hoặc `maul` 7 → 6: enc_02 mở 16/20 lượt, rút
+  ~nửa HP party kể cả khi thắng, giết trực tiếp 3/20.
+- **`reviveHpRatio` 0.25 → 0.4**: hồi sinh 7–8 HP bị địch `lowestHp` targeting
+  giết lại ngay (12/20 lượt có revive vô hiệu). Ngưỡng 0.4 (~10–16 HP) cho Hero
+  sống lại một lượt chống đỡ thật.
+- **`restHealRatio` 0.3 → 0.4** và/hoặc **tầng 2–3: rest weight 20 → 30** (hoặc
+  bảo đảm ≥1 Nghỉ Chân trong tầng 2–3): 15/20 lượt chết trước khi thấy Nghỉ
+  Chân nào; lượt có nghỉ vẫn chết vì hồi 0.3 không đủ.
+- Không đề xuất về lá thưởng/Kỳ Vật: dữ liệu chưa đủ (Kỳ Vật chỉ xuất hiện ở
+  2/20 lượt). Độ dài trận boss và Tinh Anh cũng **chưa đo được** — cần ít nhất
+  một lượt tới tầng 5–8 sau khi chỉnh attrition.
+
+## Điểm cần theo dõi khi chơi tay
+
+- [ ] Bản đồ đọc có dễ không; có muốn đi đường Tinh Anh không?
+- [ ] Lá thưởng có tạo lựa chọn thật không?
+- [ ] Kỳ Vật có cảm nhận được trong trận không?
+- [ ] Một lượt chơi dài bao lâu?
+- [ ] Người chơi thật (focus-fire, giữ hồi máu, né Tinh Anh) có lật được chuỗi
+      thua của heuristic không, hay attrition vẫn quá nặng?
+- [ ] Hero hồi sinh 25% HP có bao giờ "cứu" được lượt không?
