@@ -14,15 +14,14 @@ describe("boss and blood moon intents", () => {
     state.moonIndex = 3;
     state.bloodMoonRounds = 2;
     setIntent(state, 0, idleIntent, null);
-    const patternIndex = state.enemies[0]!.patternIndex;
 
     const result = applyAction(data, state, { type: "endTurn" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.moonIndex).toBe(4);
     expect(result.state.bloodMoonRounds).toBe(1);
-    expect(result.state.enemies[0]?.currentIntent?.intent.id).toBe("ape_blood_frenzy");
-    expect(result.state.enemies[0]?.patternIndex).toBe(patternIndex + 1);
+    expect(result.state.enemies[0]?.plannedIntents[0]?.intent.id).toBe("ape_blood_frenzy");
+    expect(result.state.enemies[0]?.plannedIntents[0]?.cost).toBe(0);
   });
 
   it("T92: the boss's Hạ Huyền reflect lasts through the player turn, then is removed", () => {
@@ -33,7 +32,8 @@ describe("boss and blood moon intents", () => {
     const announced = applyAction(data, state, { type: "endTurn" });
     expect(announced.ok).toBe(true);
     if (!announced.ok) return;
-    expect(announced.state.enemies[0]?.currentIntent?.intent.id).toBe("ape_mirror_shell");
+    expect(announced.state.enemies[0]?.plannedIntents[0]?.intent.id).toBe("ape_mirror_shell");
+    announced.state.enemies[0]!.plannedIntents.splice(1);
 
     const executed = applyAction(data, announced.state, { type: "endTurn" });
     expect(executed.ok).toBe(true);
@@ -69,10 +69,10 @@ describe("boss and blood moon intents", () => {
 
     state.moonIndex = 6;
     expect(cost("m05_ho_gam")).toBe(0);
-    expect(cost("f03_phong_tuyet_chuong")).toBe(1);
+    expect(cost("f03_phong_tuyet_chuong")).toBe(2);
 
     state.moonIndex = 4;
     expect(cost("f04_thao_duoc")).toBe(0);
-    expect(cost("m05_ho_gam")).toBe(1);
+    expect(cost("m05_ho_gam")).toBe(2);
   });
 });

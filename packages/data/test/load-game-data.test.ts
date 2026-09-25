@@ -6,6 +6,7 @@ import encountersJson from "../encounters.json";
 import moonPhasesJson from "../moon-phases.json";
 import runRelicsJson from "../run-relics.json";
 import runConfigJson from "../run-config.json";
+import combatConfigJson from "../combat-config.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -17,6 +18,7 @@ function rawData(): any {
     moonPhases: moonPhasesJson,
     runRelics: runRelicsJson,
     runConfig: runConfigJson,
+    combatConfig: combatConfigJson,
   }));
 }
 
@@ -35,7 +37,7 @@ describe("loadGameData", () => {
     expect(Object.keys(data.runRelics)).toHaveLength(10);
     expect(data.runConfig.floors).toBe(8);
     expect(data.heroes["m05"]?.rewardCardIds).toEqual([
-      "m05_thiet_bich", "m05_no_hoa_lien_hoan", "m05_bat_dong_nhu_son", "m05_huyet_chien",
+      "m05_thiet_bich", "m05_no_hoa_lien_hoan", "m05_huyet_chien",
     ]);
     expect(data.encounters["enc_elite_01"]).toMatchObject({ tier: "elite", minFloor: 5 });
 
@@ -88,7 +90,7 @@ describe("parseGameData validation", () => {
 
   it("rejects an intent with to:chosen but no targeting", () => {
     const raw = rawData();
-    delete raw.enemies[0].intentPattern[0].targeting;
+    delete raw.enemies[0].intents[1].targeting;
     expect(() => parseGameData(raw)).toThrowError(/heavy_strike/);
   });
 
@@ -131,7 +133,7 @@ describe("parseGameData validation", () => {
 
   it("T94: rejects actor on an enemy intent", () => {
     const raw = rawData();
-    raw.enemies[0].intentPattern[0].effects[0].actor = 0;
+    raw.enemies[0].intents[1].effects[0].actor = 0;
     expect(() => parseGameData(raw)).toThrowError(/heavy_strike.*actor/);
   });
 
@@ -191,5 +193,33 @@ describe("parseGameData validation", () => {
     const raw = rawData();
     raw.runRelics.find((r: any) => r.id === "tan_hon_dang").hooks[0].actor = "trigger";
     expect(() => parseGameData(raw)).toThrowError(/tan_hon_dang.*heroDied/);
+  });
+
+  it("T148: rejects a combatConfig moon power start above its cap", () => {
+    const raw = rawData();
+    raw.combatConfig.moonPower.start = 9;
+    expect(() => parseGameData(raw)).toThrowError(/moonPower start must be <= cap/);
+  });
+
+  it("T148: rejects a card with copies outside 1..3", () => {
+    const raw = rawData();
+    raw.cards[0].copies = 4;
+    expect(() => parseGameData(raw)).toThrowError(/copies/);
+  });
+
+  it("T148: rejects an enemy without intents or with start above cap", () => {
+    const empty = rawData();
+    empty.enemies[0].intents = [];
+    expect(() => parseGameData(empty)).toThrowError();
+    const inverted = rawData();
+    inverted.enemies[0].moonPower = { start: 4, cap: 2 };
+    expect(() => parseGameData(inverted)).toThrowError(/moonPower start must be <= cap/);
+  });
+
+  it("T148: rejects chooseCard that is not the last top-level card effect", () => {
+    const raw = rawData();
+    const guide = raw.cards.find((card: any) => card.id === "f04_nguyet_quang_dan");
+    guide.effects.reverse();
+    expect(() => parseGameData(raw)).toThrowError(/chooseCard must be the last/);
   });
 });

@@ -22,14 +22,25 @@ export interface HeroState extends UnitState {
   side: "hero";
   levelUpCounter: number;
   leveledUp: boolean;
-  freeCardUsedThisTurn: boolean;
-  freeCardActive: boolean;
+  firstCardDiscountUsedThisTurn: boolean;
+  firstCardDiscountActive: boolean;
+}
+
+export interface PlannedIntent {
+  intent: IntentDef;
+  cost: number;
+  targetId: string | null;
 }
 
 export interface EnemyState extends UnitState {
   side: "enemy";
-  patternIndex: number;
-  currentIntent: { intent: IntentDef; targetId: string | null } | null;
+  plannedIntents: PlannedIntent[];
+  /** Ids of the chain executed last round (the most expensive one may not lead again). */
+  lastIntentIds: string[];
+  /** Fund the current chain was planned with (base + reserve). */
+  moonPower: number;
+  /** Reserve carried into the next plan. */
+  moonReserve: number;
 }
 
 export interface CardInstance {
@@ -39,7 +50,7 @@ export interface CardInstance {
   ownerIds: string[];
 }
 
-export type CombatStatus = "playerTurn" | "enemyTurn" | "won" | "lost";
+export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost";
 
 export interface CombatState {
   status: CombatStatus;
@@ -47,12 +58,16 @@ export interface CombatState {
   moonIndex: number;
   bloodMoonRounds: number;
   moonPower: number;
+  /** Moon power carried into this turn (reserve), for display. */
+  moonReserve: number;
   heroes: HeroState[];
   enemies: EnemyState[];
   cards: Record<string, CardInstance>;
   drawPile: string[];
   hand: string[];
   discardPile: string[];
+  /** A pending Chiêm Bài pick; the option instance ids are out of the draw pile until resolved. */
+  pendingChoice: { kind: "chooseCard"; options: string[] } | null;
   rngState: number;
   runRelicIds: string[];
   /** Per-combat hook counters, keyed "<relicId>#<hookIndex>". */

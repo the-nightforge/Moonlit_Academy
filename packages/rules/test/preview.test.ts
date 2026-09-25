@@ -10,10 +10,10 @@ describe("previewEnemyIntent", () => {
     setIntent(state, 0, heavy, "hero:m05");
 
     const preview = previewEnemyIntent(data, state, state.enemies[0]!);
-    expect(preview?.targetId).toBe("hero:m05");
+    expect(preview?.intents[0]?.targetId).toBe("hero:m05");
     expect(preview?.skipped).toBe(false);
-    expect(preview?.fizzles).toBe(false);
-    expect(preview?.damages).toEqual([{ targetId: "hero:m05", amount: 9, hits: 1 }]);
+    expect(preview?.intents[0]?.fizzles).toBe(false);
+    expect(preview?.intents[0]?.damages).toEqual([{ targetId: "hero:m05", amount: 9, hits: 1 }]);
   });
 
   it("re-resolves through taunt without consuming rng state", () => {
@@ -24,7 +24,7 @@ describe("previewEnemyIntent", () => {
     const rngBefore = state.rngState;
 
     const preview = previewEnemyIntent(data, state, state.enemies[0]!);
-    expect(preview?.targetId).toBe("hero:m05");
+    expect(preview?.intents[0]?.targetId).toBe("hero:m05");
     expect(state.rngState).toBe(rngBefore);
   });
 
@@ -36,7 +36,7 @@ describe("previewEnemyIntent", () => {
     state.heroes[0]!.statuses.push({ id: "vulnerable", value: 1 });
 
     const preview = previewEnemyIntent(data, state, state.enemies[0]!);
-    expect(preview?.damages[0]?.amount).toBe(10);
+    expect(preview?.intents[0]?.damages[0]?.amount).toBe(10);
   });
 
   it("marks a frozen enemy as skipped", () => {
@@ -52,17 +52,18 @@ describe("previewEnemyIntent", () => {
         for (const hero of s.heroes) hero.statuses.push({ id: "stealth", value: 1 });
       },
     });
+    setIntent(state, 0, strike9Intent, "hero:m05");
     const preview = previewEnemyIntent(data, state, state.enemies[0]!);
-    expect(preview?.targetId).toBeNull();
-    expect(preview?.fizzles).toBe(true);
-    expect(preview?.damages).toEqual([]);
+    expect(preview?.intents[0]?.targetId).toBeNull();
+    expect(preview?.intents[0]?.fizzles).toBe(true);
+    expect(preview?.intents[0]?.damages).toEqual([]);
   });
 
   it("returns null for an intent with no effects targeting", () => {
     const { data, state } = makeTestCombat();
     setIntent(state, 0, idleIntent, null);
     const preview = previewEnemyIntent(data, state, state.enemies[0]!);
-    expect(preview?.targetId).toBeNull();
-    expect(preview?.damages).toEqual([]);
+    expect(preview?.intents[0]?.targetId).toBeNull();
+    expect(preview?.intents[0]?.damages).toEqual([]);
   });
 });

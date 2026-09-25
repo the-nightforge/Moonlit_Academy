@@ -3,9 +3,10 @@ export { nextRandom, shuffle } from "./rng";
 export { bondCardsForTeam, createCombat } from "./create-combat";
 export { applyAction } from "./apply-action";
 export { getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
-export { getPlayCardError } from "./apply-action";
+export { getMulliganError, getPlayCardError } from "./apply-action";
 export { previewEnemyIntent } from "./preview";
-export { drawCards } from "./draw";
+export { planEnemyIntents } from "./intent";
+export { drawCards, refillHand } from "./draw";
 export { generateMap } from "./run/map";
 export {
   applyRunAction,
@@ -15,4 +16,4 @@ export {
   reachableNodeIds,
   restHealAmounts,
 } from "./run/run";
-export type { IntentPreview, IntentDamagePreview } from "./preview";
+export type { EnemyPlanPreview, IntentPreview, IntentDamagePreview } from "./preview";

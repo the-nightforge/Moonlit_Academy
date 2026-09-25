@@ -29,16 +29,23 @@ function firstNodeId(run: RunState): string {
   return run.map.floors[0]![0]!.id;
 }
 
+function keepHand(data: GameData, run: RunState): RunState {
+  if (run.combat?.status !== "mulligan") return run;
+  return act(data, run, { type: "combat", action: { type: "mulligan", instanceIds: [] } }).run;
+}
+
 /** Every enemy dies to burn at the next enemy turn start. */
 function winCombat(data: GameData, run: RunState) {
-  for (const enemy of run.combat!.enemies) enemy.statuses.push({ id: "burn", value: 999 });
-  return act(data, run, { type: "combat", action: { type: "endTurn" } });
+  const ready = keepHand(data, run);
+  for (const enemy of ready.combat!.enemies) enemy.statuses.push({ id: "burn", value: 999 });
+  return act(data, ready, { type: "combat", action: { type: "endTurn" } });
 }
 
 /** Every hero dies to burn at the next player turn start. */
 function loseCombat(data: GameData, run: RunState) {
-  for (const hero of run.combat!.heroes) hero.statuses.push({ id: "burn", value: 999 });
-  return act(data, run, { type: "combat", action: { type: "endTurn" } });
+  const ready = keepHand(data, run);
+  for (const hero of ready.combat!.heroes) hero.statuses.push({ id: "burn", value: 999 });
+  return act(data, ready, { type: "combat", action: { type: "endTurn" } });
 }
 
 function teamRewardPool(data: GameData): string[] {
@@ -76,7 +83,7 @@ describe("run lifecycle", () => {
     const { run: next } = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) });
     expect(next.status).toBe("combat");
     expect(next.combat!.heroes[1]!.hp).toBe(20);
-    expect(Object.values(next.combat!.cards).map((c) => c.cardId).sort()).toEqual([...run.deck].sort());
+    expect([...new Set(Object.values(next.combat!.cards).map((c) => c.cardId))].sort()).toEqual([...run.deck].sort());
   });
 
   it("T105: winning carries HP, revives fallen heroes and offers 3 reward cards", () => {
@@ -106,12 +113,12 @@ describe("run lifecycle", () => {
     const reward = winCombat(data, entered).run;
     const pick = reward.pendingReward!.cardChoices[0]!;
     const picked = act(data, reward, { type: "pickCard", cardId: pick });
-    expect(picked.run.deck).toHaveLength(16);
+    expect(picked.run.deck).toHaveLength(19);
     expect(picked.run.deck).toContain(pick);
     expect(picked.run.status).toBe("map");
     expect(picked.runEvents).toEqual([{ type: "cardAdded", cardId: pick }]);
     const skipped = act(data, reward, { type: "pickCard", cardId: null });
-    expect(skipped.run.deck).toHaveLength(15);
+    expect(skipped.run.deck).toHaveLength(18);
     expect(skipped.run.status).toBe("map");
   });
 
@@ -210,9 +217,9 @@ describe("run lifecycle", () => {
   it("T114: reward choices shrink with the pool; an empty pool skips the reward", () => {
     const { data, run } = newRun();
     const pool = teamRewardPool(data);
-    run.deck.push(...pool.slice(0, 11));
+    run.deck.push(...pool.slice(0, 8));
     const entered = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) }).run;
-    expect(winCombat(data, entered).run.pendingReward!.cardChoices).toEqual([pool[11]]);
+    expect(winCombat(data, entered).run.pendingReward!.cardChoices).toEqual([pool[8]]);
 
     const full = newRun();
     full.run.deck.push(...pool);
@@ -238,7 +245,14 @@ describe("run lifecycle", () => {
     };
     const run = createRun(data, { heroIds: DEFAULT_TEAM, seed: 42 }).run;
     run.runRelicIds.push("test_annihilate");
-    const result = applyRunAction(data, run, { type: "chooseNode", nodeId: firstNodeId(run) });
+    const entered = applyRunAction(data, run, { type: "chooseNode", nodeId: firstNodeId(run) });
+    expect(entered.ok).toBe(true);
+    if (!entered.ok) return;
+    expect(entered.run.combat?.status).toBe("mulligan");
+    const result = applyRunAction(data, entered.run, {
+      type: "combat",
+      action: { type: "mulligan", instanceIds: [] },
+    });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.run.status).toBe("reward");

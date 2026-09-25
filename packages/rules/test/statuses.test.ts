@@ -14,6 +14,7 @@ describe("statuses", () => {
   it("T16: vulnerable multiplies damage taken by 1.5", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
+        s.moonPower = 11;
         s.enemies[0]!.statuses.push({ id: "vulnerable", value: 1 });
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },
@@ -21,13 +22,15 @@ describe("statuses", () => {
     const result = play(data, state, "m05_liet_hoa_xung_phong", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.enemies[0]?.hp).toBe(30);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 12);
   });
 
   it("T18: empower adds to the next attack card and is consumed", () => {
     const { data, state } = makeTestCombat({
-      setup: (s) =>
-        setHand(s, ["m05_tran_bac_huyet_tinh", "m05_liet_hoa_xung_phong"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["m05_tran_bac_huyet_tinh", "m05_liet_hoa_xung_phong"]);
+      },
     });
     const first = play(data, state, "m05_tran_bac_huyet_tinh");
     expect(first.ok).toBe(true);
@@ -38,8 +41,8 @@ describe("statuses", () => {
     const second = play(data, first.state, "m05_liet_hoa_xung_phong", "enemy:0");
     expect(second.ok).toBe(true);
     if (!second.ok) return;
-    expect(second.state.enemies[0]?.hp).toBe(30);
-    expect(second.state.moonPower).toBe(1);
+    expect(second.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 12);
+    expect(second.state.moonPower).toBe(7);
     expect(second.state.heroes[0]?.statuses.some((s) => s.id === "empower")).toBe(false);
     expect(
       second.events.some((e) => e.type === "statusRemoved" && e.status === "empower"),
@@ -48,12 +51,14 @@ describe("statuses", () => {
 
   it("T19: empower is spent after one attack card", () => {
     const { data, state } = makeTestCombat({
-      setup: (s) =>
+      setup: (s) => {
+        s.moonPower = 11;
         setHand(s, [
           "m05_tran_bac_huyet_tinh",
           "m05_liet_hoa_xung_phong",
           "m05_thuong_pha",
-        ]),
+        ]);
+      },
     });
     const first = play(data, state, "m05_tran_bac_huyet_tinh");
     if (!first.ok) throw new Error("setup failed");
@@ -69,8 +74,10 @@ describe("statuses", () => {
 
   it("T37: mark adds +3 only to attacks of the hero who applied it", () => {
     const { data, state } = makeTestCombat({
-      setup: (s) =>
-        setHand(s, ["m06_nguyet_anh_an", "m06_am_tien", "m05_thuong_pha"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["m06_nguyet_anh_an", "m06_am_tien", "m05_thuong_pha"]);
+      },
     });
     const marked = play(data, state, "m06_nguyet_anh_an", "enemy:0");
     expect(marked.ok).toBe(true);

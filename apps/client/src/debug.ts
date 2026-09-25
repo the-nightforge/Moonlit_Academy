@@ -84,6 +84,12 @@ export function describeEvent(
       return `Rút ${event.instanceIds.length} lá`;
     case "deckShuffled":
       return "Xáo lại chồng bỏ";
+    case "mulliganed":
+      return `Đổi Bài ${event.returned.length} lá`;
+    case "choiceOpened":
+      return `Chiêm Bài: ${event.options.length} lá`;
+    case "cardChosen":
+      return "Chọn 1 lá";
     case "cardPlayed": {
       const instance = state.cards[event.instanceId];
       const card = instance ? data.cards[instance.cardId] : undefined;
@@ -107,12 +113,18 @@ export function describeEvent(
       return `${name(event.targetId)} -${event.status}`;
     case "moonPowerChanged":
       return `Nguyệt Lực = ${event.value}`;
+    case "moonReserveChanged":
+      return `Dự Trữ ${event.side === "hero" ? "người chơi" : name(event.enemyId)} = ${event.value}`;
+    case "deckedOut":
+      return "Cạn Bài";
+    case "cardsPurged":
+      return `Tán Chiêu: ${name(event.heroId)} mất ${event.instanceIds.length} lá trong chồng`;
     case "moonShifted":
       return `Pha ${event.from} → ${event.to}`;
     case "bloodMoonChanged":
       return `Huyết Nguyệt còn ${event.rounds} vòng (${event.cause})`;
-    case "intentRevealed":
-      return `${name(event.enemyId)} công bố ${event.intentId}`;
+    case "intentsRevealed":
+      return `${name(event.enemyId)} báo ${event.intents.map((i) => i.intentId).join(", ") || "Tụ Lực"} (NL ${event.moonPower})`;
     case "intentExecuted":
       return `${name(event.enemyId)} thực hiện ${event.intentId} → ${name(event.targetId)}`;
     case "intentSkipped":

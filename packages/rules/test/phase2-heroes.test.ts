@@ -51,7 +51,10 @@ describe("F03 Tần Sương", () => {
   it("T88: a leveled-up F03 deals double damage to a frozen target", () => {
     const { data, state } = makeTestCombat({
       heroIds: TEAM,
-      setup: (s) => setHand(s, ["f03_bang_phach_lien_kich"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["f03_bang_phach_lien_kich"]);
+      },
     });
     hero(state, "f03").leveledUp = true;
     state.enemies[0]!.statuses.push({ id: "freeze", value: 1 });
@@ -61,7 +64,7 @@ describe("F03 Tần Sương", () => {
     if (!result.ok) return;
     const hits = result.events.filter((e) => e.type === "damageDealt");
     expect(hits.map((e) => e.type === "damageDealt" && e.amount)).toEqual([8, 8]);
-    expect(result.state.enemies[0]?.hp).toBe(26);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 16);
   });
 
   it("T89: freezing an already frozen target does not count", () => {

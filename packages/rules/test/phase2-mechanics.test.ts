@@ -36,7 +36,7 @@ describe("reflect", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(hero(result.state, "f03").hp).toBe(23);
-    expect(result.state.enemies[0]?.hp).toBe(40);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 2);
     const hit = result.events.findIndex((e) => e.type === "damageDealt" && e.targetId === "hero:f03");
     expect(result.events[hit + 1]).toEqual({
       type: "hpLost",
@@ -60,19 +60,19 @@ describe("reflect", () => {
     expect(result.events).toContainEqual(
       expect.objectContaining({ type: "damageDealt", targetId: "hero:f03", blocked: 9, hpLost: 0 }),
     );
-    expect(result.state.enemies[0]?.hp).toBe(40);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 2);
   });
 
   it("T63: reflect triggers on every hit of a multi-hit attack", () => {
     const { data, state } = makeTestCombat({ heroIds: PHASE2_TEAM });
     hero(state, "f03").statuses.push({ id: "reflect", value: 2 });
     setIntent(state, 0, idleIntent, null);
-    setIntent(state, 1, data.enemies["shadow_fox"]!.intentPattern[0]!, "hero:f03");
+    setIntent(state, 1, data.enemies["shadow_fox"]!.intents.find((i) => i.id === "twin_claw")!, "hero:f03");
 
     const result = applyAction(data, state, { type: "endTurn" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.enemies[1]?.hp).toBe(20);
+    expect(result.state.enemies[1]?.hp).toBe(state.enemies[1]!.hp - 4);
   });
 
   it("T64: reflect is removed together with armor at the start of its side's turn", () => {
@@ -103,7 +103,10 @@ describe("reflect", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
       encounterId: "enc_04",
-      setup: (s) => setHand(s, ["f03_bang_phach_lien_kich"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["f03_bang_phach_lien_kich"]);
+      },
     });
     hero(state, "f03").hp = 3;
     state.enemies[0]!.statuses.push({ id: "reflect", value: 3 });
@@ -114,7 +117,7 @@ describe("reflect", () => {
     const f03 = hero(result.state, "f03");
     expect(f03.alive).toBe(false);
     expect(result.events.filter((e) => e.type === "damageDealt")).toHaveLength(1);
-    expect(result.state.enemies[0]?.hp).toBe(106);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 4);
     expect(result.events).toContainEqual({ type: "unitDied", unitId: "hero:f03", killerId: "enemy:0" });
     expect(result.state.discardPile).toContain(instanceIdOf(result.state, "f03_bang_phach_lien_kich"));
   });
@@ -188,7 +191,7 @@ describe("stealBuff", () => {
     expect(result.events).toContainEqual(
       expect.objectContaining({ type: "damageDealt", sourceId: "hero:f02", targetId: "enemy:0", amount: 8 }),
     );
-    expect(result.state.enemies[0]?.hp).toBe(34);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 8);
   });
 
   it("T70: nothing happens when the target has no buff", () => {
@@ -213,7 +216,10 @@ describe("blood moon", () => {
   it("T71: Đổi Vận Chú starts a 2-round blood moon and shifts the moon", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
-      setup: (s) => setHand(s, ["f02_doi_van_chu"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["f02_doi_van_chu"]);
+      },
     });
 
     const result = play(data, state, "f02_doi_van_chu");
@@ -280,7 +286,10 @@ describe("blood moon", () => {
   it("T75: Phệ Hồn is playable during blood moon", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
-      setup: (s) => setHand(s, ["f02_phe_hon"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["f02_phe_hon"]);
+      },
     });
     state.bloodMoonRounds = 1;
     expect(isCardPlayable(data, state, instanceIdOf(state, "f02_phe_hon"))).toBe(true);
@@ -289,13 +298,16 @@ describe("blood moon", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(hero(result.state, "f02").hp).toBe(23);
-    expect(result.state.enemies[0]?.hp).toBe(26);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 16);
   });
 
   it("T76: a shorter bloodMoon does not shorten an active one", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
-      setup: (s) => setHand(s, ["f02_doi_van_chu"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["f02_doi_van_chu"]);
+      },
     });
     state.bloodMoonRounds = 3;
 

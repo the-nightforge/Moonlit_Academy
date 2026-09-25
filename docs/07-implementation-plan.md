@@ -1,4 +1,4 @@
-# 07 — Kế hoạch code (Giai đoạn 0–3)
+# 07 — Kế hoạch code (Giai đoạn 0–4a)
 
 Mỗi bước là **một phiên làm việc** với AI. Dán prompt mẫu (chỉnh nếu cần), để AI làm xong, **tự chạy thử**, commit, rồi mới sang bước sau.
 
@@ -131,7 +131,37 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ---
 
-## Sau giai đoạn 3
+## Giai đoạn 4a — Kinh tế Nguyệt Lực
+
+Đặc tả: `12-phase4a-spec.md`. Luật đã đưa vào `01`, schema vào `02`, thuật ngữ vào `04`, test vào `06` (T128–T148). Mỗi bước gom thay đổi luật cùng phần data phụ thuộc để `pnpm test` xanh sau từng bước.
+
+### Bước 4a.1 — Cập nhật tài liệu
+Đưa đặc tả `12` vào `00`, `01`, `02`, `04`, `06`, `07` (`12` §9). *(Đã xong.)*
+
+### Bước 4a.2 — Thang Nguyệt Lực
+> `combat-config.json`, Nguyệt Lực tăng dần + Dự Trữ người chơi, nhân đôi cost / giảm cost theo pha / `gainMoonPower`, passive M06 (T128, T129, T146, T148 config).
+
+### Bước 4a.3 — Tay và chồng bài
+> Giữ tay, rút bù, bỏ Tàn Chiêu, `copies`, deck 6 lá/Hero, không xáo lại, Cạn Bài, Tán Chiêu (T131–T136, T148 copies).
+
+### Bước 4a.4 — Đổi Bài
+> Trạng thái `mulligan`, Action `mulligan` (T137, T138).
+
+### Bước 4a.5 — Chiêm Bài
+> Effect `chooseCard`, trạng thái `choosing`, Action `chooseCard`, Kỳ Vật Thanh Loan Vũ (T144, T145, T148 chooseCard).
+
+### Bước 4a.6 — AI địch dùng Nguyệt Lực
+> Schema `intents`/`moonPower`, bộ chiêu mới, lên chuỗi, thi hành, Dự Trữ địch, xem trước; tất định (T130, T139–T143, T147, T148 intents).
+
+### Bước 4a.7 — Client
+> Theo `12` §6: Đổi Bài, Chiêm Bài, tay 6, Dự Trữ, đồng hồ Cạn Bài, chuỗi ý định.
+
+### Bước 4a.8 — Mô phỏng + chỉnh số
+> Mô phỏng + chỉnh số (qua duyệt) + ghi kết quả vào `playtest-notes.md` (`12` §8).
+
+---
+
+## Sau giai đoạn 4a
 
 Viết tài liệu cho giai đoạn tiếp theo **dựa trên ghi chú chơi thử**, theo thứ tự trong `00-gdd.md` mục 12:
 - Giai đoạn 4: kinh tế gacha, cấu trúc tài khoản, API server.

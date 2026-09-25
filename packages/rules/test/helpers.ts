@@ -1,6 +1,6 @@
 import { loadGameData } from "data";
 import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "../src/index";
-import { createCombat } from "../src/index";
+import { applyAction, createCombat } from "../src/index";
 import { idleIntent } from "./fixtures";
 
 export function testData(): GameData {
@@ -15,6 +15,8 @@ export interface TestCombatOverrides {
   heroes?: { hp: number; maxHp: number }[];
   runRelicIds?: string[];
   mutateData?: (data: GameData) => void;
+  /** Default: an empty mulligan is sent so the state is at the player's first turn. */
+  mulligan?: "pending";
   setup?: (state: CombatState) => void;
 }
 
@@ -25,7 +27,7 @@ export function makeTestCombat(overrides: TestCombatOverrides = {}): {
 } {
   const data = testData();
   overrides.mutateData?.(data);
-  const { state, events } = createCombat(data, {
+  const created = createCombat(data, {
     heroIds: overrides.heroIds ?? ["m05", "f04", "m06"],
     encounterId: overrides.encounterId ?? "enc_01",
     seed: overrides.seed ?? 42,
@@ -33,6 +35,14 @@ export function makeTestCombat(overrides: TestCombatOverrides = {}): {
     heroes: overrides.heroes,
     runRelicIds: overrides.runRelicIds,
   });
+  let { state } = created;
+  const events = [...created.events];
+  if (overrides.mulligan !== "pending") {
+    const kept = applyAction(data, state, { type: "mulligan", instanceIds: [] });
+    if (!kept.ok) throw new Error(`test: mulligan failed: ${kept.error}`);
+    state = kept.state;
+    events.push(...kept.events);
+  }
   overrides.setup?.(state);
   return { data, state, events };
 }
@@ -66,18 +76,26 @@ export function setIntent(
   intent: IntentDef,
   targetId: string | null,
 ): void {
-  state.enemies[position]!.currentIntent = { intent, targetId };
+  setPlan(state, position, [{ intent, targetId }]);
+}
+
+export function setPlan(
+  state: CombatState,
+  position: number,
+  plan: { intent: IntentDef; targetId: string | null }[],
+): void {
+  state.enemies[position]!.plannedIntents = plan.map((entry) => ({ ...entry, cost: 0 }));
 }
 
 export function idleEnemies(state: CombatState): void {
   for (const enemy of state.enemies) {
-    enemy.currentIntent = { intent: idleIntent, targetId: null };
+    enemy.plannedIntents = [{ intent: idleIntent, cost: 0, targetId: null }];
   }
 }
 
 export function makeEnemiesIdle(data: GameData): void {
   for (const def of Object.values(data.enemies)) {
-    def.intentPattern = [idleIntent];
+    def.intents = [{ ...idleIntent, cost: 0 }];
     def.moonOverrides = [];
   }
 }

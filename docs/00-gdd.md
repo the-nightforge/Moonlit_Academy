@@ -43,20 +43,21 @@ Vương quốc **Hằng Châu** thờ mặt trăng như thần linh. Mỗi 100 n
 ### 3.1 Thiết lập
 
 - **Đội hình:** 3 Hero đứng thành 1 hàng, mỗi Hero có HP riêng. Không có grid, không di chuyển.
-- **Deck 20 lá:**
-  - 15 lá kỹ năng (mỗi Hero góp 5 lá)
-  - 3 lá Binh Khí (mỗi vũ khí góp 1 lá)
-  - 2 lá chung (lá phe hoặc lá trung lập)
-  - Cộng thêm lá Song Hành nếu có cặp Bond (xem 3.5)
+- **Deck 18 lá độc nhất** (không có 2 lá trùng id):
+  - Lá kỹ năng của 3 Hero (GĐ 4a: mỗi Hero 6 lá cố định; GĐ 4b: tự xếp, mỗi Hero ít nhất 4 lá)
+  - Binh Khí (sau này) mỗi lá chiếm 1 ô trong 18, không tính vào mức tối thiểu của Hero
+  - Cộng thêm lá Song Hành nếu có cặp Bond (xem 3.5), không tính vào 18 lá
+  - Mỗi lá vào chồng bài với số bản theo `copies` (1–3): lá yếu nhiều bản, lá mạnh ít bản
 - **Nguyệt Bảo:** tối đa 2 relic, tác dụng lên cả đội.
 
 ### 3.2 Một lượt
 
-1. Rút 5 lá.
-2. Nhận **3 Nguyệt Lực**.
+0. Đầu trận: rút 6 lá, **Đổi Bài** — đổi tối đa 2 lá một lần.
+1. Nhận Nguyệt Lực: **3 ở vòng 1, +1 mỗi vòng, tối đa 8**, cộng **Nguyệt Lực Dự Trữ** (phần chưa dùng lượt trước, tối đa 3).
+2. **Rút bù** cho đủ 6 lá trên tay. Chồng bài không xáo lại; hết cả chồng lẫn tay là thua (**Cạn Bài**).
 3. Đánh bài. Mỗi lá tốn Nguyệt Lực và do **Hero sở hữu lá đó** thực hiện.
-4. Kết thúc lượt: bỏ hết bài còn trên tay.
-5. Kẻ địch hành động theo **ý định đã báo trước**.
+4. Kết thúc lượt: **giữ bài trên tay**, chỉ bỏ lá Tàn Chiêu.
+5. Kẻ địch dùng Nguyệt Lực (cùng đường cong) để đánh **chuỗi chiêu đã báo trước** (tối đa 3 chiêu).
 6. Nguyệt Luân tiến 1 pha.
 
 **Lá bài thuộc về Hero:** Hero nào ngã thì các lá của Hero đó thành **Tàn Chiêu** (không đánh được, chiếm chỗ trên tay). Người chơi phải cân nhắc bảo vệ ai.
@@ -278,7 +279,7 @@ Mỗi arc gắn với: chương truyện, banner Hero, sự kiện, boss.
 
 ### 8.2 Nguyệt Thực Roguelike (PvE, chế độ chơi lại chính)
 
-- Chọn 3 Hero + trang bị, bắt đầu với deck 20 lá.
+- Chọn 3 Hero + trang bị, bắt đầu với deck 18 lá.
 - Đi qua bản đồ nút: **Trận thường → Sự kiện → Tinh Anh → Kho Báu → Nghỉ Chân → Boss**.
 - Nhận trong lượt chơi: lá bài mới, **Kỳ Vật**, Phúc Nguyệt (buff), Lời Nguyền (debuff đổi phần thưởng).
 - Cuối lượt chơi: **Boss Huyết Nguyệt**.
@@ -314,7 +315,7 @@ Mỗi arc gắn với: chương truyện, banner Hero, sự kiện, boss.
 | Lá kỹ năng | Bản gốc, không có bản "+"; được dùng lá thay thế đã mở |
 | Vũ khí | Tất cả về mức R1 |
 | Nguyệt Bảo | Tất cả về Cộng Minh 1 |
-| Luật deck | 3 Hero, 20 lá, 1 vũ khí/Hero, 2 Nguyệt Bảo |
+| Luật deck | 3 Hero, 18 lá, 1 vũ khí/Hero, 2 Nguyệt Bảo |
 | Hiển thị | Art, khung card, skin hiện đầy đủ |
 
 - **Pool Hero thử miễn phí** 4–5 Hero xoay vòng mỗi tuần.

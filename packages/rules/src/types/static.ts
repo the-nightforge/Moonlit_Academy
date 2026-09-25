@@ -22,7 +22,7 @@ export type LevelUpCounter =
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
   | { type: "regenSpreadsToAllAllies" }
-  | { type: "firstOwnCardFreeEachTurn" }
+  | { type: "firstOwnCardDiscount"; amount: number }
   | { type: "doubleDamageVsFrozen" }
   | { type: "stealBonus" };
 
@@ -59,6 +59,8 @@ export interface CardDef {
   /** Bond card: belongs to both heroes. */
   bond?: { owners: [string, string] };
   cost: number;
+  /** Instances of this card in the draw pile (weak cards get more). */
+  copies: 1 | 2 | 3;
   type: CardType;
   tags: CardTag[];
   target: CardTarget;
@@ -79,7 +81,7 @@ export type Effect = (
   | { type: "removeArmor"; to: TargetRef }
   | { type: "applyStatus"; status: StatusId; amount: number; to: TargetRef }
   | { type: "cleanse"; to: TargetRef }
-  | { type: "draw"; amount: number }
+  | { type: "chooseCard"; look: number }
   | { type: "gainMoonPower"; amount: number }
   | { type: "shiftMoon"; amount: number }
   | { type: "stealBuff"; count: number }
@@ -106,11 +108,14 @@ export interface IntentDef {
   effects: Effect[];
 }
 
+export type EnemyIntentDef = IntentDef & { cost: number };
+
 export interface EnemyDef {
   id: string;
   name: string;
   maxHp: number;
-  intentPattern: IntentDef[];
+  intents: EnemyIntentDef[];
+  moonPower: { start: number; cap: number };
   moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];
   bloodMoonOverride?: IntentDef;
   art: { portrait: string };
@@ -185,4 +190,13 @@ export interface RunRelicDef {
   /** Always-on, combined with the moon phase's modifiers. */
   modifiers?: MoonModifier[];
   hooks?: RunRelicHook[];
+}
+
+export interface CombatConfig {
+  moonPower: { start: number; perRound: number; cap: number };
+  moonReserveMax: number;
+  handSize: number;
+  maxMulligan: number;
+  maxIntentsPerRound: number;
+  bloodMoonHpLoss: number;
 }

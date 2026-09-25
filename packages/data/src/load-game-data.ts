@@ -8,6 +8,7 @@ import encountersJson from "../encounters.json";
 import moonPhasesJson from "../moon-phases.json";
 import runRelicsJson from "../run-relics.json";
 import runConfigJson from "../run-config.json";
+import combatConfigJson from "../combat-config.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -27,7 +28,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig } = parsed;
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig } = parsed;
   const errors: string[] = [];
 
   const groups = [
@@ -48,6 +49,13 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   const heroById = new Map(heroes.map((hero) => [hero.id, hero]));
   const cardById = new Map(cards.map((card) => [card.id, card]));
   const enemyById = new Map(enemies.map((enemy) => [enemy.id, enemy]));
+
+  const nestedChoose = (effects: Effect[]) =>
+    effects.some(
+      (effect) =>
+        effect.type === "conditional" &&
+        someEffect([...effect.then, ...(effect.else ?? [])], (inner) => inner.type === "chooseCard"),
+    );
 
   for (const hero of heroes) {
     for (const cardId of hero.cardIds) {
@@ -88,11 +96,23 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     if (card.target !== "none" && !usesChosen) {
       errors.push(`card "${card.id}": target "${card.target}" requires at least one effect with to "chosen"`);
     }
+    const chooseIndex = card.effects.findIndex((effect) => effect.type === "chooseCard");
+    if ((chooseIndex >= 0 && chooseIndex !== card.effects.length - 1) || nestedChoose(card.effects)) {
+      errors.push(`card "${card.id}": chooseCard must be the last top-level effect`);
+    }
   }
 
   for (const enemy of enemies) {
+    if (enemy.moonPower.start > enemy.moonPower.cap) {
+      errors.push(`enemy "${enemy.id}": moonPower start must be <= cap`);
+    }
+    const intentIds = new Set<string>();
+    for (const intent of enemy.intents) {
+      if (intentIds.has(intent.id)) errors.push(`enemy "${enemy.id}": duplicate intent id "${intent.id}"`);
+      intentIds.add(intent.id);
+    }
     const intents = [
-      ...enemy.intentPattern,
+      ...enemy.intents,
       ...(enemy.moonOverrides ?? []).map((override) => override.intent),
       ...(enemy.bloodMoonOverride ? [enemy.bloodMoonOverride] : []),
     ];
@@ -102,6 +122,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       }
       if (someEffect(intent.effects, (effect) => effect.actor !== undefined)) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": actor is only allowed on bond cards`);
+      }
+      if (someEffect(intent.effects, (effect) => effect.type === "chooseCard")) {
+        errors.push(`enemy "${enemy.id}" intent "${intent.id}": chooseCard is not allowed`);
       }
     }
   }
@@ -167,6 +190,10 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     errors.push(`runConfig: floor ${floors} must be type "boss"`);
   }
 
+  if (combatConfig.moonPower.start > combatConfig.moonPower.cap) {
+    errors.push(`combatConfig: moonPower start must be <= cap`);
+  }
+
   for (const relic of runRelics) {
     for (const [index, hook] of (relic.hooks ?? []).entries()) {
       const label = `runRelic "${relic.id}" hook ${index}`;
@@ -178,6 +205,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       }
       if (someEffect(hook.effects, (effect) => effect.actor !== undefined)) {
         errors.push(`${label}: effects must not use actor`);
+      }
+      if (someEffect(hook.effects, (effect) => effect.type === "chooseCard")) {
+        errors.push(`${label}: effects must not use chooseCard`);
       }
       if (
         someEffect(
@@ -205,7 +235,8 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig } = parsed.data;
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig } =
+    parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
     cards: Object.fromEntries(cards.map((card) => [card.id, card])),
@@ -214,6 +245,7 @@ export function parseGameData(raw: unknown): GameData {
     moonPhases: [...moonPhases].sort((a, b) => a.index - b.index),
     runRelics: Object.fromEntries(runRelics.map((relic) => [relic.id, relic])),
     runConfig,
+    combatConfig,
   };
 }
 
@@ -226,5 +258,6 @@ export function loadGameData(): GameData {
     moonPhases: moonPhasesJson,
     runRelics: runRelicsJson,
     runConfig: runConfigJson,
+    combatConfig: combatConfigJson,
   });
 }

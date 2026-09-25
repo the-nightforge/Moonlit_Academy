@@ -80,6 +80,8 @@ describe("enemy turn", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         for (const hero of s.heroes) hero.statuses.push({ id: "stealth", value: 1 });
+        setIntent(s, 0, strike9Intent, "hero:m05");
+        setIntent(s, 1, strike9Intent, "hero:m05");
       },
     });
     const result = applyAction(data, state, { type: "endTurn" });
@@ -153,7 +155,7 @@ describe("enemy turn", () => {
     const { data, state } = makeTestCombat({
       mutateData: (d) => {
         for (const def of Object.values(d.enemies)) {
-          def.intentPattern = [idleIntent];
+          def.intents = [{ ...idleIntent, cost: 0 }];
           def.moonOverrides = [];
         }
       },
@@ -169,7 +171,7 @@ describe("enemy turn", () => {
 
   it("T45: enemy armor is only cleared at enemy turn start", () => {
     const { data, state } = makeTestCombat();
-    const guard = data.enemies["puppet_guard"]!.intentPattern[1]!;
+    const guard = data.enemies["puppet_guard"]!.intents.find((i) => i.id === "guard_stance")!;
     setIntent(state, 0, guard, "hero:m05");
     setIntent(state, 1, idleIntent, null);
 

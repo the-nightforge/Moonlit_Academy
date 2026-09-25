@@ -19,7 +19,7 @@ describe("moon phases", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.events.find((e) => e.type === "damageDealt")).toMatchObject({ amount: 9 });
-    expect(result.state.enemies[0]?.hp).toBe(33);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 9);
   });
 
   it("T22: stealthed assassin branch also gets the 1.5x multiplier", () => {
@@ -65,7 +65,7 @@ describe("moon phases", () => {
     });
     expect(getEffectiveCost(data, state, instanceIdOf(state, "m06_nguyet_anh_an"))).toBe(0);
     expect(getEffectiveCost(data, state, instanceIdOf(state, "m05_ho_gam"))).toBe(0);
-    expect(getEffectiveCost(data, state, instanceIdOf(state, "m05_liet_hoa_xung_phong"))).toBe(2);
+    expect(getEffectiveCost(data, state, instanceIdOf(state, "m05_liet_hoa_xung_phong"))).toBe(4);
   });
 
   it("T25: full moon doubles healing", () => {
@@ -134,6 +134,7 @@ describe("moon phases", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 3;
+        s.moonPower = 11;
         s.heroes[1]!.hp = 20;
         setHand(s, ["f04_nguyet_quang_dan", "f04_thao_duoc"]);
       },
@@ -149,9 +150,15 @@ describe("moon phases", () => {
       shifted.events.find((e) => e.type === "moonShifted"),
     ).toMatchObject({ from: 3, to: 4, cause: "card" });
 
-    const healed = applyAction(data, shifted.state, {
+    const picked = applyAction(data, shifted.state, {
+      type: "chooseCard",
+      instanceId: shifted.state.pendingChoice!.options[0]!,
+    });
+    expect(picked.ok).toBe(true);
+    if (!picked.ok) return;
+    const healed = applyAction(data, picked.state, {
       type: "playCard",
-      instanceId: instanceIdOf(shifted.state, "f04_thao_duoc"),
+      instanceId: instanceIdOf(picked.state, "f04_thao_duoc"),
       targetId: "hero:f04",
     });
     expect(healed.ok).toBe(true);
@@ -163,6 +170,7 @@ describe("moon phases", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 7;
+        s.moonPower = 11;
         setHand(s, ["f04_nguyet_quang_dan"]);
       },
     });
@@ -189,7 +197,7 @@ describe("moon phases", () => {
     expect(result.state.moonIndex).toBe(7);
   });
 
-  it("T31: moon overrides apply at the new phase and patternIndex still advances", () => {
+  it("T31: moon overrides apply at the new phase and lead the announced chain", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 3;
@@ -200,14 +208,16 @@ describe("moon phases", () => {
     if (!result.ok) return;
     expect(result.state.moonIndex).toBe(4);
     const fox = result.state.enemies[1]!;
-    expect(fox.currentIntent?.intent.id).toBe("moon_illusion");
-    expect(fox.patternIndex).toBe(2);
+    expect(fox.plannedIntents[0]?.intent.id).toBe("moon_illusion");
+    expect(fox.plannedIntents[0]?.cost).toBe(0);
   });
 
   it("T32: a card-shifted moon changes which intent is announced", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 3;
+        s.moonPower = 11;
+        s.enemies[1]!.moonReserve = 3; // lets the round-2 replan afford the fox's top intent
         setHand(s, ["f04_nguyet_quang_dan"]);
       },
     });
@@ -218,12 +228,18 @@ describe("moon phases", () => {
     expect(shifted.ok).toBe(true);
     if (!shifted.ok) return;
 
-    const result = applyAction(data, shifted.state, { type: "endTurn" });
+    const picked = applyAction(data, shifted.state, {
+      type: "chooseCard",
+      instanceId: shifted.state.pendingChoice!.options[0]!,
+    });
+    expect(picked.ok).toBe(true);
+    if (!picked.ok) return;
+    const result = applyAction(data, picked.state, { type: "endTurn" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.moonIndex).toBe(5);
     const fox = result.state.enemies[1]!;
-    expect(fox.currentIntent?.intent.id).toBe("illusion");
-    expect(fox.currentIntent?.intent.id).not.toBe("moon_illusion");
+    expect(fox.plannedIntents[0]?.intent.id).toBe("fox_shadow_kill");
+    expect(fox.plannedIntents[0]?.intent.id).not.toBe("moon_illusion");
   });
 });

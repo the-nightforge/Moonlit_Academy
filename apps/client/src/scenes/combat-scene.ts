@@ -56,6 +56,9 @@ const ERROR_LABELS: [RegExp, string][] = [
   [/no target/, "Lá này không cần mục tiêu"],
   [/requires a target/, "Cần chọn mục tiêu"],
   [/invalid target/, "Mục tiêu không hợp lệ"],
+  [/mulligan pending/, "Hãy Đổi Bài trước"],
+  [/choice pending/, "Hãy chọn 1 lá"],
+  [/too many cards to mulligan/, "Chỉ đổi tối đa 2 lá"],
 ];
 
 function errorLabel(error: string): string {
@@ -74,6 +77,7 @@ export class CombatScene extends Phaser.Scene {
   private errorText?: Phaser.GameObjects.Text;
   private inputLocked = false;
   private debugVisible = false;
+  private mulliganPicks = new Set<string>();
 
   constructor() {
     super("combat");
@@ -92,6 +96,7 @@ export class CombatScene extends Phaser.Scene {
     this.state = session.state;
     this.targeting = null;
     this.validTargetIds.clear();
+    this.mulliganPicks.clear();
     this.inputLocked = false;
     useDesignCamera(this);
     this.root = this.add.container(0, 0);
@@ -160,6 +165,13 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private onCardClicked(instanceId: string) {
+    if (this.state.status === "mulligan") {
+      if (this.inputLocked) return;
+      if (this.mulliganPicks.has(instanceId)) this.mulliganPicks.delete(instanceId);
+      else if (this.mulliganPicks.size < this.gameData.combatConfig.maxMulligan) this.mulliganPicks.add(instanceId);
+      this.renderAll();
+      return;
+    }
     if (this.inputLocked || this.state.status !== "playerTurn") return;
     if (this.targeting === instanceId) {
       this.cancelTargeting();
@@ -254,6 +266,8 @@ export class CombatScene extends Phaser.Scene {
     if (this.state.status === "won" || this.state.status === "lost") {
       this.renderCombatEnd();
     }
+    if (this.state.status === "mulligan") this.renderMulliganBar();
+    if (this.state.status === "choosing") this.renderChoiceOverlay();
     this.renderDebugPanel();
   }
 
@@ -266,6 +280,7 @@ export class CombatScene extends Phaser.Scene {
     this.state = session.state;
     this.targeting = null;
     this.validTargetIds.clear();
+    this.mulliganPicks.clear();
     this.inputLocked = false;
     this.renderAll();
   }
@@ -375,26 +390,29 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderIntent(enemy: EnemyState, x: number, y: number) {
-    const intent = enemy.currentIntent?.intent;
-    if (!intent || !enemy.alive) return;
+    if (!enemy.alive) return;
     const preview = previewEnemyIntent(this.gameData, this.state, enemy);
-    const icon = INTENT_ICONS[intent.kind];
-    let label = `${icon} ${intent.name}`;
-    const firstDamage = preview?.damages[0];
-    if (firstDamage) {
-      label += ` ${firstDamage.amount}`;
-      if (firstDamage.hits > 1) label += `×${firstDamage.hits}`;
-    }
-    if (preview?.fizzles) {
-      label += " → (hụt)";
-    } else if (preview?.targetId) {
-      const target = this.state.heroes.find((hero) => hero.id === preview.targetId);
-      label += ` → ${target ? this.gameData.heroes[target.defId]!.name : "—"}`;
-    } else if ((preview?.damages.length ?? 0) > 0) {
-      label += " → tất cả";
-    }
-    if (preview?.skipped) label = `❄ ${label}`;
-    this.text(x, y, label, 13).setOrigin(0.5).setAlpha(preview?.skipped ? 0.55 : 1);
+    if (!preview) return;
+    const lines = enemy.plannedIntents.map((planned, index) => {
+      const intentPreview = preview.intents[index]!;
+      let label = `${INTENT_ICONS[planned.intent.kind]} ${planned.intent.name} (${planned.cost})`;
+      const damage = intentPreview.damages[0];
+      if (damage) label += ` ${damage.amount}${damage.hits > 1 ? `×${damage.hits}` : ""}`;
+      if (intentPreview.fizzles) {
+        label += " → (hụt)";
+      } else if (intentPreview.targetId) {
+        const target = this.state.heroes.find((hero) => hero.id === intentPreview.targetId);
+        label += ` → ${target ? this.gameData.heroes[target.defId]!.name : "—"}`;
+      } else if (intentPreview.damages.length > 0) {
+        label += " → tất cả";
+      }
+      return label;
+    });
+    const text = lines.length === 0 ? "⋯ Tụ Lực" : lines.join("\n");
+    this.text(x, y, preview.skipped ? `❄ ${text}` : text, 12)
+      .setOrigin(0.5, 1)
+      .setAlign("center")
+      .setAlpha(preview.skipped ? 0.55 : 1);
   }
 
   // Draws a texture cover-fitted into a w×h box centered at (x, y).
@@ -448,7 +466,7 @@ export class CombatScene extends Phaser.Scene {
     const panelH = 140;
     enemies.forEach((enemy, index) => {
       const cx = (WIDTH / (enemies.length + 1)) * (index + 1);
-      this.renderIntent(enemy, cx, 118);
+      this.renderIntent(enemy, cx, 132);
       const cy = 205;
       const c = this.add.container(cx, cy);
       this.root.add(c);
@@ -474,6 +492,14 @@ export class CombatScene extends Phaser.Scene {
       }
       const def = this.gameData.enemies[enemy.defId]!;
       this.text(0, -panelH / 2 + 16, def.name, 15, COLORS.text, c).setOrigin(0.5);
+      this.text(
+        panelW / 2 - 10,
+        -panelH / 2 + 16,
+        `NL ${enemy.moonPower}${enemy.moonReserve > 0 ? ` +${enemy.moonReserve}` : ""}`,
+        11,
+        COLORS.gold,
+        c,
+      ).setOrigin(1, 0.5);
       this.hpBar(-panelW / 2 + 14, -14, panelW - 28, enemy.hp, enemy.maxHp, COLORS.hpFillEnemy, c);
       if (enemy.armor > 0) {
         this.text(-panelW / 2 + 14, 12, `🛡 ${enemy.armor}`, 12, COLORS.armor, c);
@@ -566,11 +592,12 @@ export class CombatScene extends Phaser.Scene {
 
     const bg = this.add.rectangle(0, 0, CARD_W, CARD_H, broken ? 0x30303a : 0x141b33);
     const isValidTarget = this.targeting === instanceId;
+    const mulliganPicked = this.mulliganPicks.has(instanceId);
     bg.setStrokeStyle(
-      isValidTarget ? 3 : 2,
+      isValidTarget || mulliganPicked ? 3 : 2,
       broken
         ? COLORS.dead
-        : isValidTarget
+        : isValidTarget || mulliganPicked
           ? COLORS.goldFill
           : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
     );
@@ -652,13 +679,20 @@ export class CombatScene extends Phaser.Scene {
         .setOrigin(0.5, 0),
     );
 
+    if (mulliganPicked) {
+      container.add(
+        this.add
+          .text(0, 0, "Đổi", { ...TEXT_BASE, fontSize: "16px", color: COLORS.gold })
+          .setOrigin(0.5),
+      );
+    }
     if (broken) {
       container.add(
         this.add
           .text(0, 0, "Tàn Chiêu", { ...TEXT_BASE, fontSize: "14px", color: "#bbbbbb" })
           .setOrigin(0.5),
       );
-    } else if (!playable && !isValidTarget) {
+    } else if (!playable && !isValidTarget && this.state.status !== "mulligan") {
       container.setAlpha(0.5);
     }
 
@@ -668,7 +702,7 @@ export class CombatScene extends Phaser.Scene {
       useHandCursor: true,
     });
     container.on("pointerover", () => {
-      if (!broken && this.state.status === "playerTurn") {
+      if (!broken && (this.state.status === "playerTurn" || this.state.status === "mulligan")) {
         container.setScale(1.15);
         container.y = y - 18;
         container.setDepth(10);
@@ -694,6 +728,32 @@ export class CombatScene extends Phaser.Scene {
       13,
       COLORS.gold,
     ).setOrigin(0.5);
+  }
+
+  private renderMulliganBar() {
+    const picks = this.mulliganPicks.size;
+    this.text(WIDTH / 2, 520, `Đổi Bài: chọn tối đa ${this.gameData.combatConfig.maxMulligan} lá để đổi`, 14, COLORS.gold).setOrigin(0.5);
+    this.endScreenButton(1150, 600, picks > 0 ? `Đổi (${picks})` : "Giữ nguyên", () => {
+      const instanceIds = [...this.mulliganPicks];
+      this.mulliganPicks.clear();
+      this.dispatch({ type: "mulligan", instanceIds });
+    });
+  }
+
+  private renderChoiceOverlay() {
+    const options = this.state.pendingChoice!.options;
+    this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.6));
+    this.text(WIDTH / 2, 250, "Chiêm Bài — chọn 1 lá, các lá còn lại xuống đáy chồng", 16, COLORS.gold).setOrigin(0.5);
+    const spacing = CARD_W + 30;
+    const startX = WIDTH / 2 - ((options.length - 1) * spacing) / 2;
+    options.forEach((instanceId, index) => {
+      const view = this.renderCard(instanceId, startX + index * spacing, 380);
+      view.setDepth(50).setAlpha(1); // renderCard dims cards that are not playable right now
+      view.removeAllListeners("pointerup");
+      view.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0) this.dispatch({ type: "chooseCard", instanceId });
+      });
+    });
   }
 
   private renderCombatEnd() {
@@ -839,9 +899,11 @@ export class CombatScene extends Phaser.Scene {
 
   private renderBottomBar() {
     const power = this.state.moonPower;
+    const reserve = Math.min(this.state.moonReserve, power);
     this.text(30, 545, "Nguyệt Lực", 13, COLORS.dimText);
-    this.text(30, 566, `${"◉".repeat(power)}${"○".repeat(Math.max(0, 3 - power))}`, 16, COLORS.gold);
-    this.text(30, 592, `${power}/3`, 12, COLORS.dimText);
+    this.text(30, 566, "◉".repeat(power - reserve), 16, COLORS.gold);
+    if (reserve > 0) this.text(30 + (power - reserve) * 12, 566, "◈".repeat(reserve), 16, COLORS.costCheap);
+    this.text(30, 592, reserve > 0 ? `${power} (Dự Trữ ${reserve})` : `${power}`, 12, COLORS.dimText);
 
     const hand = this.state.hand;
     const spacing = CARD_W + 10;
@@ -850,20 +912,30 @@ export class CombatScene extends Phaser.Scene {
       this.renderCard(instanceId, startX + index * spacing, 632);
     });
 
-    this.text(1090, 552, `Rút ${this.state.drawPile.length}`, 13, COLORS.dimText);
+    const pile = this.state.drawPile.length;
+    this.text(1090, 548, `Chồng bài ${pile}`, 16, pile <= 6 ? "#ff8080" : COLORS.text);
     this.text(1090, 576, `Bỏ ${this.state.discardPile.length}`, 13, COLORS.dimText);
 
-    const btnX = 1150;
-    const btnY = 660;
-    const btn = this.add.rectangle(btnX, btnY, 190, 56, COLORS.button);
-    btn.setStrokeStyle(1, COLORS.goldFill);
-    btn.setInteractive({ useHandCursor: true });
-    btn.on("pointerover", () => btn.setFillStyle(0x3a5090));
-    btn.on("pointerout", () => btn.setFillStyle(COLORS.button));
-    btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-      if (pointer.button === 0 && !this.inputLocked) this.dispatch({ type: "endTurn" });
-    });
-    this.root.add(btn);
-    this.text(btnX, btnY, "KẾT THÚC LƯỢT", 15).setOrigin(0.5);
+    if (this.state.status === "playerTurn") {
+      const btnX = 1150;
+      const btnY = 660;
+      const btn = this.add.rectangle(btnX, btnY, 190, 56, COLORS.button);
+      btn.setStrokeStyle(1, COLORS.goldFill);
+      btn.setInteractive({ useHandCursor: true });
+      btn.on("pointerover", () => btn.setFillStyle(0x3a5090));
+      btn.on("pointerout", () => btn.setFillStyle(COLORS.button));
+      btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0 && !this.inputLocked) this.dispatch({ type: "endTurn" });
+      });
+      this.root.add(btn);
+      this.text(btnX, btnY, "KẾT THÚC LƯỢT", 15).setOrigin(0.5);
+      this.text(
+        btnX,
+        btnY + 30,
+        `Giữ ${Math.min(this.gameData.combatConfig.moonReserveMax, this.state.moonPower)}`,
+        11,
+        COLORS.dimText,
+      ).setOrigin(0.5, 0);
+    }
   }
 }

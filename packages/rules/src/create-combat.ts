@@ -1,7 +1,6 @@
-import { announceIntents } from "./intent";
+import { drawCards } from "./draw";
+import { planEnemyIntents } from "./intent";
 import { shuffle } from "./rng";
-import { runRelicHooks } from "./run-relic-hooks";
-import { startPlayerTurn } from "./turn";
 import type {
   CardDef,
   CardInstance,
@@ -39,21 +38,29 @@ export function createCombat(
   const cards: Record<string, CardInstance> = {};
   const drawPile: string[] = [];
   const deckCardIds = setup.deckCardIds ?? heroDefs.flatMap((hero) => hero.cardIds);
-  deckCardIds.forEach((cardId, index) => {
+  let deckIndex = 0;
+  for (const cardId of deckCardIds) {
     const card = data.cards[cardId];
     if (!card) throw new Error(`createCombat: deck references missing card "${cardId}"`);
     if (card.ownerId === undefined || !setup.heroIds.includes(card.ownerId)) {
       throw new Error(`createCombat: deck card "${cardId}" is not owned by a hero in the team`);
     }
-    const instanceId = `c${String(index + 1).padStart(2, "0")}`;
-    cards[instanceId] = { instanceId, cardId, ownerIds: [card.ownerId] };
-    drawPile.push(instanceId);
-  });
-  bondCardsForTeam(data, setup.heroIds).forEach((card, index) => {
-    const instanceId = `bond${String(index + 1).padStart(2, "0")}`;
-    cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [...card.bond!.owners] };
-    drawPile.push(instanceId);
-  });
+    for (let copy = 0; copy < card.copies; copy++) {
+      deckIndex += 1;
+      const instanceId = `c${String(deckIndex).padStart(2, "0")}`;
+      cards[instanceId] = { instanceId, cardId, ownerIds: [card.ownerId] };
+      drawPile.push(instanceId);
+    }
+  }
+  let bondIndex = 0;
+  for (const card of bondCardsForTeam(data, setup.heroIds)) {
+    for (let copy = 0; copy < card.copies; copy++) {
+      bondIndex += 1;
+      const instanceId = `bond${String(bondIndex).padStart(2, "0")}`;
+      cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [...card.bond!.owners] };
+      drawPile.push(instanceId);
+    }
+  }
   let rngState = setup.seed;
   const shuffled = shuffle(drawPile, rngState);
   rngState = shuffled.rngState;
@@ -71,8 +78,8 @@ export function createCombat(
     alive: true,
     levelUpCounter: 0,
     leveledUp: false,
-    freeCardUsedThisTurn: false,
-    freeCardActive: false,
+    firstCardDiscountUsedThisTurn: false,
+    firstCardDiscountActive: false,
   }));
 
   const enemies: EnemyState[] = encounter.enemyIds.map((enemyId, position) => {
@@ -88,30 +95,33 @@ export function createCombat(
       armor: 0,
       statuses: [],
       alive: true,
-      patternIndex: 0,
-      currentIntent: null,
+      plannedIntents: [],
+      lastIntentIds: [],
+      moonPower: 0,
+      moonReserve: 0,
     };
   });
 
   const state: CombatState = {
-    status: "playerTurn",
+    status: "mulligan",
     round: 1,
     moonIndex: 1,
     bloodMoonRounds: 0,
     moonPower: 0,
+    moonReserve: 0,
     heroes,
     enemies,
     cards,
     drawPile: shuffled.items,
     hand: [],
     discardPile: [],
+    pendingChoice: null,
     rngState,
     runRelicIds: [...(setup.runRelicIds ?? [])],
     runRelicCounters: {},
   };
 
-  announceIntents(data, state, events);
-  startPlayerTurn(data, state, events);
-  runRelicHooks(data, state, events, { type: "combatStart" });
+  planEnemyIntents(data, state, events);
+  drawCards(state, data.combatConfig.handSize, events);
   return { state, events };
 }

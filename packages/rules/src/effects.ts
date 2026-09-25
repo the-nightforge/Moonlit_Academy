@@ -1,4 +1,3 @@
-import { drawCards } from "./draw";
 import { bumpCounter, checkLevelUps } from "./levelup";
 import {
   moonArmorMultiplier,
@@ -243,8 +242,17 @@ export function resolveEffect(
       }
       return;
     }
-    case "draw": {
-      drawCards(state, effect.amount, events);
+    case "chooseCard": {
+      const options = state.drawPile.splice(0, Math.min(effect.look, state.drawPile.length));
+      if (options.length === 0) return;
+      if (options.length === 1) {
+        state.hand.push(options[0]!);
+        events.push({ type: "cardsDrawn", instanceIds: options });
+        return;
+      }
+      state.pendingChoice = { kind: "chooseCard", options };
+      state.status = "choosing";
+      events.push({ type: "choiceOpened", options });
       return;
     }
     case "gainMoonPower": {
@@ -357,6 +365,15 @@ function killUnit(
   if (killer?.cardDamage && unit.side === "enemy") {
     const killerHero = state.heroes.find((hero) => hero.id === killer.id);
     if (killerHero) bumpCounter(data, killerHero, "enemiesKilled", 1);
+  }
+  if (unit.side === "hero") {
+    const defId = (unit as HeroState).defId;
+    const purged = state.drawPile.filter((id) => state.cards[id]!.ownerIds.includes(defId));
+    if (purged.length > 0) {
+      state.drawPile = state.drawPile.filter((id) => !purged.includes(id));
+      state.discardPile.push(...purged);
+      events.push({ type: "cardsPurged", heroId: unit.id, instanceIds: purged });
+    }
   }
 }
 

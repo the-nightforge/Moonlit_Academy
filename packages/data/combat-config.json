@@ -1,0 +1,8 @@
+{
+  "moonPower": { "start": 4, "perRound": 1, "cap": 8 },
+  "moonReserveMax": 3,
+  "handSize": 6,
+  "maxMulligan": 2,
+  "maxIntentsPerRound": 3,
+  "bloodMoonHpLoss": 2
+}

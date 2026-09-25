@@ -44,7 +44,7 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
     z.object({ actor, type: z.literal("removeArmor"), to: targetRefSchema }),
     z.object({ actor, type: z.literal("applyStatus"), status: statusIdSchema, amount: intAmount, to: targetRefSchema }),
     z.object({ actor, type: z.literal("cleanse"), to: targetRefSchema }),
-    z.object({ actor, type: z.literal("draw"), amount: z.number().int().positive() }),
+    z.object({ actor, type: z.literal("chooseCard"), look: z.number().int().positive() }),
     z.object({ actor, type: z.literal("gainMoonPower"), amount: intAmount }),
     z.object({ actor, type: z.literal("shiftMoon"), amount: intAmount }),
     z.object({ actor, type: z.literal("stealBuff"), count: z.number().int().positive() }),
@@ -62,7 +62,7 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
 const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("attackDamageBonus"), amount: intAmount }),
   z.object({ type: z.literal("regenSpreadsToAllAllies") }),
-  z.object({ type: z.literal("firstOwnCardFreeEachTurn") }),
+  z.object({ type: z.literal("firstOwnCardDiscount"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("doubleDamageVsFrozen") }),
   z.object({ type: z.literal("stealBonus") }),
 ]);
@@ -74,7 +74,7 @@ export const heroDefSchema = z.object({
   archetype: archetypeSchema,
   rarity: raritySchema,
   maxHp: z.number().int().positive(),
-  cardIds: z.array(idSchema).length(5),
+  cardIds: z.array(idSchema).length(6),
   rewardCardIds: z.array(idSchema),
   levelUp: z.object({
     name: z.string().min(1),
@@ -95,6 +95,7 @@ export const cardDefSchema = z.object({
   ownerId: idSchema.optional(),
   bond: z.object({ owners: z.tuple([idSchema, idSchema]) }).optional(),
   cost: z.number().int().nonnegative(),
+  copies: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   type: z.enum(["attack", "skill"]),
   tags: z.array(cardTagSchema),
   target: z.enum(["none", "enemy", "ally"]),
@@ -111,11 +112,19 @@ export const intentDefSchema = z.object({
   effects: z.array(effectSchema).min(1),
 });
 
+export const enemyIntentDefSchema = intentDefSchema.extend({
+  cost: z.number().int().nonnegative(),
+});
+
 export const enemyDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
   maxHp: z.number().int().positive(),
-  intentPattern: z.array(intentDefSchema).min(1),
+  intents: z.array(enemyIntentDefSchema).min(1),
+  moonPower: z.object({
+    start: z.number().int().nonnegative(),
+    cap: z.number().int().nonnegative(),
+  }),
   moonOverrides: z.array(z.object({ phase: moonPhaseIdSchema, intent: intentDefSchema })).optional(),
   bloodMoonOverride: intentDefSchema.optional(),
   art: z.object({ portrait: z.string() }),
@@ -206,6 +215,19 @@ export const runConfigSchema = z.object({
   minDeckSize: z.number().int().positive(),
 });
 
+export const combatConfigSchema = z.object({
+  moonPower: z.object({
+    start: z.number().int().nonnegative(),
+    perRound: z.number().int().nonnegative(),
+    cap: z.number().int().nonnegative(),
+  }),
+  moonReserveMax: z.number().int().nonnegative(),
+  handSize: z.number().int().positive(),
+  maxMulligan: z.number().int().nonnegative(),
+  maxIntentsPerRound: z.number().int().positive(),
+  bloodMoonHpLoss: z.number().int().nonnegative(),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
@@ -214,4 +236,5 @@ export const rawGameDataSchema = z.object({
   moonPhases: z.array(moonPhaseDefSchema),
   runRelics: z.array(runRelicDefSchema),
   runConfig: runConfigSchema,
+  combatConfig: combatConfigSchema,
 });
