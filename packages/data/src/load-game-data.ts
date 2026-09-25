@@ -50,6 +50,13 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   const cardById = new Map(cards.map((card) => [card.id, card]));
   const enemyById = new Map(enemies.map((enemy) => [enemy.id, enemy]));
 
+  const nestedChoose = (effects: Effect[]) =>
+    effects.some(
+      (effect) =>
+        effect.type === "conditional" &&
+        someEffect([...effect.then, ...(effect.else ?? [])], (inner) => inner.type === "chooseCard"),
+    );
+
   for (const hero of heroes) {
     for (const cardId of hero.cardIds) {
       const card = cardById.get(cardId);
@@ -89,6 +96,10 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     if (card.target !== "none" && !usesChosen) {
       errors.push(`card "${card.id}": target "${card.target}" requires at least one effect with to "chosen"`);
     }
+    const chooseIndex = card.effects.findIndex((effect) => effect.type === "chooseCard");
+    if ((chooseIndex >= 0 && chooseIndex !== card.effects.length - 1) || nestedChoose(card.effects)) {
+      errors.push(`card "${card.id}": chooseCard must be the last top-level effect`);
+    }
   }
 
   for (const enemy of enemies) {
@@ -103,6 +114,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       }
       if (someEffect(intent.effects, (effect) => effect.actor !== undefined)) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": actor is only allowed on bond cards`);
+      }
+      if (someEffect(intent.effects, (effect) => effect.type === "chooseCard")) {
+        errors.push(`enemy "${enemy.id}" intent "${intent.id}": chooseCard is not allowed`);
       }
     }
   }
@@ -183,6 +197,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       }
       if (someEffect(hook.effects, (effect) => effect.actor !== undefined)) {
         errors.push(`${label}: effects must not use actor`);
+      }
+      if (someEffect(hook.effects, (effect) => effect.type === "chooseCard")) {
+        errors.push(`${label}: effects must not use chooseCard`);
       }
       if (
         someEffect(

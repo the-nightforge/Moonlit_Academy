@@ -44,7 +44,7 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
     z.object({ actor, type: z.literal("removeArmor"), to: targetRefSchema }),
     z.object({ actor, type: z.literal("applyStatus"), status: statusIdSchema, amount: intAmount, to: targetRefSchema }),
     z.object({ actor, type: z.literal("cleanse"), to: targetRefSchema }),
-    z.object({ actor, type: z.literal("draw"), amount: z.number().int().positive() }),
+    z.object({ actor, type: z.literal("chooseCard"), look: z.number().int().positive() }),
     z.object({ actor, type: z.literal("gainMoonPower"), amount: intAmount }),
     z.object({ actor, type: z.literal("shiftMoon"), amount: intAmount }),
     z.object({ actor, type: z.literal("stealBuff"), count: z.number().int().positive() }),

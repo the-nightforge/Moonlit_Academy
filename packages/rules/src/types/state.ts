@@ -39,7 +39,7 @@ export interface CardInstance {
   ownerIds: string[];
 }
 
-export type CombatStatus = "mulligan" | "playerTurn" | "enemyTurn" | "won" | "lost";
+export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost";
 
 export interface CombatState {
   status: CombatStatus;
@@ -55,6 +55,8 @@ export interface CombatState {
   drawPile: string[];
   hand: string[];
   discardPile: string[];
+  /** A pending Chiêm Bài pick; the option instance ids are out of the draw pile until resolved. */
+  pendingChoice: { kind: "chooseCard"; options: string[] } | null;
   rngState: number;
   runRelicIds: string[];
   /** Per-combat hook counters, keyed "<relicId>#<hookIndex>". */

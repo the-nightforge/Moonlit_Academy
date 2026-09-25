@@ -81,7 +81,7 @@ export type Effect = (
   | { type: "removeArmor"; to: TargetRef }
   | { type: "applyStatus"; status: StatusId; amount: number; to: TargetRef }
   | { type: "cleanse"; to: TargetRef }
-  | { type: "draw"; amount: number }
+  | { type: "chooseCard"; look: number }
   | { type: "gainMoonPower"; amount: number }
   | { type: "shiftMoon"; amount: number }
   | { type: "stealBuff"; count: number }

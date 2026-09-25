@@ -206,4 +206,11 @@ describe("parseGameData validation", () => {
     raw.cards[0].copies = 4;
     expect(() => parseGameData(raw)).toThrowError(/copies/);
   });
+
+  it("T148: rejects chooseCard that is not the last top-level card effect", () => {
+    const raw = rawData();
+    const guide = raw.cards.find((card: any) => card.id === "f04_nguyet_quang_dan");
+    guide.effects.reverse();
+    expect(() => parseGameData(raw)).toThrowError(/chooseCard must be the last/);
+  });
 });

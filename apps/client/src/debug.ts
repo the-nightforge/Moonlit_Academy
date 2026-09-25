@@ -86,6 +86,10 @@ export function describeEvent(
       return "Xáo lại chồng bỏ";
     case "mulliganed":
       return `Đổi Bài ${event.returned.length} lá`;
+    case "choiceOpened":
+      return `Chiêm Bài: ${event.options.length} lá`;
+    case "cardChosen":
+      return "Chọn 1 lá";
     case "cardPlayed": {
       const instance = state.cards[event.instanceId];
       const card = instance ? data.cards[instance.cardId] : undefined;

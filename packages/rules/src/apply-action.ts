@@ -130,6 +130,16 @@ function mulligan(data: GameData, state: CombatState, instanceIds: string[], eve
   runRelicHooks(data, state, events, { type: "combatStart" });
 }
 
+function chooseCard(state: CombatState, instanceId: string, events: CombatEvent[]): void {
+  const options = state.pendingChoice!.options;
+  const bottomed = options.filter((id) => id !== instanceId);
+  state.hand.push(instanceId);
+  state.drawPile.push(...bottomed);
+  state.pendingChoice = null;
+  state.status = "playerTurn";
+  events.push({ type: "cardChosen", instanceId, bottomed });
+}
+
 function statusError(state: CombatState, action: Action): string | null {
   if (action.type === "mulligan") {
     return state.status === "mulligan" ? null : "mulligan already done";
@@ -137,8 +147,10 @@ function statusError(state: CombatState, action: Action): string | null {
   switch (state.status) {
     case "mulligan":
       return "mulligan pending";
+    case "choosing":
+      return action.type === "chooseCard" ? null : "choice pending";
     case "playerTurn":
-      return null;
+      return action.type === "chooseCard" ? "no pending choice" : null;
     case "enemyTurn":
     case "won":
     case "lost":
@@ -168,6 +180,15 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
       const next = cloneState(state);
       const events: CombatEvent[] = [];
       playCard(data, next, action, events);
+      return { ok: true, state: next, events };
+    }
+    case "chooseCard": {
+      if (!state.pendingChoice!.options.includes(action.instanceId)) {
+        return { ok: false, error: "not a choice option" };
+      }
+      const next = cloneState(state);
+      const events: CombatEvent[] = [];
+      chooseCard(next, action.instanceId, events);
       return { ok: true, state: next, events };
     }
     case "endTurn": {

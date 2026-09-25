@@ -3,6 +3,7 @@ import type { StatusId } from "./static";
 export type Action =
   | { type: "playCard"; instanceId: string; targetId?: string }
   | { type: "mulligan"; instanceIds: string[] }
+  | { type: "chooseCard"; instanceId: string }
   | { type: "endTurn" };
 
 export type CombatEvent =
@@ -24,6 +25,8 @@ export type CombatEvent =
   | { type: "deckedOut" }
   | { type: "cardsPurged"; heroId: string; instanceIds: string[] }
   | { type: "mulliganed"; returned: string[]; drawn: string[] }
+  | { type: "choiceOpened"; options: string[] }
+  | { type: "cardChosen"; instanceId: string; bottomed: string[] }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
   | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }
   | { type: "intentRevealed"; enemyId: string; intentId: string; targetId: string | null }

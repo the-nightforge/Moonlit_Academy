@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "../src/index";
-import { drawTwoCard } from "./fixtures";
+import { chooseThreeCard } from "./fixtures";
 import { injectCard, instanceIdOf, makeTestCombat, setHand } from "./helpers";
 
 describe("playCard validation", () => {
@@ -61,14 +61,19 @@ describe("draw", () => {
           "f04_tinh_tam_tra",
         ]),
     });
-    const instanceId = injectCard(state, data, drawTwoCard);
-    const discardBefore = state.discardPile.length;
+    const top = state.drawPile.slice(0, 3);
+    const instanceId = injectCard(state, data, chooseThreeCard);
     const result = applyAction(data, state, { type: "playCard", instanceId });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.hand).toHaveLength(11);
-    expect(result.events.some((event) => event.type === "cardDiscarded")).toBe(false);
-    expect(result.state.discardPile).toHaveLength(discardBefore + 1);
+    expect(result.state.status).toBe("choosing");
+    expect(result.state.pendingChoice).toEqual({ kind: "chooseCard", options: top });
+    const picked = applyAction(data, result.state, { type: "chooseCard", instanceId: top[0]! });
+    expect(picked.ok).toBe(true);
+    if (!picked.ok) return;
+    expect(picked.state.hand).toHaveLength(10);
+    expect(picked.events.some((event) => event.type === "cardDiscarded")).toBe(false);
+    expect(picked.state.discardPile).toContain(instanceId);
   });
 });

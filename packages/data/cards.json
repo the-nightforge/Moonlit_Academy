@@ -144,9 +144,9 @@
     "target": "none",
     "effects": [
       { "type": "shiftMoon", "amount": 1 },
-      { "type": "draw", "amount": 1 }
+      { "type": "chooseCard", "look": 3 }
     ],
-    "text": "Đổi Vận: trăng tiến 1 pha. Rút 1 lá."
+    "text": "Đổi Vận: trăng tiến 1 pha. Chiêm Bài 3."
   },
   {
     "id": "m06_anh_bo",
@@ -598,11 +598,11 @@
         "to": "allAllies"
       },
       {
-        "type": "draw",
-        "amount": 1
+        "type": "chooseCard",
+        "look": 3
       }
     ],
-    "text": "Giải trừ mọi Hero. Rút 1 lá."
+    "text": "Giải trừ mọi Hero. Chiêm Bài 3."
   },
   {
     "id": "f04_nguyet_lo",
@@ -715,11 +715,11 @@
         "to": "self"
       },
       {
-        "type": "draw",
-        "amount": 1
+        "type": "chooseCard",
+        "look": 3
       }
     ],
-    "text": "Ẩn Thân 2 vòng. Rút 1 lá."
+    "text": "Ẩn Thân 2 vòng. Chiêm Bài 3."
   },
   {
     "id": "m06_tuyet_menh",
@@ -911,11 +911,11 @@
         "to": "self"
       },
       {
-        "type": "draw",
-        "amount": 1
+        "type": "chooseCard",
+        "look": 3
       }
     ],
-    "text": "Ẩn Thân 1 vòng. Rút 1 lá."
+    "text": "Ẩn Thân 1 vòng. Chiêm Bài 3."
   },
   {
     "id": "f02_doat_hon_thich",

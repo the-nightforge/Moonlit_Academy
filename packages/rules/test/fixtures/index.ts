@@ -7,17 +7,17 @@ export const idleIntent: IntentDef = {
   effects: [],
 };
 
-export const drawTwoCard: CardDef = {
-  id: "test_draw_two",
-  name: "Test Draw Two",
+export const chooseThreeCard: CardDef = {
+  id: "test_choose_three",
+  name: "Test Choose Three",
   ownerId: "f04",
   cost: 0,
   copies: 1,
   type: "skill",
   tags: [],
   target: "none",
-  effects: [{ type: "draw", amount: 2 }],
-  text: "Rút 2 lá (test).",
+  effects: [{ type: "chooseCard", look: 3 }],
+  text: "Chiêm Bài 3 (test).",
 };
 
 export const rewindMoonCard: CardDef = {

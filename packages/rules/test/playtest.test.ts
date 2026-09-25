@@ -78,10 +78,21 @@ function simulate(
   };
   let actions = 0;
 
-  while (state.status === "playerTurn" || state.status === "mulligan") {
+  while (state.status === "playerTurn" || state.status === "mulligan" || state.status === "choosing") {
     if (state.round > MAX_ROUNDS || actions >= MAX_ACTIONS) break;
     if (state.status === "mulligan") {
       const result = applyAction(gameData, state, { type: "mulligan", instanceIds: [] });
+      if (!result.ok) break;
+      state = result.state;
+      record(result.events);
+      actions += 1;
+      continue;
+    }
+    if (state.status === "choosing") {
+      const result = applyAction(gameData, state, {
+        type: "chooseCard",
+        instanceId: state.pendingChoice!.options[0]!,
+      });
       if (!result.ok) break;
       state = result.state;
       record(result.events);

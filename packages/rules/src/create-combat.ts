@@ -113,6 +113,7 @@ export function createCombat(
     drawPile: shuffled.items,
     hand: [],
     discardPile: [],
+    pendingChoice: null,
     rngState,
     runRelicIds: [...(setup.runRelicIds ?? [])],
     runRelicCounters: {},

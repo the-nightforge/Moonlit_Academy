@@ -255,9 +255,13 @@ export class CombatScene extends Phaser.Scene {
       this.renderCombatEnd();
     }
     this.renderDebugPanel();
-    // Task 7 will replace this auto-keep with a real Đổi Bài UI.
+    // Task 7 will replace these auto-picks with a real Đổi Bài / Chiêm Bài UI.
     if (this.state.status === "mulligan" && !this.inputLocked) {
       this.time.delayedCall(0, () => this.dispatch({ type: "mulligan", instanceIds: [] }));
+    }
+    if (this.state.status === "choosing" && !this.inputLocked) {
+      const first = this.state.pendingChoice!.options[0]!;
+      this.time.delayedCall(0, () => this.dispatch({ type: "chooseCard", instanceId: first }));
     }
   }
 

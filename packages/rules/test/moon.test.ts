@@ -150,9 +150,15 @@ describe("moon phases", () => {
       shifted.events.find((e) => e.type === "moonShifted"),
     ).toMatchObject({ from: 3, to: 4, cause: "card" });
 
-    const healed = applyAction(data, shifted.state, {
+    const picked = applyAction(data, shifted.state, {
+      type: "chooseCard",
+      instanceId: shifted.state.pendingChoice!.options[0]!,
+    });
+    expect(picked.ok).toBe(true);
+    if (!picked.ok) return;
+    const healed = applyAction(data, picked.state, {
       type: "playCard",
-      instanceId: instanceIdOf(shifted.state, "f04_thao_duoc"),
+      instanceId: instanceIdOf(picked.state, "f04_thao_duoc"),
       targetId: "hero:f04",
     });
     expect(healed.ok).toBe(true);
@@ -221,7 +227,13 @@ describe("moon phases", () => {
     expect(shifted.ok).toBe(true);
     if (!shifted.ok) return;
 
-    const result = applyAction(data, shifted.state, { type: "endTurn" });
+    const picked = applyAction(data, shifted.state, {
+      type: "chooseCard",
+      instanceId: shifted.state.pendingChoice!.options[0]!,
+    });
+    expect(picked.ok).toBe(true);
+    if (!picked.ok) return;
+    const result = applyAction(data, picked.state, { type: "endTurn" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.moonIndex).toBe(5);

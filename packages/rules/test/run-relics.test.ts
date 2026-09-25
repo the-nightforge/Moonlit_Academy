@@ -34,21 +34,18 @@ describe("run relic hooks", () => {
     );
   });
 
-  it("T116: every 2 player turns draws one more card", () => {
-    const { data, state } = makeTestCombat({
+  it("T116: every 2 player turns grants 2 moon power", () => {
+    const withRelic = makeTestCombat({
       runRelicIds: ["thanh_loan_vu"],
       mutateData: makeEnemiesIdle,
       setup: idleEnemies,
     });
-    expect(state.hand).toHaveLength(6);
-    const second = applyAction(data, state, { type: "endTurn" });
-    expect(second.ok).toBe(true);
-    if (!second.ok) return;
-    expect(second.state.hand).toHaveLength(7);
-    const third = applyAction(data, second.state, { type: "endTurn" });
-    expect(third.ok).toBe(true);
-    if (!third.ok) return;
-    expect(third.state.hand).toHaveLength(7);
+    const without = makeTestCombat({ mutateData: makeEnemiesIdle, setup: idleEnemies });
+    const a = applyAction(withRelic.data, withRelic.state, { type: "endTurn" });
+    const b = applyAction(without.data, without.state, { type: "endTurn" });
+    expect(a.ok && b.ok).toBe(true);
+    if (!a.ok || !b.ok) return;
+    expect(a.state.moonPower).toBe(b.state.moonPower + 2);
   });
 
   it("T117: every third attack card grants 2 moon power", () => {
