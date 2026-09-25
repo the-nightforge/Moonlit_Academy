@@ -21,7 +21,7 @@ describe("card damage", () => {
     const result = play(data, state, "m05_liet_hoa_xung_phong", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.enemies[0]?.hp).toBe(34);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 8);
     const damage = result.events.find((event) => event.type === "damageDealt");
     expect(damage).toMatchObject({ sourceId: "hero:m05", targetId: "enemy:0", amount: 8, blocked: 0, hpLost: 8 });
     expect(result.state.moonPower).toBe(7);
@@ -42,7 +42,7 @@ describe("card damage", () => {
     const result = play(data, state, "m05_liet_hoa_xung_phong", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.enemies[0]?.hp).toBe(30);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 12);
   });
 
   it("T12: selfHpBelow is strictly below (50% exactly deals 8)", () => {
@@ -56,7 +56,7 @@ describe("card damage", () => {
     const result = play(data, state, "m05_liet_hoa_xung_phong", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.enemies[0]?.hp).toBe(34);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 8);
   });
 
   it("T13: armor blocks before hp", () => {
@@ -71,7 +71,7 @@ describe("card damage", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.enemies[0]?.armor).toBe(0);
-    expect(result.state.enemies[0]?.hp).toBe(39);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 3);
     const damage = result.events.find((event) => event.type === "damageDealt");
     expect(damage).toMatchObject({ blocked: 5, hpLost: 3 });
   });
@@ -87,7 +87,7 @@ describe("card damage", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.enemies[0]?.armor).toBe(0);
-    expect(result.state.enemies[0]?.hp).toBe(37);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 5);
   });
 
   it("T20: Song Nhan Loan Vu hits every enemy", () => {
@@ -100,8 +100,8 @@ describe("card damage", () => {
     const result = play(data, state, "m06_song_nhan_loan_vu");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.enemies[0]?.hp).toBe(37);
-    expect(result.state.enemies[1]?.hp).toBe(19);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 5);
+    expect(result.state.enemies[1]?.hp).toBe(state.enemies[1]!.hp - 5);
     expect(result.events.filter((event) => event.type === "damageDealt")).toHaveLength(2);
   });
 });

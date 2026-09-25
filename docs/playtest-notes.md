@@ -281,3 +281,71 @@ là độ khó chấp nhận được cho sàn kỹ năng.
       / đội m06+f02+f03 không, hay attrition vẫn quá nặng?
 - [ ] Boss còn quá khắc nghiệt với đội không có hồi máu / chỉ một nguồn Đóng
       Băng không?
+
+# Playtest Notes — Phase 4a (bước 4a.8)
+
+Playtest scripted: `packages/rules/test/playtest.test.ts` (trận đơn) và
+`run-playtest.test.ts` (lượt chơi). Heuristic 4a: Đổi Bài bỏ lá cost > 5;
+Chiêm Bài lấy lá đắt nhất mua nổi ở vòng tới; đánh lá đắt nhất trước; focus
+địch ít HP / đồng minh thấp % nhất. Đây là **sàn kỹ năng**.
+
+Lượt chạy đầu sau khi đổi kinh tế (trước chỉnh số): **0/80 thắng run**,
+tầng TB 1.99/8, 59/80 chết tầng ≤2, trận thường thắng 38%, Cạn Bài 18%
+trận — kinh tế mới làm đội chơi yếu tương đối hơn nhiều so giai đoạn 3.
+
+## Đo ablation (4 đội × 20 seed = 80 lượt/biến thể)
+
+| Biến thể | Thắng/80 | Tầng TB | Chết ≤F2 | Thắng trận | Vòng/trận | Cạn Bài |
+|---|---|---|---|---|---|---|
+| baseline | 0 | 1.99 | 59 | 38% | 7.3 | 18% |
+| HP địch ×0.8 | 0 | 2.96 | 44 | 54% | 7.1 | 7% |
+| NL địch −1 | 0 | 2.75 | 50 | 51% | 8.0 | 17% |
+| copies +1 | 0 | 2.33 | 55 | 44% | 7.9 | 6% |
+| dmg địch ×0.8 | 0 | 2.21 | 56 | 44% | 7.7 | 19% |
+| NL +2/vòng (chơi) | 0 | 2.41 | 54 | 46% | 6.9 | 15% |
+| K: NL−1 + HP×0.8 + dmg×0.8 + copies+1 + boss 90 + NL start 4 | 7 | 5.40 | 14 | 75% | 8.4 | 2% |
+| **P: K + dmg×0.7** | **12** | **5.91** | **10** | **78%** | **8.6** | **3%** |
+| V: P + Nghỉ ×2 | 14 | 5.94 | 10 | 79% | 8.6 | 3% |
+| X: P + Nghỉ ×2 + NL +2/vòng | 18 | 5.76 | 11 | 80% | 7.9 | 3% |
+
+## Gói đã áp dụng (đã duyệt — gói P)
+
+- `combat-config`: `moonPower.start` 3 → 4 (vòng 1 đánh được 1 lá tầm trung).
+- `cards.json`: mọi lá `copies` +1 (tối đa 3) — deck 18 → 21+, Cạn Bài
+  18% → ~0%.
+- `enemies.json`: `moonPower.start` −1 cho tất cả địch (địch chậm chuỗi ở
+  vòng 1 — đường damage "thấp sớm"); `maxHp` địch thường ×0.8; damage mọi
+  intent ×0.7 (làm tròn, tối thiểu 1; **không** đổi damage lồng trong
+  `conditional` — ablation chỉ đo top-level); `moon_ape` 110 → 90.
+- Test luật chuyển sang số đọc từ data/fixture (hp địch, đường Nguyệt Lực)
+  hoặc inject intent — chỉnh cân bằng không còn làm vỡ test luật.
+
+## Kết quả sau chỉnh
+
+Trận đơn (`playtest`, 3 seed × 4 đội, máu đầy):
+
+| Tier | Trận | Thắng | Vòng TB | Cạn Bài | Kẹt tay |
+|---|---|---|---|---|---|
+| Thường | 60 | 98% | 8.8 | 0% | 3% |
+| Tinh Anh | 24 | 96% | 9.9 | 0% | 7% |
+| Boss | 12 | 42% | 10.8 | 8% | 0% |
+
+Lượt chơi (`run-playtest`, seed 1–5 × 4 đội): **2/20 thắng**, 12/20 tới
+tầng 8, boss thắng 2/12 (17%), 0 kẹt, trận thường 90% / 8.2 vòng / Cạn
+Bài 0%.
+
+So mục tiêu §8: trận thường/Tinh Anh 8–12 vòng ✓ (8.2–9.9), Cạn Bài <10%
+✓ (~0%), kẹt tay <10% ✓, thắng lượt 25–40% **chưa đạt** (bot ~10–15% —
+đã duyệt gói P thay vì gói X 22.5% để giữ độ khó; người chơi thật sẽ cao
+hơn sàn). Boss còn là chốt chặn chính (17% trận boss thắng).
+
+## Điểm cần theo dõi khi chơi tay
+
+- [ ] Đổi Bài có tạo quyết định thật không (hay luôn bỏ 2 lá đắt)?
+- [ ] Dự Trữ có được dùng chủ động không (nhịp lượt xanh để vòng sau bùng)?
+- [ ] Đồng hồ Cạn Bài có gây áp lực đúng không?
+- [ ] Chuỗi chiêu địch có đọc được không; Tụ Lực có đủ cảnh báo?
+- [ ] Chiêm Bài có đáng cost không; lấy lá đắt hay lá rẻ?
+- [ ] Tỷ lệ thắng lượt của người chơi thật — bot đo 10–15%; nếu người chơi
+      thật <25%, cân nhắc lại gói V/X.
+

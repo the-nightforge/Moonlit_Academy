@@ -19,7 +19,7 @@ describe("moon phases", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.events.find((e) => e.type === "damageDealt")).toMatchObject({ amount: 9 });
-    expect(result.state.enemies[0]?.hp).toBe(33);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 9);
   });
 
   it("T22: stealthed assassin branch also gets the 1.5x multiplier", () => {
@@ -217,6 +217,7 @@ describe("moon phases", () => {
       setup: (s) => {
         s.moonIndex = 3;
         s.moonPower = 11;
+        s.enemies[1]!.moonReserve = 3; // lets the round-2 replan afford the fox's top intent
         setHand(s, ["f04_nguyet_quang_dan"]);
       },
     });

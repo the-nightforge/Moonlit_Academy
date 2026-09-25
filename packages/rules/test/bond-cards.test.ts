@@ -52,11 +52,16 @@ describe("bond deck construction", () => {
   it("T80: several bond cards follow cards.json order", () => {
     const data = testData();
     const { state } = createCombat(data, { heroIds: ["m05", "f03", "f04"], encounterId: "enc_01", seed: 42 });
-    expect(state.cards["bond01"]?.cardId).toBe("bond_bang_hoa_tranh_phong");
-    expect(state.cards["bond02"]?.cardId).toBe("bond_bang_hoa_tranh_phong");
-    expect(state.cards["bond03"]?.cardId).toBe("bond_tuyet_trung_tong_than");
-    expect(state.cards["bond03"]?.ownerIds).toEqual(["f03", "f04"]);
-    expect(state.cards["bond04"]?.cardId).toBe("bond_tuyet_trung_tong_than");
+    const firstCopies = data.cards["bond_bang_hoa_tranh_phong"]!.copies;
+    const secondCopies = data.cards["bond_tuyet_trung_tong_than"]!.copies;
+    const id = (n: number) => `bond${String(n).padStart(2, "0")}`;
+    for (let i = 1; i <= firstCopies; i++) {
+      expect(state.cards[id(i)]?.cardId).toBe("bond_bang_hoa_tranh_phong");
+    }
+    for (let i = firstCopies + 1; i <= firstCopies + secondCopies; i++) {
+      expect(state.cards[id(i)]?.cardId).toBe("bond_tuyet_trung_tong_than");
+    }
+    expect(state.cards[id(firstCopies + 1)]?.ownerIds).toEqual(["f03", "f04"]);
   });
 });
 
@@ -130,7 +135,7 @@ describe("bond resolution", () => {
     const result = play(data, state, "bond_bang_hoa_tranh_phong", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.enemies[0]?.hp).toBe(28);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 14);
     expect(result.events.some((e) => e.type === "statusApplied")).toBe(false);
     expect(hero(result.state, "f03").levelUpCounter).toBe(0);
   });
@@ -148,7 +153,7 @@ describe("bond resolution", () => {
     const result = play(data, state, "bond_bang_hoa_tranh_phong", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.enemies[0]?.hp).toBe(34);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 8);
   });
 
   it("T86: Ảnh Đấu gives the stolen buff to F02 and keeps M06 stealthed", () => {

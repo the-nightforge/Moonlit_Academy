@@ -140,8 +140,12 @@ describe("hero level up", () => {
     });
     expect(free.ok).toBe(true);
     if (!free.ok) return;
+    const fund =
+      data.combatConfig.moonPower.start +
+      data.combatConfig.moonPower.perRound +
+      data.combatConfig.moonReserveMax;
     expect(free.events.find((e) => e.type === "cardPlayed")).toMatchObject({ cost: 0 });
-    expect(free.state.moonPower).toBe(7);
+    expect(free.state.moonPower).toBe(fund);
 
     const paid = applyAction(data, free.state, {
       type: "playCard",
@@ -151,7 +155,7 @@ describe("hero level up", () => {
     expect(paid.ok).toBe(true);
     if (!paid.ok) return;
     expect(paid.events.find((e) => e.type === "cardPlayed")).toMatchObject({ cost: 2 });
-    expect(paid.state.moonPower).toBe(5);
+    expect(paid.state.moonPower).toBe(fund - 2);
   });
 
   it("T53: a kill by another hero does not raise M06's counter", () => {

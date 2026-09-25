@@ -22,7 +22,7 @@ describe("statuses", () => {
     const result = play(data, state, "m05_liet_hoa_xung_phong", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.enemies[0]?.hp).toBe(30);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 12);
   });
 
   it("T18: empower adds to the next attack card and is consumed", () => {
@@ -41,7 +41,7 @@ describe("statuses", () => {
     const second = play(data, first.state, "m05_liet_hoa_xung_phong", "enemy:0");
     expect(second.ok).toBe(true);
     if (!second.ok) return;
-    expect(second.state.enemies[0]?.hp).toBe(30);
+    expect(second.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 12);
     expect(second.state.moonPower).toBe(7);
     expect(second.state.heroes[0]?.statuses.some((s) => s.id === "empower")).toBe(false);
     expect(

@@ -56,6 +56,6 @@ describe("combat setup from a run", () => {
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.enemies[0]?.hp).toBe(31);
+    expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 11);
   });
 });

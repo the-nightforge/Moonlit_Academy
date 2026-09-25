@@ -5,11 +5,12 @@ declare const console: {
   log(...args: unknown[]): void;
   table(...args: unknown[]): void;
 };
-import type { Action, CombatState, GameData, RunAction, RunState } from "../src/index";
+import type { Action, CombatEvent, CombatState, GameData, RunAction, RunState } from "../src/index";
 import {
   applyRunAction,
   createRun,
   findNode,
+  getEffectiveCost,
   getValidTargets,
   isCardPlayable,
   reachableNodeIds,
@@ -26,14 +27,42 @@ const SEEDS = [1, 2, 3, 4, 5];
 const MAX_STEPS = 20000;
 const MAX_COMBAT_ROUNDS = 60;
 
-// First playable card; focus the lowest-HP enemy, or the ally with the lowest HP ratio.
+// Phase 4a heuristic: mulligan cards above the doubling curve, Chiêm Bài picks
+// the most expensive card affordable next round, plays costliest first,
+// focuses lowest-HP enemy / lowest-ratio ally.
 function combatAction(gameData: GameData, state: CombatState): Action {
-  if (state.status === "mulligan") return { type: "mulligan", instanceIds: [] };
-  if (state.status === "choosing") {
-    return { type: "chooseCard", instanceId: state.pendingChoice!.options[0]! };
+  if (state.status === "mulligan") {
+    const expensive = state.hand.filter(
+      (id) => gameData.cards[state.cards[id]!.cardId]!.cost > 5,
+    );
+    return {
+      type: "mulligan",
+      instanceIds: expensive.slice(0, gameData.combatConfig.maxMulligan),
+    };
   }
-  for (const instanceId of state.hand) {
-    if (!isCardPlayable(gameData, state, instanceId)) continue;
+  if (state.status === "choosing") {
+    const curve = gameData.combatConfig.moonPower;
+    const nextFund =
+      Math.min(curve.cap, curve.start + state.round * curve.perRound) +
+      gameData.combatConfig.moonReserveMax;
+    const options = [...state.pendingChoice!.options].sort(
+      (a, b) =>
+        gameData.cards[state.cards[b]!.cardId]!.cost -
+        gameData.cards[state.cards[a]!.cardId]!.cost,
+    );
+    const pick =
+      options.find(
+        (id) => gameData.cards[state.cards[id]!.cardId]!.cost <= nextFund,
+      ) ?? options[0]!;
+    return { type: "chooseCard", instanceId: pick };
+  }
+  const playable = state.hand
+    .filter((id) => isCardPlayable(gameData, state, id))
+    .sort(
+      (a, b) =>
+        getEffectiveCost(gameData, state, b) - getEffectiveCost(gameData, state, a),
+    );
+  for (const instanceId of playable) {
     const card = gameData.cards[state.cards[instanceId]!.cardId]!;
     if (card.target === "none") return { type: "playCard", instanceId };
     const units: { id: string; hp: number; maxHp: number }[] =
@@ -42,7 +71,9 @@ function combatAction(gameData: GameData, state: CombatState): Action {
       const unit = units.find((u) => u.id === id)!;
       return card.target === "enemy" ? unit.hp : unit.hp / unit.maxHp;
     };
-    const targetId = getValidTargets(gameData, state, instanceId).sort((a, b) => score(a) - score(b))[0];
+    const targetId = getValidTargets(gameData, state, instanceId).sort(
+      (a, b) => score(a) - score(b),
+    )[0];
     if (targetId !== undefined) return { type: "playCard", instanceId, targetId };
   }
   return { type: "endTurn" };
@@ -91,10 +122,73 @@ function runAction(gameData: GameData, run: RunState): RunAction {
   }
 }
 
+interface TierStats {
+  fights: number;
+  won: number;
+  lost: number;
+  rounds: number;
+  turns: number;
+  clogTurns: number;
+  reserveSum: number;
+  reserveSamples: number;
+  enemyIntentSum: number;
+  enemyIntentSamples: number;
+  deckedOut: number;
+}
+
+function emptyTierStats(): TierStats {
+  return {
+    fights: 0,
+    won: 0,
+    lost: 0,
+    rounds: 0,
+    turns: 0,
+    clogTurns: 0,
+    reserveSum: 0,
+    reserveSamples: 0,
+    enemyIntentSum: 0,
+    enemyIntentSamples: 0,
+    deckedOut: 0,
+  };
+}
+
 function simulateRun(heroIds: [string, string, string], seed: number) {
   let run = createRun(data, { heroIds, seed }).run;
   let fights = 0;
   let stalled = false;
+  const tiers = new Map<string, TierStats>();
+  let currentTier: string | null = null;
+  let lastCombat: CombatState | null = null;
+  const record = (events: CombatEvent[], state: CombatState | null) => {
+    for (const event of events) {
+      if (state === null || currentTier === null) continue;
+      const tier = tiers.get(currentTier) ?? emptyTierStats();
+      tiers.set(currentTier, tier);
+      if (event.type === "turnStarted" && event.side === "hero") {
+        tier.turns += 1;
+        tier.reserveSum += state.moonReserve;
+        tier.reserveSamples += 1;
+        if (
+          state.hand.length === data.combatConfig.handSize &&
+          state.hand.every((id) => !isCardPlayable(data, state, id))
+        ) {
+          tier.clogTurns += 1;
+        }
+      } else if (event.type === "turnStarted" && event.side === "enemy") {
+        for (const enemy of state.enemies) {
+          if (!enemy.alive) continue;
+          tier.enemyIntentSum += enemy.plannedIntents.length;
+          tier.enemyIntentSamples += 1;
+        }
+      } else if (event.type === "deckedOut") {
+        tier.deckedOut += 1;
+      } else if (event.type === "combatEnded") {
+        tier.rounds += state.round;
+        if (event.result === "won") tier.won += 1;
+        else tier.lost += 1;
+      }
+    }
+  };
   for (let step = 0; step < MAX_STEPS; step++) {
     if (run.status === "won" || run.status === "lost") break;
     if (run.status === "combat" && run.combat!.round > MAX_COMBAT_ROUNDS) {
@@ -103,9 +197,19 @@ function simulateRun(heroIds: [string, string, string], seed: number) {
     }
     const result = applyRunAction(data, run, runAction(data, run));
     if (!result.ok) throw new Error(`run action rejected: ${result.error}`);
-    if (result.runEvents.some((e) => e.type === "nodeEntered" && e.nodeType !== "rest" && e.nodeType !== "treasure")) {
-      fights += 1;
+    for (const e of result.runEvents) {
+      if (e.type === "nodeEntered") {
+        if (e.nodeType === "combat" || e.nodeType === "elite" || e.nodeType === "boss") {
+          currentTier = e.nodeType === "combat" ? "normal" : e.nodeType;
+          const tier = tiers.get(currentTier) ?? emptyTierStats();
+          tier.fights += 1;
+          tiers.set(currentTier, tier);
+          fights += 1;
+        }
+      }
     }
+    if (result.run.combat !== null) lastCombat = result.run.combat;
+    record(result.events, result.run.combat ?? lastCombat);
     run = result.run;
   }
   return {
@@ -115,16 +219,51 @@ function simulateRun(heroIds: [string, string, string], seed: number) {
     deck: run.deck.length,
     relics: run.runRelicIds.length,
     hp: run.heroes.map((h) => `${h.defId}:${h.hp}/${h.maxHp}`).join(" "),
+    tiers,
   };
 }
+
+const allTierStats = new Map<string, Map<string, TierStats>>();
 
 describe("run playtest", () => {
   for (const team of TEAMS) {
     it(`${team.join("+")} chạy trọn lượt chơi`, () => {
-      const rows = SEEDS.map((seed) => ({ seed, ...simulateRun(team, seed) }));
+      const rows = SEEDS.map((seed) => {
+        const { tiers, ...row } = simulateRun(team, seed);
+        allTierStats.set(`${team.join("+")}#${seed}`, tiers);
+        return { seed, ...row };
+      });
       console.log(`\n=== run · ${team.join("+")} ===`);
       console.table(rows);
       for (const row of rows) expect(["won", "lost", "stalled"]).toContain(row.result);
     });
   }
+
+  it("tổng hợp theo tier trận", () => {
+    const merged = new Map<string, TierStats>();
+    for (const tiers of allTierStats.values()) {
+      for (const [tier, stats] of tiers) {
+        const m = merged.get(tier) ?? emptyTierStats();
+        for (const key of Object.keys(m) as (keyof TierStats)[]) {
+          m[key] += stats[key];
+        }
+        merged.set(tier, m);
+      }
+    }
+    const rows = [...merged.entries()].map(([tier, s]) => ({
+      tier,
+      trận: s.fights,
+      "thắng%": s.fights > 0 ? `${((s.won / s.fights) * 100).toFixed(0)}%` : "—",
+      vòng_TB: s.fights > 0 ? (s.rounds / s.fights).toFixed(1) : "—",
+      "cạn_bài%": s.fights > 0 ? `${((s.deckedOut / s.fights) * 100).toFixed(0)}%` : "—",
+      "kẹt_tay%": `${((s.clogTurns / Math.max(1, s.turns)) * 100).toFixed(0)}%`,
+      DT_TB: s.reserveSamples > 0 ? (s.reserveSum / s.reserveSamples).toFixed(1) : "—",
+      chiêu_địch_TB:
+        s.enemyIntentSamples > 0
+          ? (s.enemyIntentSum / s.enemyIntentSamples).toFixed(1)
+          : "—",
+    }));
+    console.log("\n=== theo tier trận (toàn bộ run) ===");
+    console.table(rows);
+  });
 });

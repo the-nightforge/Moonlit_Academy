@@ -5,7 +5,8 @@ import {
   isCardPlayable,
 } from "../src/index";
 import type { Action, CombatState, GameData } from "../src/index";
-import { makeTestCombat } from "./helpers";
+import { makeTestCombat, setIntent } from "./helpers";
+import { strike9Intent } from "./fixtures";
 
 function pickAction(data: GameData, state: CombatState): Action {
   for (const instanceId of state.hand) {
@@ -50,14 +51,23 @@ describe("turn flow", () => {
   });
 
   it("T07: endTurn runs the full round cycle", () => {
-    const { data, state } = makeTestCombat();
+    const { data, state } = makeTestCombat({
+      setup: (s) => {
+        setIntent(s, 0, strike9Intent, "hero:m05");
+        setIntent(s, 1, strike9Intent, "hero:m06");
+      },
+    });
     const hand = [...state.hand];
     const result = applyAction(data, state, { type: "endTurn" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.round).toBe(2);
     expect(result.state.moonIndex).toBe(2);
-    expect(result.state.moonPower).toBe(4 + 3);
+    expect(result.state.moonPower).toBe(
+      data.combatConfig.moonPower.start +
+        data.combatConfig.moonPower.perRound +
+        data.combatConfig.moonReserveMax,
+    );
     expect(result.state.hand).toEqual(hand);
     const types = result.events.map((e) => e.type);
     expect(types).not.toContain("cardDiscarded");

@@ -10,9 +10,10 @@ function end(data: GameData, state: CombatState) {
 }
 
 describe("moon power economy", () => {
-  it("T128: base moon power ramps 3, 4, … 8 by round and caps at 8", () => {
+  it("T128: base moon power ramps by round and caps at the configured cap", () => {
     const { data, state } = makeTestCombat({ mutateData: makeEnemiesIdle, setup: idleEnemies });
-    expect(state.moonPower).toBe(3);
+    const { start, perRound, cap } = data.combatConfig.moonPower;
+    expect(state.moonPower).toBe(start);
     let current = state;
     const seen: number[] = [];
     for (let i = 0; i < 7; i++) {
@@ -20,25 +21,29 @@ describe("moon power economy", () => {
       current = end(data, current).state;
       seen.push(current.moonPower);
     }
-    expect(seen).toEqual([4, 5, 6, 7, 8, 8, 8]);
+    expect(seen).toEqual(
+      Array.from({ length: 7 }, (_, i) => Math.min(cap, start + perRound * (i + 1))),
+    );
   });
 
   it("T129: unspent moon power carries over as reserve (max 3) and can exceed the cap", () => {
     const { data, state } = makeTestCombat({ mutateData: makeEnemiesIdle, setup: idleEnemies });
+    const { start, perRound, cap } = data.combatConfig.moonPower;
+    const reserveMax = data.combatConfig.moonReserveMax;
     const r2 = end(data, state);
-    expect(r2.state.moonReserve).toBe(3);
-    expect(r2.state.moonPower).toBe(4 + 3);
-    expect(r2.events).toContainEqual({ type: "moonReserveChanged", side: "hero", value: 3 });
+    expect(r2.state.moonReserve).toBe(reserveMax);
+    expect(r2.state.moonPower).toBe(start + perRound + reserveMax);
+    expect(r2.events).toContainEqual({ type: "moonReserveChanged", side: "hero", value: reserveMax });
 
     r2.state.moonPower = 5; // more than the reserve max left unspent
     const r3 = end(data, r2.state);
-    expect(r3.state.moonReserve).toBe(3);
-    expect(r3.state.moonPower).toBe(5 + 3);
+    expect(r3.state.moonReserve).toBe(reserveMax);
+    expect(r3.state.moonPower).toBe(Math.min(cap, start + perRound * 2) + reserveMax);
 
     let current = r3.state;
     for (let i = 0; i < 4; i++) current = end(data, current).state;
     expect(current.round).toBe(7);
-    expect(current.moonPower).toBe(8 + 3);
+    expect(current.moonPower).toBe(Math.min(cap, start + perRound * 6) + reserveMax);
 
     current.moonPower = 0;
     const drained = end(data, current);

@@ -12,7 +12,7 @@ describe("createCombat", () => {
     expect(state.status).toBe("playerTurn");
     expect(state.round).toBe(1);
     expect(state.moonIndex).toBe(1);
-    expect(state.moonPower).toBe(3);
+    expect(state.moonPower).toBe(data.combatConfig.moonPower.start);
     expect(state.bloodMoonRounds).toBe(0);
 
     const deckSize = ["m05", "f04", "m06"]

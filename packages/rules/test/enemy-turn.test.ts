@@ -80,6 +80,8 @@ describe("enemy turn", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         for (const hero of s.heroes) hero.statuses.push({ id: "stealth", value: 1 });
+        setIntent(s, 0, strike9Intent, "hero:m05");
+        setIntent(s, 1, strike9Intent, "hero:m05");
       },
     });
     const result = applyAction(data, state, { type: "endTurn" });
