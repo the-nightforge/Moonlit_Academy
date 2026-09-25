@@ -51,7 +51,7 @@ describe("run relic hooks", () => {
     expect(third.state.hand).toHaveLength(5);
   });
 
-  it("T117: every third attack card grants 1 moon power", () => {
+  it("T117: every third attack card grants 2 moon power", () => {
     const { data, state } = makeTestCombat({
       runRelicIds: ["tam_tuyet_kiem_pho"],
       setup: (s) => {
@@ -66,18 +66,21 @@ describe("run relic hooks", () => {
       if (!result.ok) return;
       current = result.state;
     }
-    expect(current.moonPower).toBe(6);
+    expect(current.moonPower).toBe(2);
     const last = play(data, current, "m06_am_tien", "enemy:0");
     expect(last.ok).toBe(true);
     if (!last.ok) return;
     expect(triggered(last.events)).toEqual(["tam_tuyet_kiem_pho"]);
-    expect(last.state.moonPower).toBe(6);
+    expect(last.state.moonPower).toBe(2);
   });
 
   it("T118: cardPlayed filters by tag and uses the card owner (bond: owners[0])", () => {
     const { data, state } = makeTestCombat({
       runRelicIds: ["han_ngoc"],
-      setup: (s) => setHand(s, ["m06_nguyet_anh_an", "m05_thuong_pha"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["m06_nguyet_anh_an", "m05_thuong_pha"]);
+      },
     });
     const marked = play(data, state, "m06_nguyet_anh_an", "enemy:0");
     expect(marked.ok).toBe(true);
@@ -157,6 +160,7 @@ describe("run relic hooks", () => {
       runRelicIds: ["bach_lo_huong_tui"],
       setup: (s) => {
         s.moonIndex = 3;
+        s.moonPower = 11;
         setHand(s, ["f04_nguyet_quang_dan"]);
       },
     });
@@ -172,7 +176,10 @@ describe("run relic hooks", () => {
     const start = makeTestCombat({
       heroIds: team,
       runRelicIds: ["huyet_nguyet_phu"],
-      setup: (s) => setHand(s, ["f02_doi_van_chu"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["f02_doi_van_chu"]);
+      },
     });
     const begun = play(start.data, start.state, "f02_doi_van_chu");
     expect(begun.ok).toBe(true);
@@ -184,6 +191,7 @@ describe("run relic hooks", () => {
       runRelicIds: ["huyet_nguyet_phu"],
       setup: (s) => {
         s.bloodMoonRounds = 1;
+        s.moonPower = 11;
         setHand(s, ["f02_doi_van_chu"]);
       },
     });

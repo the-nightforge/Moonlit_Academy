@@ -22,8 +22,8 @@ export interface HeroState extends UnitState {
   side: "hero";
   levelUpCounter: number;
   leveledUp: boolean;
-  freeCardUsedThisTurn: boolean;
-  freeCardActive: boolean;
+  firstCardDiscountUsedThisTurn: boolean;
+  firstCardDiscountActive: boolean;
 }
 
 export interface EnemyState extends UnitState {
@@ -47,6 +47,8 @@ export interface CombatState {
   moonIndex: number;
   bloodMoonRounds: number;
   moonPower: number;
+  /** Moon power carried into this turn (reserve), for display. */
+  moonReserve: number;
   heroes: HeroState[];
   enemies: EnemyState[];
   cards: Record<string, CardInstance>;

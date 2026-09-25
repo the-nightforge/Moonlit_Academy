@@ -103,7 +103,10 @@ describe("reflect", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
       encounterId: "enc_04",
-      setup: (s) => setHand(s, ["f03_bang_phach_lien_kich"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["f03_bang_phach_lien_kich"]);
+      },
     });
     hero(state, "f03").hp = 3;
     state.enemies[0]!.statuses.push({ id: "reflect", value: 3 });
@@ -213,7 +216,10 @@ describe("blood moon", () => {
   it("T71: Đổi Vận Chú starts a 2-round blood moon and shifts the moon", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
-      setup: (s) => setHand(s, ["f02_doi_van_chu"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["f02_doi_van_chu"]);
+      },
     });
 
     const result = play(data, state, "f02_doi_van_chu");
@@ -280,7 +286,10 @@ describe("blood moon", () => {
   it("T75: Phệ Hồn is playable during blood moon", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
-      setup: (s) => setHand(s, ["f02_phe_hon"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["f02_phe_hon"]);
+      },
     });
     state.bloodMoonRounds = 1;
     expect(isCardPlayable(data, state, instanceIdOf(state, "f02_phe_hon"))).toBe(true);
@@ -295,7 +304,10 @@ describe("blood moon", () => {
   it("T76: a shorter bloodMoon does not shorten an active one", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
-      setup: (s) => setHand(s, ["f02_doi_van_chu"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["f02_doi_van_chu"]);
+      },
     });
     state.bloodMoonRounds = 3;
 

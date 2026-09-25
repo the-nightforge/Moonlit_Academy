@@ -65,7 +65,7 @@ describe("moon phases", () => {
     });
     expect(getEffectiveCost(data, state, instanceIdOf(state, "m06_nguyet_anh_an"))).toBe(0);
     expect(getEffectiveCost(data, state, instanceIdOf(state, "m05_ho_gam"))).toBe(0);
-    expect(getEffectiveCost(data, state, instanceIdOf(state, "m05_liet_hoa_xung_phong"))).toBe(2);
+    expect(getEffectiveCost(data, state, instanceIdOf(state, "m05_liet_hoa_xung_phong"))).toBe(4);
   });
 
   it("T25: full moon doubles healing", () => {
@@ -134,6 +134,7 @@ describe("moon phases", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 3;
+        s.moonPower = 11;
         s.heroes[1]!.hp = 20;
         setHand(s, ["f04_nguyet_quang_dan", "f04_thao_duoc"]);
       },
@@ -163,6 +164,7 @@ describe("moon phases", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 7;
+        s.moonPower = 11;
         setHand(s, ["f04_nguyet_quang_dan"]);
       },
     });
@@ -208,6 +210,7 @@ describe("moon phases", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 3;
+        s.moonPower = 11;
         setHand(s, ["f04_nguyet_quang_dan"]);
       },
     });

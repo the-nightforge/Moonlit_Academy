@@ -3,7 +3,7 @@
     "id": "m05_liet_hoa_xung_phong",
     "name": "Liệt Hỏa Xung Phong",
     "ownerId": "m05",
-    "cost": 2,
+    "cost": 4,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -21,7 +21,7 @@
     "id": "m05_ho_gam",
     "name": "Hổ Gầm",
     "ownerId": "m05",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": ["control", "ward"],
     "target": "none",
@@ -35,7 +35,7 @@
     "id": "m05_thuong_pha",
     "name": "Thương Phá",
     "ownerId": "m05",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -63,7 +63,7 @@
     "id": "m05_bat_khuat",
     "name": "Bất Khuất",
     "ownerId": "m05",
-    "cost": 2,
+    "cost": 4,
     "type": "skill",
     "tags": ["heal"],
     "target": "none",
@@ -72,16 +72,16 @@
       {
         "type": "conditional",
         "condition": { "type": "moonPhaseIs", "phase": "new" },
-        "then": [{ "type": "gainMoonPower", "amount": 1 }]
+        "then": [{ "type": "gainMoonPower", "amount": 2 }]
       }
     ],
-    "text": "Hồi 6 HP. Trăng Non: nhận thêm 1 Nguyệt Lực."
+    "text": "Hồi 6 HP. Trăng Non: nhận thêm 2 Nguyệt Lực."
   },
   {
     "id": "f04_thao_duoc",
     "name": "Thảo Dược",
     "ownerId": "f04",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": ["heal", "harmony"],
     "target": "ally",
@@ -92,7 +92,7 @@
     "id": "f04_bach_thao_huong",
     "name": "Bách Thảo Hương",
     "ownerId": "f04",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": ["heal", "harmony"],
     "target": "ally",
@@ -103,7 +103,7 @@
     "id": "f04_linh_chi_ho_the",
     "name": "Linh Chi Hộ Thể",
     "ownerId": "f04",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": [],
     "target": "ally",
@@ -114,7 +114,7 @@
     "id": "f04_tinh_tam_tra",
     "name": "Tịnh Tâm Trà",
     "ownerId": "f04",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": ["heal", "harmony"],
     "target": "ally",
@@ -128,7 +128,7 @@
     "id": "f04_nguyet_quang_dan",
     "name": "Nguyệt Quang Dẫn",
     "ownerId": "f04",
-    "cost": 2,
+    "cost": 5,
     "type": "skill",
     "tags": ["moon"],
     "target": "none",
@@ -142,7 +142,7 @@
     "id": "m06_anh_bo",
     "name": "Ảnh Bộ",
     "ownerId": "m06",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": ["assassin"],
     "target": "none",
@@ -153,7 +153,7 @@
     "id": "m06_am_tien",
     "name": "Ám Tiễn",
     "ownerId": "m06",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "tags": ["attack", "assassin"],
     "target": "enemy",
@@ -171,7 +171,7 @@
     "id": "m06_doat_menh",
     "name": "Đoạt Mệnh",
     "ownerId": "m06",
-    "cost": 2,
+    "cost": 4,
     "type": "attack",
     "tags": ["attack", "assassin"],
     "target": "enemy",
@@ -189,7 +189,7 @@
     "id": "m06_nguyet_anh_an",
     "name": "Nguyệt Ảnh Ấn",
     "ownerId": "m06",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": ["control"],
     "target": "enemy",
@@ -200,7 +200,7 @@
     "id": "m06_song_nhan_loan_vu",
     "name": "Song Nhận Loạn Vũ",
     "ownerId": "m06",
-    "cost": 2,
+    "cost": 4,
     "type": "attack",
     "tags": ["attack", "assassin"],
     "target": "none",
@@ -211,7 +211,7 @@
     "id": "f03_suong_tram",
     "name": "Sương Trảm",
     "ownerId": "f03",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -229,7 +229,7 @@
     "id": "f03_han_an",
     "name": "Hàn Ấn",
     "ownerId": "f03",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": ["control"],
     "target": "enemy",
@@ -240,7 +240,7 @@
     "id": "f03_bang_phach_lien_kich",
     "name": "Băng Phách Liên Kích",
     "ownerId": "f03",
-    "cost": 2,
+    "cost": 4,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -251,7 +251,7 @@
     "id": "f03_phong_tuyet_chuong",
     "name": "Phong Tuyết Chướng",
     "ownerId": "f03",
-    "cost": 2,
+    "cost": 4,
     "type": "skill",
     "tags": ["ward"],
     "target": "none",
@@ -265,7 +265,7 @@
     "id": "f03_tuyet_han",
     "name": "Tuyệt Hàn",
     "ownerId": "f03",
-    "cost": 3,
+    "cost": 6,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -283,7 +283,7 @@
     "id": "f02_dien_doat",
     "name": "Diện Đoạt",
     "ownerId": "f02",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": [],
     "target": "enemy",
@@ -294,7 +294,7 @@
     "id": "f02_huyet_tram",
     "name": "Huyết Trâm",
     "ownerId": "f02",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "tags": ["attack", "forbidden"],
     "target": "enemy",
@@ -308,7 +308,7 @@
     "id": "f02_anh_tap",
     "name": "Ảnh Tập",
     "ownerId": "f02",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "tags": ["attack", "assassin"],
     "target": "enemy",
@@ -327,7 +327,7 @@
     "id": "f02_doi_van_chu",
     "name": "Đổi Vận Chú",
     "ownerId": "f02",
-    "cost": 2,
+    "cost": 4,
     "type": "skill",
     "tags": ["moon"],
     "target": "none",
@@ -341,7 +341,7 @@
     "id": "f02_phe_hon",
     "name": "Phệ Hồn",
     "ownerId": "f02",
-    "cost": 3,
+    "cost": 6,
     "type": "attack",
     "tags": ["attack", "forbidden"],
     "target": "enemy",
@@ -356,7 +356,7 @@
     "id": "bond_bang_hoa_tranh_phong",
     "name": "Băng Hỏa Tranh Phong",
     "bond": { "owners": ["m05", "f03"] },
-    "cost": 2,
+    "cost": 4,
     "type": "attack",
     "tags": ["attack"],
     "target": "enemy",
@@ -377,7 +377,7 @@
     "id": "bond_anh_dau",
     "name": "Ảnh Đấu",
     "bond": { "owners": ["m06", "f02"] },
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": [],
     "target": "enemy",
@@ -391,7 +391,7 @@
     "id": "bond_tuyet_trung_tong_than",
     "name": "Tuyết Trung Tống Thán",
     "bond": { "owners": ["f03", "f04"] },
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": ["control"],
     "target": "enemy",
@@ -405,7 +405,7 @@
     "id": "m05_thiet_bich",
     "name": "Thiết Bích",
     "ownerId": "m05",
-    "cost": 2,
+    "cost": 4,
     "type": "skill",
     "tags": [
       "ward"
@@ -430,7 +430,7 @@
     "id": "m05_no_hoa_lien_hoan",
     "name": "Nộ Hỏa Liên Hoàn",
     "ownerId": "m05",
-    "cost": 2,
+    "cost": 4,
     "type": "attack",
     "tags": [
       "attack"
@@ -450,7 +450,7 @@
     "id": "m05_bat_dong_nhu_son",
     "name": "Bất Động Như Sơn",
     "ownerId": "m05",
-    "cost": 2,
+    "cost": 4,
     "type": "skill",
     "tags": [
       "ward"
@@ -475,7 +475,7 @@
     "id": "m05_huyet_chien",
     "name": "Huyết Chiến",
     "ownerId": "m05",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "tags": [
       "attack"
@@ -510,7 +510,7 @@
     "id": "f04_hoi_xuan_tan",
     "name": "Hồi Xuân Tán",
     "ownerId": "f04",
-    "cost": 2,
+    "cost": 4,
     "type": "skill",
     "tags": [
       "heal",
@@ -530,7 +530,7 @@
     "id": "f04_bang_tam_quyet",
     "name": "Băng Tâm Quyết",
     "ownerId": "f04",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": [
       "control",
@@ -551,7 +551,7 @@
     "id": "f04_thanh_tam_chu",
     "name": "Thanh Tâm Chú",
     "ownerId": "f04",
-    "cost": 1,
+    "cost": 3,
     "type": "skill",
     "tags": [
       "harmony"
@@ -594,18 +594,18 @@
         "then": [
           {
             "type": "gainMoonPower",
-            "amount": 1
+            "amount": 2
           }
         ]
       }
     ],
-    "text": "Hồi 3 HP. Trăng Tròn: +1 Nguyệt Lực."
+    "text": "Hồi 3 HP. Trăng Tròn: +2 Nguyệt Lực."
   },
   {
     "id": "m06_tang_anh_thich",
     "name": "Tàng Ảnh Thích",
     "ownerId": "m06",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "tags": [
       "attack",
@@ -642,7 +642,7 @@
     "id": "m06_doc_tieu",
     "name": "Độc Tiêu",
     "ownerId": "m06",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": [
       "control"
@@ -662,7 +662,7 @@
     "id": "m06_anh_phan_than",
     "name": "Ảnh Phân Thân",
     "ownerId": "m06",
-    "cost": 2,
+    "cost": 5,
     "type": "skill",
     "tags": [
       "assassin"
@@ -686,7 +686,7 @@
     "id": "m06_tuyet_menh",
     "name": "Tuyệt Mệnh",
     "ownerId": "m06",
-    "cost": 3,
+    "cost": 6,
     "type": "attack",
     "tags": [
       "attack",
@@ -722,7 +722,7 @@
     "id": "f03_suong_giap",
     "name": "Sương Giáp",
     "ownerId": "f03",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": [
       "ward"
@@ -747,7 +747,7 @@
     "id": "f03_bang_toai",
     "name": "Băng Toái",
     "ownerId": "f03",
-    "cost": 2,
+    "cost": 4,
     "type": "attack",
     "tags": [
       "attack"
@@ -782,7 +782,7 @@
     "id": "f03_han_phong",
     "name": "Hàn Phong",
     "ownerId": "f03",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "tags": [
       "control"
@@ -808,7 +808,7 @@
     "id": "f03_tuyet_vu",
     "name": "Tuyết Vũ",
     "ownerId": "f03",
-    "cost": 2,
+    "cost": 4,
     "type": "attack",
     "tags": [
       "attack"
@@ -842,16 +842,16 @@
       },
       {
         "type": "gainMoonPower",
-        "amount": 2
+        "amount": 4
       }
     ],
-    "text": "Mất 3 HP. +2 Nguyệt Lực."
+    "text": "Mất 3 HP. +4 Nguyệt Lực."
   },
   {
     "id": "f02_dien_cu",
     "name": "Diện Cụ",
     "ownerId": "f02",
-    "cost": 1,
+    "cost": 3,
     "type": "skill",
     "tags": [
       "assassin"
@@ -875,7 +875,7 @@
     "id": "f02_doat_hon_thich",
     "name": "Đoạt Hồn Thích",
     "ownerId": "f02",
-    "cost": 2,
+    "cost": 4,
     "type": "attack",
     "tags": [
       "attack",

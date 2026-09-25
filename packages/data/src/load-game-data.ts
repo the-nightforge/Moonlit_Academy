@@ -8,6 +8,7 @@ import encountersJson from "../encounters.json";
 import moonPhasesJson from "../moon-phases.json";
 import runRelicsJson from "../run-relics.json";
 import runConfigJson from "../run-config.json";
+import combatConfigJson from "../combat-config.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -27,7 +28,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig } = parsed;
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig } = parsed;
   const errors: string[] = [];
 
   const groups = [
@@ -167,6 +168,10 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     errors.push(`runConfig: floor ${floors} must be type "boss"`);
   }
 
+  if (combatConfig.moonPower.start > combatConfig.moonPower.cap) {
+    errors.push(`combatConfig: moonPower start must be <= cap`);
+  }
+
   for (const relic of runRelics) {
     for (const [index, hook] of (relic.hooks ?? []).entries()) {
       const label = `runRelic "${relic.id}" hook ${index}`;
@@ -205,7 +210,8 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig } = parsed.data;
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig } =
+    parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
     cards: Object.fromEntries(cards.map((card) => [card.id, card])),
@@ -214,6 +220,7 @@ export function parseGameData(raw: unknown): GameData {
     moonPhases: [...moonPhases].sort((a, b) => a.index - b.index),
     runRelics: Object.fromEntries(runRelics.map((relic) => [relic.id, relic])),
     runConfig,
+    combatConfig,
   };
 }
 
@@ -226,5 +233,6 @@ export function loadGameData(): GameData {
     moonPhases: moonPhasesJson,
     runRelics: runRelicsJson,
     runConfig: runConfigJson,
+    combatConfig: combatConfigJson,
   });
 }

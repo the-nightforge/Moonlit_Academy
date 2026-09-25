@@ -69,10 +69,10 @@ describe("boss and blood moon intents", () => {
 
     state.moonIndex = 6;
     expect(cost("m05_ho_gam")).toBe(0);
-    expect(cost("f03_phong_tuyet_chuong")).toBe(1);
+    expect(cost("f03_phong_tuyet_chuong")).toBe(2);
 
     state.moonIndex = 4;
     expect(cost("f04_thao_duoc")).toBe(0);
-    expect(cost("m05_ho_gam")).toBe(1);
+    expect(cost("m05_ho_gam")).toBe(2);
   });
 });

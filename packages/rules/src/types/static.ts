@@ -22,7 +22,7 @@ export type LevelUpCounter =
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
   | { type: "regenSpreadsToAllAllies" }
-  | { type: "firstOwnCardFreeEachTurn" }
+  | { type: "firstOwnCardDiscount"; amount: number }
   | { type: "doubleDamageVsFrozen" }
   | { type: "stealBonus" };
 
@@ -185,4 +185,13 @@ export interface RunRelicDef {
   /** Always-on, combined with the moon phase's modifiers. */
   modifiers?: MoonModifier[];
   hooks?: RunRelicHook[];
+}
+
+export interface CombatConfig {
+  moonPower: { start: number; perRound: number; cap: number };
+  moonReserveMax: number;
+  handSize: number;
+  maxMulligan: number;
+  maxIntentsPerRound: number;
+  bloodMoonHpLoss: number;
 }

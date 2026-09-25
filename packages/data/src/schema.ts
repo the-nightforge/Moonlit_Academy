@@ -62,7 +62,7 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
 const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("attackDamageBonus"), amount: intAmount }),
   z.object({ type: z.literal("regenSpreadsToAllAllies") }),
-  z.object({ type: z.literal("firstOwnCardFreeEachTurn") }),
+  z.object({ type: z.literal("firstOwnCardDiscount"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("doubleDamageVsFrozen") }),
   z.object({ type: z.literal("stealBonus") }),
 ]);
@@ -206,6 +206,19 @@ export const runConfigSchema = z.object({
   minDeckSize: z.number().int().positive(),
 });
 
+export const combatConfigSchema = z.object({
+  moonPower: z.object({
+    start: z.number().int().nonnegative(),
+    perRound: z.number().int().nonnegative(),
+    cap: z.number().int().nonnegative(),
+  }),
+  moonReserveMax: z.number().int().nonnegative(),
+  handSize: z.number().int().positive(),
+  maxMulligan: z.number().int().nonnegative(),
+  maxIntentsPerRound: z.number().int().positive(),
+  bloodMoonHpLoss: z.number().int().nonnegative(),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
@@ -214,4 +227,5 @@ export const rawGameDataSchema = z.object({
   moonPhases: z.array(moonPhaseDefSchema),
   runRelics: z.array(runRelicDefSchema),
   runConfig: runConfigSchema,
+  combatConfig: combatConfigSchema,
 });

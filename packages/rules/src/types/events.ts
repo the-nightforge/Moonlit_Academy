@@ -19,6 +19,7 @@ export type CombatEvent =
   | { type: "statusApplied"; targetId: string; status: StatusId; value: number }
   | { type: "statusRemoved"; targetId: string; status: StatusId }
   | { type: "moonPowerChanged"; value: number }
+  | { type: "moonReserveChanged"; side: "hero" | "enemy"; enemyId?: string; value: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
   | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }
   | { type: "intentRevealed"; enemyId: string; intentId: string; targetId: string | null }

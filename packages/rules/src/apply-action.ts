@@ -1,6 +1,6 @@
 import { cloneState } from "./clone";
 import { resolveEffects } from "./effects";
-import { cardOwners, getEffectiveCost, getValidTargets, isFreeByPassive, ownerError } from "./queries";
+import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
 import { runRelicHooks } from "./run-relic-hooks";
 import { removeStatus } from "./statuses";
 import { runEndTurn } from "./turn";
@@ -53,7 +53,7 @@ function playCard(
   const card = data.cards[instance.cardId]!;
   const owners = cardOwners(state, instance) as HeroState[];
   const owner = owners[0]!;
-  const freeByPassive = isFreeByPassive(data, state, instance.instanceId);
+  const discounted = firstCardDiscount(data, state, instance.instanceId) > 0;
   const cost = getEffectiveCost(data, state, instance.instanceId);
 
   state.moonPower -= cost;
@@ -65,7 +65,7 @@ function playCard(
     cost,
     ...(action.targetId !== undefined ? { targetId: action.targetId } : {}),
   });
-  if (freeByPassive) owner.freeCardUsedThisTurn = true;
+  if (discounted) owner.firstCardDiscountUsedThisTurn = true;
 
   resolveEffects(
     data,

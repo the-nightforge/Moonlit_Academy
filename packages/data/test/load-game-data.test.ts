@@ -6,6 +6,7 @@ import encountersJson from "../encounters.json";
 import moonPhasesJson from "../moon-phases.json";
 import runRelicsJson from "../run-relics.json";
 import runConfigJson from "../run-config.json";
+import combatConfigJson from "../combat-config.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -17,6 +18,7 @@ function rawData(): any {
     moonPhases: moonPhasesJson,
     runRelics: runRelicsJson,
     runConfig: runConfigJson,
+    combatConfig: combatConfigJson,
   }));
 }
 
@@ -191,5 +193,11 @@ describe("parseGameData validation", () => {
     const raw = rawData();
     raw.runRelics.find((r: any) => r.id === "tan_hon_dang").hooks[0].actor = "trigger";
     expect(() => parseGameData(raw)).toThrowError(/tan_hon_dang.*heroDied/);
+  });
+
+  it("T148: rejects a combatConfig moon power start above its cap", () => {
+    const raw = rawData();
+    raw.combatConfig.moonPower.start = 9;
+    expect(() => parseGameData(raw)).toThrowError(/moonPower start must be <= cap/);
   });
 });

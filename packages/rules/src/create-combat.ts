@@ -71,8 +71,8 @@ export function createCombat(
     alive: true,
     levelUpCounter: 0,
     leveledUp: false,
-    freeCardUsedThisTurn: false,
-    freeCardActive: false,
+    firstCardDiscountUsedThisTurn: false,
+    firstCardDiscountActive: false,
   }));
 
   const enemies: EnemyState[] = encounter.enemyIds.map((enemyId, position) => {
@@ -99,6 +99,7 @@ export function createCombat(
     moonIndex: 1,
     bloodMoonRounds: 0,
     moonPower: 0,
+    moonReserve: 0,
     heroes,
     enemies,
     cards,

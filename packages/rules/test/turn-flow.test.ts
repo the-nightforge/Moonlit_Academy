@@ -56,7 +56,7 @@ describe("turn flow", () => {
     if (!result.ok) return;
     expect(result.state.round).toBe(2);
     expect(result.state.moonIndex).toBe(2);
-    expect(result.state.moonPower).toBe(3);
+    expect(result.state.moonPower).toBe(4 + 3);
     expect(result.state.hand).toHaveLength(5);
     expect(result.state.discardPile).toHaveLength(5);
     expect(result.state.drawPile).toHaveLength(5);

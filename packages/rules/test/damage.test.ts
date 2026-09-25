@@ -13,7 +13,10 @@ function play(data: Parameters<typeof applyAction>[0], state: Parameters<typeof 
 describe("card damage", () => {
   it("T10: Liet Hoa Xung Phong deals 8 at full hp", () => {
     const { data, state } = makeTestCombat({
-      setup: (s) => setHand(s, ["m05_liet_hoa_xung_phong"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["m05_liet_hoa_xung_phong"]);
+      },
     });
     const result = play(data, state, "m05_liet_hoa_xung_phong", "enemy:0");
     expect(result.ok).toBe(true);
@@ -21,7 +24,7 @@ describe("card damage", () => {
     expect(result.state.enemies[0]?.hp).toBe(34);
     const damage = result.events.find((event) => event.type === "damageDealt");
     expect(damage).toMatchObject({ sourceId: "hero:m05", targetId: "enemy:0", amount: 8, blocked: 0, hpLost: 8 });
-    expect(result.state.moonPower).toBe(1);
+    expect(result.state.moonPower).toBe(7);
     expect(result.state.hand).toHaveLength(0);
     expect(result.state.discardPile).toContain(
       instanceIdOf(state, "m05_liet_hoa_xung_phong"),
@@ -31,6 +34,7 @@ describe("card damage", () => {
   it("T11: Liet Hoa Xung Phong deals 12 when owner below 50% hp", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
+        s.moonPower = 11;
         s.heroes[0]!.hp = 19;
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },
@@ -44,6 +48,7 @@ describe("card damage", () => {
   it("T12: selfHpBelow is strictly below (50% exactly deals 8)", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
+        s.moonPower = 11;
         s.heroes[0]!.hp = 20;
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },
@@ -57,6 +62,7 @@ describe("card damage", () => {
   it("T13: armor blocks before hp", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
+        s.moonPower = 11;
         s.enemies[0]!.armor = 5;
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },
@@ -86,7 +92,10 @@ describe("card damage", () => {
 
   it("T20: Song Nhan Loan Vu hits every enemy", () => {
     const { data, state } = makeTestCombat({
-      setup: (s) => setHand(s, ["m06_song_nhan_loan_vu"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["m06_song_nhan_loan_vu"]);
+      },
     });
     const result = play(data, state, "m06_song_nhan_loan_vu");
     expect(result.ok).toBe(true);

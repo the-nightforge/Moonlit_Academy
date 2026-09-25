@@ -17,20 +17,21 @@ export function ownerError(state: CombatState, instance: CardInstance): string |
   return null;
 }
 
-export function isFreeByPassive(data: GameData, state: CombatState, instanceId: string): boolean {
+/** First-card discount granted by a `firstOwnCardDiscount` passive, or 0. */
+export function firstCardDiscount(data: GameData, state: CombatState, instanceId: string): number {
   const instance = state.cards[instanceId];
   // Level-up passives never apply to bond cards.
-  if (!instance || instance.ownerIds.length !== 1) return false;
+  if (!instance || instance.ownerIds.length !== 1) return 0;
   const [owner] = cardOwners(state, instance);
-  if (!owner?.leveledUp || !owner.freeCardActive || owner.freeCardUsedThisTurn) return false;
-  return data.heroes[owner.defId]?.levelUp.passive.type === "firstOwnCardFreeEachTurn";
+  if (!owner?.leveledUp || !owner.firstCardDiscountActive || owner.firstCardDiscountUsedThisTurn) return 0;
+  const passive = data.heroes[owner.defId]?.levelUp.passive;
+  return passive?.type === "firstOwnCardDiscount" ? passive.amount : 0;
 }
 
 export function getEffectiveCost(data: GameData, state: CombatState, instanceId: string): number {
   const instance = state.cards[instanceId];
   const card = instance ? data.cards[instance.cardId] : undefined;
   if (!card) throw new Error(`getEffectiveCost: unknown card instance "${instanceId}"`);
-  if (isFreeByPassive(data, state, instanceId)) return 0;
   let cost = card.cost;
   let floor = 0;
   for (const modifier of activeModifiers(data, state)) {
@@ -39,7 +40,7 @@ export function getEffectiveCost(data: GameData, state: CombatState, instanceId:
       floor = Math.max(floor, modifier.min);
     }
   }
-  return Math.max(0, floor, cost);
+  return Math.max(0, Math.max(0, floor, cost) - firstCardDiscount(data, state, instanceId));
 }
 
 export function getValidTargets(data: GameData, state: CombatState, instanceId: string): string[] {

@@ -79,10 +79,10 @@
     ],
     "levelUp": {
       "name": "Vô Nguyệt",
-      "description": "Từ lượt sau: lá đầu tiên của Tô Dạ mỗi lượt có chi phí 0.",
+      "description": "Từ lượt sau: lá đầu tiên của Tô Dạ mỗi lượt giảm 3 Nguyệt Lực.",
       "counter": "enemiesKilled",
       "threshold": 1,
-      "passive": { "type": "firstOwnCardFreeEachTurn" }
+      "passive": { "type": "firstOwnCardDiscount", "amount": 3 }
     },
     "art": { "portrait": "", "levelUp": "" }
   },

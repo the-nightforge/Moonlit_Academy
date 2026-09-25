@@ -84,7 +84,10 @@ describe("bond resolution", () => {
   it("T83: each effect uses its actor; only damage actors are cleaned up", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "f03", "f02"],
-      setup: (s) => setHand(s, ["bond_bang_hoa_tranh_phong"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["bond_bang_hoa_tranh_phong"]);
+      },
     });
     hero(state, "m05").statuses.push({ id: "empower", value: 2 });
     hero(state, "f03").statuses.push({ id: "empower", value: 2 });
@@ -99,13 +102,16 @@ describe("bond resolution", () => {
     expect(hero(result.state, "f03").levelUpCounter).toBe(1);
     expect(hero(result.state, "m05").statuses).toEqual([]);
     expect(hero(result.state, "f03").statuses).toEqual([{ id: "empower", value: 2 }]);
-    expect(result.state.moonPower).toBe(1);
+    expect(result.state.moonPower).toBe(7);
   });
 
   it("T84: a frozen target takes 14 damage and is not frozen again", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "f03", "f02"],
-      setup: (s) => setHand(s, ["bond_bang_hoa_tranh_phong"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["bond_bang_hoa_tranh_phong"]);
+      },
     });
     state.enemies[0]!.statuses.push({ id: "freeze", value: 1 });
 
@@ -120,7 +126,10 @@ describe("bond resolution", () => {
   it("T85: level-up passives do not apply to bond cards (M05 +3)", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "f03", "f02"],
-      setup: (s) => setHand(s, ["bond_bang_hoa_tranh_phong"]),
+      setup: (s) => {
+        s.moonPower = 11;
+        setHand(s, ["bond_bang_hoa_tranh_phong"]);
+      },
     });
     hero(state, "m05").leveledUp = true;
 
@@ -145,16 +154,16 @@ describe("bond resolution", () => {
     expect(hero(result.state, "m06").statuses).toEqual([{ id: "stealth", value: 1 }]);
   });
 
-  it("T87: M06's free-card passive does not apply to a bond card", () => {
+  it("T87: M06's first-card discount does not apply to a bond card", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "m06", "f02"],
       setup: (s) => setHand(s, ["bond_anh_dau", "m06_anh_bo"]),
     });
     const m06 = hero(state, "m06");
     m06.leveledUp = true;
-    m06.freeCardActive = true;
+    m06.firstCardDiscountActive = true;
 
-    expect(getEffectiveCost(data, state, instanceIdOf(state, "bond_anh_dau"))).toBe(1);
+    expect(getEffectiveCost(data, state, instanceIdOf(state, "bond_anh_dau"))).toBe(2);
     expect(getEffectiveCost(data, state, instanceIdOf(state, "m06_anh_bo"))).toBe(0);
   });
 
