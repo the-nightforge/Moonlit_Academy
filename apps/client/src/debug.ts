@@ -84,6 +84,8 @@ export function describeEvent(
       return `Rút ${event.instanceIds.length} lá`;
     case "deckShuffled":
       return "Xáo lại chồng bỏ";
+    case "mulliganed":
+      return `Đổi Bài ${event.returned.length} lá`;
     case "cardPlayed": {
       const instance = state.cards[event.instanceId];
       const card = instance ? data.cards[instance.cardId] : undefined;

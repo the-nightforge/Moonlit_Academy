@@ -3,8 +3,12 @@ import { makeTestCombat } from "./helpers";
 
 describe("createCombat", () => {
   it("T01: initializes the combat state per spec", () => {
-    const { data, state, events } = makeTestCombat();
+    const pending = makeTestCombat({ mulligan: "pending" });
+    expect(pending.state.status).toBe("mulligan");
+    expect(pending.state.hand).toHaveLength(6);
+    expect(pending.events.some((e) => e.type === "turnStarted")).toBe(false);
 
+    const { data, state, events } = makeTestCombat();
     expect(state.status).toBe("playerTurn");
     expect(state.round).toBe(1);
     expect(state.moonIndex).toBe(1);

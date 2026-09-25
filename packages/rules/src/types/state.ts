@@ -39,7 +39,7 @@ export interface CardInstance {
   ownerIds: string[];
 }
 
-export type CombatStatus = "playerTurn" | "enemyTurn" | "won" | "lost";
+export type CombatStatus = "mulligan" | "playerTurn" | "enemyTurn" | "won" | "lost";
 
 export interface CombatState {
   status: CombatStatus;

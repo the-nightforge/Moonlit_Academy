@@ -1,6 +1,6 @@
 import { loadGameData } from "data";
 import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "../src/index";
-import { createCombat } from "../src/index";
+import { applyAction, createCombat } from "../src/index";
 import { idleIntent } from "./fixtures";
 
 export function testData(): GameData {
@@ -15,6 +15,8 @@ export interface TestCombatOverrides {
   heroes?: { hp: number; maxHp: number }[];
   runRelicIds?: string[];
   mutateData?: (data: GameData) => void;
+  /** Default: an empty mulligan is sent so the state is at the player's first turn. */
+  mulligan?: "pending";
   setup?: (state: CombatState) => void;
 }
 
@@ -25,7 +27,7 @@ export function makeTestCombat(overrides: TestCombatOverrides = {}): {
 } {
   const data = testData();
   overrides.mutateData?.(data);
-  const { state, events } = createCombat(data, {
+  const created = createCombat(data, {
     heroIds: overrides.heroIds ?? ["m05", "f04", "m06"],
     encounterId: overrides.encounterId ?? "enc_01",
     seed: overrides.seed ?? 42,
@@ -33,6 +35,14 @@ export function makeTestCombat(overrides: TestCombatOverrides = {}): {
     heroes: overrides.heroes,
     runRelicIds: overrides.runRelicIds,
   });
+  let { state } = created;
+  const events = [...created.events];
+  if (overrides.mulligan !== "pending") {
+    const kept = applyAction(data, state, { type: "mulligan", instanceIds: [] });
+    if (!kept.ok) throw new Error(`test: mulligan failed: ${kept.error}`);
+    state = kept.state;
+    events.push(...kept.events);
+  }
   overrides.setup?.(state);
   return { data, state, events };
 }

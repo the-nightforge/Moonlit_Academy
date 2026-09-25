@@ -28,6 +28,7 @@ const MAX_COMBAT_ROUNDS = 60;
 
 // First playable card; focus the lowest-HP enemy, or the ally with the lowest HP ratio.
 function combatAction(gameData: GameData, state: CombatState): Action {
+  if (state.status === "mulligan") return { type: "mulligan", instanceIds: [] };
   for (const instanceId of state.hand) {
     if (!isCardPlayable(gameData, state, instanceId)) continue;
     const card = gameData.cards[state.cards[instanceId]!.cardId]!;

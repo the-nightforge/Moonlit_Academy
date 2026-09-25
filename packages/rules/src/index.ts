@@ -3,7 +3,7 @@ export { nextRandom, shuffle } from "./rng";
 export { bondCardsForTeam, createCombat } from "./create-combat";
 export { applyAction } from "./apply-action";
 export { getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
-export { getPlayCardError } from "./apply-action";
+export { getMulliganError, getPlayCardError } from "./apply-action";
 export { previewEnemyIntent } from "./preview";
 export { drawCards, refillHand } from "./draw";
 export { generateMap } from "./run/map";

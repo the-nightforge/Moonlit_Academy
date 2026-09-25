@@ -1,7 +1,6 @@
+import { drawCards } from "./draw";
 import { announceIntents } from "./intent";
 import { shuffle } from "./rng";
-import { runRelicHooks } from "./run-relic-hooks";
-import { startPlayerTurn } from "./turn";
 import type {
   CardDef,
   CardInstance,
@@ -102,7 +101,7 @@ export function createCombat(
   });
 
   const state: CombatState = {
-    status: "playerTurn",
+    status: "mulligan",
     round: 1,
     moonIndex: 1,
     bloodMoonRounds: 0,
@@ -120,7 +119,6 @@ export function createCombat(
   };
 
   announceIntents(data, state, events);
-  startPlayerTurn(data, state, events);
-  runRelicHooks(data, state, events, { type: "combatStart" });
+  drawCards(state, data.combatConfig.handSize, events);
   return { state, events };
 }

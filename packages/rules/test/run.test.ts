@@ -29,16 +29,23 @@ function firstNodeId(run: RunState): string {
   return run.map.floors[0]![0]!.id;
 }
 
+function keepHand(data: GameData, run: RunState): RunState {
+  if (run.combat?.status !== "mulligan") return run;
+  return act(data, run, { type: "combat", action: { type: "mulligan", instanceIds: [] } }).run;
+}
+
 /** Every enemy dies to burn at the next enemy turn start. */
 function winCombat(data: GameData, run: RunState) {
-  for (const enemy of run.combat!.enemies) enemy.statuses.push({ id: "burn", value: 999 });
-  return act(data, run, { type: "combat", action: { type: "endTurn" } });
+  const ready = keepHand(data, run);
+  for (const enemy of ready.combat!.enemies) enemy.statuses.push({ id: "burn", value: 999 });
+  return act(data, ready, { type: "combat", action: { type: "endTurn" } });
 }
 
 /** Every hero dies to burn at the next player turn start. */
 function loseCombat(data: GameData, run: RunState) {
-  for (const hero of run.combat!.heroes) hero.statuses.push({ id: "burn", value: 999 });
-  return act(data, run, { type: "combat", action: { type: "endTurn" } });
+  const ready = keepHand(data, run);
+  for (const hero of ready.combat!.heroes) hero.statuses.push({ id: "burn", value: 999 });
+  return act(data, ready, { type: "combat", action: { type: "endTurn" } });
 }
 
 function teamRewardPool(data: GameData): string[] {
@@ -238,7 +245,14 @@ describe("run lifecycle", () => {
     };
     const run = createRun(data, { heroIds: DEFAULT_TEAM, seed: 42 }).run;
     run.runRelicIds.push("test_annihilate");
-    const result = applyRunAction(data, run, { type: "chooseNode", nodeId: firstNodeId(run) });
+    const entered = applyRunAction(data, run, { type: "chooseNode", nodeId: firstNodeId(run) });
+    expect(entered.ok).toBe(true);
+    if (!entered.ok) return;
+    expect(entered.run.combat?.status).toBe("mulligan");
+    const result = applyRunAction(data, entered.run, {
+      type: "combat",
+      action: { type: "mulligan", instanceIds: [] },
+    });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.run.status).toBe("reward");

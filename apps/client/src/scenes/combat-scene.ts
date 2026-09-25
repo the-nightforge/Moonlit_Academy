@@ -255,6 +255,10 @@ export class CombatScene extends Phaser.Scene {
       this.renderCombatEnd();
     }
     this.renderDebugPanel();
+    // Task 7 will replace this auto-keep with a real Đổi Bài UI.
+    if (this.state.status === "mulligan" && !this.inputLocked) {
+      this.time.delayedCall(0, () => this.dispatch({ type: "mulligan", instanceIds: [] }));
+    }
   }
 
   private restart(seed?: number, encounterId?: string): void {

@@ -1,9 +1,10 @@
 import { cloneState } from "./clone";
 import { resolveEffects } from "./effects";
 import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
+import { shuffle } from "./rng";
 import { runRelicHooks } from "./run-relic-hooks";
 import { removeStatus } from "./statuses";
-import { runEndTurn } from "./turn";
+import { runEndTurn, startPlayerTurn } from "./turn";
 import type {
   Action,
   ActionResult,
@@ -103,11 +104,64 @@ function attackCleanupTargets(card: CardDef, owners: HeroState[]): HeroState[] {
   return owners.filter((_, index) => damageActors.has(index));
 }
 
-export function applyAction(data: GameData, state: CombatState, action: Action): ActionResult {
-  if (state.status !== "playerTurn") {
-    return { ok: false, error: "not the player turn" };
+export function getMulliganError(data: GameData, state: CombatState, instanceIds: string[]): string | null {
+  if (instanceIds.length > data.combatConfig.maxMulligan) return "too many cards to mulligan";
+  if (new Set(instanceIds).size !== instanceIds.length) return "duplicate card in mulligan";
+  if (instanceIds.some((id) => !state.hand.includes(id))) return "card is not in hand";
+  return null;
+}
+
+function mulligan(data: GameData, state: CombatState, instanceIds: string[], events: CombatEvent[]): void {
+  const drawn = state.drawPile.splice(0, instanceIds.length);
+  let drawIndex = 0;
+  state.hand = state.hand.flatMap((id) => {
+    if (!instanceIds.includes(id)) return [id];
+    const replacement = drawn[drawIndex++];
+    return replacement === undefined ? [] : [replacement];
+  });
+  events.push({ type: "mulliganed", returned: [...instanceIds], drawn });
+  if (instanceIds.length > 0) {
+    const shuffled = shuffle([...state.drawPile, ...instanceIds], state.rngState);
+    state.drawPile = shuffled.items;
+    state.rngState = shuffled.rngState;
+    events.push({ type: "deckShuffled" });
   }
+  startPlayerTurn(data, state, events);
+  runRelicHooks(data, state, events, { type: "combatStart" });
+}
+
+function statusError(state: CombatState, action: Action): string | null {
+  if (action.type === "mulligan") {
+    return state.status === "mulligan" ? null : "mulligan already done";
+  }
+  switch (state.status) {
+    case "mulligan":
+      return "mulligan pending";
+    case "playerTurn":
+      return null;
+    case "enemyTurn":
+    case "won":
+    case "lost":
+      return "not the player turn";
+    default: {
+      const exhaustive: never = state.status;
+      return `unknown status ${String(exhaustive)}`;
+    }
+  }
+}
+
+export function applyAction(data: GameData, state: CombatState, action: Action): ActionResult {
+  const blocked = statusError(state, action);
+  if (blocked !== null) return { ok: false, error: blocked };
   switch (action.type) {
+    case "mulligan": {
+      const error = getMulliganError(data, state, action.instanceIds);
+      if (error !== null) return { ok: false, error };
+      const next = cloneState(state);
+      const events: CombatEvent[] = [];
+      mulligan(data, next, action.instanceIds, events);
+      return { ok: true, state: next, events };
+    }
     case "playCard": {
       const error = getPlayCardError(data, state, action);
       if (error !== null) return { ok: false, error };
