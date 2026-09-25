@@ -247,17 +247,29 @@ Sau chỉnh boss: 11/20 lượt tới tầng 8; boss thắng 9, thua 2; **0 lư�
 Playtest per-encounter giai đoạn 2 (heuristic tham lam, không đổi): enc_01–03
 thắng 34/36 (trước 29/36).
 
+### Đo lại trên 80 lượt (seed 1–20, mỗi đội)
+
+Ablation vòng hai trên data đã chỉnh (mỗi biến thể 4 đội × 20 seed = 80 lượt):
+
+| Biến thể | Thắng/80 | Tầng TB | Chết ≤ tầng 2 | Chết ở boss |
+|---|---|---|---|---|
+| Baseline | 28 | 5.24 | 20 | 3 |
+| enc_02/03 `minFloor` 2 | 27 | 5.04 | 23 | 3 |
+| + `enc_00` dễ (Ảnh Hồ ×2) | 22 | 4.67 | 18 | 4 |
+| `enc_00` + `minFloor` 2 | 29 | 5.28 | 15 | 4 |
+| Boss HP 110 → 100 | 28 | 5.24 | 20 | 3 |
+| Boss HP 100 + Hống Nguyệt 6→5 | 28 | 5.24 | 20 | 3 |
+
+Kết luận: **không thay đổi thêm** — boss chỉ còn hạ 3/80 lượt (giảm tiếp cho kết
+quả y hệt); các đòn bẩy tầng 1 hoặc tệ hơn hoặc nằm trong nhiễu (enc_01 không dễ
+hơn enc_02 sau nerf; `enc_00` làm loãng cả tầng giữa). ~25% lượt chết ở tầng 1–2
+là độ khó chấp nhận được cho sàn kỹ năng.
+
 ### Còn mở
 
-- [ ] **Boss vẫn kết liễu đội không hồi máu** — 2/11 lượt tới tầng 8 thua
-      (m05+f03+f02 seed 5; m06+f02+f03 seed 2 — cả hai đội không có lá hồi).
-      Nhẹ hơn trước (5/11) nhưng chưa hết — quyết định tiếp bằng chơi tay.
-- [ ] **m06+f02+f03 0/5** (0/20 ở mọi ablation) — quyết định: **không chỉnh**,
-      coi như đội hard-mode; vấn đề của đội (không hồi máu, F02 tự mất HP),
-      không phải cấu trúc lượt chơi. Xác nhận bằng chơi tay.
-- [ ] **Tầng 1 còn khắc nghiệt**: seed 1 hạ cả 4 đội ở tầng 1–2 (enc_02 mở,
-      Ảnh Hồ ×3). Encounter dễ tầng 1 (Ảnh Hồ ×2 / Khôi Lỗi ×1) đã cân nhắc —
-      ablation chỉ +3/80, tạm bỏ qua.
+- [ ] **m06+f02+f03 0/20** (0/80 ở mọi biến thể, kể cả seed 1–20) — quyết định:
+      **không chỉnh**, coi như đội hard-mode; vấn đề của đội (không hồi máu,
+      F02 tự mất HP), không phải cấu trúc lượt chơi. Xác nhận bằng chơi tay.
 
 ## Điểm cần theo dõi khi chơi tay
 
