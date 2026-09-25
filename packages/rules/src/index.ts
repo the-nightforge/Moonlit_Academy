@@ -6,4 +6,5 @@ export { getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
 export { getPlayCardError } from "./apply-action";
 export { previewEnemyIntent } from "./preview";
 export { drawCards } from "./draw";
+export { generateMap } from "./run/map";
 export type { IntentPreview, IntentDamagePreview } from "./preview";
