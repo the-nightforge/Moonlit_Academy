@@ -407,6 +407,18 @@ function animateEvent(
     }
     case "combatEnded":
       return instant();
+    case "mulliganed":
+      return floatText(scene, WIDTH / 2, 520, `Đổi ${event.returned.length} lá`, "#cfd6f0", 14, 250);
+    case "choiceOpened":
+      return floatText(scene, WIDTH / 2, 520, "Chiêm Bài", "#f4d35e", 16, 250);
+    case "cardChosen":
+      return instant();
+    case "deckedOut":
+      return floatText(scene, WIDTH / 2, 300, "CẠN BÀI", "#ff8080", 28, 700);
+    case "cardsPurged":
+      return floatText(scene, 1120, 548, `-${event.instanceIds.length} lá (Tán Chiêu)`, "#8b93b8", 12, 300);
+    case "moonReserveChanged":
+      return instant();
     default:
       return instant();
   }
