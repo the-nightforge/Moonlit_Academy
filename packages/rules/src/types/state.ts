@@ -50,6 +50,8 @@ export interface CardInstance {
   ownerIds: string[];
   /** Turns spent in hand (Tích Tụ); 0 when the card enters the hand. */
   heldTurns: number;
+  /** Taken into hand by Chiêm Bài this turn: costs `chooseCardDiscount` less. */
+  chosenThisTurn?: boolean;
 }
 
 export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost";

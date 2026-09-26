@@ -262,6 +262,7 @@ export function resolveEffect(
       if (options.length === 0) return;
       if (options.length === 1) {
         state.cards[options[0]!]!.heldTurns = 0;
+        state.cards[options[0]!]!.chosenThisTurn = true;
         state.hand.push(options[0]!);
         events.push({ type: "cardsDrawn", instanceIds: options });
         return;

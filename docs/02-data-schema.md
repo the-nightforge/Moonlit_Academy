@@ -195,6 +195,7 @@ export interface MoonPhaseDef {
 {
   "moonPower": { "start": 3, "perRound": 1, "cap": 8 },
   "moonReserveMax": 3,
+  "chooseCardDiscount": 1,
   "handSize": 6,
   "maxMulligan": 2,
   "maxIntentsPerRound": 3,
@@ -206,6 +207,7 @@ export interface MoonPhaseDef {
 export interface CombatConfig {
   moonPower: { start: number; perRound: number; cap: number };
   moonReserveMax: number; // Nguyệt Lực Dự Trữ tối đa
+  chooseCardDiscount: number; // lá lấy qua Chiêm Bài giảm chừng này NL tới hết lượt
   handSize: number;       // số lá trên tay, ≥ 1
   maxMulligan: number;    // số lá đổi tối đa khi Đổi Bài
   maxIntentsPerRound: number;  // số chiêu tối đa trong chuỗi của một kẻ địch

@@ -136,6 +136,7 @@ function chooseCard(state: CombatState, instanceId: string, events: CombatEvent[
   const options = state.pendingChoice!.options;
   const bottomed = options.filter((id) => id !== instanceId);
   state.cards[instanceId]!.heldTurns = 0;
+  state.cards[instanceId]!.chosenThisTurn = true;
   state.hand.push(instanceId);
   state.drawPile.push(...bottomed);
   state.pendingChoice = null;

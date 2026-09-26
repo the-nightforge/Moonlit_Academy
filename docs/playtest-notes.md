@@ -499,16 +499,20 @@ có ngay. Tỉ lệ thắng không đổi (43%) — bot không bị giới hạn
 - Lá Song Hành: viền màu Hero thứ hai + nhãn "Song Hành" (tăng cỡ 9 → 11px).
 - Bản đồ: thêm chú thích biểu tượng (⚔ ☠ 🏮 🎁 🌕 kèm ý nghĩa) và số tầng.
 
-## Cần quyết định thiết kế
+## Quyết định thiết kế (đã duyệt)
 
-Ba cơ chế kinh tế 4a **không tạo quyết định** theo số đo — muốn sửa phải đổi
-luật, không chỉ số:
+Ba cơ chế kinh tế 4a không tạo quyết định theo số đo; người dùng đã chọn:
 
-- [ ] Chiêm Bài có đáng cost không? — Bỏ hẳn mọi Chiêm Bài: 42% → 42%. Tay tự
-      rút bù về 6 mỗi lượt nên Chiêm Bài chỉ đổi *chất lượng* lá kế tiếp;
-      chọn lá đắt / rẻ / đầu tiên lệch ≤ 3 điểm.
-- [ ] Đổi Bài có tạo quyết định thật không? — Bỏ lá đắt 42%, giữ nguyên 41%,
-      bỏ 2 lá đầu 41%: gần như không tác động (van an toàn chống tay xấu).
-- [ ] Dự Trữ có được dùng chủ động không? — Tự động giữ ≤ 3 NL thừa hoạt
-      động (Dự Trữ TB 0.4–0.6); cố tình nhịn đánh để dành cho lá đắt: 42% →
-      38%, không được thưởng.
+- **Chiêm Bài — lá chọn rẻ hơn (luật mới, T171):** lá lấy qua Chiêm Bài giảm
+  `combatConfig.chooseCardDiscount` = 1 NL tới hết lượt. Trước: bỏ hẳn Chiêm
+  Bài 42% → 42%. Sau (80 seed): Bộ cơ bản 41% có vs 41% bỏ hẳn, nhánh A 57% vs
+  53%; giảm 2 không tốt hơn (42%). Ở cấp bot Nguyệt Lực mới là nút thắt nên
+  chọn lá ít đổi kết quả; luật mới cho người chơi lý do cụ thể "Chiêm Bài rồi
+  đánh ngay lá vừa lấy". Không phải điểm mở: muốn Chiêm Bài mạnh hơn nữa thì
+  phải đổi kinh tế tay/Nguyệt Lực.
+- **Đổi Bài — giữ làm van an toàn:** bỏ lá đắt 42%, giữ nguyên 41%, bỏ 2 lá
+  đầu 41%. Vai trò là tránh tay xấu gây ức chế, không cần là quyết định lớn.
+- **Dự Trữ — giữ nguyên:** tự giữ ≤ 3 NL thừa (Dự Trữ TB 0.4–0.6) để làm mượt
+  nhịp; cố tình nhịn đánh không được thưởng (42% → 38%), chấp nhận.
+
+Không còn mục mở trong tài liệu này.
