@@ -1,5 +1,7 @@
 import { cloneState } from "./clone";
 import { resolveEffects } from "./effects";
+import { cardDefOf } from "./gear";
+import { levelUpPassive } from "./levelup";
 import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
 import { shuffle } from "./rng";
 import { runRelicHooks } from "./run-relic-hooks";
@@ -25,7 +27,7 @@ export function getPlayCardError(
   if (!instance || !state.hand.includes(action.instanceId)) {
     return "card is not in hand";
   }
-  const card = data.cards[instance.cardId];
+  const card = cardDefOf(data, state, instance);
   if (!card) return "unknown card";
   const ownerProblem = ownerError(state, instance);
   if (ownerProblem !== null) return ownerProblem;
@@ -51,7 +53,7 @@ function playCard(
   events: CombatEvent[],
 ): void {
   const instance = state.cards[action.instanceId]!;
-  const card = data.cards[instance.cardId]!;
+  const card = cardDefOf(data, state, instance)!;
   const owners = cardOwners(state, instance) as HeroState[];
   const owner = owners[0]!;
   const discounted = firstCardDiscount(data, state, instance.instanceId) > 0;
@@ -68,11 +70,19 @@ function playCard(
   });
   if (discounted) owner.firstCardDiscountUsedThisTurn = true;
 
+  // Tàn Ảnh: the owner's first Liên Hoàn card each turn counts one more card played.
+  let comboBonus = 0;
+  const passive = !card.bond && owner.leveledUp ? levelUpPassive(data, owner) : undefined;
+  if (passive?.type === "firstComboCountsExtra" && card.keywords?.includes("lien_hoan") && !owner.comboBonusUsedThisTurn) {
+    owner.comboBonusUsedThisTurn = true;
+    comboBonus = passive.amount;
+  }
+
   resolveEffects(
     data,
     state,
     card.effects,
-    { source: owner, actors: owners, card, chosenId: action.targetId, instanceId: instance.instanceId },
+    { source: owner, actors: owners, card, chosenId: action.targetId, instanceId: instance.instanceId, comboBonus },
     events,
   );
 

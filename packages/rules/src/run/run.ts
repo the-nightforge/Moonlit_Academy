@@ -1,9 +1,10 @@
 import { applyAction } from "../apply-action";
-import { createCombat } from "../create-combat";
+import { applySignatureCards, createCombat } from "../create-combat";
 import { nextRandom, shuffle } from "../rng";
 import type {
   CombatEvent,
   GameData,
+  Loadout,
   MapNode,
   RunAction,
   RunActionResult,
@@ -22,9 +23,10 @@ export function findNode(run: RunState, nodeId: string): MapNode | undefined {
   return run.map.floors.flat().find((node) => node.id === nodeId);
 }
 
+/** A fresh array: callers may sort it without touching the map. */
 export function reachableNodeIds(run: RunState): string[] {
   if (run.position === null) return run.map.floors[0]!.map((node) => node.id);
-  return findNode(run, run.position)?.next ?? [];
+  return [...(findNode(run, run.position)?.next ?? [])];
 }
 
 /** HP each hero would regain from resting now (`11` §3.1). */
@@ -34,7 +36,7 @@ export function restHealAmounts(data: GameData, run: RunState): number[] {
   );
 }
 
-export function createRun(data: GameData, setup: RunSetup): { run: RunState; runEvents: RunEvent[] } {
+export function createRun(data: GameData, setup: RunSetup, loadout?: Loadout): { run: RunState; runEvents: RunEvent[] } {
   const heroDefs = setup.heroIds.map((heroId) => {
     const hero = data.heroes[heroId];
     if (!hero) throw new Error(`createRun: unknown hero "${heroId}"`);
@@ -51,7 +53,7 @@ export function createRun(data: GameData, setup: RunSetup): { run: RunState; run
     status: "map",
     rngState,
     heroes: heroDefs.map((hero) => ({ defId: hero.id, hp: hero.maxHp, maxHp: hero.maxHp })),
-    deck: [...setup.deckCardIds],
+    deck: applySignatureCards(data, setup.deckCardIds, loadout),
     runRelicIds: [],
     augmentIds: [],
     map,
@@ -59,6 +61,7 @@ export function createRun(data: GameData, setup: RunSetup): { run: RunState; run
     combat: null,
     pendingReward: null,
     heroLevelUps: {},
+    ...(loadout ? { loadout } : {}),
   };
   return { run, runEvents: [] };
 }
@@ -136,7 +139,7 @@ function enterNode(
         deckCardIds: [...run.deck],
         heroes: run.heroes.map(({ hp, maxHp }) => ({ hp, maxHp })),
         runRelicIds: [...run.runRelicIds, ...run.augmentIds],
-      });
+      }, run.loadout);
       run.combat = created.state;
       events.push(...created.events);
       // A relic hook may have ended the combat during setup (combatStart/playerTurnStart).

@@ -22,8 +22,16 @@ export interface HeroState extends UnitState {
   side: "hero";
   levelUpCounter: number;
   leveledUp: boolean;
+  /** Tinh Hồn from the loadout; 0 outside a run with one (`01` §8). */
+  constellation: number;
   firstCardDiscountUsedThisTurn: boolean;
   firstCardDiscountActive: boolean;
+  /** "alt" = second level-up form from the loadout (Tinh Hồn 5, `01` §8). */
+  levelUpForm: "base" | "alt";
+  /** Tàn Ảnh: the first Liên Hoàn card this turn already took its bonus. */
+  comboBonusUsedThisTurn: boolean;
+  /** Hàn Kiếm: the first hit this turn already happened. */
+  firstHitUsedThisTurn: boolean;
 }
 
 export interface PlannedIntent {
@@ -78,6 +86,19 @@ export interface CombatState {
   pendingChoice: { kind: "chooseCard"; options: string[] } | null;
   rngState: number;
   runRelicIds: string[];
-  /** Per-combat hook counters, keyed "<relicId>#<hookIndex>". */
+  /**
+   * Per-combat hook counters, keyed "<relicId>#<hookIndex>" (run relics, augments,
+   * moon relics) or "<weaponId>@<heroId>#<hookIndex>" (weapons).
+   */
   runRelicCounters: Record<string, number>;
+  /** Weapons carried, in wearer position order (`01` §14). */
+  weapons: CombatWeapon[];
+  /** Moon relics carried, in loadout order (`01` §14.4). */
+  relics: { id: string; resonance: number }[];
+}
+
+export interface CombatWeapon {
+  heroId: string;
+  weaponId: string;
+  refinement: number;
 }

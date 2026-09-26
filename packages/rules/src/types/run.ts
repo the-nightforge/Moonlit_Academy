@@ -1,3 +1,4 @@
+import type { Loadout } from "./meta";
 import type { Action, CombatEvent } from "./events";
 import type { CombatState } from "./state";
 import type { NodeType } from "./static";
@@ -39,6 +40,8 @@ export interface RunState {
   pendingReward: { augmentChoices: string[]; runRelicId?: string } | null;
   /** defId → combats in which the hero leveled up (mastery XP). */
   heroLevelUps: Record<string, number>;
+  /** Constellations the run started with; every combat of the run uses them. */
+  loadout?: Loadout;
 }
 
 export interface RunSetup {

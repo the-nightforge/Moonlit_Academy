@@ -51,6 +51,7 @@
       "description": "Mọi đòn từ lá tấn công của Hoắc Liệt gây thêm 3 damage.",
       "counter": "damageTaken",
       "threshold": 15,
+      "constellationThreshold": 11,
       "passive": {
         "type": "attackDamageBonus",
         "amount": 3
@@ -59,6 +60,31 @@
     "art": {
       "portrait": "",
       "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m05_liet_hoa_xung_phong",
+      "plusCardId": "m05_liet_hoa_xung_phong_plus"
+    },
+    "altLevelUp": {
+      "name": "Bất Diệt",
+      "description": "Khi thăng cấp: nhận 12 giáp và Khiêu Khích 2 vòng. Mỗi lá của Hoắc Liệt nhận giáp được thêm 3 giáp.",
+      "passive": {
+        "type": "armorBonusOwnCards",
+        "amount": 3
+      },
+      "onLevelUp": [
+        {
+          "type": "gainArmor",
+          "amount": 12,
+          "to": "self"
+        },
+        {
+          "type": "applyStatus",
+          "status": "taunt",
+          "amount": 2,
+          "to": "self"
+        }
+      ]
     }
   },
   {
@@ -113,6 +139,7 @@
       "description": "Khi lá của Ôn Như Ý áp Hồi Phục, mọi Hero còn sống đều nhận Hồi Phục.",
       "counter": "turnsWithAllyRegen",
       "threshold": 3,
+      "constellationThreshold": 2,
       "passive": {
         "type": "regenSpreadsToAllAllies"
       }
@@ -120,6 +147,17 @@
     "art": {
       "portrait": "",
       "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f04_bach_thao_huong",
+      "plusCardId": "f04_bach_thao_huong_plus"
+    },
+    "altLevelUp": {
+      "name": "Tĩnh Tâm",
+      "description": "Lá hồi của Ôn Như Ý giải trừ Hero được hồi.",
+      "passive": {
+        "type": "healCleanses"
+      }
     }
   },
   {
@@ -174,6 +212,7 @@
       "description": "Từ lượt sau: lá đầu tiên của Tô Dạ mỗi lượt giảm 3 Nguyệt Lực.",
       "counter": "enemiesKilled",
       "threshold": 1,
+      "constellationThreshold": 1,
       "passive": {
         "type": "firstOwnCardDiscount",
         "amount": 3
@@ -182,6 +221,18 @@
     "art": {
       "portrait": "",
       "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m06_am_tien",
+      "plusCardId": "m06_am_tien_plus"
+    },
+    "altLevelUp": {
+      "name": "Tàn Ảnh",
+      "description": "Lá Liên Hoàn đầu tiên của Tô Dạ mỗi lượt tính như đã đánh thêm 1 lá.",
+      "passive": {
+        "type": "firstComboCountsExtra",
+        "amount": 1
+      }
     }
   },
   {
@@ -236,6 +287,7 @@
       "description": "Damage từ lá của Tần Sương lên kẻ địch đang Đóng Băng tăng gấp đôi.",
       "counter": "freezesApplied",
       "threshold": 3,
+      "constellationThreshold": 2,
       "passive": {
         "type": "doubleDamageVsFrozen"
       }
@@ -243,6 +295,18 @@
     "art": {
       "portrait": "",
       "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f03_suong_tram",
+      "plusCardId": "f03_suong_tram_plus"
+    },
+    "altLevelUp": {
+      "name": "Hàn Kiếm",
+      "description": "Đòn đầu tiên mỗi lượt từ lá của Tần Sương làm kẻ địch Dễ Vỡ 1 vòng.",
+      "passive": {
+        "type": "firstHitVulnerable",
+        "rounds": 1
+      }
     }
   },
   {
@@ -297,6 +361,7 @@
       "description": "Mỗi buff Diệp Linh Lung cướp bằng lá của mình được thêm 1.",
       "counter": "buffsStolen",
       "threshold": 3,
+      "constellationThreshold": 2,
       "passive": {
         "type": "stealBonus"
       }
@@ -304,6 +369,18 @@
     "art": {
       "portrait": "",
       "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f02_anh_tap",
+      "plusCardId": "f02_anh_tap_plus"
+    },
+    "altLevelUp": {
+      "name": "Huyết Diện",
+      "description": "Trong Huyết Nguyệt, lá của Diệp Linh Lung giảm 1 Nguyệt Lực.",
+      "passive": {
+        "type": "bloodMoonOwnCardDiscount",
+        "amount": 1
+      }
     }
   }
 ]

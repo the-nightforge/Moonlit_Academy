@@ -7,10 +7,10 @@ import type {
   CombatEvent,
   CombatSetup,
   CombatState,
+  CombatWeapon,
   EnemyState,
   GameData,
-  HeroState,
-} from "./types/index";
+  HeroState, Loadout } from "./types/index";
 
 /** Bond cards whose owners are both in the team, in cards.json order. */
 export function bondCardsForTeam(data: GameData, heroIds: readonly string[]): CardDef[] {
@@ -19,9 +19,20 @@ export function bondCardsForTeam(data: GameData, heroIds: readonly string[]): Ca
   );
 }
 
+/** At constellation 4 a hero's signature card becomes its "+" version (`01` §8). */
+export function applySignatureCards(data: GameData, deckCardIds: readonly string[], loadout?: Loadout): string[] {
+  return deckCardIds.map((cardId) => {
+    const ownerId = data.cards[cardId]?.ownerId;
+    const hero = ownerId !== undefined ? data.heroes[ownerId] : undefined;
+    const constellation = ownerId !== undefined ? (loadout?.heroes[ownerId]?.constellation ?? 0) : 0;
+    return hero && constellation >= 4 && hero.signature.cardId === cardId ? hero.signature.plusCardId : cardId;
+  });
+}
+
 export function createCombat(
   data: GameData,
   setup: CombatSetup,
+  loadout?: Loadout,
 ): { state: CombatState; events: CombatEvent[] } {
   const encounter = data.encounters[setup.encounterId];
   if (!encounter) {
@@ -37,7 +48,7 @@ export function createCombat(
 
   const cards: Record<string, CardInstance> = {};
   const drawPile: string[] = [];
-  const deckCardIds = setup.deckCardIds ?? heroDefs.flatMap((hero) => hero.cardIds);
+  const deckCardIds = applySignatureCards(data, setup.deckCardIds ?? heroDefs.flatMap((hero) => hero.cardIds), loadout);
   let deckIndex = 0;
   for (const cardId of deckCardIds) {
     const card = data.cards[cardId];
@@ -61,6 +72,25 @@ export function createCombat(
       drawPile.push(instanceId);
     }
   }
+  // Weapon cards join the draw pile before the first shuffle, wearers in team order (`01` §14.2).
+  const weapons: CombatWeapon[] = [];
+  for (const heroId of setup.heroIds) {
+    const gear = loadout?.heroes[heroId];
+    const weaponId = gear?.weaponId;
+    if (weaponId === undefined || weaponId === null) continue;
+    const def = data.weapons[weaponId];
+    if (!def) throw new Error(`createCombat: unknown weapon "${weaponId}"`);
+    weapons.push({ heroId, weaponId, refinement: Math.min(5, Math.max(1, gear?.refinement ?? 1)) });
+    for (let copy = 1; copy <= def.card.copies; copy++) {
+      const instanceId = `wpn_${heroId}_${copy}`;
+      cards[instanceId] = { instanceId, cardId: weaponId, ownerIds: [heroId], heldTurns: 0 };
+      drawPile.push(instanceId);
+    }
+  }
+  const relics = (loadout?.relics ?? []).map((relic) => {
+    if (!data.relics[relic.id]) throw new Error(`createCombat: unknown relic "${relic.id}"`);
+    return { id: relic.id, resonance: Math.min(5, Math.max(1, relic.resonance)) };
+  });
   let rngState = setup.seed;
   const shuffled = shuffle(drawPile, rngState);
   rngState = shuffled.rngState;
@@ -78,8 +108,12 @@ export function createCombat(
     alive: true,
     levelUpCounter: 0,
     leveledUp: false,
+    constellation: loadout?.heroes[hero.id]?.constellation ?? 0,
     firstCardDiscountUsedThisTurn: false,
     firstCardDiscountActive: false,
+    levelUpForm: loadout?.heroes[hero.id]?.levelUpForm ?? "base",
+    comboBonusUsedThisTurn: false,
+    firstHitUsedThisTurn: false,
   }));
 
   const enemies: EnemyState[] = encounter.enemyIds.map((enemyId, position) => {
@@ -121,6 +155,8 @@ export function createCombat(
     rngState,
     runRelicIds: [...(setup.runRelicIds ?? [])],
     runRelicCounters: {},
+    weapons,
+    relics,
   };
 
   planEnemyIntents(data, state, events);

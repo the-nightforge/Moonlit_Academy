@@ -1,0 +1,18 @@
+[
+  { "id": "a_first_win", "name": "Lần đầu khải hoàn", "text": "Thắng lượt chơi đầu tiên.",
+    "goal": { "type": "runsWon", "count": 1 }, "reward": { "moonJade": 150 } },
+  { "id": "a_bond_bang_hoa", "name": "Băng Hỏa đồng tâm", "text": "Hạ boss với đội có Hoắc Liệt và Tần Sương.",
+    "goal": { "type": "bossKillWithBond", "bondCardId": "bond_bang_hoa_tranh_phong" }, "reward": { "moonJade": 100 } },
+  { "id": "a_bond_anh_dau", "name": "Ảnh Đấu song hành", "text": "Hạ boss với đội có Tô Dạ và Diệp Linh Lung.",
+    "goal": { "type": "bossKillWithBond", "bondCardId": "bond_anh_dau" }, "reward": { "moonJade": 100 } },
+  { "id": "a_bond_tuyet_trung", "name": "Tuyết trung tống thán", "text": "Hạ boss với đội có Tần Sương và Ôn Như Ý.",
+    "goal": { "type": "bossKillWithBond", "bondCardId": "bond_tuyet_trung_tong_than" }, "reward": { "moonJade": 100 } },
+  { "id": "a_mastery_max", "name": "Tu Luyện viên mãn", "text": "Một Hero đạt Tu Luyện cấp 6.",
+    "goal": { "type": "masteryLevel", "level": 6 }, "reward": { "moonJade": 150 } },
+  { "id": "a_all_heroes", "name": "Tụ hội Thư Viện", "text": "Sở hữu cả 5 Hero.",
+    "goal": { "type": "ownAllHeroes" }, "reward": { "moonJade": 250 } },
+  { "id": "a_starter_floor_8", "name": "Bộ cơ bản cũng đủ", "text": "Đạt tầng 8 với Bộ cơ bản.",
+    "goal": { "type": "starterFloor", "floor": 8 }, "reward": { "moonJade": 100 } },
+  { "id": "a_all_unlocked", "name": "Tàng Thư đầy đủ", "text": "Mở hết lá khóa của mọi Hero đang sở hữu.",
+    "goal": { "type": "allLockedUnlocked" }, "reward": { "moonJade": 250 } }
+]

@@ -251,6 +251,77 @@ export interface MetaConfig {
 
 `GameData` thêm `metaConfig: MetaConfig` (mục 4).
 
+### 1.11 Kinh tế, nhiệm vụ, thành tựu, banner [GĐ4c–4d]
+
+Luật đầy đủ ở `14-meta-rules.md` §1, §5–§11.
+
+| File | Kiểu | `GameData` |
+|---|---|---|
+| `economy-config.json` | `EconomyConfig` (`14` §1): `starterHeroIds` (4c); `starterGift`, `pullCost`, `runRewards`, `resetUtcHour`, `gacha`, `dupeMoonStar`, `moonStarShop` (4d) | `economyConfig` |
+| `missions.json` | `MissionDef[]` (`14` §7) | `missions: Record<id, MissionDef>` |
+| `achievements.json` | `AchievementDef[]` (`14` §8) | `achievements: Record<id, AchievementDef>` |
+| `banners.json` | `BannerDef[]` (`14` §9) | `banners: Record<id, BannerDef>` |
+
+Trường mới **[GĐ4d]**:
+
+```ts
+// heroes.json
+levelUp: LevelUpDef & { constellationThreshold: number };   // ≤ threshold (Tinh Hồn 2)
+signature: { cardId: string; plusCardId: string };          // Tinh Hồn 4
+// cards.json
+plusOf?: string;   // lá "+" của lá chủ lực: cùng ownerId, cost, copies; không thuộc pool Hero nào
+```
+
+Kiểm tra khi nạp thêm: id nhiệm vụ / thành tựu / banner / mặt hàng duy nhất; `bondCardId`
+của thành tựu là lá Song Hành; pool banner là Hero có thật, đúng độ hiếm, không trùng;
+`signature` khớp luật trên; mọi lá có `plusOf` được đúng một Hero dùng làm `plusCardId`.
+
+### 1.12 Binh Khí, Nguyệt Bảo, dạng thăng cấp thứ hai [GĐ4e]
+
+Luật: `01` §8 (dạng thứ hai), `01` §14, `14` §10.1, §13. Nội dung: `03` §7.
+
+| File | Kiểu | `GameData` |
+|---|---|---|
+| `weapons.json` | `WeaponDef[]` | `weapons: Record<id, WeaponDef>` |
+| `relics.json` | `RelicDef[]` | `relics: Record<id, RelicDef>` |
+
+```ts
+interface WeaponDef {
+  id: string; name: string; rarity: Rarity;
+  archetype?: Archetype;            // vũ khí chung (chỉ để hiển thị)
+  signatureHeroId?: string;         // vũ khí bản mệnh
+  text: string;                     // nội tại R1 (hiển thị)
+  card: Omit<CardDef, "id" | "ownerId" | "copies" | "plusOf"> & { copies: 1 | 2 };
+  hooks: WeaponHook[];              // 01 §14.3
+  signatureHooks?: WeaponHook[];    // chỉ khi có signatureHeroId
+  refinement: WeaponRefinement[];   // đúng 4 mục: R2, R3, R4, R5
+}
+interface WeaponRefinement {
+  text: string;                     // mô tả phần thay đổi (hiển thị)
+  card?: Partial<WeaponDef["card"]>;
+  hooks?: WeaponHook[];
+  signatureHooks?: WeaponHook[];
+}
+interface RelicDef {
+  id: string; name: string; rarity: Rarity;
+  resonance: { text: string; modifiers?: MoonModifier[]; hooks?: RunRelicHook[] }[];  // đúng 5 cấp
+}
+// heroes.json
+altLevelUp: { name: string; description: string; passive: LevelUpPassive; onLevelUp?: Effect[] };
+// LevelUpPassive thêm: armorBonusOwnCards(amount) | healCleanses | firstComboCountsExtra(amount)
+//                      | firstHitVulnerable(rounds) | bloodMoonOwnCardDiscount(amount)
+// MoonModifier costModifierForTag thêm: while?: "bloodMoon"
+// HookTrigger: cardPlayed thêm owner?: "wearer"; enemyKilled thêm killer?: "wearer" (chỉ trong WeaponHook)
+// banners.json: kind "weapon" | "relic"; economy-config: gearDupeMoonStar; meta-config: maxRelics
+```
+
+Kiểm tra khi nạp thêm: id vũ khí / Nguyệt Bảo duy nhất và không trùng id lá, Kỳ Vật, Lõi,
+Hero; `signatureHeroId` là Hero có thật; `signatureHooks` chỉ khi có `signatureHeroId`;
+`card` (sau mỗi cấp Tinh Luyện) hợp lệ như `CardDef` (target, effect, từ khóa);
+`refinement` đúng 4 mục, `resonance` đúng 5 cấp; hook vũ khí / Nguyệt Bảo theo ràng buộc
+của Lõi (`11` §3.3); `actor` / `owner` / `killer` `"wearer"` chỉ trong hook vũ khí;
+`onLevelUp` theo ràng buộc effect của lá không có mục tiêu chọn (`to` ≠ `"chosen"`).
+
 ---
 
 ## 2. Trạng thái trận đấu (runtime)
@@ -375,6 +446,8 @@ export type CombatEvent =
   | { type: "heroLeveledUp"; heroId: string; name: string }
   | { type: "unitDied"; unitId: string; killerId?: string }
   | { type: "runRelicTriggered"; runRelicId: string }   // GĐ3
+  | { type: "relicTriggered"; relicId: string }          // GĐ4e (Nguyệt Bảo)
+  | { type: "weaponTriggered"; weaponId: string; heroId: string }   // GĐ4e
   | { type: "combatEnded"; result: "won" | "lost" };
 ```
 

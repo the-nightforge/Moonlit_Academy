@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import {
   applyAction,
-  applyRunAction,
+  cardDefOf,
   getEffectiveCost,
   getPlayCardError,
   getValidTargets,
@@ -16,17 +16,15 @@ import type {
   GameData,
   StatusInstance,
 } from "rules";
+import { applyRecordedRunAction } from "../run-session";
 import { cycleEncounter, restartSession, session } from "../session";
 import {
   debugAddMoonPower,
   debugAdjustHeroHp,
   debugDrawCards,
-  debugGrantTeamXp,
   debugKillEnemy,
-  debugResetProfile,
   debugSetBloodMoon,
   debugSetMoon,
-  debugUnlockAll,
   describeEvent,
 } from "../debug";
 import manifest from "virtual:assets-manifest";
@@ -128,7 +126,7 @@ export class CombatScene extends Phaser.Scene {
     if (this.inputLocked) return false;
     const run = session.run;
     const result = run
-      ? applyRunAction(this.gameData, run, { type: "combat", action })
+      ? applyRecordedRunAction({ type: "combat", action })
       : applyAction(this.gameData, this.state, action);
     if (!result.ok) {
       this.showError(result.error);
@@ -183,7 +181,7 @@ export class CombatScene extends Phaser.Scene {
       return;
     }
     const instance = this.state.cards[instanceId]!;
-    const card = this.gameData.cards[instance.cardId]!;
+    const card = cardDefOf(this.gameData, this.state, instance)!;
     if (!isCardPlayable(this.gameData, this.state, instanceId)) {
       const probeTarget =
         card.target === "none"
@@ -579,9 +577,10 @@ export class CombatScene extends Phaser.Scene {
         this.text(-panelW / 2 + 16, -4, `🛡 ${hero.armor}`, 12, COLORS.armor, c);
       }
       this.statusChips(-panelW / 2 + 16, 22, hero.statuses, panelW - 32, c);
-      const progress = hero.leveledUp
-        ? def.levelUp.name
-        : `${def.levelUp.name} ${hero.levelUpCounter}/${def.levelUp.threshold}`;
+      // Shown from state: the second form's name, the Tinh Hồn 2 threshold (`01` §8).
+      const passiveName = hero.levelUpForm === "alt" ? def.altLevelUp.name : def.levelUp.name;
+      const threshold = hero.constellation >= 2 ? def.levelUp.constellationThreshold : def.levelUp.threshold;
+      const progress = hero.leveledUp ? passiveName : `${passiveName} ${hero.levelUpCounter}/${threshold}`;
       this.text(0, panelH / 2 - 20, progress, 11, COLORS.dimText, c).setOrigin(0.5);
       if (!hero.alive) {
         c.add(this.add.rectangle(0, 0, panelW, panelH, 0x000000, 0.55));
@@ -594,7 +593,8 @@ export class CombatScene extends Phaser.Scene {
 
   private renderCard(instanceId: string, x: number, y: number) {
     const instance = this.state.cards[instanceId]!;
-    const card = this.gameData.cards[instance.cardId]!;
+    const card = cardDefOf(this.gameData, this.state, instance)!;
+    const weapon = this.gameData.weapons[instance.cardId];
     const [ownerId, partnerId] = instance.ownerIds as [string, string | undefined];
     const broken = instance.ownerIds.some(
       (id) => !this.state.heroes.find((hero) => hero.defId === id)?.alive,
@@ -621,6 +621,17 @@ export class CombatScene extends Phaser.Scene {
       this.coverImage(`heroes:${ownerId}`, 0, 0, CARD_W - 6, CARD_H - 6, container);
     if (cardArt) {
       container.add(this.add.rectangle(0, 0, CARD_W - 6, CARD_H - 6, 0x0a0e20, 0.5));
+    }
+    if (weapon !== undefined) {
+      // Weapon card (`01` §14.2): inner orange frame and the weapon's name.
+      if (!broken && !isValidTarget) {
+        container.add(this.add.rectangle(0, 0, CARD_W - 8, CARD_H - 8).setStrokeStyle(2, 0xe08a3c));
+      }
+      container.add(
+        this.add
+          .text(CARD_W / 2 - 8, -CARD_H / 2 + 10, `⚔ ${weapon.name}`, { ...TEXT_BASE, fontSize: "10px", color: "#ffb080" })
+          .setOrigin(1, 0.5),
+      );
     }
     if (partnerId !== undefined) {
       // Bond card: second owner's color as an inner border.
@@ -724,7 +735,7 @@ export class CombatScene extends Phaser.Scene {
     });
     container.on("pointerover", () => {
       this.tooltip?.destroy();
-      this.tooltip = showCardTooltip(this, x + CARD_W / 2 + 10, y - 40, this.gameData, instance.cardId);
+      this.tooltip = showCardTooltip(this, x + CARD_W / 2 + 10, y - 40, this.gameData, cardDefOf(this.gameData, this.state, instance)!);
       if (!broken && (this.state.status === "playerTurn" || this.state.status === "mulligan")) {
         container.setScale(1.15);
         container.y = y - 18;
@@ -745,7 +756,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderTargetingHint() {
-    const card = this.gameData.cards[this.state.cards[this.targeting!]!.cardId]!;
+    const card = cardDefOf(this.gameData, this.state, this.state.cards[this.targeting!]!)!;
     this.text(
       WIDTH / 2,
       92,
@@ -859,6 +870,7 @@ export class CombatScene extends Phaser.Scene {
       y += 20;
     };
     line(`DEBUG — seed ${session.seed} · ${session.encounterId}`, 13);
+    if (session.run) line("⚠ Sửa trận trong lượt chơi: server sẽ không công nhận kết quả", 11);
     this.debugButton(x + 14, y + 10, 100, "Chơi lại", () => this.restart());
     this.debugButton(x + 124, y + 10, 80, "Seed +1", () => this.restart(session.seed + 1));
     this.debugButton(x + 214, y + 10, 90, "Trận kế ▸", () => {
@@ -881,19 +893,6 @@ export class CombatScene extends Phaser.Scene {
     });
     this.debugButton(x + 134, y + 10, 80, "Rút 1 lá", () => {
       debugDrawCards(1);
-      this.renderAll();
-    });
-    y += 36;
-    this.debugButton(x + 14, y + 10, 100, "+100 XP đội", () => {
-      debugGrantTeamXp(100);
-      this.renderAll();
-    });
-    this.debugButton(x + 124, y + 10, 90, "Mở hết lá", () => {
-      debugUnlockAll();
-      this.renderAll();
-    });
-    this.debugButton(x + 224, y + 10, 90, "Xóa hồ sơ", () => {
-      debugResetProfile();
       this.renderAll();
     });
     y += 36;

@@ -108,6 +108,43 @@
     "text": "Gây 8 damage. Nếu HP của Hoắc Liệt dưới 50%: gây 12."
   },
   {
+    "id": "m05_liet_hoa_xung_phong_plus",
+    "name": "Liệt Hỏa Xung Phong+",
+    "ownerId": "m05",
+    "cost": 4,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "selfHpBelow",
+          "ratio": 0.5
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 15,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 10,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 10 damage. Nếu HP của Hoắc Liệt dưới 50%: gây 15.",
+    "plusOf": "m05_liet_hoa_xung_phong"
+  },
+  {
     "id": "m05_ho_gam",
     "name": "Hổ Gầm",
     "ownerId": "m05",
@@ -456,6 +493,49 @@
     "keywords": [
       "hoi_phuc"
     ]
+  },
+  {
+    "id": "f04_bach_thao_huong_plus",
+    "name": "Bách Thảo Hương+",
+    "ownerId": "f04",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "heal",
+      "harmony"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "regen"
+        },
+        "then": [
+          {
+            "type": "applyStatus",
+            "status": "regen",
+            "amount": 6,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "applyStatus",
+            "status": "regen",
+            "amount": 4,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Áp 4 Hồi Phục cho 1 Hero. Nếu Hero đó đã có Hồi Phục: áp 6.",
+    "keywords": [
+      "hoi_phuc"
+    ],
+    "plusOf": "f04_bach_thao_huong"
   },
   {
     "id": "f04_linh_chi_ho_the",
@@ -871,6 +951,47 @@
     "keywords": [
       "an_than"
     ]
+  },
+  {
+    "id": "m06_am_tien_plus",
+    "name": "Ám Tiễn+",
+    "ownerId": "m06",
+    "cost": 2,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "selfHasStatus",
+          "status": "stealth"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 12,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 7,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 7 damage. Nếu đang Ẩn Thân: gây 12.",
+    "keywords": [
+      "an_than"
+    ],
+    "plusOf": "m06_am_tien"
   },
   {
     "id": "m06_doat_menh",
@@ -1381,6 +1502,46 @@
     ]
   },
   {
+    "id": "f03_suong_tram_plus",
+    "name": "Sương Trảm+",
+    "ownerId": "f03",
+    "cost": 2,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "freeze"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 10,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 6,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 6 damage. Nếu mục tiêu đang Đóng Băng: gây 10.",
+    "keywords": [
+      "dong_bang"
+    ],
+    "plusOf": "f03_suong_tram"
+  },
+  {
     "id": "f03_bang_phach_lien_kich",
     "name": "Băng Phách Liên Kích",
     "ownerId": "f03",
@@ -1756,6 +1917,48 @@
       }
     ],
     "text": "Cướp 1 buff. Gây 6 damage; HP dưới 50%: gây 10."
+  },
+  {
+    "id": "f02_anh_tap_plus",
+    "name": "Ảnh Tập+",
+    "ownerId": "f02",
+    "cost": 2,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "stealBuff",
+        "count": 1
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "selfHpBelow",
+          "ratio": 0.5
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 12,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 7,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Cướp 1 buff. Gây 7 damage; HP dưới 50%: gây 12.",
+    "plusOf": "f02_anh_tap"
   },
   {
     "id": "f02_dien_cu",

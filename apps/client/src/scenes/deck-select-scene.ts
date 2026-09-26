@@ -1,11 +1,12 @@
 import Phaser from "phaser";
-import { bondCardsForTeam, deleteDeck, pendingUnlocks, starterDeck, validateDeck } from "rules";
+import { bondCardsForTeam, buildLoadout, claimMission, pendingUnlocks, starterDeck, validateDeck } from "rules";
 import type { DeckError, GameData, SavedDeck } from "rules";
-import { saveProfile } from "../profile-store";
-import { restartSession, session, startRun } from "../session";
+import { errorText, logout, mutate } from "../account";
+import { startServerRun } from "../run-session";
+import { restartSession, session } from "../session";
 import type { Team } from "../session";
 import { COLORS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
-import { addButton, addText } from "../ui/widgets";
+import { addButton, addCurrencyBar, addText, showToast } from "../ui/widgets";
 
 const WIDTH = 1280;
 const ROW_H = 38;
@@ -17,6 +18,8 @@ export function describeDeckError(data: GameData, error: DeckError): string {
   switch (error.code) {
     case "badHeroes":
       return "Deck phải có 3 Hero khác nhau";
+    case "unownedHero":
+      return `Chưa sở hữu Hero: ${data.heroes[error.heroId]?.name ?? error.heroId}`;
     case "wrongSize":
       return `Deck cần đúng ${data.metaConfig.deckSize} lá (đang ${error.size})`;
     case "duplicateCard":
@@ -27,6 +30,18 @@ export function describeDeckError(data: GameData, error: DeckError): string {
       return `${data.heroes[error.heroId]?.name ?? error.heroId} cần ít nhất ${data.metaConfig.minCardsPerHero} lá (đang ${error.count})`;
     case "lockedCard":
       return `Lá chưa mở: ${data.cards[error.cardId]?.name ?? error.cardId}`;
+    case "weaponSlot":
+      return `Vũ khí gắn cho Hero ngoài đội: ${data.heroes[error.heroId]?.name ?? error.heroId}`;
+    case "unownedWeapon":
+      return `Chưa sở hữu vũ khí: ${data.weapons[error.weaponId]?.name ?? error.weaponId}`;
+    case "weaponTwice":
+      return `Một vũ khí gắn cho 2 Hero: ${data.weapons[error.weaponId]?.name ?? error.weaponId}`;
+    case "unownedRelic":
+      return `Chưa sở hữu Nguyệt Bảo: ${data.relics[error.relicId]?.name ?? error.relicId}`;
+    case "duplicateRelic":
+      return `Trùng Nguyệt Bảo: ${data.relics[error.relicId]?.name ?? error.relicId}`;
+    case "tooManyRelics":
+      return `Tối đa ${data.metaConfig.maxRelics} Nguyệt Bảo (đang ${error.count})`;
     default: {
       const exhaustive: never = error;
       return String(exhaustive);
@@ -42,6 +57,8 @@ export class DeckSelectScene extends Phaser.Scene {
   private scroll = 0;
   private pickingTeam = false;
   private picked: string[] = [];
+  /** A server request is in flight (starting a run). */
+  private busy = false;
 
   constructor() {
     super("deck-select");
@@ -49,12 +66,14 @@ export class DeckSelectScene extends Phaser.Scene {
 
   create() {
     useDesignCamera(this);
+    this.busy = false;
     this.root = this.add.container(0, 0);
     this.selected = `starter:${teamKey(session.heroIds)}`;
     this.scroll = 0;
     this.pickingTeam = false;
     this.picked = [];
     this.render();
+    showToast(this, session.notices.splice(0));
   }
 
   /** Starter row for every team seen in saved decks + the current team, then all saved decks. */
@@ -89,8 +108,24 @@ export class DeckSelectScene extends Phaser.Scene {
     addText(this, this.root, WIDTH / 2, 30, "Chọn deck", 26, COLORS.gold).setOrigin(0.5);
     addText(this, this.root, WIDTH / 2, 62, "Đội đi theo deck — mỗi deck mang 3 Hero của nó", 13, COLORS.dimText).setOrigin(0.5);
 
+    const online = session.online;
     const canUnlock = Object.keys(data.heroes).some((id) => pendingUnlocks(data, session.profile, id) > 0);
-    addButton(this, this.root, WIDTH - 100, 30, 160, `Tu Luyện${canUnlock ? " ●" : ""}`, () => this.scene.start("mastery"));
+    // A dry run of the server's claim tells whether a reward is waiting (`14` §7).
+    const canClaim = Object.keys(data.missions).some((id) => claimMission(data, session.profile, id, Date.now()).ok);
+    addButton(this, this.root, 765, 30, 100, "Triệu Hồi", () => this.scene.start("gacha"), online);
+    addButton(this, this.root, 870, 30, 100, "Kho Hero", () => this.scene.start("heroes"), online);
+    addButton(this, this.root, 975, 30, 100, "Kho đồ", () => this.scene.start("armory"), online);
+    addButton(this, this.root, 1080, 30, 100, `Nhiệm vụ${canClaim ? " ●" : ""}`, () => this.scene.start("missions"), online);
+    addButton(this, this.root, 1195, 30, 120, `Tu Luyện${canUnlock ? " ●" : ""}`, () => this.scene.start("mastery"), online);
+    if (online) {
+      addCurrencyBar(this, this.root, 175, 30, session.profile.currencies);
+      addButton(this, this.root, 90, 30, 140, "Đăng xuất", () => {
+        void logout().then(() => this.scene.start("login"));
+      });
+    } else {
+      addButton(this, this.root, 90, 30, 140, "Đăng nhập", () => this.scene.start("login"));
+      addText(this, this.root, WIDTH / 2, 692, "Offline — chỉ Trận lẻ. Lượt chơi, deck và Tu Luyện cần kết nối server.", 13, "#ff8080").setOrigin(0.5);
+    }
 
     const decks = this.decks();
     const maxScroll = Math.max(0, decks.length - VISIBLE);
@@ -139,33 +174,45 @@ export class DeckSelectScene extends Phaser.Scene {
     const starter = deck.id.startsWith("starter:");
     const y = 650;
     const play = () => {
-      session.heroIds = [...deck.heroIds] as Team;
-      startRun(session.heroIds, [...deck.cardIds]);
-      this.scene.start("run");
+      if (this.busy) return;
+      this.busy = true;
+      startServerRun({ id: deck.id, heroIds: [...deck.heroIds] as Team }).then(
+        () => this.scene.start("run"),
+        (error: unknown) => {
+          this.busy = false;
+          window.alert(errorText(error));
+        },
+      );
     };
     const single = () => {
       session.heroIds = [...deck.heroIds] as Team;
-      restartSession(session.seed, session.encounterId, session.heroIds, [...deck.cardIds]);
+      // Online, the single combat uses the profile's Tinh Hồn and the deck's gear (no rewards).
+      const built = online ? buildLoadout(data, session.profile, deck) : undefined;
+      restartSession(session.seed, session.encounterId, session.heroIds, [...deck.cardIds], built?.ok ? built.loadout : undefined);
       this.scene.start("combat");
     };
-    addButton(this, this.root, 200, y, 150, "Lượt chơi", play, valid);
+    addButton(this, this.root, 200, y, 150, "Lượt chơi", play, valid && online);
     addButton(this, this.root, 360, y, 150, "Trận lẻ", single, valid);
-    addButton(this, this.root, 520, y, 150, "Sửa", () => this.edit(deck), !starter);
-    addButton(this, this.root, 680, y, 150, "Sao chép", () => this.edit({ ...deck, id: "", name: `${deck.name} (bản sao)`.slice(0, 24) }));
+    addButton(this, this.root, 520, y, 150, "Sửa", () => this.edit(deck), !starter && online);
+    addButton(this, this.root, 680, y, 150, "Sao chép", () => this.edit({ ...deck, id: "", name: `${deck.name} (bản sao)`.slice(0, 24) }), online);
     addButton(this, this.root, 840, y, 150, "Xóa", () => {
       if (!window.confirm(`Xóa deck "${deck.name}"?`)) return;
-      const result = deleteDeck(session.profile, deck.id);
-      if (!result.ok) return;
-      session.profile = result.profile;
-      saveProfile(session.profile);
-      this.selected = `starter:${teamKey(session.heroIds)}`;
-      this.render();
-    }, !starter);
+      mutate("DELETE", `/profile/decks/${deck.id}`).then(
+        () => {
+          this.selected = `starter:${teamKey(session.heroIds)}`;
+          this.render();
+        },
+        (error: unknown) => {
+          window.alert(errorText(error));
+          this.render();
+        },
+      );
+    }, !starter && online);
     addButton(this, this.root, 1090, y, 200, "Deck mới", () => {
       this.pickingTeam = true;
       this.picked = [...session.heroIds];
       this.render();
-    });
+    }, online);
   }
 
   /** Compact team picker, only used to seed a brand-new deck's heroIds. */
@@ -180,11 +227,12 @@ export class DeckSelectScene extends Phaser.Scene {
       const x = startX + index * spacing;
       const y = 280;
       const slot = this.picked.indexOf(hero.id);
-      const panel = this.add.rectangle(x, y, 210, 110, COLORS.panelHero);
+      const owned = session.profile.heroes[hero.id] !== undefined;
+      const panel = this.add.rectangle(x, y, 210, 110, COLORS.panelHero).setAlpha(owned ? 1 : 0.45);
       panel.setStrokeStyle(slot >= 0 ? 3 : 1, slot >= 0 ? COLORS.goldFill : (OWNER_COLORS[hero.id] ?? COLORS.panelBorder));
       panel.setInteractive({ useHandCursor: true });
       panel.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        if (pointer.button !== 0) return;
+        if (pointer.button !== 0 || !owned) return;
         if (this.picked.includes(hero.id)) this.picked = this.picked.filter((id) => id !== hero.id);
         else if (this.picked.length < 3) this.picked.push(hero.id);
         this.render();
@@ -192,7 +240,7 @@ export class DeckSelectScene extends Phaser.Scene {
       this.root.add(panel);
       if (slot >= 0) addText(this, this.root, x + 90, y - 42, `${slot + 1}`, 16, COLORS.gold).setOrigin(0.5);
       addText(this, this.root, x, y - 24, hero.name, 17).setOrigin(0.5);
-      addText(this, this.root, x, y + 2, `HP ${hero.maxHp}`, 12, COLORS.dimText).setOrigin(0.5);
+      addText(this, this.root, x, y + 2, owned ? `HP ${hero.maxHp}` : "Chưa sở hữu", 12, COLORS.dimText).setOrigin(0.5);
       this.root.add(
         this.add
           .text(x, y + 20, hero.branches.map((b) => b.name).join(" / "), { ...TEXT_BASE, fontSize: "11px", color: COLORS.dimText, align: "center", wordWrap: { width: 190 } })
@@ -219,7 +267,13 @@ export class DeckSelectScene extends Phaser.Scene {
   }
 
   private edit(deck: SavedDeck) {
-    session.editingDeck = { ...deck, cardIds: [...deck.cardIds], heroIds: [...deck.heroIds] as SavedDeck["heroIds"] };
+    session.editingDeck = {
+      ...deck,
+      cardIds: [...deck.cardIds],
+      heroIds: [...deck.heroIds] as SavedDeck["heroIds"],
+      weapons: { ...deck.weapons },
+      relicIds: [...(deck.relicIds ?? [])],
+    };
     this.scene.start("deck-builder");
   }
 }

@@ -601,3 +601,99 @@ lượt tới cấp 6 (mục tiêu 8–12).
   4/4/10 của m05+f03+f04 0% (chết sớm tầng 2–3) — xem lại bằng chơi tay,
   có thể do heuristic không chơi tốt các deck tập trung.
 
+
+# Playtest Notes — Phase 4d (bước 4d.6)
+
+## Phương pháp
+
+- `packages/rules/test/economy-sim.test.ts`: 200 người chơi ảo × 60 ngày, mỗi ngày 2 lượt
+  chơi Bộ cơ bản (kết quả rút từ lượt bot thật, 4 đội × seed 1–20), mở lá khi có lượt,
+  nhận mọi nhiệm vụ, mua cửa hàng Nguyệt Tinh, quay mỗi khi đủ Nguyệt Ngọc.
+- `run-playtest`: Bộ cơ bản, mọi Hero cùng Tinh Hồn 0 / 2 / 4 / 6 (4 đội × 20 seed).
+- Mục tiêu (`15` §8): ≥ 90% đủ 5 Hero trước ngày 7; Legendary đầu TB ngày 16–25;
+  thắng lượt C0 và C6 chênh ≤ 15 điểm.
+
+## Thắng lượt theo Tinh Hồn (80 lượt/mức)
+
+| Tinh Hồn | 0 | 2 | 4 | 6 |
+|---|---|---|---|---|
+| Thắng | 43% | 43% | 48% | 48% |
+
+Chênh 5 điểm — đạt, không chỉnh. C2 gần như không đổi với bot (ít khi sát ngưỡng thăng
+cấp); C4 (lá "+") là bước tăng rõ nhất.
+
+## Kinh tế
+
+| | Trước | Sau (gói J) | Mục tiêu |
+|---|---|---|---|
+| Đủ 5 Hero trước ngày 7 | 99% | 96% | ≥ 90% |
+| Ngày đủ 5 Hero (trung vị / p90) | 0 / 3 | 0 / 3 | — |
+| Legendary đầu (TB / trung vị) | 4.7 / 4 | 16.8 / 14 | 16–25 |
+| Nguyệt Ngọc/ngày | 628 | 184 | — |
+| Lượt quay/ngày | 4.1 | 1.4 | — |
+| Tinh Hồn TB Hero Epic ngày 30 / 60 | 5.4 / 6.0 | 2.1 / 3.6 | — |
+
+Hai mục tiêu ngược nhau khi chỉ giảm thu nhập (gói E/F/G: Legendary ~13–16 ngày thì
+đủ 5 Hero tụt còn 87–89%); tăng quà tân thủ tách được hai mục tiêu.
+
+## Gói đã áp dụng (đã duyệt — gói J)
+
+- `starterGift` 1600 → 2400; `runRewards` 10/80/100 → 3/20/30.
+- Nhiệm vụ ngày 40/40/30 → 20/20/10; tuần 200/150/100 → 80/60/40.
+- Thành tựu ×0.5; `dupeMoonStar` rare/common 3 → 1, epic 10 → 5.
+- `shop_pull` 5 → 2 lần/tuần.
+
+## Điểm mở
+
+- Legendary duy nhất (Hoắc Liệt) là Hero khởi đầu: "Legendary đầu" luôn là bản trùng.
+- Pool Rare chỉ có Ôn Như Ý → Tinh Hồn 6 ngay ngày đầu với mọi gói; cần nội dung Rare
+  (ví dụ vật phẩm 4e) nếu muốn nhịp này chậm lại.
+
+# Playtest Notes — Phase 4e (bước 4e.7)
+
+## Phương pháp
+
+- `run-playtest` (bật bằng `PLAYTEST_GEAR=1`): Bộ cơ bản, 4 đội × 20 seed mỗi dòng. Vũ
+  khí do Hero bản mệnh mang nếu có trong đội, nếu không thì Hero đầu đội; deck bỏ lá cuối
+  của người mang (18 ô). Nguyệt Bảo: deck giữ nguyên. Mỗi món đo ở R1 và R5.
+- Mục tiêu (`15` §8): không món nào làm thắng lượt tăng > 10 điểm ở R1. Sai số mỗi dòng
+  (80 lượt) khoảng ±5 điểm.
+
+## Gói đã áp dụng (đã duyệt — gói G1)
+
+| Món | Chỉnh | R1 trước → sau |
+|---|---|---|
+| Xích Diệm Thương | lá 8→6 damage, Thiêu Đốt 3→2; bản mệnh R1 chỉ Phản Đòn 3 (+1 Sức Mạnh dời lên R5) | +21 → +6 |
+| Bách Hoa Trâm | nội tại mỗi 2 lượt; lá Hồi Phục 3/5 → 2/4 | +20 → +10 |
+| Loan Linh Ấn | CM1 mỗi lá kỹ năng thứ 5 (thay vì 3); CM3–5 mỗi lá thứ 4 | +19 → +9 |
+| Tinh Bàn | R1 "Đầu trận +2 NL"; Dưỡng Nguyệt 1 dời lên R5 | +18 → +3 |
+| Liệt Cung | lá 3×2 → 2×2 | +16 → +11 |
+| Hàn Tuyết Song Kiếm | lá 4×2 → 3×2; bản mệnh R1 như bản thường | +13 → +6 |
+
+R2–R5 co lại theo cùng nguyên tắc (`03` §7).
+
+## Kết quả sau chỉnh (mốc Bộ cơ bản 43%)
+
+| Món | R1 | R5 | Món | R1 | R5 |
+|---|---|---|---|---|---|
+| Xích Diệm Thương | +6 | +19 | Thiên Sách | +1 | +6 |
+| Ảnh Nguyệt Chủy | +8 | +15 | Vọng Nguyệt Kính | +3 | +1 |
+| Hàn Tuyết Song Kiếm | +6 | +24 | Huyết Ngọc Bội | +1 | +9 |
+| Thiên Diện Phiến | +10 | +21 | Loan Linh Ấn | +9 | +18 |
+| Bách Hoa Trâm | +10 | +24 | Xích Diễm Châu | +1 | +14 |
+| Thiết Thuẫn | +9 | +6 | Bạch Lộ Hương Nang | +8 | +23 |
+| Liệt Cung | +11 | +18 | Huyền Vũ Giáp Phù | 0 | −1 |
+| Huyền Linh Kính | +3 | +13 | Trấn Hồn Linh | +10 | +34 |
+| Thanh Tâm Bình | +5 | +14 | | | |
+| Tinh Bàn | +3 | +15 | | | |
+
+Mọi lá Binh Khí đều từng được đánh.
+
+## Điểm mở
+
+- Liệt Cung +11 ở R1: sát ngưỡng, trong sai số. Lợi thế chủ yếu đến từ 2 bản lá rẻ trong
+  chồng bài (1 bản → −1); nếu chơi tay thấy mạnh, chỉnh `copies` thay vì damage.
+- Mục tiêu chỉ đặt cho R1. Ở R5 nhiều món +20 trở lên (Trấn Hồn Linh +34, Bách Hoa Trâm
+  +24, Hàn Tuyết Song Kiếm +24, Bạch Lộ Hương Nang +23) — đạt R5 cần 4 bản trùng.
+- Thiết Thuẫn và Huyền Vũ Giáp Phù yếu đi ở R5 so với R1: giáp nhiều hơn không đổi kết cục
+  với bot hiện tại; nên xem lại khi có chơi tay.

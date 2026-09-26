@@ -132,28 +132,60 @@
 
 || Tiếng Việt | Code | Ghi chú |
 ||---|---|---|
-|| Hồ sơ | `profile`, `Profile` | Lưu lâu dài trong trình duyệt (`localStorage`) |
+|| Hồ sơ | `profile`, `Profile` | GĐ 4b: `localStorage`; từ GĐ 4c: lưu trên server (`version: 2`) |
 || Tu Luyện | `mastery` | XP từ lượt chơi; `masteryLevel`, `masteryLevels` trong `meta-config.json` |
 || Lá khóa | `lockedCardIds` | 6 lá/Hero mở bằng Tu Luyện; pool = `cardIds` + `lockedCardIds` (12 lá) |
 || Nhánh | `branches`, `HeroBranch` | Mỗi Hero 2 nhánh × 6 lá |
 || Deck (đã lưu) | `SavedDeck` | Deck đặt tên 18 lá (`deckSize`) |
 || Bộ cơ bản | `starterDeck` | Deck 18 lá miễn phí của đội, không lưu trong hồ sơ |
+|| Hero khởi đầu | `starterHeroIds` | Hero tài khoản mới sở hữu (`economy-config.json`) |
+|| Tài khoản | `account` | Tên đăng nhập + mật khẩu; mỗi tài khoản một hồ sơ |
+|| Phiên | `session` | Token đăng nhập, hạn 30 ngày kể từ lần dùng cuối |
+|| Phiếu lượt chơi | `runTicket`, `runId` | Server cấp seed + ảnh chụp `RunSetup` cho một lượt chơi |
+|| Chạy lại | `replay`, `replayRun` | Server chạy lại chuỗi `RunAction` để xác nhận kết quả trước khi thưởng |
+|| Phiên bản dữ liệu | `dataVersion` | Băm của `GameData`; client và server phải khớp |
+
+## Kinh tế và gacha [GĐ4d]
+
+|| Tiếng Việt | Code | Ghi chú |
+||---|---|---|
+|| Nguyệt Ngọc | `moonJade` | Tiền quay gacha; kiếm từ lượt chơi, nhiệm vụ, thành tựu, quà |
+|| Nguyệt Tinh | `moonStar` | Từ bản trùng khi Tinh Hồn đã 6; tiêu ở cửa hàng Nguyệt Tinh |
+|| Quà tài khoản mới | `starterGift` | Nhận một lần |
+|| Kỳ ngày / kỳ tuần | `dayKey`, `weekKey` | Đổi lúc 04:00 giờ Việt Nam (tuần: sáng thứ Hai) |
+|| Nhiệm vụ | `mission`, `MissionDef` | Ngày / tuần; nhận thưởng bằng tay |
+|| Thành tựu | `achievement`, `AchievementDef` | Một lần, tự nhận |
+|| Banner gacha | `banner`, `BannerDef` | GĐ 4d: Triệu Hồi Anh Hùng |
+|| Lượt quay | `pull` | 1 hoặc 10 lượt mỗi giao dịch |
+|| Bảo hiểm (pity) | `pity` | `sinceEpic`, `sinceLegendary` theo banner |
+|| Bảo vệ người mới | `newPlayerEpicHero` | Epic trên banner Hero ưu tiên Hero chưa sở hữu |
+|| Tinh Hồn | `constellation` | 0–6, tăng khi quay trùng Hero |
+|| Lá chủ lực / lá "+" | `signature`, `plusCardId`, `plusOf` | Tinh Hồn 4 |
+|| Dạng thăng cấp thứ hai | `altLevelUp`, `levelUpForm` | Tinh Hồn 5 (luật trận GĐ 4e) |
+|| Cửa hàng Nguyệt Tinh | `moonStarShop` | Giới hạn mua theo tuần |
+|| Loadout | `Loadout`, `buildLoadout` | Tinh Hồn (4d), trang bị (4e) của đội mang vào lượt chơi |
+
+## Trang bị [GĐ4e]
+
+| Tiếng Việt | Code | Ghi chú |
+|---|---|---|
+| Binh Khí (vũ khí) | `weapon`, `WeaponDef` | Mỗi Hero mang tối đa 1; góp 1 lá Binh Khí |
+| Lá Binh Khí | weapon card (`wpn_<heroId>_<n>`) | Lá riêng của người mang; chiếm 1 ô trong 18 |
+| Người mang | `wearer` | Hero đang mang vũ khí |
+| Vũ khí bản mệnh | `signatureHeroId`, `signatureHooks` | Nội tại mạnh hơn trên đúng Hero |
+| Vũ khí chung | `archetype` | Không có bản mệnh |
+| Nội tại vũ khí | `WeaponHook` | Chạy trên máy hook Kỳ Vật |
+| Nguyệt Bảo | `relic`, `RelicDef` | Tối đa 2 mỗi deck; nằm cả đời tài khoản (khác Kỳ Vật của lượt chơi) |
+| Tinh Luyện | `refinement` | R1–R5, tăng khi quay trùng vũ khí |
+| Cộng Minh | `resonance` | 1–5, tăng khi quay trùng Nguyệt Bảo |
+| Huyền Thiết | `darkIron` | Từ vũ khí trùng khi R5; GĐ 4 chỉ tích trữ |
+| Nguyệt Trần | `moonDust` | Từ Nguyệt Bảo trùng khi Cộng Minh 5; GĐ 4 chỉ tích trữ |
+| Binh Khí Các / Nguyệt Bảo Các | `banner_weapons`, `banner_relics` | Banner trang bị |
 
 ## Hệ thống sau này (chưa code)
 
 | Tiếng Việt | Code |
 |---|---|
-| Binh Khí | `weapon` |
-| Nguyệt Bảo | `relic` |
-| Tinh Hồn | `constellation` |
-| Tinh Luyện | `refinement` |
-| Cộng Minh | `resonance` |
-| Nguyệt Ngọc | `moonJade` |
-| Nguyệt Tinh | `moonStar` |
-| Huyền Thiết | `darkIron` |
-| Nguyệt Trần | `moonDust` |
 | Vinh Dự | `honor` |
-| Banner gacha | `banner` |
-| Bảo hiểm (pity) | `pity` |
 | Đấu Trường Công Bằng | `fairArena` |
 | Hợp Kích | `coopCombo` |

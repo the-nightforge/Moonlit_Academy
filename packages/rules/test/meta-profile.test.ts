@@ -15,11 +15,11 @@ function withXp(data: GameData, heroId: string, xp: number): Profile {
 }
 
 describe("profile and mastery", () => {
-  it("T159: a new profile has every hero at 0 XP; mastery levels follow the thresholds", () => {
+  it("T159: a new profile owns the starter heroes at 0 XP; mastery levels follow the thresholds", () => {
     const data = testData();
     const profile = createProfile(data);
-    expect(Object.keys(profile.heroes).sort()).toEqual(Object.keys(data.heroes).sort());
-    expect(profile).toMatchObject({ version: 1, decks: [] });
+    expect(Object.keys(profile.heroes).sort()).toEqual([...data.economyConfig.starterHeroIds].sort());
+    expect(profile).toMatchObject({ version: 2, decks: [] });
     const levels = data.metaConfig.masteryLevels;
     expect(masteryLevel(data, 0)).toBe(0);
     levels.forEach((threshold, index) => {
@@ -40,7 +40,7 @@ describe("profile and mastery", () => {
     expect(JSON.stringify(profile)).toBe(snapshot);
     expect(next.heroes["m05"]!.xp).toBe(perFloor * 5 + win + heroLevelUp * 2);
     expect(next.heroes["f04"]!.xp).toBe(perFloor * 5 + win);
-    expect(next.heroes["f03"]!.xp).toBe(0);
+    expect(next.heroes["f03"]).toBeUndefined(); // not owned: no XP, no entry
     const m05 = gains.find((gain) => gain.heroId === "m05")!;
     expect(m05).toEqual({
       heroId: "m05", xp: perFloor * 5 + win + heroLevelUp * 2,
@@ -65,7 +65,7 @@ describe("profile and mastery", () => {
   it("T162: parseProfile resets broken data, drops unknown ids and keeps invalid decks", () => {
     const data = testData();
     expect(parseProfile(data, "garbage")).toEqual({ profile: createProfile(data), reset: true });
-    expect(parseProfile(data, { version: 2, heroes: {}, decks: [] }).reset).toBe(true);
+    expect(parseProfile(data, { version: 3, heroes: {}, decks: [] }).reset).toBe(true);
 
     const locked = data.heroes["m05"]!.lockedCardIds[0]!;
     const deck = { id: "d1", name: "Thử", heroIds: TEAM, cardIds: ["f03_suong_giap"] };
@@ -76,8 +76,8 @@ describe("profile and mastery", () => {
     });
     expect(reset).toBe(false);
     expect(profile.heroes["ghost"]).toBeUndefined();
-    expect(profile.heroes["m05"]).toEqual({ xp: 40, unlockedCardIds: [locked] });
-    expect(profile.heroes["f04"]).toEqual({ xp: 0, unlockedCardIds: [] });
+    expect(profile.heroes["m05"]).toMatchObject({ xp: 40, unlockedCardIds: [locked] });
+    expect(profile.heroes["f04"]).toEqual({ xp: 0, unlockedCardIds: [], constellation: 0, bonusUnlocks: 0, levelUpForm: "base" });
     expect(profile.decks).toEqual([deck]);
   });
 

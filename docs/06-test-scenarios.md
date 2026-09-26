@@ -284,3 +284,65 @@ Bối cảnh thiết kế: `13-phase4b-spec.md`. Luật từ khóa: `01`; luật
 | T170 | `previewEnemyIntent.nextRoundMoonPower` = gốc vòng sau của địch + Dự Trữ hiện tại (cảnh báo Tụ Lực) |
 | T171 | Chiêm Bài: lá được chọn (và lá vào thẳng khi `k = 1`) có cost giảm `chooseCardDiscount` tới hết lượt; cuối lượt mất dấu `chosenThisTurn` |
 | T172 | Lõi: Lõi đã chọn (`pickAugment`) có hook hoạt động ở trận kế tiếp |
+
+## Giai đoạn 4c
+
+Bối cảnh thiết kế: `15-phase4-spec.md`. Luật hồ sơ / lượt chơi có xác nhận: `14`; server và API: `16`. Test server dùng `buildApp` với DB `:memory:`, đồng hồ và nguồn ngẫu nhiên giả.
+
+| Mã | Kịch bản |
+|---|---|
+| T173 | Đăng ký / đăng nhập / đăng xuất; tên trùng `409`; sai mật khẩu 5 lần → khóa 5 phút (`429`), đúng thì đặt lại bộ đếm; DB chỉ lưu băm của token và mật khẩu |
+| T174 | Phiên hết hạn sau 30 ngày không dùng (`401`); dùng trong hạn thì gia hạn |
+| T175 | `parseProfile` v1 → v2: giữ XP / lá mở của Hero khởi đầu, bỏ Hero chưa sở hữu, deck giữ nguyên; v2 thiếu trường → mặc định của trường |
+| T176 | `mergeImportedProfile` / `POST /profile/import`: `xp` lấy max, lá mở hợp nhưng không vượt Tu Luyện, deck nối thêm (id mới, cắt `maxDecks`); lần hai `"already imported"` |
+| T177 | `replayRun`: chuỗi Action hợp lệ → cùng `RunState` như khi chơi; Action bị từ chối → `step`/`reason`; Action sau khi kết thúc → `"actions after end"` |
+| T178 | Phiếu: tối đa 1 phiếu `open` mỗi tài khoản (cấp mới bỏ phiếu cũ); quá 7 ngày → `410`; `X-Data-Version` lệch → `409 outdated client` |
+| T179 | Nộp lượt chơi hợp lệ: XP đúng `applyRunResult`, phiếu `finished`, `rev` +1; nộp lại → `409 run closed`; chuỗi sai → `422 replay failed`, phiếu `rejected`, hồ sơ không đổi |
+| T180 | Route đổi hồ sơ với `If-Match` lệch → `409 stale profile` kèm hồ sơ và `rev` hiện tại; hồ sơ không đổi |
+| T181 | Hero chưa sở hữu: `validateDeck` → `unownedHero`; `unlockCard` → `"hero not owned"`; `POST /runs` với deck đó → `400 invalid deck` |
+| T182 | `dataVersion`: cùng data (khác thứ tự khóa) → cùng giá trị; đổi một số → khác |
+
+## Giai đoạn 4d
+
+Bối cảnh: `15-phase4-spec.md` §3. Luật: `14` §5–§12, `01` §8 (Tinh Hồn), API `16` §4.1. Test luật dùng `now` và `rngState` cố định.
+
+| Mã | Kịch bản |
+|---|---|
+| T183 | `grantStarterGift` một lần; `applyRunResult` + `applyRunRewards`: Nguyệt Ngọc theo tầng/thắng, `firstWinOfDay` một lần mỗi ngày (mốc 21:00 UTC), bộ đếm kỳ và `stats` |
+| T184 | `dayKey`/`weekKey` quanh mốc 21:00 UTC và đầu tuần ISO; nhiệm vụ: tiến độ theo kỳ, sang kỳ reset, `claimMission` lỗi `not complete` / `already claimed` / `unknown mission` |
+| T185 | Thành tựu tự nhận đúng một lần (thắng đầu, Song Hành, Tu Luyện 6, đủ Hero, tầng 8 Bộ cơ bản, mở hết lá) |
+| T186 | Gacha tất định: cùng hồ sơ + `rngState` → cùng kết quả; quay 10 = 10 lượt liên tiếp, trừ `pullCost × 10` |
+| T187 | Bảo hiểm Epic: lượt thứ `epicPity` chưa có Epic+ → chắc chắn Epic+; Legendary đặt lại cả hai bộ đếm |
+| T188 | Bảo hiểm Legendary: lượt `legendaryPity` chắc chắn; tỉ lệ mềm từ `legendarySoftPityStart` đúng công thức |
+| T189 | Độ hiếm rỗng hạ rồi nâng đúng thứ tự; bảo vệ người mới chỉ chọn Hero Epic chưa sở hữu |
+| T190 | Không đủ Nguyệt Ngọc → lỗi, hồ sơ và bảo hiểm không đổi; route quay ghi hồ sơ + nhật ký cùng transaction |
+| T191 | Hero mới → sở hữu; trùng → Tinh Hồn +1 (cấp 1/3 thêm `bonusUnlocks`); Tinh Hồn 6 + trùng → Nguyệt Tinh theo độ hiếm |
+| T192 | `bonusUnlocks` cộng vào `pendingUnlocks`, không vượt số lá khóa |
+| T193 | Tinh Hồn 2: trận dùng `constellationThreshold`; M06 tính kẻ địch ngã do Phản Đòn |
+| T194 | Tinh Hồn 4: lá chủ lực trong deck thành lá "+" khi tạo lượt chơi / trận |
+| T195 | `buildLoadout` từ hồ sơ; phiếu chụp loadout, nộp chạy lại với loadout đó dù Tinh Hồn đổi sau; `levelUpForm` luôn `base` ở 4d |
+| T196 | Cửa hàng Nguyệt Tinh: giá, giới hạn tuần (reset sang tuần mới), `heroChoice` chỉ Hero đúng độ hiếm chưa sở hữu |
+
+
+## Giai đoạn 4e
+
+Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01` §14, `14` §3.1, §10.1, §12–§13, API `16` §4.2. Test trận dùng vũ khí / Nguyệt Bảo fixture khi cần số cố định.
+
+| Mã | Kịch bản |
+|---|---|
+| T197 | `validateDeck` có trang bị: `weaponSlot`, `unownedWeapon`, `weaponTwice`, `unownedRelic`, `duplicateRelic`, `tooManyRelics`; `wrongSize` tính lá Hero + số vũ khí; lá Binh Khí không tính `minCardsPerHero` |
+| T198 | Lá Binh Khí trong trận: đúng `copies` bản, id `wpn_<heroId>_<n>`, chủ là người mang; thành Tàn Chiêu khi người mang ngã; M06 kết liễu bằng lá Binh Khí → `enemiesKilled` +1 |
+| T199 | Nội tại vũ khí: `actor: "wearer"`, bộ lọc `owner` / `killer`, `every`; `signatureHooks` chỉ trên Hero bản mệnh; người mang ngã → hook không chạy, bộ đếm không tăng |
+| T200 | Tinh Luyện: `weaponAt` R1…R5 ghi đè đúng trường lá / hook theo thứ tự; R3 giảm cost |
+| T201 | Nguyệt Bảo: `relicAt` theo Cộng Minh (modifier + hook); `costModifierForTag` `while: "bloodMoon"` chỉ có hiệu lực khi đang Huyết Nguyệt |
+| T202 | Thứ tự hook cùng trigger: Kỳ Vật/Lõi → Nguyệt Bảo → vũ khí theo vị trí; event `relicTriggered` / `weaponTriggered` trước event effect; không đệ quy |
+| T203 | Lượt chơi: lá Binh Khí không nằm trong `run.deck`, có mặt ở mọi trận, không bỏ được ở Nghỉ Chân; `replayRun` với loadout có trang bị khớp |
+| T204 | `grantItem` vũ khí / Nguyệt Bảo: mới → cấp 1; trùng → +1; cấp 5 + trùng → Huyền Thiết / Nguyệt Trần 1 + `gearDupeMoonStar`; banner trang bị: bảo hiểm riêng, không bảo vệ người mới |
+| T205 | `buildLoadout(deck)` có trang bị: cấp lấy từ hồ sơ; lỗi sở hữu; `levelUpForm "alt"` chỉ khi Tinh Hồn ≥ 5; phiếu chụp trang bị, đổi sau không ảnh hưởng (server) |
+| T206 | `setLevelUpForm` / route: `"hero not owned"`, `"constellation too low"`; dạng thứ hai thay nội tại cơ bản, bộ đếm + ngưỡng giữ nguyên |
+| T207 | M05 *Bất Diệt*: `onLevelUp` 12 giáp + Khiêu Khích 2; `gainArmor` từ lá M05 +3 |
+| T208 | F04 *Tĩnh Tâm*: lá hồi / Hồi Phục của F04 giải trừ Hero được hồi |
+| T209 | M06 *Tàn Ảnh*: lá Liên Hoàn đầu tiên mỗi lượt tính thêm 1 lá; lá thứ hai không |
+| T210 | F03 *Hàn Kiếm*: lượt damage đầu tiên mỗi lượt từ lá F03 → Dễ Vỡ 1 vòng; đòn sau không; đặt lại lượt sau |
+| T211 | F02 *Huyết Diện*: lá F02 −1 NL khi Huyết Nguyệt (tối thiểu 0), hết Huyết Nguyệt thì mất |
+| T212 | Kiểm tra dữ liệu khi nạp: `wearer` ngoài hook vũ khí, effect cấm trong hook, `refinement` ≠ 4 mục, `resonance` ≠ 5 cấp, id trùng → lỗi |

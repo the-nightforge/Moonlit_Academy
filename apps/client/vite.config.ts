@@ -44,4 +44,8 @@ function assetsManifest(): Plugin {
   };
 }
 
-export default defineConfig({ plugins: [assetsManifest()] });
+export default defineConfig({
+  plugins: [assetsManifest()],
+  // The API server (`apps/server`, `16` §1) runs beside Vite in development.
+  server: { proxy: { "/api": `http://localhost:${process.env.API_PORT ?? 8787}` } },
+});

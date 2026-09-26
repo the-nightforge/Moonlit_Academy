@@ -1,0 +1,67 @@
+[
+  {
+    "id": "banner_heroes",
+    "name": "Triệu Hồi Anh Hùng",
+    "kind": "hero",
+    "pool": {
+      "legendary": [
+        "m05"
+      ],
+      "epic": [
+        "m06",
+        "f02",
+        "f03"
+      ],
+      "rare": [
+        "f04"
+      ],
+      "common": []
+    }
+  },
+  {
+    "id": "banner_weapons",
+    "name": "Binh Khí Các",
+    "kind": "weapon",
+    "pool": {
+      "legendary": [
+        "w_xich_diem_thuong",
+        "w_tinh_ban"
+      ],
+      "epic": [
+        "w_anh_nguyet_chuy",
+        "w_han_tuyet_song_kiem",
+        "w_thien_dien_phien",
+        "w_huyen_linh_kinh"
+      ],
+      "rare": [
+        "w_bach_hoa_tram",
+        "w_thiet_thuan",
+        "w_liet_cung",
+        "w_thanh_tam_binh"
+      ],
+      "common": []
+    }
+  },
+  {
+    "id": "banner_relics",
+    "name": "Nguyệt Bảo Các",
+    "kind": "relic",
+    "pool": {
+      "legendary": [
+        "r_thien_sach",
+        "r_vong_nguyet_kinh"
+      ],
+      "epic": [
+        "r_huyet_ngoc_boi",
+        "r_loan_linh_an",
+        "r_xich_diem_chau"
+      ],
+      "rare": [
+        "r_bach_lo_huong_nang",
+        "r_huyen_vu_giap_phu",
+        "r_tran_hon_linh"
+      ],
+      "common": []
+    }
+  }
+]

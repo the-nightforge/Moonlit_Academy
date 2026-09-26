@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Effect, GameData, RunRelicDef } from "rules";
+import type { Effect, GameData, RunRelicHook, WeaponHook } from "rules";
 import { rawGameDataSchema } from "./schema";
 import heroesJson from "../heroes.json";
 import cardsJson from "../cards.json";
@@ -12,6 +12,12 @@ import runConfigJson from "../run-config.json";
 import combatConfigJson from "../combat-config.json";
 import keywordsJson from "../keywords.json";
 import metaConfigJson from "../meta-config.json";
+import economyConfigJson from "../economy-config.json";
+import missionsJson from "../missions.json";
+import achievementsJson from "../achievements.json";
+import bannersJson from "../banners.json";
+import weaponsJson from "../weapons.json";
+import relicsJson from "../relics.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -31,7 +37,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics } =
     parsed;
   const errors: string[] = [];
 
@@ -43,6 +49,8 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     ["runRelics", runRelics],
     ["runAugments", runAugments],
     ["keywords", keywords],
+    ["weapons", weapons],
+    ["relics", relics],
   ] as const;
   for (const [label, defs] of groups) {
     const seen = new Set<string>();
@@ -74,6 +82,36 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
         someEffect([...effect.then, ...(effect.else ?? [])], (inner) => inner.type === "chooseCard"),
     );
 
+  /** Rules every playable card follows, weapon cards included (`02` §6). */
+  const checkCardShape = (
+    label: string,
+    card: Pick<z.infer<typeof rawGameDataSchema>["cards"][number], "target" | "effects" | "keywords" | "tags" | "requiresBloodMoon">,
+  ) => {
+    if (card.requiresBloodMoon && !card.tags.includes("forbidden")) {
+      errors.push(`${label}: requiresBloodMoon requires tag "forbidden"`);
+    }
+    const usesChosen = effectsUseChosen(card.effects);
+    if (card.target === "none" && usesChosen) {
+      errors.push(`${label}: target "none" must not have effects with to "chosen"`);
+    }
+    if (card.target !== "none" && !usesChosen) {
+      errors.push(`${label}: target "${card.target}" requires at least one effect with to "chosen"`);
+    }
+    const chooseIndex = card.effects.findIndex((effect) => effect.type === "chooseCard");
+    if ((chooseIndex >= 0 && chooseIndex !== card.effects.length - 1) || nestedChoose(card.effects)) {
+      errors.push(`${label}: chooseCard must be the last top-level effect`);
+    }
+    for (const id of card.keywords ?? []) {
+      if (!keywordIds.has(id)) errors.push(`${label}: unknown keyword "${id}"`);
+    }
+    if (
+      card.target !== "enemy" &&
+      someEffect(card.effects, (e) => e.type === "drainMoonPower" && e.to === "chosen")
+    ) {
+      errors.push(`${label}: drainMoonPower to "chosen" needs target "enemy"`);
+    }
+  };
+
   for (const hero of heroes) {
     for (const cardId of hero.cardIds) {
       const card = cardById.get(cardId);
@@ -103,29 +141,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     } else if (someEffect(card.effects, (effect) => effect.actor !== undefined)) {
       errors.push(`card "${card.id}": actor is only allowed on bond cards`);
     }
-    if (card.requiresBloodMoon && !card.tags.includes("forbidden")) {
-      errors.push(`card "${card.id}": requiresBloodMoon requires tag "forbidden"`);
-    }
-    const usesChosen = effectsUseChosen(card.effects);
-    if (card.target === "none" && usesChosen) {
-      errors.push(`card "${card.id}": target "none" must not have effects with to "chosen"`);
-    }
-    if (card.target !== "none" && !usesChosen) {
-      errors.push(`card "${card.id}": target "${card.target}" requires at least one effect with to "chosen"`);
-    }
-    const chooseIndex = card.effects.findIndex((effect) => effect.type === "chooseCard");
-    if ((chooseIndex >= 0 && chooseIndex !== card.effects.length - 1) || nestedChoose(card.effects)) {
-      errors.push(`card "${card.id}": chooseCard must be the last top-level effect`);
-    }
-    for (const id of card.keywords ?? []) {
-      if (!keywordIds.has(id)) errors.push(`card "${card.id}": unknown keyword "${id}"`);
-    }
-    if (
-      card.target !== "enemy" &&
-      someEffect(card.effects, (e) => e.type === "drainMoonPower" && e.to === "chosen")
-    ) {
-      errors.push(`card "${card.id}": drainMoonPower to "chosen" needs target "enemy"`);
-    }
+    checkCardShape(`card "${card.id}"`, card);
   }
 
   for (const enemy of enemies) {
@@ -246,53 +262,173 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
   }
 
+  // Constellation data (`14` §10): threshold, signature card and its "+" version.
+  const pooled = new Set(heroes.flatMap((hero) => [...hero.cardIds, ...hero.lockedCardIds]));
+  for (const hero of heroes) {
+    if (hero.levelUp.constellationThreshold > hero.levelUp.threshold) {
+      errors.push(`heroes: "${hero.id}" constellationThreshold must not exceed threshold`);
+    }
+    const { cardId, plusCardId } = hero.signature;
+    const base = cards.find((card) => card.id === cardId);
+    const plus = cards.find((card) => card.id === plusCardId);
+    if (!hero.cardIds.includes(cardId)) errors.push(`heroes: "${hero.id}" signature card "${cardId}" is not one of its free cards`);
+    if (!base || !plus) {
+      errors.push(`heroes: "${hero.id}" signature cards must exist`);
+    } else if (plus.plusOf !== cardId || plus.ownerId !== hero.id || plus.cost !== base.cost || plus.copies !== base.copies) {
+      errors.push(`heroes: "${hero.id}" plus card "${plusCardId}" must have plusOf "${cardId}", the same owner, cost and copies`);
+    }
+  }
+  for (const card of cards) {
+    if (card.plusOf === undefined) continue;
+    if (pooled.has(card.id)) errors.push(`cards: plus card "${card.id}" must not be in a hero pool`);
+    if (heroes.filter((hero) => hero.signature.plusCardId === card.id).length !== 1) {
+      errors.push(`cards: plus card "${card.id}" must be the signature plus card of exactly one hero`);
+    }
+  }
+
+  const starters = economyConfig.starterHeroIds;
+  if (new Set(starters).size !== starters.length) {
+    errors.push(`economyConfig: starterHeroIds must be distinct`);
+  }
+  for (const heroId of starters) {
+    if (!heroes.some((hero) => hero.id === heroId)) {
+      errors.push(`economyConfig: unknown starter hero "${heroId}"`);
+    }
+  }
+  const { gacha } = economyConfig;
+  if (gacha.rates.legendary + gacha.rates.epic >= 1) errors.push(`economyConfig: gacha rates must leave room for rare`);
+  if (gacha.legendarySoftPityStart >= gacha.legendaryPity) {
+    errors.push(`economyConfig: legendarySoftPityStart must be below legendaryPity`);
+  }
+  const duplicate = (ids: string[]) => ids.filter((id, index) => ids.indexOf(id) !== index);
+  for (const id of duplicate(economyConfig.moonStarShop.map((item) => item.id))) errors.push(`economyConfig: duplicate shop item "${id}"`);
+  for (const id of duplicate(missions.map((mission) => mission.id))) errors.push(`missions: duplicate id "${id}"`);
+  for (const id of duplicate(achievements.map((achievement) => achievement.id))) errors.push(`achievements: duplicate id "${id}"`);
+  for (const id of duplicate(banners.map((banner) => banner.id))) errors.push(`banners: duplicate id "${id}"`);
+  for (const banner of banners) {
+    const ids = Object.values(banner.pool).flat();
+    for (const id of duplicate(ids)) errors.push(`banners: "${banner.id}" lists "${id}" twice`);
+    if (ids.length === 0) errors.push(`banners: "${banner.id}" has an empty pool`);
+    // Pool ids come from the file of the banner's kind, at their own rarity.
+    const items: { id: string; rarity: string }[] =
+      banner.kind === "hero" ? heroes : banner.kind === "weapon" ? parsed.weapons : parsed.relics;
+    for (const [rarity, itemIds] of Object.entries(banner.pool)) {
+      for (const itemId of itemIds) {
+        const item = items.find((candidate) => candidate.id === itemId);
+        if (!item) errors.push(`banners: "${banner.id}" has unknown ${banner.kind} "${itemId}"`);
+        else if (item.rarity !== rarity) errors.push(`banners: "${banner.id}" lists ${item.rarity} ${banner.kind} "${itemId}" as ${rarity}`);
+      }
+    }
+  }
+  for (const achievement of achievements) {
+    const goal = achievement.goal;
+    if (goal.type === "bossKillWithBond" && !cards.some((card) => card.id === goal.bondCardId && card.bond)) {
+      errors.push(`achievements: "${achievement.id}" needs a bond card, got "${goal.bondCardId}"`);
+    }
+  }
+
   for (const augment of runAugments) {
     if (runRelics.some((relic) => relic.id === augment.id)) {
       errors.push(`runAugments: id "${augment.id}" collides with a runRelic`);
     }
   }
 
-  const validateHooks = (
-    defs: Pick<RunRelicDef, "id" | "hooks">[],
+  const checkHooks = (
     label: string,
+    hooks: (RunRelicHook | WeaponHook)[],
     allowCardOnly: boolean,
+    allowWearer: boolean,
   ) => {
-    for (const def of defs) {
-      for (const [index, hook] of (def.hooks ?? []).entries()) {
-        const hookLabel = `${label} "${def.id}" hook ${index}`;
-        if (someEffect(hook.effects, (effect) => "to" in effect && effect.to === "chosen")) {
-          errors.push(`${hookLabel}: effects must not use to "chosen"`);
-        }
-        if (someEffect(hook.effects, (effect) => effect.type === "stealBuff")) {
-          errors.push(`${hookLabel}: effects must not use stealBuff`);
-        }
-        if (someEffect(hook.effects, (effect) => effect.actor !== undefined)) {
-          errors.push(`${hookLabel}: effects must not use actor`);
-        }
-        if (someEffect(hook.effects, (effect) => effect.type === "chooseCard")) {
-          errors.push(`${hookLabel}: effects must not use chooseCard`);
-        }
-        if (!allowCardOnly && someEffect(hook.effects, (e) => cardOnly(e) || e.type === "missingHpDamage")) {
-          errors.push(`${hookLabel}: card-only keyword`);
-        }
-        if (
-          someEffect(
-            hook.effects,
-            (effect) => effect.type === "conditional" && effect.condition.type.startsWith("target"),
-          )
-        ) {
-          errors.push(`${hookLabel}: conditions must not reference a target`);
-        }
-        if (hook.on.type === "heroDied" && hook.actor === "trigger") {
-          errors.push(`${hookLabel}: heroDied cannot use actor "trigger"`);
-        }
+    for (const [index, hook] of hooks.entries()) {
+      const hookLabel = `${label} hook ${index}`;
+      if (someEffect(hook.effects, (effect) => "to" in effect && effect.to === "chosen")) {
+        errors.push(`${hookLabel}: effects must not use to "chosen"`);
       }
+      if (someEffect(hook.effects, (effect) => effect.type === "stealBuff")) {
+        errors.push(`${hookLabel}: effects must not use stealBuff`);
+      }
+      if (someEffect(hook.effects, (effect) => effect.actor !== undefined)) {
+        errors.push(`${hookLabel}: effects must not use actor`);
+      }
+      if (someEffect(hook.effects, (effect) => effect.type === "chooseCard")) {
+        errors.push(`${hookLabel}: effects must not use chooseCard`);
+      }
+      if (!allowCardOnly && someEffect(hook.effects, (e) => cardOnly(e) || e.type === "missingHpDamage")) {
+        errors.push(`${hookLabel}: card-only keyword`);
+      }
+      if (
+        someEffect(
+          hook.effects,
+          (effect) => effect.type === "conditional" && effect.condition.type.startsWith("target"),
+        )
+      ) {
+        errors.push(`${hookLabel}: conditions must not reference a target`);
+      }
+      if (hook.on.type === "heroDied" && hook.actor === "trigger") {
+        errors.push(`${hookLabel}: heroDied cannot use actor "trigger"`);
+      }
+      const usesWearer =
+        hook.actor === "wearer" ||
+        (hook.on.type === "cardPlayed" && hook.on.owner !== undefined) ||
+        (hook.on.type === "enemyKilled" && hook.on.killer !== undefined);
+      if (usesWearer && !allowWearer) errors.push(`${hookLabel}: "wearer" is only allowed in weapon hooks`);
     }
   };
-  validateHooks(runRelics, "runRelic", false);
-  // Augments are player-side powers: card-only effects (drainMoonPower,
-  // gainMoonPowerPerTurn, ...) are allowed here, unlike run relics.
-  validateHooks(runAugments, "runAugment", true);
+  for (const relic of runRelics) checkHooks(`runRelic "${relic.id}"`, relic.hooks ?? [], false, false);
+  // Augments, moon relics and weapons are player-side powers: card-only effects
+  // (drainMoonPower, gainMoonPowerPerTurn, ...) are allowed, unlike run relics.
+  for (const augment of runAugments) checkHooks(`runAugment "${augment.id}"`, augment.hooks ?? [], true, false);
+
+  // Weapons and moon relics (`01` §14, `14` §13).
+  const otherIds = new Set([...heroes, ...cards, ...runRelics, ...runAugments].map((def) => def.id));
+  for (const def of [...weapons, ...relics]) {
+    if (otherIds.has(def.id)) errors.push(`gear: id "${def.id}" collides with a hero, card, run relic or augment`);
+  }
+  for (const id of weapons.map((weapon) => weapon.id).filter((id) => relics.some((relic) => relic.id === id))) {
+    errors.push(`gear: id "${id}" is both a weapon and a relic`);
+  }
+  for (const weapon of weapons) {
+    const label = `weapon "${weapon.id}"`;
+    const signature = weapon.signatureHeroId;
+    if (signature !== undefined && !heroById.has(signature)) errors.push(`${label}: unknown signature hero "${signature}"`);
+    const usesSignature = weapon.signatureHooks !== undefined || weapon.refinement.some((level) => level.signatureHooks !== undefined);
+    if (usesSignature && signature === undefined) errors.push(`${label}: signatureHooks need signatureHeroId`);
+    // Every refinement level must be a valid card with valid passives.
+    let card = weapon.card;
+    let hooks = weapon.hooks;
+    let signatureHooks = weapon.signatureHooks;
+    for (let level = 1; level <= weapon.refinement.length + 1; level++) {
+      if (level > 1) {
+        const change = weapon.refinement[level - 2]!;
+        card = { ...card, ...change.card };
+        hooks = change.hooks ?? hooks;
+        signatureHooks = change.signatureHooks ?? signatureHooks;
+      }
+      const levelLabel = `${label} R${level}`;
+      checkCardShape(levelLabel, card);
+      if (someEffect(card.effects, (effect) => effect.actor !== undefined)) {
+        errors.push(`${levelLabel}: actor is only allowed on bond cards`);
+      }
+      checkHooks(levelLabel, hooks, true, true);
+      checkHooks(`${levelLabel} signature`, signatureHooks ?? [], true, true);
+    }
+  }
+  for (const relic of relics) {
+    for (const [index, level] of relic.resonance.entries()) {
+      checkHooks(`relic "${relic.id}" resonance ${index + 1}`, level.hooks ?? [], true, false);
+    }
+  }
+  for (const hero of heroes) {
+    const effects = hero.altLevelUp.onLevelUp ?? [];
+    const label = `hero "${hero.id}" altLevelUp.onLevelUp`;
+    if (effectsUseChosen(effects)) errors.push(`${label}: effects must not use to "chosen" or stealBuff`);
+    if (someEffect(effects, (effect) => effect.type === "chooseCard" || effect.actor !== undefined)) {
+      errors.push(`${label}: effects must not use chooseCard or actor`);
+    }
+    if (someEffect(effects, (effect) => effect.type === "conditional" && effect.condition.type.startsWith("target"))) {
+      errors.push(`${label}: conditions must not reference a target`);
+    }
+  }
 
   return errors;
 }
@@ -306,7 +442,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -320,6 +456,12 @@ export function parseGameData(raw: unknown): GameData {
     combatConfig,
     keywords: Object.fromEntries(keywords.map((keyword) => [keyword.id, keyword])),
     metaConfig,
+    economyConfig,
+    missions: Object.fromEntries(missions.map((mission) => [mission.id, mission])),
+    achievements: Object.fromEntries(achievements.map((achievement) => [achievement.id, achievement])),
+    banners: Object.fromEntries(banners.map((banner) => [banner.id, banner])),
+    weapons: Object.fromEntries(weapons.map((weapon) => [weapon.id, weapon])),
+    relics: Object.fromEntries(relics.map((relic) => [relic.id, relic])),
   };
 }
 
@@ -336,5 +478,11 @@ export function loadGameData(): GameData {
     combatConfig: combatConfigJson,
     keywords: keywordsJson,
     metaConfig: metaConfigJson,
+    economyConfig: economyConfigJson,
+    missions: missionsJson,
+    achievements: achievementsJson,
+    banners: bannersJson,
+    weapons: weaponsJson,
+    relics: relicsJson,
   });
 }

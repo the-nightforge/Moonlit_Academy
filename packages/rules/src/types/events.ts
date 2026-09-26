@@ -40,6 +40,8 @@ export type CombatEvent =
   | { type: "intentFizzled"; enemyId: string; intentId: string }
   | { type: "intentSkipped"; enemyId: string; reason: "freeze" }
   | { type: "runRelicTriggered"; runRelicId: string }
+  | { type: "relicTriggered"; relicId: string }
+  | { type: "weaponTriggered"; weaponId: string; heroId: string }
   | { type: "heroLeveledUp"; heroId: string; name: string }
   | { type: "unitDied"; unitId: string; killerId?: string }
   | { type: "combatEnded"; result: "won" | "lost" };

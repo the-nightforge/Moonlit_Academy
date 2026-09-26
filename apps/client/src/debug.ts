@@ -1,6 +1,5 @@
-import { createProfile, drawCards } from "rules";
-import type { CombatEvent, CombatState, GameData, Profile } from "rules";
-import { saveProfile } from "./profile-store";
+import { cardDefOf, drawCards } from "rules";
+import type { CombatEvent, CombatState, GameData } from "rules";
 import { session } from "./session";
 
 function unitName(state: CombatState, data: GameData, unitId: string): string {
@@ -69,30 +68,6 @@ export function debugAdjustHeroHp(index: number, delta: number): void {
   checkEnd();
 }
 
-export function debugGrantTeamXp(amount = 100): void {
-  const profile = JSON.parse(JSON.stringify(session.profile)) as Profile;
-  for (const heroId of session.heroIds) profile.heroes[heroId]!.xp += amount;
-  session.profile = profile;
-  saveProfile(profile);
-}
-
-export function debugUnlockAll(): void {
-  const profile = JSON.parse(JSON.stringify(session.profile)) as Profile;
-  for (const hero of Object.values(session.data.heroes)) {
-    profile.heroes[hero.id] = {
-      xp: Math.max(profile.heroes[hero.id]?.xp ?? 0, session.data.metaConfig.masteryLevels.at(-1)!),
-      unlockedCardIds: [...hero.lockedCardIds],
-    };
-  }
-  session.profile = profile;
-  saveProfile(profile);
-}
-
-export function debugResetProfile(): void {
-  session.profile = createProfile(session.data);
-  saveProfile(session.profile);
-}
-
 export function describeEvent(
   state: CombatState,
   data: GameData,
@@ -117,7 +92,7 @@ export function describeEvent(
       return "Chọn 1 lá";
     case "cardPlayed": {
       const instance = state.cards[event.instanceId];
-      const card = instance ? data.cards[instance.cardId] : undefined;
+      const card = instance ? cardDefOf(data, state, instance) : undefined;
       return `Đánh ${card?.name ?? event.instanceId} (cost ${event.cost})`;
     }
     case "cardDiscarded":
@@ -163,6 +138,10 @@ export function describeEvent(
       if (relic !== undefined) return `Kỳ Vật: ${relic.name}`;
       return `Lõi: ${data.augments[event.runRelicId]?.name ?? event.runRelicId}`;
     }
+    case "relicTriggered":
+      return `Nguyệt Bảo: ${data.relics[event.relicId]?.name ?? event.relicId}`;
+    case "weaponTriggered":
+      return `Binh Khí: ${data.weapons[event.weaponId]?.name ?? event.weaponId} (${name(`hero:${event.heroId}`)})`;
     case "heroLeveledUp":
       return `${name(event.heroId)} thăng cấp: ${event.name}`;
     case "unitDied":

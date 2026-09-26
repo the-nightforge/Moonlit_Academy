@@ -279,6 +279,33 @@ Ví dụ — `bloodMoon(2)` đánh trong lượt người chơi vòng N:
 
 *Ghi chú: GDD ghi ngưỡng F04 là 4; prototype dùng 3 vì trận ngắn. GDD ghi F02 "Cướp 3 buff"; dùng 2 sau playtest 2.8 (`09` mục 12), trả về 3 và tính thêm Đoạt Nguyệt sau playtest 4b (`playtest-notes.md`, chỉnh sau 4b).*
 
+- **Tinh Hồn [GĐ4d]** (`14` §10; `createCombat` / `createRun` nhận tham số `loadout`):
+  - **Cấp ≥ 2:** ngưỡng thăng cấp của Hero đó = `levelUp.constellationThreshold` thay
+    `threshold`. Riêng M06 (`enemiesKilled`): tính cả kẻ địch ngã do Phản Đòn của M06.
+  - **Cấp ≥ 4:** khi tạo trận / lượt chơi, mọi bản của lá `signature.cardId` trong deck
+    của Hero đó được thay bằng `signature.plusCardId` (cùng owner, cost, `copies`). Lá "+"
+    là lá riêng của Hero, chịu mọi luật lá bình thường.
+  - Cấp 1, 3, 6 không đổi luật trận.
+  - **Cấp 5 [GĐ4e] — dạng thăng cấp thứ hai:** khi loadout của Hero có
+    `levelUpForm: "alt"` (chỉ chọn được ở Tinh Hồn ≥ 5, `14` §10.1), Hero dùng
+    `heroes.json altLevelUp` thay `levelUp.name / description / passive`. Bộ đếm và
+    ngưỡng **không đổi** (vẫn theo cấp 2). Nội tại mới **thay** nội tại cơ bản, có hiệu
+    lực ngay khi thăng cấp; `onLevelUp` (nếu có) chạy một lần ngay sau `heroLeveledUp`,
+    Hero đó là đơn vị hành động.
+
+| Hero | Dạng thứ hai | `onLevelUp` | Nội tại (`passive`) |
+|---|---|---|---|
+| M05 | *Bất Diệt* | Nhận 12 giáp, Khiêu Khích 2 vòng | `armorBonusOwnCards(3)`: mỗi effect `gainArmor` từ lá của M05 +3 giáp (áp trước hệ số giáp) |
+| F04 | *Tĩnh Tâm* | — | `healCleanses`: sau mỗi effect `heal` / `burstRegen` / `applyStatus regen` từ lá của F04 lên một Hero, Hero đó được **giải trừ** (như effect `cleanse`) |
+| M06 | *Tàn Ảnh* | — | `firstComboCountsExtra(1)`: lá đầu tiên có từ khóa Liên Hoàn của M06 mỗi lượt tính `cardsPlayedThisTurnAtLeast` như đã đánh thêm 1 lá |
+| F03 | *Hàn Kiếm* | — | `firstHitVulnerable(1)`: lượt damage đầu tiên mỗi lượt từ lá của F03 trúng kẻ địch (còn sống sau đòn) → kẻ địch đó Dễ Vỡ 1 vòng |
+| F02 | *Huyết Diện* | — | `bloodMoonOwnCardDiscount(1)`: khi đang Huyết Nguyệt, lá của F02 giảm 1 Nguyệt Lực (tối thiểu 0, áp sau giảm theo pha) |
+
+    "Lá của Hero X" gồm lá Binh Khí X đang mang (§14.2), không gồm lá Song Hành. Bộ đếm
+    "mỗi lượt" (Tàn Ảnh, Hàn Kiếm) đặt lại ở đầu lượt người chơi. Hàn Kiếm: lượt damage đầu tiên luôn
+    dùng hết lượt của lượt đó (kể cả khi bị giáp chặn hết hoặc kết liễu mục tiêu — khi đó
+    không áp Dễ Vỡ). Tàn Ảnh: lá Liên Hoàn = lá có từ khóa `lien_hoan`; lá đầu tiên dùng
+    hết phần thưởng dù điều kiện Liên Hoàn của nó có cần hay không.
 - "Lá của Hero X" trong cột Nội tại **không** gồm lá Song Hành: nội tại thăng cấp không áp cho lá Song Hành **[GĐ2]**.
 - Bộ đếm tính cho **đơn vị hành động** của effect, kể cả trong lá Song Hành (mục 5.4). Riêng `enemiesKilled` tính khi kẻ địch ngã do damage từ lá có đơn vị hành động là M06; kẻ địch ngã do Phản Đòn **không** tính.
 
@@ -426,7 +453,7 @@ healed = min(maxHp − hp, floor(amount × hệ số hồi máu của pha))
 
 ## 12. Chưa có trong prototype
 
-Crit, Binh Khí, Nguyệt Bảo, Mê Hoặc, triệu hồi, hàng trước/sau. Không code các phần này ở giai đoạn 1–2.
+Crit, Mê Hoặc, triệu hồi, hàng trước/sau. Không code các phần này ở giai đoạn 1–2. Binh Khí và Nguyệt Bảo: §14 (GĐ 4e).
 
 ---
 
@@ -507,3 +534,72 @@ Hook `combatStart` chạy ở lượt 1 nên giáp nhận được còn tới h�
 - **Modifier:** `activeMoonModifiers` đổi thành `activeModifiers` = modifier của
   pha trăng + modifier của mọi Kỳ Vật đang có. Chi phí theo tag, damage theo tag,
   hệ số hồi / giáp, thưởng Ẩn Thân tự áp dụng; các hệ số nhân với nhau.
+
+---
+
+## 14. Binh Khí và Nguyệt Bảo [GĐ4e]
+
+Nội dung: `03` §7. Sở hữu, Tinh Luyện, Cộng Minh, deck: `14` §13. Dữ liệu: `02` §1.12.
+
+### 14.1 Vào trận
+
+- `createCombat(data, setup, loadout?)` / `createRun(data, setup, loadout?)`: loadout
+  (`14` §12) thêm `heroes[id].weaponId: string | null`, `heroes[id].refinement` (1–5; 0
+  khi không có) và `relics: { id, resonance }[]` (≤ 2). Thiếu loadout = không trang bị.
+- **Cấp hiệu lực:** `weaponAt(def, r)` = bản R1 (`card`, `hooks`, `signatureHooks`) rồi
+  áp lần lượt `refinement[0..r−2]` (mỗi mục ghi đè các trường nó có: `card` ghi đè từng
+  trường của lá, `hooks` / `signatureHooks` thay cả mảng). `relicAt(def, c)` =
+  `resonance[c−1]` (mỗi cấp là bản đầy đủ).
+
+### 14.2 Lá Binh Khí
+
+- Mỗi Hero có vũ khí góp `card.copies` (1 hoặc 2) bản vào chồng rút lúc tạo trận, **sau**
+  các lá deck và lá Song Hành, theo vị trí người mang, trước lần xáo đầu; instance id `wpn_<heroId>_<n>` (n = 1, 2),
+  `cardId = weaponId`, `ownerIds = [heroId]`. Lá được coi như `CardDef` với `id =
+  weaponId`, `ownerId = heroId`, các trường còn lại từ `weaponAt(...).card`.
+- Là **lá riêng của người mang**: Tàn Chiêu khi người mang ngã, Đóng Băng, chi phí theo
+  tag/pha, bộ đếm và nội tại thăng cấp của người mang (kể cả Tinh Hồn, dạng thứ hai),
+  "lá riêng đầu tiên" của Tô Dạ. Không phải lá Song Hành. Dùng được mọi effect của lá
+  (kể cả từ khóa 4b).
+- Trong lượt chơi, lá Binh Khí **không** nằm trong `run.deck`: mỗi trận thêm lại từ
+  `run.loadout` → không bỏ được ở Nghỉ Chân, không tính `minDeckSize` (`11` §3).
+
+### 14.3 Nội tại vũ khí
+
+```ts
+type WeaponHook = Omit<RunRelicHook, "actor" | "on"> & {
+  actor: RunRelicHook["actor"] | "wearer";
+  on: HookTrigger                                              // như §13.1, thêm bộ lọc:
+    | { type: "cardPlayed"; tag?: CardTag; cardType?: CardType; owner?: "wearer" }
+    | { type: "enemyKilled"; killer?: "wearer" };
+};
+```
+
+- Chạy trên máy hook của Kỳ Vật (§13.2–§13.4) với các khác biệt:
+  - `actor: "wearer"` = người mang; `owner: "wearer"` khớp khi Hero `trigger` của
+    `cardPlayed` là người mang; `killer: "wearer"` khớp khi Hero kết liễu là người mang.
+    `wearer` chỉ hợp lệ trong hook vũ khí (lỗi khi nạp nếu dùng ở Kỳ Vật / Lõi /
+    Nguyệt Bảo).
+  - **Người mang đã ngã → mọi hook của vũ khí đó không chạy** (bộ đếm không tăng).
+  - `signatureHooks` (nếu có) thay `hooks` khi người mang là `signatureHeroId`.
+  - Được dùng effect "chỉ lá" như Lõi (`gainMoonPowerPerTurn`, `drainMoonPower` với
+    `allEnemies`…); vẫn cấm `to: "chosen"`, `stealBuff`, `actor`, `chooseCard`,
+    condition `target…`.
+- Khóa bộ đếm `"<weaponId>@<heroId>#<chỉ số hook>"`. Mỗi lần chạy phát
+  `weaponTriggered { weaponId, heroId }` trước event của các effect.
+
+### 14.4 Nguyệt Bảo
+
+- Mỗi Nguyệt Bảo trong loadout góp `relicAt(...).modifiers` vào `activeModifiers` và
+  `relicAt(...).hooks` vào máy hook (ràng buộc như Lõi). Khóa bộ đếm
+  `"<relicId>#<chỉ số hook>"`; mỗi lần chạy phát `relicTriggered { relicId }`.
+- `costModifierForTag` thêm `while?: "bloodMoon"`: modifier chỉ có hiệu lực khi
+  `bloodMoonRounds > 0` (dùng được ở mọi nguồn modifier).
+- Có hiệu lực ở mọi trận của lượt chơi và ở trận lẻ.
+
+### 14.5 Thứ tự hook
+
+Cùng một lần trigger: Kỳ Vật và Lõi (thứ tự `runRelicIds`) → Nguyệt Bảo (thứ tự
+`loadout.relics`) → vũ khí theo vị trí người mang 0 → 2; trong mỗi nguồn theo thứ tự
+`hooks`. "Không đệ quy" (§13.4) áp cho mọi nguồn: trigger phát sinh trong effect của một
+hook bất kỳ không kích hoạt hook nào.

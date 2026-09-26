@@ -1,3 +1,5 @@
+import { cardDefOf } from "./gear";
+import { levelUpPassive } from "./levelup";
 import { activeModifiers } from "./moon";
 import { hasStatus } from "./statuses";
 import type { CardInstance, CombatState, GameData, HeroState } from "./types/index";
@@ -24,13 +26,22 @@ export function firstCardDiscount(data: GameData, state: CombatState, instanceId
   if (!instance || instance.ownerIds.length !== 1) return 0;
   const [owner] = cardOwners(state, instance);
   if (!owner?.leveledUp || !owner.firstCardDiscountActive || owner.firstCardDiscountUsedThisTurn) return 0;
-  const passive = data.heroes[owner.defId]?.levelUp.passive;
+  const passive = levelUpPassive(data, owner);
   return passive?.type === "firstOwnCardDiscount" ? passive.amount : 0;
+}
+
+/** Huyết Diện: the owner's cards cost less during blood moon (`01` §8). */
+function bloodMoonDiscount(data: GameData, state: CombatState, instance: CardInstance): number {
+  if (state.bloodMoonRounds === 0 || instance.ownerIds.length !== 1) return 0;
+  const [owner] = cardOwners(state, instance);
+  if (!owner?.leveledUp) return 0;
+  const passive = levelUpPassive(data, owner);
+  return passive?.type === "bloodMoonOwnCardDiscount" ? passive.amount : 0;
 }
 
 export function getEffectiveCost(data: GameData, state: CombatState, instanceId: string): number {
   const instance = state.cards[instanceId];
-  const card = instance ? data.cards[instance.cardId] : undefined;
+  const card = instance ? cardDefOf(data, state, instance) : undefined;
   if (!card) throw new Error(`getEffectiveCost: unknown card instance "${instanceId}"`);
   let cost = card.cost;
   let floor = 0;
@@ -41,12 +52,13 @@ export function getEffectiveCost(data: GameData, state: CombatState, instanceId:
     }
   }
   const chosen = instance!.chosenThisTurn ? data.combatConfig.chooseCardDiscount : 0;
-  return Math.max(0, Math.max(0, floor, cost) - firstCardDiscount(data, state, instanceId) - chosen);
+  const passives = firstCardDiscount(data, state, instanceId) + bloodMoonDiscount(data, state, instance!);
+  return Math.max(0, Math.max(0, floor, cost) - passives - chosen);
 }
 
 export function getValidTargets(data: GameData, state: CombatState, instanceId: string): string[] {
   const instance = state.cards[instanceId];
-  const card = instance ? data.cards[instance.cardId] : undefined;
+  const card = instance ? cardDefOf(data, state, instance) : undefined;
   if (!card) return [];
   switch (card.target) {
     case "none":
@@ -63,7 +75,7 @@ export function getValidTargets(data: GameData, state: CombatState, instanceId: 
 export function isCardPlayable(data: GameData, state: CombatState, instanceId: string): boolean {
   if (state.status !== "playerTurn") return false;
   const instance = state.cards[instanceId];
-  const card = instance ? data.cards[instance.cardId] : undefined;
+  const card = instance ? cardDefOf(data, state, instance) : undefined;
   if (!instance || !card || !state.hand.includes(instanceId)) return false;
   if (ownerError(state, instance) !== null) return false;
   if (card.requiresBloodMoon && state.bloodMoonRounds === 0) return false;

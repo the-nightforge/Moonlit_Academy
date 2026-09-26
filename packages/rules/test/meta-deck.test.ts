@@ -3,7 +3,7 @@ import type { GameData, Profile, SavedDeck } from "../src/index";
 import {
   applyRunAction, createProfile, createRun, deleteDeck, saveDeck, starterDeck, validateDeck,
 } from "../src/index";
-import { testData } from "./helpers";
+import { ownAllHeroes, testData } from "./helpers";
 
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
 
@@ -26,7 +26,7 @@ describe("decks", () => {
     const locked = data.heroes["m05"]!.lockedCardIds[0]!;
     const withLocked = [locked, ...base.slice(1)];
     expect(validateDeck(data, profile, { heroIds: TEAM, cardIds: withLocked })).toEqual([{ code: "lockedCard", cardId: locked }]);
-    const unlocked: Profile = { ...profile, heroes: { ...profile.heroes, m05: { xp: 999, unlockedCardIds: [locked] } } };
+    const unlocked: Profile = { ...profile, heroes: { ...profile.heroes, m05: { ...profile.heroes["m05"]!, xp: 999, unlockedCardIds: [locked] } } };
     expect(validateDeck(data, unlocked, { heroIds: TEAM, cardIds: withLocked })).toEqual([]);
 
     const m06Cards = data.heroes["m06"]!.cardIds;
@@ -34,9 +34,9 @@ describe("decks", () => {
     expect(validateDeck(data, profile, { heroIds: TEAM, cardIds: fewM06 })).toContainEqual({ code: "tooFewForHero", heroId: "m06", count: 3 });
   });
 
-  it("T165: the starter deck is valid for all ten teams with a new profile", () => {
+  it("T165: the starter deck is valid for all ten teams when every hero is owned", () => {
     const data = testData();
-    const profile = createProfile(data);
+    const profile = ownAllHeroes(data, createProfile(data));
     const ids = Object.keys(data.heroes);
     let teams = 0;
     for (let a = 0; a < ids.length; a++) for (let b = a + 1; b < ids.length; b++) for (let c = b + 1; c < ids.length; c++) {
