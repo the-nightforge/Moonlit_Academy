@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { pendingUnlocks } from "rules";
+import { errorText, mutate } from "../account";
 import { session } from "../session";
 import { showCardTooltip } from "../ui/card-tooltip";
 import { COLORS, CONSTELLATION_TEXT, FACTION_LABELS, OWNER_COLORS, RARITY_COLORS, RARITY_LABELS, TEXT_BASE, useDesignCamera } from "../ui/theme";
@@ -15,6 +16,7 @@ export class HeroesScene extends Phaser.Scene {
   private root!: Phaser.GameObjects.Container;
   private heroId = "";
   private tooltip: Phaser.GameObjects.Container | null = null;
+  private busy = false;
 
   constructor() {
     super("heroes");
@@ -61,6 +63,37 @@ export class HeroesScene extends Phaser.Scene {
     addButton(this, this.root, 410, 680, 150, "Tu Luyện", () => this.scene.start("mastery", { heroId: this.heroId }), profile.heroes[this.heroId] !== undefined);
   }
 
+  /** Level-up form choice (Tinh Hồn 5, `14` §10.1); the server checks it again. */
+  private renderLevelUpForm(x: number, y: number) {
+    const hero = session.data.heroes[this.heroId]!;
+    const owned = session.profile.heroes[hero.id];
+    const alt = hero.altLevelUp;
+    const form = owned?.levelUpForm === "alt" && owned.constellation >= 5 ? "alt" : "base";
+    this.root.add(this.add.text(x, y, `Dạng thứ hai — ${alt.name}: ${alt.description}`, {
+      ...TEXT_BASE, fontSize: "13px", color: form === "alt" ? COLORS.gold : COLORS.text, wordWrap: { width: 760 },
+    }));
+    if (!owned) return;
+    const canAlt = owned.constellation >= 5;
+    const choose = (next: "base" | "alt") => {
+      if (this.busy || next === form) return;
+      this.busy = true;
+      mutate("PUT", `/profile/heroes/${hero.id}/level-up-form`, { form: next }).then(
+        () => {
+          this.busy = false;
+          this.render();
+        },
+        (error: unknown) => {
+          this.busy = false;
+          window.alert(errorText(error));
+          this.render();
+        },
+      );
+    };
+    addButton(this, this.root, x + 90, y + 58, 180, `${hero.levelUp.name}${form === "base" ? " ✓" : ""}`, () => choose("base"));
+    addButton(this, this.root, x + 290, y + 58, 180, `${alt.name}${form === "alt" ? " ✓" : ""}`, () => choose("alt"), canAlt);
+    if (!canAlt) addText(this, this.root, x + 400, y + 58, "cần Tinh Hồn 5", 12, COLORS.dimText).setOrigin(0, 0.5);
+  }
+
   private renderDetail() {
     const data = session.data;
     const hero = data.heroes[this.heroId]!;
@@ -85,12 +118,12 @@ export class HeroesScene extends Phaser.Scene {
     if (owned && owned.bonusUnlocks > 0) {
       addText(this, this.root, x, 410, `Lượt mở lá thêm từ Tinh Hồn: ${owned.bonusUnlocks}`, 13, COLORS.text);
     }
-    addText(this, this.root, x, 434, "Dạng thăng cấp: cơ bản (dạng thứ hai mở ở giai đoạn sau)", 13, COLORS.dimText);
+    this.renderLevelUpForm(x, 426);
 
-    addText(this, this.root, x, 474, "Lá chủ lực (di chuột để xem)", 15);
+    addText(this, this.root, x, 514, "Lá chủ lực (di chuột để xem)", 15);
     const { cardId, plusCardId } = hero.signature;
     [cardId, plusCardId].forEach((id, index) => {
-      const y = 512 + index * 46;
+      const y = 550 + index * 46;
       const active = index === 0 ? level < 4 : level >= 4;
       const card = data.cards[id]!;
       const row = this.add.rectangle(x, y, 520, 38, active ? 0x1f3a2a : 0x141b33).setOrigin(0, 0.5);
@@ -98,7 +131,7 @@ export class HeroesScene extends Phaser.Scene {
       row.setInteractive();
       row.on("pointerover", () => {
         this.tooltip?.destroy();
-        this.tooltip = showCardTooltip(this, 1010, y - 60, data, id);
+        this.tooltip = showCardTooltip(this, 1010, y - 100, data, id);
       });
       row.on("pointerout", () => {
         this.tooltip?.destroy();

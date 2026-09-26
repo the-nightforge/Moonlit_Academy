@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { GameData } from "rules";
+import type { CardDef, GameData } from "rules";
 import { COLORS, TEXT_BASE } from "./theme";
 
 const WIDTH = 300;
@@ -10,9 +10,10 @@ export function showCardTooltip(
   x: number,
   y: number,
   data: GameData,
-  cardId: string,
+  cardOrId: string | CardDef,
+  extraLines: string[] = [],
 ): Phaser.GameObjects.Container {
-  const card = data.cards[cardId]!;
+  const card = typeof cardOrId === "string" ? data.cards[cardOrId]! : cardOrId;
   const lines = [
     `${card.name}  ·  ${card.cost} Nguyệt Lực  ·  ${card.copies} bản`,
     card.text,
@@ -20,6 +21,7 @@ export function showCardTooltip(
       const keyword = data.keywords[id];
       return keyword ? `• ${keyword.name}: ${keyword.text}` : "";
     }),
+    ...extraLines,
   ].filter((line) => line.length > 0);
   const text = scene.add.text(12, 10, lines.join("\n"), {
     ...TEXT_BASE,

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { bondCardsForTeam, claimMission, pendingUnlocks, starterDeck, validateDeck } from "rules";
+import { bondCardsForTeam, buildLoadout, claimMission, pendingUnlocks, starterDeck, validateDeck } from "rules";
 import type { DeckError, GameData, SavedDeck } from "rules";
 import { errorText, logout, mutate } from "../account";
 import { startServerRun } from "../run-session";
@@ -112,10 +112,11 @@ export class DeckSelectScene extends Phaser.Scene {
     const canUnlock = Object.keys(data.heroes).some((id) => pendingUnlocks(data, session.profile, id) > 0);
     // A dry run of the server's claim tells whether a reward is waiting (`14` §7).
     const canClaim = Object.keys(data.missions).some((id) => claimMission(data, session.profile, id, Date.now()).ok);
-    addButton(this, this.root, 820, 30, 110, "Triệu Hồi", () => this.scene.start("gacha"), online);
-    addButton(this, this.root, 940, 30, 110, "Kho Hero", () => this.scene.start("heroes"), online);
-    addButton(this, this.root, 1060, 30, 110, `Nhiệm vụ${canClaim ? " ●" : ""}`, () => this.scene.start("missions"), online);
-    addButton(this, this.root, 1190, 30, 130, `Tu Luyện${canUnlock ? " ●" : ""}`, () => this.scene.start("mastery"), online);
+    addButton(this, this.root, 765, 30, 100, "Triệu Hồi", () => this.scene.start("gacha"), online);
+    addButton(this, this.root, 870, 30, 100, "Kho Hero", () => this.scene.start("heroes"), online);
+    addButton(this, this.root, 975, 30, 100, "Kho đồ", () => this.scene.start("armory"), online);
+    addButton(this, this.root, 1080, 30, 100, `Nhiệm vụ${canClaim ? " ●" : ""}`, () => this.scene.start("missions"), online);
+    addButton(this, this.root, 1195, 30, 120, `Tu Luyện${canUnlock ? " ●" : ""}`, () => this.scene.start("mastery"), online);
     if (online) {
       addCurrencyBar(this, this.root, 175, 30, session.profile.currencies);
       addButton(this, this.root, 90, 30, 140, "Đăng xuất", () => {
@@ -185,7 +186,9 @@ export class DeckSelectScene extends Phaser.Scene {
     };
     const single = () => {
       session.heroIds = [...deck.heroIds] as Team;
-      restartSession(session.seed, session.encounterId, session.heroIds, [...deck.cardIds]);
+      // Online, the single combat uses the profile's Tinh Hồn and the deck's gear (no rewards).
+      const built = online ? buildLoadout(data, session.profile, deck) : undefined;
+      restartSession(session.seed, session.encounterId, session.heroIds, [...deck.cardIds], built?.ok ? built.loadout : undefined);
       this.scene.start("combat");
     };
     addButton(this, this.root, 200, y, 150, "Lượt chơi", play, valid && online);
@@ -264,7 +267,13 @@ export class DeckSelectScene extends Phaser.Scene {
   }
 
   private edit(deck: SavedDeck) {
-    session.editingDeck = { ...deck, cardIds: [...deck.cardIds], heroIds: [...deck.heroIds] as SavedDeck["heroIds"] };
+    session.editingDeck = {
+      ...deck,
+      cardIds: [...deck.cardIds],
+      heroIds: [...deck.heroIds] as SavedDeck["heroIds"],
+      weapons: { ...deck.weapons },
+      relicIds: [...(deck.relicIds ?? [])],
+    };
     this.scene.start("deck-builder");
   }
 }

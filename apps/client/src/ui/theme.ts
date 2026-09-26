@@ -214,7 +214,7 @@ export const CONSTELLATION_TEXT: readonly string[] = [
   "Thăng cấp dễ hơn (ngưỡng thấp hơn)",
   "Mở ngay 1 lá khóa",
   "Lá chủ lực thành bản \"+\"",
-  "Dạng thăng cấp thứ hai (giai đoạn sau)",
+  "Mở dạng thăng cấp thứ hai (chọn bên dưới)",
   "Khung vàng",
 ];
 

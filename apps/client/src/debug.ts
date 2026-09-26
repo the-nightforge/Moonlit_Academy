@@ -1,4 +1,4 @@
-import { drawCards } from "rules";
+import { cardDefOf, drawCards } from "rules";
 import type { CombatEvent, CombatState, GameData } from "rules";
 import { session } from "./session";
 
@@ -92,7 +92,7 @@ export function describeEvent(
       return "Chọn 1 lá";
     case "cardPlayed": {
       const instance = state.cards[event.instanceId];
-      const card = instance ? data.cards[instance.cardId] : undefined;
+      const card = instance ? cardDefOf(data, state, instance) : undefined;
       return `Đánh ${card?.name ?? event.instanceId} (cost ${event.cost})`;
     }
     case "cardDiscarded":

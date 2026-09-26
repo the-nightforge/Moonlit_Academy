@@ -71,13 +71,15 @@ export class GachaScene extends Phaser.Scene {
       `chắc chắn ở lượt ${gacha.legendaryPity}`,
       ...(gacha.newPlayerEpicHero && banner.kind === "hero" ? ["Bảo vệ người mới: Epic ưu tiên Hero chưa sở hữu"] : []),
     ];
-    this.root.add(this.add.text(40, 130, info.join("\n"), { ...TEXT_BASE, fontSize: "13px", color: COLORS.dimText, lineSpacing: 5 }));
+    // The info block starts below the banner buttons.
+    const top = 80 + Object.keys(data.banners).length * 42 - 14;
+    this.root.add(this.add.text(40, top, info.join("\n"), { ...TEXT_BASE, fontSize: "13px", color: COLORS.dimText, lineSpacing: 5 }));
 
-    addText(this, this.root, 40, 262, `Còn ${Math.max(1, gacha.epicPity - pity.sinceEpic)} lượt tới Epic chắc chắn`, 15, COLORS.gold);
-    addText(this, this.root, 40, 286, `Còn ${Math.max(1, gacha.legendaryPity - pity.sinceLegendary)} lượt tới Legendary chắc chắn`, 15, COLORS.gold);
+    addText(this, this.root, 40, top + 132, `Còn ${Math.max(1, gacha.epicPity - pity.sinceEpic)} lượt tới Epic chắc chắn`, 15, COLORS.gold);
+    addText(this, this.root, 40, top + 156, `Còn ${Math.max(1, gacha.legendaryPity - pity.sinceLegendary)} lượt tới Legendary chắc chắn`, 15, COLORS.gold);
 
-    addText(this, this.root, 40, 330, "Có thể nhận:", 14);
-    let y = 356;
+    addText(this, this.root, 40, top + 196, "Có thể nhận:", 14);
+    let y = top + 222;
     for (const rarity of RARITIES) {
       const ids = banner.pool[rarity];
       if (ids.length === 0) continue;

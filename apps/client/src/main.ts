@@ -4,6 +4,7 @@ import { LoginScene } from "./scenes/login-scene";
 import { session } from "./session";
 import { CombatScene } from "./scenes/combat-scene";
 import { DeckBuilderScene } from "./scenes/deck-builder-scene";
+import { ArmoryScene } from "./scenes/armory-scene";
 import { DeckSelectScene } from "./scenes/deck-select-scene";
 import { GachaScene } from "./scenes/gacha-scene";
 import { HeroesScene } from "./scenes/heroes-scene";
@@ -26,7 +27,7 @@ const game = new Phaser.Game({
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   scene: [
-    LoginScene, DeckSelectScene, DeckBuilderScene, MasteryScene, GachaScene, ShopScene, HeroesScene, MissionsScene,
+    LoginScene, DeckSelectScene, DeckBuilderScene, MasteryScene, GachaScene, ShopScene, HeroesScene, MissionsScene, ArmoryScene,
     CombatScene, RunScene,
   ],
 });

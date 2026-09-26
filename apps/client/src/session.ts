@@ -1,6 +1,6 @@
 import { loadGameData } from "data";
 import { createCombat, createProfile, starterDeck } from "rules";
-import type { CombatEvent, CombatState, GameData, MasteryGain, Profile, RunRewards, RunState, SavedDeck } from "rules";
+import type { CombatEvent, CombatState, GameData, Loadout, MasteryGain, Profile, RunRewards, RunState, SavedDeck } from "rules";
 import type { RunTicket } from "./run-session";
 
 export type Team = [string, string, string];
@@ -32,6 +32,8 @@ export interface CombatSession {
   notices: string[];
   /** The finished run's result was accepted by the server. */
   runSubmitted: boolean;
+  /** Tinh Hồn and gear of the single combat's team (built from the profile). */
+  loadout: Loadout | undefined;
 }
 
 export function newCombatSession(
@@ -39,14 +41,15 @@ export function newCombatSession(
   encounterId = "enc_01",
   heroIds: Team = DEFAULT_TEAM,
   deckCardIds?: string[],
+  loadout?: Loadout,
 ): CombatSession {
   const data = loadGameData();
   const deck = deckCardIds ?? starterDeck(data, heroIds);
-  const { state, events } = createCombat(data, { heroIds, encounterId, seed, deckCardIds: deck });
+  const { state, events } = createCombat(data, { heroIds, encounterId, seed, deckCardIds: deck }, loadout);
   return {
     data, state, events, seed, encounterId, heroIds, deckCardIds: deck, run: null,
     profile: createProfile(data), rev: 0, online: false, ticket: null, editingDeck: null, lastGains: null,
-    lastRewards: null, notices: [], runSubmitted: false,
+    lastRewards: null, notices: [], runSubmitted: false, loadout,
   };
 }
 
@@ -57,8 +60,10 @@ export function restartSession(
   encounterId = session.encounterId,
   heroIds: Team = session.heroIds,
   deckCardIds = session.deckCardIds,
+  loadout = session.loadout,
 ): void {
-  const fresh = newCombatSession(seed, encounterId, heroIds, deckCardIds);
+  const fresh = newCombatSession(seed, encounterId, heroIds, deckCardIds, loadout);
+  session.loadout = loadout;
   session.seed = fresh.seed;
   session.encounterId = fresh.encounterId;
   session.heroIds = fresh.heroIds;

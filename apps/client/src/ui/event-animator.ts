@@ -1,4 +1,5 @@
 import type Phaser from "phaser";
+import { cardDefOf } from "rules";
 import type { CombatEvent, CombatState, GameData, IntentDef } from "rules";
 import { STATUS_LABELS, TEXT_BASE } from "./theme";
 
@@ -237,7 +238,7 @@ function animateEvent(
       return floatText(scene, 1090, 540, "Xáo lại chồng bỏ", "#cfd6f0", 12, 300);
     case "cardPlayed": {
       const instance = ctx.state.cards[event.instanceId];
-      const card = instance ? ctx.gameData.cards[instance.cardId] : undefined;
+      const card = instance ? cardDefOf(ctx.gameData, ctx.state, instance) : undefined;
       const name = card?.name ?? "";
       return floatText(scene, WIDTH / 2, 330, `◆ ${name}`, "#f4d35e", 22, 300);
     }
