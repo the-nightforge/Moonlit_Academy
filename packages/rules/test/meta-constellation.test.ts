@@ -116,7 +116,8 @@ describe("constellations, loadout and the moon star shop", () => {
       if (!result.ok) throw new Error(result.error);
       profile = result.profile;
     }
-    expect(profile.currencies).toMatchObject({ moonStar: 1000 - 5 * pullItem.price, moonJade: 5 * 160 });
+    const amount = pullItem.item.type === "moonJade" ? pullItem.item.amount : 0;
+    expect(profile.currencies).toMatchObject({ moonStar: 1000 - pullItem.limitPerWeek * pullItem.price, moonJade: pullItem.limitPerWeek * amount });
     expect(buyShopItem(data, profile, "shop_pull", MONDAY)).toEqual({ ok: false, error: "weekly limit" });
     expect(buyShopItem(data, profile, "shop_pull", MONDAY + WEEK).ok).toBe(true);
 

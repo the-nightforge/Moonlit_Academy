@@ -14,10 +14,11 @@ describe("gacha routes", () => {
     expect(pulled.status).toBe(200);
     expect(pulled.body.rev).toBe(2);
     expect(pulled.body.results).toHaveLength(10);
-    // The starter gift is exactly 10 pulls; achievements reached by the pull pay on top.
+    // Ten pulls are paid from the starter gift; achievements reached by the pull pay on top.
     const achievementJade = (pulled.body.achievements as string[])
       .reduce((sum, id) => sum + server.data.achievements[id]!.reward.moonJade, 0);
-    expect(pulled.body.profile.currencies.moonJade).toBe(achievementJade);
+    const { starterGift, pullCost } = server.data.economyConfig;
+    expect(pulled.body.profile.currencies.moonJade).toBe(starterGift.moonJade - 10 * pullCost + achievementJade);
 
     // The log keeps the seed: the same pull can be reproduced from it.
     const logged = server.db.prepare("SELECT seed, results_json, count FROM pulls").get() as { seed: number; results_json: string; count: number };

@@ -674,7 +674,10 @@ Mã mới từ **T173**. Test luật dùng fixture; test server dùng `buildApp`
 
 1. **Thư viện:** `fastify`, `better-sqlite3`, `@types/better-sqlite3`.
 2. **Số kinh tế** (§3.1–§3.2): quà 1600 Nguyệt Ngọc, ~130/lượt chơi, nhiệm vụ ngày ~110,
-   tuần ~450 — nhịp "Legendary mới sau ~3 tuần".
+   tuần ~450 — nhịp "Legendary mới sau ~3 tuần". **Chỉnh ở 4d.6 (đã duyệt, gói J):** quà
+   2400, lượt chơi 3/tầng + 20 thắng + 30 thắng đầu ngày, nhiệm vụ ngày 20/20/10, tuần
+   80/60/40, thành tựu ×0.5, Nguyệt Tinh trùng rare/common 1 · epic 5, gói Nguyệt Ngọc
+   ở cửa hàng 2 lần/tuần (số đo: `playtest-notes.md` mục 4d).
 3. **Bảo vệ người mới** (§3.5 bước 5): đảm bảo Epic đầu tiên trên banner Hero ra Hero
    chưa sở hữu — lệch nhẹ khỏi GDD, để có đủ 5 Hero sớm.
 4. **Tinh Hồn chẵn trong lượt chơi:** GĐ 4 áp mọi cấp (chưa có PvP); khi có PvP (GĐ 5)

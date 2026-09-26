@@ -33,9 +33,9 @@ Hồ sơ là dữ liệu JSON thuần; mọi hàm dưới đây là hàm thuần
 ```json
 {
   "starterHeroIds": ["m05", "f04", "m06"],
-  "starterGift": { "moonJade": 1600 },
+  "starterGift": { "moonJade": 2400 },
   "pullCost": 160,
-  "runRewards": { "moonJadePerFloor": 10, "moonJadeWin": 80, "firstWinOfDay": 100 },
+  "runRewards": { "moonJadePerFloor": 3, "moonJadeWin": 20, "firstWinOfDay": 30 },
   "resetUtcHour": 21,
   "gacha": {
     "rates": { "legendary": 0.02, "epic": 0.13 },
@@ -45,9 +45,9 @@ Hồ sơ là dữ liệu JSON thuần; mọi hàm dưới đây là hàm thuần
     "legendaryPity": 70,
     "newPlayerEpicHero": true
   },
-  "dupeMoonStar": { "legendary": 25, "epic": 10, "rare": 3, "common": 3 },
+  "dupeMoonStar": { "legendary": 25, "epic": 5, "rare": 1, "common": 1 },
   "moonStarShop": [
-    { "id": "shop_pull", "item": { "type": "moonJade", "amount": 160 }, "price": 10, "limitPerWeek": 5 },
+    { "id": "shop_pull", "item": { "type": "moonJade", "amount": 160 }, "price": 10, "limitPerWeek": 2 },
     { "id": "shop_epic_hero", "item": { "type": "heroChoice", "rarity": "epic" }, "price": 120, "limitPerWeek": 1 }
   ]
 }

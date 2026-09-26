@@ -601,3 +601,50 @@ lượt tới cấp 6 (mục tiêu 8–12).
   4/4/10 của m05+f03+f04 0% (chết sớm tầng 2–3) — xem lại bằng chơi tay,
   có thể do heuristic không chơi tốt các deck tập trung.
 
+
+# Playtest Notes — Phase 4d (bước 4d.6)
+
+## Phương pháp
+
+- `packages/rules/test/economy-sim.test.ts`: 200 người chơi ảo × 60 ngày, mỗi ngày 2 lượt
+  chơi Bộ cơ bản (kết quả rút từ lượt bot thật, 4 đội × seed 1–20), mở lá khi có lượt,
+  nhận mọi nhiệm vụ, mua cửa hàng Nguyệt Tinh, quay mỗi khi đủ Nguyệt Ngọc.
+- `run-playtest`: Bộ cơ bản, mọi Hero cùng Tinh Hồn 0 / 2 / 4 / 6 (4 đội × 20 seed).
+- Mục tiêu (`15` §8): ≥ 90% đủ 5 Hero trước ngày 7; Legendary đầu TB ngày 16–25;
+  thắng lượt C0 và C6 chênh ≤ 15 điểm.
+
+## Thắng lượt theo Tinh Hồn (80 lượt/mức)
+
+| Tinh Hồn | 0 | 2 | 4 | 6 |
+|---|---|---|---|---|
+| Thắng | 43% | 43% | 48% | 48% |
+
+Chênh 5 điểm — đạt, không chỉnh. C2 gần như không đổi với bot (ít khi sát ngưỡng thăng
+cấp); C4 (lá "+") là bước tăng rõ nhất.
+
+## Kinh tế
+
+| | Trước | Sau (gói J) | Mục tiêu |
+|---|---|---|---|
+| Đủ 5 Hero trước ngày 7 | 99% | 96% | ≥ 90% |
+| Ngày đủ 5 Hero (trung vị / p90) | 0 / 3 | 0 / 3 | — |
+| Legendary đầu (TB / trung vị) | 4.7 / 4 | 16.8 / 14 | 16–25 |
+| Nguyệt Ngọc/ngày | 628 | 184 | — |
+| Lượt quay/ngày | 4.1 | 1.4 | — |
+| Tinh Hồn TB Hero Epic ngày 30 / 60 | 5.4 / 6.0 | 2.1 / 3.6 | — |
+
+Hai mục tiêu ngược nhau khi chỉ giảm thu nhập (gói E/F/G: Legendary ~13–16 ngày thì
+đủ 5 Hero tụt còn 87–89%); tăng quà tân thủ tách được hai mục tiêu.
+
+## Gói đã áp dụng (đã duyệt — gói J)
+
+- `starterGift` 1600 → 2400; `runRewards` 10/80/100 → 3/20/30.
+- Nhiệm vụ ngày 40/40/30 → 20/20/10; tuần 200/150/100 → 80/60/40.
+- Thành tựu ×0.5; `dupeMoonStar` rare/common 3 → 1, epic 10 → 5.
+- `shop_pull` 5 → 2 lần/tuần.
+
+## Điểm mở
+
+- Legendary duy nhất (Hoắc Liệt) là Hero khởi đầu: "Legendary đầu" luôn là bản trùng.
+- Pool Rare chỉ có Ôn Như Ý → Tinh Hồn 6 ngay ngày đầu với mọi gói; cần nội dung Rare
+  (ví dụ vật phẩm 4e) nếu muốn nhịp này chậm lại.
