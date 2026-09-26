@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { CombatEvent, CombatState, GameData, RunRelicDef } from "../src/index";
 import { applyAction } from "../src/index";
-import { idleIntent, strike9Intent } from "./fixtures";
-import { idleEnemies, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand, setIntent } from "./helpers";
+import { armorBreakCard, idleIntent, strike9Intent } from "./fixtures";
+import { idleEnemies, injectCard, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand, setIntent } from "./helpers";
 
 function play(data: GameData, state: CombatState, cardId: string, targetId?: string) {
   return applyAction(data, state, {
@@ -52,12 +52,13 @@ describe("run relic hooks", () => {
     const { data, state } = makeTestCombat({
       runRelicIds: ["tam_tuyet_kiem_pho"],
       setup: (s) => {
-        setHand(s, ["m05_liet_hoa_xung_phong", "m05_ho_gam", "m05_thuong_pha", "m06_am_tien"]);
+        setHand(s, ["m05_liet_hoa_xung_phong", "m05_ho_gam", "m06_am_tien"]);
         s.moonPower = 10;
       },
     });
+    injectCard(state, data, { ...armorBreakCard, cost: 2 });
     let current = state;
-    for (const cardId of ["m05_liet_hoa_xung_phong", "m05_ho_gam", "m05_thuong_pha"]) {
+    for (const cardId of ["m05_liet_hoa_xung_phong", "m05_ho_gam", armorBreakCard.id]) {
       const result = play(data, current, cardId, cardId === "m05_ho_gam" ? undefined : "enemy:0");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
@@ -76,14 +77,15 @@ describe("run relic hooks", () => {
       runRelicIds: ["han_ngoc"],
       setup: (s) => {
         s.moonPower = 11;
-        setHand(s, ["m06_nguyet_anh_an", "m05_thuong_pha"]);
+        setHand(s, ["m06_nguyet_anh_an"]);
       },
     });
+    injectCard(state, data, armorBreakCard);
     const marked = play(data, state, "m06_nguyet_anh_an", "enemy:0");
     expect(marked.ok).toBe(true);
     if (!marked.ok) return;
     expect(hero(marked.state, "m06").armor).toBe(3);
-    const attack = play(data, marked.state, "m05_thuong_pha", "enemy:0");
+    const attack = play(data, marked.state, armorBreakCard.id, "enemy:0");
     expect(attack.ok).toBe(true);
     if (!attack.ok) return;
     expect(hero(attack.state, "m05").armor).toBe(0);
@@ -102,11 +104,11 @@ describe("run relic hooks", () => {
   it("T119: enemyKilled heals the killer; a burn kill has no killer", () => {
     const { data, state } = makeTestCombat({
       runRelicIds: ["huyet_an"],
-      setup: (s) => setHand(s, ["m05_thuong_pha"]),
     });
+    injectCard(state, data, armorBreakCard);
     hero(state, "m05").hp = 30;
     state.enemies[0]!.hp = 5;
-    const kill = play(data, state, "m05_thuong_pha", "enemy:0");
+    const kill = play(data, state, armorBreakCard.id, "enemy:0");
     expect(kill.ok).toBe(true);
     if (!kill.ok) return;
     expect(hero(kill.state, "m05").hp).toBe(34);
@@ -234,10 +236,10 @@ describe("run relic hooks", () => {
       mutateData: (d) => {
         d.runRelics[chain.id] = chain;
       },
-      setup: (s) => setHand(s, ["m05_thuong_pha"]),
     });
+    injectCard(state, data, armorBreakCard);
     state.enemies[0]!.hp = 5;
-    const result = play(data, state, "m05_thuong_pha", "enemy:0");
+    const result = play(data, state, armorBreakCard.id, "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.status).toBe("won");
@@ -273,10 +275,10 @@ describe("run relic hooks", () => {
       mutateData: (d) => {
         d.runRelics[starter.id] = starter;
       },
-      setup: (s) => setHand(s, ["m05_thuong_pha"]),
     });
+    injectCard(state, data, armorBreakCard);
     state.enemies[0]!.hp = 5;
-    const result = play(data, state, "m05_thuong_pha", "enemy:0");
+    const result = play(data, state, armorBreakCard.id, "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.bloodMoonRounds).toBe(1);

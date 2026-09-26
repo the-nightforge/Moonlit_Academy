@@ -1,4 +1,4 @@
-# 07 — Kế hoạch code (Giai đoạn 0–4a)
+# 07 — Kế hoạch code (Giai đoạn 0–4b)
 
 Mỗi bước là **một phiên làm việc** với AI. Dán prompt mẫu (chỉnh nếu cần), để AI làm xong, **tự chạy thử**, commit, rồi mới sang bước sau.
 
@@ -161,7 +161,34 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ---
 
-## Sau giai đoạn 4a
+## Giai đoạn 4b — Pool lá, Tu Luyện, xếp deck
+
+Đặc tả: `13-phase4b-spec.md`. Luật đã đưa vào `01` (từ khóa), `14` (hồ sơ / Tu Luyện / deck), schema vào `02`, thuật ngữ vào `04`, test vào `06` (T149–T168). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-26-phase4b-pools-mastery-decks.md`. Mỗi bước gom thay đổi luật cùng phần data phụ thuộc để `pnpm test` xanh sau từng bước.
+
+### Bước 4b.1 — Cập nhật tài liệu
+Đưa đặc tả `13` vào `00`, `01`, `02`, `04`, `06`, `07` và tài liệu mới `14` (`13` §9). *(Đã xong.)*
+
+### Bước 4b.2 — Bảy từ khóa
+> 7 từ khóa trong `rules` + schema ràng buộc + `keywords.json` (T149–T157).
+
+### Bước 4b.3 — Nội dung 60 lá + nhánh
+> 60 lá Hero + lá Song Hành, `heroes.json` (`lockedCardIds`, `branches`), `text`/`keywords` (T158).
+
+### Bước 4b.4 — Hồ sơ và Tu Luyện
+> `meta-config.json`, `profile.ts`, `RunState.heroLevelUps` (T159–T163).
+
+### Bước 4b.5 — Deck
+> `deck.ts`, `RunSetup.deckCardIds`, pool lá thưởng (T164–T168).
+
+### Bước 4b.6 — Client
+> Theo `13` §6: chọn deck, xếp deck, Tu Luyện, XP cuối lượt chơi, hiển thị từ khóa.
+
+### Bước 4b.7 — Mô phỏng + chỉnh số
+> Mô phỏng + chỉnh số (qua duyệt) + ghi kết quả vào `playtest-notes.md` (`13` §8).
+
+---
+
+## Sau giai đoạn 4b
 
 Viết tài liệu cho giai đoạn tiếp theo **dựa trên ghi chú chơi thử**, theo thứ tự trong `00-gdd.md` mục 12:
 - Giai đoạn 4: kinh tế gacha, cấu trúc tài khoản, API server.

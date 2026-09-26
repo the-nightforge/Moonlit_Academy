@@ -1,6 +1,7 @@
 import Phaser from "phaser";
-import { applyRunAction, findNode, reachableNodeIds, restHealAmounts } from "rules";
+import { applyRunAction, applyRunResult, findNode, pendingUnlocks, reachableNodeIds, restHealAmounts, summarizeRun } from "rules";
 import type { MapNode, RunAction, RunState } from "rules";
+import { saveProfile } from "../profile-store";
 import { session } from "../session";
 import { COLORS, NODE_ICONS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
 
@@ -263,6 +264,13 @@ export class RunScene extends Phaser.Scene {
   private renderEnd() {
     const won = this.run.status === "won";
     const floor = this.run.position ? (findNode(this.run, this.run.position)?.floor ?? 0) : 0;
+    if (!session.runRewarded) {
+      const result = applyRunResult(session.data, session.profile, summarizeRun(session.data, this.run));
+      session.profile = result.profile;
+      session.lastGains = result.gains;
+      session.runRewarded = true;
+      saveProfile(session.profile);
+    }
     this.text(WIDTH / 2, 260, won ? "LƯỢT CHƠI THẮNG" : "LƯỢT CHƠI THẤT BẠI", 44, won ? COLORS.gold : "#cc5555").setOrigin(0.5);
     this.text(
       WIDTH / 2,
@@ -271,10 +279,22 @@ export class RunScene extends Phaser.Scene {
       16,
       COLORS.dimText,
     ).setOrigin(0.5);
-    this.button(WIDTH / 2, 400, 240, "Về màn chọn đội", () => {
+    (session.lastGains ?? []).forEach((gain, index) => {
+      const name = session.data.heroes[gain.heroId]!.name;
+      const levelUp = gain.levelAfter > gain.levelBefore ? `  ·  Lên cấp Tu Luyện ${gain.levelAfter}!` : "";
+      this.text(WIDTH / 2, 350 + index * 24, `${name} +${gain.xp} XP${levelUp}`, 15, levelUp ? COLORS.gold : COLORS.text).setOrigin(0.5);
+    });
+    const canUnlock = session.heroIds.some((id) => pendingUnlocks(session.data, session.profile, id) > 0);
+    this.button(WIDTH / 2, 460, 240, "Về màn chọn đội", () => {
       session.run = null;
       this.scene.start("team-select");
     });
+    if (canUnlock) {
+      this.button(WIDTH / 2, 510, 240, "Mở lá ngay", () => {
+        session.run = null;
+        this.scene.start("mastery", { heroId: session.heroIds.find((id) => pendingUnlocks(session.data, session.profile, id) > 0) });
+      });
+    }
   }
 
   private renderDeck() {

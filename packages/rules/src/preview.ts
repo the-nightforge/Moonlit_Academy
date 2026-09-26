@@ -48,7 +48,11 @@ function previewIntent(
   };
   const damages: IntentDamagePreview[] = [];
   for (const effect of intent.effects) {
-    if (effect.type !== "damage") continue;
+    if (effect.type !== "damage" && effect.type !== "missingHpDamage") continue;
+    const base =
+      effect.type === "damage"
+        ? effect.amount
+        : Math.floor((enemy.maxHp - enemy.hp) * effect.ratio);
     let targets: UnitState[] = [];
     if (effect.to === "chosen") {
       const target = [...state.heroes, ...state.enemies].find((unit) => unit.id === targetId);
@@ -63,7 +67,7 @@ function previewIntent(
     for (const target of targets) {
       damages.push({
         targetId: target.id,
-        amount: computeDamageAmount(data, state, ctx, target, effect.amount),
+        amount: computeDamageAmount(data, state, ctx, target, base),
         hits: effect.hits ?? 1,
       });
     }

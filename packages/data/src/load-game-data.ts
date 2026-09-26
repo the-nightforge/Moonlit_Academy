@@ -9,6 +9,8 @@ import moonPhasesJson from "../moon-phases.json";
 import runRelicsJson from "../run-relics.json";
 import runConfigJson from "../run-config.json";
 import combatConfigJson from "../combat-config.json";
+import keywordsJson from "../keywords.json";
+import metaConfigJson from "../meta-config.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -28,7 +30,8 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig } = parsed;
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig, keywords, metaConfig } =
+    parsed;
   const errors: string[] = [];
 
   const groups = [
@@ -37,6 +40,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     ["enemies", enemies],
     ["encounters", encounters],
     ["runRelics", runRelics],
+    ["keywords", keywords],
   ] as const;
   for (const [label, defs] of groups) {
     const seen = new Set<string>();
@@ -49,6 +53,17 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   const heroById = new Map(heroes.map((hero) => [hero.id, hero]));
   const cardById = new Map(cards.map((card) => [card.id, card]));
   const enemyById = new Map(enemies.map((enemy) => [enemy.id, enemy]));
+  const keywordIds = new Set(keywords.map((keyword) => keyword.id));
+
+  /** Effects and conditions only usable on player cards (`13` §2.3). */
+  const cardOnly = (effect: Effect): boolean =>
+    effect.type === "drainMoonPower" ||
+    effect.type === "gainMoonPowerPerTurn" ||
+    effect.type === "burstRegen" ||
+    (effect.type === "heal" && effect.overflow !== undefined) ||
+    (effect.type === "conditional" &&
+      (effect.condition.type === "heldTurnsAtLeast" ||
+        effect.condition.type === "cardsPlayedThisTurnAtLeast"));
 
   const nestedChoose = (effects: Effect[]) =>
     effects.some(
@@ -100,6 +115,15 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     if ((chooseIndex >= 0 && chooseIndex !== card.effects.length - 1) || nestedChoose(card.effects)) {
       errors.push(`card "${card.id}": chooseCard must be the last top-level effect`);
     }
+    for (const id of card.keywords ?? []) {
+      if (!keywordIds.has(id)) errors.push(`card "${card.id}": unknown keyword "${id}"`);
+    }
+    if (
+      card.target !== "enemy" &&
+      someEffect(card.effects, (e) => e.type === "drainMoonPower" && e.to === "chosen")
+    ) {
+      errors.push(`card "${card.id}": drainMoonPower to "chosen" needs target "enemy"`);
+    }
   }
 
   for (const enemy of enemies) {
@@ -126,6 +150,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(intent.effects, (effect) => effect.type === "chooseCard")) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": chooseCard is not allowed`);
       }
+      if (someEffect(intent.effects, cardOnly)) {
+        errors.push(`enemy "${enemy.id}" intent "${intent.id}": card-only keyword`);
+      }
     }
   }
 
@@ -147,15 +174,28 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   }
 
   for (const hero of heroes) {
-    for (const cardId of hero.rewardCardIds) {
+    for (const cardId of hero.lockedCardIds) {
       const card = cardById.get(cardId);
       if (!card) {
-        errors.push(`hero "${hero.id}": rewardCardIds references missing card "${cardId}"`);
+        errors.push(`hero "${hero.id}": lockedCardIds references missing card "${cardId}"`);
       } else if (card.ownerId !== hero.id) {
-        errors.push(`hero "${hero.id}": reward card "${cardId}" has ownerId "${card.ownerId}"`);
+        errors.push(`hero "${hero.id}": locked card "${cardId}" has ownerId "${card.ownerId}"`);
       } else if (hero.cardIds.includes(cardId)) {
-        errors.push(`hero "${hero.id}": reward card "${cardId}" is also a starting card`);
+        errors.push(`hero "${hero.id}": locked card "${cardId}" is also a starting card`);
       }
+    }
+    const pool = new Set([...hero.cardIds, ...hero.lockedCardIds]);
+    const branchCards = hero.branches.flatMap((branch) => branch.cardIds);
+    if (
+      new Set(branchCards).size !== branchCards.length ||
+      branchCards.some((id) => !pool.has(id)) ||
+      branchCards.length !== pool.size
+    ) {
+      errors.push(`hero "${hero.id}": branches must split the 12-card pool exactly`);
+    }
+    const cheapFree = hero.cardIds.filter((id) => (cardById.get(id)?.cost ?? 99) <= 3).length;
+    if (cheapFree < 2) {
+      errors.push(`hero "${hero.id}": needs at least 2 free cards with cost <= 3`);
     }
   }
 
@@ -194,6 +234,16 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     errors.push(`combatConfig: moonPower start must be <= cap`);
   }
 
+  const levels = metaConfig.masteryLevels;
+  if (levels.some((value, index) => index > 0 && value <= levels[index - 1]!)) {
+    errors.push(`metaConfig: masteryLevels must increase`);
+  }
+  for (const hero of heroes) {
+    if (hero.lockedCardIds.length !== levels.length) {
+      errors.push(`metaConfig: masteryLevels needs one level per locked card of "${hero.id}"`);
+    }
+  }
+
   for (const relic of runRelics) {
     for (const [index, hook] of (relic.hooks ?? []).entries()) {
       const label = `runRelic "${relic.id}" hook ${index}`;
@@ -208,6 +258,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       }
       if (someEffect(hook.effects, (effect) => effect.type === "chooseCard")) {
         errors.push(`${label}: effects must not use chooseCard`);
+      }
+      if (someEffect(hook.effects, (e) => cardOnly(e) || e.type === "missingHpDamage")) {
+        errors.push(`${label}: card-only keyword`);
       }
       if (
         someEffect(
@@ -235,7 +288,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig, keywords, metaConfig } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -246,6 +299,8 @@ export function parseGameData(raw: unknown): GameData {
     runRelics: Object.fromEntries(runRelics.map((relic) => [relic.id, relic])),
     runConfig,
     combatConfig,
+    keywords: Object.fromEntries(keywords.map((keyword) => [keyword.id, keyword])),
+    metaConfig,
   };
 }
 
@@ -259,5 +314,7 @@ export function loadGameData(): GameData {
     runRelics: runRelicsJson,
     runConfig: runConfigJson,
     combatConfig: combatConfigJson,
+    keywords: keywordsJson,
+    metaConfig: metaConfigJson,
   });
 }

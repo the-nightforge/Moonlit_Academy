@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, getValidTargets } from "../src/index";
-import { idleIntent, strike9Intent } from "./fixtures";
-import { instanceIdOf, makeTestCombat, setHand, setIntent } from "./helpers";
+import { healFiveCard, idleIntent, stealthOneCard, strike9Intent } from "./fixtures";
+import { injectCard, instanceIdOf, makeTestCombat, setHand, setIntent } from "./helpers";
 
 describe("enemy turn", () => {
   it("T15: weak reduces enemy damage dealt to 75%", () => {
@@ -54,15 +54,14 @@ describe("enemy turn", () => {
   });
 
   it("T34: stealthed announced target is re-picked among valid heroes", () => {
-    const { data, state } = makeTestCombat({
-      setup: (s) => setHand(s, ["m06_anh_bo"]),
-    });
+    const { data, state } = makeTestCombat();
+    const stealth = injectCard(state, data, stealthOneCard);
     const heavy = strike9Intent;
     setIntent(state, 0, heavy, "hero:m06");
     setIntent(state, 1, idleIntent, null);
     const played = applyAction(data, state, {
       type: "playCard",
-      instanceId: instanceIdOf(state, "m06_anh_bo"),
+      instanceId: stealth,
     });
     expect(played.ok).toBe(true);
     if (!played.ok) return;
@@ -98,7 +97,8 @@ describe("enemy turn", () => {
         s.heroes[2]!.statuses.push({ id: "stealth", value: 1 });
       },
     });
-    const targets = getValidTargets(data, state, instanceIdOf(state, "f04_thao_duoc"));
+    const heal = injectCard(state, data, healFiveCard);
+    const targets = getValidTargets(data, state, heal);
     expect(targets).toContain("hero:m06");
   });
 

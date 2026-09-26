@@ -5,6 +5,7 @@ import type {
   CombatEvent,
   CombatState,
   EnemyIntentDef,
+  EnemyState,
   GameData,
   HeroState,
   PlannedIntent,
@@ -54,6 +55,31 @@ function weightedPick(state: CombatState, intents: EnemyIntentDef[]): EnemyInten
     if (cursor < 0) return intent;
   }
   return intents[intents.length - 1]!;
+}
+
+/** Tỏa Nguyệt: shrink an enemy's planned fund, cancelling intents from the chain's end (`01` §9.5). */
+export function drainEnemyMoonPower(
+  data: GameData,
+  enemy: EnemyState,
+  amount: number,
+  events: CombatEvent[],
+): number {
+  const drained = Math.min(amount, enemy.moonPower);
+  enemy.moonPower -= drained;
+  const planned = () => enemy.plannedIntents.reduce((sum, entry) => sum + entry.cost, 0);
+  const cancelled: string[] = [];
+  while (enemy.plannedIntents.length > 0 && planned() > enemy.moonPower) {
+    cancelled.push(enemy.plannedIntents.pop()!.intent.id);
+  }
+  if (cancelled.length > 0) {
+    events.push({ type: "intentsCancelled", enemyId: enemy.id, intentIds: cancelled });
+  }
+  const reserve = Math.min(data.combatConfig.moonReserveMax, enemy.moonPower - planned());
+  if (reserve !== enemy.moonReserve) {
+    enemy.moonReserve = reserve;
+    events.push({ type: "moonReserveChanged", side: "enemy", enemyId: enemy.id, value: reserve });
+  }
+  return drained;
 }
 
 /** Plans every living enemy's intent chain for `state.round` (`12` §4.2). */

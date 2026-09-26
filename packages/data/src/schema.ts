@@ -30,6 +30,8 @@ const conditionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("targetHasStatus"), status: statusIdSchema }),
   z.object({ type: z.literal("moonPhaseIs"), phase: moonPhaseIdSchema }),
   z.object({ type: z.literal("bloodMoonActive") }),
+  z.object({ type: z.literal("heldTurnsAtLeast"), turns: z.number().int().positive() }),
+  z.object({ type: z.literal("cardsPlayedThisTurnAtLeast"), count: z.number().int().positive() }),
 ]);
 
 const intAmount = z.number().int();
@@ -38,7 +40,7 @@ const actor = z.union([z.literal(0), z.literal(1)]).optional();
 export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
   z.discriminatedUnion("type", [
     z.object({ actor, type: z.literal("damage"), amount: intAmount, to: targetRefSchema, hits: z.number().int().positive().optional() }),
-    z.object({ actor, type: z.literal("heal"), amount: intAmount, to: targetRefSchema }),
+    z.object({ actor, type: z.literal("heal"), amount: intAmount, to: targetRefSchema, overflow: z.literal("armor").optional() }),
     z.object({ actor, type: z.literal("loseHp"), amount: intAmount, to: targetRefSchema }),
     z.object({ actor, type: z.literal("gainArmor"), amount: intAmount, to: targetRefSchema }),
     z.object({ actor, type: z.literal("removeArmor"), to: targetRefSchema }),
@@ -49,6 +51,10 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
     z.object({ actor, type: z.literal("shiftMoon"), amount: intAmount }),
     z.object({ actor, type: z.literal("stealBuff"), count: z.number().int().positive() }),
     z.object({ actor, type: z.literal("bloodMoon"), rounds: z.number().int().positive() }),
+    z.object({ actor, type: z.literal("drainMoonPower"), amount: z.number().int().positive(), to: z.enum(["chosen", "allEnemies"]), steal: z.literal(true).optional() }),
+    z.object({ actor, type: z.literal("gainMoonPowerPerTurn"), amount: z.number().int().positive() }),
+    z.object({ actor, type: z.literal("missingHpDamage"), ratio: z.number().gt(0).lte(2), to: targetRefSchema, hits: z.number().int().positive().optional() }),
+    z.object({ actor, type: z.literal("burstRegen"), multiplier: z.number().positive(), to: targetRefSchema }),
     z.object({
       actor,
       type: z.literal("conditional"),
@@ -67,6 +73,11 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("stealBonus") }),
 ]);
 
+const branchSchema = z.object({
+  name: z.string().min(1),
+  cardIds: z.array(idSchema).length(6),
+});
+
 export const heroDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
@@ -75,7 +86,8 @@ export const heroDefSchema = z.object({
   rarity: raritySchema,
   maxHp: z.number().int().positive(),
   cardIds: z.array(idSchema).length(6),
-  rewardCardIds: z.array(idSchema),
+  lockedCardIds: z.array(idSchema).length(6),
+  branches: z.tuple([branchSchema, branchSchema]),
   levelUp: z.object({
     name: z.string().min(1),
     description: z.string(),
@@ -102,6 +114,7 @@ export const cardDefSchema = z.object({
   effects: z.array(effectSchema).min(1),
   text: z.string(),
   requiresBloodMoon: z.boolean().optional(),
+  keywords: z.array(idSchema).optional(),
 });
 
 export const intentDefSchema = z.object({
@@ -228,6 +241,24 @@ export const combatConfigSchema = z.object({
   bloodMoonHpLoss: z.number().int().nonnegative(),
 });
 
+export const keywordDefSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1),
+  text: z.string().min(1),
+});
+
+export const metaConfigSchema = z.object({
+  masteryLevels: z.array(z.number().int().positive()).min(1),
+  masteryXp: z.object({
+    perFloor: z.number().int().nonnegative(),
+    win: z.number().int().nonnegative(),
+    heroLevelUp: z.number().int().nonnegative(),
+  }),
+  deckSize: z.number().int().positive(),
+  minCardsPerHero: z.number().int().nonnegative(),
+  maxDecks: z.number().int().positive(),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
@@ -237,4 +268,6 @@ export const rawGameDataSchema = z.object({
   runRelics: z.array(runRelicDefSchema),
   runConfig: runConfigSchema,
   combatConfig: combatConfigSchema,
+  keywords: z.array(keywordDefSchema),
+  metaConfig: metaConfigSchema,
 });

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { bondCardsForTeam } from "rules";
-import { restartSession, session, startRun } from "../session";
+import { bondCardsForTeam, pendingUnlocks } from "rules";
+import { session } from "../session";
 import type { Team } from "../session";
 import { COLORS, FACTION_LABELS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
 
@@ -11,7 +11,6 @@ const HERO_H = 250;
 export class TeamSelectScene extends Phaser.Scene {
   private picked: string[] = [];
   private encounterId = "";
-  private mode: "run" | "single" = "run";
   private root!: Phaser.GameObjects.Container;
 
   constructor() {
@@ -100,41 +99,29 @@ export class TeamSelectScene extends Phaser.Scene {
             .join("   ·   ");
     this.text(WIDTH / 2, 416, bondLine, 15, bonds.length > 0 ? COLORS.gold : COLORS.dimText).setOrigin(0.5);
 
-    this.button(WIDTH / 2 - 120, 470, 200, "Lượt chơi", this.mode === "run", () => {
-      this.mode = "run";
-      this.render();
-    });
-    this.button(WIDTH / 2 + 120, 470, 200, "Trận lẻ", this.mode === "single", () => {
-      this.mode = "single";
-      this.render();
+    this.text(WIDTH / 2, 470, "Trận lẻ: chọn trận", 13, COLORS.dimText).setOrigin(0.5);
+    const encounters = Object.values(data.encounters);
+    const perRow = 4;
+    const encSpacing = 230;
+    encounters.forEach((encounter, index) => {
+      const col = index % perRow;
+      const row = Math.floor(index / perRow);
+      const x = WIDTH / 2 + (col - (perRow - 1) / 2) * encSpacing;
+      this.button(x, 510 + row * 44, 210, encounter.name, encounter.id === this.encounterId, () => {
+        this.encounterId = encounter.id;
+        this.render();
+      });
     });
 
-    if (this.mode === "single") {
-      const encounters = Object.values(data.encounters);
-      const perRow = 4;
-      const encSpacing = 230;
-      encounters.forEach((encounter, index) => {
-        const col = index % perRow;
-        const row = Math.floor(index / perRow);
-        const x = WIDTH / 2 + (col - (perRow - 1) / 2) * encSpacing;
-        this.button(x, 520 + row * 44, 210, encounter.name, encounter.id === this.encounterId, () => {
-          this.encounterId = encounter.id;
-          this.render();
-        });
-      });
-    }
+    const canUnlock = Object.keys(data.heroes).some((id) => pendingUnlocks(data, session.profile, id) > 0);
+    this.button(WIDTH - 110, 30, 160, `Tu Luyện${canUnlock ? " ●" : ""}`, false, () => this.scene.start("mastery"));
 
     const ready = this.picked.length === 3;
-    this.button(WIDTH / 2, 640, 220, ready ? "BẮT ĐẦU" : `Chọn thêm ${3 - this.picked.length} Hero`, ready, () => {
+    this.button(WIDTH / 2, 640, 220, ready ? "TIẾP — CHỌN DECK" : `Chọn thêm ${3 - this.picked.length} Hero`, ready, () => {
       if (!ready) return;
-      const team = [...this.picked] as Team;
-      if (this.mode === "run") {
-        startRun(team);
-        this.scene.start("run");
-      } else {
-        restartSession(session.seed, this.encounterId, team);
-        this.scene.start("combat");
-      }
+      session.heroIds = [...this.picked] as Team;
+      session.encounterId = this.encounterId;
+      this.scene.start("deck-select");
     });
   }
 }

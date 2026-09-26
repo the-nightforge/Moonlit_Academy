@@ -7,6 +7,8 @@ import moonPhasesJson from "../moon-phases.json";
 import runRelicsJson from "../run-relics.json";
 import runConfigJson from "../run-config.json";
 import combatConfigJson from "../combat-config.json";
+import keywordsJson from "../keywords.json";
+import metaConfigJson from "../meta-config.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -19,6 +21,8 @@ function rawData(): any {
     runRelics: runRelicsJson,
     runConfig: runConfigJson,
     combatConfig: combatConfigJson,
+    keywords: keywordsJson,
+    metaConfig: metaConfigJson,
   }));
 }
 
@@ -27,7 +31,7 @@ describe("loadGameData", () => {
     const data = loadGameData();
 
     expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02"]);
-    expect(Object.keys(data.cards)).toHaveLength(48);
+    expect(Object.keys(data.cards)).toHaveLength(63);
     expect(Object.keys(data.enemies)).toEqual([
       "puppet_guard", "shadow_fox", "moon_ape", "book_wraith", "black_guard", "fox_king",
     ]);
@@ -36,8 +40,13 @@ describe("loadGameData", () => {
     ]);
     expect(Object.keys(data.runRelics)).toHaveLength(10);
     expect(data.runConfig.floors).toBe(8);
-    expect(data.heroes["m05"]?.rewardCardIds).toEqual([
-      "m05_thiet_bich", "m05_no_hoa_lien_hoan", "m05_huyet_chien",
+    expect(data.heroes["m05"]?.lockedCardIds).toEqual([
+      "m05_huyet_chien",
+      "m05_no_hoa_lien_hoan",
+      "m05_liet_hoa_phan_thien",
+      "m05_thiet_bich",
+      "m05_huyet_thuan",
+      "m05_lo_luyen",
     ]);
     expect(data.encounters["enc_elite_01"]).toMatchObject({ tier: "elite", minFloor: 5 });
 
@@ -153,10 +162,10 @@ describe("parseGameData validation", () => {
     expect(() => parseGameData(duplicated)).toThrowError(/bond_anh_dau.*different/);
   });
 
-  it("rejects a reward card owned by another hero", () => {
+  it("rejects a locked card owned by another hero", () => {
     const raw = rawData();
-    raw.heroes[0].rewardCardIds[0] = "f04_thao_duoc";
-    expect(() => parseGameData(raw)).toThrowError(/m05.*f04_thao_duoc/);
+    raw.heroes[0].lockedCardIds[0] = "f04_thao_duoc";
+    expect(() => parseGameData(raw)).toThrowError(/locked card/);
   });
 
   it("rejects encounters without exactly one boss", () => {
@@ -221,5 +230,38 @@ describe("parseGameData validation", () => {
     const guide = raw.cards.find((card: any) => card.id === "f04_nguyet_quang_dan");
     guide.effects.reverse();
     expect(() => parseGameData(raw)).toThrowError(/chooseCard must be the last/);
+  });
+
+  it("T158: every hero has 6 free + 6 locked unique own cards, 2 branches of 6 and cheap free cards", () => {
+    const data = loadGameData();
+    for (const hero of Object.values(data.heroes)) {
+      const pool = [...hero.cardIds, ...hero.lockedCardIds];
+      expect(hero.cardIds).toHaveLength(6);
+      expect(hero.lockedCardIds).toHaveLength(6);
+      expect(new Set(pool).size).toBe(12);
+      for (const id of pool) {
+        expect(data.cards[id]?.ownerId).toBe(hero.id);
+        expect([1, 2, 3]).toContain(data.cards[id]!.copies);
+      }
+      expect(hero.branches.flatMap((b) => b.cardIds).sort()).toEqual([...pool].sort());
+      expect(hero.cardIds.filter((id) => data.cards[id]!.cost <= 3).length).toBeGreaterThanOrEqual(2);
+    }
+    const bad = rawData();
+    bad.heroes[0].branches[0].cardIds[0] = bad.heroes[0].branches[1].cardIds[0];
+    expect(() => parseGameData(bad)).toThrowError(/branches must split/);
+  });
+
+  it("T157: rejects card-only keywords in enemy intents and relic hooks, and unknown card keywords", () => {
+    const intent = rawData();
+    intent.enemies[0].intents[0].effects.push({ type: "drainMoonPower", amount: 1, to: "chosen" });
+    expect(() => parseGameData(intent)).toThrowError(/card-only keyword/);
+
+    const hook = rawData();
+    hook.runRelics[0].hooks[0].effects.push({ type: "missingHpDamage", ratio: 1, to: "allEnemies" });
+    expect(() => parseGameData(hook)).toThrowError(/card-only keyword/);
+
+    const keyword = rawData();
+    keyword.cards[0].keywords = ["no_such_keyword"];
+    expect(() => parseGameData(keyword)).toThrowError(/unknown keyword/);
   });
 });

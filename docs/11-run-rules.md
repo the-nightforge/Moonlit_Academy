@@ -24,7 +24,9 @@ interface RunState {
 }
 ```
 
-- Bắt đầu: `deck` = 15 lá `cardIds` của 3 Hero (theo thứ tự đội), HP đầy,
+- Bắt đầu: `deck` = `RunSetup.deckCardIds` (bắt buộc từ GĐ4b — deck đã lưu
+  của người chơi hoặc `starterDeck()` = toàn bộ lá free của 3 Hero;
+  `createRun` kiểm mọi lá phải thuộc một Hero trong đội), HP đầy,
   `runRelicIds = []`, sinh bản đồ, `status = "map"`, `position = null`.
 - `RunState` là JSON thuần; lưu `localStorage` để sau.
 
@@ -163,7 +165,8 @@ type RunAction =
 
 ### 3.3 Lá thưởng
 
-- Pool = hợp `rewardCardIds` của 3 Hero trong đội, **trừ** lá đã có trong `deck`.
+- Pool = hợp `cardIds` + `lockedCardIds` (pool 12 lá/Hero, GĐ4b) của 3 Hero
+  trong đội, **trừ** lá đã có trong `deck`.
 - Rút `rewardCardChoices` lá khác nhau bằng RNG của lượt chơi (ít hơn nếu pool
   không đủ). Lá đã bỏ ở Nghỉ Chân có thể xuất hiện lại.
 - Nút `elite`: thêm 1 Kỳ Vật (mục 3.4) vào `pendingReward.runRelicId`, **nhận

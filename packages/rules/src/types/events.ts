@@ -35,6 +35,7 @@ export type CombatEvent =
       moonPower: number;
       intents: { intentId: string; cost: number; targetId: string | null }[];
     }
+  | { type: "intentsCancelled"; enemyId: string; intentIds: string[] }
   | { type: "intentExecuted"; enemyId: string; intentId: string; targetId: string | null }
   | { type: "intentFizzled"; enemyId: string; intentId: string }
   | { type: "intentSkipped"; enemyId: string; reason: "freeze" }

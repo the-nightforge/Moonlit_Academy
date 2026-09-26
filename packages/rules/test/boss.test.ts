@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { CombatState } from "../src/index";
 import { applyAction, getEffectiveCost } from "../src/index";
-import { idleIntent } from "./fixtures";
-import { instanceIdOf, makeTestCombat, setHand, setIntent } from "./helpers";
+import { armorReflectCard, healFiveCard, idleIntent } from "./fixtures";
+import { injectCard, instanceIdOf, makeTestCombat, setHand, setIntent } from "./helpers";
 
 function hero(state: CombatState, defId: string) {
   return state.heroes.find((h) => h.defId === defId)!;
@@ -65,14 +65,16 @@ describe("boss and blood moon intents", () => {
 
   it("T93: ward and harmony cards are cheaper in their moon phases", () => {
     const { data, state } = makeTestCombat({ heroIds: ["m05", "f03", "f04"] });
+    const wardCard = injectCard(state, data, { ...armorReflectCard, cost: 4 });
+    const harmonyCard = injectCard(state, data, { ...healFiveCard, cost: 2 });
     const cost = (cardId: string) => getEffectiveCost(data, state, instanceIdOf(state, cardId));
 
     state.moonIndex = 6;
     expect(cost("m05_ho_gam")).toBe(0);
-    expect(cost("f03_phong_tuyet_chuong")).toBe(2);
+    expect(getEffectiveCost(data, state, wardCard)).toBe(2);
 
     state.moonIndex = 4;
-    expect(cost("f04_thao_duoc")).toBe(0);
+    expect(getEffectiveCost(data, state, harmonyCard)).toBe(0);
     expect(cost("m05_ho_gam")).toBe(2);
   });
 });

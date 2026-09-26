@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { CombatState, GameData } from "../src/index";
 import { applyAction, bondCardsForTeam } from "../src/index";
-import { idleEnemies, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand } from "./helpers";
+import { healFiveCard } from "./fixtures";
+import { idleEnemies, injectCard, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand } from "./helpers";
 
 function end(data: GameData, state: CombatState) {
   const result = applyAction(data, state, { type: "endTurn" });
@@ -33,14 +34,14 @@ describe("hand and draw pile", () => {
       mutateData: makeEnemiesIdle,
       setup: (s) => {
         idleEnemies(s);
-        setHand(s, ["m05_ho_gam", "f04_thao_duoc", "f02_phe_hon"]);
+        setHand(s, ["m05_ho_gam", "f02_phe_hon"]);
         s.heroes[0]!.alive = false;
         s.heroes[0]!.hp = 0;
         s.heroes[1]!.statuses.push({ id: "freeze", value: 1 });
       },
     });
+    const thaoDuoc = injectCard(state, data, healFiveCard);
     const hoGam = instanceIdOf(state, "m05_ho_gam");
-    const thaoDuoc = instanceIdOf(state, "f04_thao_duoc");
     const pheHon = instanceIdOf(state, "f02_phe_hon");
     const result = end(data, state);
     expect(result.events).toContainEqual({ type: "cardDiscarded", instanceIds: [hoGam] });

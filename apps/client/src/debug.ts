@@ -1,5 +1,6 @@
-import { drawCards } from "rules";
-import type { CombatEvent, CombatState, GameData } from "rules";
+import { createProfile, drawCards } from "rules";
+import type { CombatEvent, CombatState, GameData, Profile } from "rules";
+import { saveProfile } from "./profile-store";
 import { session } from "./session";
 
 function unitName(state: CombatState, data: GameData, unitId: string): string {
@@ -68,6 +69,30 @@ export function debugAdjustHeroHp(index: number, delta: number): void {
   checkEnd();
 }
 
+export function debugGrantTeamXp(amount = 100): void {
+  const profile = JSON.parse(JSON.stringify(session.profile)) as Profile;
+  for (const heroId of session.heroIds) profile.heroes[heroId]!.xp += amount;
+  session.profile = profile;
+  saveProfile(profile);
+}
+
+export function debugUnlockAll(): void {
+  const profile = JSON.parse(JSON.stringify(session.profile)) as Profile;
+  for (const hero of Object.values(session.data.heroes)) {
+    profile.heroes[hero.id] = {
+      xp: Math.max(profile.heroes[hero.id]?.xp ?? 0, session.data.metaConfig.masteryLevels.at(-1)!),
+      unlockedCardIds: [...hero.lockedCardIds],
+    };
+  }
+  session.profile = profile;
+  saveProfile(profile);
+}
+
+export function debugResetProfile(): void {
+  session.profile = createProfile(session.data);
+  saveProfile(session.profile);
+}
+
 export function describeEvent(
   state: CombatState,
   data: GameData,
@@ -125,6 +150,8 @@ export function describeEvent(
       return `Huyết Nguyệt còn ${event.rounds} vòng (${event.cause})`;
     case "intentsRevealed":
       return `${name(event.enemyId)} báo ${event.intents.map((i) => i.intentId).join(", ") || "Tụ Lực"} (NL ${event.moonPower})`;
+    case "intentsCancelled":
+      return `${name(event.enemyId)} bị hủy ${event.intentIds.join(", ")}`;
     case "intentExecuted":
       return `${name(event.enemyId)} thực hiện ${event.intentId} → ${name(event.targetId)}`;
     case "intentSkipped":

@@ -5,7 +5,7 @@ declare const console: {
   log(...args: unknown[]): void;
   table(...args: unknown[]): void;
 };
-import type { Action, CombatEvent, CombatState, GameData } from "../src/index";
+import type { Action, CombatEvent, CombatState, Effect, GameData } from "../src/index";
 import {
   applyAction,
   createCombat,
@@ -76,24 +76,46 @@ function combatAction(gameData: GameData, state: CombatState): Action {
       ) ?? options[0]!;
     return { type: "chooseCard", instanceId: pick };
   }
-  const playable = state.hand
-    .filter((id) => isCardPlayable(gameData, state, id))
-    .sort(
-      (a, b) =>
-        getEffectiveCost(gameData, state, b) - getEffectiveCost(gameData, state, a),
-    );
-  for (const instanceId of playable) {
+  const keywordsOf = (id: string) => gameData.cards[state.cards[id]!.cardId]!.keywords ?? [];
+  const heldThreshold = (id: string): number => {
+    let best = 0;
+    const walk = (effects: Effect[]) => {
+      for (const effect of effects) {
+        if (effect.type !== "conditional") continue;
+        if (effect.condition.type === "heldTurnsAtLeast") best = Math.max(best, effect.condition.turns);
+        walk(effect.then);
+        walk(effect.else ?? []);
+      }
+    };
+    walk(gameData.cards[state.cards[id]!.cardId]!.effects);
+    return best;
+  };
+  const playable = state.hand.filter((id) => isCardPlayable(gameData, state, id));
+  const ready = playable.filter((id) => state.cards[id]!.heldTurns >= heldThreshold(id));
+  const candidates = ready.length > 0 || state.hand.length < gameData.combatConfig.handSize ? ready : playable;
+  const ordered = [...candidates].sort((a, b) => {
+    const comboA = keywordsOf(a).includes("lien_hoan") ? 1 : 0;
+    const comboB = keywordsOf(b).includes("lien_hoan") ? 1 : 0;
+    if (comboA !== comboB) return comboA - comboB; // non-combo cards first
+    return getEffectiveCost(gameData, state, b) - getEffectiveCost(gameData, state, a);
+  });
+  for (const instanceId of ordered) {
     const card = gameData.cards[state.cards[instanceId]!.cardId]!;
     if (card.target === "none") return { type: "playCard", instanceId };
-    const units: { id: string; hp: number; maxHp: number }[] =
-      card.target === "enemy" ? state.enemies : state.heroes;
-    const score = (id: string) => {
-      const unit = units.find((u) => u.id === id)!;
-      return card.target === "enemy" ? unit.hp : unit.hp / unit.maxHp;
-    };
-    const targetId = getValidTargets(gameData, state, instanceId).sort(
-      (a, b) => score(a) - score(b),
-    )[0];
+    const targets = getValidTargets(gameData, state, instanceId);
+    let targetId: string | undefined;
+    if (card.target === "enemy") {
+      const drains = keywordsOf(instanceId).some((k) => k === "toa_nguyet" || k === "doat_nguyet");
+      const chainCost = (id: string) => state.enemies.find((e) => e.id === id)!.plannedIntents.reduce((s, p) => s + p.cost, 0);
+      const hp = (id: string) => state.enemies.find((e) => e.id === id)!.hp;
+      targetId = [...targets].sort((a, b) => (drains ? chainCost(b) - chainCost(a) : hp(a) - hp(b)))[0];
+    } else {
+      const burst = keywordsOf(instanceId).includes("tu_duoc");
+      const regen = (id: string) => state.heroes.find((h) => h.id === id)!.statuses.find((s) => s.id === "regen")?.value ?? 0;
+      const ratio = (id: string) => { const h = state.heroes.find((u) => u.id === id)!; return h.hp / h.maxHp; };
+      const pool = burst ? targets.filter((id) => regen(id) >= 3) : targets;
+      targetId = [...pool].sort((a, b) => ratio(a) - ratio(b))[0];
+    }
     if (targetId !== undefined) return { type: "playCard", instanceId, targetId };
   }
   return { type: "endTurn" };

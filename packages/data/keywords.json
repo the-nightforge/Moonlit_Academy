@@ -1,0 +1,23 @@
+[
+  { "id": "tich_tu", "name": "Tích Tụ", "text": "Lá mạnh hơn nếu đã nằm trên tay đủ số lượt (mỗi cuối lượt lá còn trên tay được tính 1)." },
+  { "id": "lien_hoan", "name": "Liên Hoàn", "text": "Lá mạnh hơn nếu trong lượt này đã đánh đủ số lá trước nó." },
+  { "id": "toa_nguyet", "name": "Tỏa Nguyệt", "text": "Kẻ địch mất Nguyệt Lực; chiêu cuối chuỗi đã báo bị hủy cho tới khi đủ tiền." },
+  { "id": "doat_nguyet", "name": "Đoạt Nguyệt", "text": "Như Tỏa Nguyệt, và bạn nhận đúng số Nguyệt Lực đã lấy." },
+  { "id": "duong_nguyet", "name": "Dưỡng Nguyệt", "text": "Từ lượt sau, mỗi lượt nhận thêm Nguyệt Lực đến hết trận (vượt được trần)." },
+  { "id": "phan_huyet", "name": "Phẫn Huyết", "text": "Gây damage theo số HP người đánh đã mất." },
+  { "id": "du_sinh", "name": "Dư Sinh", "text": "Phần hồi máu vượt HP tối đa biến thành giáp." },
+  { "id": "tu_duoc", "name": "Tụ Dược", "text": "Kích nổ Hồi Phục: hồi ngay theo Hồi Phục còn lại, rồi mất Hồi Phục." },
+  { "id": "chiem_bai", "name": "Chiêm Bài", "text": "Xem các lá trên cùng chồng bài, lấy 1, các lá còn lại xuống đáy chồng." },
+  { "id": "an_than", "name": "Ẩn Thân", "text": "Không bị chọn làm mục tiêu đơn; mất khi đánh lá tấn công." },
+  { "id": "khieu_khich", "name": "Khiêu Khích", "text": "Kẻ địch buộc phải nhắm vào Hero này." },
+  { "id": "suy_yeu", "name": "Suy Yếu", "text": "Gây ít damage hơn (×0.75)." },
+  { "id": "de_vo", "name": "Dễ Vỡ", "text": "Nhận nhiều damage hơn (×1.5)." },
+  { "id": "danh_dau", "name": "Đánh Dấu", "text": "Nhận thêm 3 damage từ đòn tấn công của người đánh dấu." },
+  { "id": "thieu_dot", "name": "Thiêu Đốt", "text": "Mất HP đầu lượt, giảm dần." },
+  { "id": "hoi_phuc", "name": "Hồi Phục", "text": "Hồi HP đầu lượt, giảm dần." },
+  { "id": "suc_manh", "name": "Sức Mạnh", "text": "Mỗi đòn tấn công gây thêm damage." },
+  { "id": "cuong_hoa", "name": "Cường Hóa", "text": "Lá tấn công tiếp theo gây thêm damage." },
+  { "id": "dong_bang", "name": "Đóng Băng", "text": "Kẻ địch bỏ lượt; Hero bị Đóng Băng không đánh được lá của mình trong lượt." },
+  { "id": "phan_don", "name": "Phản Đòn", "text": "Kẻ đánh trúng mất HP." },
+  { "id": "huyet_nguyet", "name": "Huyết Nguyệt", "text": "Mọi Hero mất HP mỗi lượt; mở khóa các lá Cấm Thuật." }
+]

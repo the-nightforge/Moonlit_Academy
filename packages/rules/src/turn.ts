@@ -12,6 +12,7 @@ import type { CombatEvent, CombatState, GameData } from "./types/index";
 export function startPlayerTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
   state.status = "playerTurn";
   events.push({ type: "turnStarted", side: "hero", round: state.round });
+  state.cardsPlayedThisTurn = 0;
   for (const hero of state.heroes) {
     if (hero.armor > 0) {
       hero.armor = 0;
@@ -53,7 +54,8 @@ export function startPlayerTurn(data: GameData, state: CombatState, events: Comb
   }
   if (checkCombatEnd(state, events)) return;
   const curve = data.combatConfig.moonPower;
-  state.moonPower = baseMoonPower(curve, curve.perRound, state.round) + state.moonReserve;
+  state.moonPower =
+    baseMoonPower(curve, curve.perRound, state.round) + state.moonReserve + state.moonPowerBonus;
   events.push({ type: "moonPowerChanged", value: state.moonPower });
   refillHand(data, state, events);
   if (state.hand.length === 0 && state.drawPile.length === 0) {
@@ -90,11 +92,6 @@ export function runEndTurn(data: GameData, state: CombatState, events: CombatEve
   // Combat may end inside playerTurnEnd hooks. Written as a won/lost check so
   // TS keeps `status` un-narrowed for the identical guards after runEnemyTurn.
   if (state.status === "won" || state.status === "lost") return;
-  const reserve = Math.min(data.combatConfig.moonReserveMax, state.moonPower);
-  if (reserve !== state.moonReserve) {
-    state.moonReserve = reserve;
-    events.push({ type: "moonReserveChanged", side: "hero", value: reserve });
-  }
   const broken = state.hand.filter((id) =>
     cardOwners(state, state.cards[id]!).some((owner) => !owner?.alive),
   );
@@ -102,6 +99,12 @@ export function runEndTurn(data: GameData, state: CombatState, events: CombatEve
     state.hand = state.hand.filter((id) => !broken.includes(id));
     state.discardPile.push(...broken);
     events.push({ type: "cardDiscarded", instanceIds: broken });
+  }
+  for (const id of state.hand) state.cards[id]!.heldTurns += 1;
+  const reserve = Math.min(data.combatConfig.moonReserveMax, state.moonPower);
+  if (reserve !== state.moonReserve) {
+    state.moonReserve = reserve;
+    events.push({ type: "moonReserveChanged", side: "hero", value: reserve });
   }
   for (const hero of state.heroes) removeStatus(hero, "freeze", events);
   runEnemyTurn(data, state, events);

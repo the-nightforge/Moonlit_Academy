@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { GameData, NodeType, RunAction, RunState } from "../src/index";
-import { applyRunAction, createRun, reachableNodeIds } from "../src/index";
+import { applyRunAction, createRun, reachableNodeIds, starterDeck } from "../src/index";
 import { testData } from "./helpers";
 
 const DEFAULT_TEAM: [string, string, string] = ["m05", "f04", "m06"];
 
 function newRun(seed = 42) {
   const data = testData();
-  return { data, run: createRun(data, { heroIds: DEFAULT_TEAM, seed }).run };
+  return { data, run: createRun(data, { heroIds: DEFAULT_TEAM, seed, deckCardIds: starterDeck(data, DEFAULT_TEAM) }).run };
 }
 
 function act(data: GameData, run: RunState, action: RunAction) {
@@ -49,7 +49,7 @@ function loseCombat(data: GameData, run: RunState) {
 }
 
 function teamRewardPool(data: GameData): string[] {
-  return DEFAULT_TEAM.flatMap((id) => data.heroes[id]!.rewardCardIds);
+  return DEFAULT_TEAM.flatMap((id) => [...data.heroes[id]!.cardIds, ...data.heroes[id]!.lockedCardIds]);
 }
 
 describe("run lifecycle", () => {
@@ -217,9 +217,11 @@ describe("run lifecycle", () => {
   it("T114: reward choices shrink with the pool; an empty pool skips the reward", () => {
     const { data, run } = newRun();
     const pool = teamRewardPool(data);
-    run.deck.push(...pool.slice(0, 8));
+    run.deck.push(...pool.slice(0, pool.length - 1));
     const entered = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) }).run;
-    expect(winCombat(data, entered).run.pendingReward!.cardChoices).toEqual([pool[8]]);
+    expect(winCombat(data, entered).run.pendingReward!.cardChoices).toEqual([
+      pool[pool.length - 1],
+    ]);
 
     const full = newRun();
     full.run.deck.push(...pool);
@@ -243,7 +245,7 @@ describe("run lifecycle", () => {
         },
       ],
     };
-    const run = createRun(data, { heroIds: DEFAULT_TEAM, seed: 42 }).run;
+    const run = createRun(data, { heroIds: DEFAULT_TEAM, seed: 42, deckCardIds: starterDeck(data, DEFAULT_TEAM) }).run;
     run.runRelicIds.push("test_annihilate");
     const entered = applyRunAction(data, run, { type: "chooseNode", nodeId: firstNodeId(run) });
     expect(entered.ok).toBe(true);

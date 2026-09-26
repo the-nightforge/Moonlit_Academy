@@ -1,3 +1,4 @@
+import { drainEnemyMoonPower } from "./intent";
 import { bumpCounter, checkLevelUps } from "./levelup";
 import {
   moonArmorMultiplier,
@@ -21,6 +22,7 @@ import type {
   CombatState,
   Condition,
   Effect,
+  EnemyState,
   GameData,
   HeroState,
   IntentKind,
@@ -37,6 +39,8 @@ export interface EffectContext {
   card?: CardDef;
   intentKind?: IntentKind;
   chosenId?: string;
+  /** Instance of the card being played (Tích Tụ). */
+  instanceId?: string;
   /** Set for run relic effects and nested conditional branches: do not fire hooks here. */
   noHooks?: boolean;
 }
@@ -185,6 +189,12 @@ function evalCondition(
       return data.moonPhases[state.moonIndex]!.id === condition.phase;
     case "bloodMoonActive":
       return state.bloodMoonRounds > 0;
+    case "heldTurnsAtLeast": {
+      const instance = ctx.instanceId !== undefined ? state.cards[ctx.instanceId] : undefined;
+      return instance !== undefined && instance.heldTurns >= condition.turns;
+    }
+    case "cardsPlayedThisTurnAtLeast":
+      return state.cardsPlayedThisTurn >= condition.count;
   }
 }
 
@@ -209,13 +219,18 @@ export function resolveEffect(
     case "heal": {
       const multiplier = moonHealMultiplier(data, state);
       for (const target of resolveTargets(state, effect.to, ctx)) {
-        const healed = Math.min(
-          target.maxHp - target.hp,
-          Math.floor(effect.amount * multiplier),
-        );
+        const raw = Math.floor(effect.amount * multiplier);
+        const healed = Math.min(target.maxHp - target.hp, raw);
         if (healed > 0) {
           target.hp += healed;
           events.push({ type: "healed", targetId: target.id, amount: healed });
+        }
+        if (effect.overflow === "armor" && raw > healed) {
+          const armor = Math.floor((raw - healed) * moonArmorMultiplier(data, state));
+          if (armor > 0) {
+            target.armor += armor;
+            events.push({ type: "armorGained", targetId: target.id, amount: armor });
+          }
         }
       }
       return;
@@ -246,6 +261,7 @@ export function resolveEffect(
       const options = state.drawPile.splice(0, Math.min(effect.look, state.drawPile.length));
       if (options.length === 0) return;
       if (options.length === 1) {
+        state.cards[options[0]!]!.heldTurns = 0;
         state.hand.push(options[0]!);
         events.push({ type: "cardsDrawn", instanceIds: options });
         return;
@@ -321,6 +337,50 @@ export function resolveEffect(
         state.bloodMoonRounds = rounds;
         events.push({ type: "bloodMoonChanged", rounds, cause: "card" });
       }
+      return;
+    }
+    case "burstRegen": {
+      const multiplier = moonHealMultiplier(data, state);
+      for (const target of resolveTargets(state, effect.to, ctx)) {
+        const regen = getStatus(target, "regen");
+        if (!regen) continue;
+        const healed = Math.min(
+          target.maxHp - target.hp,
+          Math.floor(regen.value * effect.multiplier * multiplier),
+        );
+        if (healed > 0) {
+          target.hp += healed;
+          events.push({ type: "healed", targetId: target.id, amount: healed });
+        }
+        removeStatus(target, "regen", events);
+      }
+      return;
+    }
+    case "missingHpDamage": {
+      const hits = effect.hits ?? 1;
+      for (const target of resolveTargets(state, effect.to, ctx)) {
+        for (let hit = 0; hit < hits && target.alive && target.hp > 0; hit++) {
+          const base = Math.floor((ctx.source.maxHp - ctx.source.hp) * effect.ratio);
+          dealDamage(data, state, ctx, target, base, events);
+          if (!ctx.source.alive) return;
+        }
+      }
+      return;
+    }
+    case "drainMoonPower": {
+      let drained = 0;
+      for (const target of resolveTargets(state, effect.to, ctx)) {
+        if (target.side !== "enemy") continue;
+        drained += drainEnemyMoonPower(data, target as EnemyState, effect.amount, events);
+      }
+      if (effect.steal && drained > 0) {
+        state.moonPower += drained;
+        events.push({ type: "moonPowerChanged", value: state.moonPower });
+      }
+      return;
+    }
+    case "gainMoonPowerPerTurn": {
+      state.moonPowerBonus += effect.amount;
       return;
     }
     default: {
@@ -410,7 +470,8 @@ export function resolveEffects(
     resolveEffect(data, state, effect, effectCtx, events);
     processDeaths(data, state, events, {
       id: effectCtx.source.id,
-      cardDamage: ctx.card !== undefined && effect.type === "damage",
+      cardDamage:
+        ctx.card !== undefined && (effect.type === "damage" || effect.type === "missingHpDamage"),
     });
     checkLevelUps(data, state, events);
     if (checkCombatEnd(state, events)) return;

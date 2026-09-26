@@ -349,6 +349,11 @@ function animateEvent(
       const label = event.intents.length === 0 ? "Tụ Lực" : "Ý định mới";
       return floatText(scene, anchor.x, anchor.y - 110, label, "#cfd6f0", 12, 150);
     }
+    case "intentsCancelled": {
+      const anchor = anchorOf(event.enemyId);
+      if (!anchor) return instant();
+      return floatText(scene, anchor.x, anchor.y - 110, `Tỏa Nguyệt: hủy ${event.intentIds.length} chiêu`, "#9fd4ff", 13, 300);
+    }
     case "intentExecuted": {
       const anchor = anchorOf(event.enemyId);
       const view = ctx.unitViews.get(event.enemyId);

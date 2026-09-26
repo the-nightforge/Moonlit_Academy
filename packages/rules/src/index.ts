@@ -16,4 +16,14 @@ export {
   reachableNodeIds,
   restHealAmounts,
 } from "./run/run";
+export {
+  applyRunResult,
+  createProfile,
+  masteryLevel,
+  parseProfile,
+  pendingUnlocks,
+  summarizeRun,
+  unlockCard,
+} from "./meta/profile";
+export { deleteDeck, saveDeck, starterDeck, validateDeck } from "./meta/deck";
 export type { EnemyPlanPreview, IntentPreview, IntentDamagePreview } from "./preview";

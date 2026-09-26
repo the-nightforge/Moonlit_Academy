@@ -34,6 +34,11 @@ export interface LevelUpDef {
   passive: LevelUpPassive;
 }
 
+export interface HeroBranch {
+  name: string;
+  cardIds: string[];
+}
+
 export interface HeroDef {
   id: string;
   name: string;
@@ -42,8 +47,10 @@ export interface HeroDef {
   rarity: Rarity;
   maxHp: number;
   cardIds: string[];
-  /** Cards this hero can learn in a run; not in `cardIds`. */
-  rewardCardIds: string[];
+  /** Mastery-unlocked cards; with cardIds forms the 12-card pool. */
+  lockedCardIds: string[];
+  /** Two build paths; their cardIds partition the 12-card pool. */
+  branches: [HeroBranch, HeroBranch];
   levelUp: LevelUpDef;
   art: { portrait: string; levelUp: string };
 }
@@ -68,6 +75,14 @@ export interface CardDef {
   text: string;
   /** Only valid on `forbidden` cards. */
   requiresBloodMoon?: boolean;
+  /** Keyword ids (keywords.json) shown as explanations. */
+  keywords?: string[];
+}
+
+export interface KeywordDef {
+  id: string;
+  name: string;
+  text: string;
 }
 
 export type TargetRef = "self" | "chosen" | "allEnemies" | "allAllies";
@@ -75,7 +90,7 @@ export type TargetRef = "self" | "chosen" | "allEnemies" | "allAllies";
 /** `actor` indexes `bond.owners` (bond cards only); nested effects inherit it. */
 export type Effect = (
   | { type: "damage"; amount: number; to: TargetRef; hits?: number }
-  | { type: "heal"; amount: number; to: TargetRef }
+  | { type: "heal"; amount: number; to: TargetRef; overflow?: "armor" }
   | { type: "loseHp"; amount: number; to: TargetRef }
   | { type: "gainArmor"; amount: number; to: TargetRef }
   | { type: "removeArmor"; to: TargetRef }
@@ -86,6 +101,10 @@ export type Effect = (
   | { type: "shiftMoon"; amount: number }
   | { type: "stealBuff"; count: number }
   | { type: "bloodMoon"; rounds: number }
+  | { type: "drainMoonPower"; amount: number; to: TargetRef; steal?: true }
+  | { type: "gainMoonPowerPerTurn"; amount: number }
+  | { type: "missingHpDamage"; ratio: number; to: TargetRef; hits?: number }
+  | { type: "burstRegen"; multiplier: number; to: TargetRef }
   | { type: "conditional"; condition: Condition; then: Effect[]; else?: Effect[] }
 ) & { actor?: 0 | 1 };
 
@@ -95,7 +114,9 @@ export type Condition =
   | { type: "selfHasStatus"; status: StatusId }
   | { type: "targetHasStatus"; status: StatusId }
   | { type: "moonPhaseIs"; phase: MoonPhaseId }
-  | { type: "bloodMoonActive" };
+  | { type: "bloodMoonActive" }
+  | { type: "heldTurnsAtLeast"; turns: number }
+  | { type: "cardsPlayedThisTurnAtLeast"; count: number };
 
 export type Targeting = "random" | "lowestHp" | "highestHp" | "front";
 export type IntentKind = "attack" | "defend" | "buff" | "debuff" | "attackDefend" | "special";
@@ -199,4 +220,13 @@ export interface CombatConfig {
   maxMulligan: number;
   maxIntentsPerRound: number;
   bloodMoonHpLoss: number;
+}
+
+export interface MetaConfig {
+  /** Cumulative XP thresholds for mastery level 1..n (one per locked card). */
+  masteryLevels: number[];
+  masteryXp: { perFloor: number; win: number; heroLevelUp: number };
+  deckSize: number;
+  minCardsPerHero: number;
+  maxDecks: number;
 }

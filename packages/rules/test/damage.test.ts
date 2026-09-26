@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "../src/index";
-import { instanceIdOf, makeTestCombat, setHand } from "./helpers";
+import { aoeFiveCard, armorBreakCard } from "./fixtures";
+import { injectCard, instanceIdOf, makeTestCombat, setHand } from "./helpers";
 
 function play(data: Parameters<typeof applyAction>[0], state: Parameters<typeof applyAction>[1], cardId: string, targetId?: string) {
   return applyAction(data, state, {
@@ -80,10 +81,10 @@ describe("card damage", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.enemies[0]!.armor = 8;
-        setHand(s, ["m05_thuong_pha"]);
       },
     });
-    const result = play(data, state, "m05_thuong_pha", "enemy:0");
+    injectCard(state, data, armorBreakCard);
+    const result = play(data, state, armorBreakCard.id, "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.enemies[0]?.armor).toBe(0);
@@ -91,13 +92,9 @@ describe("card damage", () => {
   });
 
   it("T20: Song Nhan Loan Vu hits every enemy", () => {
-    const { data, state } = makeTestCombat({
-      setup: (s) => {
-        s.moonPower = 11;
-        setHand(s, ["m06_song_nhan_loan_vu"]);
-      },
-    });
-    const result = play(data, state, "m06_song_nhan_loan_vu");
+    const { data, state } = makeTestCombat();
+    injectCard(state, data, aoeFiveCard);
+    const result = play(data, state, aoeFiveCard.id);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 5);

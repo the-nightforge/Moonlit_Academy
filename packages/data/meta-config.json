@@ -1,0 +1,7 @@
+{
+  "masteryLevels": [45, 165, 345, 585, 885, 1245],
+  "masteryXp": { "perFloor": 10, "win": 50, "heroLevelUp": 10 },
+  "deckSize": 18,
+  "minCardsPerHero": 4,
+  "maxDecks": 30
+}
