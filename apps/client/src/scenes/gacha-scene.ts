@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { PullResult, Rarity } from "rules";
+import type { GameData, PullResult, Rarity } from "rules";
 import { achievementNotices, errorText, mutate, type ProfileReply } from "../account";
 import { api } from "../api";
 import { session } from "../session";
@@ -16,6 +16,9 @@ interface HistoryEntry {
   results: PullResult[];
   createdAt: number;
 }
+
+/** Hero, weapon or moon relic name for a pull result. */
+const itemName = (data: GameData, id: string) => data.heroes[id]?.name ?? data.weapons[id]?.name ?? data.relics[id]?.name ?? id;
 
 const percent = (rate: number) => `${Math.round(rate * 1000) / 10}%`;
 
@@ -79,9 +82,12 @@ export class GachaScene extends Phaser.Scene {
       const ids = banner.pool[rarity];
       if (ids.length === 0) continue;
       const names = ids.map((id) => {
-        const owned = profile.heroes[id];
-        const name = data.heroes[id]?.name ?? id;
-        return owned ? `${name} (Tinh Hồn ${owned.constellation})` : `${name} (chưa có)`;
+        const name = itemName(data, id);
+        const level =
+          banner.kind === "hero" ? (profile.heroes[id] ? `Tinh Hồn ${profile.heroes[id]!.constellation}` : null)
+            : banner.kind === "weapon" ? (profile.weapons[id] ? `R${profile.weapons[id]!.refinement}` : null)
+              : (profile.relics[id] ? `Cộng Minh ${profile.relics[id]!.resonance}` : null);
+        return `${name} (${level ?? "chưa có"})`;
       });
       const label = this.add.text(40, y, `${RARITY_LABELS[rarity]}: ${names.join(", ")}`, {
         ...TEXT_BASE, fontSize: "13px", color: COLORS.text, wordWrap: { width: 380 },
@@ -150,7 +156,7 @@ export class GachaScene extends Phaser.Scene {
         onComplete: () => {
           mark.destroy();
           back.setFillStyle(0x141b33).setStrokeStyle(grand ? 4 : 2, color);
-          const name = data.heroes[result.itemId]?.name ?? result.itemId;
+          const name = itemName(data, result.itemId);
           card.add(this.add.rectangle(0, -CARD_H / 2 + 14, CARD_W, 28, color));
           card.add(this.add.text(0, -CARD_H / 2 + 14, RARITY_LABELS[result.rarity], { ...TEXT_BASE, fontSize: "12px", color: "#0b1026" }).setOrigin(0.5));
           card.add(this.add.text(0, -8, name, { ...TEXT_BASE, fontSize: "15px", color: COLORS.text, align: "center", wordWrap: { width: CARD_W - 12 } }).setOrigin(0.5));
@@ -177,6 +183,15 @@ export class GachaScene extends Phaser.Scene {
         return `Tinh Hồn ${result.constellation}`;
       case "moonStar":
         return `+${result.moonStar} ${CURRENCY_LABELS.moonStar}`;
+      case "newWeapon":
+      case "newRelic":
+        return "MỚI!";
+      case "refinement":
+        return `Tinh Luyện ${result.refinement}`;
+      case "resonance":
+        return `Cộng Minh ${result.resonance}`;
+      case "maxed":
+        return `+${result.moonStar} ${CURRENCY_LABELS.moonStar}, +1 ${result.darkIron ? "Huyền Thiết" : "Nguyệt Trần"}`;
       default: {
         const exhaustive: never = result.outcome;
         return String(exhaustive);
@@ -202,7 +217,7 @@ export class GachaScene extends Phaser.Scene {
     if (entries.length === 0) addText(this, layer, WIDTH / 2, 200, "Chưa có lượt quay nào", 15, COLORS.dimText).setOrigin(0.5);
     entries.forEach((entry, index) => {
       const when = new Date(entry.createdAt).toLocaleString("vi-VN");
-      const names = entry.results.map((result) => `${data.heroes[result.itemId]?.name ?? result.itemId}${result.rarity === "legendary" || result.rarity === "epic" ? ` (${RARITY_LABELS[result.rarity]})` : ""}`);
+      const names = entry.results.map((result) => `${itemName(data, result.itemId)}${result.rarity === "legendary" || result.rarity === "epic" ? ` (${RARITY_LABELS[result.rarity]})` : ""}`);
       const line = this.add.text(60, 80 + index * 28, `${when}  ·  ${data.banners[entry.bannerId]?.name ?? entry.bannerId}  ·  ${names.join(", ")}`, {
         ...TEXT_BASE, fontSize: "12px", color: COLORS.text, wordWrap: { width: WIDTH - 120 }, maxLines: 1,
       });

@@ -366,7 +366,7 @@ export const missionDefSchema = z.object({
 export const bannerDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
-  kind: z.literal("hero"),
+  kind: z.enum(["hero", "weapon", "relic"]),
   pool: z.object({
     common: z.array(idSchema),
     rare: z.array(idSchema),

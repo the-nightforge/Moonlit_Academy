@@ -186,6 +186,9 @@ export const API_ERROR_TEXT: Record<string, string> = {
   "weekly limit": "Đã đạt giới hạn mua trong tuần",
   "hero required": "Hãy chọn một Hero",
   "invalid hero": "Không chọn được Hero này",
+  "weapon not owned": "Chưa sở hữu vũ khí này",
+  "relic not owned": "Chưa sở hữu Nguyệt Bảo này",
+  "constellation too low": "Cần Tinh Hồn 5 để chọn dạng thăng cấp thứ hai",
 };
 
 export const CURRENCY_LABELS = { moonJade: "Nguyệt Ngọc", moonStar: "Nguyệt Tinh" } as const;

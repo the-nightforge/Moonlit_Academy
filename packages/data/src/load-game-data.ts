@@ -309,11 +309,14 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     const ids = Object.values(banner.pool).flat();
     for (const id of duplicate(ids)) errors.push(`banners: "${banner.id}" lists "${id}" twice`);
     if (ids.length === 0) errors.push(`banners: "${banner.id}" has an empty pool`);
-    for (const [rarity, heroIds] of Object.entries(banner.pool)) {
-      for (const heroId of heroIds) {
-        const hero = heroes.find((candidate) => candidate.id === heroId);
-        if (!hero) errors.push(`banners: "${banner.id}" has unknown hero "${heroId}"`);
-        else if (hero.rarity !== rarity) errors.push(`banners: "${banner.id}" lists ${hero.rarity} hero "${heroId}" as ${rarity}`);
+    // Pool ids come from the file of the banner's kind, at their own rarity.
+    const items: { id: string; rarity: string }[] =
+      banner.kind === "hero" ? heroes : banner.kind === "weapon" ? parsed.weapons : parsed.relics;
+    for (const [rarity, itemIds] of Object.entries(banner.pool)) {
+      for (const itemId of itemIds) {
+        const item = items.find((candidate) => candidate.id === itemId);
+        if (!item) errors.push(`banners: "${banner.id}" has unknown ${banner.kind} "${itemId}"`);
+        else if (item.rarity !== rarity) errors.push(`banners: "${banner.id}" lists ${item.rarity} ${banner.kind} "${itemId}" as ${rarity}`);
       }
     }
   }

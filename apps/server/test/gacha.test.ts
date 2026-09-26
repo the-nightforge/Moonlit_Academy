@@ -7,7 +7,7 @@ describe("gacha routes", () => {
     const server = testServer();
     const { token } = await register(server);
     const banners = await call(server, "GET", "/api/gacha/banners", { token });
-    expect(banners.body.banners.map((banner: { id: string }) => banner.id)).toEqual(["banner_heroes"]);
+    expect(banners.body.banners.map((banner: { id: string }) => banner.id)).toEqual(["banner_heroes", "banner_weapons", "banner_relics"]);
     expect(banners.body).toMatchObject({ pullCost: server.data.economyConfig.pullCost, pity: {} });
 
     const pulled = await call(server, "POST", "/api/gacha/banner_heroes/pull", { token, rev: 1, body: { count: 10 } });

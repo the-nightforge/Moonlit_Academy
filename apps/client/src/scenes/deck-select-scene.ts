@@ -30,6 +30,18 @@ export function describeDeckError(data: GameData, error: DeckError): string {
       return `${data.heroes[error.heroId]?.name ?? error.heroId} cần ít nhất ${data.metaConfig.minCardsPerHero} lá (đang ${error.count})`;
     case "lockedCard":
       return `Lá chưa mở: ${data.cards[error.cardId]?.name ?? error.cardId}`;
+    case "weaponSlot":
+      return `Vũ khí gắn cho Hero ngoài đội: ${data.heroes[error.heroId]?.name ?? error.heroId}`;
+    case "unownedWeapon":
+      return `Chưa sở hữu vũ khí: ${data.weapons[error.weaponId]?.name ?? error.weaponId}`;
+    case "weaponTwice":
+      return `Một vũ khí gắn cho 2 Hero: ${data.weapons[error.weaponId]?.name ?? error.weaponId}`;
+    case "unownedRelic":
+      return `Chưa sở hữu Nguyệt Bảo: ${data.relics[error.relicId]?.name ?? error.relicId}`;
+    case "duplicateRelic":
+      return `Trùng Nguyệt Bảo: ${data.relics[error.relicId]?.name ?? error.relicId}`;
+    case "tooManyRelics":
+      return `Tối đa ${data.metaConfig.maxRelics} Nguyệt Bảo (đang ${error.count})`;
     default: {
       const exhaustive: never = error;
       return String(exhaustive);

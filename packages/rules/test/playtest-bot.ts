@@ -1,5 +1,5 @@
 import type { Action, CombatState, Effect, GameData, RunAction, RunState } from "../src/index";
-import { findNode, getEffectiveCost, getValidTargets, isCardPlayable, reachableNodeIds } from "../src/index";
+import { cardDefOf, findNode, getEffectiveCost, getValidTargets, isCardPlayable, reachableNodeIds } from "../src/index";
 
 /** The playtest bot shared by `run-playtest` and the economy simulation. */
 // Phase 4a heuristic: mulligan cards above the doubling curve, Chiêm Bài picks
@@ -8,7 +8,7 @@ import { findNode, getEffectiveCost, getValidTargets, isCardPlayable, reachableN
 export function combatAction(gameData: GameData, state: CombatState): Action {
   if (state.status === "mulligan") {
     const expensive = state.hand.filter(
-      (id) => gameData.cards[state.cards[id]!.cardId]!.cost > 5,
+      (id) => cardDefOf(gameData, state, state.cards[id]!)!.cost > 5,
     );
     return {
       type: "mulligan",
@@ -22,16 +22,16 @@ export function combatAction(gameData: GameData, state: CombatState): Action {
       gameData.combatConfig.moonReserveMax;
     const options = [...state.pendingChoice!.options].sort(
       (a, b) =>
-        gameData.cards[state.cards[b]!.cardId]!.cost -
-        gameData.cards[state.cards[a]!.cardId]!.cost,
+        cardDefOf(gameData, state, state.cards[b]!)!.cost -
+        cardDefOf(gameData, state, state.cards[a]!)!.cost,
     );
     const pick =
       options.find(
-        (id) => gameData.cards[state.cards[id]!.cardId]!.cost <= nextFund,
+        (id) => cardDefOf(gameData, state, state.cards[id]!)!.cost <= nextFund,
       ) ?? options[0]!;
     return { type: "chooseCard", instanceId: pick };
   }
-  const keywordsOf = (id: string) => gameData.cards[state.cards[id]!.cardId]!.keywords ?? [];
+  const keywordsOf = (id: string) => cardDefOf(gameData, state, state.cards[id]!)!.keywords ?? [];
   const heldThreshold = (id: string): number => {
     let best = 0;
     const walk = (effects: Effect[]) => {
@@ -42,7 +42,7 @@ export function combatAction(gameData: GameData, state: CombatState): Action {
         walk(effect.else ?? []);
       }
     };
-    walk(gameData.cards[state.cards[id]!.cardId]!.effects);
+    walk(cardDefOf(gameData, state, state.cards[id]!)!.effects);
     return best;
   };
   const playable = state.hand.filter((id) => isCardPlayable(gameData, state, id));
@@ -55,7 +55,7 @@ export function combatAction(gameData: GameData, state: CombatState): Action {
     return getEffectiveCost(gameData, state, b) - getEffectiveCost(gameData, state, a);
   });
   for (const instanceId of ordered) {
-    const card = gameData.cards[state.cards[instanceId]!.cardId]!;
+    const card = cardDefOf(gameData, state, state.cards[instanceId]!)!;
     if (card.target === "none") return { type: "playCard", instanceId };
     const targets = getValidTargets(gameData, state, instanceId);
     let targetId: string | undefined;

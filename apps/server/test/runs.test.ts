@@ -109,8 +109,8 @@ describe("run tickets", () => {
     setConstellation(4);
     const ticket = await call(server, "POST", "/api/runs", { token, body: { deckId: "starter", heroIds: TEAM } });
     const loadout = ticket.body.loadout as Loadout;
-    expect(loadout.heroes["m05"]).toEqual({ constellation: 4, levelUpForm: "base" });
-    expect(loadout.heroes["f04"]).toEqual({ constellation: 0, levelUpForm: "base" });
+    expect(loadout.heroes["m05"]).toEqual({ constellation: 4, levelUpForm: "base", weaponId: null, refinement: 0 });
+    expect(loadout.heroes["f04"]).toEqual({ constellation: 0, levelUpForm: "base", weaponId: null, refinement: 0 });
 
     setConstellation(0);
     const { run, actions } = playRun(server.data, ticket.body.setup, loadout);

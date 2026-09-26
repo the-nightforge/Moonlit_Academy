@@ -353,11 +353,11 @@ export type AchievementGoal =
   | { type: "starterFloor"; floor: number }
   | { type: "allLockedUnlocked" };
 
-/** A gacha banner (`14` §9). Phase 4d has hero banners only. */
+/** A gacha banner (`14` §9): heroes, weapons or moon relics. */
 export interface BannerDef {
   id: string;
   name: string;
-  kind: "hero";
+  kind: "hero" | "weapon" | "relic";
   pool: Record<Rarity, string[]>;
 }
 

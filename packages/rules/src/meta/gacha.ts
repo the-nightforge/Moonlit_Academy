@@ -12,12 +12,20 @@ const RARITIES: readonly Rarity[] = ["legendary", "epic", "rare", "common"];
 export interface PullResult {
   itemId: string;
   rarity: Rarity;
-  outcome: "newHero" | "constellation" | "moonStar";
+  outcome: "newHero" | "constellation" | "moonStar" | "newWeapon" | "refinement" | "newRelic" | "resonance" | "maxed";
   /** Constellation after a duplicate raised it. */
   constellation?: number;
-  /** Moon stars gained from a duplicate at constellation 6. */
+  /** Refinement / resonance after a duplicate raised it (`14` §13.1). */
+  refinement?: number;
+  resonance?: number;
+  /** Moon stars from a duplicate at the top level (constellation 6, or gear level 5). */
   moonStar?: number;
+  /** Materials from a gear duplicate at level 5. */
+  darkIron?: number;
+  moonDust?: number;
 }
+
+const MAX_GEAR_LEVEL = 5;
 
 /** Chance of a legendary on the `sinceLegendary`-th pull since the last one (`14` §9 step 2). */
 export function legendaryRate(gacha: EconomyConfig["gacha"], sinceLegendary: number): number {
@@ -54,6 +62,42 @@ function grantHero(data: GameData, profile: Profile, heroId: string, rarity: Rar
   const moonStar = data.economyConfig.dupeMoonStar[rarity];
   profile.currencies.moonStar += moonStar;
   return { itemId: heroId, rarity, outcome: "moonStar", moonStar };
+}
+
+/**
+ * Gives a weapon or moon relic: new → level 1; duplicate → +1; at level 5 → one
+ * dark iron / moon dust and moon stars (`14` §13.1). Mutates `profile`.
+ */
+function grantGear(data: GameData, profile: Profile, kind: "weapon" | "relic", id: string, rarity: Rarity): PullResult {
+  if (kind === "weapon") {
+    const weapon = profile.weapons[id];
+    if (!weapon) {
+      profile.weapons[id] = { refinement: 1 };
+      return { itemId: id, rarity, outcome: "newWeapon" };
+    }
+    if (weapon.refinement < MAX_GEAR_LEVEL) {
+      weapon.refinement += 1;
+      return { itemId: id, rarity, outcome: "refinement", refinement: weapon.refinement };
+    }
+  } else {
+    const relic = profile.relics[id];
+    if (!relic) {
+      profile.relics[id] = { resonance: 1 };
+      return { itemId: id, rarity, outcome: "newRelic" };
+    }
+    if (relic.resonance < MAX_GEAR_LEVEL) {
+      relic.resonance += 1;
+      return { itemId: id, rarity, outcome: "resonance", resonance: relic.resonance };
+    }
+  }
+  const moonStar = data.economyConfig.gearDupeMoonStar[rarity];
+  profile.currencies.moonStar += moonStar;
+  if (kind === "weapon") {
+    profile.currencies.darkIron += 1;
+    return { itemId: id, rarity, outcome: "maxed", moonStar, darkIron: 1 };
+  }
+  profile.currencies.moonDust += 1;
+  return { itemId: id, rarity, outcome: "maxed", moonStar, moonDust: 1 };
 }
 
 /** Owns `heroId` as if pulled (shop hero choice, `14` §11). Mutates `profile`. */
@@ -98,7 +142,10 @@ function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: 
     if (unowned.length > 0) candidates = unowned;
   }
   const itemId = candidates[Math.floor(draw() * candidates.length)]!;
-  return { result: grantHero(data, profile, itemId, rarity), rngState: rng };
+  const result = banner.kind === "hero"
+    ? grantHero(data, profile, itemId, rarity)
+    : grantGear(data, profile, banner.kind, itemId, rarity);
+  return { result, rngState: rng };
 }
 
 /** Pays for and performs `count` pulls (1 or 10) with the server's seed (`14` §9). */

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { dataVersion, loadGameData } from "data";
 import type { GameData, Loadout, RunAction, RunSetup, RunState } from "rules";
-import { applyRunAction, createRun, getValidTargets, isCardPlayable, reachableNodeIds } from "rules";
+import { applyRunAction, cardDefOf, createRun, getValidTargets, isCardPlayable, reachableNodeIds } from "rules";
 import { buildApp } from "../src/app";
 import type { AppDeps } from "../src/context";
 import { openDb, type Db } from "../src/db";
@@ -81,7 +81,7 @@ function botAction(data: GameData, run: RunState): RunAction {
       }
       for (const instanceId of state.hand) {
         if (!isCardPlayable(data, state, instanceId)) continue;
-        if (data.cards[state.cards[instanceId]!.cardId]!.target === "none") {
+        if (cardDefOf(data, state, state.cards[instanceId]!)!.target === "none") {
           return { type: "combat", action: { type: "playCard", instanceId } };
         }
         const targetId = getValidTargets(data, state, instanceId)[0];

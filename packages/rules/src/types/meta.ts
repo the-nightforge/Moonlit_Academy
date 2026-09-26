@@ -17,6 +17,10 @@ export interface SavedDeck {
   name: string;
   heroIds: [string, string, string];
   cardIds: string[];
+  /** Phase 4e: heroId → weaponId; missing = no weapon (`14` §3.1). */
+  weapons?: Record<string, string | null>;
+  /** Phase 4e: moon relics of the team; missing = none. */
+  relicIds?: string[];
 }
 
 export interface HeroProgress {
@@ -98,4 +102,10 @@ export type DeckError =
   | { code: "duplicateCard"; cardId: string }
   | { code: "foreignCard"; cardId: string }
   | { code: "tooFewForHero"; heroId: string; count: number }
-  | { code: "lockedCard"; cardId: string };
+  | { code: "lockedCard"; cardId: string }
+  | { code: "weaponSlot"; heroId: string }
+  | { code: "unownedWeapon"; weaponId: string }
+  | { code: "weaponTwice"; weaponId: string }
+  | { code: "unownedRelic"; relicId: string }
+  | { code: "duplicateRelic"; relicId: string }
+  | { code: "tooManyRelics"; count: number };

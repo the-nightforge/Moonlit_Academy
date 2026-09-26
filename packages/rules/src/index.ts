@@ -24,10 +24,11 @@ export {
   mergeImportedProfile,
   parseProfile,
   pendingUnlocks,
+  setLevelUpForm,
   summarizeRun,
   unlockCard,
 } from "./meta/profile";
-export { deleteDeck, saveDeck, starterDeck, validateDeck } from "./meta/deck";
+export { deckWeapons, deleteDeck, saveDeck, starterDeck, validateDeck } from "./meta/deck";
 export { replayRun } from "./meta/replay";
 export {
   applyRunRewards,

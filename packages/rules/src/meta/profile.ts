@@ -242,3 +242,18 @@ export function mergeImportedProfile(
   next.flags.localImportDone = true;
   return { ok: true, profile: next };
 }
+
+/** Chooses a hero's level-up form; the second form needs Tinh Hồn 5 (`14` §10.1). */
+export function setLevelUpForm(
+  data: GameData,
+  profile: Profile,
+  heroId: string,
+  form: "base" | "alt",
+): { ok: true; profile: Profile } | { ok: false; error: string } {
+  const hero = profile.heroes[heroId];
+  if (!hero || !data.heroes[heroId]) return { ok: false, error: "hero not owned" };
+  if (form === "alt" && hero.constellation < 5) return { ok: false, error: "constellation too low" };
+  const next = clone(profile);
+  next.heroes[heroId]!.levelUpForm = form;
+  return { ok: true, profile: next };
+}

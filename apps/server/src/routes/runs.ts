@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { Loadout, RunAction, RunSetup } from "rules";
+import type { Loadout, RunAction, RunSetup, SavedDeck } from "rules";
 import { applyRunResult, applyRunRewards, buildLoadout, replayRun, starterDeck, summarizeRun, validateDeck } from "rules";
 import { z } from "zod";
 import { HttpError, type AppContext } from "../context";
@@ -68,7 +68,7 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
     const accountId = ctx.requireAccount(request);
     const body = ctx.parseBody(startBody, request.body);
     const { profile } = ctx.readProfile(accountId);
-    let deck: { heroIds: [string, string, string]; cardIds: string[] };
+    let deck: SavedDeck | Omit<SavedDeck, "id" | "name">;
     if ("heroIds" in body) {
       deck = { heroIds: body.heroIds, cardIds: starterDeck(data, body.heroIds) };
     } else {
@@ -78,8 +78,8 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
     }
     const errors = validateDeck(data, profile, deck);
     if (errors.length > 0) throw new HttpError(400, "invalid deck", { errors });
-    // Constellations are snapshotted now: later pulls do not change this run (T195).
-    const built = buildLoadout(data, profile, deck.heroIds);
+    // Constellations and gear are snapshotted now: later changes do not affect this run (T195, T205).
+    const built = buildLoadout(data, profile, deck);
     if (!built.ok) throw new HttpError(400, built.error);
     const { loadout } = built;
 

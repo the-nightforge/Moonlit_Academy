@@ -94,13 +94,25 @@ describe("constellations, loadout and the moon star shop", () => {
     expect(createCombat(data, { heroIds: TEAM, encounterId: "enc_01", seed: 3, deckCardIds: deck }).state.heroes[0]!.constellation).toBe(0);
   });
 
-  it("T195: buildLoadout reads the team's constellations; the second level-up form stays locked in phase 4d", () => {
+  it("T195: buildLoadout reads the team's constellations; the second level-up form needs Tinh Hồn 5", () => {
     const data = testData();
     const profile = createProfile(data);
     profile.heroes["m05"]!.constellation = 5;
     profile.heroes["m05"]!.levelUpForm = "alt";
+    profile.heroes["f04"]!.levelUpForm = "alt"; // constellation 0: stays base
     const built = buildLoadout(data, profile, TEAM);
-    expect(built).toEqual({ ok: true, loadout: loadout({ m05: 5, f04: 0, m06: 0 }) });
+    const noGear = { weaponId: null, refinement: 0 };
+    expect(built).toEqual({
+      ok: true,
+      loadout: {
+        heroes: {
+          m05: { constellation: 5, levelUpForm: "alt", ...noGear },
+          f04: { constellation: 0, levelUpForm: "base", ...noGear },
+          m06: { constellation: 0, levelUpForm: "base", ...noGear },
+        },
+        relics: [],
+      },
+    });
     expect(buildLoadout(data, profile, ["m05", "f04", "f03"])).toEqual({ ok: false, error: "hero not owned" });
   });
 
