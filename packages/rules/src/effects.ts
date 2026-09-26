@@ -469,7 +469,7 @@ function killUnit(
   });
   if (killer && unit.side === "enemy") {
     const killerHero = state.heroes.find((hero) => hero.id === killer.id);
-    if (killerHero && (killer.cardDamage || (killer.reflect && killerHero.constellation >= 2))) {
+    if (killerHero && (killer.cardDamage || (killer.reflect && killerHero.constellation >= 2 && !killerHero.pvp))) {
       bumpCounter(data, killerHero, "enemiesKilled", 1);
     }
   }

@@ -335,7 +335,10 @@ export interface PvpConfig {
   mulliganSeconds: number;                         // 30 — giới hạn Đổi Bài
   timeoutsToForfeit: number;                       // 3 — số lượt hết giờ liên tiếp → thua
   reconnectSeconds: number;                        // 60 — chờ kết nối lại trước khi thua
-  roundCap: number;                                // 30 — trần vòng, quá thì hòa
+  roundCap: number;                                // 30 — trần vòng, quá tròn → hòa
+  tiers?: { id: string; name: string; minRating: number }[];    // bậc xếp hạng (§5d)
+  honorShop?: { id: string; item: string; cost: number; weeklyLimit?: number }[];  // cửa hàng Vinh Dự
+  emotes?: string[];                               // câu biểu cảm cố định
 }
 ```
 

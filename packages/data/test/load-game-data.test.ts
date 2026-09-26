@@ -16,6 +16,7 @@ import achievementsJson from "../achievements.json";
 import bannersJson from "../banners.json";
 import weaponsJson from "../weapons.json";
 import relicsJson from "../relics.json";
+import pvpConfigJson from "../pvp-config.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -37,6 +38,7 @@ function rawData(): any {
     banners: bannersJson,
     weapons: weaponsJson,
     relics: relicsJson,
+    pvpConfig: pvpConfigJson,
   }));
 }
 
@@ -387,5 +389,28 @@ describe("weapons, moon relics and second level-up forms", () => {
     const onLevelUp = rawData();
     onLevelUp.heroes[0].altLevelUp.onLevelUp = [{ type: "damage", amount: 3, to: "chosen" }];
     expect(() => parseGameData(onLevelUp)).toThrow(/altLevelUp.onLevelUp: effects must not use to "chosen"/);
+  });
+
+  it("pvpConfig: arena stats cover every hero and every referenced id exists", () => {
+    const data = loadGameData();
+    expect(Object.keys(data.pvpConfig.heroStats).sort()).toEqual(Object.keys(data.heroes).sort());
+    expect(data.pvpConfig.trialHeroIds).toHaveLength(Object.keys(data.heroes).length);
+    for (const id of data.pvpConfig.freeWeaponIds) expect(data.weapons[id]).toBeDefined();
+    for (const id of data.pvpConfig.freeRelicIds) expect(data.relics[id]).toBeDefined();
+    expect(data.pvpConfig.secondPlayerBonus.moonPower).toBeGreaterThan(0);
+    expect(data.pvpConfig.roundCap).toBeGreaterThan(0);
+
+    const missing = rawData();
+    delete missing.pvpConfig.heroStats.m05;
+    expect(() => parseGameData(missing)).toThrow(/pvpConfig: heroStats missing "m05"/);
+    const unknown = rawData();
+    unknown.pvpConfig.trialHeroIds.push("x99");
+    expect(() => parseGameData(unknown)).toThrow(/pvpConfig: unknown trial hero "x99"/);
+    const free = rawData();
+    free.pvpConfig.freeWeaponIds.push("w_nope");
+    expect(() => parseGameData(free)).toThrow(/pvpConfig: unknown free weapon "w_nope"/);
+    const badNumber = rawData();
+    badNumber.pvpConfig.turnSeconds = 0;
+    expect(() => parseGameData(badNumber)).toThrow(/Invalid game data/);
   });
 });

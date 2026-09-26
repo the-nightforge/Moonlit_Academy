@@ -390,6 +390,27 @@ export const achievementDefSchema = z.object({
   reward: z.object({ moonJade: z.number().int().positive() }),
 });
 
+export const pvpConfigSchema = z.object({
+  heroStats: z.record(z.string(), z.object({ maxHp: z.number().int().positive() })),
+  trialHeroIds: z.array(idSchema),
+  freeWeaponIds: z.array(idSchema),
+  freeRelicIds: z.array(idSchema),
+  secondPlayerBonus: z.object({ moonPower: z.number().int().nonnegative() }),
+  turnSeconds: z.number().int().positive(),
+  mulliganSeconds: z.number().int().positive(),
+  timeoutsToForfeit: z.number().int().positive(),
+  reconnectSeconds: z.number().int().positive(),
+  roundCap: z.number().int().positive(),
+  tiers: z.array(z.object({ id: idSchema, name: z.string().min(1), minRating: z.number().int() })).optional(),
+  honorShop: z.array(z.object({
+    id: idSchema,
+    item: z.string().min(1),
+    cost: z.number().int().positive(),
+    weeklyLimit: z.number().int().positive().optional(),
+  })).optional(),
+  emotes: z.array(z.string().min(1)).optional(),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
@@ -408,4 +429,5 @@ export const rawGameDataSchema = z.object({
   banners: z.array(bannerDefSchema),
   weapons: z.array(weaponDefSchema),
   relics: z.array(relicDefSchema),
+  pvpConfig: pvpConfigSchema,
 });

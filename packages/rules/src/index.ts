@@ -50,7 +50,7 @@ export {
 export type { RunRewards } from "./meta/economy";
 export { dayKey, weekKey } from "./meta/periods";
 export { grantHeroItem, legendaryRate, pullMany } from "./meta/gacha";
-export { buildLoadout } from "./meta/loadout";
+export { buildLoadout, buildPvpLoadout } from "./meta/loadout";
 export { buyShopItem } from "./meta/shop";
 export type { PullResult } from "./meta/gacha";
 export type { ReplayResult } from "./meta/replay";

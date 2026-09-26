@@ -18,6 +18,7 @@ import achievementsJson from "../achievements.json";
 import bannersJson from "../banners.json";
 import weaponsJson from "../weapons.json";
 import relicsJson from "../relics.json";
+import pvpConfigJson from "../pvp-config.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -37,7 +38,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig } =
     parsed;
   const errors: string[] = [];
 
@@ -418,6 +419,29 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       checkHooks(`relic "${relic.id}" resonance ${index + 1}`, level.hooks ?? [], true, false);
     }
   }
+  // PvP config (`17` §3.1): every hero has arena HP; trial and free ids must exist.
+  for (const hero of heroes) {
+    if (pvpConfig.heroStats[hero.id] === undefined) {
+      errors.push(`pvpConfig: heroStats missing "${hero.id}"`);
+    }
+  }
+  for (const id of Object.keys(pvpConfig.heroStats)) {
+    if (!heroById.has(id)) errors.push(`pvpConfig: heroStats references unknown hero "${id}"`);
+  }
+  for (const id of pvpConfig.trialHeroIds) {
+    if (!heroById.has(id)) errors.push(`pvpConfig: unknown trial hero "${id}"`);
+  }
+  for (const id of pvpConfig.freeWeaponIds) {
+    if (!weapons.some((weapon) => weapon.id === id)) {
+      errors.push(`pvpConfig: unknown free weapon "${id}"`);
+    }
+  }
+  for (const id of pvpConfig.freeRelicIds) {
+    if (!relics.some((relic) => relic.id === id)) {
+      errors.push(`pvpConfig: unknown free relic "${id}"`);
+    }
+  }
+
   for (const hero of heroes) {
     const effects = hero.altLevelUp.onLevelUp ?? [];
     const label = `hero "${hero.id}" altLevelUp.onLevelUp`;
@@ -442,7 +466,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -462,6 +486,7 @@ export function parseGameData(raw: unknown): GameData {
     banners: Object.fromEntries(banners.map((banner) => [banner.id, banner])),
     weapons: Object.fromEntries(weapons.map((weapon) => [weapon.id, weapon])),
     relics: Object.fromEntries(relics.map((relic) => [relic.id, relic])),
+    pvpConfig,
   };
 }
 
@@ -484,5 +509,6 @@ export function loadGameData(): GameData {
     banners: bannersJson,
     weapons: weaponsJson,
     relics: relicsJson,
+    pvpConfig: pvpConfigJson,
   });
 }

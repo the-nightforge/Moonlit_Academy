@@ -19,13 +19,13 @@ export function bondCardsForTeam(data: GameData, heroIds: readonly string[]): Ca
   );
 }
 
-/** At constellation 4 a hero's signature card becomes its "+" version (`01` §8). */
+/** At constellation 4 a hero's signature card becomes its "+" version (`01` §8); never in PvP (`17` §3.2). */
 export function applySignatureCards(data: GameData, deckCardIds: readonly string[], loadout?: Loadout): string[] {
   return deckCardIds.map((cardId) => {
     const ownerId = data.cards[cardId]?.ownerId;
     const hero = ownerId !== undefined ? data.heroes[ownerId] : undefined;
     const constellation = ownerId !== undefined ? (loadout?.heroes[ownerId]?.constellation ?? 0) : 0;
-    return hero && constellation >= 4 && hero.signature.cardId === cardId ? hero.signature.plusCardId : cardId;
+    return hero && constellation >= 4 && loadout?.pvp !== true && hero.signature.cardId === cardId ? hero.signature.plusCardId : cardId;
   });
 }
 
@@ -110,6 +110,7 @@ export function createCombat(
     levelUpCounter: 0,
     leveledUp: false,
     constellation: loadout?.heroes[hero.id]?.constellation ?? 0,
+    ...(loadout?.pvp === true ? { pvp: true } : {}),
     firstCardDiscountUsedThisTurn: false,
     firstCardDiscountActive: false,
     levelUpForm: loadout?.heroes[hero.id]?.levelUpForm ?? "base",

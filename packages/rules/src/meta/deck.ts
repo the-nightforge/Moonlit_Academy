@@ -20,14 +20,23 @@ export function validateDeck(
   data: GameData,
   profile: Profile,
   deck: DeckGear & { cardIds: readonly string[] },
+  options?: { mode?: "pvp" },
 ): DeckError[] {
+  const pvp = options?.mode === "pvp";
   const { heroIds, cardIds } = deck;
   if (heroIds.length !== 3 || new Set(heroIds).size !== 3 || heroIds.some((id) => !data.heroes[id])) {
     return [{ code: "badHeroes" }];
   }
+  // Fair Arena: trial heroes and free gear count as owned (`17` §3.2).
+  const heroOwned = (heroId: string) =>
+    profile.heroes[heroId] !== undefined || (pvp && data.pvpConfig.trialHeroIds.includes(heroId));
+  const weaponOwned = (weaponId: string) =>
+    profile.weapons[weaponId] !== undefined || (pvp && data.pvpConfig.freeWeaponIds.includes(weaponId));
+  const relicOwned = (relicId: string) =>
+    profile.relics[relicId] !== undefined || (pvp && data.pvpConfig.freeRelicIds.includes(relicId));
   const errors: DeckError[] = [];
   for (const heroId of heroIds) {
-    if (!profile.heroes[heroId]) errors.push({ code: "unownedHero", heroId });
+    if (!heroOwned(heroId)) errors.push({ code: "unownedHero", heroId });
   }
   // Each carried weapon takes one of the deck's slots (`14` §3.1).
   const weapons = deckWeapons(deck);
@@ -50,6 +59,7 @@ export function validateDeck(
   }
   for (const cardId of owned) {
     const ownerId = data.cards[cardId]!.ownerId!;
+    // A trial hero contributes only its six starter cards (`17` §3.2).
     const free = data.heroes[ownerId]!.cardIds.includes(cardId);
     if (!free && !profile.heroes[ownerId]?.unlockedCardIds.includes(cardId)) {
       errors.push({ code: "lockedCard", cardId });
@@ -59,7 +69,7 @@ export function validateDeck(
     if (!heroIds.includes(heroId)) errors.push({ code: "weaponSlot", heroId });
   }
   for (const [, weaponId] of weapons) {
-    if (!data.weapons[weaponId] || !profile.weapons[weaponId]) errors.push({ code: "unownedWeapon", weaponId });
+    if (!data.weapons[weaponId] || !weaponOwned(weaponId)) errors.push({ code: "unownedWeapon", weaponId });
   }
   const seenWeapons = new Set<string>();
   for (const [, weaponId] of weapons) {
@@ -68,7 +78,7 @@ export function validateDeck(
   }
   const relicIds = deck.relicIds ?? [];
   for (const relicId of relicIds) {
-    if (!data.relics[relicId] || !profile.relics[relicId]) errors.push({ code: "unownedRelic", relicId });
+    if (!data.relics[relicId] || !relicOwned(relicId)) errors.push({ code: "unownedRelic", relicId });
   }
   const seenRelics = new Set<string>();
   for (const relicId of relicIds) {

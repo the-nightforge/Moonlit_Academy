@@ -1,0 +1,21 @@
+{
+  "heroStats": {
+    "m05": { "maxHp": 52 },
+    "f04": { "maxHp": 40 },
+    "m06": { "maxHp": 36 },
+    "f03": { "maxHp": 42 },
+    "f02": { "maxHp": 34 }
+  },
+  "trialHeroIds": ["m05", "f04", "m06", "f03", "f02"],
+  "freeWeaponIds": ["w_bach_hoa_tram", "w_thiet_thuan", "w_liet_cung", "w_thanh_tam_binh"],
+  "freeRelicIds": ["r_bach_lo_huong_nang", "r_huyen_vu_giap_phu", "r_tran_hon_linh"],
+  "secondPlayerBonus": { "moonPower": 1 },
+  "turnSeconds": 60,
+  "mulliganSeconds": 30,
+  "timeoutsToForfeit": 3,
+  "reconnectSeconds": 60,
+  "roundCap": 30,
+  "tiers": [],
+  "honorShop": [],
+  "emotes": []
+}

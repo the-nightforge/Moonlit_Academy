@@ -359,7 +359,7 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T223 | **[GĐ5]** `enemiesKilled` đếm Hero đối thủ ngã; `enemyKilled` chạy hook người kết liễu, `heroDied` chạy hook người mất; `moonPhaseEntered` chạy hook cả hai theo thứ tự lượt |
 | T224 | **[GĐ5]** Thắng/thua/hòa: hết Hero, Cạn Bài của từng seat; cùng hết trong một effect → người có lượt thắng; `round > roundCap` → `draw` |
 | T225 | **[GĐ5]** `forfeit`: chỉ `system: true` được chấp nhận; client gửi bị từ chối; `winner` = seat còn lại |
-| T226 | **[GĐ5]** `buildPvpLoadout`: Tinh Hồn → cấp lẻ trần 5, cờ `pvp` tắt ngưỡng chẵn/lá "+"; vũ khí sở hữu giữ Tinh Luyện, miễn phí Tinh Luyện 1; Hero thử Tinh Hồn 0 |
+| T226 | **[GĐ5]** `buildPvpLoadout`: Tinh Hồn → cấp lẻ trần 5, cờ `pvp` tắt ngưỡng chẵn/lá "+"; mọi vũ khí về Tinh Luyện 1, mọi Nguyệt Bảo về Cộng Minh 1; Hero thử Tinh Hồn 0 |
 | T227 | **[GĐ5]** `validateDeck` `mode: "pvp"`: Hero thử / trang bị miễn phí hợp lệ dù chưa sở hữu; Hero vừa chưa sở hữu vừa ngoài `trialHeroIds` → `unownedHero` |
 | T228 | **[GĐ5]** `viewFor`: tay đối thủ thành `hidden_<n>` chỉ còn số lượng; chồng rút cả hai chỉ số; `rngState = 0`; bỏ/trang bị/Nguyệt Lực/Dự Trữ đầy đủ |
 | T229 | **[GĐ5]** `redactEvents`: `cardsDrawn`/`mulliganed`/`choiceOpened`/`cardChosen`/`deckShuffled` của đối thủ thành số lượng; `cardPlayed` giữ nguyên |

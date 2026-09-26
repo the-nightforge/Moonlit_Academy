@@ -1,3 +1,5 @@
+import type { Loadout } from "./meta";
+
 export type Faction = "thanhLoan" | "huyenVu" | "bachLo" | "xichDien" | "neutral";
 export type Archetype = "vanguard" | "striker" | "controller" | "support" | "specialist";
 export type Rarity = "common" | "rare" | "epic" | "legendary";
@@ -379,4 +381,37 @@ export interface MetaConfig {
   maxDecks: number;
   /** Moon relics per deck (`14` §3.1). */
   maxRelics: number;
+}
+
+/** Fair Arena configuration — `pvp-config.json` (`02` §1.13, `17` §3.1). */
+export interface PvpConfig {
+  /** Per-hero HP in the arena (every hero must have an entry). */
+  heroStats: Record<string, { maxHp: number }>;
+  /** Heroes playable without ownership (starter cards only). */
+  trialHeroIds: string[];
+  /** Gear usable without ownership, normalized to level 1. */
+  freeWeaponIds: string[];
+  freeRelicIds: string[];
+  /** Moon power granted to the second player on their first turn. */
+  secondPlayerBonus: { moonPower: number };
+  /** Server timers (`01` §15.2, `17` §4.7). */
+  turnSeconds: number;
+  mulliganSeconds: number;
+  timeoutsToForfeit: number;
+  reconnectSeconds: number;
+  /** Hard round cap; beyond it the match is a draw (`17` §4.6). */
+  roundCap: number;
+  /** Ranking tiers, honor shop and fixed emotes (filled in later tasks). */
+  tiers?: { id: string; name: string; minRating: number }[];
+  honorShop?: { id: string; item: string; cost: number; weeklyLimit?: number }[];
+  emotes?: string[];
+}
+
+/** One side of a PvP match (`17` §4.1). */
+export interface PvpSide {
+  heroIds: [string, string, string];
+  /** 18 slots like `CombatSetup.deckCardIds`; default: the team's cards. */
+  deckCardIds?: string[];
+  /** Normalized by `buildPvpLoadout` — `pvp: true` (`14` §12). */
+  loadout: Loadout;
 }

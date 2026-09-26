@@ -10,6 +10,8 @@ export interface Loadout {
   }>;
   /** Moon relics (phase 4e); missing = none. */
   relics?: { id: string; resonance: number }[];
+  /** [GĐ5] Fair Arena loadout: even constellation thresholds and "+" cards stay off (`17` §3.2). */
+  pvp?: boolean;
 }
 
 export interface SavedDeck {
