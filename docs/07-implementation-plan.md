@@ -1,4 +1,4 @@
-# 07 — Kế hoạch code (Giai đoạn 0–4b)
+# 07 — Kế hoạch code (Giai đoạn 0–4c)
 
 Mỗi bước là **một phiên làm việc** với AI. Dán prompt mẫu (chỉnh nếu cần), để AI làm xong, **tự chạy thử**, commit, rồi mới sang bước sau.
 
@@ -188,8 +188,31 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ---
 
-## Sau giai đoạn 4b
+## Giai đoạn 4c — Server, tài khoản, hồ sơ trên server
 
-Viết tài liệu cho giai đoạn tiếp theo **dựa trên ghi chú chơi thử**, theo thứ tự trong `00-gdd.md` mục 12:
-- Giai đoạn 4: kinh tế gacha, cấu trúc tài khoản, API server.
+Đặc tả: `15-phase4-spec.md` (§2). Luật hồ sơ / lượt chơi có xác nhận vào `14`, server và API vào `16` (mới), thuật ngữ vào `04`, test vào `06` (T173–T182). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-27-phase4c-server-accounts.md`. Thư viện đã duyệt: `fastify`, `better-sqlite3`, `@types/better-sqlite3`.
+
+### Bước 4c.1 — Cập nhật tài liệu
+> Đưa luật 4c vào `14`, `16`, `04`, `06`, `07`, `CLAUDE.md`.
+
+### Bước 4c.2 — Luật thuần
+> Hồ sơ v2 + `parseProfile` v1→v2, sở hữu Hero, `mergeImportedProfile`, `dataVersion`, `replayRun`. Làm T175, T176 (luật), T177, T181 (luật), T182. `run-playtest` kiểm chạy lại khớp.
+
+### Bước 4c.3 — Server khung và tài khoản
+> `apps/server` (Fastify + SQLite, bundle Vite SSR), migration, băm mật khẩu, phiên. Làm T173, T174.
+
+### Bước 4c.4 — Route hồ sơ
+> Hồ sơ, deck, mở lá, nhập hồ sơ cũ, `If-Match`. Làm T176, T180, T181 (route).
+
+### Bước 4c.5 — Phiếu lượt chơi
+> Cấp phiếu, nộp, chạy lại, trao XP. Làm T178, T179.
+
+### Bước 4c.6 — Client
+> Đăng nhập / đăng ký, `api.ts`, hồ sơ từ server, lượt chơi qua phiếu, nhập hồ sơ cũ, chế độ mất kết nối (chỉ Trận lẻ).
+
+## Sau giai đoạn 4c
+
+Theo `15-phase4-spec.md` và `00-gdd.md` mục 12:
+- Giai đoạn 4d: tiền tệ, nhiệm vụ, gacha Hero, Tinh Hồn (`15` §3).
+- Giai đoạn 4e: Binh Khí, Nguyệt Bảo, Tinh Luyện, Cộng Minh (`15` §4).
 - Giai đoạn 5–6: giao thức mạng PvP và co-op.

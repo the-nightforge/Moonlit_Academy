@@ -284,3 +284,21 @@ Bối cảnh thiết kế: `13-phase4b-spec.md`. Luật từ khóa: `01`; luật
 | T170 | `previewEnemyIntent.nextRoundMoonPower` = gốc vòng sau của địch + Dự Trữ hiện tại (cảnh báo Tụ Lực) |
 | T171 | Chiêm Bài: lá được chọn (và lá vào thẳng khi `k = 1`) có cost giảm `chooseCardDiscount` tới hết lượt; cuối lượt mất dấu `chosenThisTurn` |
 | T172 | Lõi: Lõi đã chọn (`pickAugment`) có hook hoạt động ở trận kế tiếp |
+
+## Giai đoạn 4c
+
+Bối cảnh thiết kế: `15-phase4-spec.md`. Luật hồ sơ / lượt chơi có xác nhận: `14`; server và API: `16`. Test server dùng `buildApp` với DB `:memory:`, đồng hồ và nguồn ngẫu nhiên giả.
+
+| Mã | Kịch bản |
+|---|---|
+| T173 | Đăng ký / đăng nhập / đăng xuất; tên trùng `409`; sai mật khẩu 5 lần → khóa 5 phút (`429`), đúng thì đặt lại bộ đếm; DB chỉ lưu băm của token và mật khẩu |
+| T174 | Phiên hết hạn sau 30 ngày không dùng (`401`); dùng trong hạn thì gia hạn |
+| T175 | `parseProfile` v1 → v2: giữ XP / lá mở của Hero khởi đầu, bỏ Hero chưa sở hữu, deck giữ nguyên; v2 thiếu trường → mặc định của trường |
+| T176 | `mergeImportedProfile` / `POST /profile/import`: `xp` lấy max, lá mở hợp nhưng không vượt Tu Luyện, deck nối thêm (id mới, cắt `maxDecks`); lần hai `"already imported"` |
+| T177 | `replayRun`: chuỗi Action hợp lệ → cùng `RunState` như khi chơi; Action bị từ chối → `step`/`reason`; Action sau khi kết thúc → `"actions after end"` |
+| T178 | Phiếu: tối đa 1 phiếu `open` mỗi tài khoản (cấp mới bỏ phiếu cũ); quá 7 ngày → `410`; `X-Data-Version` lệch → `409 outdated client` |
+| T179 | Nộp lượt chơi hợp lệ: XP đúng `applyRunResult`, phiếu `finished`, `rev` +1; nộp lại → `409 run closed`; chuỗi sai → `422 replay failed`, phiếu `rejected`, hồ sơ không đổi |
+| T180 | Route đổi hồ sơ với `If-Match` lệch → `409 stale profile` kèm hồ sơ và `rev` hiện tại; hồ sơ không đổi |
+| T181 | Hero chưa sở hữu: `validateDeck` → `unownedHero`; `unlockCard` → `"hero not owned"`; `POST /runs` với deck đó → `400 invalid deck` |
+| T182 | `dataVersion`: cùng data (khác thứ tự khóa) → cùng giá trị; đổi một số → khác |
+

@@ -132,12 +132,18 @@
 
 || Tiếng Việt | Code | Ghi chú |
 ||---|---|---|
-|| Hồ sơ | `profile`, `Profile` | Lưu lâu dài trong trình duyệt (`localStorage`) |
+|| Hồ sơ | `profile`, `Profile` | GĐ 4b: `localStorage`; từ GĐ 4c: lưu trên server (`version: 2`) |
 || Tu Luyện | `mastery` | XP từ lượt chơi; `masteryLevel`, `masteryLevels` trong `meta-config.json` |
 || Lá khóa | `lockedCardIds` | 6 lá/Hero mở bằng Tu Luyện; pool = `cardIds` + `lockedCardIds` (12 lá) |
 || Nhánh | `branches`, `HeroBranch` | Mỗi Hero 2 nhánh × 6 lá |
 || Deck (đã lưu) | `SavedDeck` | Deck đặt tên 18 lá (`deckSize`) |
 || Bộ cơ bản | `starterDeck` | Deck 18 lá miễn phí của đội, không lưu trong hồ sơ |
+|| Hero khởi đầu | `starterHeroIds` | Hero tài khoản mới sở hữu (`economy-config.json`) |
+|| Tài khoản | `account` | Tên đăng nhập + mật khẩu; mỗi tài khoản một hồ sơ |
+|| Phiên | `session` | Token đăng nhập, hạn 30 ngày kể từ lần dùng cuối |
+|| Phiếu lượt chơi | `runTicket`, `runId` | Server cấp seed + ảnh chụp `RunSetup` cho một lượt chơi |
+|| Chạy lại | `replay`, `replayRun` | Server chạy lại chuỗi `RunAction` để xác nhận kết quả trước khi thưởng |
+|| Phiên bản dữ liệu | `dataVersion` | Băm của `GameData`; client và server phải khớp |
 
 ## Hệ thống sau này (chưa code)
 

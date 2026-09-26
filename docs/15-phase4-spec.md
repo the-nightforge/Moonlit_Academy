@@ -26,7 +26,9 @@ tài liệu này giữ bối cảnh và lý do.
 **Điều kiện trước:** GĐ 4b + Lõi (`13`, `11` §3.3) và các gói chỉnh sau 4b đã vào
 `main`.
 
-**Trạng thái:** bản nháp, chờ duyệt.
+**Trạng thái:** đã duyệt (2026-09-27), gồm mọi điểm ở §11. 4c: kế hoạch
+`docs/superpowers/plans/2026-09-27-phase4c-server-accounts.md`; đã đưa vào `14`, `16`,
+`04`, `06`, `07`, `CLAUDE.md` (bước 4c.1).
 
 **Thư viện mới cần duyệt** (CLAUDE.md: không thêm thư viện khi chưa hỏi): `fastify`,
 `better-sqlite3` (+ `@types/better-sqlite3`) cho `apps/server`. Không thêm thư viện
@@ -93,9 +95,10 @@ apps/
 
 - `buildApp(deps)` nhận `db`, `clock: () => number`, `random: (bytes) => Buffer` để
   test tất định (giờ và seed giả).
-- **Phiên bản dữ liệu:** `dataVersion` = hash SHA-256 (16 ký tự hex) của JSON
-  `GameData` đã chuẩn hóa, tính khi server khởi động và khi client build (hàm dùng
-  chung trong `packages/data`). Mọi request có header `X-Data-Version`; lệch → `409
+- **Phiên bản dữ liệu:** `dataVersion` = băm FNV-1a 64 bit (16 ký tự hex) của JSON
+  `GameData` đã chuẩn hóa (khóa sắp xếp), hàm TypeScript thuần trong `packages/data`
+  để client (trình duyệt) và server tính giống nhau, đồng bộ. Không dùng để bảo mật,
+  chỉ để phát hiện lệch dữ liệu. Mọi request có header `X-Data-Version`; lệch → `409
   { error: "outdated client" }`. Phiếu lượt chơi lưu `dataVersion` lúc cấp.
 - Client dev: Vite proxy `/api` → `http://localhost:8787`. Server phục vụ riêng
   (không phục vụ file client ở GĐ 4).
@@ -664,7 +667,7 @@ Mã mới từ **T173**. Test luật dùng fixture; test server dùng `buildApp`
 
 ---
 
-## 11. Điểm cần người dùng xác nhận
+## 11. Điểm đã xác nhận (2026-09-27)
 
 1. **Thư viện:** `fastify`, `better-sqlite3`, `@types/better-sqlite3`.
 2. **Số kinh tế** (§3.1–§3.2): quà 1600 Nguyệt Ngọc, ~130/lượt chơi, nhiệm vụ ngày ~110,
