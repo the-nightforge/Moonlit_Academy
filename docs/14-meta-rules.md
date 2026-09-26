@@ -86,7 +86,7 @@ Chỉ lượt chơi cho XP; trận lẻ và lượt chơi bỏ ngang không cho.
 - Không phải object / thiếu trường / sai kiểu → `{ profile: createProfile(data), reset: true }`.
 - **[GĐ4c]** `version: 1` → chuyển sang v2: giữ `xp`, `unlockedCardIds` của Hero có trong v1 **và** thuộc `starterHeroIds` (các trường Hero mới lấy mặc định); Hero ngoài bộ khởi đầu bị bỏ (chưa sở hữu); giữ `decks` nguyên (deck dùng Hero chưa sở hữu vẫn lưu, không hợp lệ — `unownedHero`); mọi trường v2 khác lấy mặc định như `createProfile`.
 - `version: 2`: từng trường kiểm kiểu; thiếu hoặc sai kiểu → mặc định của trường đó (không reset cả hồ sơ). `version` khác 1/2 → coi như hỏng.
-- Hero không có trong data → bỏ. **[GĐ4c]** Hero trong data mà hồ sơ thiếu **không** được thêm (chưa sở hữu).
+- Hero không có trong data → bỏ. **[GĐ4c]** Hero trong data mà hồ sơ thiếu **không** được thêm (chưa sở hữu), trừ Hero trong `starterHeroIds`: luôn có (mặc định nếu thiếu).
 - `unlockedCardIds` không thuộc `lockedCardIds` của Hero → bỏ (lượt mở tự quay lại vì được tính ra).
 - Deck: giữ nguyên (kể cả không hợp lệ); chỉ bỏ deck sai kiểu cơ bản (thiếu `id`, `name`, `heroIds` 3 phần tử, `cardIds` mảng chuỗi).
 

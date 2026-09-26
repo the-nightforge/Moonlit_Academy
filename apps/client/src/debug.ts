@@ -71,7 +71,10 @@ export function debugAdjustHeroHp(index: number, delta: number): void {
 
 export function debugGrantTeamXp(amount = 100): void {
   const profile = JSON.parse(JSON.stringify(session.profile)) as Profile;
-  for (const heroId of session.heroIds) profile.heroes[heroId]!.xp += amount;
+  for (const heroId of session.heroIds) {
+    const hero = profile.heroes[heroId];
+    if (hero) hero.xp += amount;
+  }
   session.profile = profile;
   saveProfile(profile);
 }
@@ -79,7 +82,12 @@ export function debugGrantTeamXp(amount = 100): void {
 export function debugUnlockAll(): void {
   const profile = JSON.parse(JSON.stringify(session.profile)) as Profile;
   for (const hero of Object.values(session.data.heroes)) {
+    // Debug: also owns every hero.
     profile.heroes[hero.id] = {
+      constellation: 0,
+      bonusUnlocks: 0,
+      levelUpForm: "base",
+      ...profile.heroes[hero.id],
       xp: Math.max(profile.heroes[hero.id]?.xp ?? 0, session.data.metaConfig.masteryLevels.at(-1)!),
       unlockedCardIds: [...hero.lockedCardIds],
     };

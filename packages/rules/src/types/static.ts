@@ -227,6 +227,12 @@ export interface CombatConfig {
   bloodMoonHpLoss: number;
 }
 
+/** Account economy (`14` §1). Phase 4c: starter heroes only. */
+export interface EconomyConfig {
+  /** Heroes a new account owns. */
+  starterHeroIds: string[];
+}
+
 export interface MetaConfig {
   /** Cumulative XP thresholds for mastery level 1..n (one per locked card). */
   masteryLevels: number[];

@@ -5,7 +5,7 @@ declare const console: {
   log(...args: unknown[]): void;
   table(...args: unknown[]): void;
 };
-import type { Action, CombatEvent, CombatState, Effect, GameData, RunAction, RunState } from "../src/index";
+import type { Action, CombatEvent, CombatState, Effect, GameData, RunAction, RunSetup, RunState } from "../src/index";
 import {
   applyRunAction,
   createRun,
@@ -15,6 +15,7 @@ import {
   isCardPlayable,
   reachableNodeIds,
   shuffle,
+  replayRun,
   starterDeck,
 } from "../src/index";
 
@@ -214,7 +215,9 @@ const DECK_VARIANTS: { label: string; build: (team: [string, string, string], se
 ];
 
 function simulateRun(heroIds: [string, string, string], seed: number, deckCardIds: string[]) {
-  let run = createRun(data, { heroIds, seed, deckCardIds }).run;
+  const setup: RunSetup = { heroIds, seed, deckCardIds };
+  let run = createRun(data, setup).run;
+  const actions: RunAction[] = [];
   let fights = 0;
   let stalled = false;
   const played = new Set<string>();
@@ -260,7 +263,9 @@ function simulateRun(heroIds: [string, string, string], seed: number, deckCardId
       stalled = true;
       break;
     }
-    const result = applyRunAction(data, run, runAction(data, run));
+    const action = runAction(data, run);
+    const result = applyRunAction(data, run, action);
+    if (result.ok) actions.push(action);
     if (!result.ok) throw new Error(`run action rejected: ${result.error}`);
     for (const e of result.runEvents) {
       if (e.type === "nodeEntered") {
@@ -277,6 +282,8 @@ function simulateRun(heroIds: [string, string, string], seed: number, deckCardId
     record(result.events, result.run.combat ?? lastCombat);
     run = result.run;
   }
+  // Server replay (`14` §4.2): the recorded actions rebuild exactly this run.
+  if (!stalled) expect(replayRun(data, setup, actions)).toEqual({ ok: true, run });
   const { perFloor, win, heroLevelUp } = data.metaConfig.masteryXp;
   const floor = run.position ? findNode(run, run.position)!.floor : 0;
   const xpAvg =

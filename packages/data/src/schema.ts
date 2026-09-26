@@ -260,6 +260,10 @@ export const metaConfigSchema = z.object({
   maxDecks: z.number().int().positive(),
 });
 
+export const economyConfigSchema = z.object({
+  starterHeroIds: z.array(idSchema).length(3),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
@@ -272,4 +276,5 @@ export const rawGameDataSchema = z.object({
   combatConfig: combatConfigSchema,
   keywords: z.array(keywordDefSchema),
   metaConfig: metaConfigSchema,
+  economyConfig: economyConfigSchema,
 });

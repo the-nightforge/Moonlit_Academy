@@ -10,6 +10,7 @@ import runConfigJson from "../run-config.json";
 import combatConfigJson from "../combat-config.json";
 import keywordsJson from "../keywords.json";
 import metaConfigJson from "../meta-config.json";
+import economyConfigJson from "../economy-config.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -25,6 +26,7 @@ function rawData(): any {
     combatConfig: combatConfigJson,
     keywords: keywordsJson,
     metaConfig: metaConfigJson,
+    economyConfig: economyConfigJson,
   }));
 }
 
@@ -288,3 +290,15 @@ describe("parseGameData validation", () => {
     expect(() => parseGameData(keyword)).toThrowError(/unknown keyword/);
   });
 });
+
+describe("economyConfig", () => {
+  it("rejects unknown or repeated starter heroes", () => {
+    const unknown = rawData();
+    unknown.economyConfig = { starterHeroIds: ["m05", "f04", "ghost"] };
+    expect(() => parseGameData(unknown)).toThrow(/unknown starter hero "ghost"/);
+    const repeated = rawData();
+    repeated.economyConfig = { starterHeroIds: ["m05", "m05", "f04"] };
+    expect(() => parseGameData(repeated)).toThrow(/starterHeroIds must be distinct/);
+  });
+});
+

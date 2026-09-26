@@ -31,7 +31,10 @@ export class MasteryScene extends Phaser.Scene {
     const data = session.data;
     const levels = data.metaConfig.masteryLevels;
     addText(this, this.root, WIDTH / 2, 28, "Tu Luyện", 26, COLORS.gold).setOrigin(0.5);
-    Object.values(data.heroes).forEach((hero, index) => {
+    // Only owned heroes train (phase 4c); others come from the gacha later.
+    const owned = Object.values(data.heroes).filter((hero) => session.profile.heroes[hero.id]);
+    if (!session.profile.heroes[this.heroId]) this.heroId = owned[0]!.id;
+    owned.forEach((hero, index) => {
       const y = 100 + index * 90;
       const { xp } = session.profile.heroes[hero.id]!;
       const level = masteryLevel(data, xp);

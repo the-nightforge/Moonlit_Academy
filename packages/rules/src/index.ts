@@ -20,10 +20,13 @@ export {
   applyRunResult,
   createProfile,
   masteryLevel,
+  mergeImportedProfile,
   parseProfile,
   pendingUnlocks,
   summarizeRun,
   unlockCard,
 } from "./meta/profile";
 export { deleteDeck, saveDeck, starterDeck, validateDeck } from "./meta/deck";
+export { replayRun } from "./meta/replay";
+export type { ReplayResult } from "./meta/replay";
 export type { EnemyPlanPreview, IntentPreview, IntentDamagePreview } from "./preview";

@@ -12,6 +12,7 @@ import runConfigJson from "../run-config.json";
 import combatConfigJson from "../combat-config.json";
 import keywordsJson from "../keywords.json";
 import metaConfigJson from "../meta-config.json";
+import economyConfigJson from "../economy-config.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -31,7 +32,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig } =
     parsed;
   const errors: string[] = [];
 
@@ -246,6 +247,16 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
   }
 
+  const starters = economyConfig.starterHeroIds;
+  if (new Set(starters).size !== starters.length) {
+    errors.push(`economyConfig: starterHeroIds must be distinct`);
+  }
+  for (const heroId of starters) {
+    if (!heroes.some((hero) => hero.id === heroId)) {
+      errors.push(`economyConfig: unknown starter hero "${heroId}"`);
+    }
+  }
+
   for (const augment of runAugments) {
     if (runRelics.some((relic) => relic.id === augment.id)) {
       errors.push(`runAugments: id "${augment.id}" collides with a runRelic`);
@@ -306,7 +317,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -320,6 +331,7 @@ export function parseGameData(raw: unknown): GameData {
     combatConfig,
     keywords: Object.fromEntries(keywords.map((keyword) => [keyword.id, keyword])),
     metaConfig,
+    economyConfig,
   };
 }
 
@@ -336,5 +348,6 @@ export function loadGameData(): GameData {
     combatConfig: combatConfigJson,
     keywords: keywordsJson,
     metaConfig: metaConfigJson,
+    economyConfig: economyConfigJson,
   });
 }

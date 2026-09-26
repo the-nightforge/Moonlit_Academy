@@ -17,6 +17,8 @@ export function describeDeckError(data: GameData, error: DeckError): string {
   switch (error.code) {
     case "badHeroes":
       return "Deck phải có 3 Hero khác nhau";
+    case "unownedHero":
+      return `Chưa sở hữu Hero: ${data.heroes[error.heroId]?.name ?? error.heroId}`;
     case "wrongSize":
       return `Deck cần đúng ${data.metaConfig.deckSize} lá (đang ${error.size})`;
     case "duplicateCard":
@@ -180,11 +182,12 @@ export class DeckSelectScene extends Phaser.Scene {
       const x = startX + index * spacing;
       const y = 280;
       const slot = this.picked.indexOf(hero.id);
-      const panel = this.add.rectangle(x, y, 210, 110, COLORS.panelHero);
+      const owned = session.profile.heroes[hero.id] !== undefined;
+      const panel = this.add.rectangle(x, y, 210, 110, COLORS.panelHero).setAlpha(owned ? 1 : 0.45);
       panel.setStrokeStyle(slot >= 0 ? 3 : 1, slot >= 0 ? COLORS.goldFill : (OWNER_COLORS[hero.id] ?? COLORS.panelBorder));
       panel.setInteractive({ useHandCursor: true });
       panel.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        if (pointer.button !== 0) return;
+        if (pointer.button !== 0 || !owned) return;
         if (this.picked.includes(hero.id)) this.picked = this.picked.filter((id) => id !== hero.id);
         else if (this.picked.length < 3) this.picked.push(hero.id);
         this.render();
@@ -192,7 +195,7 @@ export class DeckSelectScene extends Phaser.Scene {
       this.root.add(panel);
       if (slot >= 0) addText(this, this.root, x + 90, y - 42, `${slot + 1}`, 16, COLORS.gold).setOrigin(0.5);
       addText(this, this.root, x, y - 24, hero.name, 17).setOrigin(0.5);
-      addText(this, this.root, x, y + 2, `HP ${hero.maxHp}`, 12, COLORS.dimText).setOrigin(0.5);
+      addText(this, this.root, x, y + 2, owned ? `HP ${hero.maxHp}` : "Chưa sở hữu", 12, COLORS.dimText).setOrigin(0.5);
       this.root.add(
         this.add
           .text(x, y + 20, hero.branches.map((b) => b.name).join(" / "), { ...TEXT_BASE, fontSize: "11px", color: COLORS.dimText, align: "center", wordWrap: { width: 190 } })

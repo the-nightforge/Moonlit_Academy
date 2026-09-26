@@ -31,7 +31,7 @@ export class DeckBuilderScene extends Phaser.Scene {
 
   private isUnlocked(heroId: string, cardId: string): boolean {
     const hero = session.data.heroes[heroId]!;
-    return hero.cardIds.includes(cardId) || session.profile.heroes[heroId]!.unlockedCardIds.includes(cardId);
+    return hero.cardIds.includes(cardId) || (session.profile.heroes[heroId]?.unlockedCardIds.includes(cardId) ?? false);
   }
 
   private toggle(cardId: string) {

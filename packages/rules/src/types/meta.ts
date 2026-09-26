@@ -5,10 +5,45 @@ export interface SavedDeck {
   cardIds: string[];
 }
 
+export interface HeroProgress {
+  xp: number;
+  unlockedCardIds: string[];
+  /** Tinh Hồn 0–6 (phase 4d). */
+  constellation: number;
+  /** Extra unlocks granted by Tinh Hồn 1/3 (phase 4d). */
+  bonusUnlocks: number;
+  /** Tinh Hồn 5 choice (phase 4d). */
+  levelUpForm: "base" | "alt";
+}
+
+export interface ProfileCurrencies {
+  moonJade: number;
+  moonStar: number;
+  darkIron: number;
+  moonDust: number;
+}
+
+export interface MissionState {
+  dayKey: string;
+  weekKey: string;
+  progress: Record<string, number>;
+  claimed: string[];
+}
+
+/** Saved account progress (`14` §2.1). Version 1 was the phase 4b localStorage profile. */
 export interface Profile {
-  version: 1;
-  heroes: Record<string, { xp: number; unlockedCardIds: string[] }>;
+  version: 2;
+  /** Owned heroes only. */
+  heroes: Record<string, HeroProgress>;
   decks: SavedDeck[];
+  currencies: ProfileCurrencies;
+  weapons: Record<string, { refinement: number }>;
+  relics: Record<string, { resonance: number }>;
+  pity: Record<string, { sinceEpic: number; sinceLegendary: number }>;
+  missions: MissionState;
+  achievements: string[];
+  stats: Record<string, number>;
+  flags: { starterGiftClaimed: boolean; localImportDone: boolean };
 }
 
 export interface RunResult {
@@ -28,6 +63,7 @@ export interface MasteryGain {
 
 export type DeckError =
   | { code: "badHeroes" }
+  | { code: "unownedHero"; heroId: string }
   | { code: "wrongSize"; size: number }
   | { code: "duplicateCard"; cardId: string }
   | { code: "foreignCard"; cardId: string }

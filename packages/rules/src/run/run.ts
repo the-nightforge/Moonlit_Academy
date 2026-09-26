@@ -22,9 +22,10 @@ export function findNode(run: RunState, nodeId: string): MapNode | undefined {
   return run.map.floors.flat().find((node) => node.id === nodeId);
 }
 
+/** A fresh array: callers may sort it without touching the map. */
 export function reachableNodeIds(run: RunState): string[] {
   if (run.position === null) return run.map.floors[0]!.map((node) => node.id);
-  return findNode(run, run.position)?.next ?? [];
+  return [...(findNode(run, run.position)?.next ?? [])];
 }
 
 /** HP each hero would regain from resting now (`11` §3.1). */

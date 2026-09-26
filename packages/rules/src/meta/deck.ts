@@ -19,6 +19,9 @@ export function validateDeck(
     return [{ code: "badHeroes" }];
   }
   const errors: DeckError[] = [];
+  for (const heroId of heroIds) {
+    if (!profile.heroes[heroId]) errors.push({ code: "unownedHero", heroId });
+  }
   if (cardIds.length !== data.metaConfig.deckSize) errors.push({ code: "wrongSize", size: cardIds.length });
   const unique = new Set<string>();
   for (const cardId of cardIds) {
