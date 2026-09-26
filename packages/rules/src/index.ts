@@ -11,6 +11,8 @@ export {
 } from "./players";
 export { cardDefOf, relicAt, weaponAt, weaponCardDef, weaponHooks } from "./gear";
 export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-combat";
+export { createPvpCombat } from "./pvp/create";
+export { displayDuration, getStatus, hasStatus } from "./statuses";
 export { applyAction } from "./apply-action";
 export { getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
 export { getMulliganError, getPlayCardError } from "./apply-action";

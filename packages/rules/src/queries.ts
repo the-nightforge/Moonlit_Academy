@@ -76,10 +76,17 @@ export function getValidTargets(data: GameData, state: CombatState, instanceId: 
   switch (card.target) {
     case "none":
       return [];
-    case "enemy":
-      return opponentsOf(state, source)
-        .filter((unit) => unit.alive && !hasStatus(unit, "stealth"))
-        .map((unit) => unit.id);
+    case "enemy": {
+      const targets = opponentsOf(state, source).filter(
+        (unit) => unit.alive && !hasStatus(unit, "stealth"),
+      );
+      // PvP: a taunting opposing hero soaks single-target picks (`17` §4.4).
+      if (state.mode === "pvp") {
+        const taunters = targets.filter((unit) => hasStatus(unit, "taunt"));
+        if (taunters.length > 0) return taunters.map((unit) => unit.id);
+      }
+      return targets.map((unit) => unit.id);
+    }
     case "ally":
       return alliesOf(state, source).filter((unit) => unit.alive).map((unit) => unit.id);
   }

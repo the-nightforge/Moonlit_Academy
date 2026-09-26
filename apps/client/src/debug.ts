@@ -147,7 +147,12 @@ export function describeEvent(
       return `${name(event.heroId)} thăng cấp: ${event.name}`;
     case "unitDied":
       return `${name(event.unitId)} ngã`;
+    case "playerForfeited":
+      return `Người chơi ${event.player} bỏ cuộc (${event.reason})`;
+    case "playerDisconnected":
+      return `Người chơi ${event.player} mất kết nối`;
     case "combatEnded":
+      if (event.result === "draw") return "HÒA";
       return event.result === "won" ? "THẮNG" : "THUA";
   }
 }

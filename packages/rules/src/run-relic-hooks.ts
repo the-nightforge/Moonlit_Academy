@@ -1,6 +1,6 @@
 import { checkCombatEnd, resolveEffects } from "./effects";
 import { relicAt, weaponHooks } from "./gear";
-import { heroesOf } from "./players";
+import { heroesOf, playerOf, seatTag } from "./players";
 import type {
   CardDef,
   CombatEvent,
@@ -93,10 +93,11 @@ interface HookSource {
 /** Hook sources of seat `player` in firing order (`01` §14.5); weapons of fallen wearers are left out. */
 function hookSources(data: GameData, state: CombatState, player: number): HookSource[] {
   const seat = state.players[player]!;
+  const tag = seatTag(state, player);
   const sources: HookSource[] = seat.runRelicIds.map((relicId) => ({
     keyPrefix: relicId,
     hooks: (data.runRelics[relicId] ?? data.augments[relicId])?.hooks ?? [],
-    event: { type: "runRelicTriggered", runRelicId: relicId },
+    event: { type: "runRelicTriggered", runRelicId: relicId, ...tag },
   }));
   for (const relic of seat.relics) {
     const def = data.relics[relic.id];
@@ -104,7 +105,7 @@ function hookSources(data: GameData, state: CombatState, player: number): HookSo
     sources.push({
       keyPrefix: relic.id,
       hooks: relicAt(def, relic.resonance).hooks ?? [],
-      event: { type: "relicTriggered", relicId: relic.id },
+      event: { type: "relicTriggered", relicId: relic.id, ...tag },
     });
   }
   for (const weapon of seat.weapons) {
@@ -113,7 +114,7 @@ function hookSources(data: GameData, state: CombatState, player: number): HookSo
     sources.push({
       keyPrefix: `${weapon.weaponId}@${weapon.heroId}`,
       hooks: weaponHooks(data, weapon),
-      event: { type: "weaponTriggered", weaponId: weapon.weaponId, heroId: weapon.heroId },
+      event: { type: "weaponTriggered", weaponId: weapon.weaponId, heroId: weapon.heroId, ...tag },
       wearer,
     });
   }
@@ -167,30 +168,53 @@ export function fireEventHooks(
   bloodMoonBefore: number,
   player: number = state.activePlayer,
 ): void {
-  const seat = state.players[player]!;
-  if (seat.runRelicIds.length === 0 && seat.relics.length === 0 && seat.weapons.length === 0) return;
+  // PvP world events (moon shifts) fire hooks for both seats, active player first (`17` §4.5).
+  const moonSeats =
+    state.mode === "pvp"
+      ? [player, ...state.players.map((seat) => seat.index).filter((i) => i !== player)]
+      : [player];
   // Sampled before any hook effects below run: bloodMoonStarted only reacts to
   // the scanned effect's own 0→active transition, never a relic-internal one.
   const bloodMoonAfter = state.bloodMoonRounds;
   for (const event of events.slice(from)) {
     if (isOver(state)) return;
     if (event.type === "unitDied") {
-      const isEnemy = state.enemies.some((enemy) => enemy.id === event.unitId);
-      runRelicHooks(
-        data,
-        state,
-        events,
-        isEnemy ? { type: "enemyKilled", killerId: event.killerId } : { type: "heroDied" },
-        player,
-      );
+      const victimHero = state.heroes.find((hero) => hero.id === event.unitId);
+      if (victimHero) {
+        // heroDied fires for the victim's seat; in PvP a kill by the opposing
+        // seat also fires enemyKilled for the killer (`17` §4.5).
+        runRelicHooks(data, state, events, { type: "heroDied" }, victimHero.player);
+        if (state.mode === "pvp") {
+          const killerSeat =
+            event.killerId !== undefined ? playerOf(state, event.killerId)?.index : undefined;
+          if (killerSeat !== undefined && killerSeat !== victimHero.player) {
+            runRelicHooks(
+              data,
+              state,
+              events,
+              { type: "enemyKilled", killerId: event.killerId },
+              killerSeat,
+            );
+          }
+        }
+      } else {
+        runRelicHooks(data, state, events, { type: "enemyKilled", killerId: event.killerId }, player);
+      }
     } else if (event.type === "moonShifted") {
-      runRelicHooks(data, state, events, {
-        type: "moonPhaseEntered",
-        phase: data.moonPhases[event.to]!.id,
-      }, player);
+      for (const seat of moonSeats) {
+        runRelicHooks(
+          data,
+          state,
+          events,
+          { type: "moonPhaseEntered", phase: data.moonPhases[event.to]!.id },
+          seat,
+        );
+      }
     }
   }
   if (!isOver(state) && bloodMoonBefore === 0 && bloodMoonAfter > 0) {
-    runRelicHooks(data, state, events, { type: "bloodMoonStarted" }, player);
+    for (const seat of moonSeats) {
+      runRelicHooks(data, state, events, { type: "bloodMoonStarted" }, seat);
+    }
   }
 }

@@ -4,7 +4,7 @@ import { runEnemyTurn } from "./enemy-turn";
 import { planEnemyIntents } from "./intent";
 import { bumpCounter, checkLevelUps, levelUpPassive } from "./levelup";
 import { baseMoonPower } from "./moon-power";
-import { heroesOf } from "./players";
+import { heroesOf, seatTag } from "./players";
 import { cardOwners } from "./queries";
 import { fireEventHooks, runRelicHooks } from "./run-relic-hooks";
 import { DURATION_STATUSES, hasStatus, removeStatus } from "./statuses";
@@ -17,7 +17,7 @@ export function startPlayerTurn(
   events: CombatEvent[],
 ): void {
   state.status = "playerTurn";
-  events.push({ type: "turnStarted", side: "hero", round: state.round });
+  events.push({ type: "turnStarted", side: "hero", round: state.round, ...seatTag(state, player.index) });
   player.cardsPlayedThisTurn = 0;
   for (const hero of heroesOf(state, player.index)) {
     if (hero.armor > 0) {
@@ -62,17 +62,30 @@ export function startPlayerTurn(
   const curve = data.combatConfig.moonPower;
   player.moonPower =
     baseMoonPower(curve, curve.perRound, state.round) + player.moonReserve + player.moonPowerBonus;
-  events.push({ type: "moonPowerChanged", value: player.moonPower });
+  // Fair Arena: the second player's first turn gets the catch-up bonus (`17` §4.2).
+  if (state.mode === "pvp" && state.round === 1 && player.index !== state.firstPlayer) {
+    player.moonPower += data.pvpConfig.secondPlayerBonus.moonPower;
+  }
+  events.push({ type: "moonPowerChanged", value: player.moonPower, ...seatTag(state, player.index) });
   refillHand(data, state, player, events);
   if (player.hand.length === 0 && player.drawPile.length === 0) {
-    state.status = "lost";
-    events.push({ type: "deckedOut" }, { type: "combatEnded", result: "lost" });
+    events.push({ type: "deckedOut", ...seatTag(state, player.index) });
+    if (state.mode === "pvp") {
+      const winner = (1 - player.index) as 0 | 1;
+      state.winner = winner;
+      state.status = "won";
+      events.push({ type: "combatEnded", result: "won", winner });
+    } else {
+      state.status = "lost";
+      events.push({ type: "combatEnded", result: "lost" });
+    }
     return;
   }
   runRelicHooks(data, state, events, { type: "playerTurnStart" }, player.index);
 }
 
-export function endRound(data: GameData, state: CombatState, events: CombatEvent[]): void {
+/** Duration statuses tick down once per unit at the round's (PvE) or turn's (PvP) end. */
+export function tickDurations(state: CombatState, events: CombatEvent[]): void {
   for (const unit of [...state.heroes, ...state.enemies]) {
     for (const entry of [...unit.statuses]) {
       if (!DURATION_STATUSES.has(entry.id)) continue;
@@ -80,6 +93,10 @@ export function endRound(data: GameData, state: CombatState, events: CombatEvent
       if (entry.value <= 0) removeStatus(unit, entry.id, events);
     }
   }
+}
+
+/** The shared part of a round's end: moon phase advances, blood moon ticks, round++. */
+export function advanceRound(data: GameData, state: CombatState, events: CombatEvent[]): void {
   const from = state.moonIndex;
   state.moonIndex = (state.moonIndex + 1) % data.moonPhases.length;
   events.push({ type: "moonShifted", from, to: state.moonIndex, cause: "roundEnd" });
@@ -90,6 +107,12 @@ export function endRound(data: GameData, state: CombatState, events: CombatEvent
     events.push({ type: "bloodMoonChanged", rounds: state.bloodMoonRounds, cause: "roundEnd" });
   }
   state.round += 1;
+}
+
+export function endRound(data: GameData, state: CombatState, events: CombatEvent[]): void {
+  tickDurations(state, events);
+  advanceRound(data, state, events);
+  if (state.status === "won" || state.status === "lost") return;
   planEnemyIntents(data, state, events);
 }
 
@@ -105,14 +128,14 @@ export function runEndTurn(data: GameData, state: CombatState, events: CombatEve
   if (broken.length > 0) {
     player.hand = player.hand.filter((id) => !broken.includes(id));
     player.discardPile.push(...broken);
-    events.push({ type: "cardDiscarded", instanceIds: broken });
+    events.push({ type: "cardDiscarded", instanceIds: broken, ...seatTag(state, player.index) });
   }
   for (const id of player.hand) state.cards[id]!.heldTurns += 1;
   for (const instance of Object.values(state.cards)) delete instance.chosenThisTurn;
   const reserve = Math.min(data.combatConfig.moonReserveMax, player.moonPower);
   if (reserve !== player.moonReserve) {
     player.moonReserve = reserve;
-    events.push({ type: "moonReserveChanged", side: "hero", value: reserve });
+    events.push({ type: "moonReserveChanged", side: "hero", value: reserve, ...seatTag(state, player.index) });
   }
   for (const hero of heroesOf(state, player.index)) removeStatus(hero, "freeze", events);
   runEnemyTurn(data, state, events);

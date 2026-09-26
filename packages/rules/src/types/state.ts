@@ -105,6 +105,8 @@ export interface PlayerState {
   relics: { id: string; resonance: number }[];
   /** Run relics and augments carried into this combat by this player. */
   runRelicIds: string[];
+  /** [GĐ5] PvP: this seat already mulliganed (`17` §4.1 — both seats mulligan in parallel). */
+  mulliganDone: boolean;
   /** Co-op: this player finished their simultaneous turn (`17` §8.3). */
   done: boolean;
 }
@@ -123,8 +125,10 @@ export interface CombatState {
   /** Card instances of every player; multiplayer instance ids carry the `p<index>_` prefix. */
   cards: Record<string, CardInstance>;
   rngState: number;
-  /** Winning seat index, or "draw" (PvP round cap). */
+  /** Winning seat index, or "draw" (PvP round cap / simultaneous wipe). */
   winner?: number | "draw";
+  /** [GĐ5] PvP: seat taking the first turn of each round (`17` §4.1). */
+  firstPlayer?: number;
 }
 
 export interface CombatWeapon {

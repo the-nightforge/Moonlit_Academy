@@ -11,11 +11,10 @@ export function playerOf(state: CombatState, unitId: string): PlayerState | unde
   return hero ? state.players[hero.player] : undefined;
 }
 
-/** The seat owning the hero that owns card instance `instanceId` (first owner for bond cards). */
+/** The seat owning card instance `instanceId`. */
 export function playerOfCard(state: CombatState, instanceId: string): PlayerState | undefined {
   const instance = state.cards[instanceId];
-  if (!instance) return undefined;
-  return playerOf(state, instance.ownerIds[0]!);
+  return instance ? state.players[instance.player] : undefined;
 }
 
 /** Living or dead hero units of seat `player`, in state order. */
@@ -50,4 +49,12 @@ export function opponentsOf(state: CombatState, unit: UnitState): UnitState[] {
  */
 export function prefixedId(state: CombatState, player: number, id: string): string {
   return state.players.length > 1 ? `p${player}_${id}` : id;
+}
+
+/**
+ * `{ player }` spread for seat-scoped events — only in multiplayer, so PvE event
+ * streams stay byte-identical (`17` §2.3, doc `02` §3).
+ */
+export function seatTag(state: CombatState, player: number): { player?: number } {
+  return state.players.length > 1 ? { player } : {};
 }

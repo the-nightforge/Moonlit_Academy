@@ -161,6 +161,7 @@ export function createCombat(
         weapons,
         relics,
         runRelicIds: [...(setup.runRelicIds ?? [])],
+        mulliganDone: false,
         done: false,
       },
     ],

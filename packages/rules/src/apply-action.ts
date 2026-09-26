@@ -2,7 +2,8 @@ import { cloneState } from "./clone";
 import { resolveEffects } from "./effects";
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
-import { activePlayerState } from "./players";
+import { activePlayerState, seatTag } from "./players";
+import { pvpEndTurn } from "./pvp/turn";
 import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
 import { shuffle } from "./rng";
 import { runRelicHooks } from "./run-relic-hooks";
@@ -64,13 +65,14 @@ function playCard(
   const cost = getEffectiveCost(data, state, instance.instanceId);
 
   player.moonPower -= cost;
-  events.push({ type: "moonPowerChanged", value: player.moonPower });
+  events.push({ type: "moonPowerChanged", value: player.moonPower, ...seatTag(state, player.index) });
   player.hand = player.hand.filter((id) => id !== instance.instanceId);
   events.push({
     type: "cardPlayed",
     instanceId: instance.instanceId,
     cost,
     ...(action.targetId !== undefined ? { targetId: action.targetId } : {}),
+    ...seatTag(state, player.index),
   });
   if (discounted) owner.firstCardDiscountUsedThisTurn = true;
 
@@ -146,12 +148,24 @@ function mulligan(
     const replacement = drawn[drawIndex++];
     return replacement === undefined ? [] : [replacement];
   });
-  events.push({ type: "mulliganed", returned: [...instanceIds], drawn });
+  events.push({ type: "mulliganed", returned: [...instanceIds], drawn, ...seatTag(state, player.index) });
   if (instanceIds.length > 0) {
     const shuffled = shuffle([...player.drawPile, ...instanceIds], state.rngState);
     player.drawPile = shuffled.items;
     state.rngState = shuffled.rngState;
-    events.push({ type: "deckShuffled" });
+    events.push({ type: "deckShuffled", ...seatTag(state, player.index) });
+  }
+  player.mulliganDone = true;
+  if (state.mode === "pvp") {
+    // Both seats mulligan in parallel (`17` §4.1); when the second finishes, the
+    // first player opens the match and combatStart hooks fire in play order.
+    if (!state.players.every((seat) => seat.mulliganDone)) return;
+    state.activePlayer = state.firstPlayer!;
+    startPlayerTurn(data, state, state.players[state.firstPlayer!]!, events);
+    for (const seat of [state.firstPlayer!, 1 - state.firstPlayer!]) {
+      runRelicHooks(data, state, events, { type: "combatStart" }, seat);
+    }
+    return;
   }
   startPlayerTurn(data, state, player, events);
   runRelicHooks(data, state, events, { type: "combatStart" }, player.index);
@@ -166,12 +180,12 @@ function chooseCard(state: CombatState, player: PlayerState, instanceId: string,
   player.drawPile.push(...bottomed);
   player.pendingChoice = null;
   state.status = "playerTurn";
-  events.push({ type: "cardChosen", instanceId, bottomed });
+  events.push({ type: "cardChosen", instanceId, bottomed, ...seatTag(state, player.index) });
 }
 
-function statusError(state: CombatState, action: Action): string | null {
+function statusError(state: CombatState, action: Action, player: PlayerState): string | null {
   if (action.type === "mulligan") {
-    return state.status === "mulligan" ? null : "mulligan already done";
+    return state.status === "mulligan" && !player.mulliganDone ? null : "mulligan already done";
   }
   switch (state.status) {
     case "mulligan":
@@ -191,42 +205,78 @@ function statusError(state: CombatState, action: Action): string | null {
   }
 }
 
+/**
+ * `17` §4.6 — a forfeit resolves the match. `system: true` is set by the server
+ * (resign command, timeout, disconnect); a client-originated action never has it.
+ */
+function forfeit(data: GameData, state: CombatState, action: Extract<Action, { type: "forfeit" }>): ActionResult {
+  if (state.mode !== "pvp") return { ok: false, error: "forfeit is only valid in pvp" };
+  if (state.status === "won" || state.status === "lost") {
+    return { ok: false, error: "match already ended" };
+  }
+  const loser = state.players[action.player];
+  if (!loser) return { ok: false, error: "unknown player" };
+  const winner = state.players.find((seat) => seat.index !== loser.index)!;
+  const next = cloneState(state);
+  next.winner = winner.index;
+  next.status = "won";
+  const events: CombatEvent[] = [
+    { type: "playerForfeited", player: loser.index, reason: action.reason },
+    { type: "combatEnded", result: "won", winner: winner.index },
+  ];
+  return { ok: true, state: next, events };
+}
+
 export function applyAction(data: GameData, state: CombatState, action: Action): ActionResult {
-  const blocked = statusError(state, action);
+  if (action.type === "forfeit") {
+    // `system` is runtime-checked, not just typed: a forged client action must not resign anyone.
+    if (action.system !== true) return { ok: false, error: "forfeit is a system action" };
+    return forfeit(data, state, action);
+  }
+  const seat = state.players[action.player ?? state.activePlayer];
+  if (!seat) return { ok: false, error: "unknown player" };
+  // Only the active seat acts (`17` §4.2) — except a seat that still owes its
+  // mulligan while the mulligan phase is open.
+  const ownMulliganPending = state.status === "mulligan" && !seat.mulliganDone;
+  if (seat.index !== state.activePlayer && !ownMulliganPending) {
+    return { ok: false, error: "not your turn" };
+  }
+  const blocked = statusError(state, action, seat);
   if (blocked !== null) return { ok: false, error: blocked };
   switch (action.type) {
     case "mulligan": {
-      const player = activePlayerState(state);
-      const error = getMulliganError(data, state, action.instanceIds, player);
+      const error = getMulliganError(data, state, action.instanceIds, seat);
       if (error !== null) return { ok: false, error };
       const next = cloneState(state);
       const events: CombatEvent[] = [];
-      mulligan(data, next, next.players[player.index]!, action.instanceIds, events);
+      mulligan(data, next, next.players[seat.index]!, action.instanceIds, events);
       return { ok: true, state: next, events };
     }
     case "playCard": {
-      const player = activePlayerState(state);
-      const error = getPlayCardError(data, state, action, player);
+      const error = getPlayCardError(data, state, action, seat);
       if (error !== null) return { ok: false, error };
       const next = cloneState(state);
       const events: CombatEvent[] = [];
-      playCard(data, next, next.players[player.index]!, action, events);
+      playCard(data, next, next.players[seat.index]!, action, events);
       return { ok: true, state: next, events };
     }
     case "chooseCard": {
-      const player = activePlayerState(state);
-      if (!player.pendingChoice!.options.includes(action.instanceId)) {
+      if (!seat.pendingChoice!.options.includes(action.instanceId)) {
         return { ok: false, error: "not a choice option" };
       }
       const next = cloneState(state);
       const events: CombatEvent[] = [];
-      chooseCard(next, next.players[player.index]!, action.instanceId, events);
+      chooseCard(next, next.players[seat.index]!, action.instanceId, events);
       return { ok: true, state: next, events };
     }
     case "endTurn": {
       const next = cloneState(state);
       const events: CombatEvent[] = [];
-      runEndTurn(data, next, events);
+      if (next.mode === "pvp") {
+        pvpEndTurn(data, next, events);
+      } else {
+        runEndTurn(data, next, events);
+      }
       return { ok: true, state: next, events };
     }
     default: {

@@ -6,12 +6,13 @@ import {
   moonHealMultiplier,
   moonStealthDurationBonus,
 } from "./moon";
-import { alliesOf, opponentsOf, playerOf } from "./players";
+import { alliesOf, heroesOf, opponentsOf, playerOf, seatTag } from "./players";
 import { fireEventHooks } from "./run-relic-hooks";
 import {
   applyStatus,
   cleanseDebuffs,
   DEBUFF_STATUSES,
+  DURATION_STATUSES,
   getStatus,
   hasStatus,
   removeStatus,
@@ -293,12 +294,12 @@ export function resolveEffect(
         state.cards[options[0]!]!.heldTurns = 0;
         state.cards[options[0]!]!.chosenThisTurn = true;
         seat.hand.push(options[0]!);
-        events.push({ type: "cardsDrawn", instanceIds: options });
+        events.push({ type: "cardsDrawn", instanceIds: options, ...seatTag(state, seat.index) });
         return;
       }
       seat.pendingChoice = { kind: "chooseCard", options };
       state.status = "choosing";
-      events.push({ type: "choiceOpened", options });
+      events.push({ type: "choiceOpened", options, ...seatTag(state, seat.index) });
       return;
     }
     case "gainMoonPower": {
@@ -308,7 +309,7 @@ export function resolveEffect(
       }
       const seat = playerOf(state, ctx.source.id)!;
       seat.moonPower += effect.amount;
-      events.push({ type: "moonPowerChanged", value: seat.moonPower });
+      events.push({ type: "moonPowerChanged", value: seat.moonPower, ...seatTag(state, seat.index) });
       return;
     }
     case "conditional": {
@@ -320,6 +321,8 @@ export function resolveEffect(
     }
     case "applyStatus": {
       const bonus = effect.status === "stealth" ? moonStealthDurationBonus(data, state, modifiersSeat(state, ctx.source)) : 0;
+      // PvP stores durations in turns (2 × rounds); they tick at each player's turn end (`17` §4.3).
+      const durationFactor = state.mode === "pvp" && DURATION_STATUSES.has(effect.status) ? 2 : 1;
       let targets = resolveTargets(state, effect.to, ctx);
       if (
         effect.status === "regen" &&
@@ -329,7 +332,7 @@ export function resolveEffect(
       }
       for (const target of targets) {
         const newFreeze = effect.status === "freeze" && !hasStatus(target, "freeze");
-        applyStatus(target, effect.status, effect.amount + bonus, ctx.source.id, events);
+        applyStatus(target, effect.status, (effect.amount + bonus) * durationFactor, ctx.source.id, events);
         if (newFreeze && ctx.source.side === "hero") {
           bumpCounter(data, ctx.source as HeroState, "freezesApplied", 1);
         }
@@ -405,6 +408,23 @@ export function resolveEffect(
       return;
     }
     case "drainMoonPower": {
+      // PvP: drains the opponent's reserve once, however many heroes `to` covers (`17` §4.5).
+      if (state.mode === "pvp") {
+        const seat = playerOf(state, ctx.source.id);
+        const opponent = state.players.find((p) => p.index !== seat?.index);
+        if (!seat || !opponent) return;
+        const drained = Math.min(effect.amount, opponent.moonReserve);
+        if (drained > 0) {
+          opponent.moonReserve -= drained;
+          events.push({ type: "moonReserveChanged", side: "hero", value: opponent.moonReserve, player: opponent.index });
+        }
+        if (effect.steal && drained > 0 && ctx.source.side === "hero") {
+          bumpCounter(data, ctx.source as HeroState, "buffsStolen", 1);
+          seat.moonPower += drained;
+          events.push({ type: "moonPowerChanged", value: seat.moonPower, player: seat.index });
+        }
+        return;
+      }
       let drained = 0;
       for (const target of resolveTargets(state, effect.to, ctx)) {
         if (target.side !== "enemy") continue;
@@ -416,7 +436,7 @@ export function resolveEffect(
           bumpCounter(data, ctx.source as HeroState, "buffsStolen", 1);
           const seat = playerOf(state, ctx.source.id)!;
           seat.moonPower += drained;
-          events.push({ type: "moonPowerChanged", value: seat.moonPower });
+          events.push({ type: "moonPowerChanged", value: seat.moonPower, ...seatTag(state, seat.index) });
         }
       }
       return;
@@ -467,9 +487,14 @@ function killUnit(
     unitId: unit.id,
     ...(killer !== undefined ? { killerId: killer.id } : {}),
   });
-  if (killer && unit.side === "enemy") {
+  if (killer) {
     const killerHero = state.heroes.find((hero) => hero.id === killer.id);
-    if (killerHero && (killer.cardDamage || (killer.reflect && killerHero.constellation >= 2 && !killerHero.pvp))) {
+    // PvE/co-op: kills of enemies count. PvP: kills of the opposing seat's heroes count (`17` §4.5).
+    const victimOpposesKiller =
+      unit.side === "enemy"
+        ? killerHero !== undefined
+        : state.mode === "pvp" && (unit as HeroState).player !== killerHero?.player;
+    if (killerHero && victimOpposesKiller && (killer.cardDamage || (killer.reflect && killerHero.constellation >= 2 && !killerHero.pvp))) {
       bumpCounter(data, killerHero, "enemiesKilled", 1);
     }
   }
@@ -482,13 +507,24 @@ function killUnit(
     if (purged.length > 0) {
       seat.drawPile = seat.drawPile.filter((id) => !purged.includes(id));
       seat.discardPile.push(...purged);
-      events.push({ type: "cardsPurged", heroId: unit.id, instanceIds: purged });
+      events.push({ type: "cardsPurged", heroId: unit.id, instanceIds: purged, ...seatTag(state, seat.index) });
     }
   }
 }
 
 export function checkCombatEnd(state: CombatState, events: CombatEvent[]): boolean {
   if (state.status === "won" || state.status === "lost") return true;
+  // PvP: a seat loses when all its heroes fall; a simultaneous wipe favors the
+  // active player (`17` §4.6).
+  if (state.mode === "pvp") {
+    const dead = state.players.map((seat) => heroesOf(state, seat.index).every((hero) => !hero.alive));
+    if (!dead.some(Boolean)) return false;
+    const winner = dead.every(Boolean) ? state.activePlayer : (dead.indexOf(true) === 0 ? 1 : 0);
+    state.winner = winner;
+    state.status = "won";
+    events.push({ type: "combatEnded", result: "won", winner });
+    return true;
+  }
   if (state.enemies.every((enemy) => !enemy.alive)) {
     state.status = "won";
     events.push({ type: "combatEnded", result: "won" });

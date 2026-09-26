@@ -1,4 +1,4 @@
-import type { CombatEvent, StatusId, StatusInstance, UnitState } from "./types/index";
+import type { CombatEvent, CombatState, StatusId, StatusInstance, UnitState } from "./types/index";
 
 export const DEBUFF_STATUSES: ReadonlySet<StatusId> = new Set([
   "weak",
@@ -26,6 +26,16 @@ export function getStatus(unit: UnitState, status: StatusId): StatusInstance | u
 
 export function statusValue(unit: UnitState, status: StatusId): number {
   return getStatus(unit, status)?.value ?? 0;
+}
+
+/**
+ * What a duration status shows to players (`01` §15.5): PvP stores half-round
+ * turns (2 × rounds), so the display is `ceil(stored / 2)`. Other statuses (and
+ * all of PvE) display their stored value.
+ */
+export function displayDuration(state: CombatState, unit: UnitState, status: StatusId): number {
+  const value = statusValue(unit, status);
+  return state.mode === "pvp" && DURATION_STATUSES.has(status) ? Math.ceil(value / 2) : value;
 }
 
 export function applyStatus(

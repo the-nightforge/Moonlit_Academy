@@ -1,3 +1,4 @@
+import { seatTag } from "./players";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "./types/index";
 
 /** Draws from the top of `player`'s draw pile; stops when it is empty (never reshuffles). */
@@ -11,7 +12,7 @@ export function drawCards(
   if (drawn.length === 0) return;
   for (const id of drawn) state.cards[id]!.heldTurns = 0;
   player.hand.push(...drawn);
-  events.push({ type: "cardsDrawn", instanceIds: drawn });
+  events.push({ type: "cardsDrawn", instanceIds: drawn, ...seatTag(state, player.index) });
 }
 
 /** Draws until `player`'s hand holds `handSize` cards or the draw pile is empty. */
