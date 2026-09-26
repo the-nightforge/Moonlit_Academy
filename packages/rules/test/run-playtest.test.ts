@@ -128,7 +128,7 @@ function runAction(gameData: GameData, run: RunState): RunAction {
     case "combat":
       return { type: "combat", action: combatAction(gameData, run.combat!) };
     case "reward":
-      return { type: "pickCard", cardId: run.pendingReward!.cardChoices[0] ?? null };
+      return { type: "pickAugment", augmentId: run.pendingReward!.augmentChoices[0] ?? null };
     case "rest": {
       if (hpRatio(run) < 0.6 || run.deck.length <= gameData.runConfig.minDeckSize) {
         return { type: "rest", choice: "heal" };

@@ -48,8 +48,8 @@ function loseCombat(data: GameData, run: RunState) {
   return act(data, ready, { type: "combat", action: { type: "endTurn" } });
 }
 
-function teamRewardPool(data: GameData): string[] {
-  return DEFAULT_TEAM.flatMap((id) => [...data.heroes[id]!.cardIds, ...data.heroes[id]!.lockedCardIds]);
+function augmentPool(data: GameData): string[] {
+  return Object.keys(data.augments);
 }
 
 describe("run lifecycle", () => {
@@ -98,37 +98,39 @@ describe("run lifecycle", () => {
     expect(runEvents).toContainEqual({ type: "heroRevived", heroId: "f04", hp: 12 });
     expect(won.status).toBe("reward");
     expect(won.combat).toBeNull();
-    const choices = won.pendingReward!.cardChoices;
+    const choices = won.pendingReward!.augmentChoices;
     expect(choices).toHaveLength(3);
     expect(new Set(choices).size).toBe(3);
-    for (const cardId of choices) {
-      expect(teamRewardPool(data)).toContain(cardId);
-      expect(won.deck).not.toContain(cardId);
+    for (const augmentId of choices) {
+      expect(augmentPool(data)).toContain(augmentId);
+      expect(won.augmentIds).not.toContain(augmentId);
     }
   });
 
-  it("T106: picking a reward card adds it; skipping keeps the deck", () => {
+  it("T106: picking an augment stores it; the deck stays at 18", () => {
     const { data, run } = newRun();
     const entered = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) }).run;
     const reward = winCombat(data, entered).run;
-    const pick = reward.pendingReward!.cardChoices[0]!;
-    const picked = act(data, reward, { type: "pickCard", cardId: pick });
-    expect(picked.run.deck).toHaveLength(19);
-    expect(picked.run.deck).toContain(pick);
+    const pick = reward.pendingReward!.augmentChoices[0]!;
+    const picked = act(data, reward, { type: "pickAugment", augmentId: pick });
+    expect(picked.run.deck).toHaveLength(18);
+    expect(picked.run.augmentIds).toEqual([pick]);
     expect(picked.run.status).toBe("map");
-    expect(picked.runEvents).toEqual([{ type: "cardAdded", cardId: pick }]);
-    const skipped = act(data, reward, { type: "pickCard", cardId: null });
-    expect(skipped.run.deck).toHaveLength(18);
-    expect(skipped.run.status).toBe("map");
+    expect(picked.runEvents).toEqual([{ type: "augmentGained", augmentId: pick }]);
+    expect(applyRunAction(data, reward, { type: "pickAugment", augmentId: null })).toEqual({
+      ok: false,
+      error: "must pick a lõi",
+    });
   });
 
-  it("T107: a card outside the choices is rejected", () => {
+  it("T107: an augment outside the choices is rejected", () => {
     const { data, run } = newRun();
     const entered = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) }).run;
     const reward = winCombat(data, entered).run;
-    expect(applyRunAction(data, reward, { type: "pickCard", cardId: "m05_ho_gam" })).toEqual({
+    const other = augmentPool(data).find((id) => !reward.pendingReward!.augmentChoices.includes(id))!;
+    expect(applyRunAction(data, reward, { type: "pickAugment", augmentId: other })).toEqual({
       ok: false,
-      error: "card is not a reward choice",
+      error: "augment is not a reward choice",
     });
   });
 
@@ -140,7 +142,7 @@ describe("run lifecycle", () => {
     expect(won.runRelicIds).toHaveLength(1);
     expect(runEvents).toContainEqual({ type: "runRelicGained", runRelicId: won.runRelicIds[0] });
     expect(won.pendingReward!.runRelicId).toBe(won.runRelicIds[0]);
-    expect(won.pendingReward!.cardChoices).toHaveLength(3);
+    expect(won.pendingReward!.augmentChoices).toHaveLength(3);
     expect(won.status).toBe("reward");
   });
 
@@ -205,7 +207,7 @@ describe("run lifecycle", () => {
       log.push(current.events, current.runEvents);
       current = winCombat(data, current.run);
       log.push(current.events, current.runEvents);
-      current = act(data, current.run, { type: "pickCard", cardId: current.run.pendingReward!.cardChoices[0]! });
+      current = act(data, current.run, { type: "pickAugment", augmentId: current.run.pendingReward!.augmentChoices[0]! });
       log.push(current.runEvents);
       current = act(data, current.run, { type: "chooseNode", nodeId: reachableNodeIds(current.run)[0]! });
       log.push(current.events, current.runEvents);
@@ -214,21 +216,33 @@ describe("run lifecycle", () => {
     expect(playThrough()).toEqual(playThrough());
   });
 
-  it("T114: reward choices shrink with the pool; an empty pool skips the reward", () => {
+  it("T114: augment choices shrink with the pool; an empty pool skips the reward", () => {
     const { data, run } = newRun();
-    const pool = teamRewardPool(data);
-    run.deck.push(...pool.slice(0, pool.length - 1));
+    const pool = augmentPool(data);
+    run.augmentIds.push(...pool.slice(0, pool.length - 1));
     const entered = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) }).run;
-    expect(winCombat(data, entered).run.pendingReward!.cardChoices).toEqual([
+    expect(winCombat(data, entered).run.pendingReward!.augmentChoices).toEqual([
       pool[pool.length - 1],
     ]);
 
     const full = newRun();
-    full.run.deck.push(...pool);
+    full.run.augmentIds.push(...pool);
     const fullEntered = act(full.data, full.run, { type: "chooseNode", nodeId: firstNodeId(full.run) }).run;
     const done = winCombat(full.data, fullEntered).run;
     expect(done.status).toBe("map");
     expect(done.pendingReward).toBeNull();
+  });
+
+  it("T172: a picked augment's hook is active in the next combat", () => {
+    const { data, run } = newRun();
+    run.augmentIds.push("aug_cuong_hoa");
+    const entered = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) }).run;
+    expect(entered.combat!.runRelicIds).toContain("aug_cuong_hoa");
+    // combatStart hooks fire after the mulligan resolves.
+    const playing = keepHand(data, entered);
+    for (const hero of playing.combat!.heroes) {
+      expect(hero.statuses).toContainEqual({ id: "empower", value: 2 });
+    }
   });
 
   it("a combat ended by a combatStart relic hook flows through finishCombat", () => {

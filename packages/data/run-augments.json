@@ -1,0 +1,177 @@
+[
+ {
+  "id": "aug_nguyet_trieu",
+  "name": "Nguyệt Triều",
+  "text": "Đầu trận: +3 Nguyệt Lực.",
+  "hooks": [
+   {
+    "on": { "type": "combatStart" },
+    "actor": "front",
+    "effects": [ { "type": "gainMoonPower", "amount": 3 } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_tu_luc",
+  "name": "Tụ Lực",
+  "text": "Đầu trận: mỗi lượt của mình +1 Nguyệt Lực.",
+  "hooks": [
+   {
+    "on": { "type": "combatStart" },
+    "actor": "front",
+    "effects": [ { "type": "gainMoonPowerPerTurn", "amount": 1 } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_kiem_dao",
+  "name": "Kiếm Đạo",
+  "text": "Mỗi lá tấn công thứ 2 trong trận: +3 Nguyệt Lực.",
+  "hooks": [
+   {
+    "on": { "type": "cardPlayed", "cardType": "attack" },
+    "actor": "trigger",
+    "every": 2,
+    "effects": [ { "type": "gainMoonPower", "amount": 3 } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_huyet_khi",
+  "name": "Huyết Khí",
+  "text": "Hero kết liễu một kẻ địch được +2 Mạnh.",
+  "hooks": [
+   {
+    "on": { "type": "enemyKilled" },
+    "actor": "trigger",
+    "effects": [ { "type": "applyStatus", "status": "strength", "amount": 2, "to": "self" } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_cuong_hoa",
+  "name": "Cường Hóa Tâm Pháp",
+  "text": "Đầu trận: mọi Hero +2 Cường Hóa.",
+  "hooks": [
+   {
+    "on": { "type": "combatStart" },
+    "actor": "each",
+    "effects": [ { "type": "applyStatus", "status": "empower", "amount": 2, "to": "self" } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_hoi_xuan",
+  "name": "Hồi Xuân Quyết",
+  "text": "Đầu trận: mọi Hero +3 Hồi.",
+  "hooks": [
+   {
+    "on": { "type": "combatStart" },
+    "actor": "each",
+    "effects": [ { "type": "applyStatus", "status": "regen", "amount": 3, "to": "self" } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_thien_luong",
+  "name": "Thiên Lượng",
+  "text": "Cuối mỗi lượt: mọi Hero +4 giáp.",
+  "hooks": [
+   {
+    "on": { "type": "playerTurnEnd" },
+    "actor": "each",
+    "effects": [ { "type": "gainArmor", "amount": 4, "to": "self" } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_bat_diet",
+  "name": "Bất Diệt Chi Hồn",
+  "text": "Khi một Hero ngã: đồng đội còn lại hồi 15 HP.",
+  "hooks": [
+   {
+    "on": { "type": "heroDied" },
+    "actor": "each",
+    "effects": [ { "type": "heal", "amount": 15, "to": "self" } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_nguyet_am",
+  "name": "Nguyệt Âm Độ",
+  "text": "Vào Trăng Tròn: mọi Hero hồi 10 HP.",
+  "hooks": [
+   {
+    "on": { "type": "moonPhaseEntered", "phase": "full" },
+    "actor": "each",
+    "effects": [ { "type": "heal", "amount": 10, "to": "self" } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_huyet_dong",
+  "name": "Huyết Động",
+  "text": "Đầu trận: kéo dài Huyết Nguyệt thêm 1 vòng.",
+  "hooks": [
+   {
+    "on": { "type": "combatStart" },
+    "actor": "front",
+    "effects": [ { "type": "bloodMoon", "rounds": 1 } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_ta_lac",
+  "name": "Tà Lạc",
+  "text": "Đầu trận: gây 8 sát thương cho mọi kẻ địch.",
+  "hooks": [
+   {
+    "on": { "type": "combatStart" },
+    "actor": "front",
+    "effects": [ { "type": "damage", "amount": 8, "to": "allEnemies" } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_doat_nguyet",
+  "name": "Đoạt Nguyệt",
+  "text": "Đầu trận: hút 1 Nguyệt Lực từ mỗi kẻ địch.",
+  "hooks": [
+   {
+    "on": { "type": "combatStart" },
+    "actor": "front",
+    "effects": [ { "type": "drainMoonPower", "amount": 1, "to": "allEnemies", "steal": true } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_dau_xuong",
+  "name": "Đấu Xướng",
+  "text": "Đầu mỗi lượt: Hero đầu hàng +1 Mạnh.",
+  "hooks": [
+   {
+    "on": { "type": "playerTurnStart" },
+    "actor": "front",
+    "effects": [ { "type": "applyStatus", "status": "strength", "amount": 1, "to": "self" } ]
+   }
+  ]
+ },
+ {
+  "id": "aug_loan_dao",
+  "name": "Loan Đao",
+  "text": "Lá Sát Thủ gây ×1.5 sát thương.",
+  "modifiers": [ { "type": "damageMultiplierForTag", "tag": "assassin", "multiplier": 1.5 } ]
+ },
+ {
+  "id": "aug_tinh_anh",
+  "name": "Tinh Anh Chi Luật",
+  "text": "Hiệu quả hồi máu +30%.",
+  "modifiers": [ { "type": "healMultiplier", "multiplier": 1.3 } ]
+ },
+ {
+  "id": "aug_chi_nhan",
+  "name": "Chí Nhân Đạo",
+  "text": "Lá Nguyệt giảm 1 Nguyệt Lực (tối thiểu 0).",
+  "modifiers": [ { "type": "costModifierForTag", "tag": "moon", "amount": -1, "min": 0 } ]
+ }
+]

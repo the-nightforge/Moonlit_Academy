@@ -224,7 +224,7 @@ export const runConfigSchema = z.object({
   ),
   restHealRatio: z.number().gt(0).lte(1),
   reviveHpRatio: z.number().gt(0).lte(1),
-  rewardCardChoices: z.number().int().positive(),
+  augmentChoices: z.number().int().positive(),
   minDeckSize: z.number().int().positive(),
 });
 
@@ -267,6 +267,7 @@ export const rawGameDataSchema = z.object({
   encounters: z.array(encounterDefSchema),
   moonPhases: z.array(moonPhaseDefSchema),
   runRelics: z.array(runRelicDefSchema),
+  runAugments: z.array(runRelicDefSchema),
   runConfig: runConfigSchema,
   combatConfig: combatConfigSchema,
   keywords: z.array(keywordDefSchema),

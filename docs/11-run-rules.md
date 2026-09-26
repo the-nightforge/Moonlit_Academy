@@ -17,17 +17,19 @@ interface RunState {
   heroes: { defId: string; hp: number; maxHp: number }[];  // theo thứ tự heroIds
   deck: string[];              // cardId, không gồm lá Song Hành
   runRelicIds: string[];       // theo thứ tự nhận
+  augmentIds: string[];        // Lõi đã chọn, theo thứ tự nhận; mỗi id ≤1 lần
   map: RunMap;
   position: string | null;     // nút hiện tại; null = chưa vào tầng 1
   combat: CombatState | null;
-  pendingReward: { cardChoices: string[]; runRelicId?: string } | null;
+  pendingReward: { augmentChoices: string[]; runRelicId?: string } | null;
+  heroLevelUps: Record<string, number>;  // defId → số lần thăng cấp trong lượt (XP Tu Luyện)
 }
 ```
 
 - Bắt đầu: `deck` = `RunSetup.deckCardIds` (bắt buộc từ GĐ4b — deck đã lưu
   của người chơi hoặc `starterDeck()` = toàn bộ lá free của 3 Hero;
   `createRun` kiểm mọi lá phải thuộc một Hero trong đội), HP đầy,
-  `runRelicIds = []`, sinh bản đồ, `status = "map"`, `position = null`.
+  `runRelicIds = []`, `augmentIds = []`, sinh bản đồ, `status = "map"`, `position = null`.
 - `RunState` là JSON thuần; lưu `localStorage` để sau.
 
 ### 1.2 Nối với trận đấu
@@ -64,7 +66,7 @@ interface CombatSetup {
   ],
   "restHealRatio": 0.3,
   "reviveHpRatio": 0.25,
-  "rewardCardChoices": 3,
+  "augmentChoices": 3,
   "minDeckSize": 10
 }
 ```
@@ -122,7 +124,7 @@ Gán ngay khi sinh bản đồ (cùng seed → cùng trận):
 
 1. `createRun`: sinh bản đồ (độ rộng từng tầng → cạnh → loại nút → trận).
 2. Vào nút trận: lấy seed trận.
-3. Thắng trận: rút lá thưởng, rồi (Tinh Anh) rút Kỳ Vật.
+3. Thắng trận: rút lựa chọn Lõi, rồi (Tinh Anh) rút Kỳ Vật.
 4. Vào Kho Báu: rút Kỳ Vật.
 
 ---
@@ -135,7 +137,7 @@ Gán ngay khi sinh bản đồ (cùng seed → cùng trận):
 type RunAction =
   | { type: "chooseNode"; nodeId: string }
   | { type: "combat"; action: Action }
-  | { type: "pickCard"; cardId: string | null }
+  | { type: "pickAugment"; augmentId: string | null }  // null chỉ hợp lệ khi augmentChoices rỗng
   | { type: "rest"; choice: "heal" }
   | { type: "rest"; choice: "removeCard"; cardId: string }
   | { type: "continue" };
@@ -145,7 +147,7 @@ type RunAction =
 |---|---|---|
 | `chooseNode` | `map`; nút thuộc `next` của `position` (hoặc tầng 1 nếu `position = null`) | `position` = nút. `combat`/`elite`/`boss` → tạo trận (mục 1.2), `combat`. `rest` → `rest`. `treasure` → nhận 1 Kỳ Vật (mục 3.4), `treasure` |
 | `combat` | `combat` | Chuyển tiếp `applyAction`; lỗi của trận trả về nguyên văn. Trận kết thúc → mục 3.2 |
-| `pickCard` | `reward`; `cardId` thuộc `cardChoices` hoặc `null` | Thêm lá vào `deck` (hoặc bỏ qua), xóa `pendingReward` → `map` |
+| `pickAugment` | `reward`; `augmentId` thuộc `augmentChoices` (hoặc `null` khi `augmentChoices` rỗng) | Thêm Lõi vào `augmentIds` (không đổi `deck`), xóa `pendingReward` → `map` |
 | `rest heal` | `rest` | Mỗi Hero hồi `floor(maxHp × restHealRatio)`, không quá `maxHp` → `map` |
 | `rest removeCard` | `rest`; `cardId` có trong `deck`; `deck.length > minDeckSize` | Bỏ **một** bản của lá đó khỏi `deck` → `map` |
 | `continue` | `treasure` | → `map` |
@@ -161,16 +163,24 @@ type RunAction =
      `max(1, ceil(maxHp × reviveHpRatio))` (event `heroRevived`).
   2. Nút `boss` → `status = "won"`.
   3. Ngược lại: tạo `pendingReward` (mục 3.3), `combat = null`. Nếu không có
-     lá nào để chọn và không có Kỳ Vật → thẳng `map`; ngược lại → `reward`.
+     Lõi nào để chọn và không có Kỳ Vật → thẳng `map`; ngược lại → `reward`.
 
-### 3.3 Lá thưởng
+### 3.3 Chọn Lõi
 
-- Pool = hợp `cardIds` + `lockedCardIds` (pool 12 lá/Hero, GĐ4b) của 3 Hero
-  trong đội, **trừ** lá đã có trong `deck`.
-- Rút `rewardCardChoices` lá khác nhau bằng RNG của lượt chơi (ít hơn nếu pool
-  không đủ). Lá đã bỏ ở Nghỉ Chân có thể xuất hiện lại.
+- Sau **mọi trận thắng không phải boss** (kể cả Tinh Anh): rút `augmentChoices`
+  Lõi khác nhau từ `run-augments.json` bằng RNG của lượt chơi — pool = các Lõi
+  chưa có trong `augmentIds` (mỗi Lõi chỉ lấy **một lần** mỗi lượt). Pool cạn →
+  ít hơn 3; hết hoàn toàn → không còn màn Lõi.
+- Người chơi **bắt buộc chọn 1** (không có "bỏ qua"); `pickAugment` thêm id vào
+  `augmentIds`, phát `augmentGained`. `deck` không đổi — deck giữ nguyên 18 lá
+  suốt lượt (trừ khi bỏ lá ở Nghỉ Chân).
 - Nút `elite`: thêm 1 Kỳ Vật (mục 3.4) vào `pendingReward.runRelicId`, **nhận
   ngay** (event `runRelicGained`); màn thưởng chỉ hiển thị.
+- Lõi hoạt động trong trận bằng đúng máy hook của Kỳ Vật: khi tạo trận,
+  `CombatState.runRelicIds` nhận `[...runRelicIds, ...augmentIds]`; hook và
+  modifier tra `data.runRelics[id]` rồi tới `data.augments[id]`. Khác Kỳ Vật,
+  Lõi được phép dùng effect "chỉ lá" (`drainMoonPower`, `gainMoonPowerPerTurn`…)
+  vì Lõi là sức mạnh phía người chơi.
 
 ### 3.4 Nhận Kỳ Vật
 
@@ -181,7 +191,7 @@ Rút ngẫu nhiên trong các Kỳ Vật **chưa có**. Hết Kỳ Vật → kh�
 ```ts
 type RunEvent =
   | { type: "nodeEntered"; nodeId: string; nodeType: NodeType }
-  | { type: "cardAdded"; cardId: string }
+  | { type: "augmentGained"; augmentId: string }
   | { type: "cardRemoved"; cardId: string }
   | { type: "runRelicGained"; runRelicId: string }
   | { type: "heroRevived"; heroId: string; hp: number }      // heroId = defId ("m05")

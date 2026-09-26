@@ -283,3 +283,4 @@ Bối cảnh thiết kế: `13-phase4b-spec.md`. Luật từ khóa: `01`; luật
 | T169 | Bộ đếm F02 `buffsStolen`: Đoạt Nguyệt lấy được ≥ 1 Nguyệt Lực → +1; Tỏa Nguyệt hoặc Đoạt Nguyệt lên địch 0 Nguyệt Lực → không tính |
 | T170 | `previewEnemyIntent.nextRoundMoonPower` = gốc vòng sau của địch + Dự Trữ hiện tại (cảnh báo Tụ Lực) |
 | T171 | Chiêm Bài: lá được chọn (và lá vào thẳng khi `k = 1`) có cost giảm `chooseCardDiscount` tới hết lượt; cuối lượt mất dấu `chosenThisTurn` |
+| T172 | Lõi: Lõi đã chọn (`pickAugment`) có hook hoạt động ở trận kế tiếp |

@@ -103,5 +103,5 @@ type DeckError =
 - `RunSetup` thêm `deckCardIds: string[]` (bắt buộc). `createRun` ném lỗi nếu một lá không tồn tại hoặc không thuộc đội (như `createCombat`); `run.deck = deckCardIds`.
 - Client chỉ vào trận với deck có `validateDeck` rỗng (Bộ cơ bản luôn hợp lệ).
 - Trận lẻ: `CombatSetup.deckCardIds` sẵn có.
-- **Lá thưởng:** pool = `cardIds + lockedCardIds` của 3 Hero, trừ lá đã có trong `run.deck`; lá khóa lấy được chỉ dùng trong lượt đó, không mở khóa.
-- Nghỉ Chân / `minDeckSize` như cũ; deck trong lượt chơi được vượt 18 lá.
+- **Lõi (augment):** sau mỗi trận thắng (không phải boss) chọn 1 trong `augmentChoices` Lõi từ `run-augments.json`, mỗi Lõi ≤1 lần/lượt; deck giữ nguyên suốt lượt (xem `11` §3.3).
+- Nghỉ Chân / `minDeckSize` như cũ; deck trong lượt chơi chỉ nhỏ hơn 18 lá khi bỏ lá ở Nghỉ Chân.

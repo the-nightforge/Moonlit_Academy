@@ -114,7 +114,9 @@ export class RunScene extends Phaser.Scene {
     });
     const relics =
       this.run.runRelicIds.map((id) => session.data.runRelics[id]?.name ?? id).join(" · ") || "—";
-    const relicText = this.text(WIDTH / 2, 16, `Kỳ Vật: ${relics}`, 13, COLORS.dimText).setOrigin(0.5, 0);
+    const augments =
+      this.run.augmentIds.map((id) => session.data.augments[id]?.name ?? id).join(" · ") || "—";
+    const relicText = this.text(WIDTH / 2, 16, `Kỳ Vật: ${relics}  |  Lõi: ${augments}`, 13, COLORS.dimText).setOrigin(0.5, 0);
     relicText.setInteractive({ useHandCursor: true });
     relicText.on("pointerover", () => this.showRelicTooltip());
     relicText.on("pointerout", () => this.hideRelicTooltip());
@@ -128,11 +130,17 @@ export class RunScene extends Phaser.Scene {
 
   private showRelicTooltip() {
     this.hideRelicTooltip();
-    if (this.run.runRelicIds.length === 0) return;
-    const lines = this.run.runRelicIds.map((id) => {
-      const relic = session.data.runRelics[id];
-      return relic ? `${relic.name}: ${relic.text}` : id;
-    });
+    const lines = [
+      ...this.run.runRelicIds.map((id) => {
+        const relic = session.data.runRelics[id];
+        return relic ? `${relic.name}: ${relic.text}` : id;
+      }),
+      ...this.run.augmentIds.map((id) => {
+        const augment = session.data.augments[id];
+        return augment ? `Lõi ${augment.name}: ${augment.text}` : id;
+      }),
+    ];
+    if (lines.length === 0) return;
     const tip = this.add.container(WIDTH / 2, 44);
     const texts = lines.map((line, index) =>
       this.add
@@ -197,45 +205,45 @@ export class RunScene extends Phaser.Scene {
     }
   }
 
-  private cardBox(x: number, y: number, cardId: string, onClick: () => void) {
-    const card = session.data.cards[cardId]!;
-    const owner = card.ownerId ?? "";
+  private augmentBox(x: number, y: number, augmentId: string, onClick: () => void) {
+    const augment = session.data.augments[augmentId]!;
     const bg = this.add
-      .rectangle(x, y, 170, 230, 0x141b33)
-      .setStrokeStyle(2, OWNER_COLORS[owner] ?? COLORS.panelBorder);
+      .rectangle(x, y, 200, 230, 0x141b33)
+      .setStrokeStyle(2, COLORS.goldFill);
     bg.setInteractive({ useHandCursor: true });
     bg.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (pointer.button === 0) onClick();
     });
     this.root.add(bg);
-    this.text(x - 70, y - 105, `${card.cost}`, 18, COLORS.gold);
+    this.text(x, y - 80, "◈ LÕI", 13, COLORS.gold).setOrigin(0.5);
     this.root.add(
       this.add
-        .text(x, y - 60, card.name, { ...TEXT_BASE, fontSize: "16px", color: COLORS.text, align: "center", wordWrap: { width: 150 } })
+        .text(x, y - 52, augment.name, { ...TEXT_BASE, fontSize: "17px", color: COLORS.text, align: "center", wordWrap: { width: 180 } })
         .setOrigin(0.5),
     );
-    this.text(x, y - 30, session.data.heroes[owner]?.name ?? "", 12, COLORS.dimText).setOrigin(0.5);
     this.root.add(
       this.add
-        .text(x, y, card.text, { ...TEXT_BASE, fontSize: "12px", color: COLORS.dimText, align: "center", wordWrap: { width: 150 } })
+        .text(x, y + 20, augment.text, { ...TEXT_BASE, fontSize: "13px", color: COLORS.dimText, align: "center", wordWrap: { width: 175 } })
         .setOrigin(0.5, 0),
     );
   }
 
   private renderReward() {
     const reward = this.run.pendingReward!;
-    this.text(WIDTH / 2, 130, "Chọn 1 lá thưởng", 24, COLORS.gold).setOrigin(0.5);
+    this.text(WIDTH / 2, 130, "Chọn 1 Lõi", 24, COLORS.gold).setOrigin(0.5);
     if (reward.runRelicId !== undefined) {
       const relic = session.data.runRelics[reward.runRelicId]!;
       this.text(WIDTH / 2, 170, `Nhận Kỳ Vật: ${relic.name} — ${relic.text}`, 14, COLORS.gold).setOrigin(0.5);
     }
-    reward.cardChoices.forEach((cardId, index) => {
-      const x = WIDTH / 2 + (index - (reward.cardChoices.length - 1) / 2) * 200;
-      this.cardBox(x, 340, cardId, () => this.dispatch({ type: "pickCard", cardId }));
+    reward.augmentChoices.forEach((augmentId, index) => {
+      const x = WIDTH / 2 + (index - (reward.augmentChoices.length - 1) / 2) * 230;
+      this.augmentBox(x, 340, augmentId, () => this.dispatch({ type: "pickAugment", augmentId }));
     });
-    this.button(WIDTH / 2, 520, 180, reward.cardChoices.length > 0 ? "Bỏ qua" : "Tiếp tục", () =>
-      this.dispatch({ type: "pickCard", cardId: null }),
-    );
+    if (reward.augmentChoices.length === 0) {
+      this.button(WIDTH / 2, 520, 180, "Tiếp tục", () =>
+        this.dispatch({ type: "pickAugment", augmentId: null }),
+      );
+    }
   }
 
   private renderRest() {

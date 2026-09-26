@@ -435,8 +435,10 @@ function animateEvent(
       });
     }
     case "runRelicTriggered": {
-      const name = ctx.gameData.runRelics[event.runRelicId]?.name ?? event.runRelicId;
-      return floatText(scene, WIDTH / 2, 250, `✦ ${name}`, "#9fd4ff", 18, 400);
+      const relic = ctx.gameData.runRelics[event.runRelicId];
+      const name = relic?.name ?? ctx.gameData.augments[event.runRelicId]?.name ?? event.runRelicId;
+      const color = relic === undefined ? "#e0b0ff" : "#9fd4ff";
+      return floatText(scene, WIDTH / 2, 250, `✦ ${name}`, color, 18, 400);
     }
     case "combatEnded":
       return instant();
