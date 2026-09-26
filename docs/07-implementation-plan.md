@@ -245,4 +245,4 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ## Sau giai đoạn 4e
 
-- Giai đoạn 5–6: giao thức mạng PvP và co-op.
+- Giai đoạn 5–6: đặc tả `17-phase5-6-spec.md` (bản nháp, chờ duyệt); các bước thêm vào đây khi duyệt.
