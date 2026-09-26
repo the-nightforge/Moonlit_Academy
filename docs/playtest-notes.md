@@ -55,10 +55,6 @@ UI: đổi mục tiêu theo Khiêu Khích, xem số damage ý định trước k
 
 ## Điểm cần theo dõi khi playtest tay
 
-- [ ] enc_03 quá dài/khó? (11–15 vòng, thắng thường chỉ còn 1 Hero)
-- [ ] f04 có cảm giác "không bao giờ thăng cấp" không?
-- [ ] Nguyệt Quang Dẫn 2 NL — đáng không?
-- [ ] Tay toàn Tàn Chiêu / lá không đánh được → cảm giác "bí"?
 - [ ] Animation lượt địch đủ rõ ai đánh ai không?
 
 ## Không chỉnh data
@@ -143,8 +139,6 @@ Có: 0–4 lần/trận. Boss (pha Hạ Huyền) và *Phong Tuyết Chướng* �
 - [ ] Cướp buff (Diện Đoạt, Ảnh Đấu) có đáng một lượt không?
 - [ ] Lá Song Hành có dễ nhận ra trên tay (viền 2 màu, nhãn) không?
 - [ ] Animation cướp buff, tia Phản Đòn, Huyết Nguyệt có rõ không?
-- [ ] Trận boss còn quá dài không? (12–37 vòng standalone; đã giảm damage/heal
-      boss ở Phase 3 nhưng độ dài chưa đo lại)
 
 ## Điều chỉnh F02 (`09` mục 12, đã duyệt)
 
@@ -265,22 +259,12 @@ quả y hệt); các đòn bẩy tầng 1 hoặc tệ hơn hoặc nằm trong nh
 hơn enc_02 sau nerf; `enc_00` làm loãng cả tầng giữa). ~25% lượt chết ở tầng 1–2
 là độ khó chấp nhận được cho sàn kỹ năng.
 
-### Còn mở
-
-- [ ] **m06+f02+f03 0/20** (0/80 ở mọi biến thể, kể cả seed 1–20) — quyết định:
-      **không chỉnh**, coi như đội hard-mode; vấn đề của đội (không hồi máu,
-      F02 tự mất HP), không phải cấu trúc lượt chơi. Xác nhận bằng chơi tay.
-
 ## Điểm cần theo dõi khi chơi tay
 
 - [ ] Bản đồ đọc có dễ không; có muốn đi đường Tinh Anh không?
 - [ ] Lá thưởng có tạo lựa chọn thật không?
 - [ ] Kỳ Vật có cảm nhận được trong trận không?
 - [ ] Một lượt chơi dài bao lâu?
-- [ ] Người chơi thật (focus-fire, giữ hồi máu, né Tinh Anh) có lật được seed 1
-      / đội m06+f02+f03 không, hay attrition vẫn quá nặng?
-- [ ] Boss còn quá khắc nghiệt với đội không có hồi máu / chỉ một nguồn Đóng
-      Băng không?
 
 # Playtest Notes — Phase 4a (bước 4a.8)
 
@@ -346,8 +330,6 @@ hơn sàn). Boss còn là chốt chặn chính (17% trận boss thắng).
 - [ ] Đồng hồ Cạn Bài có gây áp lực đúng không?
 - [ ] Chuỗi chiêu địch có đọc được không; Tụ Lực có đủ cảnh báo?
 - [ ] Chiêm Bài có đáng cost không; lấy lá đắt hay lá rẻ?
-- [ ] Tỷ lệ thắng lượt của người chơi thật — bot đo 10–15%; nếu người chơi
-      thật <25%, cân nhắc lại gói V/X.
 
 
 # Playtest Notes — Phase 4b (bước 4b.7)
@@ -401,6 +383,73 @@ hơn, độ khó thật cần xác nhận bằng chơi tay.
 - [ ] Mở khóa (Tu Luyện) có hào hứng không; ~10 lượt tới cấp 6 có hợp lý?
 - [ ] Deck nhánh có khác cảm giác Bộ cơ bản không?
 
+## Còn mở sau 4b (đo lại trên data hiện tại)
+
+Các mục đã đóng nhờ số đo 4b (đã xóa khỏi checklist cũ): trận thường dài quá
+(nay 7.9 vòng TB), F04 ít thăng cấp (nay 38/48 trận), Nguyệt Quang Dẫn 2 NL
+(nay cost 4 theo kinh tế 4a), tay kẹt vì Tàn Chiêu (nay bỏ cuối lượt, kẹt tay
+0–5%), boss quá dài (nay 10–12 vòng), m06+f02+f03 0/20 (nay 50% với Bộ cơ
+bản), tỷ lệ thắng bot 10–15% (nay 59%). Sau "Chỉnh sau 4b" đóng thêm: game dễ
+hơn mục tiêu (bot 59% → 44%), F02 gần như không thăng cấp (6/48 → 28/48).
+
+- [ ] **Chênh lệch đội (chưa sửa được):** Bộ cơ bản m05+f04+m06 30%,
+      m06+f02+f03 25%, m05+f03+f04 80% lượt thắng. Đã thử 8 hoán đổi lá miễn
+      phí ↔ khóa (Băng Tâm Quyết, Xuân Phong, Ảnh Phân Thân, Tàng Ảnh Thích,
+      Huyết Chiến…): không cái nào kéo đội yếu lên, bỏ Nguyệt Quang Dẫn còn
+      làm m05+f04+m06 tụt 30% → 5–10%. Cần xem lại bằng chơi tay trước khi
+      chỉnh tiếp (có thể do heuristic chơi F04/M06 kém, không phải data).
+- [ ] **Nhánh A mạnh hơn hẳn nhánh B ở m06+f02+f03** (60–85% vs 25–30%);
+      tính chung mọi đội nhánh B chỉ kém Bộ cơ bản 3–4 điểm.
+- [ ] Huyết Nguyệt vẫn hiếm: TB 0.5 lượt/trận (tối đa 3).
+
+## Chỉnh sau 4b (đã duyệt)
+
+Ablation bằng file tạm (không commit), 4 đội × 6 loại deck × 20 seed (gói
+cuối kiểm lại với 50 seed). Mục tiêu: bot 35–45% với Bộ cơ bản (người chơi
+thật 25–40% + chênh sàn kỹ năng), trận dài hơn.
+
+| Biến thể | Bộ cơ bản | Nhánh B 6/6/6 | Vòng thường / Tinh Anh | F02 thăng cấp |
+|---|---|---|---|---|
+| Data 4b | 59% | 50% | 8.3 / 8.8 | 8% |
+| NL khởi đầu 3 | 48% | 38% | 8.7 / 9.3 | 9% |
+| + damage địch ×0.8 | 36% | 29% | 8.6 / 9.1 | 8% (m05+f04+m06 còn 15%) |
+| **+ HP địch thường ×0.9** | **45%** | **39%** | **9.1 / 9.9** | 8% |
+| + boss 100 HP | 44% | 35% | 9.1 / 9.9 | 8% |
+| + ngưỡng F02 1 | 45% | 39% | — | 29% |
+| + Diện Cụ thêm Cướp 1 | 45% | 39% | — | 10% |
+| **+ Đoạt Nguyệt tính vào bộ đếm, ngưỡng 3** | **45%** | **39%** | — | **40%** |
+
+Đã áp dụng:
+
+- `combat-config.moonPower.start` 4 → **3** (yêu cầu: kéo dài trận).
+- `maxHp` địch thường và Tinh Anh ×0.9/0.8 (hoàn một nửa gói P): Khôi Lỗi
+  34 → 38, Ảnh Hồ 19 → 21, Thư Hồn 26 → 29, Hắc Giáp Vệ 56 → 63,
+  Hồ Vương 40 → 45. Boss giữ 90. Damage địch giữ ×0.7 (×0.8 làm đội yếu
+  sụp).
+- **Luật** (`01` §8, T169): bộ đếm F02 `buffsStolen` +1 mỗi effect Đoạt Nguyệt
+  của F02 lấy được ≥ 1 Nguyệt Lực; ngưỡng 2 → **3** (trở lại GDD). Cướp buff
+  hiếm vì địch ít buff, còn Đoạt Nguyệt luôn có mục tiêu. T86 (Ảnh Đấu) nay
+  đếm 2.
+- Nhánh B của M06: *Loạn Ảnh* 5 → 4, *Ảnh Tốc* 2 → 1 (50 seed: nhánh B 8/5/5
+  25% → 32%, ngẫu nhiên 39% → 43%). Giảm HP tự mất của lá Huyết Nguyệt (F02)
+  không có tác dụng đo được, không áp.
+
+### Kết quả sau chỉnh (`run-playtest`, seed 1–20)
+
+| Deck | Thắng | Tầng TB | XP TB/lượt |
+|---|---|---|---|
+| Bộ cơ bản | 44% | 6.2 | 109.0 |
+| nhánh A 6/6/6 | 55% | 7.2 | 133.6 |
+| nhánh B 6/6/6 | 41% | 6.3 | 100.2 |
+| nhánh A 4/4/10 | 54% | 6.8 | 125.9 |
+| nhánh B 8/5/5 | 40% | 6.5 | 103.9 |
+| ngẫu nhiên | 48% | 6.6 | 115.9 |
+
+Bộ cơ bản theo tier: thường 90% / 9.3 vòng, Tinh Anh 81% / 11.2, boss 71% /
+12.0. Cạn Bài ≤ 6%, kẹt tay ≤ 1%, 0 lượt kẹt, 0/60 lá chưa được đánh. Nhịp Tu
+Luyện ~11.4 lượt tới cấp 6 (mục tiêu 8–12). Thăng cấp trong trận đơn: M05
+51/72, F04 40/48, M06 36/48, F03 44/72, **F02 28/48** (trước 6/48).
+
 # Playtest Notes — Lõi (augment thay lá thưởng)
 
 Thay thế lá thưởng sau trận bằng **chọn 1 trong 3 Lõi** (`run-augments.json`,
@@ -408,6 +457,9 @@ Thay thế lá thưởng sau trận bằng **chọn 1 trong 3 Lõi** (`run-augme
 nguyên 18 lá suốt lượt (chỉ nhỏ đi khi Nghỉ Chân bỏ lá).
 
 ## Số đo sau thay đổi (4 đội × 6 loại deck × 20 seed = 480 lượt)
+
+**Lưu ý:** đo trên data 4b *trước* khi merge gói "Chỉnh sau 4b" từ main
+(NL start 3, HP địch ×0.9/0.8…) — sau merge cần đo lại.
 
 | Deck | Thắng% | Tầng TB | XP/lượt |
 |---|---|---|---|

@@ -2,7 +2,7 @@
   {
     "id": "puppet_guard",
     "name": "Khôi Lỗi Canh Thư",
-    "maxHp": 34,
+    "maxHp": 38,
     "moonPower": { "start": 0, "cap": 3 },
     "intents": [
       { "id": "guard_stance", "name": "Thủ Thế", "kind": "defend", "cost": 1,
@@ -30,7 +30,7 @@
   {
     "id": "shadow_fox",
     "name": "Ảnh Hồ",
-    "maxHp": 19,
+    "maxHp": 21,
     "moonPower": { "start": 0, "cap": 2 },
     "intents": [
       { "id": "twin_claw", "name": "Song Trảo", "kind": "attack", "targeting": "lowestHp", "cost": 1,
@@ -138,7 +138,7 @@
   {
     "id": "book_wraith",
     "name": "Thư Hồn",
-    "maxHp": 26,
+    "maxHp": 29,
     "moonPower": { "start": 0, "cap": 3 },
     "intents": [
       { "id": "wraith_curse", "name": "Nguyền Thư", "kind": "debuff", "targeting": "random", "cost": 1,
@@ -159,7 +159,7 @@
   {
     "id": "black_guard",
     "name": "Hắc Giáp Vệ",
-    "maxHp": 56,
+    "maxHp": 63,
     "moonPower": { "start": 1, "cap": 5 },
     "intents": [
       { "id": "black_roar", "name": "Chấn Hồn", "kind": "debuff", "cost": 1,
@@ -183,7 +183,7 @@
   {
     "id": "fox_king",
     "name": "Hồ Vương",
-    "maxHp": 40,
+    "maxHp": 45,
     "moonPower": { "start": 1, "cap": 5 },
     "intents": [
       { "id": "fox_king_veil", "name": "Huyễn Ảnh", "kind": "buff", "cost": 1,

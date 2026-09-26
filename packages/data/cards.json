@@ -1169,7 +1169,7 @@
     "id": "m06_anh_toc",
     "name": "Ảnh Tốc",
     "ownerId": "m06",
-    "cost": 2,
+    "cost": 1,
     "copies": 3,
     "type": "skill",
     "tags": [
@@ -1206,7 +1206,7 @@
     "id": "m06_loan_anh",
     "name": "Loạn Ảnh",
     "ownerId": "m06",
-    "cost": 5,
+    "cost": 4,
     "copies": 2,
     "type": "attack",
     "tags": [

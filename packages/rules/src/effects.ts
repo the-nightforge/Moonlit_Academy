@@ -374,6 +374,10 @@ export function resolveEffect(
         drained += drainEnemyMoonPower(data, target as EnemyState, effect.amount, events);
       }
       if (effect.steal && drained > 0) {
+        // Đoạt Nguyệt counts as one theft toward F02's level-up (01 §8).
+        if (ctx.source.side === "hero") {
+          bumpCounter(data, ctx.source as HeroState, "buffsStolen", 1);
+        }
         state.moonPower += drained;
         events.push({ type: "moonPowerChanged", value: state.moonPower });
       }
