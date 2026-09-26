@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
-import type { CardDef, CombatEvent, CombatState, GameData, Loadout, PvpSide } from "../src/index";
-import { applyAction, createPvpCombat, displayDuration, getStatus } from "../src/index";
+import type { Action, CardDef, CombatEvent, CombatState, GameData, Loadout, PvpSide } from "../src/index";
+import {
+  applyAction,
+  createPvpCombat,
+  displayDuration,
+  getStatus,
+  getValidTargets,
+  isCardPlayable,
+  pvpBot,
+  redactEvents,
+  replayMatch,
+  viewFor,
+} from "../src/index";
 import { p0, testData } from "./helpers";
 
 // m05/m06 appear on both sides so injected fixture cards always find an owner.
@@ -77,6 +88,15 @@ function testRelic(data: GameData, id: string, hook: object): void {
 }
 
 const other = (seat: number) => (seat === 0 ? 1 : 0);
+
+/** Last moonPowerChanged value emitted for `seat`, or undefined. */
+function lastPowerGain(events: CombatEvent[], seat: number): number | undefined {
+  const gains = events.filter(
+    (e): e is Extract<CombatEvent, { type: "moonPowerChanged" }> =>
+      e.type === "moonPowerChanged" && e.player === seat,
+  );
+  return gains.at(-1)?.value;
+}
 
 describe("T216 createPvpCombat", () => {
   it("creates both seats with prefixed ids, arena hp, a drawn hand each, and mulligan status", () => {
@@ -189,30 +209,18 @@ describe("T219 second player bonus", () => {
     const started = startMatch(data, state, events);
     const first = started.firstPlayer!;
     const second = other(first);
-    const firstGain = events.findLast(
-      (e) => e.type === "moonPowerChanged" && e.player === first,
-    )!;
+    const firstGain = lastPowerGain(events, first)!;
     const afterFirst = endTurn(data, started, events);
-    const secondGain = events.findLast(
-      (e) => e.type === "moonPowerChanged" && e.player === second,
-    )!;
-    expect(secondGain).toMatchObject({
-      value: firstGain.value + data.pvpConfig.secondPlayerBonus.moonPower,
-    });
+    const secondGain = lastPowerGain(events, second)!;
+    expect(secondGain).toBe(firstGain + data.pvpConfig.secondPlayerBonus.moonPower);
     expect(afterFirst.players[second]!.moonPower).toBe(
-      firstGain.value + data.pvpConfig.secondPlayerBonus.moonPower,
+      firstGain + data.pvpConfig.secondPlayerBonus.moonPower,
     );
     // Not granted again: by round 2 both seats gain base+reserve without the bonus.
     let current = endTurn(data, afterFirst, events); // first's round-2 turn
+    const firstRoundTwo = lastPowerGain(events, first)!;
     current = endTurn(data, current, events); // second's round-2 turn
-    const gains = events.filter(
-      (e) => e.type === "moonPowerChanged" && e.player === second,
-    );
-    expect(gains).toHaveLength(2);
-    const firstRoundTwo = events.findLast(
-      (e) => e.type === "moonPowerChanged" && e.player === first,
-    )!;
-    expect(gains[1]!.value).toBe(firstRoundTwo.value);
+    expect(lastPowerGain(events, second)).toBe(firstRoundTwo);
     expect(current.activePlayer).toBe(second);
     expect(current.round).toBe(2);
   });
@@ -256,7 +264,7 @@ describe("T221 pvp targeting", () => {
     const current = startMatch(data, state, events);
     const active = current.activePlayer;
     const foes = current.heroes.filter((hero) => hero.player === other(active));
-    const [taunter, nonTaunter] = foes;
+    const [taunter, nonTaunter] = foes as [typeof foes[number], typeof foes[number]];
     taunter.statuses.push({ id: "taunt", value: 4 });
     const card = pvpInjectCard(current, data, active, ping);
     const denied = applyAction(data, current, {
@@ -494,6 +502,94 @@ describe("T225 forfeit", () => {
       rngState: 1,
     }, { type: "forfeit", player: 0, reason: "resign", system: true });
     expect(result).toEqual({ ok: false, error: "forfeit is only valid in pvp" });
+  });
+});
+
+describe("T228 viewFor", () => {
+  it("hides the opponent's hand and draw pile but keeps everything the viewer owns", () => {
+    const { data, state, events } = makePvp();
+    const current = startMatch(data, state, events);
+    const viewer = current.activePlayer;
+    const foe = other(viewer);
+    const view = viewFor(current, viewer);
+    const viewOpp = view.players[foe]!;
+    expect(view.rngState).toBe(0);
+    // Opponent zones: same sizes, placeholder ids, no card ids in the map.
+    expect(viewOpp.hand).toHaveLength(current.players[foe]!.hand.length);
+    expect(viewOpp.hand.every((id) => id.startsWith("hidden_"))).toBe(true);
+    expect(viewOpp.drawPile).toHaveLength(current.players[foe]!.drawPile.length);
+    expect(viewOpp.drawPile.every((id) => id.startsWith("hidden_"))).toBe(true);
+    for (const [id, instance] of Object.entries(view.cards)) {
+      if (instance.player === foe) {
+        expect(viewOpp.discardPile).toContain(id);
+      }
+    }
+    // Viewer's own zones are intact and the view still answers queries.
+    expect(view.players[viewer]!.hand).toEqual(current.players[viewer]!.hand);
+    const ownCard = view.players[viewer]!.hand[0]!;
+    expect(view.cards[ownCard]).toBeDefined();
+    expect(() => isCardPlayable(data, view, ownCard, viewer)).not.toThrow();
+    expect(() => getValidTargets(data, view, ownCard)).not.toThrow();
+    // Heroes, gear and moon power are public on both sides.
+    expect(view.heroes).toEqual(current.heroes);
+    expect(view.players[foe]!.moonPower).toBe(current.players[foe]!.moonPower);
+  });
+
+  it("reads opponentTurn when the other seat owns the status, keeps playerTurn for the active viewer", () => {
+    const { data, state, events } = makePvp();
+    const current = startMatch(data, state, events);
+    const active = current.activePlayer;
+    expect(viewFor(current, active).status).toBe("playerTurn");
+    expect(viewFor(current, other(active)).status).toBe("opponentTurn");
+    // During mulligan, a finished seat waits in opponentTurn; the pending seat keeps mulligan.
+    const pending = makePvp();
+    const done = applyAction(data, pending.state, { type: "mulligan", instanceIds: [], player: 0 });
+    expect(done.ok).toBe(true);
+    if (!done.ok) return;
+    expect(viewFor(done.state, 0).status).toBe("opponentTurn");
+    expect(viewFor(done.state, 1).status).toBe("mulligan");
+  });
+});
+
+describe("T229 redactEvents", () => {
+  it("reduces opponent reveal events to counts; played cards stay public", () => {
+    const { data, state, events } = makePvp();
+    const current = startMatch(data, state, events);
+    const redacted = redactEvents(events, 0);
+    const oppDraw = redacted.find((e) => e.type === "cardsDrawn" && e.player === 1)!;
+    expect(oppDraw.type === "cardsDrawn" && oppDraw.instanceIds.every((id) => id.startsWith("hidden_"))).toBe(true);
+    const realDraw = events.find((e) => e.type === "cardsDrawn" && e.player === 1) as Extract<CombatEvent, { type: "cardsDrawn" }>;
+    expect(oppDraw.type === "cardsDrawn" && oppDraw.instanceIds).toHaveLength(realDraw.instanceIds.length);
+    // Own events untouched.
+    const ownDraw = redacted.find((e) => e.type === "cardsDrawn" && e.player === 0);
+    expect(ownDraw).toEqual(events.find((e) => e.type === "cardsDrawn" && e.player === 0));
+    // A played opponent card stays visible in the stream.
+    const mulligan = applyAction(data, current, { type: "mulligan", instanceIds: [], player: 1 });
+    expect(mulligan).toEqual({ ok: false, error: "mulligan already done" });
+  });
+});
+
+describe("T230 pvpBot + replayMatch", () => {
+  it("drives a full match from views only: every action is legal on the real state", () => {
+    const { data, state } = makePvp(9);
+    let current = state;
+    const log: { player: number; action: Action }[] = [];
+    for (let step = 0; step < 1000 && current.status !== "won" && current.status !== "lost"; step++) {
+      const seat =
+        current.status === "mulligan"
+          ? current.players.find((s) => !s.mulliganDone)!.index
+          : current.activePlayer;
+      const action = pvpBot(data, viewFor(current, seat), seat);
+      const result = applyAction(data, current, action);
+      if (!result.ok) throw new Error(`bot action ${action.type} rejected: ${result.error}`);
+      log.push({ player: seat, action });
+      current = result.state;
+    }
+    expect(current.status).toBe("won");
+    expect(current.winner).toBeDefined();
+    // The same log replays to the same final state.
+    const replayed = replayMatch(data, { seed: 9, players: [pvpSide(TEAM_A), pvpSide(TEAM_B)] }, log);
+    expect(replayed.state).toEqual(current);
   });
 });
 

@@ -12,6 +12,10 @@ export {
 export { cardDefOf, relicAt, weaponAt, weaponCardDef, weaponHooks } from "./gear";
 export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-combat";
 export { createPvpCombat } from "./pvp/create";
+export { pvpBot } from "./pvp/bot";
+export { replayMatch } from "./pvp/replay";
+export { redactEvents, viewFor } from "./pvp/view";
+export { chooseCombatAction } from "./bot";
 export { displayDuration, getStatus, hasStatus } from "./statuses";
 export { applyAction } from "./apply-action";
 export { getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";

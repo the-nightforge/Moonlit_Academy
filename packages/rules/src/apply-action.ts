@@ -197,6 +197,7 @@ function statusError(state: CombatState, action: Action, player: PlayerState): s
     case "enemyTurn":
     case "won":
     case "lost":
+    case "opponentTurn":
       return "not the player turn";
     default: {
       const exhaustive: never = state.status;

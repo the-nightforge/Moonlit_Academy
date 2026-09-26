@@ -68,7 +68,8 @@ export interface CardInstance {
   chosenThisTurn?: boolean;
 }
 
-export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost";
+/** `opponentTurn` only ever appears inside `viewFor` results — a real state is always playerTurn/choosing/etc. */
+export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost" | "opponentTurn";
 
 /** `17` §2.1: pve (one player vs enemies), pvp (1v1, heroes vs heroes), coop (2 players vs a boss). */
 export type CombatMode = "pve" | "pvp" | "coop";
