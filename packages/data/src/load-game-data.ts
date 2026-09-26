@@ -10,6 +10,7 @@ import runRelicsJson from "../run-relics.json";
 import runConfigJson from "../run-config.json";
 import combatConfigJson from "../combat-config.json";
 import keywordsJson from "../keywords.json";
+import metaConfigJson from "../meta-config.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -29,7 +30,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig, keywords } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig, keywords, metaConfig } =
     parsed;
   const errors: string[] = [];
 
@@ -233,6 +234,16 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     errors.push(`combatConfig: moonPower start must be <= cap`);
   }
 
+  const levels = metaConfig.masteryLevels;
+  if (levels.some((value, index) => index > 0 && value <= levels[index - 1]!)) {
+    errors.push(`metaConfig: masteryLevels must increase`);
+  }
+  for (const hero of heroes) {
+    if (hero.lockedCardIds.length !== levels.length) {
+      errors.push(`metaConfig: masteryLevels needs one level per locked card of "${hero.id}"`);
+    }
+  }
+
   for (const relic of runRelics) {
     for (const [index, hook] of (relic.hooks ?? []).entries()) {
       const label = `runRelic "${relic.id}" hook ${index}`;
@@ -277,7 +288,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig, keywords } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig, keywords, metaConfig } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -289,6 +300,7 @@ export function parseGameData(raw: unknown): GameData {
     runConfig,
     combatConfig,
     keywords: Object.fromEntries(keywords.map((keyword) => [keyword.id, keyword])),
+    metaConfig,
   };
 }
 
@@ -303,5 +315,6 @@ export function loadGameData(): GameData {
     runConfig: runConfigJson,
     combatConfig: combatConfigJson,
     keywords: keywordsJson,
+    metaConfig: metaConfigJson,
   });
 }

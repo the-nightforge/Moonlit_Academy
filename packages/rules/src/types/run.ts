@@ -35,6 +35,8 @@ export interface RunState {
   position: string | null;
   combat: CombatState | null;
   pendingReward: { cardChoices: string[]; runRelicId?: string } | null;
+  /** defId → combats in which the hero leveled up (mastery XP). */
+  heroLevelUps: Record<string, number>;
 }
 
 export interface RunSetup {

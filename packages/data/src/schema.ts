@@ -247,6 +247,18 @@ export const keywordDefSchema = z.object({
   text: z.string().min(1),
 });
 
+export const metaConfigSchema = z.object({
+  masteryLevels: z.array(z.number().int().positive()).min(1),
+  masteryXp: z.object({
+    perFloor: z.number().int().nonnegative(),
+    win: z.number().int().nonnegative(),
+    heroLevelUp: z.number().int().nonnegative(),
+  }),
+  deckSize: z.number().int().positive(),
+  minCardsPerHero: z.number().int().nonnegative(),
+  maxDecks: z.number().int().positive(),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
@@ -257,4 +269,5 @@ export const rawGameDataSchema = z.object({
   runConfig: runConfigSchema,
   combatConfig: combatConfigSchema,
   keywords: z.array(keywordDefSchema),
+  metaConfig: metaConfigSchema,
 });

@@ -51,6 +51,7 @@ export function createRun(data: GameData, setup: RunSetup): { run: RunState; run
     position: null,
     combat: null,
     pendingReward: null,
+    heroLevelUps: {},
   };
   return { run, runEvents: [] };
 }
@@ -201,6 +202,11 @@ export function applyRunAction(data: GameData, run: RunState, action: RunAction)
       if (!result.ok) return { ok: false, error: result.error };
       next.combat = result.state;
       events.push(...result.events);
+      for (const event of result.events) {
+        if (event.type !== "heroLeveledUp") continue;
+        const defId = result.state.heroes.find((hero) => hero.id === event.heroId)!.defId;
+        next.heroLevelUps[defId] = (next.heroLevelUps[defId] ?? 0) + 1;
+      }
       if (result.state.status === "won" || result.state.status === "lost") {
         finishCombat(data, next, runEvents);
       }

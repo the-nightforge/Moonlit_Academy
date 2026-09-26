@@ -8,6 +8,7 @@ import runRelicsJson from "../run-relics.json";
 import runConfigJson from "../run-config.json";
 import combatConfigJson from "../combat-config.json";
 import keywordsJson from "../keywords.json";
+import metaConfigJson from "../meta-config.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -21,6 +22,7 @@ function rawData(): any {
     runConfig: runConfigJson,
     combatConfig: combatConfigJson,
     keywords: keywordsJson,
+    metaConfig: metaConfigJson,
   }));
 }
 

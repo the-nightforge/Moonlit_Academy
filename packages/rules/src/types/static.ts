@@ -221,3 +221,12 @@ export interface CombatConfig {
   maxIntentsPerRound: number;
   bloodMoonHpLoss: number;
 }
+
+export interface MetaConfig {
+  /** Cumulative XP thresholds for mastery level 1..n (one per locked card). */
+  masteryLevels: number[];
+  masteryXp: { perFloor: number; win: number; heroLevelUp: number };
+  deckSize: number;
+  minCardsPerHero: number;
+  maxDecks: number;
+}
