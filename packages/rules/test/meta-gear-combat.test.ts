@@ -74,7 +74,6 @@ describe("weapons and moon relics in combat", () => {
     const onSignature = makeTestCombat({ loadout: gear({ m05: ["w_xich_diem_thuong", 1], f04: ["w_han_tuyet_song_kiem", 1] }) });
     const reflect = (defId: string) => hero(onSignature.state, defId).statuses.find((status) => status.id === "reflect")?.value;
     expect(reflect("m05")).toBe(3);
-    expect(hero(onSignature.state, "m05").statuses).toContainEqual(expect.objectContaining({ id: "strength", value: 1 }));
     const offSignature = makeTestCombat({ loadout: gear({ f04: ["w_xich_diem_thuong", 1] }) });
     expect(hero(offSignature.state, "f04").statuses.find((status) => status.id === "reflect")?.value).toBe(2);
     expect(hero(offSignature.state, "f04").statuses.some((status) => status.id === "strength")).toBe(false);
@@ -108,10 +107,14 @@ describe("weapons and moon relics in combat", () => {
     expect(afterF04.events).toContainEqual({ type: "weaponTriggered", weaponId: "w_liet_cung", heroId: "f04" });
     expect(afterF04.state.moonPower).toBe(afterM05.state.moonPower + 1);
 
-    // Bách Hoa Trâm acts through the lowest-HP hero, but only while its wearer stands.
+    // Bách Hoa Trâm (every 2nd turn end) acts through the lowest-HP hero, but only while its wearer stands.
     const hairpin = makeTestCombat({ loadout: gear({ f04: ["w_bach_hoa_tram", 1] }) });
     idleEnemies(hairpin.state);
-    const standing = applyAction(hairpin.data, hairpin.state, { type: "endTurn" });
+    const first = applyAction(hairpin.data, hairpin.state, { type: "endTurn" });
+    if (!first.ok) throw new Error(first.error);
+    expect(first.events.some((event) => event.type === "weaponTriggered")).toBe(false);
+    idleEnemies(first.state);
+    const standing = applyAction(hairpin.data, first.state, { type: "endTurn" });
     if (!standing.ok) throw new Error(standing.error);
     expect(standing.events).toContainEqual({ type: "weaponTriggered", weaponId: "w_bach_hoa_tram", heroId: "f04" });
     Object.assign(hero(hairpin.state, "f04"), { hp: 0, alive: false });
@@ -126,7 +129,7 @@ describe("weapons and moon relics in combat", () => {
     const spear = data.weapons["w_xich_diem_thuong"]!;
     const damageOf = (level: number) => weaponAt(spear, level).card.effects.find((effect) => effect.type === "damage");
     expect([1, 2, 3, 4, 5].map((level) => weaponAt(spear, level).card.cost)).toEqual([4, 4, 3, 3, 3]);
-    expect([1, 2, 3, 4, 5].map((level) => (damageOf(level) as { amount: number }).amount)).toEqual([8, 10, 10, 12, 12]);
+    expect([1, 2, 3, 4, 5].map((level) => (damageOf(level) as { amount: number }).amount)).toEqual([6, 7, 7, 9, 9]);
     expect(weaponAt(spear, 4).hooks).toBe(spear.hooks);
     expect(weaponAt(spear, 5).signatureHooks).toEqual(spear.refinement[3]!.signatureHooks);
 

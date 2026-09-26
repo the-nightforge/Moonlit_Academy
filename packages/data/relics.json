@@ -370,7 +370,7 @@
   "rarity": "epic",
   "resonance": [
    {
-    "text": "Mỗi lá kỹ năng thứ 3 trong trận: +1 Nguyệt Lực.",
+    "text": "Mỗi lá kỹ năng thứ 5 trong trận: +1 Nguyệt Lực.",
     "hooks": [
      {
       "on": {
@@ -378,7 +378,7 @@
        "cardType": "skill"
       },
       "actor": "front",
-      "every": 3,
+      "every": 5,
       "effects": [
        {
         "type": "gainMoonPower",
@@ -389,7 +389,7 @@
     ]
    },
    {
-    "text": "Mỗi lá kỹ năng thứ 3 trong trận: +2 Nguyệt Lực.",
+    "text": "Mỗi lá kỹ năng thứ 5 trong trận: +2 Nguyệt Lực.",
     "hooks": [
      {
       "on": {
@@ -397,7 +397,7 @@
        "cardType": "skill"
       },
       "actor": "front",
-      "every": 3,
+      "every": 5,
       "effects": [
        {
         "type": "gainMoonPower",
@@ -408,7 +408,7 @@
     ]
    },
    {
-    "text": "Mỗi lá kỹ năng thứ 2 trong trận: +1 Nguyệt Lực.",
+    "text": "Mỗi lá kỹ năng thứ 4 trong trận: +1 Nguyệt Lực.",
     "hooks": [
      {
       "on": {
@@ -416,7 +416,7 @@
        "cardType": "skill"
       },
       "actor": "front",
-      "every": 2,
+      "every": 4,
       "effects": [
        {
         "type": "gainMoonPower",
@@ -427,7 +427,7 @@
     ]
    },
    {
-    "text": "Mỗi lá kỹ năng thứ 2 trong trận: +2 Nguyệt Lực.",
+    "text": "Mỗi lá kỹ năng thứ 4 trong trận: +2 Nguyệt Lực.",
     "hooks": [
      {
       "on": {
@@ -435,7 +435,7 @@
        "cardType": "skill"
       },
       "actor": "front",
-      "every": 2,
+      "every": 4,
       "effects": [
        {
         "type": "gainMoonPower",
@@ -446,7 +446,7 @@
     ]
    },
    {
-    "text": "Mỗi lá kỹ năng thứ 2 trong trận: +2 Nguyệt Lực. Mỗi lá tấn công thứ 3: +1 Nguyệt Lực.",
+    "text": "Mỗi lá kỹ năng thứ 4 trong trận: +2 Nguyệt Lực. Mỗi lá tấn công thứ 4: +1 Nguyệt Lực.",
     "hooks": [
      {
       "on": {
@@ -454,7 +454,7 @@
        "cardType": "skill"
       },
       "actor": "front",
-      "every": 2,
+      "every": 4,
       "effects": [
        {
         "type": "gainMoonPower",
@@ -468,7 +468,7 @@
        "cardType": "attack"
       },
       "actor": "front",
-      "every": 3,
+      "every": 4,
       "effects": [
        {
         "type": "gainMoonPower",

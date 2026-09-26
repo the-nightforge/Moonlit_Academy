@@ -4,7 +4,7 @@
   "name": "Xích Diệm Thương",
   "rarity": "legendary",
   "signatureHeroId": "m05",
-  "text": "Đầu trận người mang Phản Đòn 2 (Hoắc Liệt: Phản Đòn 3, +1 Sức Mạnh).",
+  "text": "Đầu trận người mang Phản Đòn 2 (Hoắc Liệt: Phản Đòn 3).",
   "card": {
    "name": "Liệt Diệm",
    "cost": 4,
@@ -17,17 +17,17 @@
    "effects": [
     {
      "type": "damage",
-     "amount": 8,
+     "amount": 6,
      "to": "chosen"
     },
     {
      "type": "applyStatus",
      "status": "burn",
-     "amount": 3,
+     "amount": 2,
      "to": "chosen"
     }
    ],
-   "text": "Gây 8 damage, Thiêu Đốt 3.",
+   "text": "Gây 6 damage, Thiêu Đốt 2.",
    "keywords": [
     "thieu_dot"
    ]
@@ -60,34 +60,28 @@
       "status": "reflect",
       "amount": 3,
       "to": "self"
-     },
-     {
-      "type": "applyStatus",
-      "status": "strength",
-      "amount": 1,
-      "to": "self"
      }
     ]
    }
   ],
   "refinement": [
    {
-    "text": "Liệt Diệm gây 10 damage.",
+    "text": "Liệt Diệm gây 7 damage.",
     "card": {
      "effects": [
       {
        "type": "damage",
-       "amount": 10,
+       "amount": 7,
        "to": "chosen"
       },
       {
        "type": "applyStatus",
        "status": "burn",
-       "amount": 3,
+       "amount": 2,
        "to": "chosen"
       }
      ],
-     "text": "Gây 10 damage, Thiêu Đốt 3."
+     "text": "Gây 7 damage, Thiêu Đốt 2."
     }
    },
    {
@@ -97,26 +91,26 @@
     }
    },
    {
-    "text": "Liệt Diệm gây 12 damage.",
+    "text": "Liệt Diệm gây 9 damage.",
     "card": {
      "effects": [
       {
        "type": "damage",
-       "amount": 12,
+       "amount": 9,
        "to": "chosen"
       },
       {
        "type": "applyStatus",
        "status": "burn",
-       "amount": 3,
+       "amount": 2,
        "to": "chosen"
       }
      ],
-     "text": "Gây 12 damage, Thiêu Đốt 3."
+     "text": "Gây 9 damage, Thiêu Đốt 2."
     }
    },
    {
-    "text": "Đầu trận Phản Đòn 3 (Hoắc Liệt: Phản Đòn 5, +2 Sức Mạnh).",
+    "text": "Đầu trận Phản Đòn 3 (Hoắc Liệt: Phản Đòn 5, +1 Sức Mạnh).",
     "hooks": [
      {
       "on": {
@@ -149,7 +143,7 @@
        {
         "type": "applyStatus",
         "status": "strength",
-        "amount": 2,
+        "amount": 1,
         "to": "self"
        }
       ]
@@ -380,7 +374,7 @@
   "name": "Hàn Tuyết Song Kiếm",
   "rarity": "epic",
   "signatureHeroId": "f03",
-  "text": "Đầu trận mọi kẻ địch Suy Yếu 1 vòng (Tần Sương: 2 vòng).",
+  "text": "Đầu trận mọi kẻ địch Suy Yếu 1 vòng (Tần Sương mang: R5 mạnh hơn).",
   "card": {
    "name": "Song Tuyết",
    "cost": 4,
@@ -393,7 +387,7 @@
    "effects": [
     {
      "type": "damage",
-     "amount": 4,
+     "amount": 3,
      "to": "chosen",
      "hits": 2
     },
@@ -413,7 +407,7 @@
      ]
     }
    ],
-   "text": "Gây 4 damage ×2. Tích Tụ 1: Đóng Băng mục tiêu.",
+   "text": "Gây 3 damage ×2. Tích Tụ 1: Đóng Băng mục tiêu.",
    "keywords": [
     "tich_tu",
     "dong_bang"
@@ -445,13 +439,48 @@
      {
       "type": "applyStatus",
       "status": "weak",
-      "amount": 2,
+      "amount": 1,
       "to": "allEnemies"
      }
     ]
    }
   ],
   "refinement": [
+   {
+    "text": "Song Tuyết gây 4 ×2.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 4,
+       "to": "chosen",
+       "hits": 2
+      },
+      {
+       "type": "conditional",
+       "condition": {
+        "type": "heldTurnsAtLeast",
+        "turns": 1
+       },
+       "then": [
+        {
+         "type": "applyStatus",
+         "status": "freeze",
+         "amount": 1,
+         "to": "chosen"
+        }
+       ]
+      }
+     ],
+     "text": "Gây 4 damage ×2. Tích Tụ 1: Đóng Băng mục tiêu."
+    }
+   },
+   {
+    "text": "Song Tuyết còn 3 Nguyệt Lực.",
+    "card": {
+     "cost": 3
+    }
+   },
    {
     "text": "Song Tuyết gây 5 ×2.",
     "card": {
@@ -479,41 +508,6 @@
       }
      ],
      "text": "Gây 5 damage ×2. Tích Tụ 1: Đóng Băng mục tiêu."
-    }
-   },
-   {
-    "text": "Song Tuyết còn 3 Nguyệt Lực.",
-    "card": {
-     "cost": 3
-    }
-   },
-   {
-    "text": "Song Tuyết gây 6 ×2.",
-    "card": {
-     "effects": [
-      {
-       "type": "damage",
-       "amount": 6,
-       "to": "chosen",
-       "hits": 2
-      },
-      {
-       "type": "conditional",
-       "condition": {
-        "type": "heldTurnsAtLeast",
-        "turns": 1
-       },
-       "then": [
-        {
-         "type": "applyStatus",
-         "status": "freeze",
-         "amount": 1,
-         "to": "chosen"
-        }
-       ]
-      }
-     ],
-     "text": "Gây 6 damage ×2. Tích Tụ 1: Đóng Băng mục tiêu."
     }
    },
    {
@@ -744,7 +738,7 @@
   "name": "Bách Hoa Trâm",
   "rarity": "rare",
   "signatureHeroId": "f04",
-  "text": "Cuối lượt Hero máu thấp nhất Hồi Phục 1 (Ôn Như Ý: 2).",
+  "text": "Mỗi 2 lượt, cuối lượt Hero máu thấp nhất Hồi Phục 1 (Ôn Như Ý: 2).",
   "card": {
    "name": "Trâm Hoa",
    "cost": 2,
@@ -765,7 +759,7 @@
       {
        "type": "applyStatus",
        "status": "regen",
-       "amount": 5,
+       "amount": 4,
        "to": "chosen"
       }
      ],
@@ -773,13 +767,13 @@
       {
        "type": "applyStatus",
        "status": "regen",
-       "amount": 3,
+       "amount": 2,
        "to": "chosen"
       }
      ]
     }
    ],
-   "text": "1 Hero Hồi Phục 3. Tích Tụ 1: Hồi Phục 5.",
+   "text": "1 Hero Hồi Phục 2. Tích Tụ 1: Hồi Phục 4.",
    "keywords": [
     "hoi_phuc",
     "tich_tu"
@@ -791,6 +785,7 @@
      "type": "playerTurnEnd"
     },
     "actor": "lowestHp",
+    "every": 2,
     "effects": [
      {
       "type": "applyStatus",
@@ -807,6 +802,7 @@
      "type": "playerTurnEnd"
     },
     "actor": "lowestHp",
+    "every": 2,
     "effects": [
      {
       "type": "applyStatus",
@@ -818,6 +814,43 @@
    }
   ],
   "refinement": [
+   {
+    "text": "Trâm Hoa Hồi Phục 3 / 5.",
+    "card": {
+     "effects": [
+      {
+       "type": "conditional",
+       "condition": {
+        "type": "heldTurnsAtLeast",
+        "turns": 1
+       },
+       "then": [
+        {
+         "type": "applyStatus",
+         "status": "regen",
+         "amount": 5,
+         "to": "chosen"
+        }
+       ],
+       "else": [
+        {
+         "type": "applyStatus",
+         "status": "regen",
+         "amount": 3,
+         "to": "chosen"
+        }
+       ]
+      }
+     ],
+     "text": "1 Hero Hồi Phục 3. Tích Tụ 1: Hồi Phục 5."
+    }
+   },
+   {
+    "text": "Trâm Hoa còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
    {
     "text": "Trâm Hoa Hồi Phục 4 / 6.",
     "card": {
@@ -850,50 +883,14 @@
     }
    },
    {
-    "text": "Trâm Hoa còn 1 Nguyệt Lực.",
-    "card": {
-     "cost": 1
-    }
-   },
-   {
-    "text": "Trâm Hoa Hồi Phục 5 / 7.",
-    "card": {
-     "effects": [
-      {
-       "type": "conditional",
-       "condition": {
-        "type": "heldTurnsAtLeast",
-        "turns": 1
-       },
-       "then": [
-        {
-         "type": "applyStatus",
-         "status": "regen",
-         "amount": 7,
-         "to": "chosen"
-        }
-       ],
-       "else": [
-        {
-         "type": "applyStatus",
-         "status": "regen",
-         "amount": 5,
-         "to": "chosen"
-        }
-       ]
-      }
-     ],
-     "text": "1 Hero Hồi Phục 5. Tích Tụ 1: Hồi Phục 7."
-    }
-   },
-   {
-    "text": "Cuối lượt Hồi Phục 2 (Ôn Như Ý: 3).",
+    "text": "Mỗi 2 lượt Hồi Phục 2 (Ôn Như Ý: 3).",
     "hooks": [
      {
       "on": {
        "type": "playerTurnEnd"
       },
       "actor": "lowestHp",
+      "every": 2,
       "effects": [
        {
         "type": "applyStatus",
@@ -910,6 +907,7 @@
        "type": "playerTurnEnd"
       },
       "actor": "lowestHp",
+      "every": 2,
       "effects": [
        {
         "type": "applyStatus",
@@ -1054,7 +1052,7 @@
    "effects": [
     {
      "type": "damage",
-     "amount": 3,
+     "amount": 2,
      "to": "chosen",
      "hits": 2
     },
@@ -1065,7 +1063,7 @@
      "to": "chosen"
     }
    ],
-   "text": "Gây 3 damage ×2, Đánh Dấu 1 vòng.",
+   "text": "Gây 2 damage ×2, Đánh Dấu 1 vòng.",
    "keywords": [
     "danh_dau"
    ]
@@ -1087,6 +1085,32 @@
   ],
   "refinement": [
    {
+    "text": "Liệt Tiễn gây 3 ×2.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 3,
+       "to": "chosen",
+       "hits": 2
+      },
+      {
+       "type": "applyStatus",
+       "status": "mark",
+       "amount": 1,
+       "to": "chosen"
+      }
+     ],
+     "text": "Gây 3 damage ×2, Đánh Dấu 1 vòng."
+    }
+   },
+   {
+    "text": "Liệt Tiễn còn 2 Nguyệt Lực.",
+    "card": {
+     "cost": 2
+    }
+   },
+   {
     "text": "Liệt Tiễn gây 4 ×2.",
     "card": {
      "effects": [
@@ -1104,32 +1128,6 @@
       }
      ],
      "text": "Gây 4 damage ×2, Đánh Dấu 1 vòng."
-    }
-   },
-   {
-    "text": "Liệt Tiễn còn 2 Nguyệt Lực.",
-    "card": {
-     "cost": 2
-    }
-   },
-   {
-    "text": "Liệt Tiễn gây 5 ×2.",
-    "card": {
-     "effects": [
-      {
-       "type": "damage",
-       "amount": 5,
-       "to": "chosen",
-       "hits": 2
-      },
-      {
-       "type": "applyStatus",
-       "status": "mark",
-       "amount": 1,
-       "to": "chosen"
-      }
-     ],
-     "text": "Gây 5 damage ×2, Đánh Dấu 1 vòng."
     }
    },
    {
@@ -1391,7 +1389,7 @@
   "name": "Tinh Bàn",
   "rarity": "legendary",
   "archetype": "specialist",
-  "text": "Đầu trận: Dưỡng Nguyệt 1 (mỗi lượt +1 Nguyệt Lực).",
+  "text": "Đầu trận: +2 Nguyệt Lực.",
   "card": {
    "name": "Chuyển Tinh",
    "cost": 2,
@@ -1424,8 +1422,8 @@
     "actor": "wearer",
     "effects": [
      {
-      "type": "gainMoonPowerPerTurn",
-      "amount": 1
+      "type": "gainMoonPower",
+      "amount": 2
      }
     ]
    }
@@ -1474,7 +1472,7 @@
     }
    },
    {
-    "text": "Đầu trận: Dưỡng Nguyệt 2.",
+    "text": "Đầu trận: Dưỡng Nguyệt 1 (mỗi lượt +1 Nguyệt Lực).",
     "hooks": [
      {
       "on": {
@@ -1484,7 +1482,7 @@
       "effects": [
        {
         "type": "gainMoonPowerPerTurn",
-        "amount": 2
+        "amount": 1
        }
       ]
      }

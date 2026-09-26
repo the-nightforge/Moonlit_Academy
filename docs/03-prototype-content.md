@@ -123,7 +123,7 @@ Ghi kết quả vào `docs/playtest-notes.md` (tự tạo) sau mỗi buổi chơ
 
 ## 7. Binh Khí và Nguyệt Bảo [GĐ4e]
 
-Số khởi điểm (chỉnh ở mô phỏng 4e.7). Luật: `01` §14, `14` §13. Mỗi ô R2–R5 ghi **phần
+Số sau gói chỉnh G1 (4e.7, đã duyệt; số đo ở `playtest-notes.md` mục 4e). Luật: `01` §14, `14` §13. Mỗi ô R2–R5 ghi **phần
 thay đổi** so với cấp trước; phần không nhắc giữ nguyên. "(X: …)" = bản mệnh khi người
 mang là Hero X (`signatureHooks`). Mọi Hero mang được mọi vũ khí.
 
@@ -131,16 +131,16 @@ mang là Hero X (`signatureHooks`). Mọi Hero mang được mọi vũ khí.
 
 | Vũ khí | Độ hiếm | Lá R1 | Nội tại R1 | R2 | R3 | R4 | R5 |
 |---|---|---|---|---|---|---|---|
-| Xích Diệm Thương `w_xich_diem_thuong` (bản mệnh M05) | Legendary | *Liệt Diệm* 4 · 2 · tấn công [attack]: gây 8, Thiêu Đốt 3 | Đầu trận người mang Phản Đòn 2 (M05: Phản Đòn 3, +1 Sức Mạnh) | gây 10 | cost 3 | gây 12 | Phản Đòn 3 (M05: Phản Đòn 5, +2 Sức Mạnh) |
+| Xích Diệm Thương `w_xich_diem_thuong` (bản mệnh M05) | Legendary | *Liệt Diệm* 4 · 2 · tấn công [attack]: gây 6, Thiêu Đốt 2 | Đầu trận người mang Phản Đòn 2 (M05: Phản Đòn 3) | gây 7 | cost 3 | gây 9 | Phản Đòn 3 (M05: Phản Đòn 5, +1 Sức Mạnh) |
 | Ảnh Nguyệt Chủy `w_anh_nguyet_chuy` (M06) | Epic | *Ảnh Sát Chủy* 1 · 2 · tấn công [attack, assassin]: gây 3; mục tiêu ≤ 30% HP: gây 9 | Mỗi lá `assassin` thứ 3 của người mang: +1 NL (M06: +2) | 4 / 11 | thêm Đánh Dấu 1 vòng | 5 / 13 | thành mỗi lá thứ **2** |
-| Hàn Tuyết Song Kiếm `w_han_tuyet_song_kiem` (F03) | Epic | *Song Tuyết* 4 · 2 · tấn công [attack]: gây 4 ×2; Tích Tụ 1: Đóng Băng 1 vòng | Đầu trận mọi kẻ địch Suy Yếu 1 vòng (F03: 2 vòng) | 5 ×2 | cost 3 | 6 ×2 | Suy Yếu 2 vòng (F03: 3 vòng, thêm Dễ Vỡ 1 vòng) |
+| Hàn Tuyết Song Kiếm `w_han_tuyet_song_kiem` (F03) | Epic | *Song Tuyết* 4 · 2 · tấn công [attack]: gây 3 ×2; Tích Tụ 1: Đóng Băng 1 vòng | Đầu trận mọi kẻ địch Suy Yếu 1 vòng (F03: như thường tới R4) | 4 ×2 | cost 3 | 5 ×2 | Suy Yếu 2 vòng (F03: 3 vòng, thêm Dễ Vỡ 1 vòng) |
 | Thiên Diện Phiến `w_thien_dien_phien` (F02) | Epic | *Phiến Ảnh* 1 · 2 · kỹ năng [scheme]: Đoạt Nguyệt 1; Liên Hoàn 2: Cướp 1 buff | Khi Huyết Nguyệt bắt đầu: người mang +1 Sức Mạnh (F02: +1 Sức Mạnh, +2 NL) | Đoạt Nguyệt 2 | cost 0 | Liên Hoàn 2: Cướp 2 buff | +2 Sức Mạnh (F02: +2 Sức Mạnh, +3 NL) |
-| Bách Hoa Trâm `w_bach_hoa_tram` (F04) | Rare | *Trâm Hoa* 2 · 2 · kỹ năng [heal]: 1 Hero Hồi Phục 3; Tích Tụ 1: 5 | Cuối lượt Hero máu thấp nhất Hồi Phục 1 (F04: 2) | 4 / 6 | cost 1 | 5 / 7 | Hồi Phục 2 (F04: 3) |
+| Bách Hoa Trâm `w_bach_hoa_tram` (F04) | Rare | *Trâm Hoa* 2 · 2 · kỹ năng [heal]: 1 Hero Hồi Phục 2; Tích Tụ 1: 4 | Mỗi 2 lượt, cuối lượt Hero máu thấp nhất Hồi Phục 1 (F04: 2) | 3 / 5 | cost 1 | 4 / 6 | Hồi Phục 2 (F04: 3), vẫn mỗi 2 lượt |
 | Thiết Thuẫn `w_thiet_thuan` (chung — Vanguard) | Rare | *Thuẫn Kích* 2 · 2 · kỹ năng [ward]: nhận 6 giáp, Khiêu Khích 1 vòng | Đầu trận người mang 4 giáp | 7 giáp | cost 1 | 8 giáp | đầu trận 8 giáp |
-| Liệt Cung `w_liet_cung` (chung — Striker) | Rare | *Liệt Tiễn* 3 · 2 · tấn công [attack]: gây 3 ×2, Đánh Dấu 1 vòng | Người mang kết liễu kẻ địch: +1 NL | 4 ×2 | cost 2 | 5 ×2 | +2 NL |
+| Liệt Cung `w_liet_cung` (chung — Striker) | Rare | *Liệt Tiễn* 3 · 2 · tấn công [attack]: gây 2 ×2, Đánh Dấu 1 vòng | Người mang kết liễu kẻ địch: +1 NL | 3 ×2 | cost 2 | 4 ×2 | +2 NL |
 | Huyền Linh Kính `w_huyen_linh_kinh` (chung — Controller) | Epic | *Kính Hàn* 2 · 2 · kỹ năng [control, moon]: Tỏa Nguyệt 2, Suy Yếu 1 vòng | Khi vào Trăng Non: mọi kẻ địch Dễ Vỡ 1 vòng | Tỏa Nguyệt 3 | cost 1 | Suy Yếu 2 vòng | Trăng Non **hoặc Trăng Tròn** |
 | Thanh Tâm Bình `w_thanh_tam_binh` (chung — Support) | Rare | *Bình Lộ* 3 · 2 · kỹ năng [heal]: mọi Hero hồi 3 (Dư Sinh) | Đầu trận người mang Hồi Phục 2 | hồi 4 | cost 2 | hồi 5 | đầu trận **mọi Hero** Hồi Phục 2 |
-| Tinh Bàn `w_tinh_ban` (chung — Specialist) | Legendary | *Chuyển Tinh* 2 · 2 · kỹ năng [moon]: Đổi Vận 1 pha, Chiêm Bài 2 | Đầu trận: Dưỡng Nguyệt 1 (mỗi lượt +1 NL) | Chiêm Bài 3 | cost 1 | thêm +1 NL | Dưỡng Nguyệt 2 |
+| Tinh Bàn `w_tinh_ban` (chung — Specialist) | Legendary | *Chuyển Tinh* 2 · 2 · kỹ năng [moon]: Đổi Vận 1 pha, Chiêm Bài 2 | Đầu trận: +2 NL | Chiêm Bài 3 | cost 1 | thêm +1 NL | Đầu trận: Dưỡng Nguyệt 1 (mỗi lượt +1 NL) |
 
 ### 7.2 Nguyệt Bảo (mỗi cấp Cộng Minh là bản đầy đủ)
 
@@ -149,7 +149,7 @@ mang là Hero X (`signatureHooks`). Mọi Hero mang được mọi vũ khí.
 | Thiên Sách `r_thien_sach` | Legendary | Khi vào Trăng Tròn: +2 NL | +3 NL | Trăng Tròn hoặc Huyết Nguyệt bắt đầu: +3 NL | +4 NL | CM4, thêm: khi vào Trăng Non +2 NL |
 | Vọng Nguyệt Kính `r_vong_nguyet_kinh` | Legendary | Mỗi lần trăng đổi pha: mọi Hero 2 giáp | 3 giáp | 4 giáp | 5 giáp | CM4, thêm: Huyết Nguyệt bắt đầu → mọi Hero 5 giáp |
 | Huyết Ngọc Bội `r_huyet_ngoc_boi` | Epic | Trong Huyết Nguyệt: lá `forbidden` −1 NL | `forbidden` và `scheme` −1 | `forbidden` −2, `scheme` −1 | `forbidden` −2, `scheme` −2 | CM4, thêm: Huyết Nguyệt bắt đầu → +2 NL |
-| Loan Linh Ấn `r_loan_linh_an` | Epic | Mỗi lá kỹ năng thứ 3 trong trận: +1 NL | +2 NL | mỗi lá thứ 2: +1 NL | mỗi lá thứ 2: +2 NL | CM4, thêm: mỗi lá tấn công thứ 3 +1 NL |
+| Loan Linh Ấn `r_loan_linh_an` | Epic | Mỗi lá kỹ năng thứ 5 trong trận: +1 NL | +2 NL | mỗi lá thứ 4: +1 NL | mỗi lá thứ 4: +2 NL | CM4, thêm: mỗi lá tấn công thứ 4 +1 NL |
 | Xích Diễm Châu `r_xich_diem_chau` | Epic | Khi hạ một kẻ địch: mọi kẻ địch còn lại Thiêu Đốt 2 | Thiêu Đốt 3 | Thiêu Đốt 4 | Thiêu Đốt 5 | CM4, thêm: Hero kết liễu +1 Sức Mạnh |
 | Bạch Lộ Hương Nang `r_bach_lo_huong_nang` | Rare | Khi vào Trăng Tròn: Hero máu thấp nhất hồi 3 | hồi 5 | Trăng Tròn hoặc Trăng Non: hồi 5 | hồi 7 | CM4, thêm: Hero đó Hồi Phục 2 |
 | Huyền Vũ Giáp Phù `r_huyen_vu_giap_phu` | Rare | Đầu trận mọi Hero 3 giáp | 4 giáp | 5 giáp | 6 giáp | CM4, thêm: Huyết Nguyệt bắt đầu → mọi Hero 3 giáp |
