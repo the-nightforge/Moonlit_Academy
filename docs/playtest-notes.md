@@ -561,7 +561,43 @@ hồ cạn giờ chỉ cắn ở boss), trận thường ≤4%; kẹt tay ≤1%,
 thường 96% / 8.9 vòng, Tinh Anh 94% / 9.2, boss 77% / 10.6, **Cạn Bài ở boss
 17%**.
 
-- [ ] Vẫn dễ hơn mục tiêu (bot 35–45%) dù đã có gói chỉnh sau 4b (trước Lõi:
+- [x] Vẫn dễ hơn mục tiêu (bot 35–45%) dù đã có gói chỉnh sau 4b (trước Lõi:
       ~40%). Cần chỉnh số Lõi hoặc độ khó — chờ duyệt.
-- [ ] Cạn Bài ở boss 17% (mục tiêu < 10%): deck 18 lá cố định, trận boss dài.
+      → **Đã duyệt gói L** (xem "Chỉnh sau Lõi").
+- [ ] Cạn Bài ở boss 17% → nay 10–18% tùy deck (mục tiêu < 10%): deck 18 lá
+      cố định, trận boss dài. Cải thiện nhẹ sau gói L (trận boss ngắn đi) nhưng
+      vẫn trên ngưỡng ở deck thiên phòng thủ.
+
+## Chỉnh sau Lõi (đã duyệt)
+
+Ablation: giảm độ lớn Lõi (×0.5/×0.35) **không đổi** win rate (Lõi kinh tế
+đã ở sàn 1); giới hạn số Lõi/lượt làm bot luôn trúng Lõi mạnh nhất (70%);
+HP địch ×1.15 → 61%. Damage địch là đòn bẩy duy nhất hạ được: ×1.25 → 54%,
+×1.4 → 40%, dmg ×1.25 + HP ×1.1 → **43%**.
+
+**Đã áp** (`enemies.json`): `maxHp` mọi địch ×1.1 (Khôi Lỗi 42, Ảnh Hồ 23,
+Thần Viên 94, Thư Hồn 32, Hắc Giáp 69, Hồ Vương 50), `damage` mọi chiêu
+×1.25 (kể cả `conditional`/`moonOverrides`/`bloodMoonOverride`); không đụng
+`loseHp` (không có), `gainArmor`, status, hồi.
+
+### Kết quả sau chỉnh (seed 1–20, mọi đội × loại deck)
+
+| Deck | Thắng | Tầng TB | XP/lượt |
+|---|---|---|---|
+| Bộ cơ bản | **43%** | 5.9 | 105.3 |
+| nhánh A 6/6/6 | 64% | 6.8 | 133.0 |
+| nhánh B 6/6/6 | 34% | 5.5 | 85.3 |
+| nhánh A 4/4/10 | 51% | 5.6 | 106.5 |
+| nhánh B 8/5/5 | 35% | 6.0 | 93.4 |
+| ngẫu nhiên | 51% | 6.3 | 111.4 |
+
+Bộ cơ bản theo tier: thường 89% / 9.3 vòng, Tinh Anh 87% / 9.2, boss 69% /
+10.7. Kẹt tay ≤2%, 0 kẹt lượt, 0/60 lá chưa được đánh. Nhịp Tu Luyện ~11.8
+lượt tới cấp 6 (mục tiêu 8–12).
+
+### Điểm mở mới
+
+- Chênh lệch đội/deck rộng hơn: Bộ cơ bản của m05+f04+m06 chỉ 5%, nhánh A
+  4/4/10 của m05+f03+f04 0% (chết sớm tầng 2–3) — xem lại bằng chơi tay,
+  có thể do heuristic không chơi tốt các deck tập trung.
 
