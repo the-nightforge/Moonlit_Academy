@@ -178,13 +178,13 @@ Nhãn: Giữ / Sửa (giữ id, đổi cơ chế) / Mới. Hiệu ứng viết t
 | `f04_bach_thao_huong` | Bách Thảo Hương | BT | Miễn phí | Sửa | 2·3 | A | heal, harmony | Hồi Phục 3; mục tiêu đã có Hồi Phục: 5 |
 | `f04_linh_chi_ho_the` | Linh Chi Hộ Thể | BT | Miễn phí | Sửa | 2·3 | A | heal | Tụ Dược ×1; giáp 4 |
 | `f04_hoi_xuan_tan` | Hồi Xuân Tán | BT | Miễn phí | Sửa | 4·3 | — | heal, harmony | Mọi Hero Hồi Phục 2; HT≥1: 4 |
-| `f04_thao_duoc` | Thảo Dược | TT | Miễn phí | Sửa | 2·3 | A | heal, harmony | Hồi 5 (Dư Sinh) |
+| `f04_thao_duoc` | Thảo Dược | TT | Khóa¹ | Sửa | 2·3 | A | heal, harmony | Hồi 5 (Dư Sinh) |
 | `f04_tinh_tam_tra` | Tịnh Tâm Trà | TT | Miễn phí | Sửa | 3·3 | A | heal, harmony | Giải trừ; hồi 3 (Dư Sinh); Chiêm Bài 2 |
 | `f04_nguyet_quang_dan` | Nguyệt Quang Dẫn | TT | Miễn phí | Giữ | 4·3 | — | moon | Trăng tiến 1 pha; Chiêm Bài 3 |
 | `f04_xuan_phong` | Xuân Phong | BT | Khóa | Mới | 1·3 | A | heal, harmony | Hồi Phục 2 lên mục tiêu; LH≥2: lên mọi Hero |
 | `f04_thanh_tam_chu` | Thanh Tâm Chú | BT | Khóa | Sửa | 4·3 | — | harmony | Giải trừ mọi Hero; mọi Hero Hồi Phục 1; Chiêm Bài 3 |
 | `f04_bach_hoa_tu_duoc` | Bách Hoa Tụ Dược | BT | Khóa | Mới | 6·2 | — | heal, harmony | Tụ Dược ×2 lên mọi Hero |
-| `f04_bang_tam_quyet` | Băng Tâm Quyết | TT | Khóa | Sửa | 2·3 | E | control, harmony | Suy Yếu 2; Tỏa Nguyệt 1 |
+| `f04_bang_tam_quyet` | Băng Tâm Quyết | TT | Miễn phí¹ | Sửa | 2·3 | E | control, harmony | Suy Yếu 2; Tỏa Nguyệt 1 |
 | `f04_nguyet_lo` | Nguyệt Lộ | TT | Khóa | Sửa | 4·2 | A | heal, moon | Dưỡng Nguyệt 1; hồi 3 |
 | `f04_tinh_tam_quyet` | Tĩnh Tâm Quyết | TT | Khóa | Mới | 6·2 | — | heal, harmony | Mọi Hero hồi 5 (Dư Sinh); giải trừ mọi Hero |
 
@@ -232,7 +232,7 @@ Nhãn: Giữ / Sửa (giữ id, đổi cơ chế) / Mới. Hiệu ứng viết t
 | `f02_anh_tap` | Ảnh Tập | TD | Miễn phí | Giữ | 2·3 | E | attack, assassin | Cướp 1 buff; 6 damage; HP < 50%: 10 |
 | `f02_dien_cu` | Diện Cụ | TD | Miễn phí | Sửa | 3·3 | E | scheme | Đoạt Nguyệt 2; Chiêm Bài 2 |
 | `f02_huyet_tram` | Huyết Trâm | HN | Miễn phí | Sửa | 2·3 | E | attack, forbidden | Huyết Nguyệt: 9 damage; ngược lại mất 2 HP + 9 damage |
-| `f02_doi_van_chu` | Đổi Vận Chú | HN | Miễn phí | Giữ | 4·3 | — | moon | Huyết Nguyệt 2; trăng tiến 1 pha |
+| `f02_doi_van_chu` | Đổi Vận Chú | HN | Miễn phí | Giữ | 3·3¹ | — | moon | Huyết Nguyệt 2; trăng tiến 1 pha |
 | `f02_phe_hon` | Phệ Hồn | HN | Miễn phí | Giữ | 6·2 | E | attack, forbidden | Chỉ khi Huyết Nguyệt. Mất 3 HP; 16 damage |
 | `f02_vong_nguyet_thu` | Vọng Nguyệt Thủ | TD | Khóa | Mới | 1·3 | E | scheme | Đoạt Nguyệt 1; LH≥2: Đoạt Nguyệt 3 |
 | `f02_thien_dien` | Thiên Diện | TD | Khóa | Mới | 4·3 | E | scheme | Cướp 1 buff; HT≥1: cướp 3 |
@@ -248,6 +248,8 @@ Nhãn: Giữ / Sửa (giữ id, đổi cơ chế) / Mới. Hiệu ứng viết t
 | `bond_bang_hoa_tranh_phong` (M05+F03) | Giữ | 8 damage + Đóng Băng; mục tiêu Đóng Băng: 14 |
 | `bond_anh_dau` (M06+F02) | Sửa | F02: cướp 1 buff + Đoạt Nguyệt 1; M06: Ẩn Thân 1 |
 | `bond_tuyet_trung_tong_than` (F03+F04) | Giữ | F03 Đóng Băng 1 kẻ địch; F04 Hồi Phục 2 |
+
+¹ Chỉnh sau playtest 4b (`playtest-notes.md`, "Chỉnh sau 4b — vòng 2"). Cũng theo đó: *Tuyết Trung Tống Thán* `copies` 3 → 2, *Loạn Ảnh* 5 → 4, *Ảnh Tốc* 2 → 1.
 
 ### 3.8 Ghi chú nội dung
 

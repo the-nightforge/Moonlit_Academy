@@ -383,24 +383,15 @@ hơn, độ khó thật cần xác nhận bằng chơi tay.
 - [ ] Mở khóa (Tu Luyện) có hào hứng không; ~10 lượt tới cấp 6 có hợp lý?
 - [ ] Deck nhánh có khác cảm giác Bộ cơ bản không?
 
-## Còn mở sau 4b (đo lại trên data hiện tại)
+## Các mục đã đóng sau 4b
 
 Các mục đã đóng nhờ số đo 4b (đã xóa khỏi checklist cũ): trận thường dài quá
 (nay 7.9 vòng TB), F04 ít thăng cấp (nay 38/48 trận), Nguyệt Quang Dẫn 2 NL
 (nay cost 4 theo kinh tế 4a), tay kẹt vì Tàn Chiêu (nay bỏ cuối lượt, kẹt tay
 0–5%), boss quá dài (nay 10–12 vòng), m06+f02+f03 0/20 (nay 50% với Bộ cơ
 bản), tỷ lệ thắng bot 10–15% (nay 59%). Sau "Chỉnh sau 4b" đóng thêm: game dễ
-hơn mục tiêu (bot 59% → 44%), F02 gần như không thăng cấp (6/48 → 28/48).
-
-- [ ] **Chênh lệch đội (chưa sửa được):** Bộ cơ bản m05+f04+m06 30%,
-      m06+f02+f03 25%, m05+f03+f04 80% lượt thắng. Đã thử 8 hoán đổi lá miễn
-      phí ↔ khóa (Băng Tâm Quyết, Xuân Phong, Ảnh Phân Thân, Tàng Ảnh Thích,
-      Huyết Chiến…): không cái nào kéo đội yếu lên, bỏ Nguyệt Quang Dẫn còn
-      làm m05+f04+m06 tụt 30% → 5–10%. Cần xem lại bằng chơi tay trước khi
-      chỉnh tiếp (có thể do heuristic chơi F04/M06 kém, không phải data).
-- [ ] **Nhánh A mạnh hơn hẳn nhánh B ở m06+f02+f03** (60–85% vs 25–30%);
-      tính chung mọi đội nhánh B chỉ kém Bộ cơ bản 3–4 điểm.
-- [ ] Huyết Nguyệt vẫn hiếm: TB 0.5 lượt/trận (tối đa 3).
+hơn mục tiêu (bot 59% → 44%), F02 gần như không thăng cấp (6/48 → 28/48). Sau
+"vòng 2" đóng nốt: chênh lệch đội, nhánh A/B, Huyết Nguyệt hiếm.
 
 ## Chỉnh sau 4b (đã duyệt)
 
@@ -449,3 +440,49 @@ Bộ cơ bản theo tier: thường 90% / 9.3 vòng, Tinh Anh 81% / 11.2, boss 7
 12.0. Cạn Bài ≤ 6%, kẹt tay ≤ 1%, 0 lượt kẹt, 0/60 lá chưa được đánh. Nhịp Tu
 Luyện ~11.4 lượt tới cấp 6 (mục tiêu 8–12). Thăng cấp trong trận đơn: M05
 51/72, F04 40/48, M06 36/48, F03 44/72, **F02 28/48** (trước 6/48).
+
+## Chỉnh sau 4b — vòng 2
+
+Ablation bằng file tạm, 4 đội × 6 deck × 40–80 seed (20 seed của
+`run-playtest` nhiễu ±10 điểm/đội — số dưới đây là 80 seed).
+
+**Chênh lệch đội.** Nguyên nhân chính là lá Song Hành, không phải Hero:
+m05+f04+m06 có 0 lá Song Hành, m05+f03+f02 / m06+f02+f03 có 1, m05+f03+f04 có
+2 (cả hai Đóng Băng). Bỏ mọi lá Song Hành: m05+f03+f04 78% → 43%, các đội khác
+gần như không đổi. *Tuyết Trung Tống Thán* (2 NL, Đóng Băng + Hồi Phục) là lá
+quyết định.
+
+| Biến thể (80 seed) | Bộ cơ bản | m05+f04+m06 | m05+f03+f02 | m06+f02+f03 | m05+f03+f04 |
+|---|---|---|---|---|---|
+| Sau vòng 1 | 37% | 18% | 43% | 23% | 66% |
+| Tuyết Trung `copies` 2 + boss 85 + F04 đổi Thảo Dược ↔ Băng Tâm Quyết | 37% | 24% | 45% | 25% | 54% |
+| **+ Đổi Vận Chú 4 → 3** | **38%** | **24%** | **40%** | **34%** | **54%** |
+
+Thử và bỏ: bot không hồi máu khi cả đội ≥ 85% HP (không đổi), thêm lá Song
+Hành giáp/hồi cho M05+F04 (không giúp m05+f04+m06), F04 đổi Hồi Xuân Tán /
+Linh Chi / Nguyệt Quang Dẫn lấy Băng Tâm Quyết (m05+f04+m06 tụt 8–23%),
+enc_02 (Ảnh Hồ ×3) `minFloor` 2, Ảnh Hồ HP 19 (không đổi). m05+f04+m06 thấp
+nhất vì không có Song Hành lẫn Đóng Băng — chấp nhận như bản sắc đội.
+
+**Tiêu chí đóng:** mọi đội ≥ 20%, chênh lệch ≤ 30 điểm, Bộ cơ bản 35–45%, mọi
+loại deck trong ±15 điểm so với Bộ cơ bản (spec 4b §8) — đạt: 24–54%, 38%,
+nhánh A 6/6/6 52% / nhánh B 6/6/6 33% / A 4/4/10 44% / B 8/5/5 30% / ngẫu
+nhiên 43%. Khoảng cách nhánh A–B của riêng m06+f02+f03 là do nhánh A của đội
+đó mạnh (Ảnh Sát + Cướp), không phải nhánh B yếu so với Bộ cơ bản.
+
+**Huyết Nguyệt.** Đo riêng đội có F02: 0.8 lượt/trận với Bộ cơ bản và nhánh B.
+Kéo Huyết Nguyệt của Đổi Vận Chú 2 → 3 vòng tăng lên 1.4 lượt/trận nhưng đội
+F02 thua nhiều hơn (m06+f02+f03 25% → 18%): Huyết Nguyệt là rủi ro hai chiều
+đúng thiết kế, tần suất hiện tại cân bằng. Không đổi thời lượng; Đổi Vận Chú
+rẻ hơn (ở trên) giúp đội F02 mà không đổi tần suất.
+
+Đã áp dụng:
+
+- *Tuyết Trung Tống Thán* `copies` 3 → 2.
+- Boss *Thần Viên Trấn Nguyệt* `maxHp` 90 → 85 (bù lại độ khó chung).
+- F04: *Băng Tâm Quyết* vào bộ miễn phí, *Thảo Dược* thành lá khóa (cùng nhánh
+  Tĩnh Tâm, cùng cost 2; F04 có lá khống chế từ đầu).
+- *Đổi Vận Chú* cost 4 → 3.
+
+`run-playtest` (seed 1–20, sau chỉnh): Bộ cơ bản 45%, thường 89% / 9.3 vòng,
+Tinh Anh 88% / 9.9, boss 73% / 11.9; nhịp Tu Luyện ~11.4 lượt tới cấp 6.
