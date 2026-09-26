@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { dataVersion } from "data";
 import { createContext, HttpError, type AppDeps } from "./context";
 import { registerAuthRoutes } from "./routes/auth";
+import { registerProfileRoutes } from "./routes/profile";
 
 /** The HTTP API (`16`); `deps` are injected so tests control the clock and randomness. */
 export function buildApp(deps: AppDeps): FastifyInstance {
@@ -30,5 +31,6 @@ export function buildApp(deps: AppDeps): FastifyInstance {
 
   app.get("/api/health", async () => ({ ok: true, dataVersion: ctx.dataVersion }));
   registerAuthRoutes(app, ctx);
+  registerProfileRoutes(app, ctx);
   return app;
 }

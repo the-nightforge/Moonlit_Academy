@@ -39,7 +39,8 @@ sơ và không tự tính luật.
 - **Xác thực:** header `Authorization: Bearer <token>`. Thiếu, sai, hoặc phiên hết hạn →
   `401 { error: "unauthorized" }`.
 - **Đồng bộ hồ sơ:** mọi route làm đổi hồ sơ cần `If-Match: <rev>`; khác `rev` hiện tại →
-  `409 { error: "stale profile", profile, rev }`. Thành công trả `{ profile, rev, ... }`
+  `409 { error: "stale profile", profile, rev }`; thiếu hoặc không phải số nguyên →
+  `428 { error: "if-match required" }`. Thành công trả `{ profile, rev, ... }`
   với `rev` mới (= cũ + 1). Lỗi luật từ hàm thuần → `400 { error: "<chuỗi lỗi của hàm>" }`,
   hồ sơ không đổi.
 
@@ -72,7 +73,7 @@ Không có khôi phục mật khẩu.
 | `POST /api/profile/unlock` | `{ heroId, cardId }` | `unlockCard` |
 | `PUT /api/profile/decks` | `{ draft: SavedDeck }` | `saveDeck` → thêm `{ deckId }` |
 | `DELETE /api/profile/decks/:id` | — | `deleteDeck` |
-| `POST /api/profile/import` | `{ local: unknown }` | `parseProfile(local)` rồi `mergeImportedProfile` (`14` §2.4) |
+| `POST /api/profile/import` | `{ local: unknown }` | `parseProfile(local)` rồi `mergeImportedProfile` (`14` §2.4). `local` hỏng (`parseProfile` trả `reset`) → `400 "invalid profile"`, không tính là đã nhập |
 | `POST /api/runs` | `{ deckId }` hoặc `{ deckId: "starter", heroIds }` | Cấp phiếu (`14` §4.1) → `201 { runId, setup }`. Deck không có → `404 "unknown deck"`; deck không hợp lệ → `400 { error: "invalid deck", errors: DeckError[] }` |
 | `POST /api/runs/:id/finish` | `{ actions: RunAction[] }` (≤ 20000) | `14` §4.3 → `{ profile, rev, gains }`. `404 "unknown run"` (không có hoặc của tài khoản khác); `409 "run closed"` (không `open`); `410 "ticket expired"`; `409 "outdated client"` (phiếu cấp với `dataVersion` khác); `422 { error: "replay failed", step, reason }`; `422 "run not finished"` |
 | `POST /api/runs/:id/abandon` | — | Phiếu `abandoned` → `204`; `409 "run closed"` nếu không `open` |

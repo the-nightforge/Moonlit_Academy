@@ -35,7 +35,20 @@ export interface AppContext extends AppDeps {
   /** The signed-in account for this request; throws 401 otherwise. Slides the session. */
   requireAccount(request: FastifyRequest): number;
   readProfile(accountId: number): { profile: Profile; rev: number };
+  /**
+   * Applies a pure rule to the account's profile in one transaction (`16` §2):
+   * checks `If-Match` against `rev`, turns a rule error into 400, writes `rev + 1`.
+   */
+  mutateProfile<T extends object>(
+    accountId: number,
+    request: FastifyRequest,
+    change: (profile: Profile) => ProfileChange<T>,
+  ): { profile: Profile; rev: number } & T;
 }
+
+export type ProfileChange<T> =
+  | ({ ok: true; profile: Profile } & T)
+  | { ok: false; error: string };
 
 export function createContext(deps: AppDeps, dataVersion: string): AppContext {
   const { db, data, clock } = deps;
@@ -47,6 +60,35 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
   const selectProfile = db.prepare<[number], { profile_json: string; rev: number }>(
     "SELECT profile_json, rev FROM profiles WHERE account_id = ?",
   );
+  const writeProfile = db.prepare(
+    "UPDATE profiles SET profile_json = ?, rev = ?, updated_at = ? WHERE account_id = ?",
+  );
+
+  function readProfile(accountId: number): { profile: Profile; rev: number } {
+    const row = selectProfile.get(accountId);
+    if (!row) throw new HttpError(404, "unknown account");
+    return { profile: parseProfile(data, JSON.parse(row.profile_json)).profile, rev: row.rev };
+  }
+
+  function mutateProfile<T extends object>(
+    accountId: number,
+    request: FastifyRequest,
+    change: (profile: Profile) => ProfileChange<T>,
+  ): { profile: Profile; rev: number } & T {
+    const header = request.headers["if-match"];
+    const expected = typeof header === "string" && /^\d+$/.test(header.trim()) ? Number(header.trim()) : null;
+    if (expected === null) throw new HttpError(428, "if-match required");
+    return db.transaction(() => {
+      const current = readProfile(accountId);
+      if (current.rev !== expected) throw new HttpError(409, "stale profile", current);
+      const result = change(current.profile);
+      if (!result.ok) throw new HttpError(400, result.error);
+      const { ok: _ok, profile, ...extra } = result;
+      const rev = current.rev + 1;
+      writeProfile.run(JSON.stringify(profile), rev, clock(), accountId);
+      return { ...extra, profile, rev } as unknown as { profile: Profile; rev: number } & T;
+    })();
+  }
 
   return {
     ...deps,
@@ -71,10 +113,7 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
       touchSession.run(now, tokenHash);
       return session.account_id;
     },
-    readProfile(accountId) {
-      const row = selectProfile.get(accountId);
-      if (!row) throw new HttpError(404, "unknown account");
-      return { profile: parseProfile(data, JSON.parse(row.profile_json)).profile, rev: row.rev };
-    },
+    readProfile,
+    mutateProfile,
   };
 }
