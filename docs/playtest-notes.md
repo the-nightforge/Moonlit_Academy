@@ -55,10 +55,6 @@ UI: đổi mục tiêu theo Khiêu Khích, xem số damage ý định trước k
 
 ## Điểm cần theo dõi khi playtest tay
 
-- [ ] enc_03 quá dài/khó? (11–15 vòng, thắng thường chỉ còn 1 Hero)
-- [ ] f04 có cảm giác "không bao giờ thăng cấp" không?
-- [ ] Nguyệt Quang Dẫn 2 NL — đáng không?
-- [ ] Tay toàn Tàn Chiêu / lá không đánh được → cảm giác "bí"?
 - [ ] Animation lượt địch đủ rõ ai đánh ai không?
 
 ## Không chỉnh data
@@ -143,8 +139,6 @@ Có: 0–4 lần/trận. Boss (pha Hạ Huyền) và *Phong Tuyết Chướng* �
 - [ ] Cướp buff (Diện Đoạt, Ảnh Đấu) có đáng một lượt không?
 - [ ] Lá Song Hành có dễ nhận ra trên tay (viền 2 màu, nhãn) không?
 - [ ] Animation cướp buff, tia Phản Đòn, Huyết Nguyệt có rõ không?
-- [ ] Trận boss còn quá dài không? (12–37 vòng standalone; đã giảm damage/heal
-      boss ở Phase 3 nhưng độ dài chưa đo lại)
 
 ## Điều chỉnh F02 (`09` mục 12, đã duyệt)
 
@@ -265,22 +259,12 @@ quả y hệt); các đòn bẩy tầng 1 hoặc tệ hơn hoặc nằm trong nh
 hơn enc_02 sau nerf; `enc_00` làm loãng cả tầng giữa). ~25% lượt chết ở tầng 1–2
 là độ khó chấp nhận được cho sàn kỹ năng.
 
-### Còn mở
-
-- [ ] **m06+f02+f03 0/20** (0/80 ở mọi biến thể, kể cả seed 1–20) — quyết định:
-      **không chỉnh**, coi như đội hard-mode; vấn đề của đội (không hồi máu,
-      F02 tự mất HP), không phải cấu trúc lượt chơi. Xác nhận bằng chơi tay.
-
 ## Điểm cần theo dõi khi chơi tay
 
 - [ ] Bản đồ đọc có dễ không; có muốn đi đường Tinh Anh không?
 - [ ] Lá thưởng có tạo lựa chọn thật không?
 - [ ] Kỳ Vật có cảm nhận được trong trận không?
 - [ ] Một lượt chơi dài bao lâu?
-- [ ] Người chơi thật (focus-fire, giữ hồi máu, né Tinh Anh) có lật được seed 1
-      / đội m06+f02+f03 không, hay attrition vẫn quá nặng?
-- [ ] Boss còn quá khắc nghiệt với đội không có hồi máu / chỉ một nguồn Đóng
-      Băng không?
 
 # Playtest Notes — Phase 4a (bước 4a.8)
 
@@ -346,8 +330,6 @@ hơn sàn). Boss còn là chốt chặn chính (17% trận boss thắng).
 - [ ] Đồng hồ Cạn Bài có gây áp lực đúng không?
 - [ ] Chuỗi chiêu địch có đọc được không; Tụ Lực có đủ cảnh báo?
 - [ ] Chiêm Bài có đáng cost không; lấy lá đắt hay lá rẻ?
-- [ ] Tỷ lệ thắng lượt của người chơi thật — bot đo 10–15%; nếu người chơi
-      thật <25%, cân nhắc lại gói V/X.
 
 
 # Playtest Notes — Phase 4b (bước 4b.7)
@@ -400,3 +382,21 @@ hơn, độ khó thật cần xác nhận bằng chơi tay.
 - [ ] Tụ Dược có tạo nhịp "rải Hồi rồi nổ" không?
 - [ ] Mở khóa (Tu Luyện) có hào hứng không; ~10 lượt tới cấp 6 có hợp lý?
 - [ ] Deck nhánh có khác cảm giác Bộ cơ bản không?
+
+## Còn mở sau 4b (đo lại trên data hiện tại)
+
+Các mục đã đóng nhờ số đo 4b (đã xóa khỏi checklist cũ): trận thường dài quá
+(nay 7.9 vòng TB), F04 ít thăng cấp (nay 38/48 trận), Nguyệt Quang Dẫn 2 NL
+(nay cost 4 theo kinh tế 4a), tay kẹt vì Tàn Chiêu (nay bỏ cuối lượt, kẹt tay
+0–5%), boss quá dài (nay 10–12 vòng), m06+f02+f03 0/20 (nay 50% với Bộ cơ
+bản), tỷ lệ thắng bot 10–15% (nay 59%).
+
+- [ ] **Game dễ hơn mục tiêu:** bot (sàn kỹ năng) thắng 59% lượt chơi với Bộ
+      cơ bản, mục tiêu cho người chơi thật là 25–40%. Gói P được chỉnh khi
+      bot chỉ thắng ~10%.
+- [ ] **F02 gần như không thăng cấp:** 6/48 trận có F02 (Hero khác 53–79%);
+      trung bình ~1.2 lần cướp buff/trận, ngưỡng là 2.
+- [ ] **Chênh lệch đội:** Bộ cơ bản m05+f04+m06 thắng 30% lượt, m05+f03+f04
+      85%. Boss đánh riêng: m05+f04+m06 0/3, m05+f03+f04 3/3.
+- [ ] **Nhánh B yếu theo đội:** m06+f02+f03 nhánh B 6/6/6 30% vs nhánh A 85%.
+- [ ] Huyết Nguyệt vẫn hiếm: TB 0.5 lượt/trận (tối đa 3).
