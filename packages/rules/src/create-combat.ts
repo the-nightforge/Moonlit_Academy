@@ -7,6 +7,7 @@ import type {
   CombatEvent,
   CombatSetup,
   CombatState,
+  CombatWeapon,
   EnemyState,
   GameData,
   HeroState, Loadout } from "./types/index";
@@ -71,6 +72,25 @@ export function createCombat(
       drawPile.push(instanceId);
     }
   }
+  // Weapon cards join the draw pile before the first shuffle, wearers in team order (`01` §14.2).
+  const weapons: CombatWeapon[] = [];
+  for (const heroId of setup.heroIds) {
+    const gear = loadout?.heroes[heroId];
+    const weaponId = gear?.weaponId;
+    if (weaponId === undefined || weaponId === null) continue;
+    const def = data.weapons[weaponId];
+    if (!def) throw new Error(`createCombat: unknown weapon "${weaponId}"`);
+    weapons.push({ heroId, weaponId, refinement: Math.min(5, Math.max(1, gear?.refinement ?? 1)) });
+    for (let copy = 1; copy <= def.card.copies; copy++) {
+      const instanceId = `wpn_${heroId}_${copy}`;
+      cards[instanceId] = { instanceId, cardId: weaponId, ownerIds: [heroId], heldTurns: 0 };
+      drawPile.push(instanceId);
+    }
+  }
+  const relics = (loadout?.relics ?? []).map((relic) => {
+    if (!data.relics[relic.id]) throw new Error(`createCombat: unknown relic "${relic.id}"`);
+    return { id: relic.id, resonance: Math.min(5, Math.max(1, relic.resonance)) };
+  });
   let rngState = setup.seed;
   const shuffled = shuffle(drawPile, rngState);
   rngState = shuffled.rngState;
@@ -132,6 +152,8 @@ export function createCombat(
     rngState,
     runRelicIds: [...(setup.runRelicIds ?? [])],
     runRelicCounters: {},
+    weapons,
+    relics,
   };
 
   planEnemyIntents(data, state, events);

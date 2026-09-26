@@ -1,5 +1,5 @@
 import { loadGameData } from "data";
-import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, Profile } from "../src/index";
+import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, Loadout, Profile } from "../src/index";
 import { applyAction, createCombat } from "../src/index";
 import { idleIntent } from "./fixtures";
 
@@ -23,6 +23,7 @@ export interface TestCombatOverrides {
   deckCardIds?: string[];
   heroes?: { hp: number; maxHp: number }[];
   runRelicIds?: string[];
+  loadout?: Loadout;
   mutateData?: (data: GameData) => void;
   /** Default: an empty mulligan is sent so the state is at the player's first turn. */
   mulligan?: "pending";
@@ -43,7 +44,7 @@ export function makeTestCombat(overrides: TestCombatOverrides = {}): {
     deckCardIds: overrides.deckCardIds,
     heroes: overrides.heroes,
     runRelicIds: overrides.runRelicIds,
-  });
+  }, overrides.loadout);
   let { state } = created;
   const events = [...created.events];
   if (overrides.mulligan !== "pending") {

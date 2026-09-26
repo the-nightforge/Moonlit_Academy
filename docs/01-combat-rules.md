@@ -551,7 +551,7 @@ Nội dung: `03` §7. Sở hữu, Tinh Luyện, Cộng Minh, deck: `14` §13. D�
 ### 14.2 Lá Binh Khí
 
 - Mỗi Hero có vũ khí góp `card.copies` (1 hoặc 2) bản vào chồng rút lúc tạo trận, **sau**
-  các lá deck và trước lần xáo đầu; instance id `wpn_<heroId>_<n>` (n = 1, 2),
+  các lá deck và lá Song Hành, theo vị trí người mang, trước lần xáo đầu; instance id `wpn_<heroId>_<n>` (n = 1, 2),
   `cardId = weaponId`, `ownerIds = [heroId]`. Lá được coi như `CardDef` với `id =
   weaponId`, `ownerId = heroId`, các trường còn lại từ `weaponAt(...).card`.
 - Là **lá riêng của người mang**: Tàn Chiêu khi người mang ngã, Đóng Băng, chi phí theo

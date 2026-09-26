@@ -440,6 +440,14 @@ function animateEvent(
       const color = relic === undefined ? "#e0b0ff" : "#9fd4ff";
       return floatText(scene, WIDTH / 2, 250, `✦ ${name}`, color, 18, 400);
     }
+    case "relicTriggered": {
+      const name = ctx.gameData.relics[event.relicId]?.name ?? event.relicId;
+      return floatText(scene, WIDTH / 2, 250, `☾ ${name}`, "#f4d35e", 18, 400);
+    }
+    case "weaponTriggered": {
+      const name = ctx.gameData.weapons[event.weaponId]?.name ?? event.weaponId;
+      return floatText(scene, WIDTH / 2, 250, `⚔ ${name}`, "#ffb080", 18, 400);
+    }
     case "combatEnded":
       return instant();
     case "mulliganed":

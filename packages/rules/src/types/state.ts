@@ -80,6 +80,19 @@ export interface CombatState {
   pendingChoice: { kind: "chooseCard"; options: string[] } | null;
   rngState: number;
   runRelicIds: string[];
-  /** Per-combat hook counters, keyed "<relicId>#<hookIndex>". */
+  /**
+   * Per-combat hook counters, keyed "<relicId>#<hookIndex>" (run relics, augments,
+   * moon relics) or "<weaponId>@<heroId>#<hookIndex>" (weapons).
+   */
   runRelicCounters: Record<string, number>;
+  /** Weapons carried, in wearer position order (`01` §14). */
+  weapons: CombatWeapon[];
+  /** Moon relics carried, in loadout order (`01` §14.4). */
+  relics: { id: string; resonance: number }[];
+}
+
+export interface CombatWeapon {
+  heroId: string;
+  weaponId: string;
+  refinement: number;
 }

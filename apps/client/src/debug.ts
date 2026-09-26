@@ -138,6 +138,10 @@ export function describeEvent(
       if (relic !== undefined) return `Kỳ Vật: ${relic.name}`;
       return `Lõi: ${data.augments[event.runRelicId]?.name ?? event.runRelicId}`;
     }
+    case "relicTriggered":
+      return `Nguyệt Bảo: ${data.relics[event.relicId]?.name ?? event.relicId}`;
+    case "weaponTriggered":
+      return `Binh Khí: ${data.weapons[event.weaponId]?.name ?? event.weaponId} (${name(`hero:${event.heroId}`)})`;
     case "heroLeveledUp":
       return `${name(event.heroId)} thăng cấp: ${event.name}`;
     case "unitDied":

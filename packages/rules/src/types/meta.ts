@@ -1,6 +1,15 @@
-/** What the team brings into a run beyond its cards (`14` §12). Phase 4d: constellations. */
+/** What the team brings into a run beyond its cards (`14` §12): constellations (4d), gear (4e). */
 export interface Loadout {
-  heroes: Record<string, { constellation: number; levelUpForm: "base" | "alt" }>;
+  heroes: Record<string, {
+    constellation: number;
+    levelUpForm: "base" | "alt";
+    /** Phase 4e; missing = no weapon. */
+    weaponId?: string | null;
+    /** Tinh Luyện 1–5 of `weaponId`. */
+    refinement?: number;
+  }>;
+  /** Moon relics (phase 4e); missing = none. */
+  relics?: { id: string; resonance: number }[];
 }
 
 export interface SavedDeck {

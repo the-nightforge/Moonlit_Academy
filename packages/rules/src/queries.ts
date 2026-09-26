@@ -1,3 +1,4 @@
+import { cardDefOf } from "./gear";
 import { activeModifiers } from "./moon";
 import { hasStatus } from "./statuses";
 import type { CardInstance, CombatState, GameData, HeroState } from "./types/index";
@@ -30,7 +31,7 @@ export function firstCardDiscount(data: GameData, state: CombatState, instanceId
 
 export function getEffectiveCost(data: GameData, state: CombatState, instanceId: string): number {
   const instance = state.cards[instanceId];
-  const card = instance ? data.cards[instance.cardId] : undefined;
+  const card = instance ? cardDefOf(data, state, instance) : undefined;
   if (!card) throw new Error(`getEffectiveCost: unknown card instance "${instanceId}"`);
   let cost = card.cost;
   let floor = 0;
@@ -46,7 +47,7 @@ export function getEffectiveCost(data: GameData, state: CombatState, instanceId:
 
 export function getValidTargets(data: GameData, state: CombatState, instanceId: string): string[] {
   const instance = state.cards[instanceId];
-  const card = instance ? data.cards[instance.cardId] : undefined;
+  const card = instance ? cardDefOf(data, state, instance) : undefined;
   if (!card) return [];
   switch (card.target) {
     case "none":
@@ -63,7 +64,7 @@ export function getValidTargets(data: GameData, state: CombatState, instanceId: 
 export function isCardPlayable(data: GameData, state: CombatState, instanceId: string): boolean {
   if (state.status !== "playerTurn") return false;
   const instance = state.cards[instanceId];
-  const card = instance ? data.cards[instance.cardId] : undefined;
+  const card = instance ? cardDefOf(data, state, instance) : undefined;
   if (!instance || !card || !state.hand.includes(instanceId)) return false;
   if (ownerError(state, instance) !== null) return false;
   if (card.requiresBloodMoon && state.bloodMoonRounds === 0) return false;
