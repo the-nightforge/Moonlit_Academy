@@ -346,3 +346,6 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T210 | F03 *Hàn Kiếm*: lượt damage đầu tiên mỗi lượt từ lá F03 → Dễ Vỡ 1 vòng; đòn sau không; đặt lại lượt sau |
 | T211 | F02 *Huyết Diện*: lá F02 −1 NL khi Huyết Nguyệt (tối thiểu 0), hết Huyết Nguyệt thì mất |
 | T212 | Kiểm tra dữ liệu khi nạp: `wearer` ngoài hook vũ khí, effect cấm trong hook, `refinement` ≠ 4 mục, `resonance` ≠ 5 cấp, id trùng → lỗi |
+| T213 | **[GĐ5]** Bộ ghi vàng: 200 trận / lượt chơi bot PvE, event và state cuối khớp bản ghi trước khi đổi state |
+| T214 | **[GĐ5]** Phiếu lượt chơi GĐ 4c/4d/4e (mẫu trong test) chạy lại ra đúng `result` cũ |
+| T215 | **[GĐ5]** Hai người chơi cùng Hero: unit id / instance id có tiền tố `p<n>_`, không va chạm |

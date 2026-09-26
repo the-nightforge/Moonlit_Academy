@@ -370,28 +370,46 @@ export interface CardInstance {
 }
 
 export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost";   // GĐ4a: mulligan, choosing
+export type CombatMode = "pve" | "pvp" | "coop";   // [GĐ5] spec 17 §2.2
+
+// [GĐ5] Mọi thứ gắn với một người chơi nằm trong PlayerState; PvE = đúng 1 người chơi.
+export interface PlayerState {
+  index: number;            // 0 hoặc 1
+  heroIds: string[];        // unit id của các Hero của người chơi này
+  drawPile: string[]; hand: string[]; discardPile: string[];
+  moonPower: number; moonReserve: number; moonPowerBonus: number;
+  cardsPlayedThisTurn: number;
+  pendingChoice: { kind: "chooseCard"; options: string[] } | null;
+  weapons: CombatWeapon[];                       // GĐ4e
+  relics: { id: string; resonance: number }[];   // GĐ4e
+  runRelicIds: string[];                         // GĐ3 (chỉ PvE: Kỳ Vật, Lõi)
+  hookCounters: Record<string, number>;          // tên cũ: runRelicCounters
+  done: boolean;                                 // co-op: đã bấm Xong (17 §8.3)
+}
 
 export interface CombatState {
+  mode: CombatMode;         // [GĐ5]
   status: CombatStatus;
+  activePlayer: number;     // [GĐ5] PvP: người đang có lượt; PvE / co-op: 0
   round: number;
   moonIndex: number;        // 0–7
   bloodMoonRounds: number;  // > 0 = đang Huyết Nguyệt (01 mục 7.4)
-  moonPower: number;        // quỹ hiện tại của người chơi (gốc + Dự Trữ + cộng thêm)
-  moonReserve: number;      // GĐ4a: Dự Trữ mang vào lượt này (để UI hiển thị)
-  moonPowerBonus: number;   // GĐ4b: quỹ cộng thêm mỗi đầu lượt (Dưỡng Nguyệt), không trần
-  cardsPlayedThisTurn: number;  // GĐ4b: số lá đã đánh trong lượt (Liên Hoàn); 0 đầu lượt
-  pendingChoice: { kind: "chooseCard"; options: string[] } | null;   // GĐ4a: Chiêm Bài đang chờ chọn
-  heroes: HeroState[];
-  enemies: EnemyState[];
+  players: PlayerState[];   // [GĐ5] PvE: 1; PvP, co-op: 2
+  heroes: HeroState[];      // HeroState thêm `player: number` (chỉ số trong players)
+  enemies: EnemyState[];    // PvP: rỗng
   cards: Record<string, CardInstance>;  // theo instanceId
-  drawPile: string[];       // instanceId, phần tử đầu = lá rút tiếp theo
-  hand: string[];
-  discardPile: string[];
   rngState: number;
-  runRelicIds: string[];                  // GĐ3
-  runRelicCounters: Record<string, number>;  // GĐ3: "<relicId>#<hookIndex>"
+  winner?: number | "draw"; // PvP (17 §4.6)
+  // Trường co-op riêng: `17` §8.2 (comboUsed, playedThisTurn, boss)
 }
 ```
+
+**[GĐ5] Quy tắc id có tiền tố** (spec `17` §2.2): khi trận có 2 người chơi, unit id và
+instance id có tiền tố `p<n>_` (`p0_m05`, `p1_c12`, `p1_wpn_m05_1`) để hai người chơi được
+chọn cùng Hero / cùng lá. PvE giữ id cũ không tiền tố (`m05`, `c12`…) để phiếu lượt chơi
+cũ chạy lại được. Truy cập thành phần theo người chơi qua `players.ts` (`playerOf`,
+`activePlayerState`, `alliesOf`, `opponentsOf`, `prefixedId`); **không** đọc trường trong
+`players[i]` bằng tay ngoài các hàm đó.
 
 ---
 

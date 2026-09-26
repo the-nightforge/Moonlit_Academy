@@ -18,6 +18,11 @@ Phạm vi: giai đoạn 1–4b (PvE offline). Các mục đánh dấu **[GĐ2]**
 | **Nguyệt Luân** | Chỉ số pha trăng 0–7 (xem mục 7) |
 | **RNG** | Trạng thái bộ sinh số ngẫu nhiên có seed, lưu trong state |
 
+**[GĐ5]** Từ giai đoạn 5, các thành phần gắn với người chơi (deck, chồng bài, tay, Nguyệt
+Lực, Dự Trữ, Chiêm Bài, Kỳ Vật, trang bị, bộ đếm hook) nằm trong `CombatState.players[]`
+(xem `02` §2). PvE có đúng một người chơi (`players[0]`, `mode: "pve"`); toàn bộ luật trong
+tài liệu này không đổi. Luật PvP ở §15, co-op ở §16; đặc tả đầy đủ `17`.
+
 ---
 
 ## 2. Bắt đầu trận

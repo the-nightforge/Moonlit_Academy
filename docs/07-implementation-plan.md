@@ -243,6 +243,32 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 ### Bước 4e.7 — Mô phỏng + chỉnh số
 > `run-playtest` có trang bị (từng vũ khí, từng Nguyệt Bảo, R1 và R5): không món nào làm thắng lượt tăng > 10 điểm ở R1.
 
-## Sau giai đoạn 4e
+## Giai đoạn 5 — PvP (Đấu Trường Công Bằng) và triển khai Internet
 
-- Giai đoạn 5–6: đặc tả `17-phase5-6-spec.md` (bản nháp, chờ duyệt); kế hoạch `docs/superpowers/plans/2026-09-30-phase5-6-pvp-coop.md` (24 Task, bước 5a.1–6b.2); các bước thêm vào đây ở Task 1.
+> Đặc tả: `17-phase5-6-spec.md` (đã duyệt 2026-09-30). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-30-phase5-6-pvp-coop.md` (24 Task).
+
+### Bước 5a.1 — Tài liệu + bộ ghi vàng
+> Chốt spec §12; cập nhật `01`, `02`, `04`, `06`, `07`, `CLAUDE.md`. Ghi vàng ~200 trận / lượt PvE **trên code cũ** làm chuẩn so. T213–T215.
+
+### Bước 5a.2 — `PlayerState`
+> `CombatState.players[]`, `mode`, `activePlayer`; trường theo người chơi chuyển vào `PlayerState`; `players.ts` truy cập; PvE giống hệt từng bit (T213 xanh).
+
+### Bước 5b.1–5b.5 — Luật PvP
+> `pvp-config.json`, `validateDeck` pvp, `buildPvpLoadout`; `createPvpCombat`, lượt luân phiên, bù người đi sau, thời hạn theo lượt, `viewFor`/`redactEvents`, `pvpBot`; mô phỏng bot đấu bot + chỉnh số (duyệt). T216–T230.
+
+### Bước 5c.1–5c.4 — Kết nối realtime
+> `@fastify/websocket`, giao thức tin nhắn, phòng trận, Phòng riêng, đồng hồ, kết nối lại, Đấu Tập, Migration 3; client trận mạng. T231–T239.
+
+### Bước 5d.1–5d.3 — Xếp hạng, Vinh Dự, sảnh
+> Elo (K40/24, bậc khoa cử), Vinh Dự + Cửa hàng Vinh Dự, hàng chờ xếp hạng, route arena; client Đấu Trường. T240–T244.
+
+### Bước 5e.1–5e.2 — Triển khai Internet
+> Cấu hình production, giới hạn tần suất, kiểm `Origin`, sao lưu DB; `deploy/` (Caddy + systemd); triển khai thật cùng người dùng. T245.
+
+## Giai đoạn 6 — Co-op (Liên Thủ)
+
+### Bước 6a.1–6a.5 — Luật co-op
+> Tài liệu + nội dung (3 Hợp Kích, Boss *Nguyệt Thực Ma Quân* 4 giai đoạn — duyệt); `coop-config`, `coop-combos`, `phases`, effect `execute`; `createCoopCombat`, lượt đồng thời, mục tiêu co-op; `coopBot`, mô phỏng + chỉnh số (duyệt). T246–T259.
+
+### Bước 6b.1–6b.2 — Co-op trên server + client
+> `coop-room`, hàng chờ / Phòng riêng / đồng đội máy, thưởng co-op (`14` §15); client Liên Thủ (sảnh, màn trận 6 Hero, banner Hợp Kích). T260–T262.
