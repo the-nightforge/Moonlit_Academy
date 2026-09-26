@@ -486,3 +486,81 @@ Thiết / Nguyệt Trần GĐ 4 chỉ tích trữ.
   `signatureHeroId` (`01` §14.3).
 - Phiếu lượt chơi (§4.1) chụp loadout có trang bị lúc cấp; đổi trang bị / Tinh Luyện sau
   đó không ảnh hưởng lượt đang chơi.
+
+## 14. Đấu Trường — Điểm xếp hạng và Vinh Dự **[GĐ5]**
+
+`rules/src/meta/rating.ts`, `rules/src/meta/honor.ts`. Luật và mục tiêu nhịp: `17` §6.
+
+### 14.1 `profile.arena`
+
+```ts
+arena: {
+  rating: number;        // Điểm Đấu Trường, khởi đầu 1000
+  wins: number; losses: number; draws: number;
+  rankedGames: number;   // số trận xếp hạng đã chơi — quyết định K
+  honorDay: { dayKey: string; gained: number };  // Vinh Dự đã nhận trong kỳ ngày
+}
+```
+
+`currencies.honor` là tiền tệ Vinh Dự. `parseProfile` điền `arena` và `honor` mặc định
+cho hồ sơ cũ thiếu trường. Chỉ trận `ranked` đổi `arena`/`honor` — Phòng riêng và Đấu
+Tập không đụng vào (trận vẫn vào lịch sử, `16` §8.6).
+
+### 14.2 Điểm Đấu Trường — `rating.ts`
+
+```ts
+ratingChange(a: ArenaStats, b: ArenaStats, score: 1 | 0.5 | 0): number
+```
+
+- `expected = 1 / (1 + 10^((b.rating − a.rating) / 400))`.
+- `K = a.rankedGames < 10 ? 40 : 24` — K theo hồ sơ của **người được cập nhật**, nên hai
+  bên một trận có thể đổi số điểm khác nhau.
+- Trả `round(K × (score − expected))`. Điểm mới kẹp dưới `max(0, ·)` — không âm.
+- Hàm thuần; server gọi cho cả hai seat trong **một transaction** (`16` §8.3).
+
+Bậc (`tierFor(rating, data)`) chỉ để hiển thị, đọc `pvp-config.tiers` (`02` §1.13) —
+mảng `{ id, name, minRating }` tăng dần, bậc là mục cuối có `minRating ≤ rating`.
+Nội dung bậc (khoa cử Thư Viện): Đồng Sinh (<1100), Tú Tài (1100), Cử Nhân (1250),
+Tiến Sĩ (1400), Trạng Nguyên (1600).
+
+### 14.3 Vinh Dự — `honor.ts`
+
+`applyPvpResult(data, profile, opts)` — server gọi **một lần cho mỗi người** khi trận
+`ranked` kết thúc, trong transaction ghi trận:
+
+```ts
+opts: {
+  result: "won" | "lost" | "draw";
+  reason: "combat" | "resign" | "disconnect" | "timeout";
+  round: number;          // vòng kết thúc (để phạt bỏ sớm)
+  now: number;
+  ratingDelta: number;    // do ratingChange tính sẵn cho phía này
+}
+```
+
+- `wins`/`losses`/`draws` và `rankedGames` += 1; `rating += ratingDelta` (kẹp ≥ 0).
+- Vinh Dự gốc theo kết quả: thắng **+20**, hòa **+12**, thua **+8**; riêng thua vì
+  `resign`/`disconnect`/`timeout` **trước vòng 3** → **0** (người thắng vẫn +20).
+- Trần kỳ ngày **120**: `honorDay.dayKey ≠ dayKey(now)` → reset `gained` về 0; cộng
+  `min(gốc, 120 − gained)` vào `honor` và `gained`. Vượt trần trận vẫn tính Elo.
+- Có nhiệm vụ PvP thì ghi tiến độ nhiệm vụ (`§7`) — chưa có nhiệm vụ PvP ở GĐ5.
+
+### 14.4 Cửa hàng Vinh Dự — `buyHonorItem`
+
+Mặt hàng trong `pvp-config.honorShop` (`02` §1.13): cùng khối `item` của cửa hàng
+Nguyệt Tinh (`moonJade`, `heroChoice`) cộng thêm `relicChoice`; giá `cost` bằng Vinh
+Dự; giới hạn `limitPerWeek` / `limitPerMonth`.
+
+`buyHonorItem(data, profile, itemId, now, pick?)`:
+
+- `profile.honorShop = { weekKey, bought, monthKey, boughtMonth }`; sang kỳ (theo
+  `weekKey`/`monthKey`, §6) thì reset bộ đếm tương ứng. `monthKey(now)` = tháng UTC
+  của ngày dịch, dạng `"YYYY-MM"`.
+- Lỗi: `"unknown item"`; `"weekly limit"` / `"monthly limit"`; `"not enough honor"`.
+- `item.type = "moonJade"` → `moonJade += amount`.
+- `item.type = "heroChoice"` → cần `pick.heroId`: Hero có trong data, đúng `rarity`,
+  chưa sở hữu → sở hữu (như §11); sai → `"invalid hero"`, thiếu → `"hero required"`.
+- `item.type = "relicChoice"` → cần `pick.relicId`: Nguyệt Bảo có trong data và đúng
+  `rarity` → `grantItem` (trùng → Cộng Minh +1 như gacha); sai → `"invalid relic"`,
+  thiếu → `"relic required"`.
+- Trừ `cost` Vinh Dự, đếm `bought`/`boughtMonth`, `checkAchievements`.

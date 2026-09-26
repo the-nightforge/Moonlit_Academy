@@ -373,3 +373,8 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T237 | **[GĐ5]** `replayMatch` từ `setup_json` + `actions_json` tái hiện đúng trận đã lưu |
 | T238 | **[GĐ5]** `practice.start`: máy đấu trên góc nhìn của nó, nhịp 600–1200 ms; không Elo/thưởng; `mode: practice` |
 | T239 | **[GĐ5]** Kết nối lại trong `reconnectSeconds` nhận snapshot đầy đủ; quá hạn → `forfeit disconnect`; đồng hồ vẫn chạy khi mất kết nối |
+| T240 | **[GĐ5]** `ratingChange`: `K=40` khi `rankedGames < 10`, `K=24` sau; `expected` theo công thức Elo; thắng kẻ mạnh hơn đổi nhiều điểm hơn; điểm không xuống dưới 0 |
+| T241 | **[GĐ5]** Hàng chờ: ghép cặp |Δ Điểm| nhỏ nhất trong `±100 + 50×(giây chờ/10)`; khoảng nới theo thời gian chờ; không ghép lại đối thủ trong 2 trận xếp hạng gần nhất của 10 phút |
+| T242 | **[GĐ5]** `applyPvpResult`: thắng +20 / hòa +12 / thua +8 Vinh Dự; trần 120/kỳ ngày (vượt trần chỉ còn Elo); thua do `resign`/`disconnect`/`timeout` trước vòng 3 → 0 Vinh Dự |
+| T243 | **[GĐ5]** `buyHonorItem`: `limitPerWeek`/`limitPerMonth` chặn đúng kỳ; `"not enough honor"`; `heroChoice` cần Hero đúng độ hiếm chưa sở hữu; `relicChoice` qua `grantItem` (trùng → Cộng Minh +1) |
+| T244 | **[GĐ5]** Trận `ranked` kết thúc: Elo hai phía + Vinh Dự + `match_players` ghi trong một transaction; `match.end` mang `rating`/`rewards`/`profileRev`; `private`/`practice` không đổi Điểm/Vinh Dự |

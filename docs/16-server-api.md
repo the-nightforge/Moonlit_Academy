@@ -256,4 +256,24 @@ reason }`, `match.end { matchId, result, reason, rating?, rewards?, profileRev? 
 |---|---|
 | `GET /api/ws` | Nâng cấp WebSocket (§8.1) |
 
-(Các route Đấu Trường `arena/*` thuộc 5d — §8 ghi khi làm 5d.)
+### 8.8 Hàng chờ xếp hạng và route Đấu Trường (5d)
+
+`realtime/queue.ts` (spec `17` §6.1): `queue.join { mode, deckId }` cần deck hợp lệ
+PvP (`validateDeck` chế độ pvp — lỗi → `error "invalid deck"` kèm `errors`) và
+không đang ở phòng/trận khác. Mỗi giây (`scheduler`) ghép cặp có |Δ Điểm| nhỏ
+nhất trong khoảng `±100 + 50 × (giây chờ của người chờ lâu hơn / 10)`; không ghép
+lại một đối thủ trong 2 trận xếp hạng gần nhất của 10 phút qua. `queue.leave` rời
+hàng chờ; `queue.status { inQueue, waitSeconds }` báo trạng thái.
+
+Trận `ranked` kết thúc (`§8.3`): `ratingChange` cho từng phía + `applyPvpResult`
+(`14` §14) + `match_players` trong **một transaction**; `match.end` mang
+`rating: { before, after }`, `rewards: { honor: số Vinh Dự nhận được }`,
+`profileRev` (revision mới — client làm mới hồ sơ). Trận `private`/`practice`
+gửi `match.end` không có `rating`/`rewards`.
+
+| Route | Kết quả |
+|---|---|
+| `GET /api/arena/me` | `{ arena, tier, honorToday: { gained, cap } }` của tài khoản |
+| `GET /api/arena/history?page=` | 20 trận gần nhất của mình: mode, đối thủ, kết quả, Δ Điểm, lúc đấu |
+| `GET /api/arena/leaderboard` | Top 50 `rating` (tên, điểm, bậc, thắng/thua) + dòng của mình |
+| `POST /api/shop/honor/:itemId/buy` | `buyHonorItem` (`14` §14.4); `If-Match` bắt buộc; 200 → hồ sơ mới |

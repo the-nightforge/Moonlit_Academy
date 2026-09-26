@@ -196,10 +196,15 @@
 | Đấu Tập | `practiceMode` | Trận PvP không tính điểm, không lên hạng |
 | Phòng riêng | `privateRoom` | Phòng mời bạn bè bằng mã |
 | Bảng chỉ số PvP | `pvpStats` | Điểm xếp hạng Elo, Vinh Dự, thắng/thua theo mùa |
+| Điểm Đấu Trường | `arena.rating` | Điểm Elo của hồ sơ (`14` §14.2), khởi đầu 1000 |
+| Bậc | `tier` | Tên hiển thị theo Điểm (`pvp-config.tiers`): Đồng Sinh → Trạng Nguyên |
+| Vinh Dự | `honor` | Tiền tệ PvP (`currencies.honor`), trần 120/kỳ ngày |
+| Cửa hàng Vinh Dự | `honorShop` | Mặt hàng mua bằng Vinh Dự (`14` §14.4) |
+| Hàng chờ xếp hạng | `queue` | Ghép trận ranked theo chênh Điểm (`16` §8.8) |
+| Trận xếp hạng | `ranked` | Trận tính Elo và Vinh Dự |
 
 ## Hệ thống sau này (chưa code)
 
 | Tiếng Việt | Code |
 |---|---|
-| Vinh Dự | `honor` |
 | Hợp Kích | `coopCombo` |

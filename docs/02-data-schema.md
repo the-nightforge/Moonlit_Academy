@@ -337,7 +337,14 @@ export interface PvpConfig {
   reconnectSeconds: number;                        // 60 — chờ kết nối lại trước khi thua
   roundCap: number;                                // 30 — trần vòng, quá tròn → hòa
   tiers?: { id: string; name: string; minRating: number }[];    // bậc xếp hạng (§5d)
-  honorShop?: { id: string; item: string; cost: number; weeklyLimit?: number }[];  // cửa hàng Vinh Dự
+  // cửa hàng Vinh Dự — `item` như mặt hàng Nguyệt Tinh + "relicChoice"; giá bằng Vinh Dự
+  honorShop?: {
+    id: string;
+    item: ShopItemDef["item"] | { type: "relicChoice"; rarity: Rarity };
+    cost: number;
+    limitPerWeek?: number;
+    limitPerMonth?: number;                      // kỳ tháng theo monthKey (`14` §14.4)
+  }[];
   emotes?: string[];                               // câu biểu cảm cố định
 }
 ```
