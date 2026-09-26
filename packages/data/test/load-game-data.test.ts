@@ -298,11 +298,22 @@ describe("parseGameData validation", () => {
 describe("economyConfig", () => {
   it("rejects unknown or repeated starter heroes", () => {
     const unknown = rawData();
-    unknown.economyConfig = { starterHeroIds: ["m05", "f04", "ghost"] };
+    unknown.economyConfig = { ...unknown.economyConfig, starterHeroIds: ["m05", "f04", "ghost"] };
     expect(() => parseGameData(unknown)).toThrow(/unknown starter hero "ghost"/);
     const repeated = rawData();
-    repeated.economyConfig = { starterHeroIds: ["m05", "m05", "f04"] };
+    repeated.economyConfig = { ...repeated.economyConfig, starterHeroIds: ["m05", "m05", "f04"] };
     expect(() => parseGameData(repeated)).toThrow(/starterHeroIds must be distinct/);
   });
-});
 
+  it("rejects gacha rates without room for rare, soft pity past hard pity, and a bond achievement on a normal card", () => {
+    const rates = rawData();
+    rates.economyConfig = { ...rates.economyConfig, gacha: { ...rates.economyConfig.gacha, rates: { legendary: 0.5, epic: 0.5 } } };
+    expect(() => parseGameData(rates)).toThrow(/gacha rates must leave room for rare/);
+    const pity = rawData();
+    pity.economyConfig = { ...pity.economyConfig, gacha: { ...pity.economyConfig.gacha, legendarySoftPityStart: 70 } };
+    expect(() => parseGameData(pity)).toThrow(/legendarySoftPityStart must be below legendaryPity/);
+    const bond = rawData();
+    bond.achievements = [{ ...bond.achievements[1], goal: { type: "bossKillWithBond", bondCardId: "m05_bat_khuat" } }];
+    expect(() => parseGameData(bond)).toThrow(/needs a bond card/);
+  });
+});
