@@ -165,16 +165,27 @@
 || Cửa hàng Nguyệt Tinh | `moonStarShop` | Giới hạn mua theo tuần |
 || Loadout | `Loadout`, `buildLoadout` | Tinh Hồn (4d), trang bị (4e) của đội mang vào lượt chơi |
 
+## Trang bị [GĐ4e]
+
+| Tiếng Việt | Code | Ghi chú |
+|---|---|---|
+| Binh Khí (vũ khí) | `weapon`, `WeaponDef` | Mỗi Hero mang tối đa 1; góp 1 lá Binh Khí |
+| Lá Binh Khí | weapon card (`wpn_<heroId>_<n>`) | Lá riêng của người mang; chiếm 1 ô trong 18 |
+| Người mang | `wearer` | Hero đang mang vũ khí |
+| Vũ khí bản mệnh | `signatureHeroId`, `signatureHooks` | Nội tại mạnh hơn trên đúng Hero |
+| Vũ khí chung | `archetype` | Không có bản mệnh |
+| Nội tại vũ khí | `WeaponHook` | Chạy trên máy hook Kỳ Vật |
+| Nguyệt Bảo | `relic`, `RelicDef` | Tối đa 2 mỗi deck; nằm cả đời tài khoản (khác Kỳ Vật của lượt chơi) |
+| Tinh Luyện | `refinement` | R1–R5, tăng khi quay trùng vũ khí |
+| Cộng Minh | `resonance` | 1–5, tăng khi quay trùng Nguyệt Bảo |
+| Huyền Thiết | `darkIron` | Từ vũ khí trùng khi R5; GĐ 4 chỉ tích trữ |
+| Nguyệt Trần | `moonDust` | Từ Nguyệt Bảo trùng khi Cộng Minh 5; GĐ 4 chỉ tích trữ |
+| Binh Khí Các / Nguyệt Bảo Các | `banner_weapons`, `banner_relics` | Banner trang bị |
+
 ## Hệ thống sau này (chưa code)
 
 | Tiếng Việt | Code |
 |---|---|
-| Binh Khí | `weapon` |
-| Nguyệt Bảo | `relic` |
-| Tinh Luyện | `refinement` |
-| Cộng Minh | `resonance` |
-| Huyền Thiết | `darkIron` |
-| Nguyệt Trần | `moonDust` |
 | Vinh Dự | `honor` |
 | Đấu Trường Công Bằng | `fairArena` |
 | Hợp Kích | `coopCombo` |

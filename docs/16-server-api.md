@@ -107,6 +107,20 @@ cùng một transaction; `409 stale profile` để phiếu `open` cho client g�
 
 Mọi route đổi hồ sơ ở trên cần `If-Match`.
 
+### 4.2 Thay đổi và route mới (GĐ 4e)
+
+- **`PUT /api/profile/decks`:** `draft` nhận thêm `weapons?: Record<heroId, weaponId | null>`,
+  `relicIds?: string[]` (≤ 8 phần tử; luật ở `validateDeck`, `14` §3.1).
+- **`POST /api/runs`:** `buildLoadout(data, profile, deck)` với trang bị của deck (Bộ cơ
+  bản: không trang bị); lỗi sở hữu → `400` như `"invalid deck"`. Loadout vẫn nằm trong
+  `runs.loadout_json` — **không** cần migration.
+- **Gacha:** `GET /api/gacha/banners` trả cả 3 banner; `POST /api/gacha/:bannerId/pull`
+  không đổi (kết quả theo `14` §9, §13.1).
+
+| Route | Body | Kết quả / lỗi |
+|---|---|---|
+| `PUT /api/profile/heroes/:id/level-up-form` | `{ form: "base" \| "alt" }` | `setLevelUpForm` (`14` §10.1) → `{ profile, rev }`; `400 "hero not owned"`, `400 "constellation too low"` |
+
 ---
 
 ## 5. Lưu trữ (SQLite)

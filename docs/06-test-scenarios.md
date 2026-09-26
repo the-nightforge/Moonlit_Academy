@@ -323,3 +323,26 @@ Bối cảnh: `15-phase4-spec.md` §3. Luật: `14` §5–§12, `01` §8 (Tinh H
 | T195 | `buildLoadout` từ hồ sơ; phiếu chụp loadout, nộp chạy lại với loadout đó dù Tinh Hồn đổi sau; `levelUpForm` luôn `base` ở 4d |
 | T196 | Cửa hàng Nguyệt Tinh: giá, giới hạn tuần (reset sang tuần mới), `heroChoice` chỉ Hero đúng độ hiếm chưa sở hữu |
 
+
+## Giai đoạn 4e
+
+Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01` §14, `14` §3.1, §10.1, §12–§13, API `16` §4.2. Test trận dùng vũ khí / Nguyệt Bảo fixture khi cần số cố định.
+
+| Mã | Kịch bản |
+|---|---|
+| T197 | `validateDeck` có trang bị: `weaponSlot`, `unownedWeapon`, `weaponTwice`, `unownedRelic`, `duplicateRelic`, `tooManyRelics`; `wrongSize` tính lá Hero + số vũ khí; lá Binh Khí không tính `minCardsPerHero` |
+| T198 | Lá Binh Khí trong trận: đúng `copies` bản, id `wpn_<heroId>_<n>`, chủ là người mang; thành Tàn Chiêu khi người mang ngã; M06 kết liễu bằng lá Binh Khí → `enemiesKilled` +1 |
+| T199 | Nội tại vũ khí: `actor: "wearer"`, bộ lọc `owner` / `killer`, `every`; `signatureHooks` chỉ trên Hero bản mệnh; người mang ngã → hook không chạy, bộ đếm không tăng |
+| T200 | Tinh Luyện: `weaponAt` R1…R5 ghi đè đúng trường lá / hook theo thứ tự; R3 giảm cost |
+| T201 | Nguyệt Bảo: `relicAt` theo Cộng Minh (modifier + hook); `costModifierForTag` `while: "bloodMoon"` chỉ có hiệu lực khi đang Huyết Nguyệt |
+| T202 | Thứ tự hook cùng trigger: Kỳ Vật/Lõi → Nguyệt Bảo → vũ khí theo vị trí; event `relicTriggered` / `weaponTriggered` trước event effect; không đệ quy |
+| T203 | Lượt chơi: lá Binh Khí không nằm trong `run.deck`, có mặt ở mọi trận, không bỏ được ở Nghỉ Chân; `replayRun` với loadout có trang bị khớp |
+| T204 | `grantItem` vũ khí / Nguyệt Bảo: mới → cấp 1; trùng → +1; cấp 5 + trùng → Huyền Thiết / Nguyệt Trần 1 + `gearDupeMoonStar`; banner trang bị: bảo hiểm riêng, không bảo vệ người mới |
+| T205 | `buildLoadout(deck)` có trang bị: cấp lấy từ hồ sơ; lỗi sở hữu; `levelUpForm "alt"` chỉ khi Tinh Hồn ≥ 5; phiếu chụp trang bị, đổi sau không ảnh hưởng (server) |
+| T206 | `setLevelUpForm` / route: `"hero not owned"`, `"constellation too low"`; dạng thứ hai thay nội tại cơ bản, bộ đếm + ngưỡng giữ nguyên |
+| T207 | M05 *Bất Diệt*: `onLevelUp` 12 giáp + Khiêu Khích 2; `gainArmor` từ lá M05 +3 |
+| T208 | F04 *Tĩnh Tâm*: lá hồi / Hồi Phục của F04 giải trừ Hero được hồi |
+| T209 | M06 *Tàn Ảnh*: lá Liên Hoàn đầu tiên mỗi lượt tính thêm 1 lá; lá thứ hai không |
+| T210 | F03 *Hàn Kiếm*: lượt damage đầu tiên mỗi lượt từ lá F03 → Dễ Vỡ 1 vòng; đòn sau không; đặt lại lượt sau |
+| T211 | F02 *Huyết Diện*: lá F02 −1 NL khi Huyết Nguyệt (tối thiểu 0), hết Huyết Nguyệt thì mất |
+| T212 | Kiểm tra dữ liệu khi nạp: `wearer` ngoài hook vũ khí, effect cấm trong hook, `refinement` ≠ 4 mục, `resonance` ≠ 5 cấp, id trùng → lỗi |

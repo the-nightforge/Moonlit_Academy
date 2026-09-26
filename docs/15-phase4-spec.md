@@ -31,7 +31,13 @@ tài liệu này giữ bối cảnh và lý do.
 `01`, `02`, `04`, `06`, `07`, `14`, `16` (bước 4d.1). Chốt thêm 2026-09-28: Tinh Hồn 5
 dời sang 4e; thành tựu Song Hành = một thành tựu mỗi lá Song Hành; quà tài khoản tự nhận
 khi đăng ký hoặc đăng nhập nếu chưa nhận; lá "+" nằm trong `cards.json` (`plusOf`),
-`heroes.json signature` chỉ giữ id.
+`heroes.json signature` chỉ giữ id. 4d xong (4d.1–4d.6, gói kinh tế J).
+4e: kế hoạch `docs/superpowers/plans/2026-09-29-phase4e-gear.md`; đã đưa vào `01` §8,
+§14, `02` §1.12, `03` §7 (số R2–R5 và Cộng Minh 2–5 do Claude soạn, chờ duyệt), `04`,
+`06`, `07`, `14` §3, §9, §10.1, §12–§13, `16` §4.2 (bước 4e.1). Chốt 2026-09-29: người
+mang ngã → **mọi** nội tại của vũ khí đó dừng; lá Binh Khí không nằm trong `run.deck`
+(không bỏ được ở Nghỉ Chân); banner trang bị dùng chung tỉ lệ / bảo hiểm với banner
+Hero, bộ đếm riêng, không bảo vệ người mới; mọi Hero mang được mọi vũ khí.
 
 **Thư viện mới cần duyệt** (CLAUDE.md: không thêm thư viện khi chưa hỏi): `fastify`,
 `better-sqlite3` (+ `@types/better-sqlite3`) cho `apps/server`. Không thêm thư viện
@@ -527,7 +533,7 @@ Route cần đăng nhập trả `401` khi thiếu/sai token. Mọi route thay đ
 | 4d | `POST /gacha/:bannerId/pull` `{ count: 1 \| 10 }` | §3.5; trả kết quả từng lượt |
 | 4d | `GET /gacha/history?banner=&page=` | Nhật ký quay |
 | 4d | `POST /missions/:id/claim` · `POST /shop/:itemId/buy` | §3.3, §3.1 |
-| 4d | `PUT /profile/heroes/:id/level-up-form` `{ form }` | Tinh Hồn 5 |
+| 4e | `PUT /profile/heroes/:id/level-up-form` `{ form }` | Tinh Hồn 5 (dời từ 4d) |
 | 4e | (không thêm route: trang bị nằm trong deck — `PUT /profile/decks`) | |
 
 **SQLite (`db.ts`, migration đánh số):**

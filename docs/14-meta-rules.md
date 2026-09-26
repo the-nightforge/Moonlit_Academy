@@ -14,9 +14,12 @@ Hồ sơ là dữ liệu JSON thuần; mọi hàm dưới đây là hàm thuần
   "masteryXp": { "perFloor": 10, "win": 50, "heroLevelUp": 10 },
   "deckSize": 18,
   "minCardsPerHero": 4,
-  "maxDecks": 30
+  "maxDecks": 30,
+  "maxRelics": 2
 }
 ```
+
+`maxRelics` **[GĐ4e]**: số Nguyệt Bảo tối đa mỗi deck.
 
 `masteryLevels`: XP cộng dồn cho cấp 1…6; độ dài phải bằng số lá khóa mỗi Hero (6), tăng dần.
 
@@ -46,6 +49,7 @@ Hồ sơ là dữ liệu JSON thuần; mọi hàm dưới đây là hàm thuần
     "newPlayerEpicHero": true
   },
   "dupeMoonStar": { "legendary": 25, "epic": 5, "rare": 1, "common": 1 },
+  "gearDupeMoonStar": { "legendary": 10, "epic": 4, "rare": 1, "common": 1 },
   "moonStarShop": [
     { "id": "shop_pull", "item": { "type": "moonJade", "amount": 160 }, "price": 10, "limitPerWeek": 2 },
     { "id": "shop_epic_hero", "item": { "type": "heroChoice", "rarity": "epic" }, "price": 120, "limitPerWeek": 1 }
@@ -141,6 +145,8 @@ interface SavedDeck {
   name: string;                      // 1–24 ký tự sau khi trim
   heroIds: [string, string, string]; // thứ tự = vị trí trong đội
   cardIds: string[];
+  weapons?: Record<string, string | null>; // [GĐ4e] heroId → weaponId; thiếu = không mang
+  relicIds?: string[];                     // [GĐ4e] Nguyệt Bảo của đội; thiếu = []
 }
 
 type DeckError =
@@ -150,8 +156,19 @@ type DeckError =
   | { code: "duplicateCard"; cardId: string }
   | { code: "foreignCard"; cardId: string }        // không thuộc 3 Hero / lá Song Hành / không tồn tại
   | { code: "tooFewForHero"; heroId: string; count: number }
-  | { code: "lockedCard"; cardId: string };        // chưa mở (không miễn phí, không trong unlockedCardIds)
+  | { code: "lockedCard"; cardId: string }         // chưa mở (không miễn phí, không trong unlockedCardIds)
+  // [GĐ4e]
+  | { code: "weaponSlot"; heroId: string }         // khóa của weapons không phải Hero trong đội
+  | { code: "unownedWeapon"; weaponId: string }    // không có trong data hoặc chưa sở hữu
+  | { code: "weaponTwice"; weaponId: string }      // một vũ khí gắn cho 2 Hero
+  | { code: "unownedRelic"; relicId: string }
+  | { code: "duplicateRelic"; relicId: string }
+  | { code: "tooManyRelics"; count: number };      // > maxRelics (2)
 ```
+
+**[GĐ4e]** `wrongSize`: `cardIds.length` + số Hero có vũ khí ≠ `deckSize` (mỗi vũ khí
+chiếm 1 ô dù lá có 2 bản). Lá Binh Khí **không** tính vào `minCardsPerHero`.
+`meta-config.json` thêm `maxRelics: 2`.
 
 `validateDeck(data, profile, deck): DeckError[]` — kiểm tra mọi luật, trả mọi lỗi theo thứ tự trên (rỗng = hợp lệ).
 
@@ -170,6 +187,9 @@ type DeckError =
 - Trận lẻ: `CombatSetup.deckCardIds` sẵn có.
 - **Lõi (augment):** sau mỗi trận thắng (không phải boss) chọn 1 trong `augmentChoices` Lõi từ `run-augments.json`, mỗi Lõi ≤1 lần/lượt; deck giữ nguyên suốt lượt (xem `11` §3.3).
 - Nghỉ Chân / `minDeckSize` như cũ; deck trong lượt chơi chỉ nhỏ hơn 18 lá khi bỏ lá ở Nghỉ Chân.
+- **[GĐ4e]** Lá Binh Khí không nằm trong `run.deck` (`01` §14.2): mỗi trận thêm từ
+  loadout, không bỏ được ở Nghỉ Chân, không tính `minDeckSize`. Bộ cơ bản không có
+  trang bị. Trận lẻ dùng loadout dựng từ hồ sơ + deck (client, không trao thưởng).
 
 ---
 
@@ -306,7 +326,7 @@ interface AchievementDef {      // achievements.json
 ```ts
 interface BannerDef {
   id: string; name: string;
-  kind: "hero";                               // "weapon" | "relic" ở GĐ 4e
+  kind: "hero" | "weapon" | "relic";          // weapon, relic: GĐ 4e
   pool: Record<Rarity, string[]>;             // id theo độ hiếm; mảng rỗng được phép
 }
 ```
@@ -314,6 +334,12 @@ interface BannerDef {
 Banner khởi điểm `banner_heroes` (Triệu Hồi Anh Hùng): legendary `[m05]`, epic `[m06,
 f02, f03]`, rare `[f04]`, common `[]`. Kiểm tra khi nạp: id trong pool là Hero có trong
 data, độ hiếm khớp `heroes.json rarity`, không trùng.
+
+**[GĐ4e]** Thêm `banner_weapons` (Binh Khí Các, `kind: "weapon"`, pool là id trong
+`weapons.json`) và `banner_relics` (Nguyệt Bảo Các, `kind: "relic"`, `relics.json`); kiểm
+tra khi nạp như trên với file tương ứng. Mọi banner dùng chung `gacha` (tỉ lệ, bảo hiểm),
+`pullCost`; bộ đếm `pity` riêng từng banner; bảo vệ người mới chỉ áp banner `hero`;
+`gachaPulls` đếm mọi banner.
 
 `pullMany(data, profile, bannerId, count, rngState, now)` — `count` là 1 hoặc 10:
 
@@ -324,6 +350,8 @@ data, độ hiếm khớp `heroes.json rarity`, không trùng.
   `checkAchievements`.
 - Trả thêm `results: PullResult[]`:
   `{ itemId, rarity, outcome: "newHero" | "constellation" | "moonStar", constellation?, moonStar? }`.
+  **[GĐ4e]** `outcome` thêm `"newWeapon" | "refinement" | "newRelic" | "resonance" |
+  "maxed"`; trường thêm `refinement?`, `resonance?`, `darkIron?`, `moonDust?` (§13.1).
 
 **Một lượt quay:**
 
@@ -341,7 +369,7 @@ data, độ hiếm khớp `heroes.json rarity`, không trùng.
 6. Chọn id: danh sách = pool của độ hiếm đó; **bảo vệ người mới** (`newPlayerEpicHero`,
    banner `hero`, độ hiếm epic): nếu có Hero epic chưa sở hữu trong pool → danh sách chỉ
    gồm các Hero đó. Rút `u3`, chọn `danh sách[floor(u3 × độ dài)]`.
-7. `grantItem` (§10).
+7. `grantItem` theo `kind` của banner: Hero §10, vũ khí / Nguyệt Bảo §13.1.
 
 Mỗi lượt quay dùng RNG theo thứ tự `u1`, (`u2` nếu cần), `u3`. Cùng hồ sơ, `rngState`,
 `count` → cùng kết quả (T186).
@@ -360,13 +388,22 @@ Mỗi lượt quay dùng RNG theo thứ tự `u1`, (`u2` nếu cần), `u3`. Cù
 | 1, 3 | Thêm 1 lượt mở lá khóa (`bonusUnlocks`, xem `pendingUnlocks` §2.2) |
 | 2 | Trong trận: ngưỡng thăng cấp = `levelUp.constellationThreshold` (`01` §8) |
 | 4 | Trong deck: lá chủ lực thay bằng bản "+" (`01` §8) |
-| 5 | Dạng thăng cấp thứ hai — **GĐ 4e**; ở 4d cấp vẫn tăng, `levelUpForm` luôn `"base"` |
+| 5 | Chọn được dạng thăng cấp thứ hai (`levelUpForm`, §10.1; luật trận `01` §8) **[GĐ4e]** |
 | 6 | Hiển thị (khung vàng ở client) |
 
 `heroes.json` thêm: `levelUp.constellationThreshold: number` (≤ `threshold`) và
 `signature: { cardId, plusCardId }` — `cardId` thuộc `cardIds` của Hero; `plusCardId` là
 lá trong `cards.json` có `plusOf: cardId`, cùng `ownerId`, `cost`, `copies`, không nằm
 trong `cardIds`/`lockedCardIds` của Hero nào (không xếp được vào deck trực tiếp).
+
+### 10.1 Dạng thăng cấp thứ hai **[GĐ4e]**
+
+- `heroes.json` thêm `altLevelUp: { name, description, passive: LevelUpPassive, onLevelUp?:
+  Effect[] }` (mọi Hero có).
+- `setLevelUpForm(data, profile, heroId, form)`: Hero chưa sở hữu → `"hero not owned"`;
+  `form = "alt"` khi `constellation < 5` → `"constellation too low"`; ngược lại ghi
+  `heroes[heroId].levelUpForm = form`. Đổi được bất cứ lúc nào ngoài lượt chơi đang chơi
+  (lượt đang chơi dùng loadout đã chụp).
 
 ## 11. Cửa hàng Nguyệt Tinh **[GĐ4d]**
 
@@ -384,16 +421,54 @@ trong `cardIds`/`lockedCardIds` của Hero nào (không xếp được vào deck
 
 ```ts
 interface Loadout {
-  heroes: Record<string, { constellation: number; levelUpForm: "base" | "alt" }>;
-  // GĐ 4e: weaponId, refinement mỗi Hero; relics
+  heroes: Record<string, {
+    constellation: number;
+    levelUpForm: "base" | "alt";
+    weaponId?: string | null;   // [GĐ4e] thiếu = null
+    refinement?: number;        // [GĐ4e] Tinh Luyện của vũ khí; 0 khi không có
+  }>;
+  relics?: { id: string; resonance: number }[];   // [GĐ4e] thiếu = []
 }
 ```
 
 - `buildLoadout(data, profile, heroIds)`: lấy `constellation`, `levelUpForm` của 3 Hero từ
   hồ sơ (Hero chưa sở hữu → lỗi `"hero not owned"`).
+- **[GĐ4e]** `buildLoadout(data, profile, deck)` nhận `{ heroIds, weapons?, relicIds? }`:
+  thêm `weaponId` / `refinement` theo `deck.weapons` và `relics` theo `deck.relicIds` (cấp
+  lấy từ `profile.weapons` / `profile.relics`). `levelUpForm = "alt"` chỉ khi hồ sơ chọn
+  `"alt"` **và** `constellation ≥ 5`. Lỗi: `"hero not owned"`, `"weapon not owned"`,
+  `"relic not owned"`. Mảng `heroIds` cũ vẫn nhận được (không trang bị).
 - `createRun(data, setup, loadout?)`, `createCombat(data, setup, loadout?)`,
   `replayRun(data, setup, actions, loadout?)`: thiếu `loadout` = mọi Hero cấp 0. Trận
   trong lượt chơi dùng loadout của lượt chơi.
 - Phiếu lượt chơi (§4.1) chụp thêm `loadout` lúc cấp; nộp kết quả chạy lại với đúng
   loadout đó (đổi Tinh Hồn sau khi cấp phiếu không ảnh hưởng lượt đang chơi).
 
+## 13. Binh Khí và Nguyệt Bảo **[GĐ4e]**
+
+Luật trận: `01` §14. Nội dung: `03` §7. Dữ liệu: `02` §1.12.
+
+### 13.1 Sở hữu, Tinh Luyện, Cộng Minh
+
+`profile.weapons[id] = { refinement }` (1–5), `profile.relics[id] = { resonance }` (1–5).
+Tài khoản mới không có vũ khí / Nguyệt Bảo. `grantItem` cho vũ khí `id`, độ hiếm `r`:
+
+- Chưa sở hữu → `weapons[id] = { refinement: 1 }`; `outcome: "newWeapon"`.
+- `refinement < 5` → `+1`; `outcome: "refinement"`, trả `refinement`.
+- `refinement = 5` → `darkIron += 1`, `moonStar += gearDupeMoonStar[r]`; `outcome:
+  "maxed"`, trả `darkIron: 1`, `moonStar`.
+
+Nguyệt Bảo như trên với `relics[id].resonance`, `outcome: "newRelic" | "resonance" |
+"maxed"`, và `moonDust += 1` thay `darkIron`. `economy-config.json` thêm
+`gearDupeMoonStar: { legendary: 10, epic: 4, rare: 1, common: 1 }` (GDD §7.4). Huyền
+Thiết / Nguyệt Trần GĐ 4 chỉ tích trữ.
+
+### 13.2 Trang bị trong deck
+
+- `saveDeck` lưu `weapons` / `relicIds` cùng deck (deck không hợp lệ vẫn lưu được như cũ);
+  `validateDeck` kiểm §3.1. Một vũ khí chỉ có một bản nên gắn tối đa 1 Hero mỗi deck; hai
+  deck khác nhau dùng chung một vũ khí được.
+- Mọi Hero mang được mọi vũ khí; nội tại bản mệnh chỉ khi người mang là
+  `signatureHeroId` (`01` §14.3).
+- Phiếu lượt chơi (§4.1) chụp loadout có trang bị lúc cấp; đổi trang bị / Tinh Luyện sau
+  đó không ảnh hưởng lượt đang chơi.
