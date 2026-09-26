@@ -471,7 +471,7 @@
     "effects": [
       {
         "type": "burstRegen",
-        "multiplier": 1,
+        "multiplier": 2,
         "to": "chosen"
       },
       {
@@ -480,7 +480,7 @@
         "to": "chosen"
       }
     ],
-    "text": "Tụ Dược 1 cho 1 Hero, rồi Hero đó nhận 4 giáp.",
+    "text": "Tụ Dược 2 cho 1 Hero, rồi Hero đó nhận 4 giáp.",
     "keywords": [
       "tu_duoc"
     ]
@@ -704,11 +704,11 @@
     "effects": [
       {
         "type": "burstRegen",
-        "multiplier": 2,
+        "multiplier": 3,
         "to": "allAllies"
       }
     ],
-    "text": "Tụ Dược 2 lên mọi Hero.",
+    "text": "Tụ Dược 3 lên mọi Hero.",
     "keywords": [
       "tu_duoc"
     ]

@@ -113,6 +113,14 @@ export const NODE_ICONS: Record<NodeType, string> = {
   boss: "🌕",
 };
 
+export const NODE_LABELS: Record<NodeType, string> = {
+  combat: "Trận thường",
+  elite: "Tinh Anh — thắng nhận Kỳ Vật",
+  rest: "Nghỉ Chân — hồi máu / bỏ lá",
+  treasure: "Kho Báu — nhận Kỳ Vật",
+  boss: "Boss",
+};
+
 const TAG_LABELS: Record<CardTag, string> = {
   attack: "tấn công",
   control: "khống chế",

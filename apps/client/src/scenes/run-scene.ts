@@ -3,7 +3,7 @@ import { applyRunAction, applyRunResult, findNode, pendingUnlocks, reachableNode
 import type { MapNode, RunAction, RunState } from "rules";
 import { saveProfile } from "../profile-store";
 import { session } from "../session";
-import { COLORS, NODE_ICONS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
+import { COLORS, NODE_ICONS, NODE_LABELS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -172,6 +172,13 @@ export class RunScene extends Phaser.Scene {
       }
     }
     this.root.add(lines);
+    // Floor numbers on the left of each row, legend at the bottom-left.
+    this.run.map.floors.forEach((_, index) => {
+      this.text(WIDTH / 2 - 330, 660 - index * 68, `Tầng ${index + 1}`, 12, COLORS.dimText).setOrigin(0.5);
+    });
+    (Object.keys(NODE_ICONS) as (keyof typeof NODE_ICONS)[]).forEach((type, index) => {
+      this.text(24, 520 + index * 24, `${NODE_ICONS[type]}  ${NODE_LABELS[type]}`, 13).setOrigin(0, 0.5);
+    });
     for (const node of nodes) {
       const { x, y } = pos(node);
       const current = node.id === this.run.position;

@@ -53,10 +53,6 @@ UI: đổi mục tiêu theo Khiêu Khích, xem số damage ý định trước k
 - enc_02 thua khi damage dàn đều 3 mục tiêu → focus-fire là quyết định
   quan trọng, tốt cho "cảm giác phải suy nghĩ".
 
-## Điểm cần theo dõi khi playtest tay
-
-- [ ] Animation lượt địch đủ rõ ai đánh ai không?
-
 ## Không chỉnh data
 
 Chưa thay đổi `data/*.json`: kết quả nằm trong ngưỡng chấp nhận được cho
@@ -132,13 +128,6 @@ Có: 0–4 lần/trận. Boss (pha Hạ Huyền) và *Phong Tuyết Chướng* �
 - Tag theo pha có tác dụng đo được: đội mốc đổi kết quả ở enc_02/enc_03 so với
   giai đoạn 1 dù không có Hero mới (Hổ Gầm rẻ hơn ở Hạ Huyền, lá hồi của F04 rẻ
   hơn ở Trăng Tròn).
-
-## Điểm cần theo dõi khi playtest tay
-
-- [ ] Huyết Nguyệt: người chơi có chủ động để dành Đổi Vận Chú + Phệ Hồn không?
-- [ ] Cướp buff (Diện Đoạt, Ảnh Đấu) có đáng một lượt không?
-- [ ] Lá Song Hành có dễ nhận ra trên tay (viền 2 màu, nhãn) không?
-- [ ] Animation cướp buff, tia Phản Đòn, Huyết Nguyệt có rõ không?
 
 ## Điều chỉnh F02 (`09` mục 12, đã duyệt)
 
@@ -259,13 +248,6 @@ quả y hệt); các đòn bẩy tầng 1 hoặc tệ hơn hoặc nằm trong nh
 hơn enc_02 sau nerf; `enc_00` làm loãng cả tầng giữa). ~25% lượt chết ở tầng 1–2
 là độ khó chấp nhận được cho sàn kỹ năng.
 
-## Điểm cần theo dõi khi chơi tay
-
-- [ ] Bản đồ đọc có dễ không; có muốn đi đường Tinh Anh không?
-- [ ] Lá thưởng có tạo lựa chọn thật không?
-- [ ] Kỳ Vật có cảm nhận được trong trận không?
-- [ ] Một lượt chơi dài bao lâu?
-
 # Playtest Notes — Phase 4a (bước 4a.8)
 
 Playtest scripted: `packages/rules/test/playtest.test.ts` (trận đơn) và
@@ -323,14 +305,6 @@ So mục tiêu §8: trận thường/Tinh Anh 8–12 vòng ✓ (8.2–9.9), Cạ
 đã duyệt gói P thay vì gói X 22.5% để giữ độ khó; người chơi thật sẽ cao
 hơn sàn). Boss còn là chốt chặn chính (17% trận boss thắng).
 
-## Điểm cần theo dõi khi chơi tay
-
-- [ ] Đổi Bài có tạo quyết định thật không (hay luôn bỏ 2 lá đắt)?
-- [ ] Dự Trữ có được dùng chủ động không (nhịp lượt xanh để vòng sau bùng)?
-- [ ] Đồng hồ Cạn Bài có gây áp lực đúng không?
-- [ ] Chuỗi chiêu địch có đọc được không; Tụ Lực có đủ cảnh báo?
-- [ ] Chiêm Bài có đáng cost không; lấy lá đắt hay lá rẻ?
-
 
 # Playtest Notes — Phase 4b (bước 4b.7)
 
@@ -373,15 +347,6 @@ hơn, độ khó thật cần xác nhận bằng chơi tay.
   đề nằm ở độ cực đoan của split, không phải nhánh B nói chung. Nhánh B thiên
   phòng thủ/kiểm soát (Thiết Vệ, Tĩnh Tâm, Hàn Kiếm, Huyết Nguyệt) cũng khó
   cho bot hơn.
-
-## Điểm cần theo dõi khi chơi tay
-
-- [ ] Tích Tụ có đáng giữ lá qua lượt không?
-- [ ] Liên Hoàn có tạo thứ tự đánh thú vị không?
-- [ ] Tỏa Nguyệt có thấy rõ chiêu địch bị hủy không?
-- [ ] Tụ Dược có tạo nhịp "rải Hồi rồi nổ" không?
-- [ ] Mở khóa (Tu Luyện) có hào hứng không; ~10 lượt tới cấp 6 có hợp lý?
-- [ ] Deck nhánh có khác cảm giác Bộ cơ bản không?
 
 ## Các mục đã đóng sau 4b
 
@@ -486,3 +451,64 @@ rẻ hơn (ở trên) giúp đội F02 mà không đổi tần suất.
 
 `run-playtest` (seed 1–20, sau chỉnh): Bộ cơ bản 45%, thường 89% / 9.3 vòng,
 Tinh Anh 88% / 9.9, boss 73% / 11.9; nhịp Tu Luyện ~11.4 lượt tới cấp 6.
+
+## Câu hỏi chơi tay — trả lời bằng đo đạc và sửa UI
+
+Những câu "chơi tay" ở các giai đoạn trước đã được trả lời theo một trong hai
+cách, rồi xóa khỏi checklist.
+
+**1. So chiến thuật bot** (file tạm, 4 đội × 6 deck × 40 seed, Bộ cơ bản; mốc
+42%). Chơi khéo thắng nhiều hơn rõ → cơ chế tạo quyết định thật.
+
+| Câu hỏi | Chơi khéo | Đối chứng | Kết luận |
+|---|---|---|---|
+| Tích Tụ có đáng giữ lá? | giữ tới ngưỡng 42% | đánh ngay 31% (nhánh B 30% → 18%) | Có |
+| Liên Hoàn có tạo thứ tự đánh? | lá thường trước 42% | không xếp 36% | Có |
+| Để dành Đổi Vận Chú + Phệ Hồn? | để dành 46% | đánh ngay 42% (đội F02 +12–15 điểm) | Có — người chơi nên để dành |
+| Cướp buff có đáng? | có 42% | bỏ mọi `stealBuff` 39% | Có, nhỏ; nay còn tính vào thăng cấp F02 |
+| Kỳ Vật có cảm nhận được? | có 42% | không Kỳ Vật 38% (nhánh B 8/5/5 −13) | Có |
+| Lá thưởng có tạo lựa chọn? | lấy lá đầu 42%, lá đắt 39% | bỏ qua 34% | Có |
+| Có muốn đi đường Tinh Anh? | săn 43% / mặc định 42% / né 42% | — | Rủi ro ≈ phần thưởng: lựa chọn trung lập, đúng ý |
+| Deck nhánh có khác Bộ cơ bản? | Huyết Nguyệt/trận (đội F02): nhánh A 0.15, nhánh B 0.82; thắng 54% vs 30% | — | Khác rõ về nhịp và độ khó |
+| Tụ Dược "rải Hồi rồi nổ"? | nhắm Hero có Hồi ≥ 3: 42% | nhắm bừa 45% | **Không** — xem dưới |
+
+*Tụ Dược:* Hồi Phục `v` tự hồi tổng v + (v−1) + … + 1, nên *Linh Chi Hộ Thể*
+(Tụ Dược ×1) luôn lỗ khi nổ (v = 3: hồi 3 thay vì 6). Đã chỉnh Tụ Dược ×1 → ×2
+(*Linh Chi Hộ Thể*), ×2 → ×3 (*Bách Hoa Tụ Dược*): với v ≤ 3, nổ ≥ để tự hồi và
+có ngay. Tỉ lệ thắng không đổi (43%) — bot không bị giới hạn bởi hồi máu.
+
+**2. Số đo trực tiếp.**
+
+- *Một lượt chơi dài bao lâu?* Trung bình 4.3 trận, 42 lượt người chơi, ~100
+  lá được đánh mỗi lượt chơi → ước tính 15–20 phút cho người thật.
+- *Đồng hồ Cạn Bài có gây áp lực?* Cuối trận chồng còn trung bình 35–38%;
+  chồng cạn hẳn ở 5–12% trận, thua vì Cạn Bài 3–5% (chủ yếu trận boss dài):
+  áp lực chỉ đến ở trận kéo dài, đúng mục tiêu < 10%.
+- *Mở khóa (Tu Luyện) ~10 lượt tới cấp 6?* ~11.4 lượt, trong mục tiêu 8–12.
+
+**3. Kiểm tra UI** (chạy client, chụp màn hình bằng Playwright):
+
+- Lượt địch "ai đánh ai": trước chỉ nhích 18% về phía mục tiêu. Nay hiện tên
+  chiêu dưới kẻ địch và tia đỏ tới mục tiêu (chiêu lan: tia tới mọi Hero).
+- Chuỗi chiêu địch đọc được (tên, cost, damage, mục tiêu). Tụ Lực trước chỉ
+  ghi "⋯ Tụ Lực"; nay "⋯ Tụ Lực · vòng sau NL X", đổi thành "⚠" khi X đủ cho
+  chiêu đắt nhất (`previewEnemyIntent.nextRoundMoonPower`, T170).
+- Tỏa Nguyệt: trước ghi số chiêu bị hủy; nay ghi tên chiêu bị hủy.
+- Cướp buff (nhãn buff bay từ nạn nhân sang kẻ cướp), tia Phản Đòn, Huyết
+  Nguyệt (chớp đỏ toàn màn, banner, nền đỏ, đếm vòng): đã có sẵn.
+- Lá Song Hành: viền màu Hero thứ hai + nhãn "Song Hành" (tăng cỡ 9 → 11px).
+- Bản đồ: thêm chú thích biểu tượng (⚔ ☠ 🏮 🎁 🌕 kèm ý nghĩa) và số tầng.
+
+## Cần quyết định thiết kế
+
+Ba cơ chế kinh tế 4a **không tạo quyết định** theo số đo — muốn sửa phải đổi
+luật, không chỉ số:
+
+- [ ] Chiêm Bài có đáng cost không? — Bỏ hẳn mọi Chiêm Bài: 42% → 42%. Tay tự
+      rút bù về 6 mỗi lượt nên Chiêm Bài chỉ đổi *chất lượng* lá kế tiếp;
+      chọn lá đắt / rẻ / đầu tiên lệch ≤ 3 điểm.
+- [ ] Đổi Bài có tạo quyết định thật không? — Bỏ lá đắt 42%, giữ nguyên 41%,
+      bỏ 2 lá đầu 41%: gần như không tác động (van an toàn chống tay xấu).
+- [ ] Dự Trữ có được dùng chủ động không? — Tự động giữ ≤ 3 NL thừa hoạt
+      động (Dự Trữ TB 0.4–0.6); cố tình nhịn đánh để dành cho lá đắt: 42% →
+      38%, không được thưởng.

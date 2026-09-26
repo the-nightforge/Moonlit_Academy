@@ -415,7 +415,14 @@ export class CombatScene extends Phaser.Scene {
       }
       return label;
     });
-    const text = lines.length === 0 ? "⋯ Tụ Lực" : lines.join("\n");
+    let text = lines.join("\n");
+    if (lines.length === 0) {
+      // Tụ Lực warning: how much moon power the enemy brings next round,
+      // flagged when it covers its most expensive intent.
+      const topCost = Math.max(...this.gameData.enemies[enemy.defId]!.intents.map((intent) => intent.cost));
+      const next = preview.nextRoundMoonPower;
+      text = `${next >= topCost ? "⚠ " : "⋯ "}Tụ Lực · vòng sau NL ${next}`;
+    }
     this.text(x, y, preview.skipped ? `❄ ${text}` : text, 12)
       .setOrigin(0.5, 1)
       .setAlign("center")
@@ -628,7 +635,7 @@ export class CombatScene extends Phaser.Scene {
         this.add
           .text(CARD_W / 2 - 8, -CARD_H / 2 + 10, "Song Hành", {
             ...TEXT_BASE,
-            fontSize: "9px",
+            fontSize: "11px",
             color: COLORS.gold,
           })
           .setOrigin(1, 0.5),
