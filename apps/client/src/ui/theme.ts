@@ -147,3 +147,33 @@ export function describeModifier(modifier: MoonModifier): string {
       return `giáp ×${modifier.multiplier}`;
   }
 }
+
+/** Vietnamese text for API error codes (`16`). */
+export const API_ERROR_TEXT: Record<string, string> = {
+  network: "Không kết nối được server",
+  "outdated client": "Dữ liệu game đã đổi — hãy tải lại trang",
+  unauthorized: "Phiên đăng nhập đã hết — hãy đăng nhập lại",
+  "invalid credentials": "Sai tên đăng nhập hoặc mật khẩu",
+  "too many attempts": "Sai quá nhiều lần — thử lại sau 5 phút",
+  "username taken": "Tên đăng nhập đã có người dùng",
+  "invalid username": "Tên đăng nhập: 3–20 ký tự a–z, 0–9, _",
+  "invalid password": "Mật khẩu: 8–72 ký tự",
+  "stale profile": "Hồ sơ vừa thay đổi ở nơi khác — đã tải lại, hãy thử lại",
+  "if-match required": "Thiếu phiên bản hồ sơ",
+  "invalid name": "Tên deck phải có 1–24 ký tự",
+  "too many decks": "Đã đạt số deck tối đa",
+  "unknown deck": "Không tìm thấy deck",
+  "invalid deck": "Deck không hợp lệ",
+  "hero not owned": "Chưa sở hữu Hero này",
+  "no pending unlock": "Chưa có lượt mở lá",
+  "already unlocked": "Lá này đã mở",
+  "not a locked card": "Lá này không cần mở",
+  "already imported": "Tiến độ trên máy đã được nhập trước đó",
+  "invalid profile": "Tiến độ trên máy bị hỏng, không nhập được",
+  "unknown run": "Không tìm thấy lượt chơi",
+  "run closed": "Lượt chơi này đã kết thúc",
+  "ticket expired": "Lượt chơi quá 7 ngày, không nhận kết quả",
+  "replay failed": "Server không công nhận lượt chơi (dữ liệu không khớp)",
+  "run not finished": "Lượt chơi chưa kết thúc",
+  "bad request": "Yêu cầu không hợp lệ",
+};

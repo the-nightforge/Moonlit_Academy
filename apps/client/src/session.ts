@@ -1,7 +1,7 @@
 import { loadGameData } from "data";
-import { createCombat, createRun, starterDeck } from "rules";
+import { createCombat, createProfile, starterDeck } from "rules";
 import type { CombatEvent, CombatState, GameData, MasteryGain, Profile, RunState, SavedDeck } from "rules";
-import { loadProfile } from "./profile-store";
+import type { RunTicket } from "./run-session";
 
 export type Team = [string, string, string];
 
@@ -16,10 +16,18 @@ export interface CombatSession {
   heroIds: Team;
   deckCardIds: string[];
   run: RunState | null;
+  /** Local copy of the server profile (`16` §2); a blank one while offline. */
   profile: Profile;
+  /** Profile revision the copy came from (`If-Match`). */
+  rev: number;
+  /** Signed in and reachable; offline allows single combats only. */
+  online: boolean;
+  /** Server ticket of the run in progress. */
+  ticket: RunTicket | null;
   editingDeck: SavedDeck | null;
   lastGains: MasteryGain[] | null;
-  runRewarded: boolean;
+  /** The finished run's result was accepted by the server. */
+  runSubmitted: boolean;
 }
 
 export function newCombatSession(
@@ -33,7 +41,8 @@ export function newCombatSession(
   const { state, events } = createCombat(data, { heroIds, encounterId, seed, deckCardIds: deck });
   return {
     data, state, events, seed, encounterId, heroIds, deckCardIds: deck, run: null,
-    profile: loadProfile(data), editingDeck: null, lastGains: null, runRewarded: false,
+    profile: createProfile(data), rev: 0, online: false, ticket: null, editingDeck: null, lastGains: null,
+    runSubmitted: false,
   };
 }
 
@@ -53,16 +62,6 @@ export function restartSession(
   session.state = fresh.state;
   session.run = null;
   session.events.push(...fresh.events);
-}
-
-/** Starts a roguelike run with the chosen deck; combat state comes from the run. */
-export function startRun(heroIds: Team, deckCardIds: string[], seed = session.seed): void {
-  session.heroIds = heroIds;
-  session.seed = seed;
-  session.deckCardIds = deckCardIds;
-  session.runRewarded = false;
-  session.lastGains = null;
-  session.run = createRun(session.data, { heroIds, seed, deckCardIds }).run;
 }
 
 export function cycleEncounter(direction = 1): string {

@@ -104,3 +104,24 @@ foreign_keys = ON`; `journal_mode = WAL` cho file DB.
 
 Thời gian lưu dạng ms UTC từ `clock()`. Mọi thao tác "đọc hồ sơ → hàm thuần → ghi hồ
 sơ (+ bảng `runs`)" chạy trong một transaction đồng bộ của better-sqlite3.
+
+---
+
+## 6. Client
+
+- `api.ts`: mọi request gửi `X-Data-Version` (tính bằng `dataVersion` khi khởi động),
+  `Authorization` nếu có token, `If-Match` cho route đổi hồ sơ. Trả lời không phải JSON
+  hoặc lỗi 502–504 không có `error` (proxy dev khi server tắt) được coi như mất kết
+  nối (`network`). Mọi `401` → xóa token, về màn đăng nhập. Mã lỗi → câu tiếng Việt
+  trong `theme.ts` (`API_ERROR_TEXT`).
+- `localStorage`: `vong-nguyet.token` (token phiên); `vong-nguyet.run` (phiếu đang
+  chơi: `runId`, `setup`, chuỗi Action đã được chấp nhận — để chơi tiếp sau khi tải lại
+  trang bằng `replayRun`); hồ sơ 4b cũ `vong-nguyet.profile` chỉ đọc để nhập một lần,
+  sau đó đổi tên thành `vong-nguyet.profile.imported`.
+- Hồ sơ chỉ giữ trong bộ nhớ (bản sao + `rev`); `409 stale profile` thay bản sao bằng
+  bản trong lỗi. Nộp lượt chơi gặp `stale profile` tự gửi lại một lần; phiếu đã bị đóng
+  (`replay failed`, `run closed`, `ticket expired`, `unknown run`) thì xóa bản lưu tạm.
+- Không kết nối được server (lúc mở game hoặc khi đăng nhập): chế độ offline, hồ sơ
+  trống, chỉ **Trận lẻ**; Lượt chơi, xếp/xóa deck, Tu Luyện bị khóa.
+- Công cụ debug sửa hồ sơ (+XP, mở hết lá, xóa hồ sơ) đã bỏ (hồ sơ chỉ đổi trên
+  server); sửa trận bằng debug trong lượt chơi làm server từ chối kết quả (có cảnh báo).

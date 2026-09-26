@@ -1,6 +1,5 @@
-import { createProfile, drawCards } from "rules";
-import type { CombatEvent, CombatState, GameData, Profile } from "rules";
-import { saveProfile } from "./profile-store";
+import { drawCards } from "rules";
+import type { CombatEvent, CombatState, GameData } from "rules";
 import { session } from "./session";
 
 function unitName(state: CombatState, data: GameData, unitId: string): string {
@@ -67,38 +66,6 @@ export function debugAdjustHeroHp(index: number, delta: number): void {
     session.events.push({ type: "unitDied", unitId: hero.id });
   }
   checkEnd();
-}
-
-export function debugGrantTeamXp(amount = 100): void {
-  const profile = JSON.parse(JSON.stringify(session.profile)) as Profile;
-  for (const heroId of session.heroIds) {
-    const hero = profile.heroes[heroId];
-    if (hero) hero.xp += amount;
-  }
-  session.profile = profile;
-  saveProfile(profile);
-}
-
-export function debugUnlockAll(): void {
-  const profile = JSON.parse(JSON.stringify(session.profile)) as Profile;
-  for (const hero of Object.values(session.data.heroes)) {
-    // Debug: also owns every hero.
-    profile.heroes[hero.id] = {
-      constellation: 0,
-      bonusUnlocks: 0,
-      levelUpForm: "base",
-      ...profile.heroes[hero.id],
-      xp: Math.max(profile.heroes[hero.id]?.xp ?? 0, session.data.metaConfig.masteryLevels.at(-1)!),
-      unlockedCardIds: [...hero.lockedCardIds],
-    };
-  }
-  session.profile = profile;
-  saveProfile(profile);
-}
-
-export function debugResetProfile(): void {
-  session.profile = createProfile(session.data);
-  saveProfile(session.profile);
 }
 
 export function describeEvent(

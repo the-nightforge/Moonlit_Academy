@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { masteryLevel, pendingUnlocks, unlockCard } from "rules";
-import { saveProfile } from "../profile-store";
+import { masteryLevel, pendingUnlocks } from "rules";
+import { errorText, mutate } from "../account";
 import { session } from "../session";
 import { showCardTooltip } from "../ui/card-tooltip";
 import { COLORS, useDesignCamera } from "../ui/theme";
@@ -76,11 +76,13 @@ export class MasteryScene extends Phaser.Scene {
       if (!done) {
         addButton(this, this.root, 920, y, 140, "Mở khóa", () => {
           if (!window.confirm(`Mở khóa "${card.name}"?`)) return;
-          const result = unlockCard(data, session.profile, hero.id, cardId);
-          if (!result.ok) return;
-          session.profile = result.profile;
-          saveProfile(session.profile);
-          this.render();
+          mutate("POST", "/profile/unlock", { heroId: hero.id, cardId }).then(
+            () => this.render(),
+            (error: unknown) => {
+              window.alert(errorText(error));
+              this.render();
+            },
+          );
         }, pending > 0);
       }
     });

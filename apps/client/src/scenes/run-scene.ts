@@ -1,7 +1,8 @@
 import Phaser from "phaser";
-import { applyRunAction, applyRunResult, findNode, pendingUnlocks, reachableNodeIds, restHealAmounts, summarizeRun } from "rules";
+import { findNode, pendingUnlocks, reachableNodeIds, restHealAmounts } from "rules";
 import type { MapNode, RunAction, RunState } from "rules";
-import { saveProfile } from "../profile-store";
+import { errorText } from "../account";
+import { applyRecordedRunAction, submitRun } from "../run-session";
 import { session } from "../session";
 import { COLORS, NODE_ICONS, NODE_LABELS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
 
@@ -16,6 +17,8 @@ const ERROR_LABELS: Record<string, string> = {
 export class RunScene extends Phaser.Scene {
   private root!: Phaser.GameObjects.Container;
   private showDeck = false;
+  private submitting = false;
+  private submitError: string | null = null;
   private lastGainedRelic: string | undefined;
   private relicTooltip: Phaser.GameObjects.Container | null = null;
 
@@ -27,6 +30,8 @@ export class RunScene extends Phaser.Scene {
     useDesignCamera(this);
     this.root = this.add.container(0, 0);
     this.showDeck = false;
+    this.submitting = false;
+    this.submitError = null;
     this.render();
   }
 
@@ -35,7 +40,7 @@ export class RunScene extends Phaser.Scene {
   }
 
   private dispatch(action: RunAction) {
-    const result = applyRunAction(session.data, this.run, action);
+    const result = applyRecordedRunAction(action);
     if (!result.ok) {
       this.showError(result.error);
       return;
@@ -279,12 +284,21 @@ export class RunScene extends Phaser.Scene {
   private renderEnd() {
     const won = this.run.status === "won";
     const floor = this.run.position ? (findNode(this.run, this.run.position)?.floor ?? 0) : 0;
-    if (!session.runRewarded) {
-      const result = applyRunResult(session.data, session.profile, summarizeRun(session.data, this.run));
-      session.profile = result.profile;
-      session.lastGains = result.gains;
-      session.runRewarded = true;
-      saveProfile(session.profile);
+    // The server replays the run and grants the XP (`14` §4.3).
+    if (!session.runSubmitted && !this.submitting && this.submitError === null && session.ticket) {
+      this.submitting = true;
+      this.submitError = null;
+      submitRun().then(
+        () => {
+          this.submitting = false;
+          this.render();
+        },
+        (error: unknown) => {
+          this.submitting = false;
+          this.submitError = errorText(error);
+          this.render();
+        },
+      );
     }
     this.text(WIDTH / 2, 260, won ? "LƯỢT CHƠI THẮNG" : "LƯỢT CHƠI THẤT BẠI", 44, won ? COLORS.gold : "#cc5555").setOrigin(0.5);
     this.text(
@@ -294,6 +308,14 @@ export class RunScene extends Phaser.Scene {
       16,
       COLORS.dimText,
     ).setOrigin(0.5);
+    if (this.submitting) this.text(WIDTH / 2, 360, "Đang gửi kết quả lên server…", 15, COLORS.dimText).setOrigin(0.5);
+    if (this.submitError) {
+      this.text(WIDTH / 2, 360, `Chưa ghi nhận: ${this.submitError}`, 15, "#ff8080").setOrigin(0.5);
+      if (session.ticket) this.button(WIDTH / 2, 400, 200, "Gửi lại", () => {
+        this.submitError = null;
+        this.render();
+      });
+    }
     (session.lastGains ?? []).forEach((gain, index) => {
       const name = session.data.heroes[gain.heroId]!.name;
       const levelUp = gain.levelAfter > gain.levelBefore ? `  ·  Lên cấp Tu Luyện ${gain.levelAfter}!` : "";

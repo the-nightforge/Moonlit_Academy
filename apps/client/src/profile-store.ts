@@ -1,42 +1,26 @@
-import { createProfile, parseProfile } from "rules";
-import type { GameData, Profile } from "rules";
+/**
+ * Phase 4b kept the profile in localStorage. Since 4c the profile lives on the
+ * server; this only reads the old copy once so it can be imported (`14` §2.4).
+ */
+const LEGACY_KEY = "vong-nguyet.profile";
 
-const KEY = "vong-nguyet.profile";
-
-/** Set when localStorage is unavailable; scenes show a warning. */
-export const storage = { failed: false };
-
-export function loadProfile(data: GameData): Profile {
-  let raw: string | null;
+/** The old saved profile JSON, or null when there is none (or storage is blocked). */
+export function readLegacyProfile(): unknown {
   try {
-    raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(LEGACY_KEY);
+    return raw === null ? null : (JSON.parse(raw) as unknown);
   } catch {
-    storage.failed = true;
-    return createProfile(data);
+    return null;
   }
-  if (raw === null) return createProfile(data);
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    parsed = undefined;
-  }
-  const result = parseProfile(data, parsed);
-  if (result.reset) {
-    try {
-      localStorage.setItem(`${KEY}.bak`, raw);
-    } catch {
-      storage.failed = true;
-    }
-  }
-  return result.profile;
 }
 
-export function saveProfile(profile: Profile): void {
+/** Keeps the old copy under another key so the import is not offered again. */
+export function retireLegacyProfile(): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(profile));
-    storage.failed = false;
+    const raw = localStorage.getItem(LEGACY_KEY);
+    if (raw !== null) localStorage.setItem(`${LEGACY_KEY}.imported`, raw);
+    localStorage.removeItem(LEGACY_KEY);
   } catch {
-    storage.failed = true;
+    // Nothing to clean up.
   }
 }

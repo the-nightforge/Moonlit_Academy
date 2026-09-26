@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import {
   applyAction,
-  applyRunAction,
   getEffectiveCost,
   getPlayCardError,
   getValidTargets,
@@ -16,17 +15,15 @@ import type {
   GameData,
   StatusInstance,
 } from "rules";
+import { applyRecordedRunAction } from "../run-session";
 import { cycleEncounter, restartSession, session } from "../session";
 import {
   debugAddMoonPower,
   debugAdjustHeroHp,
   debugDrawCards,
-  debugGrantTeamXp,
   debugKillEnemy,
-  debugResetProfile,
   debugSetBloodMoon,
   debugSetMoon,
-  debugUnlockAll,
   describeEvent,
 } from "../debug";
 import manifest from "virtual:assets-manifest";
@@ -128,7 +125,7 @@ export class CombatScene extends Phaser.Scene {
     if (this.inputLocked) return false;
     const run = session.run;
     const result = run
-      ? applyRunAction(this.gameData, run, { type: "combat", action })
+      ? applyRecordedRunAction({ type: "combat", action })
       : applyAction(this.gameData, this.state, action);
     if (!result.ok) {
       this.showError(result.error);
@@ -859,6 +856,7 @@ export class CombatScene extends Phaser.Scene {
       y += 20;
     };
     line(`DEBUG — seed ${session.seed} · ${session.encounterId}`, 13);
+    if (session.run) line("⚠ Sửa trận trong lượt chơi: server sẽ không công nhận kết quả", 11);
     this.debugButton(x + 14, y + 10, 100, "Chơi lại", () => this.restart());
     this.debugButton(x + 124, y + 10, 80, "Seed +1", () => this.restart(session.seed + 1));
     this.debugButton(x + 214, y + 10, 90, "Trận kế ▸", () => {
@@ -881,19 +879,6 @@ export class CombatScene extends Phaser.Scene {
     });
     this.debugButton(x + 134, y + 10, 80, "Rút 1 lá", () => {
       debugDrawCards(1);
-      this.renderAll();
-    });
-    y += 36;
-    this.debugButton(x + 14, y + 10, 100, "+100 XP đội", () => {
-      debugGrantTeamXp(100);
-      this.renderAll();
-    });
-    this.debugButton(x + 124, y + 10, 90, "Mở hết lá", () => {
-      debugUnlockAll();
-      this.renderAll();
-    });
-    this.debugButton(x + 224, y + 10, 90, "Xóa hồ sơ", () => {
-      debugResetProfile();
       this.renderAll();
     });
     y += 36;

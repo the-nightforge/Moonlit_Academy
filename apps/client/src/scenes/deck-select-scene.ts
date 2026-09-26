@@ -1,8 +1,9 @@
 import Phaser from "phaser";
-import { bondCardsForTeam, deleteDeck, pendingUnlocks, starterDeck, validateDeck } from "rules";
+import { bondCardsForTeam, pendingUnlocks, starterDeck, validateDeck } from "rules";
 import type { DeckError, GameData, SavedDeck } from "rules";
-import { saveProfile } from "../profile-store";
-import { restartSession, session, startRun } from "../session";
+import { errorText, logout, mutate } from "../account";
+import { startServerRun } from "../run-session";
+import { restartSession, session } from "../session";
 import type { Team } from "../session";
 import { COLORS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
 import { addButton, addText } from "../ui/widgets";
@@ -44,6 +45,8 @@ export class DeckSelectScene extends Phaser.Scene {
   private scroll = 0;
   private pickingTeam = false;
   private picked: string[] = [];
+  /** A server request is in flight (starting a run). */
+  private busy = false;
 
   constructor() {
     super("deck-select");
@@ -51,6 +54,7 @@ export class DeckSelectScene extends Phaser.Scene {
 
   create() {
     useDesignCamera(this);
+    this.busy = false;
     this.root = this.add.container(0, 0);
     this.selected = `starter:${teamKey(session.heroIds)}`;
     this.scroll = 0;
@@ -91,8 +95,17 @@ export class DeckSelectScene extends Phaser.Scene {
     addText(this, this.root, WIDTH / 2, 30, "Chọn deck", 26, COLORS.gold).setOrigin(0.5);
     addText(this, this.root, WIDTH / 2, 62, "Đội đi theo deck — mỗi deck mang 3 Hero của nó", 13, COLORS.dimText).setOrigin(0.5);
 
+    const online = session.online;
     const canUnlock = Object.keys(data.heroes).some((id) => pendingUnlocks(data, session.profile, id) > 0);
-    addButton(this, this.root, WIDTH - 100, 30, 160, `Tu Luyện${canUnlock ? " ●" : ""}`, () => this.scene.start("mastery"));
+    addButton(this, this.root, WIDTH - 100, 30, 160, `Tu Luyện${canUnlock ? " ●" : ""}`, () => this.scene.start("mastery"), online);
+    if (online) {
+      addButton(this, this.root, 90, 30, 140, "Đăng xuất", () => {
+        void logout().then(() => this.scene.start("login"));
+      });
+    } else {
+      addButton(this, this.root, 90, 30, 140, "Đăng nhập", () => this.scene.start("login"));
+      addText(this, this.root, WIDTH / 2, 692, "Offline — chỉ Trận lẻ. Lượt chơi, deck và Tu Luyện cần kết nối server.", 13, "#ff8080").setOrigin(0.5);
+    }
 
     const decks = this.decks();
     const maxScroll = Math.max(0, decks.length - VISIBLE);
@@ -141,33 +154,43 @@ export class DeckSelectScene extends Phaser.Scene {
     const starter = deck.id.startsWith("starter:");
     const y = 650;
     const play = () => {
-      session.heroIds = [...deck.heroIds] as Team;
-      startRun(session.heroIds, [...deck.cardIds]);
-      this.scene.start("run");
+      if (this.busy) return;
+      this.busy = true;
+      startServerRun({ id: deck.id, heroIds: [...deck.heroIds] as Team }).then(
+        () => this.scene.start("run"),
+        (error: unknown) => {
+          this.busy = false;
+          window.alert(errorText(error));
+        },
+      );
     };
     const single = () => {
       session.heroIds = [...deck.heroIds] as Team;
       restartSession(session.seed, session.encounterId, session.heroIds, [...deck.cardIds]);
       this.scene.start("combat");
     };
-    addButton(this, this.root, 200, y, 150, "Lượt chơi", play, valid);
+    addButton(this, this.root, 200, y, 150, "Lượt chơi", play, valid && online);
     addButton(this, this.root, 360, y, 150, "Trận lẻ", single, valid);
-    addButton(this, this.root, 520, y, 150, "Sửa", () => this.edit(deck), !starter);
-    addButton(this, this.root, 680, y, 150, "Sao chép", () => this.edit({ ...deck, id: "", name: `${deck.name} (bản sao)`.slice(0, 24) }));
+    addButton(this, this.root, 520, y, 150, "Sửa", () => this.edit(deck), !starter && online);
+    addButton(this, this.root, 680, y, 150, "Sao chép", () => this.edit({ ...deck, id: "", name: `${deck.name} (bản sao)`.slice(0, 24) }), online);
     addButton(this, this.root, 840, y, 150, "Xóa", () => {
       if (!window.confirm(`Xóa deck "${deck.name}"?`)) return;
-      const result = deleteDeck(session.profile, deck.id);
-      if (!result.ok) return;
-      session.profile = result.profile;
-      saveProfile(session.profile);
-      this.selected = `starter:${teamKey(session.heroIds)}`;
-      this.render();
-    }, !starter);
+      mutate("DELETE", `/profile/decks/${deck.id}`).then(
+        () => {
+          this.selected = `starter:${teamKey(session.heroIds)}`;
+          this.render();
+        },
+        (error: unknown) => {
+          window.alert(errorText(error));
+          this.render();
+        },
+      );
+    }, !starter && online);
     addButton(this, this.root, 1090, y, 200, "Deck mới", () => {
       this.pickingTeam = true;
       this.picked = [...session.heroIds];
       this.render();
-    });
+    }, online);
   }
 
   /** Compact team picker, only used to seed a brand-new deck's heroIds. */

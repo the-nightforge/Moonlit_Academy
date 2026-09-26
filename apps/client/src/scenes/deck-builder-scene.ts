@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { saveDeck, validateDeck } from "rules";
-import { saveProfile, storage } from "../profile-store";
+import { validateDeck } from "rules";
+import { errorText, mutate } from "../account";
 import { session } from "../session";
 import { showCardTooltip } from "../ui/card-tooltip";
 import { COLORS, OWNER_COLORS, useDesignCamera } from "../ui/theme";
@@ -71,22 +71,19 @@ export class DeckBuilderScene extends Phaser.Scene {
     addText(this, this.root, 40, 560, `Deck ${this.deck.cardIds.length}/${data.metaConfig.deckSize}  ·  Chồng bài ${copies} bản`, 15);
     addText(this, this.root, 40, 584, `Cost 0–8: ${curve.join(" · ")}`, 13, COLORS.dimText);
     addText(this, this.root, 40, 608, errors.length === 0 ? "✓ Deck hợp lệ" : `⚠ ${describeDeckError(data, errors[0]!)}`, 13, errors.length === 0 ? COLORS.gold : "#ff8080");
-    if (storage.failed) addText(this, this.root, 40, 632, "Không lưu được tiến trình (trình duyệt chặn lưu trữ)", 12, "#ff8080");
     addButton(this, this.root, WIDTH - 470, 660, 140, "Đổi tên", () => {
       const name = window.prompt("Tên deck (tối đa 24 ký tự)", this.deck.name);
       if (name !== null) this.deck.name = name;
       this.render();
     });
     addButton(this, this.root, WIDTH - 310, 660, 140, "Lưu", () => {
-      const result = saveDeck(data, session.profile, this.deck);
-      if (!result.ok) {
-        window.alert(result.error === "invalid name" ? "Tên deck phải có 1–24 ký tự" : "Đã đạt số deck tối đa");
-        return;
-      }
-      session.profile = result.profile;
-      saveProfile(session.profile);
-      session.editingDeck = null;
-      this.scene.start("deck-select");
+      mutate("PUT", "/profile/decks", { draft: this.deck }).then(
+        () => {
+          session.editingDeck = null;
+          this.scene.start("deck-select");
+        },
+        (error: unknown) => window.alert(errorText(error)),
+      );
     });
     addButton(this, this.root, WIDTH - 150, 660, 140, "Hủy", () => {
       session.editingDeck = null;
