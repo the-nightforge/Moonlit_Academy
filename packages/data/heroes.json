@@ -296,7 +296,7 @@
       "name": "Thiên Diện",
       "description": "Mỗi buff Diệp Linh Lung cướp bằng lá của mình được thêm 1.",
       "counter": "buffsStolen",
-      "threshold": 2,
+      "threshold": 3,
       "passive": {
         "type": "stealBonus"
       }

@@ -280,3 +280,4 @@ Bối cảnh thiết kế: `13-phase4b-spec.md`. Luật từ khóa: `01`; luật
 | T166 | `saveDeck` / `deleteDeck`: cấp id, tên, `maxDecks`, lưu nháp, `unknown deck` |
 | T167 | `createRun` dùng `deckCardIds`, từ chối lá ngoài đội |
 | T168 | Pool lá thưởng = 12 lá/Hero trừ deck, có lá khóa, không rỗng với Bộ cơ bản |
+| T169 | Bộ đếm F02 `buffsStolen`: Đoạt Nguyệt lấy được ≥ 1 Nguyệt Lực → +1; Tỏa Nguyệt hoặc Đoạt Nguyệt lên địch 0 Nguyệt Lực → không tính |

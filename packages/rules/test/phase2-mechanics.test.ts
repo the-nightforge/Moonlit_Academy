@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CombatState, GameData } from "../src/index";
+import type { CardDef, CombatState, GameData } from "../src/index";
 import { applyAction, isCardPlayable } from "../src/index";
 import { idleIntent, stealOneCard, strike9Intent, twoHitCard } from "./fixtures";
 import {
@@ -157,6 +157,34 @@ describe("stealBuff", () => {
       status: "strength",
       value: 2,
     });
+  });
+
+  it("T169: Đoạt Nguyệt by F02 counts one theft toward buffsStolen; Tỏa Nguyệt and empty drains do not", () => {
+    const drain = (id: string, steal: boolean): CardDef => ({
+      id, name: id, ownerId: "f02", cost: 0, copies: 1, type: "skill", tags: [], target: "enemy",
+      effects: [{ type: "drainMoonPower", amount: 2, to: "chosen", ...(steal ? { steal: true } : {}) }], text: "",
+    });
+    const { data, state } = makeTestCombat({ heroIds: PHASE2_TEAM });
+    injectCard(state, data, drain("test_doat", true));
+    injectCard(state, data, drain("test_toa", false));
+    injectCard(state, data, drain("test_doat_empty", true));
+    state.enemies[0]!.moonPower = 5;
+    state.enemies[1]!.moonPower = 0;
+
+    const first = play(data, state, "test_doat", "enemy:0");
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(hero(first.state, "f02").levelUpCounter).toBe(1);
+
+    const second = play(data, first.state, "test_toa", "enemy:0");
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    expect(hero(second.state, "f02").levelUpCounter).toBe(1);
+
+    const third = play(data, second.state, "test_doat_empty", "enemy:1");
+    expect(third.ok).toBe(true);
+    if (!third.ok) return;
+    expect(hero(third.state, "f02").levelUpCounter).toBe(1);
   });
 
   it("T68: a stolen buff merges with the same buff on the thief", () => {

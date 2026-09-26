@@ -174,7 +174,7 @@ describe("bond resolution", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(hero(result.state, "f02").statuses).toEqual([{ id: "strength", value: 1 }]);
-    expect(hero(result.state, "f02").levelUpCounter).toBe(1);
+    expect(hero(result.state, "f02").levelUpCounter).toBe(2); // 1 buff + 1 Đoạt Nguyệt (01 §8)
     expect(hero(result.state, "m06").statuses).toEqual([{ id: "stealth", value: 1 }]);
     expect(result.state.enemies[0]?.moonPower).toBe(2);
     expect(result.state.moonPower).toBe(9);

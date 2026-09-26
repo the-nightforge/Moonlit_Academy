@@ -389,14 +389,63 @@ Các mục đã đóng nhờ số đo 4b (đã xóa khỏi checklist cũ): trậ
 (nay 7.9 vòng TB), F04 ít thăng cấp (nay 38/48 trận), Nguyệt Quang Dẫn 2 NL
 (nay cost 4 theo kinh tế 4a), tay kẹt vì Tàn Chiêu (nay bỏ cuối lượt, kẹt tay
 0–5%), boss quá dài (nay 10–12 vòng), m06+f02+f03 0/20 (nay 50% với Bộ cơ
-bản), tỷ lệ thắng bot 10–15% (nay 59%).
+bản), tỷ lệ thắng bot 10–15% (nay 59%). Sau "Chỉnh sau 4b" đóng thêm: game dễ
+hơn mục tiêu (bot 59% → 44%), F02 gần như không thăng cấp (6/48 → 28/48).
 
-- [ ] **Game dễ hơn mục tiêu:** bot (sàn kỹ năng) thắng 59% lượt chơi với Bộ
-      cơ bản, mục tiêu cho người chơi thật là 25–40%. Gói P được chỉnh khi
-      bot chỉ thắng ~10%.
-- [ ] **F02 gần như không thăng cấp:** 6/48 trận có F02 (Hero khác 53–79%);
-      trung bình ~1.2 lần cướp buff/trận, ngưỡng là 2.
-- [ ] **Chênh lệch đội:** Bộ cơ bản m05+f04+m06 thắng 30% lượt, m05+f03+f04
-      85%. Boss đánh riêng: m05+f04+m06 0/3, m05+f03+f04 3/3.
-- [ ] **Nhánh B yếu theo đội:** m06+f02+f03 nhánh B 6/6/6 30% vs nhánh A 85%.
+- [ ] **Chênh lệch đội (chưa sửa được):** Bộ cơ bản m05+f04+m06 30%,
+      m06+f02+f03 25%, m05+f03+f04 80% lượt thắng. Đã thử 8 hoán đổi lá miễn
+      phí ↔ khóa (Băng Tâm Quyết, Xuân Phong, Ảnh Phân Thân, Tàng Ảnh Thích,
+      Huyết Chiến…): không cái nào kéo đội yếu lên, bỏ Nguyệt Quang Dẫn còn
+      làm m05+f04+m06 tụt 30% → 5–10%. Cần xem lại bằng chơi tay trước khi
+      chỉnh tiếp (có thể do heuristic chơi F04/M06 kém, không phải data).
+- [ ] **Nhánh A mạnh hơn hẳn nhánh B ở m06+f02+f03** (60–85% vs 25–30%);
+      tính chung mọi đội nhánh B chỉ kém Bộ cơ bản 3–4 điểm.
 - [ ] Huyết Nguyệt vẫn hiếm: TB 0.5 lượt/trận (tối đa 3).
+
+## Chỉnh sau 4b (đã duyệt)
+
+Ablation bằng file tạm (không commit), 4 đội × 6 loại deck × 20 seed (gói
+cuối kiểm lại với 50 seed). Mục tiêu: bot 35–45% với Bộ cơ bản (người chơi
+thật 25–40% + chênh sàn kỹ năng), trận dài hơn.
+
+| Biến thể | Bộ cơ bản | Nhánh B 6/6/6 | Vòng thường / Tinh Anh | F02 thăng cấp |
+|---|---|---|---|---|
+| Data 4b | 59% | 50% | 8.3 / 8.8 | 8% |
+| NL khởi đầu 3 | 48% | 38% | 8.7 / 9.3 | 9% |
+| + damage địch ×0.8 | 36% | 29% | 8.6 / 9.1 | 8% (m05+f04+m06 còn 15%) |
+| **+ HP địch thường ×0.9** | **45%** | **39%** | **9.1 / 9.9** | 8% |
+| + boss 100 HP | 44% | 35% | 9.1 / 9.9 | 8% |
+| + ngưỡng F02 1 | 45% | 39% | — | 29% |
+| + Diện Cụ thêm Cướp 1 | 45% | 39% | — | 10% |
+| **+ Đoạt Nguyệt tính vào bộ đếm, ngưỡng 3** | **45%** | **39%** | — | **40%** |
+
+Đã áp dụng:
+
+- `combat-config.moonPower.start` 4 → **3** (yêu cầu: kéo dài trận).
+- `maxHp` địch thường và Tinh Anh ×0.9/0.8 (hoàn một nửa gói P): Khôi Lỗi
+  34 → 38, Ảnh Hồ 19 → 21, Thư Hồn 26 → 29, Hắc Giáp Vệ 56 → 63,
+  Hồ Vương 40 → 45. Boss giữ 90. Damage địch giữ ×0.7 (×0.8 làm đội yếu
+  sụp).
+- **Luật** (`01` §8, T169): bộ đếm F02 `buffsStolen` +1 mỗi effect Đoạt Nguyệt
+  của F02 lấy được ≥ 1 Nguyệt Lực; ngưỡng 2 → **3** (trở lại GDD). Cướp buff
+  hiếm vì địch ít buff, còn Đoạt Nguyệt luôn có mục tiêu. T86 (Ảnh Đấu) nay
+  đếm 2.
+- Nhánh B của M06: *Loạn Ảnh* 5 → 4, *Ảnh Tốc* 2 → 1 (50 seed: nhánh B 8/5/5
+  25% → 32%, ngẫu nhiên 39% → 43%). Giảm HP tự mất của lá Huyết Nguyệt (F02)
+  không có tác dụng đo được, không áp.
+
+### Kết quả sau chỉnh (`run-playtest`, seed 1–20)
+
+| Deck | Thắng | Tầng TB | XP TB/lượt |
+|---|---|---|---|
+| Bộ cơ bản | 44% | 6.2 | 109.0 |
+| nhánh A 6/6/6 | 55% | 7.2 | 133.6 |
+| nhánh B 6/6/6 | 41% | 6.3 | 100.2 |
+| nhánh A 4/4/10 | 54% | 6.8 | 125.9 |
+| nhánh B 8/5/5 | 40% | 6.5 | 103.9 |
+| ngẫu nhiên | 48% | 6.6 | 115.9 |
+
+Bộ cơ bản theo tier: thường 90% / 9.3 vòng, Tinh Anh 81% / 11.2, boss 71% /
+12.0. Cạn Bài ≤ 6%, kẹt tay ≤ 1%, 0 lượt kẹt, 0/60 lá chưa được đánh. Nhịp Tu
+Luyện ~11.4 lượt tới cấp 6 (mục tiêu 8–12). Thăng cấp trong trận đơn: M05
+51/72, F04 40/48, M06 36/48, F03 44/72, **F02 28/48** (trước 6/48).
