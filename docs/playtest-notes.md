@@ -553,3 +553,15 @@ hồ cạn giờ chỉ cắn ở boss), trận thường ≤4%; kẹt tay ≤1%,
   cách nhau). Chưa chỉnh — chờ duyệt.
 - Điểm cần chơi tay: Lõi có tạo cảm giác "build" mỗi lượt không; 16 Lõi có
   đủ đa dạng; Lõi thay lá có làm Nghỉ Chân bỏ lá (minDeckSize) vô dụng không.
+
+## Đo lại sau khi merge (Lõi + các gói chỉnh sau 4b)
+
+`run-playtest`, seed 1–20: Bộ cơ bản **64%**, nhánh A 6/6/6 83%, nhánh B 6/6/6
+59%, nhánh A 4/4/10 68%, nhánh B 8/5/5 63%, ngẫu nhiên 68%. Bộ cơ bản theo tier:
+thường 96% / 8.9 vòng, Tinh Anh 94% / 9.2, boss 77% / 10.6, **Cạn Bài ở boss
+17%**.
+
+- [ ] Vẫn dễ hơn mục tiêu (bot 35–45%) dù đã có gói chỉnh sau 4b (trước Lõi:
+      ~40%). Cần chỉnh số Lõi hoặc độ khó — chờ duyệt.
+- [ ] Cạn Bài ở boss 17% (mục tiêu < 10%): deck 18 lá cố định, trận boss dài.
+
