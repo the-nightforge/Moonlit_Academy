@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { auth, initApi, setToken } from "./api";
+import { ArenaScene } from "./scenes/arena-scene";
 import { LoginScene } from "./scenes/login-scene";
 import { session } from "./session";
 import { CombatScene } from "./scenes/combat-scene";
@@ -28,7 +29,7 @@ const game = new Phaser.Game({
   },
   scene: [
     LoginScene, DeckSelectScene, DeckBuilderScene, MasteryScene, GachaScene, ShopScene, HeroesScene, MissionsScene, ArmoryScene,
-    CombatScene, RunScene,
+    ArenaScene, CombatScene, RunScene,
   ],
 });
 
@@ -39,3 +40,6 @@ auth.onUnauthorized = () => {
   const active = game.scene.getScenes(true)[0];
   if (active && active.scene.key !== "login") active.scene.start("login");
 };
+
+// Dev/e2e handle: canvas UI is not DOM-readable, tests inspect session here.
+(window as unknown as { __vn: { session: typeof session; game: Phaser.Game } }).__vn = { session, game };

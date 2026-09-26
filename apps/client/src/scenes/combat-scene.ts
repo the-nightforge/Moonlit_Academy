@@ -18,6 +18,8 @@ import type {
   StatusInstance,
 } from "rules";
 import { applyRecordedRunAction } from "../run-session";
+import type { NetMatch } from "../net/match";
+import type { ServerMessage } from "../net/protocol";
 import { cycleEncounter, restartSession, session } from "../session";
 import {
   debugAddMoonPower,
@@ -82,6 +84,11 @@ export class CombatScene extends Phaser.Scene {
   private debugVisible = false;
   private mulliganPicks = new Set<string>();
   private tooltip: Phaser.GameObjects.Container | null = null;
+  /** Network match binding (`16` §8); null in offline/PvE combats. */
+  private netMatch: NetMatch | null = null;
+  private mySeat = 0;
+  private timerText: Phaser.GameObjects.Text | null = null;
+  private netDown = false;
 
   constructor() {
     super("combat");
@@ -97,11 +104,17 @@ export class CombatScene extends Phaser.Scene {
 
   create() {
     this.gameData = session.data;
-    this.state = session.state;
+    this.netMatch = session.match;
+    this.state = this.netMatch ? this.netMatch.view : session.state;
+    this.mySeat = this.netMatch?.you ?? 0;
+    this.netDown = false;
+    this.timerText = null;
     this.targeting = null;
     this.validTargetIds.clear();
     this.mulliganPicks.clear();
     this.inputLocked = false;
+    if (this.netMatch) this.bindNet(this.netMatch);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.unbindNet());
     useDesignCamera(this);
     this.root = this.add.container(0, 0);
     this.input.mouse?.disableContextMenu();
@@ -110,7 +123,7 @@ export class CombatScene extends Phaser.Scene {
     });
     this.input.keyboard?.on("keydown-ESC", () => this.cancelTargeting());
     this.input.keyboard?.on("keydown-E", () => {
-      if (!this.inputLocked) this.dispatch({ type: "endTurn" });
+      if (!this.inputLocked && this.state.status === "playerTurn") this.dispatch({ type: "endTurn" });
     });
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
       if (event.code === "Backquote") {
@@ -123,8 +136,66 @@ export class CombatScene extends Phaser.Scene {
 
   // ---- action pipeline ----
 
+  /** Routes `match.*` frames to the live match and wires socket status. */
+  private bindNet(match: NetMatch): void {
+    const net = session.net!;
+    net.onMessage = (message: ServerMessage) => {
+      if ("matchId" in message && match.handle(message)) return;
+      if (message.type === "error") this.showError(message.error);
+    };
+    net.onStatus = (connected) => {
+      this.netDown = !connected;
+      if (this.scene.isActive()) this.renderAll();
+    };
+    net.onRejoin = (snapshot) => {
+      match.rejoin(snapshot);
+      this.state = match.view;
+      this.targeting = null;
+      this.mulliganPicks.clear();
+      this.inputLocked = false;
+      if (this.scene.isActive()) this.renderAll();
+    };
+    match.onPush = (events, view) => this.onNetPush(events, view);
+    match.onEnd = () => {
+      this.inputLocked = true;
+      this.renderAll();
+    };
+    match.onRejected = (reason) => {
+      this.inputLocked = false;
+      this.showError(reason);
+    };
+  }
+
+  private unbindNet(): void {
+    if (!this.netMatch) return;
+    this.netMatch.onPush = () => {};
+    this.netMatch.onEnd = () => {};
+    this.netMatch.onRejected = () => {};
+  }
+
+  /** A `match.events` push: animate the events, then render the new view. */
+  private onNetPush(events: CombatEvent[], view: CombatState): void {
+    if (!this.scene.isActive()) {
+      this.state = view;
+      return;
+    }
+    this.targeting = null;
+    this.inputLocked = true;
+    void this.playEvents(events).then(() => {
+      this.state = view;
+      this.renderAll();
+      this.inputLocked = this.netMatch?.ended !== null;
+    });
+  }
+
   private dispatch(action: Action): boolean {
     if (this.inputLocked) return false;
+    if (this.netMatch) {
+      // The server validates; rejected actions come back as match.rejected.
+      this.netMatch.sendAction(action);
+      this.inputLocked = true;
+      return true;
+    }
     const run = session.run;
     const result = run
       ? applyRecordedRunAction({ type: "combat", action })
@@ -165,6 +236,7 @@ export class CombatScene extends Phaser.Scene {
       state: this.state,
       unitAnchors: this.unitAnchors,
       unitViews: this.unitViews,
+      mySeat: this.mySeat,
     });
   }
 
@@ -263,9 +335,15 @@ export class CombatScene extends Phaser.Scene {
     this.unitAnchors.clear();
     this.unitViews.clear();
     this.errorText = undefined;
+    this.timerText = null;
     this.renderTopBar();
     this.renderMoonWheel();
-    this.renderEnemies();
+    if (this.state.mode === "pvp") {
+      this.renderOpponentRow();
+      this.renderOpponentHand();
+    } else {
+      this.renderEnemies();
+    }
     this.renderHeroes();
     this.renderBottomBar();
     if (this.targeting !== null) this.renderTargetingHint();
@@ -274,7 +352,20 @@ export class CombatScene extends Phaser.Scene {
     }
     if (this.state.status === "mulligan") this.renderMulliganBar();
     if (this.state.status === "choosing") this.renderChoiceOverlay();
+    if (this.netDown) this.renderReconnectOverlay();
     this.renderDebugPanel();
+  }
+
+  /** Per-frame: the shared turn clock counts down to the server deadline. */
+  update(): void {
+    if (!this.timerText || !this.netMatch) return;
+    const deadline = this.netMatch.deadline;
+    if (deadline === null) {
+      this.timerText.setText("");
+      return;
+    }
+    const left = Math.max(0, deadline - (session.net?.serverNow() ?? Date.now()));
+    this.timerText.setText(`⏱ ${Math.ceil(left / 1000)}s`);
   }
 
   private restart(seed?: number, encounterId?: string): void {
@@ -310,12 +401,38 @@ export class CombatScene extends Phaser.Scene {
 
   private renderTopBar() {
     this.text(24, 14, `Vòng ${this.state.round}`, 16);
-    const seat = activePlayerState(this.state);
-    if (seat.runRelicIds.length > 0) {
-      const names = seat.runRelicIds
-        .map((id: string) => (this.gameData.runRelics[id] ?? this.gameData.augments[id])?.name ?? id)
-        .join(" · ");
-      this.text(24, 36, `Kỳ Vật · Lõi: ${names}`, 11, COLORS.dimText);
+    const match = this.netMatch;
+    if (match) {
+      // Opponent strip (`17` §7.3): name, Nguyệt Lực / Dự Trữ, pile counts.
+      const oppSeat = this.state.players.find((p) => p.index !== this.mySeat);
+      const oppInfo = match.others[0];
+      if (oppSeat && oppInfo) {
+        this.text(
+          24,
+          36,
+          `${oppInfo.username}${oppInfo.connected ? "" : " ⛔"} — NL ${oppSeat.moonPower} · DT ${Math.min(oppSeat.moonReserve, oppSeat.moonPower)} · Tay ${oppSeat.hand.length} · Chồng ${oppSeat.drawPile.length} · Bỏ ${oppSeat.discardPile.length}`,
+          12,
+          COLORS.dimText,
+        );
+      }
+      const label =
+        this.state.status === "playerTurn" || this.state.status === "choosing"
+          ? "— Lượt của bạn —"
+          : this.state.status === "opponentTurn" || (this.state.status === "mulligan" && this.state.players[this.mySeat]!.mulliganDone)
+            ? "— Lượt đối thủ —"
+            : "";
+      if (label) this.text(WIDTH / 2, 40, label, 15, COLORS.gold).setOrigin(0.5, 0);
+      if (match.deadline !== null) {
+        this.timerText = this.text(1150, 40, "", 16, COLORS.gold).setOrigin(1, 0);
+      }
+    } else {
+      const seat = activePlayerState(this.state);
+      if (seat.runRelicIds.length > 0) {
+        const names = seat.runRelicIds
+          .map((id: string) => (this.gameData.runRelics[id] ?? this.gameData.augments[id])?.name ?? id)
+          .join(" · ");
+        this.text(24, 36, `Kỳ Vật · Lõi: ${names}`, 11, COLORS.dimText);
+      }
     }
     const phase = this.gameData.moonPhases[this.state.moonIndex]!;
     this.text(WIDTH / 2, 14, `( ${phase.icon} ${phase.name} )`, 16).setOrigin(0.5, 0);
@@ -530,8 +647,70 @@ export class CombatScene extends Phaser.Scene {
     });
   }
 
+  /** PvP (`17` §7.3): the opponent's heroes take the enemy row, intents hidden. */
+  private renderOpponentRow() {
+    const opponents = this.state.heroes.filter((hero) => hero.player !== this.mySeat);
+    const panelW = 220;
+    const panelH = 140;
+    opponents.forEach((hero, index) => {
+      const cx = (WIDTH / (opponents.length + 1)) * (index + 1);
+      const cy = 205;
+      const c = this.add.container(cx, cy);
+      this.root.add(c);
+      this.unitAnchors.set(hero.id, { x: cx, y: cy });
+      this.unitViews.set(hero.id, c);
+      const isValidTarget = this.validTargetIds.has(hero.id);
+      const panel = this.add.rectangle(0, 0, panelW, panelH, COLORS.panelEnemy);
+      panel.setStrokeStyle(
+        this.targeting && isValidTarget ? 2 : 1,
+        this.targeting && isValidTarget ? COLORS.goldFill : COLORS.panelBorder,
+      );
+      c.add(panel);
+      const upKey = `heroes:${hero.defId}_up`;
+      const heroArt = this.coverImage(
+        hero.leveledUp && this.textures.exists(upKey) ? upKey : `heroes:${hero.defId}`,
+        0, 0, panelW - 6, panelH - 6, c,
+      );
+      if (heroArt) c.add(this.add.rectangle(0, 0, panelW - 6, panelH - 6, 0x0a0e20, 0.45));
+      const def = this.gameData.heroes[hero.defId]!;
+      this.text(0, -panelH / 2 + 16, `${def.name}${hero.leveledUp ? " ★" : ""}`, 15, COLORS.text, c).setOrigin(0.5);
+      this.hpBar(-panelW / 2 + 14, -14, panelW - 28, hero.hp, hero.maxHp, COLORS.hpFillEnemy, c);
+      if (hero.armor > 0) this.text(-panelW / 2 + 14, 12, `🛡 ${hero.armor}`, 12, COLORS.armor, c);
+      this.statusChips(-panelW / 2 + 14, 38, hero.statuses, panelW - 28, c);
+      if (!hero.alive) {
+        c.add(this.add.rectangle(0, 0, panelW, panelH, 0x000000, 0.55));
+        this.text(0, 0, "Ngã", 20, "#ffffff", c).setOrigin(0.5);
+      }
+      if (this.targeting && !isValidTarget) c.setAlpha(0.4);
+      this.unitPanelHit(panel, panelW, panelH, hero.id);
+    });
+  }
+
+  /** The opponent's hand — face-down card backs only (`17` §4.8). */
+  private renderOpponentHand() {
+    const oppSeat = this.state.players.find((p) => p.index !== this.mySeat);
+    if (!oppSeat) return;
+    const count = oppSeat.hand.length;
+    const startX = WIDTH / 2 - ((count - 1) * 34) / 2;
+    for (let i = 0; i < count; i++) {
+      const back = this.add
+        .rectangle(startX + i * 34, 110, 30, 44, 0x2c3e6e)
+        .setStrokeStyle(1, COLORS.panelBorder);
+      this.root.add(back);
+    }
+  }
+
+  private renderReconnectOverlay() {
+    this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.55).setDepth(200));
+    this.text(WIDTH / 2, HEIGHT / 2, "Mất kết nối — đang kết nối lại…", 20, COLORS.gold)
+      .setOrigin(0.5)
+      .setDepth(201);
+  }
+
   private renderHeroes() {
-    const heroes = this.state.heroes;
+    const heroes = this.state.mode === "pvp"
+      ? this.state.heroes.filter((hero) => hero.player === this.mySeat)
+      : this.state.heroes;
     const panelW = 240;
     const panelH = 170;
     heroes.forEach((hero, index) => {
@@ -769,6 +948,10 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderMulliganBar() {
+    if (this.state.players[this.mySeat]?.mulliganDone) {
+      this.text(WIDTH / 2, 520, "Chờ đối thủ Đổi Bài…", 14, COLORS.dimText).setOrigin(0.5);
+      return;
+    }
     const picks = this.mulliganPicks.size;
     this.text(WIDTH / 2, 520, `Đổi Bài: chọn tối đa ${this.gameData.combatConfig.maxMulligan} lá để đổi`, 14, COLORS.gold).setOrigin(0.5);
     this.endScreenButton(1150, 600, picks > 0 ? `Đổi (${picks})` : "Giữ nguyên", () => {
@@ -779,7 +962,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderChoiceOverlay() {
-    const options = activePlayerState(this.state).pendingChoice!.options;
+    const options = this.state.players[this.mySeat]!.pendingChoice!.options;
     this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.6));
     this.text(WIDTH / 2, 250, "Chiêm Bài — chọn 1 lá, các lá còn lại xuống đáy chồng", 16, COLORS.gold).setOrigin(0.5);
     const spacing = CARD_W + 30;
@@ -795,6 +978,40 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderCombatEnd() {
+    if (this.netMatch) {
+      const end = this.netMatch.ended;
+      const won = end ? end.result === "won" : this.state.winner === this.mySeat;
+      const draw = end?.result === "draw";
+      const reasons: Record<string, string> = {
+        resign: "Đối thủ bỏ cuộc",
+        timeout: "Đối thủ hết giờ quá nhiều lần",
+        disconnect: "Đối thủ mất kết nối",
+        combat: "",
+      };
+      const myReasons: Record<string, string> = {
+        resign: "Bạn đã bỏ cuộc",
+        timeout: "Bạn hết giờ quá nhiều lần",
+        disconnect: "Bạn mất kết nối quá lâu",
+        combat: "",
+      };
+      this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.65));
+      this.text(
+        WIDTH / 2, HEIGHT / 2 - 30,
+        draw ? "HÒA" : won ? "THẮNG" : "THUA",
+        56,
+        draw ? COLORS.dimText : won ? COLORS.gold : "#cc5555",
+      ).setOrigin(0.5);
+      this.text(
+        WIDTH / 2, HEIGHT / 2 + 30,
+        (won || draw ? reasons : myReasons)[end?.reason ?? "combat"] ?? "",
+        16, COLORS.dimText,
+      ).setOrigin(0.5);
+      this.endScreenButton(WIDTH / 2, HEIGHT / 2 + 90, "Về Đấu Trường", () => {
+        session.match = null;
+        this.scene.start("arena");
+      });
+      return;
+    }
     const won = this.state.status === "won";
     this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.65));
     this.text(
@@ -859,7 +1076,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderDebugPanel(): void {
-    if (!this.debugVisible) return;
+    if (!this.debugVisible || this.netMatch) return;
     const x = WIDTH - 336;
     this.root.add(
       this.add
@@ -937,7 +1154,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderBottomBar() {
-    const seat = activePlayerState(this.state);
+    const seat = this.state.players[this.mySeat] ?? activePlayerState(this.state);
     const power = seat.moonPower;
     const reserve = Math.min(seat.moonReserve, power);
     this.text(30, 545, "Nguyệt Lực", 13, COLORS.dimText);
@@ -981,6 +1198,16 @@ export class CombatScene extends Phaser.Scene {
         11,
         COLORS.dimText,
       ).setOrigin(0.5, 0);
+    }
+    if (this.netMatch && !this.netMatch.ended) {
+      const btn = this.add.rectangle(1150, 590, 100, 30, 0x40202a);
+      btn.setStrokeStyle(1, 0x884455);
+      btn.setInteractive({ useHandCursor: true });
+      btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0 && window.confirm("Bỏ cuộc trận này?")) this.netMatch!.resign();
+      });
+      this.root.add(btn);
+      this.text(1150, 590, "Bỏ cuộc", 12, "#ff9090").setOrigin(0.5);
     }
   }
 }
