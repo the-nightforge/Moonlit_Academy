@@ -5,6 +5,7 @@ import { registerAuthRoutes } from "./routes/auth";
 import { registerGachaRoutes } from "./routes/gacha";
 import { registerProfileRoutes } from "./routes/profile";
 import { registerRunRoutes } from "./routes/runs";
+import { registerShopRoutes } from "./routes/shop";
 
 /** The HTTP API (`16`); `deps` are injected so tests control the clock and randomness. */
 export function buildApp(deps: AppDeps): FastifyInstance {
@@ -36,5 +37,6 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   registerProfileRoutes(app, ctx);
   registerRunRoutes(app, ctx);
   registerGachaRoutes(app, ctx);
+  registerShopRoutes(app, ctx);
   return app;
 }

@@ -51,6 +51,7 @@
       "description": "Mọi đòn từ lá tấn công của Hoắc Liệt gây thêm 3 damage.",
       "counter": "damageTaken",
       "threshold": 15,
+      "constellationThreshold": 11,
       "passive": {
         "type": "attackDamageBonus",
         "amount": 3
@@ -59,6 +60,10 @@
     "art": {
       "portrait": "",
       "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m05_liet_hoa_xung_phong",
+      "plusCardId": "m05_liet_hoa_xung_phong_plus"
     }
   },
   {
@@ -113,6 +118,7 @@
       "description": "Khi lá của Ôn Như Ý áp Hồi Phục, mọi Hero còn sống đều nhận Hồi Phục.",
       "counter": "turnsWithAllyRegen",
       "threshold": 3,
+      "constellationThreshold": 2,
       "passive": {
         "type": "regenSpreadsToAllAllies"
       }
@@ -120,6 +126,10 @@
     "art": {
       "portrait": "",
       "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f04_bach_thao_huong",
+      "plusCardId": "f04_bach_thao_huong_plus"
     }
   },
   {
@@ -174,6 +184,7 @@
       "description": "Từ lượt sau: lá đầu tiên của Tô Dạ mỗi lượt giảm 3 Nguyệt Lực.",
       "counter": "enemiesKilled",
       "threshold": 1,
+      "constellationThreshold": 1,
       "passive": {
         "type": "firstOwnCardDiscount",
         "amount": 3
@@ -182,6 +193,10 @@
     "art": {
       "portrait": "",
       "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m06_am_tien",
+      "plusCardId": "m06_am_tien_plus"
     }
   },
   {
@@ -236,6 +251,7 @@
       "description": "Damage từ lá của Tần Sương lên kẻ địch đang Đóng Băng tăng gấp đôi.",
       "counter": "freezesApplied",
       "threshold": 3,
+      "constellationThreshold": 2,
       "passive": {
         "type": "doubleDamageVsFrozen"
       }
@@ -243,6 +259,10 @@
     "art": {
       "portrait": "",
       "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f03_suong_tram",
+      "plusCardId": "f03_suong_tram_plus"
     }
   },
   {
@@ -297,6 +317,7 @@
       "description": "Mỗi buff Diệp Linh Lung cướp bằng lá của mình được thêm 1.",
       "counter": "buffsStolen",
       "threshold": 3,
+      "constellationThreshold": 2,
       "passive": {
         "type": "stealBonus"
       }
@@ -304,6 +325,10 @@
     "art": {
       "portrait": "",
       "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f02_anh_tap",
+      "plusCardId": "f02_anh_tap_plus"
     }
   }
 ]

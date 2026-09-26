@@ -1,5 +1,5 @@
 import { applyRunAction, createRun, replayRun } from "rules";
-import type { MasteryGain, RunAction, RunActionResult, RunSetup } from "rules";
+import type { Loadout, MasteryGain, RunAction, RunActionResult, RunSetup } from "rules";
 import { mutate, type ProfileReply } from "./account";
 import { ApiError, api } from "./api";
 import { session, type Team } from "./session";
@@ -11,6 +11,8 @@ const CLOSED_TICKET_ERRORS = new Set(["replay failed", "run closed", "ticket exp
 export interface RunTicket {
   runId: string;
   setup: RunSetup;
+  /** Constellations snapshotted by the server; absent on tickets saved before phase 4d. */
+  loadout?: Loadout;
   actions: RunAction[];
 }
 
@@ -26,8 +28,8 @@ function persist(ticket: RunTicket | null): void {
 /** Asks the server for a ticket, then builds the run locally from its setup. */
 export async function startServerRun(deck: { id: string; heroIds: Team }): Promise<void> {
   const body = deck.id.startsWith("starter:") ? { deckId: "starter", heroIds: deck.heroIds } : { deckId: deck.id };
-  const { runId, setup } = await api<{ runId: string; setup: RunSetup }>("POST", "/runs", { body });
-  const ticket: RunTicket = { runId, setup, actions: [] };
+  const { runId, setup, loadout } = await api<{ runId: string; setup: RunSetup; loadout: Loadout }>("POST", "/runs", { body });
+  const ticket: RunTicket = { runId, setup, loadout, actions: [] };
   session.ticket = ticket;
   persist(ticket);
   session.heroIds = setup.heroIds;
@@ -35,7 +37,7 @@ export async function startServerRun(deck: { id: string; heroIds: Team }): Promi
   session.deckCardIds = setup.deckCardIds;
   session.lastGains = null;
   session.runSubmitted = false;
-  session.run = createRun(session.data, setup).run;
+  session.run = createRun(session.data, setup, loadout).run;
 }
 
 /** Applies an action to the current run and records it for the server replay. */
@@ -88,7 +90,7 @@ export function savedRun(): RunTicket | null {
 
 /** Rebuilds a saved run locally; false if its actions no longer replay (data changed). */
 export function resumeRun(ticket: RunTicket): boolean {
-  const replay = replayRun(session.data, ticket.setup, ticket.actions);
+  const replay = replayRun(session.data, ticket.setup, ticket.actions, ticket.loadout);
   if (!replay.ok) return false;
   session.ticket = ticket;
   session.heroIds = ticket.setup.heroIds;

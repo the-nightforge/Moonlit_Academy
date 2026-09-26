@@ -250,6 +250,30 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
   }
 
+  // Constellation data (`14` §10): threshold, signature card and its "+" version.
+  const pooled = new Set(heroes.flatMap((hero) => [...hero.cardIds, ...hero.lockedCardIds]));
+  for (const hero of heroes) {
+    if (hero.levelUp.constellationThreshold > hero.levelUp.threshold) {
+      errors.push(`heroes: "${hero.id}" constellationThreshold must not exceed threshold`);
+    }
+    const { cardId, plusCardId } = hero.signature;
+    const base = cards.find((card) => card.id === cardId);
+    const plus = cards.find((card) => card.id === plusCardId);
+    if (!hero.cardIds.includes(cardId)) errors.push(`heroes: "${hero.id}" signature card "${cardId}" is not one of its free cards`);
+    if (!base || !plus) {
+      errors.push(`heroes: "${hero.id}" signature cards must exist`);
+    } else if (plus.plusOf !== cardId || plus.ownerId !== hero.id || plus.cost !== base.cost || plus.copies !== base.copies) {
+      errors.push(`heroes: "${hero.id}" plus card "${plusCardId}" must have plusOf "${cardId}", the same owner, cost and copies`);
+    }
+  }
+  for (const card of cards) {
+    if (card.plusOf === undefined) continue;
+    if (pooled.has(card.id)) errors.push(`cards: plus card "${card.id}" must not be in a hero pool`);
+    if (heroes.filter((hero) => hero.signature.plusCardId === card.id).length !== 1) {
+      errors.push(`cards: plus card "${card.id}" must be the signature plus card of exactly one hero`);
+    }
+  }
+
   const starters = economyConfig.starterHeroIds;
   if (new Set(starters).size !== starters.length) {
     errors.push(`economyConfig: starterHeroIds must be distinct`);

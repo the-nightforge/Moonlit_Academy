@@ -163,7 +163,7 @@ function dealDamage(
   if (target.alive && target.hp <= 0) {
     killUnit(data, state, target, events, { id: ctx.source.id, cardDamage: ctx.card !== undefined });
   }
-  killUnit(data, state, ctx.source, events, { id: target.id, cardDamage: false });
+  killUnit(data, state, ctx.source, events, { id: target.id, cardDamage: false, reflect: true });
 }
 
 function evalCondition(
@@ -409,6 +409,8 @@ export function processDeaths(
 interface Killer {
   id: string;
   cardDamage: boolean;
+  /** Died to the killer's Phản Đòn (counts for enemiesKilled at constellation 2, `01` §8). */
+  reflect?: boolean;
 }
 
 function killUnit(
@@ -427,9 +429,11 @@ function killUnit(
     unitId: unit.id,
     ...(killer !== undefined ? { killerId: killer.id } : {}),
   });
-  if (killer?.cardDamage && unit.side === "enemy") {
+  if (killer && unit.side === "enemy") {
     const killerHero = state.heroes.find((hero) => hero.id === killer.id);
-    if (killerHero) bumpCounter(data, killerHero, "enemiesKilled", 1);
+    if (killerHero && (killer.cardDamage || (killer.reflect && killerHero.constellation >= 2))) {
+      bumpCounter(data, killerHero, "enemiesKilled", 1);
+    }
   }
   if (unit.side === "hero") {
     const defId = (unit as HeroState).defId;

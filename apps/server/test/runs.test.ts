@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  applyRunResult, applyRunRewards, createProfile, grantStarterGift, starterDeck, summarizeRun, type RunSetup, type SavedDeck,
+  applyRunResult, applyRunRewards, createProfile, grantStarterGift, parseProfile, replayRun, starterDeck, summarizeRun,
+  type Loadout, type RunSetup, type SavedDeck,
 } from "rules";
 import { TICKET_TTL_MS } from "../src/routes/runs";
 import { call, playRun, register, testServer } from "./helpers";
@@ -95,5 +96,37 @@ describe("run tickets", () => {
     expect(malformed.status).toBe(400);
     expect(malformed.body.error).toBe("bad request");
     expect(runStatus(server, ticket.body.runId)).toBe("open");
+  });
+
+  it("T195: a ticket snapshots the team's constellations; later changes do not affect its replay", async () => {
+    const { server, token } = await signedIn();
+    const setConstellation = (constellation: number) => {
+      const row = server.db.prepare("SELECT profile_json FROM profiles").get() as { profile_json: string };
+      const profile = parseProfile(server.data, JSON.parse(row.profile_json)).profile;
+      profile.heroes["m05"]!.constellation = constellation;
+      server.db.prepare("UPDATE profiles SET profile_json = ?").run(JSON.stringify(profile));
+    };
+    setConstellation(4);
+    const ticket = await call(server, "POST", "/api/runs", { token, body: { deckId: "starter", heroIds: TEAM } });
+    const loadout = ticket.body.loadout as Loadout;
+    expect(loadout.heroes["m05"]).toEqual({ constellation: 4, levelUpForm: "base" });
+    expect(loadout.heroes["f04"]).toEqual({ constellation: 0, levelUpForm: "base" });
+
+    setConstellation(0);
+    const { run, actions } = playRun(server.data, ticket.body.setup, loadout);
+    expect(run.deck).toContain(server.data.heroes["m05"]!.signature.plusCardId);
+    const finished = await call(server, "POST", `/api/runs/${ticket.body.runId}/finish`, { token, rev: 1, body: { actions } });
+    expect(finished.status).toBe(200);
+    expect(finished.body.profile.heroes["m05"].constellation).toBe(0);
+  });
+
+  it("a ticket issued before loadouts existed replays without one", async () => {
+    const { server, token } = await signedIn();
+    const ticket = await call(server, "POST", "/api/runs", { token, body: { deckId: "starter", heroIds: TEAM } });
+    server.db.prepare("UPDATE runs SET loadout_json = NULL WHERE id = ?").run(ticket.body.runId);
+    const { actions } = playRun(server.data, ticket.body.setup);
+    expect(replayRun(server.data, ticket.body.setup, actions).ok).toBe(true);
+    const finished = await call(server, "POST", `/api/runs/${ticket.body.runId}/finish`, { token, rev: 1, body: { actions } });
+    expect(finished.status).toBe(200);
   });
 });

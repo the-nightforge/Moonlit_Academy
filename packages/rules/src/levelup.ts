@@ -26,7 +26,8 @@ export function checkLevelUps(
     if (!hero.alive || hero.leveledUp) continue;
     const def = data.heroes[hero.defId];
     if (!def) continue;
-    if (hero.levelUpCounter >= def.levelUp.threshold) {
+    const threshold = hero.constellation >= 2 ? def.levelUp.constellationThreshold : def.levelUp.threshold;
+    if (hero.levelUpCounter >= threshold) {
       hero.leveledUp = true;
       events.push({ type: "heroLeveledUp", heroId: hero.id, name: def.name });
     }

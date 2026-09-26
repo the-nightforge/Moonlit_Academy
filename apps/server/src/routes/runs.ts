@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import type { RunAction, RunSetup } from "rules";
-import { applyRunResult, applyRunRewards, replayRun, starterDeck, summarizeRun, validateDeck } from "rules";
+import type { Loadout, RunAction, RunSetup } from "rules";
+import { applyRunResult, applyRunRewards, buildLoadout, replayRun, starterDeck, summarizeRun, validateDeck } from "rules";
 import { z } from "zod";
 import { HttpError, type AppContext } from "../context";
 
@@ -41,6 +41,7 @@ interface RunRow {
   data_version: string;
   created_at: number;
   starter_deck: number;
+  loadout_json: string | null;
 }
 
 /** Run tickets and verified results (`14` §4, `16` §4). */
@@ -48,7 +49,7 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
   const { db, data, clock, random } = ctx;
   const abandonOpen = db.prepare("UPDATE runs SET status = 'abandoned', finished_at = ? WHERE account_id = ? AND status = 'open'");
   const insertRun = db.prepare(
-    "INSERT INTO runs (id, account_id, status, setup_json, data_version, created_at, starter_deck) VALUES (?, ?, 'open', ?, ?, ?, ?)",
+    "INSERT INTO runs (id, account_id, status, setup_json, data_version, created_at, starter_deck, loadout_json) VALUES (?, ?, 'open', ?, ?, ?, ?, ?)",
   );
   const findRun = db.prepare<[string, number], RunRow>("SELECT * FROM runs WHERE id = ? AND account_id = ?");
   const closeRun = db.prepare("UPDATE runs SET status = ?, finished_at = ?, result_json = ? WHERE id = ?");
@@ -77,15 +78,19 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
     }
     const errors = validateDeck(data, profile, deck);
     if (errors.length > 0) throw new HttpError(400, "invalid deck", { errors });
+    // Constellations are snapshotted now: later pulls do not change this run (T195).
+    const built = buildLoadout(data, profile, deck.heroIds);
+    if (!built.ok) throw new HttpError(400, built.error);
+    const { loadout } = built;
 
     const setup: RunSetup = { heroIds: deck.heroIds, seed: random(4).readUInt32BE(0), deckCardIds: [...deck.cardIds] };
     const runId = random(16).toString("base64url");
     db.transaction(() => {
       const now = clock();
       abandonOpen.run(now, accountId);
-      insertRun.run(runId, accountId, JSON.stringify(setup), ctx.dataVersion, now, "heroIds" in body ? 1 : 0);
+      insertRun.run(runId, accountId, JSON.stringify(setup), ctx.dataVersion, now, "heroIds" in body ? 1 : 0, JSON.stringify(loadout));
     })();
-    return reply.code(201).send({ runId, setup });
+    return reply.code(201).send({ runId, setup, loadout });
   });
 
   app.post<{ Params: { id: string } }>("/api/runs/:id/finish", async (request) => {
@@ -94,7 +99,9 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
     const { actions } = ctx.parseBody(finishBody, request.body);
     const setup = JSON.parse(run.setup_json) as RunSetup;
 
-    const replay = replayRun(data, setup, actions);
+    // Tickets issued before phase 4d have no loadout and replay without one.
+    const loadout = run.loadout_json === null ? undefined : (JSON.parse(run.loadout_json) as Loadout);
+    const replay = replayRun(data, setup, actions, loadout);
     if (!replay.ok) {
       closeRun.run("rejected", clock(), JSON.stringify({ step: replay.step, reason: replay.reason }), run.id);
       throw new HttpError(422, "replay failed", { step: replay.step, reason: replay.reason });

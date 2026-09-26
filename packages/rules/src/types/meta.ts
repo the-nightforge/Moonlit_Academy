@@ -1,3 +1,8 @@
+/** What the team brings into a run beyond its cards (`14` §12). Phase 4d: constellations. */
+export interface Loadout {
+  heroes: Record<string, { constellation: number; levelUpForm: "base" | "alt" }>;
+}
+
 export interface SavedDeck {
   id: string;
   name: string;

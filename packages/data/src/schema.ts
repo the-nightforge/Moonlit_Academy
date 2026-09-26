@@ -96,9 +96,11 @@ export const heroDefSchema = z.object({
       "freezesApplied", "buffsStolen",
     ]),
     threshold: z.number().int().positive(),
+    constellationThreshold: z.number().int().positive(),
     passive: levelUpPassiveSchema,
   }),
   art: z.object({ portrait: z.string(), levelUp: z.string() }),
+  signature: z.object({ cardId: idSchema, plusCardId: idSchema }),
 });
 
 export const cardDefSchema = z.object({
@@ -115,6 +117,7 @@ export const cardDefSchema = z.object({
   text: z.string(),
   requiresBloodMoon: z.boolean().optional(),
   keywords: z.array(idSchema).optional(),
+  plusOf: idSchema.optional(),
 });
 
 export const intentDefSchema = z.object({

@@ -31,6 +31,8 @@ export interface LevelUpDef {
   description: string;
   counter: LevelUpCounter;
   threshold: number;
+  /** Threshold at constellation 2 or more (`01` §8). */
+  constellationThreshold: number;
   passive: LevelUpPassive;
 }
 
@@ -53,6 +55,8 @@ export interface HeroDef {
   branches: [HeroBranch, HeroBranch];
   levelUp: LevelUpDef;
   art: { portrait: string; levelUp: string };
+  /** Constellation 4 swaps `cardId` for `plusCardId` in the deck (`01` §8). */
+  signature: { cardId: string; plusCardId: string };
 }
 
 export type CardType = "attack" | "skill";
@@ -77,6 +81,8 @@ export interface CardDef {
   requiresBloodMoon?: boolean;
   /** Keyword ids (keywords.json) shown as explanations. */
   keywords?: string[];
+  /** Constellation 4 version of this card id; never placed in a deck directly. */
+  plusOf?: string;
 }
 
 export interface KeywordDef {

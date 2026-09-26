@@ -22,6 +22,8 @@ export interface HeroState extends UnitState {
   side: "hero";
   levelUpCounter: number;
   leveledUp: boolean;
+  /** Tinh Hồn from the loadout; 0 outside a run with one (`01` §8). */
+  constellation: number;
   firstCardDiscountUsedThisTurn: boolean;
   firstCardDiscountActive: boolean;
 }

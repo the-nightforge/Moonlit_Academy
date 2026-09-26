@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { dataVersion, loadGameData } from "data";
-import type { GameData, RunAction, RunSetup, RunState } from "rules";
+import type { GameData, Loadout, RunAction, RunSetup, RunState } from "rules";
 import { applyRunAction, createRun, getValidTargets, isCardPlayable, reachableNodeIds } from "rules";
 import { buildApp } from "../src/app";
 import type { AppDeps } from "../src/context";
@@ -56,8 +56,8 @@ export async function register(server: TestServer, username = "linh_lung", passw
 }
 
 /** Plays a run to the end with the simplest legal policy; returns the actions sent. */
-export function playRun(data: GameData, setup: RunSetup): { run: RunState; actions: RunAction[] } {
-  let run = createRun(data, setup).run;
+export function playRun(data: GameData, setup: RunSetup, loadout?: Loadout): { run: RunState; actions: RunAction[] } {
+  let run = createRun(data, setup, loadout).run;
   const actions: RunAction[] = [];
   while (run.status !== "won" && run.status !== "lost") {
     const action = botAction(data, run);
