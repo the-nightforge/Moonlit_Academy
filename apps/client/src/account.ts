@@ -1,7 +1,7 @@
 import type { Profile } from "rules";
 import { ApiError, api, auth, setToken } from "./api";
 import { session } from "./session";
-import { API_ERROR_TEXT } from "./ui/theme";
+import { API_ERROR_TEXT, CURRENCY_LABELS } from "./ui/theme";
 
 export interface ProfileReply {
   profile: Profile;
@@ -42,6 +42,19 @@ export async function login(username: string, password: string, register: boolea
   setToken(reply.token);
   applyServerProfile(reply);
   session.online = true;
+  // New accounts receive the starter gift with registration (`14` §5).
+  if (register) {
+    const gift = session.data.economyConfig.starterGift.moonJade;
+    session.notices.push(`Quà tân thủ: +${gift} ${CURRENCY_LABELS.moonJade} — thử vận may ở Triệu Hồi!`);
+  }
+}
+
+/** Notice lines for achievements the server just granted. */
+export function achievementNotices(ids: readonly string[] | undefined): string[] {
+  return (ids ?? []).map((id) => {
+    const achievement = session.data.achievements[id];
+    return achievement ? `Thành tựu: ${achievement.name} (+${achievement.reward.moonJade} ${CURRENCY_LABELS.moonJade})` : id;
+  });
 }
 
 /** Uses a saved token; false when there is none or it was refused. */

@@ -1,12 +1,12 @@
 import Phaser from "phaser";
-import { bondCardsForTeam, pendingUnlocks, starterDeck, validateDeck } from "rules";
+import { bondCardsForTeam, claimMission, pendingUnlocks, starterDeck, validateDeck } from "rules";
 import type { DeckError, GameData, SavedDeck } from "rules";
 import { errorText, logout, mutate } from "../account";
 import { startServerRun } from "../run-session";
 import { restartSession, session } from "../session";
 import type { Team } from "../session";
 import { COLORS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
-import { addButton, addText } from "../ui/widgets";
+import { addButton, addCurrencyBar, addText, showToast } from "../ui/widgets";
 
 const WIDTH = 1280;
 const ROW_H = 38;
@@ -61,6 +61,7 @@ export class DeckSelectScene extends Phaser.Scene {
     this.pickingTeam = false;
     this.picked = [];
     this.render();
+    showToast(this, session.notices.splice(0));
   }
 
   /** Starter row for every team seen in saved decks + the current team, then all saved decks. */
@@ -97,8 +98,14 @@ export class DeckSelectScene extends Phaser.Scene {
 
     const online = session.online;
     const canUnlock = Object.keys(data.heroes).some((id) => pendingUnlocks(data, session.profile, id) > 0);
-    addButton(this, this.root, WIDTH - 100, 30, 160, `Tu Luyện${canUnlock ? " ●" : ""}`, () => this.scene.start("mastery"), online);
+    // A dry run of the server's claim tells whether a reward is waiting (`14` §7).
+    const canClaim = Object.keys(data.missions).some((id) => claimMission(data, session.profile, id, Date.now()).ok);
+    addButton(this, this.root, 820, 30, 110, "Triệu Hồi", () => this.scene.start("gacha"), online);
+    addButton(this, this.root, 940, 30, 110, "Kho Hero", () => this.scene.start("heroes"), online);
+    addButton(this, this.root, 1060, 30, 110, `Nhiệm vụ${canClaim ? " ●" : ""}`, () => this.scene.start("missions"), online);
+    addButton(this, this.root, 1190, 30, 130, `Tu Luyện${canUnlock ? " ●" : ""}`, () => this.scene.start("mastery"), online);
     if (online) {
+      addCurrencyBar(this, this.root, 175, 30, session.profile.currencies);
       addButton(this, this.root, 90, 30, 140, "Đăng xuất", () => {
         void logout().then(() => this.scene.start("login"));
       });

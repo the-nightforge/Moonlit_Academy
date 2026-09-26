@@ -5,6 +5,10 @@ import { session } from "./session";
 import { CombatScene } from "./scenes/combat-scene";
 import { DeckBuilderScene } from "./scenes/deck-builder-scene";
 import { DeckSelectScene } from "./scenes/deck-select-scene";
+import { GachaScene } from "./scenes/gacha-scene";
+import { HeroesScene } from "./scenes/heroes-scene";
+import { MissionsScene } from "./scenes/missions-scene";
+import { ShopScene } from "./scenes/shop-scene";
 import { MasteryScene } from "./scenes/mastery-scene";
 import { RunScene } from "./scenes/run-scene";
 import { DESIGN_HEIGHT, DESIGN_WIDTH, RENDER_SCALE } from "./ui/theme";
@@ -21,7 +25,10 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [LoginScene, DeckSelectScene, DeckBuilderScene, MasteryScene, CombatScene, RunScene],
+  scene: [
+    LoginScene, DeckSelectScene, DeckBuilderScene, MasteryScene, GachaScene, ShopScene, HeroesScene, MissionsScene,
+    CombatScene, RunScene,
+  ],
 });
 
 // A refused or expired session anywhere sends the player back to sign in.

@@ -1,6 +1,6 @@
 import { loadGameData } from "data";
 import { createCombat, createProfile, starterDeck } from "rules";
-import type { CombatEvent, CombatState, GameData, MasteryGain, Profile, RunState, SavedDeck } from "rules";
+import type { CombatEvent, CombatState, GameData, MasteryGain, Profile, RunRewards, RunState, SavedDeck } from "rules";
 import type { RunTicket } from "./run-session";
 
 export type Team = [string, string, string];
@@ -26,6 +26,10 @@ export interface CombatSession {
   ticket: RunTicket | null;
   editingDeck: SavedDeck | null;
   lastGains: MasteryGain[] | null;
+  /** Moon jade and achievements from the last accepted run. */
+  lastRewards: RunRewards | null;
+  /** Messages for the next menu screen (starter gift, achievements). */
+  notices: string[];
   /** The finished run's result was accepted by the server. */
   runSubmitted: boolean;
 }
@@ -42,7 +46,7 @@ export function newCombatSession(
   return {
     data, state, events, seed, encounterId, heroIds, deckCardIds: deck, run: null,
     profile: createProfile(data), rev: 0, online: false, ticket: null, editingDeck: null, lastGains: null,
-    runSubmitted: false,
+    lastRewards: null, notices: [], runSubmitted: false,
   };
 }
 

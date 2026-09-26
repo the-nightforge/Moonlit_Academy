@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import type { CardTag, Faction, IntentKind, MoonModifier, MoonPhaseId, NodeType, StatusId } from "rules";
+import type { CardTag, Faction, IntentKind, MoonModifier, MoonPhaseId, NodeType, Rarity, StatusId } from "rules";
 
 export const FONT = '"Segoe UI", "Noto Sans", Arial, sans-serif';
 
@@ -176,4 +176,46 @@ export const API_ERROR_TEXT: Record<string, string> = {
   "replay failed": "Server không công nhận lượt chơi (dữ liệu không khớp)",
   "run not finished": "Lượt chơi chưa kết thúc",
   "bad request": "Yêu cầu không hợp lệ",
+  "not enough moonJade": "Không đủ Nguyệt Ngọc",
+  "not enough moonStar": "Không đủ Nguyệt Tinh",
+  "unknown banner": "Không tìm thấy banner",
+  "unknown mission": "Không tìm thấy nhiệm vụ",
+  "already claimed": "Đã nhận thưởng nhiệm vụ này",
+  "not complete": "Nhiệm vụ chưa hoàn thành",
+  "unknown item": "Không tìm thấy vật phẩm",
+  "weekly limit": "Đã đạt giới hạn mua trong tuần",
+  "hero required": "Hãy chọn một Hero",
+  "invalid hero": "Không chọn được Hero này",
+};
+
+export const CURRENCY_LABELS = { moonJade: "Nguyệt Ngọc", moonStar: "Nguyệt Tinh" } as const;
+
+/** Rarity names as the spec writes them ("còn N lượt tới Epic chắc chắn", `15` §3.5). */
+export const RARITY_LABELS: Record<Rarity, string> = {
+  common: "Common",
+  rare: "Rare",
+  epic: "Epic",
+  legendary: "Legendary",
+};
+
+export const RARITY_COLORS: Record<Rarity, number> = {
+  common: 0x6a7080,
+  rare: 0x3f7fd0,
+  epic: 0x9a5fd0,
+  legendary: 0xe0a830,
+};
+
+/** Tinh Hồn effects by level (`14` §10); level 5 arrives with phase 4e. */
+export const CONSTELLATION_TEXT: readonly string[] = [
+  "Mở ngay 1 lá khóa",
+  "Thăng cấp dễ hơn (ngưỡng thấp hơn)",
+  "Mở ngay 1 lá khóa",
+  "Lá chủ lực thành bản \"+\"",
+  "Dạng thăng cấp thứ hai (giai đoạn sau)",
+  "Khung vàng",
+];
+
+export const SHOP_ITEM_LABELS = {
+  moonJade: (amount: number) => `${amount} ${CURRENCY_LABELS.moonJade}`,
+  heroChoice: (rarity: Rarity) => `Chọn 1 Hero ${RARITY_LABELS[rarity]} chưa sở hữu`,
 };

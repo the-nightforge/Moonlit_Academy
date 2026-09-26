@@ -1,5 +1,5 @@
 import { applyRunAction, createRun, replayRun } from "rules";
-import type { Loadout, MasteryGain, RunAction, RunActionResult, RunSetup } from "rules";
+import type { Loadout, MasteryGain, RunAction, RunActionResult, RunRewards, RunSetup } from "rules";
 import { mutate, type ProfileReply } from "./account";
 import { ApiError, api } from "./api";
 import { session, type Team } from "./session";
@@ -36,6 +36,7 @@ export async function startServerRun(deck: { id: string; heroIds: Team }): Promi
   session.seed = setup.seed;
   session.deckCardIds = setup.deckCardIds;
   session.lastGains = null;
+  session.lastRewards = null;
   session.runSubmitted = false;
   session.run = createRun(session.data, setup, loadout).run;
 }
@@ -53,8 +54,9 @@ export function applyRecordedRunAction(action: RunAction): RunActionResult {
 /** Sends the finished run; the server replays it and returns the new profile and XP gains. */
 export async function submitRun(): Promise<MasteryGain[]> {
   const ticket = session.ticket!;
-  const send = () => mutate<ProfileReply & { gains: MasteryGain[] }>("POST", `/runs/${ticket.runId}/finish`, { actions: ticket.actions });
-  let reply: ProfileReply & { gains: MasteryGain[] };
+  type FinishReply = ProfileReply & { gains: MasteryGain[]; rewards: RunRewards };
+  const send = () => mutate<FinishReply>("POST", `/runs/${ticket.runId}/finish`, { actions: ticket.actions });
+  let reply: FinishReply;
   try {
     try {
       reply = await send();
@@ -74,6 +76,7 @@ export async function submitRun(): Promise<MasteryGain[]> {
   session.ticket = null;
   session.runSubmitted = true;
   session.lastGains = reply.gains;
+  session.lastRewards = reply.rewards;
   persist(null);
   return reply.gains;
 }
@@ -97,6 +100,7 @@ export function resumeRun(ticket: RunTicket): boolean {
   session.seed = ticket.setup.seed;
   session.deckCardIds = ticket.setup.deckCardIds;
   session.lastGains = null;
+  session.lastRewards = null;
   session.runSubmitted = false;
   session.run = replay.run;
   if (replay.run.combat) session.state = replay.run.combat;
