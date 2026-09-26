@@ -2,7 +2,7 @@ import { refillHand } from "./draw";
 import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "./effects";
 import { runEnemyTurn } from "./enemy-turn";
 import { planEnemyIntents } from "./intent";
-import { bumpCounter, checkLevelUps } from "./levelup";
+import { bumpCounter, checkLevelUps, levelUpPassive } from "./levelup";
 import { baseMoonPower } from "./moon-power";
 import { cardOwners } from "./queries";
 import { fireEventHooks, runRelicHooks } from "./run-relic-hooks";
@@ -27,9 +27,9 @@ export function startPlayerTurn(data: GameData, state: CombatState, events: Comb
     if (!hero.alive) continue;
     if (anyAllyRegen) bumpCounter(data, hero, "turnsWithAllyRegen", 1);
     hero.firstCardDiscountUsedThisTurn = false;
-    hero.firstCardDiscountActive =
-      hero.leveledUp &&
-      data.heroes[hero.defId]?.levelUp.passive.type === "firstOwnCardDiscount";
+    hero.comboBonusUsedThisTurn = false;
+    hero.firstHitUsedThisTurn = false;
+    hero.firstCardDiscountActive = hero.leveledUp && levelUpPassive(data, hero)?.type === "firstOwnCardDiscount";
   }
   checkLevelUps(data, state, events);
   for (const hero of state.heroes) {

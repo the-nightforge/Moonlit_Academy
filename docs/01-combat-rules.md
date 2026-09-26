@@ -302,7 +302,10 @@ Ví dụ — `bloodMoon(2)` đánh trong lượt người chơi vòng N:
 | F02 | *Huyết Diện* | — | `bloodMoonOwnCardDiscount(1)`: khi đang Huyết Nguyệt, lá của F02 giảm 1 Nguyệt Lực (tối thiểu 0, áp sau giảm theo pha) |
 
     "Lá của Hero X" gồm lá Binh Khí X đang mang (§14.2), không gồm lá Song Hành. Bộ đếm
-    "mỗi lượt" (Tàn Ảnh, Hàn Kiếm) đặt lại ở đầu lượt người chơi.
+    "mỗi lượt" (Tàn Ảnh, Hàn Kiếm) đặt lại ở đầu lượt người chơi. Hàn Kiếm: lượt damage đầu tiên luôn
+    dùng hết lượt của lượt đó (kể cả khi bị giáp chặn hết hoặc kết liễu mục tiêu — khi đó
+    không áp Dễ Vỡ). Tàn Ảnh: lá Liên Hoàn = lá có từ khóa `lien_hoan`; lá đầu tiên dùng
+    hết phần thưởng dù điều kiện Liên Hoàn của nó có cần hay không.
 - "Lá của Hero X" trong cột Nội tại **không** gồm lá Song Hành: nội tại thăng cấp không áp cho lá Song Hành **[GĐ2]**.
 - Bộ đếm tính cho **đơn vị hành động** của effect, kể cả trong lá Song Hành (mục 5.4). Riêng `enemiesKilled` tính khi kẻ địch ngã do damage từ lá có đơn vị hành động là M06; kẻ địch ngã do Phản Đòn **không** tính.
 

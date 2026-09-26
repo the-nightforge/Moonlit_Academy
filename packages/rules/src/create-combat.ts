@@ -111,6 +111,9 @@ export function createCombat(
     constellation: loadout?.heroes[hero.id]?.constellation ?? 0,
     firstCardDiscountUsedThisTurn: false,
     firstCardDiscountActive: false,
+    levelUpForm: loadout?.heroes[hero.id]?.levelUpForm ?? "base",
+    comboBonusUsedThisTurn: false,
+    firstHitUsedThisTurn: false,
   }));
 
   const enemies: EnemyState[] = encounter.enemyIds.map((enemyId, position) => {

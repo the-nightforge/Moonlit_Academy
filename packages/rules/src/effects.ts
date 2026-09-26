@@ -1,5 +1,5 @@
 import { drainEnemyMoonPower } from "./intent";
-import { bumpCounter, checkLevelUps } from "./levelup";
+import { bumpCounter, checkLevelUps, levelUpPassive } from "./levelup";
 import {
   moonArmorMultiplier,
   moonCardDamageMultiplier,
@@ -43,6 +43,8 @@ export interface EffectContext {
   instanceId?: string;
   /** Set for run relic effects and nested conditional branches: do not fire hooks here. */
   noHooks?: boolean;
+  /** Tàn Ảnh: cards counted as already played this turn on top of the real count. */
+  comboBonus?: number;
 }
 
 function findUnit(state: CombatState, unitId: string | undefined): UnitState | undefined {
@@ -87,7 +89,14 @@ function markFromSource(target: UnitState, sourceId: string): boolean {
 function cardPassive(data: GameData, ctx: EffectContext): LevelUpPassive | undefined {
   if (ctx.card === undefined || ctx.card.bond || ctx.source.side !== "hero") return undefined;
   const hero = ctx.source as HeroState;
-  return hero.leveledUp ? data.heroes[hero.defId]?.levelUp.passive : undefined;
+  return hero.leveledUp ? levelUpPassive(data, hero) : undefined;
+}
+
+/** Tĩnh Tâm: a hero healed by the card is cleansed (`01` §8). */
+function cleanseIfHealer(data: GameData, ctx: EffectContext, target: UnitState, events: CombatEvent[]): void {
+  if (target.side === "hero" && target.alive && cardPassive(data, ctx)?.type === "healCleanses") {
+    cleanseDebuffs(target, events);
+  }
 }
 
 export function computeDamageAmount(
@@ -155,6 +164,16 @@ function dealDamage(
     hpLost,
   });
 
+  // Hàn Kiếm: the first hit each turn from the hero's cards leaves the enemy vulnerable.
+  const passive = cardPassive(data, ctx);
+  if (passive?.type === "firstHitVulnerable" && target.side === "enemy") {
+    const hero = ctx.source as HeroState;
+    if (!hero.firstHitUsedThisTurn) {
+      hero.firstHitUsedThisTurn = true;
+      if (target.alive && target.hp > 0) applyStatus(target, "vulnerable", passive.rounds, hero.id, events);
+    }
+  }
+
   const reflect = statusValue(target, "reflect");
   if (amount <= 0 || reflect <= 0) return;
   loseHp(data, ctx.source, reflect, "reflect", events);
@@ -194,7 +213,7 @@ function evalCondition(
       return instance !== undefined && instance.heldTurns >= condition.turns;
     }
     case "cardsPlayedThisTurnAtLeast":
-      return state.cardsPlayedThisTurn >= condition.count;
+      return state.cardsPlayedThisTurn + (ctx.comboBonus ?? 0) >= condition.count;
   }
 }
 
@@ -232,6 +251,7 @@ export function resolveEffect(
             events.push({ type: "armorGained", targetId: target.id, amount: armor });
           }
         }
+        cleanseIfHealer(data, ctx, target, events);
       }
       return;
     }
@@ -243,8 +263,11 @@ export function resolveEffect(
     }
     case "gainArmor": {
       const multiplier = moonArmorMultiplier(data, state);
+      // Bất Diệt: armor from the hero's cards is raised before the armor multiplier.
+      const passive = cardPassive(data, ctx);
+      const bonus = passive?.type === "armorBonusOwnCards" ? passive.amount : 0;
       for (const target of resolveTargets(state, effect.to, ctx)) {
-        const gained = Math.floor(effect.amount * multiplier);
+        const gained = Math.floor((effect.amount + bonus) * multiplier);
         target.armor += gained;
         events.push({ type: "armorGained", targetId: target.id, amount: gained });
       }
@@ -299,6 +322,7 @@ export function resolveEffect(
         if (newFreeze && ctx.source.side === "hero") {
           bumpCounter(data, ctx.source as HeroState, "freezesApplied", 1);
         }
+        if (effect.status === "regen") cleanseIfHealer(data, ctx, target, events);
       }
       return;
     }
@@ -354,6 +378,7 @@ export function resolveEffect(
           events.push({ type: "healed", targetId: target.id, amount: healed });
         }
         removeStatus(target, "regen", events);
+        cleanseIfHealer(data, ctx, target, events);
       }
       return;
     }
