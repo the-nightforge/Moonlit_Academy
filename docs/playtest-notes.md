@@ -349,3 +349,54 @@ hơn sàn). Boss còn là chốt chặn chính (17% trận boss thắng).
 - [ ] Tỷ lệ thắng lượt của người chơi thật — bot đo 10–15%; nếu người chơi
       thật <25%, cân nhắc lại gói V/X.
 
+
+# Playtest Notes — Phase 4b (bước 4b.7)
+
+## Phương pháp
+
+Heuristic mới có nhận biết từ khóa: giữ lá Tích Tụ tới ngưỡng `heldTurnsAtLeast`,
+đánh lá thường trước lá Liên Hoàn, Tỏa Nguyệt/Đoạt Nguyệt nhắm địch có chuỗi
+chiêu đắt nhất, Tụ Dược nhắm đồng minh có Hồi ≥3. Lượt chơi chạy trên 6 loại
+deck: Bộ cơ bản (18 lá free), 4 biến thể nhánh (A/B × split 6/6/6, 4/4/10,
+8/5/5 — mọi lá coi như đã mở), deck ngẫu nhiên theo seed. 4 đội × seed 1–20 ×
+6 deck = 480 lượt.
+
+## Kết quả theo loại deck (80 lượt/deck)
+
+| Deck | Thắng | Tầng TB | XP TB/lượt |
+|---|---|---|---|
+| Bộ cơ bản | 59% | 7.1 | 127.0 |
+| nhánh A 6/6/6 | 65% | 7.6 | 138.3 |
+| nhánh B 6/6/6 | 50% | 7.0 | 112.1 |
+| nhánh A 4/4/10 | 65% | 7.5 | 136.6 |
+| nhánh B 8/5/5 | 40% | 6.7 | 105.8 |
+| ngẫu nhiên | 63% | 7.1 | 126.0 |
+
+Theo tier (trung bình các deck): trận thường thắng 92–98% / 7.7–8.9 vòng;
+Tinh Anh 94–100% / 7.8–9.6 vòng; boss 58–78% / 10.1–11.9 vòng. Cạn Bài ≤9%
+trận, kẹt tay ≤5% lượt, 0 kẹt lượt (stalled). **0/60 lá chưa từng được đánh.**
+
+So mục tiêu spec §8: trận 8–12 vòng ✓, Cạn Bài <10% ✓, kẹt tay <10% ✓,
+mọi lá được đánh ✓. Win rate tổng cao hơn 4a (~40–65% thay ~10%) vì heuristic
+mới chơi tốt hơn và pool thưởng 12 lá cho lá mạnh hơn — bot hiện là sàn cao
+hơn, độ khó thật cần xác nhận bằng chơi tay.
+
+## Gói chỉnh đã duyệt
+
+- **`meta-config.masteryLevels ×1.5`** → `[45,165,345,585,885,1245]`: nhịp
+  Tu Luyện 6.5 → **9.8 lượt** tới cấp 6 (mục tiêu 8–12). XP/thắng/tầng giữ
+  nguyên.
+- **nhánh B 8/5/5 = 40% (−19pp, vượt ±15): chấp nhận.** Deck split cực đoan
+  (10 lá một Hero, gồm cả lá khóa) vốn rủi ro; nhánh B 6/6/6 chỉ −9pp nên vấn
+  đề nằm ở độ cực đoan của split, không phải nhánh B nói chung. Nhánh B thiên
+  phòng thủ/kiểm soát (Thiết Vệ, Tĩnh Tâm, Hàn Kiếm, Huyết Nguyệt) cũng khó
+  cho bot hơn.
+
+## Điểm cần theo dõi khi chơi tay
+
+- [ ] Tích Tụ có đáng giữ lá qua lượt không?
+- [ ] Liên Hoàn có tạo thứ tự đánh thú vị không?
+- [ ] Tỏa Nguyệt có thấy rõ chiêu địch bị hủy không?
+- [ ] Tụ Dược có tạo nhịp "rải Hồi rồi nổ" không?
+- [ ] Mở khóa (Tu Luyện) có hào hứng không; ~10 lượt tới cấp 6 có hợp lý?
+- [ ] Deck nhánh có khác cảm giác Bộ cơ bản không?
