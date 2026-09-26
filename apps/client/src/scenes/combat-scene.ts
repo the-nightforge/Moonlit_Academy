@@ -796,8 +796,8 @@ export class CombatScene extends Phaser.Scene {
       cycleEncounter(1);
       this.syncFromSession();
     });
-    this.endScreenButton(WIDTH / 2 + 180, HEIGHT / 2 + 90, "Chọn đội", () =>
-      this.scene.start("team-select"),
+    this.endScreenButton(WIDTH / 2 + 180, HEIGHT / 2 + 90, "Chọn deck", () =>
+      this.scene.start("deck-select"),
     );
   }
 
@@ -859,7 +859,7 @@ export class CombatScene extends Phaser.Scene {
       this.syncFromSession();
     });
     y += 36;
-    this.debugButton(x + 14, y + 10, 100, "Chọn đội", () => this.scene.start("team-select"));
+    this.debugButton(x + 14, y + 10, 100, "Chọn deck", () => this.scene.start("deck-select"));
     this.text(x + 128, y + 10, "Huyết Nguyệt:", 11).setOrigin(0, 0.5);
     [0, 1, 2, 3].forEach((rounds, index) => {
       this.debugButton(x + 214 + index * 28, y + 10, 24, `${rounds}`, () => {

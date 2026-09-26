@@ -274,9 +274,9 @@ Ví dụ — `bloodMoon(2)` đánh trong lượt người chơi vòng N:
 | F04 Ôn Như Ý | `turnsWithAllyRegen` | Ở bước 3.1.2: nếu có ít nhất 1 Hero còn sống đang có `regen` → +1 | 3 | `regenSpreadsToAllAllies`: khi lá của F04 áp `regen`, áp cùng số tầng cho **mọi Hero còn sống** | Ngay lập tức |
 | M06 Tô Dạ | `enemiesKilled` | +1 mỗi kẻ địch ngã do damage từ lá của M06 | 1 | `firstOwnCardDiscount(3)`: lá riêng đầu tiên của Tô Dạ mỗi lượt giảm 3 Nguyệt Lực (tối thiểu 0, áp sau giảm cost theo pha) | Từ lượt người chơi kế tiếp |
 | F03 Tần Sương **[GĐ2]** | `freezesApplied` | +1 mỗi lần một effect có đơn vị hành động là F03 **thực sự áp** `freeze` lên một mục tiêu (mục tiêu đang Đóng Băng thì không tính) | 3 | `doubleDamageVsFrozen`: damage từ lá của F03 lên mục tiêu đang `freeze` **×2** (mục 10.1) | Ngay lập tức |
-| F02 Diệp Linh Lung **[GĐ2]** | `buffsStolen` | +1 mỗi buff được chuyển bởi `stealBuff` có đơn vị hành động là F02 | 2 | `stealBonus`: mỗi buff F02 cướp bằng lá của F02 được thêm **+1** giá trị | Ngay lập tức |
+| F02 Diệp Linh Lung **[GĐ2]** | `buffsStolen` | +1 mỗi buff được chuyển bởi `stealBuff` có đơn vị hành động là F02; **[GĐ4b]** +1 mỗi effect Đoạt Nguyệt (`drainMoonPower` có `steal`) có đơn vị hành động là F02 lấy được ≥ 1 Nguyệt Lực (Tỏa Nguyệt không tính) | 3 | `stealBonus`: mỗi buff F02 cướp bằng lá của F02 được thêm **+1** giá trị | Ngay lập tức |
 
-*Ghi chú: GDD ghi ngưỡng F04 là 4; prototype dùng 3 vì trận ngắn. GDD ghi F02 "Cướp 3 buff"; dùng 2 sau playtest 2.8 (`09` mục 12).*
+*Ghi chú: GDD ghi ngưỡng F04 là 4; prototype dùng 3 vì trận ngắn. GDD ghi F02 "Cướp 3 buff"; dùng 2 sau playtest 2.8 (`09` mục 12), trả về 3 và tính thêm Đoạt Nguyệt sau playtest 4b (`playtest-notes.md`, chỉnh sau 4b).*
 
 - "Lá của Hero X" trong cột Nội tại **không** gồm lá Song Hành: nội tại thăng cấp không áp cho lá Song Hành **[GĐ2]**.
 - Bộ đếm tính cho **đơn vị hành động** của effect, kể cả trong lá Song Hành (mục 5.4). Riêng `enemiesKilled` tính khi kẻ địch ngã do damage từ lá có đơn vị hành động là M06; kẻ địch ngã do Phản Đòn **không** tính.

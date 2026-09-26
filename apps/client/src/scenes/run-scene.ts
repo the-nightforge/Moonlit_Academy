@@ -285,9 +285,9 @@ export class RunScene extends Phaser.Scene {
       this.text(WIDTH / 2, 350 + index * 24, `${name} +${gain.xp} XP${levelUp}`, 15, levelUp ? COLORS.gold : COLORS.text).setOrigin(0.5);
     });
     const canUnlock = session.heroIds.some((id) => pendingUnlocks(session.data, session.profile, id) > 0);
-    this.button(WIDTH / 2, 460, 240, "Về màn chọn đội", () => {
+    this.button(WIDTH / 2, 460, 240, "Về màn chọn deck", () => {
       session.run = null;
-      this.scene.start("team-select");
+      this.scene.start("deck-select");
     });
     if (canUnlock) {
       this.button(WIDTH / 2, 510, 240, "Mở lá ngay", () => {

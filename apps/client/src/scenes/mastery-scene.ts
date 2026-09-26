@@ -81,6 +81,6 @@ export class MasteryScene extends Phaser.Scene {
         }, pending > 0);
       }
     });
-    addButton(this, this.root, 90, 680, 140, "◂ Quay lại", () => this.scene.start("team-select"));
+    addButton(this, this.root, 90, 680, 140, "◂ Quay lại", () => this.scene.start("deck-select"));
   }
 }
