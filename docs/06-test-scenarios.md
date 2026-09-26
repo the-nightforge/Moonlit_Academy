@@ -364,3 +364,12 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T228 | **[GĐ5]** `viewFor`: tay đối thủ thành `hidden_<n>` chỉ còn số lượng; chồng rút cả hai chỉ số; `rngState = 0`; bỏ/trang bị/Nguyệt Lực/Dự Trữ đầy đủ |
 | T229 | **[GĐ5]** `redactEvents`: `cardsDrawn`/`mulliganed`/`choiceOpened`/`cardChosen`/`deckShuffled` của đối thủ thành số lượng; `cardPlayed` giữ nguyên |
 | T230 | **[GĐ5]** `pvpBot` chơi trên `viewFor` 1000 bước không lỗi; `replayMatch` tái hiện đúng state + event từ nhật ký |
+| T231 | **[GĐ5]** `hello`: thiếu/sai token → đóng 4401; lệch `dataVersion` → 4409; hợp lệ → `welcome` kèm `serverTime` |
+| T232 | **[GĐ5]** Một kết nối/tài khoản: kết nối thứ hai đóng kết nối cũ mã 4000 và trả `welcome.activeMatch` |
+| T233 | **[GĐ5]** Tin sai schema / >16 KB → `error bad message` (không đóng); >30 tin/s → đóng 4429; không `pong` 2 nhịp → mất kết nối |
+| T234 | **[GĐ5]** `match.action`: `seq` trùng → bỏ qua im lặng; nhảy cóc → `rejected bad seq`; sai lượt/sai quyền → `rejected`, state không đổi |
+| T235 | **[GĐ5]** Sau mỗi Action, mỗi người nhận `redactEvents(events, i)` + `viewFor(state, i)` — tay đối thủ chỉ còn số lượng |
+| T236 | **[GĐ5]** `match.end`: ghi `matches` + cập nhật hồ sơ trong một transaction; phòng xóa khỏi bộ nhớ sau 60 s |
+| T237 | **[GĐ5]** `replayMatch` từ `setup_json` + `actions_json` tái hiện đúng trận đã lưu |
+| T238 | **[GĐ5]** `practice.start`: máy đấu trên góc nhìn của nó, nhịp 600–1200 ms; không Elo/thưởng; `mode: practice` |
+| T239 | **[GĐ5]** Kết nối lại trong `reconnectSeconds` nhận snapshot đầy đủ; quá hạn → `forfeit disconnect`; đồng hồ vẫn chạy khi mất kết nối |

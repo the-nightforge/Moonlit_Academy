@@ -167,3 +167,93 @@ sơ (+ bảng `runs`)" chạy trong một transaction đồng bộ của better-
   trống, chỉ **Trận lẻ**; Lượt chơi, xếp/xóa deck, Tu Luyện bị khóa.
 - Công cụ debug sửa hồ sơ (+XP, mở hết lá, xóa hồ sơ) đã bỏ (hồ sơ chỉ đổi trên
   server); sửa trận bằng debug trong lượt chơi làm server từ chối kết quả (có cảnh báo).
+
+---
+
+## 8. Kết nối realtime (GĐ 5c)
+
+### 8.1 Kết nối
+
+- `GET /api/ws` nâng cấp WebSocket (`@fastify/websocket`). Tin nhắn đầu tiên phải là
+  `hello { token, dataVersion }` trong 10 giây; sai token → đóng `4401`; lệch
+  `dataVersion` → `4409`. Token **không** đi trong URL (tránh lọt vào log proxy).
+- Một kết nối mỗi tài khoản: kết nối mới cùng tài khoản đóng kết nối cũ (`4000
+  "replaced"`) và nhận lại trận đang chơi qua `welcome.activeMatch` (§8.4).
+- Server gửi `ping` mỗi 20 giây; client trả `pong`; không trả lời 2 lần → coi mất
+  kết nối (§8.4).
+- Tin nhắn JSON ≤ 16 KB, kiểm bằng zod (`realtime/protocol.ts`); sai cấu trúc →
+  `error { error: "bad message" }`, không đóng. Quá 30 tin/giây → đóng `4429`.
+
+| Mã đóng | Nghĩa |
+|---|---|
+| `4000` | `replaced` — kết nối khác của cùng tài khoản thay thế |
+| `4401` | `unauthorized` — token sai/hết hạn hoặc thiếu `hello` |
+| `4409` | `outdated client` — `dataVersion` lệch |
+| `4429` | `rate limited` — quá 30 tin/giây |
+
+### 8.2 Tin nhắn (spec `17` §5.2)
+
+Client → server: `hello`, `queue.join`, `queue.leave`, `room.create`, `room.join`,
+`room.leave`, `practice.start`, `match.action { matchId, seq, action }`,
+`match.resign`, `match.emote`, `pong`.
+
+Server → client: `welcome { account, activeMatch?, serverTime }`, `queue.status`,
+`room.created` / `room.updated`, `match.start` (MatchSnapshot), `match.events
+{ matchId, eventSeq, events, view, deadline }`, `match.rejected { matchId, seq,
+reason }`, `match.end { matchId, result, reason, rating?, rewards?, profileRev? }`,
+`match.emote`, `error`, `ping`.
+
+- `seq` trong `match.action` = số Action của riêng người đó đã được chấp nhận + 1;
+  trùng → bỏ qua im lặng; nhảy cóc → `match.rejected "bad seq"`.
+- `eventSeq` tăng dần mỗi `match.events`; client thấy lỗ hổng → chờ snapshot kế
+  hoặc kết nối lại.
+- `deadline` = thời điểm hết lượt (ms UTC server); client bù lệch giờ bằng
+  `serverTime` trong `welcome`.
+
+### 8.3 Phòng trận (`match-room.ts`)
+
+- Giữ `state` đầy đủ, nhật ký Action, đồng hồ, kết nối từng người. Mọi Action xử
+  lý tuần tự trong phòng (Node đơn luồng; không `await` giữa đọc/ghi state).
+- `match.action`: kiểm `seq` → quyền (PvP: đúng lượt; co-op: chưa `done`) →
+  `applyAction`. Lỗi luật → `match.rejected`. Thành công → ghi nhật ký, gửi mỗi
+  người `redactEvents(events, i)` + `viewFor(state, i)`, đặt lại đồng hồ khi đổi
+  lượt.
+- Trận kết thúc → ghi bản ghi + cập nhật hồ sơ (Elo, Vinh Dự, thưởng co-op) trong
+  **một transaction** → `match.end` → xóa phòng khỏi bộ nhớ sau 60 giây.
+
+### 8.4 Mất kết nối và kết nối lại
+
+- Mất kết nối giữa trận: phòng giữ nguyên, đồng hồ lượt **vẫn chạy**; người kia
+  nhận `match.events` kèm `playerDisconnected`.
+- Kết nối lại trong `reconnectSeconds`: `welcome.activeMatch` mang snapshot đầy
+  đủ (góc nhìn + `eventSeq` + `deadline`); client dựng lại màn trận.
+- Quá hạn → Action hệ thống `forfeit { reason: "disconnect" }`. Tải lại trang =
+  kết nối lại (token trong `localStorage`).
+
+### 8.5 Đấu Tập (`practice.start`)
+
+- Server tạo phòng với một người chơi máy (`bot-player.ts`) dùng `pvpBot` /
+  `coopBot` trên **góc nhìn** của nó; máy "nghĩ" 600–1200 ms/Action qua
+  `scheduler`. Deck máy PvP: một đội ngẫu nhiên (seed trận), Bộ cơ bản, trang bị
+  PvP cơ bản ngẫu nhiên.
+- Không thưởng, không Elo, không nhiệm vụ/thành tựu. Bản ghi vẫn lưu
+  (`mode: "practice"`).
+
+### 8.6 Lưu trận — Migration 3
+
+| Bảng | Cột |
+|---|---|
+| `matches` | `id TEXT PK`, `mode TEXT` (`ranked`/`private`/`practice`/`coop`/`coop_private`/`coop_practice`), `data_version TEXT`, `seed INTEGER`, `setup_json TEXT`, `actions_json TEXT` (`{ player, action }[]`), `status TEXT` (`playing`/`finished`/`void`), `result_json TEXT`, `created_at`, `finished_at` |
+| `match_players` | `match_id → matches`, `account_id → accounts` (null với máy), `slot INTEGER`, `result TEXT`, `rating_before INTEGER`, `rating_after INTEGER`; PK `(match_id, slot)`; chỉ mục `(account_id, match_id)` |
+
+- Ghi `matches` lúc bắt đầu (`playing`) và kết thúc (`finished`). Server khởi
+  động: mọi trận `playing` → `void` (không Elo, không thưởng).
+- `replayMatch(data, setup, actions)` dựng lại trận để debug và test (T237).
+
+### 8.7 Route mới (5c)
+
+| Route | Kết quả |
+|---|---|
+| `GET /api/ws` | Nâng cấp WebSocket (§8.1) |
+
+(Các route Đấu Trường `arena/*` thuộc 5d — §8 ghi khi làm 5d.)
