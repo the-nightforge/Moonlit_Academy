@@ -7,7 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "pnpm --filter client dev",
+    "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   },

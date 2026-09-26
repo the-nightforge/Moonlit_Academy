@@ -1,0 +1,25 @@
+{
+  "name": "server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build --ssr src/main.ts --outDir dist",
+    "dev": "vite build --ssr src/main.ts --outDir dist --watch & node --watch dist/main.js",
+    "start": "node dist/main.js",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "data": "workspace:*",
+    "fastify": "^5.12.5",
+    "rules": "workspace:*",
+    "zod": "~4.6.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^22.0.0",
+    "vite": "^8.3.0"
+  }
+}

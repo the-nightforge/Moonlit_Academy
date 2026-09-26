@@ -12,9 +12,11 @@ sơ và không tự tính luật.
 
 ## 1. Chạy server
 
-- `apps/server`: Node 22, Fastify 5, better-sqlite3. Bundle bằng Vite SSR build (gộp
-  `rules`, `data`; để ngoài `fastify`, `better-sqlite3`).
-- Biến môi trường: `PORT` (mặc định `8787`), `DB_PATH` (mặc định
+- `apps/server`: Node 22, Fastify 5, better-sqlite3 (+ `@types/node`,
+  `@types/better-sqlite3`). Bundle bằng Vite SSR build (gộp `rules`, `data`; để ngoài
+  `fastify`, `better-sqlite3`, `zod`). `pnpm-workspace.yaml` cho phép script build của
+  `better-sqlite3` (`onlyBuiltDependencies`) để module native được biên dịch khi cài.
+- Biến môi trường: `PORT` (mặc định `8787`), `HOST` (mặc định `127.0.0.1`), `DB_PATH` (mặc định
   `./data/vong-nguyet.db`, tạo thư mục nếu thiếu).
 - `pnpm --filter server dev` (build theo dõi + `node --watch`), `pnpm --filter server
   start`, `pnpm --filter server test`. `pnpm dev` ở gốc chạy client và server song song.

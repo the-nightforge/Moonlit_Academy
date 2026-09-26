@@ -58,7 +58,7 @@ pnpm typecheck
 - ID dữ liệu: `snake_case` chữ thường (`m05`, `m05_liet_hoa_xung_phong`, `puppet_guard`).
 - Kiểu dữ liệu và hàm: `PascalCase` cho type, `camelCase` cho hàm/biến.
 - Ưu tiên union type có trường `type` (discriminated union) cho `Effect`, `Action`, `CombatEvent`, và `switch` đầy đủ với kiểm tra `never`.
-- Không thêm thư viện mới khi chưa hỏi. Đã duyệt: `fastify`, `better-sqlite3`, `@types/better-sqlite3` (chỉ trong `apps/server`).
+- Không thêm thư viện mới khi chưa hỏi. Đã duyệt: `fastify`, `better-sqlite3`, `@types/better-sqlite3`, `@types/node` (chỉ trong `apps/server`).
 
 ## Khi hoàn thành một bước
 Báo lại ngắn gọn: đã làm gì, file nào thay đổi, test nào đã thêm, kết quả `pnpm test`, và điểm nào trong tài liệu còn mơ hồ.
