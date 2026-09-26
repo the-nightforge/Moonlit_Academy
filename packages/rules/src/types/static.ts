@@ -180,7 +180,7 @@ export interface RunConfig {
   floorRules: FloorRule[];
   restHealRatio: number;
   reviveHpRatio: number;
-  rewardCardChoices: number;
+  augmentChoices: number;
   minDeckSize: number;
 }
 
@@ -212,6 +212,9 @@ export interface RunRelicDef {
   modifiers?: MoonModifier[];
   hooks?: RunRelicHook[];
 }
+
+/** TFT-style run augment ("Lõi"): same shape as a run relic, stronger on average. */
+export type RunAugmentDef = RunRelicDef;
 
 export interface CombatConfig {
   moonPower: { start: number; perRound: number; cap: number };

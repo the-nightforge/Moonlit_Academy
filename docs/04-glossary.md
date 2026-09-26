@@ -50,7 +50,7 @@
 | Trận thường / Tinh Anh / Boss (tier) | `normal` / `elite` / `boss` | `EncounterDef.tier` |
 | Nghỉ Chân | `rest` | Loại nút |
 | Kho Báu | `treasure` | Loại nút |
-| Lá thưởng | `rewardCard` | Lá chọn sau trận thắng; GĐ 4b: pool = `cardIds + lockedCardIds` của đội |
+| Lõi | `augment` | Sức mạnh vĩnh viễn trong lượt, chọn 1 trong 3 sau mỗi trận thắng (kiểu TFT); hook/modifier như Kỳ Vật, không thêm lá vào deck |
 | Tích Tụ | `heldTurns` | Số lượt lá nằm trên tay; điều kiện `heldTurnsAtLeast` |
 | Liên Hoàn | `cardsPlayedThisTurn` | Số lá đã đánh trong lượt; điều kiện `cardsPlayedThisTurnAtLeast` |
 | Tỏa Nguyệt | `drainMoonPower` | Rút Nguyệt Lực địch, hủy chiêu cuối chuỗi (`intentsCancelled`) |

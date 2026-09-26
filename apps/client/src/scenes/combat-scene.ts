@@ -313,9 +313,9 @@ export class CombatScene extends Phaser.Scene {
     this.text(24, 14, `Vòng ${this.state.round}`, 16);
     if (this.state.runRelicIds.length > 0) {
       const names = this.state.runRelicIds
-        .map((id) => this.gameData.runRelics[id]?.name ?? id)
+        .map((id) => (this.gameData.runRelics[id] ?? this.gameData.augments[id])?.name ?? id)
         .join(" · ");
-      this.text(24, 36, `Kỳ Vật: ${names}`, 11, COLORS.dimText);
+      this.text(24, 36, `Kỳ Vật · Lõi: ${names}`, 11, COLORS.dimText);
     }
     const phase = this.gameData.moonPhases[this.state.moonIndex]!;
     this.text(WIDTH / 2, 14, `( ${phase.icon} ${phase.name} )`, 16).setOrigin(0.5, 0);

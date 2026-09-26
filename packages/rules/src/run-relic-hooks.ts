@@ -73,7 +73,7 @@ export function runRelicHooks(
   trigger: TriggerInstance,
 ): void {
   for (const relicId of state.runRelicIds) {
-    const hooks = data.runRelics[relicId]?.hooks ?? [];
+    const hooks = (data.runRelics[relicId] ?? data.augments[relicId])?.hooks ?? [];
     for (const [index, hook] of hooks.entries()) {
       if (isOver(state)) return;
       if (!matches(hook.on, trigger)) continue;

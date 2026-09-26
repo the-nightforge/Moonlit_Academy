@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Effect, GameData } from "rules";
+import type { Effect, GameData, RunRelicDef } from "rules";
 import { rawGameDataSchema } from "./schema";
 import heroesJson from "../heroes.json";
 import cardsJson from "../cards.json";
@@ -7,6 +7,7 @@ import enemiesJson from "../enemies.json";
 import encountersJson from "../encounters.json";
 import moonPhasesJson from "../moon-phases.json";
 import runRelicsJson from "../run-relics.json";
+import runAugmentsJson from "../run-augments.json";
 import runConfigJson from "../run-config.json";
 import combatConfigJson from "../combat-config.json";
 import keywordsJson from "../keywords.json";
@@ -30,7 +31,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig, keywords, metaConfig } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig } =
     parsed;
   const errors: string[] = [];
 
@@ -40,6 +41,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     ["enemies", enemies],
     ["encounters", encounters],
     ["runRelics", runRelics],
+    ["runAugments", runAugments],
     ["keywords", keywords],
   ] as const;
   for (const [label, defs] of groups) {
@@ -244,37 +246,53 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
   }
 
-  for (const relic of runRelics) {
-    for (const [index, hook] of (relic.hooks ?? []).entries()) {
-      const label = `runRelic "${relic.id}" hook ${index}`;
-      if (someEffect(hook.effects, (effect) => "to" in effect && effect.to === "chosen")) {
-        errors.push(`${label}: effects must not use to "chosen"`);
-      }
-      if (someEffect(hook.effects, (effect) => effect.type === "stealBuff")) {
-        errors.push(`${label}: effects must not use stealBuff`);
-      }
-      if (someEffect(hook.effects, (effect) => effect.actor !== undefined)) {
-        errors.push(`${label}: effects must not use actor`);
-      }
-      if (someEffect(hook.effects, (effect) => effect.type === "chooseCard")) {
-        errors.push(`${label}: effects must not use chooseCard`);
-      }
-      if (someEffect(hook.effects, (e) => cardOnly(e) || e.type === "missingHpDamage")) {
-        errors.push(`${label}: card-only keyword`);
-      }
-      if (
-        someEffect(
-          hook.effects,
-          (effect) => effect.type === "conditional" && effect.condition.type.startsWith("target"),
-        )
-      ) {
-        errors.push(`${label}: conditions must not reference a target`);
-      }
-      if (hook.on.type === "heroDied" && hook.actor === "trigger") {
-        errors.push(`${label}: heroDied cannot use actor "trigger"`);
-      }
+  for (const augment of runAugments) {
+    if (runRelics.some((relic) => relic.id === augment.id)) {
+      errors.push(`runAugments: id "${augment.id}" collides with a runRelic`);
     }
   }
+
+  const validateHooks = (
+    defs: Pick<RunRelicDef, "id" | "hooks">[],
+    label: string,
+    allowCardOnly: boolean,
+  ) => {
+    for (const def of defs) {
+      for (const [index, hook] of (def.hooks ?? []).entries()) {
+        const hookLabel = `${label} "${def.id}" hook ${index}`;
+        if (someEffect(hook.effects, (effect) => "to" in effect && effect.to === "chosen")) {
+          errors.push(`${hookLabel}: effects must not use to "chosen"`);
+        }
+        if (someEffect(hook.effects, (effect) => effect.type === "stealBuff")) {
+          errors.push(`${hookLabel}: effects must not use stealBuff`);
+        }
+        if (someEffect(hook.effects, (effect) => effect.actor !== undefined)) {
+          errors.push(`${hookLabel}: effects must not use actor`);
+        }
+        if (someEffect(hook.effects, (effect) => effect.type === "chooseCard")) {
+          errors.push(`${hookLabel}: effects must not use chooseCard`);
+        }
+        if (!allowCardOnly && someEffect(hook.effects, (e) => cardOnly(e) || e.type === "missingHpDamage")) {
+          errors.push(`${hookLabel}: card-only keyword`);
+        }
+        if (
+          someEffect(
+            hook.effects,
+            (effect) => effect.type === "conditional" && effect.condition.type.startsWith("target"),
+          )
+        ) {
+          errors.push(`${hookLabel}: conditions must not reference a target`);
+        }
+        if (hook.on.type === "heroDied" && hook.actor === "trigger") {
+          errors.push(`${hookLabel}: heroDied cannot use actor "trigger"`);
+        }
+      }
+    }
+  };
+  validateHooks(runRelics, "runRelic", false);
+  // Augments are player-side powers: card-only effects (drainMoonPower,
+  // gainMoonPowerPerTurn, ...) are allowed here, unlike run relics.
+  validateHooks(runAugments, "runAugment", true);
 
   return errors;
 }
@@ -288,7 +306,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runConfig, combatConfig, keywords, metaConfig } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -297,6 +315,7 @@ export function parseGameData(raw: unknown): GameData {
     encounters: Object.fromEntries(encounters.map((encounter) => [encounter.id, encounter])),
     moonPhases: [...moonPhases].sort((a, b) => a.index - b.index),
     runRelics: Object.fromEntries(runRelics.map((relic) => [relic.id, relic])),
+    augments: Object.fromEntries(runAugments.map((augment) => [augment.id, augment])),
     runConfig,
     combatConfig,
     keywords: Object.fromEntries(keywords.map((keyword) => [keyword.id, keyword])),
@@ -312,6 +331,7 @@ export function loadGameData(): GameData {
     encounters: encountersJson,
     moonPhases: moonPhasesJson,
     runRelics: runRelicsJson,
+    runAugments: runAugmentsJson,
     runConfig: runConfigJson,
     combatConfig: combatConfigJson,
     keywords: keywordsJson,
