@@ -1,0 +1,14 @@
+[
+  { "id": "m_daily_run", "name": "Luyện tập mỗi ngày", "text": "Hoàn thành 1 lượt chơi.", "period": "daily",
+    "goal": { "type": "runsFinished", "count": 1 }, "reward": { "moonJade": 40 } },
+  { "id": "m_daily_floors", "name": "Leo tầng", "text": "Đạt tổng cộng 10 tầng trong ngày.", "period": "daily",
+    "goal": { "type": "floorsReached", "count": 10 }, "reward": { "moonJade": 40 } },
+  { "id": "m_daily_heroes", "name": "Đồng môn", "text": "Dùng 3 Hero khác nhau trong ngày.", "period": "daily",
+    "goal": { "type": "distinctHeroesUsed", "count": 3 }, "reward": { "moonJade": 30 } },
+  { "id": "m_weekly_wins", "name": "Khải hoàn", "text": "Thắng 3 lượt chơi trong tuần.", "period": "weekly",
+    "goal": { "type": "runsWon", "count": 3 }, "reward": { "moonJade": 200 } },
+  { "id": "m_weekly_bosses", "name": "Trấn Nguyệt", "text": "Hạ boss 2 lần trong tuần.", "period": "weekly",
+    "goal": { "type": "bossKills", "count": 2 }, "reward": { "moonJade": 150 } },
+  { "id": "m_weekly_pulls", "name": "Cầu duyên", "text": "Quay 10 lượt trong tuần.", "period": "weekly",
+    "goal": { "type": "gachaPulls", "count": 10 }, "reward": { "moonJade": 100 } }
+]

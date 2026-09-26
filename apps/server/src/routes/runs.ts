@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import type { RunAction, RunSetup } from "rules";
-import { applyRunResult, replayRun, starterDeck, summarizeRun, validateDeck } from "rules";
+import { applyRunResult, applyRunRewards, replayRun, starterDeck, summarizeRun, validateDeck } from "rules";
 import { z } from "zod";
 import { HttpError, type AppContext } from "../context";
 
@@ -40,6 +40,7 @@ interface RunRow {
   setup_json: string;
   data_version: string;
   created_at: number;
+  starter_deck: number;
 }
 
 /** Run tickets and verified results (`14` §4, `16` §4). */
@@ -47,7 +48,7 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
   const { db, data, clock, random } = ctx;
   const abandonOpen = db.prepare("UPDATE runs SET status = 'abandoned', finished_at = ? WHERE account_id = ? AND status = 'open'");
   const insertRun = db.prepare(
-    "INSERT INTO runs (id, account_id, status, setup_json, data_version, created_at) VALUES (?, ?, 'open', ?, ?, ?)",
+    "INSERT INTO runs (id, account_id, status, setup_json, data_version, created_at, starter_deck) VALUES (?, ?, 'open', ?, ?, ?, ?)",
   );
   const findRun = db.prepare<[string, number], RunRow>("SELECT * FROM runs WHERE id = ? AND account_id = ?");
   const closeRun = db.prepare("UPDATE runs SET status = ?, finished_at = ?, result_json = ? WHERE id = ?");
@@ -82,7 +83,7 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
     db.transaction(() => {
       const now = clock();
       abandonOpen.run(now, accountId);
-      insertRun.run(runId, accountId, JSON.stringify(setup), ctx.dataVersion, now);
+      insertRun.run(runId, accountId, JSON.stringify(setup), ctx.dataVersion, now, "heroIds" in body ? 1 : 0);
     })();
     return reply.code(201).send({ runId, setup });
   });
@@ -102,7 +103,11 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
 
     const result = summarizeRun(data, replay.run);
     return db.transaction(() => {
-      const outcome = ctx.mutateProfile(accountId, request, (profile) => ({ ok: true, ...applyRunResult(data, profile, result) }));
+      const outcome = ctx.mutateProfile(accountId, request, (profile) => {
+        const mastery = applyRunResult(data, profile, result);
+        const paid = applyRunRewards(data, mastery.profile, result, { now: clock(), starterDeck: run.starter_deck === 1 });
+        return { ok: true, profile: paid.profile, gains: mastery.gains, rewards: paid.rewards };
+      });
       closeRun.run("finished", clock(), JSON.stringify(result), run.id);
       return outcome;
     })();

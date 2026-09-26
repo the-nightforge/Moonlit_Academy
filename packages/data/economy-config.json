@@ -1,3 +1,20 @@
 {
-  "starterHeroIds": ["m05", "f04", "m06"]
+  "starterHeroIds": ["m05", "f04", "m06"],
+  "starterGift": { "moonJade": 1600 },
+  "pullCost": 160,
+  "runRewards": { "moonJadePerFloor": 10, "moonJadeWin": 80, "firstWinOfDay": 100 },
+  "resetUtcHour": 21,
+  "gacha": {
+    "rates": { "legendary": 0.02, "epic": 0.13 },
+    "epicPity": 10,
+    "legendarySoftPityStart": 55,
+    "legendarySoftPityStep": 0.06,
+    "legendaryPity": 70,
+    "newPlayerEpicHero": true
+  },
+  "dupeMoonStar": { "legendary": 25, "epic": 10, "rare": 3, "common": 3 },
+  "moonStarShop": [
+    { "id": "shop_pull", "item": { "type": "moonJade", "amount": 160 }, "price": 10, "limitPerWeek": 5 },
+    { "id": "shop_epic_hero", "item": { "type": "heroChoice", "rarity": "epic" }, "price": 120, "limitPerWeek": 1 }
+  ]
 }

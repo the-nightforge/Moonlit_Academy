@@ -1,5 +1,7 @@
 import type { FastifyInstance } from "fastify";
-import { deleteDeck, mergeImportedProfile, parseProfile, saveDeck, unlockCard } from "rules";
+import {
+  checkAchievements, claimMission, deleteDeck, mergeImportedProfile, parseProfile, recordProgress, saveDeck, unlockCard,
+} from "rules";
 import { z } from "zod";
 import { HttpError, type AppContext } from "../context";
 
@@ -23,7 +25,12 @@ export function registerProfileRoutes(app: FastifyInstance, ctx: AppContext): vo
   app.post("/api/profile/unlock", async (request) => {
     const accountId = ctx.requireAccount(request);
     const { heroId, cardId } = ctx.parseBody(unlockBody, request.body);
-    return ctx.mutateProfile(accountId, request, (profile) => unlockCard(data, profile, heroId, cardId));
+    return ctx.mutateProfile(accountId, request, (profile) => {
+      const unlocked = unlockCard(data, profile, heroId, cardId);
+      if (!unlocked.ok) return unlocked;
+      const counted = recordProgress(data, unlocked.profile, ctx.clock(), { cardsUnlocked: 1 }).profile;
+      return checkAchievements(data, counted);
+    });
   });
 
   app.put("/api/profile/decks", async (request) => {
@@ -35,6 +42,11 @@ export function registerProfileRoutes(app: FastifyInstance, ctx: AppContext): vo
   app.delete<{ Params: { id: string } }>("/api/profile/decks/:id", async (request) => {
     const accountId = ctx.requireAccount(request);
     return ctx.mutateProfile(accountId, request, (profile) => deleteDeck(profile, request.params.id));
+  });
+
+  app.post<{ Params: { id: string } }>("/api/missions/:id/claim", async (request) => {
+    const accountId = ctx.requireAccount(request);
+    return ctx.mutateProfile(accountId, request, (profile) => claimMission(data, profile, request.params.id, ctx.clock()));
   });
 
   app.post("/api/profile/import", async (request) => {

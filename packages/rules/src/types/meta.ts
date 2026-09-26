@@ -23,10 +23,24 @@ export interface ProfileCurrencies {
   moonDust: number;
 }
 
+/** Counters of one day or week (`14` §7). */
+export interface PeriodCounters {
+  runsFinished: number;
+  runsWon: number;
+  floorsReached: number;
+  bossKills: number;
+  gachaPulls: number;
+  cardsUnlocked: number;
+  /** Different heroes used in finished runs of the period. */
+  heroesUsed: string[];
+}
+
 export interface MissionState {
   dayKey: string;
   weekKey: string;
-  progress: Record<string, number>;
+  daily: PeriodCounters;
+  weekly: PeriodCounters;
+  /** Missions claimed in their current period. */
   claimed: string[];
 }
 
@@ -41,6 +55,8 @@ export interface Profile {
   relics: Record<string, { resonance: number }>;
   pity: Record<string, { sinceEpic: number; sinceLegendary: number }>;
   missions: MissionState;
+  /** Moon star shop purchases this week (`14` §11). */
+  shop: { weekKey: string; bought: Record<string, number> };
   achievements: string[];
   stats: Record<string, number>;
   flags: { starterGiftClaimed: boolean; localImportDone: boolean };

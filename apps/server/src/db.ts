@@ -38,6 +38,21 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX runs_by_account ON runs(account_id, status);
   `,
+  // 2 — phase 4d: loadout snapshot and deck kind on tickets, gacha pull log.
+  `
+  ALTER TABLE runs ADD COLUMN loadout_json TEXT;
+  ALTER TABLE runs ADD COLUMN starter_deck INTEGER NOT NULL DEFAULT 0;
+  CREATE TABLE pulls (
+    id INTEGER PRIMARY KEY,
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    banner_id TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    seed INTEGER NOT NULL,
+    results_json TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+  CREATE INDEX pulls_by_account ON pulls(account_id, created_at);
+  `,
 ];
 
 /** Opens (or creates) the database at `path` (":memory:" for tests) and migrates it. */

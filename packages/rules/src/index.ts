@@ -28,5 +28,15 @@ export {
 } from "./meta/profile";
 export { deleteDeck, saveDeck, starterDeck, validateDeck } from "./meta/deck";
 export { replayRun } from "./meta/replay";
+export {
+  applyRunRewards,
+  checkAchievements,
+  claimMission,
+  grantStarterGift,
+  missionProgress,
+  recordProgress,
+} from "./meta/economy";
+export type { RunRewards } from "./meta/economy";
+export { dayKey, weekKey } from "./meta/periods";
 export type { ReplayResult } from "./meta/replay";
 export type { EnemyPlanPreview, IntentPreview, IntentDamagePreview } from "./preview";

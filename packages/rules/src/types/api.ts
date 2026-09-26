@@ -1,5 +1,5 @@
 import type {
-  CardDef, CombatConfig, EconomyConfig, EnemyDef, EncounterDef, HeroDef, KeywordDef, MetaConfig, MoonPhaseDef, RunAugmentDef, RunConfig, RunRelicDef,
+  AchievementDef, CardDef, CombatConfig, EconomyConfig, EnemyDef, MissionDef, EncounterDef, HeroDef, KeywordDef, MetaConfig, MoonPhaseDef, RunAugmentDef, RunConfig, RunRelicDef,
 } from "./static";
 import type { CombatState } from "./state";
 import type { CombatEvent } from "./events";
@@ -18,6 +18,8 @@ export interface GameData {
   keywords: Record<string, KeywordDef>;
   metaConfig: MetaConfig;
   economyConfig: EconomyConfig;
+  missions: Record<string, MissionDef>;
+  achievements: Record<string, AchievementDef>;
 }
 
 export interface CombatSetup {

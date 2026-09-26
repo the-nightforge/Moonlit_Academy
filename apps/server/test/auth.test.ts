@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createProfile } from "rules";
+import { createProfile, grantStarterGift } from "rules";
 import { LOCK_MS, MAX_FAILED_LOGINS } from "../src/routes/auth";
 import type { FastifyRequest } from "fastify";
 import { createContext, SESSION_TTL_MS } from "../src/context";
@@ -12,7 +12,7 @@ describe("accounts and sessions", () => {
     const server = testServer();
     const created = await call(server, "POST", "/api/auth/register", { body: { username: "  Linh_Lung ", password: "trang-sang-8" } });
     expect(created.status).toBe(201);
-    expect(created.body).toMatchObject({ rev: 1, profile: createProfile(server.data) });
+    expect(created.body).toMatchObject({ rev: 1, profile: grantStarterGift(server.data, createProfile(server.data)).profile });
     const token = created.body.token as string;
 
     expect((await call(server, "POST", "/api/auth/register", { body: { username: "linh_lung", password: "khac-nua-9" } })).body)
@@ -32,7 +32,7 @@ describe("accounts and sessions", () => {
 
     const login = await call(server, "POST", "/api/auth/login", { body: { username: "LINH_LUNG", password: "trang-sang-8" } });
     expect(login.status).toBe(200);
-    expect(login.body).toMatchObject({ rev: 1, profile: createProfile(server.data) });
+    expect(login.body).toMatchObject({ rev: 1, profile: grantStarterGift(server.data, createProfile(server.data)).profile });
     expect(login.body.token).not.toBe(token);
 
     const wrong = { body: { username: "linh_lung", password: "sai-mat-khau" } };

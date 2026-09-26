@@ -1,6 +1,6 @@
 import { findNode } from "../run/run";
 import type {
-  GameData, HeroProgress, MasteryGain, MissionState, Profile, RunResult, RunState, SavedDeck,
+  GameData, HeroProgress, MasteryGain, MissionState, PeriodCounters, Profile, RunResult, RunState, SavedDeck,
 } from "../types/index";
 
 function clone<T>(value: T): T {
@@ -11,8 +11,12 @@ function newHero(): HeroProgress {
   return { xp: 0, unlockedCardIds: [], constellation: 0, bonusUnlocks: 0, levelUpForm: "base" };
 }
 
+export function emptyCounters(): PeriodCounters {
+  return { runsFinished: 0, runsWon: 0, floorsReached: 0, bossKills: 0, gachaPulls: 0, cardsUnlocked: 0, heroesUsed: [] };
+}
+
 function emptyMissions(): MissionState {
-  return { dayKey: "", weekKey: "", progress: {}, claimed: [] };
+  return { dayKey: "", weekKey: "", daily: emptyCounters(), weekly: emptyCounters(), claimed: [] };
 }
 
 /** A new account (`14` §2.2): owns the starter heroes only. */
@@ -26,6 +30,7 @@ export function createProfile(data: GameData): Profile {
     relics: {},
     pity: {},
     missions: emptyMissions(),
+    shop: { weekKey: "", bought: {} },
     achievements: [],
     stats: {},
     flags: { starterGiftClaimed: false, localImportDone: false },
@@ -117,6 +122,19 @@ function counters(value: unknown): Record<string, number> {
   return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, count(entry)]));
 }
 
+function parseCounters(value: unknown): PeriodCounters {
+  const entry = isRecord(value) ? value : {};
+  return {
+    runsFinished: count(entry.runsFinished),
+    runsWon: count(entry.runsWon),
+    floorsReached: count(entry.floorsReached),
+    bossKills: count(entry.bossKills),
+    gachaPulls: count(entry.gachaPulls),
+    cardsUnlocked: count(entry.cardsUnlocked),
+    heroesUsed: strings(entry.heroesUsed),
+  };
+}
+
 /** Hero progress from saved JSON; unlocked cards not locked for that hero are dropped. */
 function parseHero(data: GameData, heroId: string, entry: Record<string, unknown>): HeroProgress {
   const locked = data.heroes[heroId]!.lockedCardIds;
@@ -174,8 +192,15 @@ export function parseProfile(data: GameData, raw: unknown): { profile: Profile; 
     profile.missions = {
       dayKey: typeof missions.dayKey === "string" ? missions.dayKey : "",
       weekKey: typeof missions.weekKey === "string" ? missions.weekKey : "",
-      progress: counters(missions.progress),
+      daily: parseCounters(missions.daily),
+      weekly: parseCounters(missions.weekly),
       claimed: strings(missions.claimed),
+    };
+  }
+  if (isRecord(raw.shop)) {
+    profile.shop = {
+      weekKey: typeof raw.shop.weekKey === "string" ? raw.shop.weekKey : "",
+      bought: counters(raw.shop.bought),
     };
   }
   profile.achievements = strings(raw.achievements);

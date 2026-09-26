@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { applyRunResult, createProfile, starterDeck, summarizeRun, type RunSetup, type SavedDeck } from "rules";
+import {
+  applyRunResult, applyRunRewards, createProfile, grantStarterGift, starterDeck, summarizeRun, type RunSetup, type SavedDeck,
+} from "rules";
 import { TICKET_TTL_MS } from "../src/routes/runs";
 import { call, playRun, register, testServer } from "./helpers";
 
@@ -59,8 +61,13 @@ describe("run tickets", () => {
 
     const finished = await call(server, "POST", `/api/runs/${ticket.body.runId}/finish`, { token, rev: 2, body: { actions } });
     expect(finished.status).toBe(200);
-    const expected = applyRunResult(server.data, { ...createProfile(server.data), decks: saved.body.profile.decks }, summarizeRun(server.data, run));
-    expect(finished.body).toEqual({ profile: expected.profile, rev: 3, gains: expected.gains });
+    const start = { ...grantStarterGift(server.data, createProfile(server.data)).profile, decks: saved.body.profile.decks };
+    const summary = summarizeRun(server.data, run);
+    const mastery = applyRunResult(server.data, start, summary);
+    const paid = applyRunRewards(server.data, mastery.profile, summary, { now: server.now.value, starterDeck: false });
+    const expected = { profile: paid.profile };
+    expect(finished.body).toEqual({ profile: paid.profile, rev: 3, gains: mastery.gains, rewards: paid.rewards });
+    expect(paid.rewards.moonJade).toBeGreaterThan(0);
     expect(runStatus(server, ticket.body.runId)).toBe("finished");
     expect((await call(server, "POST", `/api/runs/${ticket.body.runId}/finish`, { token, rev: 3, body: { actions } })).body)
       .toEqual({ error: "run closed" });

@@ -13,6 +13,8 @@ import combatConfigJson from "../combat-config.json";
 import keywordsJson from "../keywords.json";
 import metaConfigJson from "../meta-config.json";
 import economyConfigJson from "../economy-config.json";
+import missionsJson from "../missions.json";
+import achievementsJson from "../achievements.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -32,7 +34,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements } =
     parsed;
   const errors: string[] = [];
 
@@ -256,6 +258,21 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       errors.push(`economyConfig: unknown starter hero "${heroId}"`);
     }
   }
+  const { gacha } = economyConfig;
+  if (gacha.rates.legendary + gacha.rates.epic >= 1) errors.push(`economyConfig: gacha rates must leave room for rare`);
+  if (gacha.legendarySoftPityStart >= gacha.legendaryPity) {
+    errors.push(`economyConfig: legendarySoftPityStart must be below legendaryPity`);
+  }
+  const duplicate = (ids: string[]) => ids.filter((id, index) => ids.indexOf(id) !== index);
+  for (const id of duplicate(economyConfig.moonStarShop.map((item) => item.id))) errors.push(`economyConfig: duplicate shop item "${id}"`);
+  for (const id of duplicate(missions.map((mission) => mission.id))) errors.push(`missions: duplicate id "${id}"`);
+  for (const id of duplicate(achievements.map((achievement) => achievement.id))) errors.push(`achievements: duplicate id "${id}"`);
+  for (const achievement of achievements) {
+    const goal = achievement.goal;
+    if (goal.type === "bossKillWithBond" && !cards.some((card) => card.id === goal.bondCardId && card.bond)) {
+      errors.push(`achievements: "${achievement.id}" needs a bond card, got "${goal.bondCardId}"`);
+    }
+  }
 
   for (const augment of runAugments) {
     if (runRelics.some((relic) => relic.id === augment.id)) {
@@ -317,7 +334,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -332,6 +349,8 @@ export function parseGameData(raw: unknown): GameData {
     keywords: Object.fromEntries(keywords.map((keyword) => [keyword.id, keyword])),
     metaConfig,
     economyConfig,
+    missions: Object.fromEntries(missions.map((mission) => [mission.id, mission])),
+    achievements: Object.fromEntries(achievements.map((achievement) => [achievement.id, achievement])),
   };
 }
 
@@ -349,5 +368,7 @@ export function loadGameData(): GameData {
     keywords: keywordsJson,
     metaConfig: metaConfigJson,
     economyConfig: economyConfigJson,
+    missions: missionsJson,
+    achievements: achievementsJson,
   });
 }

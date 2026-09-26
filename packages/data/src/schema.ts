@@ -260,8 +260,62 @@ export const metaConfigSchema = z.object({
   maxDecks: z.number().int().positive(),
 });
 
+const nonNegativeInt = z.number().int().nonnegative();
+const probability = z.number().min(0).max(1);
+
+export const shopItemDefSchema = z.object({
+  id: idSchema,
+  price: z.number().int().positive(),
+  limitPerWeek: z.number().int().positive(),
+  item: z.discriminatedUnion("type", [
+    z.object({ type: z.literal("moonJade"), amount: z.number().int().positive() }),
+    z.object({ type: z.literal("heroChoice"), rarity: raritySchema }),
+  ]),
+});
+
 export const economyConfigSchema = z.object({
   starterHeroIds: z.array(idSchema).length(3),
+  starterGift: z.object({ moonJade: nonNegativeInt }),
+  pullCost: z.number().int().positive(),
+  runRewards: z.object({ moonJadePerFloor: nonNegativeInt, moonJadeWin: nonNegativeInt, firstWinOfDay: nonNegativeInt }),
+  resetUtcHour: z.number().int().min(0).max(23),
+  gacha: z.object({
+    rates: z.object({ legendary: probability, epic: probability }),
+    epicPity: z.number().int().positive(),
+    legendarySoftPityStart: z.number().int().positive(),
+    legendarySoftPityStep: probability,
+    legendaryPity: z.number().int().positive(),
+    newPlayerEpicHero: z.boolean(),
+  }),
+  dupeMoonStar: z.object({ common: nonNegativeInt, rare: nonNegativeInt, epic: nonNegativeInt, legendary: nonNegativeInt }),
+  moonStarShop: z.array(shopItemDefSchema),
+});
+
+export const missionDefSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1),
+  text: z.string().min(1),
+  period: z.enum(["daily", "weekly"]),
+  goal: z.object({
+    type: z.enum(["runsFinished", "runsWon", "floorsReached", "bossKills", "distinctHeroesUsed", "gachaPulls", "cardsUnlocked"]),
+    count: z.number().int().positive(),
+  }),
+  reward: z.object({ moonJade: z.number().int().positive() }),
+});
+
+export const achievementDefSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1),
+  text: z.string().min(1),
+  goal: z.discriminatedUnion("type", [
+    z.object({ type: z.literal("runsWon"), count: z.number().int().positive() }),
+    z.object({ type: z.literal("bossKillWithBond"), bondCardId: idSchema }),
+    z.object({ type: z.literal("masteryLevel"), level: z.number().int().positive() }),
+    z.object({ type: z.literal("ownAllHeroes") }),
+    z.object({ type: z.literal("starterFloor"), floor: z.number().int().positive() }),
+    z.object({ type: z.literal("allLockedUnlocked") }),
+  ]),
+  reward: z.object({ moonJade: z.number().int().positive() }),
 });
 
 export const rawGameDataSchema = z.object({
@@ -277,4 +331,6 @@ export const rawGameDataSchema = z.object({
   keywords: z.array(keywordDefSchema),
   metaConfig: metaConfigSchema,
   economyConfig: economyConfigSchema,
+  missions: z.array(missionDefSchema),
+  achievements: z.array(achievementDefSchema),
 });

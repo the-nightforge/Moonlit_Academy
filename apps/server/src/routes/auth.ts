@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { createProfile } from "rules";
+import { createProfile, grantStarterGift } from "rules";
 import { z } from "zod";
 import {
   USERNAME_PATTERN, hashPassword, hashToken, isValidPassword, newToken, normalizeUsername, verifyPassword,
@@ -33,6 +33,7 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
   );
   const setFailures = db.prepare("UPDATE accounts SET failed_logins = ?, locked_until = ? WHERE id = ?");
   const deleteSession = db.prepare("DELETE FROM sessions WHERE token_hash = ?");
+  const writeProfile = db.prepare("UPDATE profiles SET profile_json = ?, rev = rev + 1, updated_at = ? WHERE account_id = ?");
 
   function openSession(accountId: number): string {
     const { token, tokenHash } = newToken(random);
@@ -47,7 +48,7 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
     if (!isValidPassword(body.password)) throw new HttpError(400, "invalid password");
     if (findAccount.get(username)) throw new HttpError(409, "username taken");
     const passwordHash = await hashPassword(body.password, random);
-    const profile = createProfile(data);
+    const profile = grantStarterGift(data, createProfile(data)).profile;
     let token: string;
     try {
       token = db.transaction(() => {
@@ -79,7 +80,12 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
       throw new HttpError(401, "invalid credentials");
     }
     setFailures.run(0, null, account.id);
-    const token = openSession(account.id);
+    const token = db.transaction(() => {
+      // Accounts made before the gift existed receive it at their next sign-in (`16` §4.1).
+      const gift = grantStarterGift(data, ctx.readProfile(account.id).profile);
+      if (gift.granted) writeProfile.run(JSON.stringify(gift.profile), now, account.id);
+      return openSession(account.id);
+    })();
     return { token, ...ctx.readProfile(account.id) };
   });
 

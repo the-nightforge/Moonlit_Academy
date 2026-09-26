@@ -11,6 +11,8 @@ import combatConfigJson from "../combat-config.json";
 import keywordsJson from "../keywords.json";
 import metaConfigJson from "../meta-config.json";
 import economyConfigJson from "../economy-config.json";
+import missionsJson from "../missions.json";
+import achievementsJson from "../achievements.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -27,6 +29,8 @@ function rawData(): any {
     keywords: keywordsJson,
     metaConfig: metaConfigJson,
     economyConfig: economyConfigJson,
+    missions: missionsJson,
+    achievements: achievementsJson,
   }));
 }
 

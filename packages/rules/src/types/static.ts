@@ -228,9 +228,63 @@ export interface CombatConfig {
 }
 
 /** Account economy (`14` §1). Phase 4c: starter heroes only. */
+/** Account economy (`14` §1). */
 export interface EconomyConfig {
   /** Heroes a new account owns. */
   starterHeroIds: string[];
+  starterGift: { moonJade: number };
+  pullCost: number;
+  runRewards: { moonJadePerFloor: number; moonJadeWin: number; firstWinOfDay: number };
+  /** Day and week start at this UTC hour (21 = 04:00 in Vietnam). */
+  resetUtcHour: number;
+  gacha: {
+    rates: { legendary: number; epic: number };
+    epicPity: number;
+    legendarySoftPityStart: number;
+    legendarySoftPityStep: number;
+    legendaryPity: number;
+    newPlayerEpicHero: boolean;
+  };
+  dupeMoonStar: Record<Rarity, number>;
+  moonStarShop: ShopItemDef[];
+}
+
+export type ShopItemDef = {
+  id: string;
+  price: number;
+  limitPerWeek: number;
+  item: { type: "moonJade"; amount: number } | { type: "heroChoice"; rarity: Rarity };
+};
+
+export type MissionGoalType =
+  | "runsFinished" | "runsWon" | "floorsReached" | "bossKills"
+  | "distinctHeroesUsed" | "gachaPulls" | "cardsUnlocked";
+
+/** Daily or weekly mission (`14` §7). */
+export interface MissionDef {
+  id: string;
+  name: string;
+  text: string;
+  period: "daily" | "weekly";
+  goal: { type: MissionGoalType; count: number };
+  reward: { moonJade: number };
+}
+
+export type AchievementGoal =
+  | { type: "runsWon"; count: number }
+  | { type: "bossKillWithBond"; bondCardId: string }
+  | { type: "masteryLevel"; level: number }
+  | { type: "ownAllHeroes" }
+  | { type: "starterFloor"; floor: number }
+  | { type: "allLockedUnlocked" };
+
+/** One-time, auto-claimed achievement (`14` §8). */
+export interface AchievementDef {
+  id: string;
+  name: string;
+  text: string;
+  goal: AchievementGoal;
+  reward: { moonJade: number };
 }
 
 export interface MetaConfig {
