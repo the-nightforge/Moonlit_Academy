@@ -14,6 +14,8 @@ import economyConfigJson from "../economy-config.json";
 import missionsJson from "../missions.json";
 import achievementsJson from "../achievements.json";
 import bannersJson from "../banners.json";
+import weaponsJson from "../weapons.json";
+import relicsJson from "../relics.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -33,6 +35,8 @@ function rawData(): any {
     missions: missionsJson,
     achievements: achievementsJson,
     banners: bannersJson,
+    weapons: weaponsJson,
+    relics: relicsJson,
   }));
 }
 
@@ -329,3 +333,59 @@ describe("economyConfig", () => {
   });
 });
 
+
+describe("weapons, moon relics and second level-up forms", () => {
+  it("loads 10 weapons with 4 refinements and 8 relics with 5 resonance levels; every hero has a second form", () => {
+    const data = loadGameData();
+    expect(Object.keys(data.weapons)).toHaveLength(10);
+    expect(Object.keys(data.relics)).toHaveLength(8);
+    expect(Object.values(data.weapons).every((weapon) => weapon.refinement.length === 4)).toBe(true);
+    expect(Object.values(data.relics).every((relic) => relic.resonance.length === 5)).toBe(true);
+    expect(Object.values(data.heroes).every((hero) => hero.altLevelUp.name.length > 0)).toBe(true);
+    expect(data.metaConfig.maxRelics).toBe(2);
+    expect(data.economyConfig.gearDupeMoonStar).toEqual({ legendary: 10, epic: 4, rare: 1, common: 1 });
+    const count = (rarity: string) => Object.values(data.weapons).filter((weapon) => weapon.rarity === rarity).length;
+    expect([count("legendary"), count("epic"), count("rare")]).toEqual([2, 4, 4]);
+  });
+
+  it("T212: rejects wearer outside weapon hooks, forbidden hook effects, wrong level counts and colliding ids", () => {
+    const wearerInRelic = rawData();
+    wearerInRelic.runRelics[0].hooks = [{ on: { type: "enemyKilled", killer: "wearer" }, actor: "front", effects: [{ type: "gainMoonPower", amount: 1 }] }];
+    expect(() => parseGameData(wearerInRelic)).toThrow(/"wearer" is only allowed in weapon hooks/);
+
+    const wearerInMoonRelic = rawData();
+    wearerInMoonRelic.relics[0].resonance[2].hooks = [{ on: { type: "combatStart" }, actor: "wearer", effects: [{ type: "gainMoonPower", amount: 1 }] }];
+    // actor "wearer" is not even in the relic hook schema; the owner filter reaches the cross-check.
+    expect(() => parseGameData(wearerInMoonRelic)).toThrow(/Invalid game data/);
+    const ownerInMoonRelic = rawData();
+    ownerInMoonRelic.relics[0].resonance[2].hooks = [{ on: { type: "cardPlayed", owner: "wearer" }, actor: "front", effects: [{ type: "gainMoonPower", amount: 1 }] }];
+    expect(() => parseGameData(ownerInMoonRelic)).toThrow(/relic "r_thien_sach" resonance 3 hook 0: "wearer" is only allowed/);
+
+    const chosen = rawData();
+    chosen.weapons[0].refinement[3].hooks = [{ on: { type: "combatStart" }, actor: "wearer", effects: [{ type: "damage", amount: 3, to: "chosen" }] }];
+    expect(() => parseGameData(chosen)).toThrow(/weapon "w_xich_diem_thuong" R5 hook 0: effects must not use to "chosen"/);
+
+    const badCard = rawData();
+    badCard.weapons[5].refinement[1].card = { target: "enemy" };
+    expect(() => parseGameData(badCard)).toThrow(/weapon "w_thiet_thuan" R3: target "enemy" requires/);
+
+    const noSignatureHero = rawData();
+    delete noSignatureHero.weapons[0].signatureHeroId;
+    expect(() => parseGameData(noSignatureHero)).toThrow(/signatureHooks need signatureHeroId/);
+
+    const refinements = rawData();
+    refinements.weapons[0].refinement.pop();
+    expect(() => parseGameData(refinements)).toThrow(/Invalid game data/);
+    const resonance = rawData();
+    resonance.relics[0].resonance.push(resonance.relics[0].resonance[4]);
+    expect(() => parseGameData(resonance)).toThrow(/Invalid game data/);
+
+    const collide = rawData();
+    collide.relics[0].id = "m05";
+    expect(() => parseGameData(collide)).toThrow(/gear: id "m05" collides/);
+
+    const onLevelUp = rawData();
+    onLevelUp.heroes[0].altLevelUp.onLevelUp = [{ type: "damage", amount: 3, to: "chosen" }];
+    expect(() => parseGameData(onLevelUp)).toThrow(/altLevelUp.onLevelUp: effects must not use to "chosen"/);
+  });
+});

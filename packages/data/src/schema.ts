@@ -71,6 +71,11 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("firstOwnCardDiscount"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("doubleDamageVsFrozen") }),
   z.object({ type: z.literal("stealBonus") }),
+  z.object({ type: z.literal("armorBonusOwnCards"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("healCleanses") }),
+  z.object({ type: z.literal("firstComboCountsExtra"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("firstHitVulnerable"), rounds: z.number().int().positive() }),
+  z.object({ type: z.literal("bloodMoonOwnCardDiscount"), amount: z.number().int().positive() }),
 ]);
 
 const branchSchema = z.object({
@@ -101,6 +106,12 @@ export const heroDefSchema = z.object({
   }),
   art: z.object({ portrait: z.string(), levelUp: z.string() }),
   signature: z.object({ cardId: idSchema, plusCardId: idSchema }),
+  altLevelUp: z.object({
+    name: z.string().min(1),
+    description: z.string(),
+    passive: levelUpPassiveSchema,
+    onLevelUp: z.array(effectSchema).min(1).optional(),
+  }),
 });
 
 export const cardDefSchema = z.object({
@@ -157,7 +168,7 @@ export const encounterDefSchema = z.object({
 const moonModifierSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("damageMultiplierForTag"), tag: cardTagSchema, multiplier: z.number().positive() }),
   z.object({ type: z.literal("stealthDurationBonus"), amount: intAmount }),
-  z.object({ type: z.literal("costModifierForTag"), tag: cardTagSchema, amount: intAmount, min: intAmount }),
+  z.object({ type: z.literal("costModifierForTag"), tag: cardTagSchema, amount: intAmount, min: intAmount, while: z.literal("bloodMoon").optional() }),
   z.object({ type: z.literal("healMultiplier"), multiplier: z.number().positive() }),
   z.object({ type: z.literal("armorMultiplier"), multiplier: z.number().positive() }),
 ]);
@@ -180,28 +191,72 @@ const hookTriggerSchema = z.discriminatedUnion("type", [
     type: z.literal("cardPlayed"),
     tag: cardTagSchema.optional(),
     cardType: z.enum(["attack", "skill"]).optional(),
+    owner: z.literal("wearer").optional(),
   }),
-  z.object({ type: z.literal("enemyKilled") }),
+  z.object({ type: z.literal("enemyKilled"), killer: z.literal("wearer").optional() }),
   z.object({ type: z.literal("heroDied") }),
   z.object({ type: z.literal("moonPhaseEntered"), phase: moonPhaseIdSchema.optional() }),
   z.object({ type: z.literal("bloodMoonStarted") }),
 ]);
+
+const runRelicHookSchema = z.object({
+  on: hookTriggerSchema,
+  actor: z.enum(["trigger", "each", "lowestHp", "front"]),
+  every: z.number().int().min(2).optional(),
+  effects: z.array(effectSchema).min(1),
+});
 
 export const runRelicDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
   text: z.string(),
   modifiers: z.array(moonModifierSchema).optional(),
-  hooks: z
+  hooks: z.array(runRelicHookSchema).optional(),
+});
+
+const weaponHookSchema = runRelicHookSchema.extend({
+  actor: z.enum(["trigger", "each", "lowestHp", "front", "wearer"]),
+});
+
+const weaponCardSchema = cardDefSchema
+  .omit({ id: true, ownerId: true, bond: true, copies: true, plusOf: true })
+  .extend({ copies: z.union([z.literal(1), z.literal(2)]) });
+
+export const weaponDefSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1),
+  rarity: raritySchema,
+  archetype: archetypeSchema.optional(),
+  signatureHeroId: idSchema.optional(),
+  text: z.string().min(1),
+  card: weaponCardSchema,
+  hooks: z.array(weaponHookSchema),
+  signatureHooks: z.array(weaponHookSchema).optional(),
+  refinement: z
     .array(
       z.object({
-        on: hookTriggerSchema,
-        actor: z.enum(["trigger", "each", "lowestHp", "front"]),
-        every: z.number().int().min(2).optional(),
-        effects: z.array(effectSchema).min(1),
+        text: z.string().min(1),
+        card: weaponCardSchema.partial().optional(),
+        hooks: z.array(weaponHookSchema).optional(),
+        signatureHooks: z.array(weaponHookSchema).optional(),
       }),
     )
-    .optional(),
+    .length(4),
+});
+
+export const relicDefSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1),
+  rarity: raritySchema,
+  resonance: z
+    .array(
+      z.object({
+        text: z.string().min(1),
+        modifiers: z.array(moonModifierSchema).optional(),
+        hooks: z.array(runRelicHookSchema).optional(),
+      }),
+    )
+    .length(5),
 });
 
 const floorsSchema = z.array(z.number().int().positive()).min(1);
@@ -261,6 +316,7 @@ export const metaConfigSchema = z.object({
   deckSize: z.number().int().positive(),
   minCardsPerHero: z.number().int().nonnegative(),
   maxDecks: z.number().int().positive(),
+  maxRelics: z.number().int().positive(),
 });
 
 const nonNegativeInt = z.number().int().nonnegative();
@@ -291,6 +347,7 @@ export const economyConfigSchema = z.object({
     newPlayerEpicHero: z.boolean(),
   }),
   dupeMoonStar: z.object({ common: nonNegativeInt, rare: nonNegativeInt, epic: nonNegativeInt, legendary: nonNegativeInt }),
+  gearDupeMoonStar: z.object({ common: nonNegativeInt, rare: nonNegativeInt, epic: nonNegativeInt, legendary: nonNegativeInt }),
   moonStarShop: z.array(shopItemDefSchema),
 });
 
@@ -349,4 +406,6 @@ export const rawGameDataSchema = z.object({
   missions: z.array(missionDefSchema),
   achievements: z.array(achievementDefSchema),
   banners: z.array(bannerDefSchema),
+  weapons: z.array(weaponDefSchema),
+  relics: z.array(relicDefSchema),
 });

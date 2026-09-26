@@ -3,5 +3,6 @@
   "masteryXp": { "perFloor": 10, "win": 50, "heroLevelUp": 10 },
   "deckSize": 18,
   "minCardsPerHero": 4,
-  "maxDecks": 30
+  "maxDecks": 30,
+  "maxRelics": 2
 }

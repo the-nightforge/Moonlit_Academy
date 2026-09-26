@@ -231,13 +231,13 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ### Bước 4e.1 — Cập nhật tài liệu
 ### Bước 4e.2 — Dữ liệu
-> `weapons.json`, `relics.json`, `altLevelUp`, banner trang bị, schema + kiểm tra khi nạp. T212.
+> `weapons.json`, `relics.json`, `altLevelUp`, schema + kiểm tra khi nạp. T212. (Hai banner trang bị thêm ở 4e.5 cùng `grantItem`, để server không mở banner khi chưa trao được vật phẩm.)
 ### Bước 4e.3 — Luật trận: lá Binh Khí, nội tại, Nguyệt Bảo
 > `weaponAt` / `relicAt`, lá Binh Khí trong trận, hook `wearer`, thứ tự hook, `while: "bloodMoon"`. T198–T202.
 ### Bước 4e.4 — Dạng thăng cấp thứ hai
 > 5 nội tại mới + `onLevelUp`. T206 (phần trận)–T211.
 ### Bước 4e.5 — Meta + server
-> Deck có trang bị, `grantItem` vũ khí / Nguyệt Bảo, `buildLoadout(deck)`, lượt chơi, `setLevelUpForm` + route. T197, T203–T206.
+> Deck có trang bị, `grantItem` vũ khí / Nguyệt Bảo + 2 banner trang bị, `buildLoadout(deck)`, lượt chơi, `setLevelUpForm` + route. T197, T203–T206.
 ### Bước 4e.6 — Client
 > Kho đồ, xếp deck (ô vũ khí, 2 ô Nguyệt Bảo), banner trang bị, khung lá Binh Khí, tên vũ khí / Nguyệt Bảo khi hook chạy, chọn dạng thăng cấp.
 ### Bước 4e.7 — Mô phỏng + chỉnh số

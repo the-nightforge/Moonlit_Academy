@@ -1,0 +1,972 @@
+[
+ {
+  "id": "r_thien_sach",
+  "name": "Thiên Sách",
+  "rarity": "legendary",
+  "resonance": [
+   {
+    "text": "Khi vào Trăng Tròn: +2 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Tròn: +3 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 3
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Tròn hoặc Huyết Nguyệt bắt đầu: +3 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 3
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 3
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Tròn hoặc Huyết Nguyệt bắt đầu: +4 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 4
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 4
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Tròn hoặc Huyết Nguyệt bắt đầu: +4 Nguyệt Lực. Khi vào Trăng Non: +2 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 4
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 4
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "new"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_vong_nguyet_kinh",
+  "name": "Vọng Nguyệt Kính",
+  "rarity": "legendary",
+  "resonance": [
+   {
+    "text": "Mỗi lần trăng đổi pha: mọi Hero 2 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lần trăng đổi pha: mọi Hero 3 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lần trăng đổi pha: mọi Hero 4 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lần trăng đổi pha: mọi Hero 5 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 5,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lần trăng đổi pha: mọi Hero 5 giáp. Huyết Nguyệt bắt đầu: mọi Hero 5 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 5,
+        "to": "self"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 5,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_huyet_ngoc_boi",
+  "name": "Huyết Ngọc Bội",
+  "rarity": "epic",
+  "resonance": [
+   {
+    "text": "Trong Huyết Nguyệt: lá cấm thuật −1 Nguyệt Lực.",
+    "modifiers": [
+     {
+      "type": "costModifierForTag",
+      "tag": "forbidden",
+      "amount": -1,
+      "min": 0,
+      "while": "bloodMoon"
+     }
+    ]
+   },
+   {
+    "text": "Trong Huyết Nguyệt: lá cấm thuật và mưu lược −1 Nguyệt Lực.",
+    "modifiers": [
+     {
+      "type": "costModifierForTag",
+      "tag": "forbidden",
+      "amount": -1,
+      "min": 0,
+      "while": "bloodMoon"
+     },
+     {
+      "type": "costModifierForTag",
+      "tag": "scheme",
+      "amount": -1,
+      "min": 0,
+      "while": "bloodMoon"
+     }
+    ]
+   },
+   {
+    "text": "Trong Huyết Nguyệt: lá cấm thuật −2, mưu lược −1 Nguyệt Lực.",
+    "modifiers": [
+     {
+      "type": "costModifierForTag",
+      "tag": "forbidden",
+      "amount": -2,
+      "min": 0,
+      "while": "bloodMoon"
+     },
+     {
+      "type": "costModifierForTag",
+      "tag": "scheme",
+      "amount": -1,
+      "min": 0,
+      "while": "bloodMoon"
+     }
+    ]
+   },
+   {
+    "text": "Trong Huyết Nguyệt: lá cấm thuật và mưu lược −2 Nguyệt Lực.",
+    "modifiers": [
+     {
+      "type": "costModifierForTag",
+      "tag": "forbidden",
+      "amount": -2,
+      "min": 0,
+      "while": "bloodMoon"
+     },
+     {
+      "type": "costModifierForTag",
+      "tag": "scheme",
+      "amount": -2,
+      "min": 0,
+      "while": "bloodMoon"
+     }
+    ]
+   },
+   {
+    "text": "Trong Huyết Nguyệt: lá cấm thuật và mưu lược −2 Nguyệt Lực. Huyết Nguyệt bắt đầu: +2 Nguyệt Lực.",
+    "modifiers": [
+     {
+      "type": "costModifierForTag",
+      "tag": "forbidden",
+      "amount": -2,
+      "min": 0,
+      "while": "bloodMoon"
+     },
+     {
+      "type": "costModifierForTag",
+      "tag": "scheme",
+      "amount": -2,
+      "min": 0,
+      "while": "bloodMoon"
+     }
+    ],
+    "hooks": [
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_loan_linh_an",
+  "name": "Loan Linh Ấn",
+  "rarity": "epic",
+  "resonance": [
+   {
+    "text": "Mỗi lá kỹ năng thứ 3 trong trận: +1 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "cardType": "skill"
+      },
+      "actor": "front",
+      "every": 3,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá kỹ năng thứ 3 trong trận: +2 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "cardType": "skill"
+      },
+      "actor": "front",
+      "every": 3,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá kỹ năng thứ 2 trong trận: +1 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "cardType": "skill"
+      },
+      "actor": "front",
+      "every": 2,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá kỹ năng thứ 2 trong trận: +2 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "cardType": "skill"
+      },
+      "actor": "front",
+      "every": 2,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá kỹ năng thứ 2 trong trận: +2 Nguyệt Lực. Mỗi lá tấn công thứ 3: +1 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "cardType": "skill"
+      },
+      "actor": "front",
+      "every": 2,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "cardPlayed",
+       "cardType": "attack"
+      },
+      "actor": "front",
+      "every": 3,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_xich_diem_chau",
+  "name": "Xích Diễm Châu",
+  "rarity": "epic",
+  "resonance": [
+   {
+    "text": "Khi hạ một kẻ địch: mọi kẻ địch còn lại Thiêu Đốt 2.",
+    "hooks": [
+     {
+      "on": {
+       "type": "enemyKilled"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "burn",
+        "amount": 2,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi hạ một kẻ địch: mọi kẻ địch còn lại Thiêu Đốt 3.",
+    "hooks": [
+     {
+      "on": {
+       "type": "enemyKilled"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "burn",
+        "amount": 3,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi hạ một kẻ địch: mọi kẻ địch còn lại Thiêu Đốt 4.",
+    "hooks": [
+     {
+      "on": {
+       "type": "enemyKilled"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "burn",
+        "amount": 4,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi hạ một kẻ địch: mọi kẻ địch còn lại Thiêu Đốt 5.",
+    "hooks": [
+     {
+      "on": {
+       "type": "enemyKilled"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "burn",
+        "amount": 5,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi hạ một kẻ địch: mọi kẻ địch còn lại Thiêu Đốt 5; Hero kết liễu +1 Sức Mạnh.",
+    "hooks": [
+     {
+      "on": {
+       "type": "enemyKilled"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "burn",
+        "amount": 5,
+        "to": "allEnemies"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "enemyKilled"
+      },
+      "actor": "trigger",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 1,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_bach_lo_huong_nang",
+  "name": "Bạch Lộ Hương Nang",
+  "rarity": "rare",
+  "resonance": [
+   {
+    "text": "Khi vào Trăng Tròn: Hero máu thấp nhất hồi 3 HP.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "lowestHp",
+      "effects": [
+       {
+        "type": "heal",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Tròn: Hero máu thấp nhất hồi 5 HP.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "lowestHp",
+      "effects": [
+       {
+        "type": "heal",
+        "amount": 5,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Tròn hoặc Trăng Non: Hero máu thấp nhất hồi 5 HP.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "lowestHp",
+      "effects": [
+       {
+        "type": "heal",
+        "amount": 5,
+        "to": "self"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "new"
+      },
+      "actor": "lowestHp",
+      "effects": [
+       {
+        "type": "heal",
+        "amount": 5,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Tròn hoặc Trăng Non: Hero máu thấp nhất hồi 7 HP.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "lowestHp",
+      "effects": [
+       {
+        "type": "heal",
+        "amount": 7,
+        "to": "self"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "new"
+      },
+      "actor": "lowestHp",
+      "effects": [
+       {
+        "type": "heal",
+        "amount": 7,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Tròn hoặc Trăng Non: Hero máu thấp nhất hồi 7 HP và Hồi Phục 2.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "lowestHp",
+      "effects": [
+       {
+        "type": "heal",
+        "amount": 7,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "new"
+      },
+      "actor": "lowestHp",
+      "effects": [
+       {
+        "type": "heal",
+        "amount": 7,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_huyen_vu_giap_phu",
+  "name": "Huyền Vũ Giáp Phù",
+  "rarity": "rare",
+  "resonance": [
+   {
+    "text": "Đầu trận mọi Hero 3 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Đầu trận mọi Hero 4 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Đầu trận mọi Hero 5 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 5,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Đầu trận mọi Hero 6 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 6,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Đầu trận mọi Hero 6 giáp. Huyết Nguyệt bắt đầu: mọi Hero 3 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 6,
+        "to": "self"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_tran_hon_linh",
+  "name": "Trấn Hồn Linh",
+  "rarity": "rare",
+  "resonance": [
+   {
+    "text": "Khi một Hero ngã: các Hero còn lại +1 Sức Mạnh.",
+    "hooks": [
+     {
+      "on": {
+       "type": "heroDied"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 1,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi một Hero ngã: các Hero còn lại +2 Sức Mạnh.",
+    "hooks": [
+     {
+      "on": {
+       "type": "heroDied"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi một Hero ngã: các Hero còn lại +3 Sức Mạnh.",
+    "hooks": [
+     {
+      "on": {
+       "type": "heroDied"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi một Hero ngã: các Hero còn lại +4 Sức Mạnh.",
+    "hooks": [
+     {
+      "on": {
+       "type": "heroDied"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 4,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi một Hero ngã: các Hero còn lại +4 Sức Mạnh và hồi 5 HP.",
+    "hooks": [
+     {
+      "on": {
+       "type": "heroDied"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 4,
+        "to": "self"
+       },
+       {
+        "type": "heal",
+        "amount": 5,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+]

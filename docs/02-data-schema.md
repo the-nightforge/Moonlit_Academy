@@ -290,6 +290,7 @@ interface WeaponDef {
   id: string; name: string; rarity: Rarity;
   archetype?: Archetype;            // vũ khí chung (chỉ để hiển thị)
   signatureHeroId?: string;         // vũ khí bản mệnh
+  text: string;                     // nội tại R1 (hiển thị)
   card: Omit<CardDef, "id" | "ownerId" | "copies" | "plusOf"> & { copies: 1 | 2 };
   hooks: WeaponHook[];              // 01 §14.3
   signatureHooks?: WeaponHook[];    // chỉ khi có signatureHeroId

@@ -13,6 +13,7 @@
     "newPlayerEpicHero": true
   },
   "dupeMoonStar": { "legendary": 25, "epic": 5, "rare": 1, "common": 1 },
+  "gearDupeMoonStar": { "legendary": 10, "epic": 4, "rare": 1, "common": 1 },
   "moonStarShop": [
     { "id": "shop_pull", "item": { "type": "moonJade", "amount": 160 }, "price": 10, "limitPerWeek": 2 },
     { "id": "shop_epic_hero", "item": { "type": "heroChoice", "rarity": "epic" }, "price": 120, "limitPerWeek": 1 }

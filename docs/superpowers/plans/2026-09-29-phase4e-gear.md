@@ -51,7 +51,7 @@ Hero mang mọi vũ khí). Luật chuẩn: `01` §8, §14; `14` §3, §9, §10.1
 ### Task 2: Dữ liệu (bước 4e.2)
 
 - [ ] Schema `WeaponDef`, `RelicDef`, `altLevelUp`, passive mới, `while`, bộ lọc `wearer`.
-- [ ] `weapons.json`, `relics.json` theo `03` §7; 2 banner; config mới.
+- [ ] `weapons.json`, `relics.json` theo `03` §7; config mới (2 banner dời sang Task 5).
 - [ ] Kiểm tra khi nạp (T212); test data đếm số vũ khí / Nguyệt Bảo.
 - [ ] Commit `Step 4e.2: weapon, relic and second level-up data`.
 
@@ -70,7 +70,7 @@ Hero mang mọi vũ khí). Luật chuẩn: `01` §8, §14; `14` §3, §9, §10.1
 
 ### Task 5: Meta + server (bước 4e.5)
 
-- [ ] `validateDeck` / `saveDeck` có trang bị (T197); `grantItem` trang bị + banner (T204).
+- [ ] `validateDeck` / `saveDeck` có trang bị (T197); `grantItem` trang bị + 2 banner (T204).
 - [ ] `buildLoadout(deck)`, lượt chơi dùng trang bị, `replayRun` (T203, T205).
 - [ ] `setLevelUpForm` + `PUT /api/profile/heroes/:id/level-up-form` (T206); `POST /runs`
       dựng loadout từ deck; test server.
