@@ -13,6 +13,7 @@ import metaConfigJson from "../meta-config.json";
 import economyConfigJson from "../economy-config.json";
 import missionsJson from "../missions.json";
 import achievementsJson from "../achievements.json";
+import bannersJson from "../banners.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -31,6 +32,7 @@ function rawData(): any {
     economyConfig: economyConfigJson,
     missions: missionsJson,
     achievements: achievementsJson,
+    banners: bannersJson,
   }));
 }
 
@@ -316,4 +318,14 @@ describe("economyConfig", () => {
     bond.achievements = [{ ...bond.achievements[1], goal: { type: "bossKillWithBond", bondCardId: "m05_bat_khuat" } }];
     expect(() => parseGameData(bond)).toThrow(/needs a bond card/);
   });
+
+  it("rejects banners with unknown heroes or heroes under the wrong rarity", () => {
+    const unknown = rawData();
+    unknown.banners = [{ ...unknown.banners[0], pool: { ...unknown.banners[0].pool, rare: ["ghost"] } }];
+    expect(() => parseGameData(unknown)).toThrow(/unknown hero "ghost"/);
+    const wrong = rawData();
+    wrong.banners = [{ ...wrong.banners[0], pool: { ...wrong.banners[0].pool, rare: ["f04", "m05"] } }];
+    expect(() => parseGameData(wrong)).toThrow(/lists legendary hero "m05" as rare|lists "m05" twice/);
+  });
 });
+

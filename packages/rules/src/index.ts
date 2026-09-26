@@ -38,5 +38,7 @@ export {
 } from "./meta/economy";
 export type { RunRewards } from "./meta/economy";
 export { dayKey, weekKey } from "./meta/periods";
+export { grantHeroItem, legendaryRate, pullMany } from "./meta/gacha";
+export type { PullResult } from "./meta/gacha";
 export type { ReplayResult } from "./meta/replay";
 export type { EnemyPlanPreview, IntentPreview, IntentDamagePreview } from "./preview";

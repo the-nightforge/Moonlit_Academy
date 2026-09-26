@@ -303,6 +303,18 @@ export const missionDefSchema = z.object({
   reward: z.object({ moonJade: z.number().int().positive() }),
 });
 
+export const bannerDefSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1),
+  kind: z.literal("hero"),
+  pool: z.object({
+    common: z.array(idSchema),
+    rare: z.array(idSchema),
+    epic: z.array(idSchema),
+    legendary: z.array(idSchema),
+  }),
+});
+
 export const achievementDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
@@ -333,4 +345,5 @@ export const rawGameDataSchema = z.object({
   economyConfig: economyConfigSchema,
   missions: z.array(missionDefSchema),
   achievements: z.array(achievementDefSchema),
+  banners: z.array(bannerDefSchema),
 });

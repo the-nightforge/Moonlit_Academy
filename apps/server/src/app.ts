@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { dataVersion } from "data";
 import { createContext, HttpError, type AppDeps } from "./context";
 import { registerAuthRoutes } from "./routes/auth";
+import { registerGachaRoutes } from "./routes/gacha";
 import { registerProfileRoutes } from "./routes/profile";
 import { registerRunRoutes } from "./routes/runs";
 
@@ -34,5 +35,6 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   registerAuthRoutes(app, ctx);
   registerProfileRoutes(app, ctx);
   registerRunRoutes(app, ctx);
+  registerGachaRoutes(app, ctx);
   return app;
 }

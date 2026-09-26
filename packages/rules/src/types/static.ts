@@ -278,6 +278,14 @@ export type AchievementGoal =
   | { type: "starterFloor"; floor: number }
   | { type: "allLockedUnlocked" };
 
+/** A gacha banner (`14` §9). Phase 4d has hero banners only. */
+export interface BannerDef {
+  id: string;
+  name: string;
+  kind: "hero";
+  pool: Record<Rarity, string[]>;
+}
+
 /** One-time, auto-claimed achievement (`14` §8). */
 export interface AchievementDef {
   id: string;

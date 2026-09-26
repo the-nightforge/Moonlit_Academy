@@ -15,6 +15,7 @@ import metaConfigJson from "../meta-config.json";
 import economyConfigJson from "../economy-config.json";
 import missionsJson from "../missions.json";
 import achievementsJson from "../achievements.json";
+import bannersJson from "../banners.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -34,7 +35,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners } =
     parsed;
   const errors: string[] = [];
 
@@ -267,6 +268,19 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   for (const id of duplicate(economyConfig.moonStarShop.map((item) => item.id))) errors.push(`economyConfig: duplicate shop item "${id}"`);
   for (const id of duplicate(missions.map((mission) => mission.id))) errors.push(`missions: duplicate id "${id}"`);
   for (const id of duplicate(achievements.map((achievement) => achievement.id))) errors.push(`achievements: duplicate id "${id}"`);
+  for (const id of duplicate(banners.map((banner) => banner.id))) errors.push(`banners: duplicate id "${id}"`);
+  for (const banner of banners) {
+    const ids = Object.values(banner.pool).flat();
+    for (const id of duplicate(ids)) errors.push(`banners: "${banner.id}" lists "${id}" twice`);
+    if (ids.length === 0) errors.push(`banners: "${banner.id}" has an empty pool`);
+    for (const [rarity, heroIds] of Object.entries(banner.pool)) {
+      for (const heroId of heroIds) {
+        const hero = heroes.find((candidate) => candidate.id === heroId);
+        if (!hero) errors.push(`banners: "${banner.id}" has unknown hero "${heroId}"`);
+        else if (hero.rarity !== rarity) errors.push(`banners: "${banner.id}" lists ${hero.rarity} hero "${heroId}" as ${rarity}`);
+      }
+    }
+  }
   for (const achievement of achievements) {
     const goal = achievement.goal;
     if (goal.type === "bossKillWithBond" && !cards.some((card) => card.id === goal.bondCardId && card.bond)) {
@@ -334,7 +348,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -351,6 +365,7 @@ export function parseGameData(raw: unknown): GameData {
     economyConfig,
     missions: Object.fromEntries(missions.map((mission) => [mission.id, mission])),
     achievements: Object.fromEntries(achievements.map((achievement) => [achievement.id, achievement])),
+    banners: Object.fromEntries(banners.map((banner) => [banner.id, banner])),
   };
 }
 
@@ -370,5 +385,6 @@ export function loadGameData(): GameData {
     economyConfig: economyConfigJson,
     missions: missionsJson,
     achievements: achievementsJson,
+    banners: bannersJson,
   });
 }

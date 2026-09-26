@@ -1,0 +1,8 @@
+[
+  {
+    "id": "banner_heroes",
+    "name": "Triệu Hồi Anh Hùng",
+    "kind": "hero",
+    "pool": { "legendary": ["m05"], "epic": ["m06", "f02", "f03"], "rare": ["f04"], "common": [] }
+  }
+]
