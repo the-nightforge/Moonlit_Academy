@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, getEffectiveCost } from "../src/index";
 import { idleIntent, regenThreeCard, stealthOneCard, strike9Intent } from "./fixtures";
-import { injectCard, makeEnemiesIdle, makeTestCombat, setHand, setIntent, instanceIdOf } from "./helpers";
+import { injectCard, makeEnemiesIdle, makeTestCombat, setHand, setIntent, instanceIdOf, p0 } from "./helpers";
 
 describe("hero level up", () => {
   it("T46: damageTaken counter levels M05 up mid-card", () => {
@@ -27,7 +27,7 @@ describe("hero level up", () => {
   it("T47: leveled M05's attack cards gain +3 damage", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         s.heroes[0]!.leveledUp = true;
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },
@@ -96,7 +96,7 @@ describe("hero level up", () => {
   it("T51: killing with a card levels M06 but the discount starts next turn", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         s.enemies[0]!.hp = 5;
         setHand(s, ["m06_am_tien"]);
       },
@@ -120,7 +120,7 @@ describe("hero level up", () => {
     expect(played.ok).toBe(true);
     if (!played.ok) return;
     expect(played.events.find((e) => e.type === "cardPlayed")).toMatchObject({ cost: 2 });
-    expect(played.state.moonPower).toBe(7);
+    expect(p0(played.state).moonPower).toBe(7);
   });
 
   it("T52: first own card each turn costs 0 after M06 leveled", () => {
@@ -147,7 +147,7 @@ describe("hero level up", () => {
       data.combatConfig.moonPower.perRound +
       data.combatConfig.moonReserveMax;
     expect(free.events.find((e) => e.type === "cardPlayed")).toMatchObject({ cost: 0 });
-    expect(free.state.moonPower).toBe(fund);
+    expect(p0(free.state).moonPower).toBe(fund);
 
     const paid = applyAction(data, free.state, {
       type: "playCard",
@@ -157,13 +157,13 @@ describe("hero level up", () => {
     expect(paid.ok).toBe(true);
     if (!paid.ok) return;
     expect(paid.events.find((e) => e.type === "cardPlayed")).toMatchObject({ cost: 2 });
-    expect(paid.state.moonPower).toBe(fund - 2);
+    expect(p0(paid.state).moonPower).toBe(fund - 2);
   });
 
   it("T53: a kill by another hero does not raise M06's counter", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         s.enemies[0]!.hp = 5;
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },

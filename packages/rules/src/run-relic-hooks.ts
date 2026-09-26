@@ -1,5 +1,6 @@
 import { checkCombatEnd, resolveEffects } from "./effects";
 import { relicAt, weaponHooks } from "./gear";
+import { heroesOf } from "./players";
 import type {
   CardDef,
   CombatEvent,
@@ -43,11 +44,12 @@ function matches(on: HookTrigger, trigger: TriggerInstance, wearer?: HeroState):
 
 function pickActors(
   state: CombatState,
+  player: number,
   actor: RunRelicActor | "wearer",
   trigger: TriggerInstance,
   wearer?: HeroState,
 ): HeroState[] {
-  const living = state.heroes.filter((hero) => hero.alive);
+  const living = heroesOf(state, player).filter((hero) => hero.alive);
   switch (actor) {
     case "trigger": {
       const heroId =
@@ -88,14 +90,15 @@ interface HookSource {
   wearer?: HeroState;
 }
 
-/** Hook sources in firing order (`01` §14.5); weapons of fallen wearers are left out. */
-function hookSources(data: GameData, state: CombatState): HookSource[] {
-  const sources: HookSource[] = state.runRelicIds.map((relicId) => ({
+/** Hook sources of seat `player` in firing order (`01` §14.5); weapons of fallen wearers are left out. */
+function hookSources(data: GameData, state: CombatState, player: number): HookSource[] {
+  const seat = state.players[player]!;
+  const sources: HookSource[] = seat.runRelicIds.map((relicId) => ({
     keyPrefix: relicId,
     hooks: (data.runRelics[relicId] ?? data.augments[relicId])?.hooks ?? [],
     event: { type: "runRelicTriggered", runRelicId: relicId },
   }));
-  for (const relic of state.relics) {
+  for (const relic of seat.relics) {
     const def = data.relics[relic.id];
     if (!def) continue;
     sources.push({
@@ -104,8 +107,8 @@ function hookSources(data: GameData, state: CombatState): HookSource[] {
       event: { type: "relicTriggered", relicId: relic.id },
     });
   }
-  for (const weapon of state.weapons) {
-    const wearer = state.heroes.find((hero) => hero.defId === weapon.heroId);
+  for (const weapon of seat.weapons) {
+    const wearer = heroesOf(state, player).find((hero) => hero.defId === weapon.heroId);
     if (!wearer) continue;
     sources.push({
       keyPrefix: `${weapon.weaponId}@${weapon.heroId}`,
@@ -118,26 +121,28 @@ function hookSources(data: GameData, state: CombatState): HookSource[] {
 }
 
 /**
- * Runs every hook matching `trigger`: run relics and augments, then moon relics,
- * then weapons by wearer position; each in hook order (`01` §13, §14.5).
+ * Runs seat `player`'s hooks matching `trigger`: run relics and augments, then
+ * moon relics, then weapons by wearer position; each in hook order (`01` §13, §14.5).
  */
 export function runRelicHooks(
   data: GameData,
   state: CombatState,
   events: CombatEvent[],
   trigger: TriggerInstance,
+  player: number = state.activePlayer,
 ): void {
-  for (const source of hookSources(data, state)) {
+  const seat = state.players[player]!;
+  for (const source of hookSources(data, state, player)) {
     for (const [index, hook] of source.hooks.entries()) {
       if (isOver(state)) return;
       // A fallen wearer's weapon does nothing, and its counters stay put.
       if (source.wearer !== undefined && !source.wearer.alive) break;
       if (!matches(hook.on, trigger, source.wearer)) continue;
       const key = `${source.keyPrefix}#${index}`;
-      const count = (state.runRelicCounters[key] ?? 0) + 1;
-      state.runRelicCounters[key] = count;
+      const count = (seat.hookCounters[key] ?? 0) + 1;
+      seat.hookCounters[key] = count;
       if (hook.every !== undefined && count % hook.every !== 0) continue;
-      const actors = pickActors(state, hook.actor, trigger, source.wearer);
+      const actors = pickActors(state, player, hook.actor, trigger, source.wearer);
       if (actors.length === 0) continue;
       events.push(source.event);
       for (const actor of actors) {
@@ -160,8 +165,10 @@ export function fireEventHooks(
   events: CombatEvent[],
   from: number,
   bloodMoonBefore: number,
+  player: number = state.activePlayer,
 ): void {
-  if (state.runRelicIds.length === 0 && state.relics.length === 0 && state.weapons.length === 0) return;
+  const seat = state.players[player]!;
+  if (seat.runRelicIds.length === 0 && seat.relics.length === 0 && seat.weapons.length === 0) return;
   // Sampled before any hook effects below run: bloodMoonStarted only reacts to
   // the scanned effect's own 0→active transition, never a relic-internal one.
   const bloodMoonAfter = state.bloodMoonRounds;
@@ -174,15 +181,16 @@ export function fireEventHooks(
         state,
         events,
         isEnemy ? { type: "enemyKilled", killerId: event.killerId } : { type: "heroDied" },
+        player,
       );
     } else if (event.type === "moonShifted") {
       runRelicHooks(data, state, events, {
         type: "moonPhaseEntered",
         phase: data.moonPhases[event.to]!.id,
-      });
+      }, player);
     }
   }
   if (!isOver(state) && bloodMoonBefore === 0 && bloodMoonAfter > 0) {
-    runRelicHooks(data, state, events, { type: "bloodMoonStarted" });
+    runRelicHooks(data, state, events, { type: "bloodMoonStarted" }, player);
   }
 }

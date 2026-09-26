@@ -12,6 +12,7 @@ import type {
   RunState,
 } from "../src/index";
 import { applyAction, applyRunAction, createCombat, createRun } from "../src/index";
+import { p0 } from "./helpers";
 import { combatAction, runAction } from "./playtest-bot";
 
 /**
@@ -22,18 +23,18 @@ import { combatAction, runAction } from "./playtest-bot";
  * IMPORTANT (Task 5a.2): every read of a per-player field goes through one of these
  * accessors. Task 3 turns `state.hand` into `p0(state).hand` here only.
  */
-const playerHand = (state: CombatState) => state.hand;
-const playerDrawPile = (state: CombatState) => state.drawPile;
-const playerDiscardPile = (state: CombatState) => state.discardPile;
-const playerMoonPower = (state: CombatState) => state.moonPower;
-const playerMoonReserve = (state: CombatState) => state.moonReserve;
-const playerMoonPowerBonus = (state: CombatState) => state.moonPowerBonus;
-const playerCardsPlayed = (state: CombatState) => state.cardsPlayedThisTurn;
-const playerPendingChoice = (state: CombatState) => state.pendingChoice;
-const playerRunRelicIds = (state: CombatState) => state.runRelicIds;
-const playerHookCounters = (state: CombatState) => state.runRelicCounters;
-const playerWeapons = (state: CombatState) => state.weapons;
-const playerRelics = (state: CombatState) => state.relics;
+const playerHand = (state: CombatState) => p0(state).hand;
+const playerDrawPile = (state: CombatState) => p0(state).drawPile;
+const playerDiscardPile = (state: CombatState) => p0(state).discardPile;
+const playerMoonPower = (state: CombatState) => p0(state).moonPower;
+const playerMoonReserve = (state: CombatState) => p0(state).moonReserve;
+const playerMoonPowerBonus = (state: CombatState) => p0(state).moonPowerBonus;
+const playerCardsPlayed = (state: CombatState) => p0(state).cardsPlayedThisTurn;
+const playerPendingChoice = (state: CombatState) => p0(state).pendingChoice;
+const playerRunRelicIds = (state: CombatState) => p0(state).runRelicIds;
+const playerHookCounters = (state: CombatState) => p0(state).hookCounters;
+const playerWeapons = (state: CombatState) => p0(state).weapons;
+const playerRelics = (state: CombatState) => p0(state).relics;
 
 /** Stable projection of a combat — survives the PlayerState rework unchanged. */
 export function combatProjection(state: CombatState) {

@@ -1,4 +1,4 @@
-import { cardDefOf, drawCards } from "rules";
+import { activePlayerState, cardDefOf, drawCards } from "rules";
 import type { CombatEvent, CombatState, GameData } from "rules";
 import { session } from "./session";
 
@@ -23,12 +23,13 @@ function checkEnd(): void {
 }
 
 export function debugAddMoonPower(amount = 3): void {
-  session.state.moonPower += amount;
-  session.events.push({ type: "moonPowerChanged", value: session.state.moonPower });
+  const seat = activePlayerState(session.state);
+  seat.moonPower += amount;
+  session.events.push({ type: "moonPowerChanged", value: seat.moonPower });
 }
 
 export function debugDrawCards(count = 1): void {
-  drawCards(session.state, count, session.events);
+  drawCards(session.state, activePlayerState(session.state), count, session.events);
 }
 
 export function debugSetMoon(index: number): void {

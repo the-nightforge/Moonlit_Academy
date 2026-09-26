@@ -9,8 +9,7 @@ import {
   makeEnemiesIdle,
   makeTestCombat,
   setHand,
-  setIntent,
-} from "./helpers";
+  setIntent, p0 } from "./helpers";
 
 const PHASE2_TEAM: [string, string, string] = ["m05", "f03", "f02"];
 
@@ -117,7 +116,7 @@ describe("reflect", () => {
     expect(result.events.filter((e) => e.type === "damageDealt")).toHaveLength(1);
     expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 4);
     expect(result.events).toContainEqual({ type: "unitDied", unitId: "hero:f03", killerId: "enemy:0" });
-    expect(result.state.discardPile).toContain(twoHit);
+    expect(p0(result.state).discardPile).toContain(twoHit);
   });
 
   it("T66: an enemy killed by reflect credits the reflector but not enemiesKilled", () => {
@@ -237,7 +236,7 @@ describe("blood moon", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["f02_doi_van_chu"]);
       },
     });
@@ -307,7 +306,7 @@ describe("blood moon", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["f02_phe_hon"]);
       },
     });
@@ -325,7 +324,7 @@ describe("blood moon", () => {
     const { data, state } = makeTestCombat({
       heroIds: PHASE2_TEAM,
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["f02_doi_van_chu"]);
       },
     });

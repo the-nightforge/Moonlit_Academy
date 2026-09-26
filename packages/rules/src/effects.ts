@@ -6,6 +6,7 @@ import {
   moonHealMultiplier,
   moonStealthDurationBonus,
 } from "./moon";
+import { alliesOf, opponentsOf, playerOf } from "./players";
 import { fireEventHooks } from "./run-relic-hooks";
 import {
   applyStatus,
@@ -60,6 +61,11 @@ function isAttackSource(ctx: EffectContext): boolean {
   );
 }
 
+/** Seat whose run relics/augments/moon relics modify `unit`'s effects (`17` §2.1). */
+function modifiersSeat(state: CombatState, unit: UnitState): number {
+  return unit.side === "hero" ? (unit as HeroState).player : state.activePlayer;
+}
+
 function resolveTargets(state: CombatState, to: TargetRef, ctx: EffectContext): UnitState[] {
   switch (to) {
     case "self":
@@ -69,13 +75,9 @@ function resolveTargets(state: CombatState, to: TargetRef, ctx: EffectContext): 
       return target?.alive ? [target] : [];
     }
     case "allEnemies":
-      return (ctx.source.side === "hero" ? state.enemies : state.heroes).filter(
-        (unit) => unit.alive,
-      );
+      return opponentsOf(state, ctx.source).filter((unit) => unit.alive);
     case "allAllies":
-      return (ctx.source.side === "hero" ? state.heroes : state.enemies).filter(
-        (unit) => unit.alive,
-      );
+      return alliesOf(state, ctx.source).filter((unit) => unit.alive);
   }
 }
 
@@ -119,7 +121,7 @@ export function computeDamageAmount(
   }
   let multiplier = 1;
   if (ctx.card !== undefined) {
-    multiplier *= moonCardDamageMultiplier(data, state, ctx.card.tags);
+    multiplier *= moonCardDamageMultiplier(data, state, modifiersSeat(state, ctx.source), ctx.card.tags);
   }
   if (hasStatus(ctx.source, "weak")) multiplier *= 0.75;
   if (hasStatus(target, "vulnerable")) multiplier *= 1.5;
@@ -212,8 +214,10 @@ function evalCondition(
       const instance = ctx.instanceId !== undefined ? state.cards[ctx.instanceId] : undefined;
       return instance !== undefined && instance.heldTurns >= condition.turns;
     }
-    case "cardsPlayedThisTurnAtLeast":
-      return state.cardsPlayedThisTurn + (ctx.comboBonus ?? 0) >= condition.count;
+    case "cardsPlayedThisTurnAtLeast": {
+      const seat = playerOf(state, ctx.source.id);
+      return (seat?.cardsPlayedThisTurn ?? 0) + (ctx.comboBonus ?? 0) >= condition.count;
+    }
   }
 }
 
@@ -236,7 +240,7 @@ export function resolveEffect(
       return;
     }
     case "heal": {
-      const multiplier = moonHealMultiplier(data, state);
+      const multiplier = moonHealMultiplier(data, state, modifiersSeat(state, ctx.source));
       for (const target of resolveTargets(state, effect.to, ctx)) {
         const raw = Math.floor(effect.amount * multiplier);
         const healed = Math.min(target.maxHp - target.hp, raw);
@@ -245,7 +249,7 @@ export function resolveEffect(
           events.push({ type: "healed", targetId: target.id, amount: healed });
         }
         if (effect.overflow === "armor" && raw > healed) {
-          const armor = Math.floor((raw - healed) * moonArmorMultiplier(data, state));
+          const armor = Math.floor((raw - healed) * moonArmorMultiplier(data, state, modifiersSeat(state, ctx.source)));
           if (armor > 0) {
             target.armor += armor;
             events.push({ type: "armorGained", targetId: target.id, amount: armor });
@@ -262,7 +266,7 @@ export function resolveEffect(
       return;
     }
     case "gainArmor": {
-      const multiplier = moonArmorMultiplier(data, state);
+      const multiplier = moonArmorMultiplier(data, state, modifiersSeat(state, ctx.source));
       // Bất Diệt: armor from the hero's cards is raised before the armor multiplier.
       const passive = cardPassive(data, ctx);
       const bonus = passive?.type === "armorBonusOwnCards" ? passive.amount : 0;
@@ -281,23 +285,30 @@ export function resolveEffect(
       return;
     }
     case "chooseCard": {
-      const options = state.drawPile.splice(0, Math.min(effect.look, state.drawPile.length));
+      const seat = playerOf(state, ctx.source.id);
+      if (!seat) return;
+      const options = seat.drawPile.splice(0, Math.min(effect.look, seat.drawPile.length));
       if (options.length === 0) return;
       if (options.length === 1) {
         state.cards[options[0]!]!.heldTurns = 0;
         state.cards[options[0]!]!.chosenThisTurn = true;
-        state.hand.push(options[0]!);
+        seat.hand.push(options[0]!);
         events.push({ type: "cardsDrawn", instanceIds: options });
         return;
       }
-      state.pendingChoice = { kind: "chooseCard", options };
+      seat.pendingChoice = { kind: "chooseCard", options };
       state.status = "choosing";
       events.push({ type: "choiceOpened", options });
       return;
     }
     case "gainMoonPower": {
-      state.moonPower += effect.amount;
-      events.push({ type: "moonPowerChanged", value: state.moonPower });
+      if (ctx.source.side === "enemy") {
+        (ctx.source as EnemyState).moonPower += effect.amount;
+        return;
+      }
+      const seat = playerOf(state, ctx.source.id)!;
+      seat.moonPower += effect.amount;
+      events.push({ type: "moonPowerChanged", value: seat.moonPower });
       return;
     }
     case "conditional": {
@@ -308,13 +319,13 @@ export function resolveEffect(
       return;
     }
     case "applyStatus": {
-      const bonus = effect.status === "stealth" ? moonStealthDurationBonus(data, state) : 0;
+      const bonus = effect.status === "stealth" ? moonStealthDurationBonus(data, state, modifiersSeat(state, ctx.source)) : 0;
       let targets = resolveTargets(state, effect.to, ctx);
       if (
         effect.status === "regen" &&
         cardPassive(data, ctx)?.type === "regenSpreadsToAllAllies"
       ) {
-        targets = [...new Set([...targets, ...state.heroes.filter((h) => h.alive)])];
+        targets = [...new Set([...targets, ...alliesOf(state, ctx.source).filter((h) => h.alive)])];
       }
       for (const target of targets) {
         const newFreeze = effect.status === "freeze" && !hasStatus(target, "freeze");
@@ -365,7 +376,7 @@ export function resolveEffect(
       return;
     }
     case "burstRegen": {
-      const multiplier = moonHealMultiplier(data, state);
+      const multiplier = moonHealMultiplier(data, state, modifiersSeat(state, ctx.source));
       for (const target of resolveTargets(state, effect.to, ctx)) {
         const regen = getStatus(target, "regen");
         if (!regen) continue;
@@ -403,14 +414,16 @@ export function resolveEffect(
         // Đoạt Nguyệt counts as one theft toward F02's level-up (01 §8).
         if (ctx.source.side === "hero") {
           bumpCounter(data, ctx.source as HeroState, "buffsStolen", 1);
+          const seat = playerOf(state, ctx.source.id)!;
+          seat.moonPower += drained;
+          events.push({ type: "moonPowerChanged", value: seat.moonPower });
         }
-        state.moonPower += drained;
-        events.push({ type: "moonPowerChanged", value: state.moonPower });
       }
       return;
     }
     case "gainMoonPowerPerTurn": {
-      state.moonPowerBonus += effect.amount;
+      const seat = playerOf(state, ctx.source.id);
+      if (seat) seat.moonPowerBonus += effect.amount;
       return;
     }
     default: {
@@ -462,10 +475,13 @@ function killUnit(
   }
   if (unit.side === "hero") {
     const defId = (unit as HeroState).defId;
-    const purged = state.drawPile.filter((id) => state.cards[id]!.ownerIds.includes(defId));
+    const seat = playerOf(state, unit.id)!;
+    const purged = seat.drawPile.filter(
+      (id) => state.cards[id]!.player === seat.index && state.cards[id]!.ownerIds.includes(defId),
+    );
     if (purged.length > 0) {
-      state.drawPile = state.drawPile.filter((id) => !purged.includes(id));
-      state.discardPile.push(...purged);
+      seat.drawPile = seat.drawPile.filter((id) => !purged.includes(id));
+      seat.discardPile.push(...purged);
       events.push({ type: "cardsPurged", heroId: unit.id, instanceIds: purged });
     }
   }
@@ -537,7 +553,7 @@ export function tickUnitStatuses(
   if (regen) {
     const healed = Math.min(
       unit.maxHp - unit.hp,
-      Math.floor(regen.value * moonHealMultiplier(data, state)),
+      Math.floor(regen.value * moonHealMultiplier(data, state, modifiersSeat(state, unit))),
     );
     if (healed > 0) {
       unit.hp += healed;

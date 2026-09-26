@@ -70,6 +70,9 @@ importers:
 
   packages/rules:
     devDependencies:
+      '@types/node':
+        specifier: 22.20.4
+        version: 22.20.4
       data:
         specifier: workspace:*
         version: link:../data

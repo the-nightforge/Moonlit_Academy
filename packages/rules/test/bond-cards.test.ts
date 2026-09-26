@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CombatState, GameData } from "../src/index";
 import { applyAction, createCombat, getEffectiveCost, isCardPlayable } from "../src/index";
 import { stealthOneCard } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setHand, testData } from "./helpers";
+import { injectCard, instanceIdOf, makeTestCombat, setHand, testData, p0 } from "./helpers";
 
 function play(data: GameData, state: CombatState, cardId: string, targetId?: string) {
   return applyAction(data, state, {
@@ -34,15 +34,17 @@ describe("bond deck construction", () => {
       instanceId: "bond01",
       cardId: "bond_bang_hoa_tranh_phong",
       ownerIds: ["m05", "f03"],
+      player: 0,
       heldTurns: 0,
     });
     expect(state.cards["bond02"]).toEqual({
       instanceId: "bond02",
       cardId: "bond_bang_hoa_tranh_phong",
       ownerIds: ["m05", "f03"],
+      player: 0,
       heldTurns: 0,
     });
-    expect(state.drawPile.length + state.hand.length).toBe(total);
+    expect(p0(state).drawPile.length + p0(state).hand.length).toBe(total);
   });
 
   it("T79: the default team has no bond card", () => {
@@ -105,7 +107,7 @@ describe("bond resolution", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "f03", "f02"],
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["bond_bang_hoa_tranh_phong"]);
       },
     });
@@ -122,14 +124,14 @@ describe("bond resolution", () => {
     expect(hero(result.state, "f03").levelUpCounter).toBe(1);
     expect(hero(result.state, "m05").statuses).toEqual([]);
     expect(hero(result.state, "f03").statuses).toEqual([{ id: "empower", value: 2 }]);
-    expect(result.state.moonPower).toBe(7);
+    expect(p0(result.state).moonPower).toBe(7);
   });
 
   it("T84: a frozen target takes 14 damage and is not frozen again", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "f03", "f02"],
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["bond_bang_hoa_tranh_phong"]);
       },
     });
@@ -147,7 +149,7 @@ describe("bond resolution", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "f03", "f02"],
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["bond_bang_hoa_tranh_phong"]);
       },
     });
@@ -163,7 +165,7 @@ describe("bond resolution", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "m06", "f02"],
       setup: (s) => {
-        s.moonPower = 10;
+        p0(s).moonPower = 10;
         s.enemies[0]!.moonPower = 3;
         setHand(s, ["bond_anh_dau"]);
       },
@@ -177,7 +179,7 @@ describe("bond resolution", () => {
     expect(hero(result.state, "f02").levelUpCounter).toBe(2); // 1 buff + 1 Đoạt Nguyệt (01 §8)
     expect(hero(result.state, "m06").statuses).toEqual([{ id: "stealth", value: 1 }]);
     expect(result.state.enemies[0]?.moonPower).toBe(2);
-    expect(result.state.moonPower).toBe(9);
+    expect(p0(result.state).moonPower).toBe(9);
   });
 
   it("T87: M06's first-card discount does not apply to a bond card", () => {

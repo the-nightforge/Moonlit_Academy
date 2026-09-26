@@ -77,9 +77,9 @@ function botAction(data: GameData, run: RunState): RunAction {
       const state = run.combat!;
       if (state.status === "mulligan") return { type: "combat", action: { type: "mulligan", instanceIds: [] } };
       if (state.status === "choosing") {
-        return { type: "combat", action: { type: "chooseCard", instanceId: state.pendingChoice!.options[0]! } };
+        return { type: "combat", action: { type: "chooseCard", instanceId: state.players[0]!.pendingChoice!.options[0]! } };
       }
-      for (const instanceId of state.hand) {
+      for (const instanceId of state.players[0]!.hand) {
         if (!isCardPlayable(data, state, instanceId)) continue;
         if (cardDefOf(data, state, state.cards[instanceId]!)!.target === "none") {
           return { type: "combat", action: { type: "playCard", instanceId } };

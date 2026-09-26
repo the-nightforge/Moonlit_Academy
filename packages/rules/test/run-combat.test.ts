@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, createCombat } from "../src/index";
-import { instanceIdOf, makeTestCombat, setHand, testData } from "./helpers";
+import { instanceIdOf, makeTestCombat, setHand, testData, p0 } from "./helpers";
 
 describe("combat setup from a run", () => {
   it("uses deckCardIds, hero vitals and run relics from the setup", () => {
@@ -25,8 +25,8 @@ describe("combat setup from a run", () => {
     expect(huyetChien).toHaveLength(data.cards["m05_huyet_chien"]!.copies);
     expect(huyetChien[0]?.ownerIds).toEqual(["m05"]);
     expect(state.heroes.map((h) => [h.hp, h.maxHp])).toEqual([[20, 40], [30, 30], [5, 28]]);
-    expect(state.runRelicIds).toEqual(["anh_nguyet_chau"]);
-    expect(state.runRelicCounters).toEqual({});
+    expect(p0(state).runRelicIds).toEqual(["anh_nguyet_chau"]);
+    expect(p0(state).hookCounters).toEqual({});
   });
 
   it("rejects a deck card whose owner is not in the team", () => {

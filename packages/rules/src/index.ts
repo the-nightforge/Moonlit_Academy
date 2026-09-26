@@ -1,5 +1,14 @@
 export type * from "./types/index";
 export { nextRandom, shuffle } from "./rng";
+export {
+  activePlayerState,
+  alliesOf,
+  heroesOf,
+  opponentsOf,
+  playerOf,
+  playerOfCard,
+  prefixedId,
+} from "./players";
 export { cardDefOf, relicAt, weaponAt, weaponCardDef, weaponHooks } from "./gear";
 export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-combat";
 export { applyAction } from "./apply-action";

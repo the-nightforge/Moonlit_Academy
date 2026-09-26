@@ -4,26 +4,32 @@ import { runEnemyTurn } from "./enemy-turn";
 import { planEnemyIntents } from "./intent";
 import { bumpCounter, checkLevelUps, levelUpPassive } from "./levelup";
 import { baseMoonPower } from "./moon-power";
+import { heroesOf } from "./players";
 import { cardOwners } from "./queries";
 import { fireEventHooks, runRelicHooks } from "./run-relic-hooks";
 import { DURATION_STATUSES, hasStatus, removeStatus } from "./statuses";
-import type { CombatEvent, CombatState, GameData } from "./types/index";
+import type { CombatEvent, CombatState, GameData, PlayerState } from "./types/index";
 
-export function startPlayerTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
+export function startPlayerTurn(
+  data: GameData,
+  state: CombatState,
+  player: PlayerState,
+  events: CombatEvent[],
+): void {
   state.status = "playerTurn";
   events.push({ type: "turnStarted", side: "hero", round: state.round });
-  state.cardsPlayedThisTurn = 0;
-  for (const hero of state.heroes) {
+  player.cardsPlayedThisTurn = 0;
+  for (const hero of heroesOf(state, player.index)) {
     if (hero.armor > 0) {
       hero.armor = 0;
       events.push({ type: "armorRemoved", targetId: hero.id });
     }
     removeStatus(hero, "reflect", events);
   }
-  const anyAllyRegen = state.heroes.some(
+  const anyAllyRegen = heroesOf(state, player.index).some(
     (hero) => hero.alive && hasStatus(hero, "regen"),
   );
-  for (const hero of state.heroes) {
+  for (const hero of heroesOf(state, player.index)) {
     if (!hero.alive) continue;
     if (anyAllyRegen) bumpCounter(data, hero, "turnsWithAllyRegen", 1);
     hero.firstCardDiscountUsedThisTurn = false;
@@ -32,7 +38,7 @@ export function startPlayerTurn(data: GameData, state: CombatState, events: Comb
     hero.firstCardDiscountActive = hero.leveledUp && levelUpPassive(data, hero)?.type === "firstOwnCardDiscount";
   }
   checkLevelUps(data, state, events);
-  for (const hero of state.heroes) {
+  for (const hero of heroesOf(state, player.index)) {
     if (!hero.alive) continue;
     const start = events.length;
     tickUnitStatuses(data, state, hero, events);
@@ -41,7 +47,7 @@ export function startPlayerTurn(data: GameData, state: CombatState, events: Comb
     if (checkCombatEnd(state, events)) return;
   }
   if (state.bloodMoonRounds > 0) {
-    for (const hero of state.heroes) {
+    for (const hero of heroesOf(state, player.index)) {
       if (!hero.alive) continue;
       const start = events.length;
       loseHp(data, hero, data.combatConfig.bloodMoonHpLoss, "bloodMoon", events);
@@ -54,16 +60,16 @@ export function startPlayerTurn(data: GameData, state: CombatState, events: Comb
   }
   if (checkCombatEnd(state, events)) return;
   const curve = data.combatConfig.moonPower;
-  state.moonPower =
-    baseMoonPower(curve, curve.perRound, state.round) + state.moonReserve + state.moonPowerBonus;
-  events.push({ type: "moonPowerChanged", value: state.moonPower });
-  refillHand(data, state, events);
-  if (state.hand.length === 0 && state.drawPile.length === 0) {
+  player.moonPower =
+    baseMoonPower(curve, curve.perRound, state.round) + player.moonReserve + player.moonPowerBonus;
+  events.push({ type: "moonPowerChanged", value: player.moonPower });
+  refillHand(data, state, player, events);
+  if (player.hand.length === 0 && player.drawPile.length === 0) {
     state.status = "lost";
     events.push({ type: "deckedOut" }, { type: "combatEnded", result: "lost" });
     return;
   }
-  runRelicHooks(data, state, events, { type: "playerTurnStart" });
+  runRelicHooks(data, state, events, { type: "playerTurnStart" }, player.index);
 }
 
 export function endRound(data: GameData, state: CombatState, events: CombatEvent[]): void {
@@ -88,29 +94,30 @@ export function endRound(data: GameData, state: CombatState, events: CombatEvent
 }
 
 export function runEndTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
-  runRelicHooks(data, state, events, { type: "playerTurnEnd" });
+  const player = state.players[state.activePlayer]!;
+  runRelicHooks(data, state, events, { type: "playerTurnEnd" }, player.index);
   // Combat may end inside playerTurnEnd hooks. Written as a won/lost check so
   // TS keeps `status` un-narrowed for the identical guards after runEnemyTurn.
   if (state.status === "won" || state.status === "lost") return;
-  const broken = state.hand.filter((id) =>
+  const broken = player.hand.filter((id) =>
     cardOwners(state, state.cards[id]!).some((owner) => !owner?.alive),
   );
   if (broken.length > 0) {
-    state.hand = state.hand.filter((id) => !broken.includes(id));
-    state.discardPile.push(...broken);
+    player.hand = player.hand.filter((id) => !broken.includes(id));
+    player.discardPile.push(...broken);
     events.push({ type: "cardDiscarded", instanceIds: broken });
   }
-  for (const id of state.hand) state.cards[id]!.heldTurns += 1;
+  for (const id of player.hand) state.cards[id]!.heldTurns += 1;
   for (const instance of Object.values(state.cards)) delete instance.chosenThisTurn;
-  const reserve = Math.min(data.combatConfig.moonReserveMax, state.moonPower);
-  if (reserve !== state.moonReserve) {
-    state.moonReserve = reserve;
+  const reserve = Math.min(data.combatConfig.moonReserveMax, player.moonPower);
+  if (reserve !== player.moonReserve) {
+    player.moonReserve = reserve;
     events.push({ type: "moonReserveChanged", side: "hero", value: reserve });
   }
-  for (const hero of state.heroes) removeStatus(hero, "freeze", events);
+  for (const hero of heroesOf(state, player.index)) removeStatus(hero, "freeze", events);
   runEnemyTurn(data, state, events);
   if (state.status !== "enemyTurn") return;
   endRound(data, state, events);
   if (state.status !== "enemyTurn") return;
-  startPlayerTurn(data, state, events);
+  startPlayerTurn(data, state, player, events);
 }

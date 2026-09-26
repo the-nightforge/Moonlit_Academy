@@ -1,5 +1,6 @@
 import type { Action, CombatState, Effect, GameData, RunAction, RunState } from "../src/index";
 import { cardDefOf, findNode, getEffectiveCost, getValidTargets, isCardPlayable, reachableNodeIds } from "../src/index";
+import { p0 } from "./helpers";
 
 /** The playtest bot shared by `run-playtest` and the economy simulation. */
 // Phase 4a heuristic: mulligan cards above the doubling curve, Chiêm Bài picks
@@ -7,7 +8,7 @@ import { cardDefOf, findNode, getEffectiveCost, getValidTargets, isCardPlayable,
 // focuses lowest-HP enemy / lowest-ratio ally.
 export function combatAction(gameData: GameData, state: CombatState): Action {
   if (state.status === "mulligan") {
-    const expensive = state.hand.filter(
+    const expensive = p0(state).hand.filter(
       (id) => cardDefOf(gameData, state, state.cards[id]!)!.cost > 5,
     );
     return {
@@ -20,7 +21,7 @@ export function combatAction(gameData: GameData, state: CombatState): Action {
     const nextFund =
       Math.min(curve.cap, curve.start + state.round * curve.perRound) +
       gameData.combatConfig.moonReserveMax;
-    const options = [...state.pendingChoice!.options].sort(
+    const options = [...p0(state).pendingChoice!.options].sort(
       (a, b) =>
         cardDefOf(gameData, state, state.cards[b]!)!.cost -
         cardDefOf(gameData, state, state.cards[a]!)!.cost,
@@ -45,9 +46,9 @@ export function combatAction(gameData: GameData, state: CombatState): Action {
     walk(cardDefOf(gameData, state, state.cards[id]!)!.effects);
     return best;
   };
-  const playable = state.hand.filter((id) => isCardPlayable(gameData, state, id));
+  const playable = p0(state).hand.filter((id) => isCardPlayable(gameData, state, id));
   const ready = playable.filter((id) => state.cards[id]!.heldTurns >= heldThreshold(id));
-  const candidates = ready.length > 0 || state.hand.length < gameData.combatConfig.handSize ? ready : playable;
+  const candidates = ready.length > 0 || p0(state).hand.length < gameData.combatConfig.handSize ? ready : playable;
   const ordered = [...candidates].sort((a, b) => {
     const comboA = keywordsOf(a).includes("lien_hoan") ? 1 : 0;
     const comboB = keywordsOf(b).includes("lien_hoan") ? 1 : 0;

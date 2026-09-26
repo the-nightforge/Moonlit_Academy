@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import {
+  activePlayerState,
   applyAction,
   cardDefOf,
   getEffectiveCost,
@@ -309,9 +310,10 @@ export class CombatScene extends Phaser.Scene {
 
   private renderTopBar() {
     this.text(24, 14, `Vòng ${this.state.round}`, 16);
-    if (this.state.runRelicIds.length > 0) {
-      const names = this.state.runRelicIds
-        .map((id) => (this.gameData.runRelics[id] ?? this.gameData.augments[id])?.name ?? id)
+    const seat = activePlayerState(this.state);
+    if (seat.runRelicIds.length > 0) {
+      const names = seat.runRelicIds
+        .map((id: string) => (this.gameData.runRelics[id] ?? this.gameData.augments[id])?.name ?? id)
         .join(" · ");
       this.text(24, 36, `Kỳ Vật · Lõi: ${names}`, 11, COLORS.dimText);
     }
@@ -777,7 +779,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderChoiceOverlay() {
-    const options = this.state.pendingChoice!.options;
+    const options = activePlayerState(this.state).pendingChoice!.options;
     this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.6));
     this.text(WIDTH / 2, 250, "Chiêm Bài — chọn 1 lá, các lá còn lại xuống đáy chồng", 16, COLORS.gold).setOrigin(0.5);
     const spacing = CARD_W + 30;
@@ -935,28 +937,29 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderBottomBar() {
-    const power = this.state.moonPower;
-    const reserve = Math.min(this.state.moonReserve, power);
+    const seat = activePlayerState(this.state);
+    const power = seat.moonPower;
+    const reserve = Math.min(seat.moonReserve, power);
     this.text(30, 545, "Nguyệt Lực", 13, COLORS.dimText);
     this.text(30, 566, "◉".repeat(power - reserve), 16, COLORS.gold);
     if (reserve > 0) this.text(30 + (power - reserve) * 12, 566, "◈".repeat(reserve), 16, COLORS.costCheap);
     this.text(30, 592, reserve > 0 ? `${power} (Dự Trữ ${reserve})` : `${power}`, 12, COLORS.dimText);
     const extras = [
-      this.state.cardsPlayedThisTurn > 0 ? `Liên Hoàn ${this.state.cardsPlayedThisTurn}` : "",
-      this.state.moonPowerBonus > 0 ? `+${this.state.moonPowerBonus}/lượt` : "",
+      seat.cardsPlayedThisTurn > 0 ? `Liên Hoàn ${seat.cardsPlayedThisTurn}` : "",
+      seat.moonPowerBonus > 0 ? `+${seat.moonPowerBonus}/lượt` : "",
     ].filter((part) => part.length > 0);
     if (extras.length > 0) this.text(30, 612, extras.join("  ·  "), 12, COLORS.gold);
 
-    const hand = this.state.hand;
+    const hand = seat.hand;
     const spacing = CARD_W + 10;
     const startX = WIDTH / 2 - ((hand.length - 1) * spacing) / 2;
     hand.forEach((instanceId, index) => {
       this.renderCard(instanceId, startX + index * spacing, 632);
     });
 
-    const pile = this.state.drawPile.length;
+    const pile = seat.drawPile.length;
     this.text(1090, 548, `Chồng bài ${pile}`, 16, pile <= 6 ? "#ff8080" : COLORS.text);
-    this.text(1090, 576, `Bỏ ${this.state.discardPile.length}`, 13, COLORS.dimText);
+    this.text(1090, 576, `Bỏ ${seat.discardPile.length}`, 13, COLORS.dimText);
 
     if (this.state.status === "playerTurn") {
       const btnX = 1150;
@@ -974,7 +977,7 @@ export class CombatScene extends Phaser.Scene {
       this.text(
         btnX,
         btnY + 30,
-        `Giữ ${Math.min(this.gameData.combatConfig.moonReserveMax, this.state.moonPower)}`,
+        `Giữ ${Math.min(this.gameData.combatConfig.moonReserveMax, seat.moonPower)}`,
         11,
         COLORS.dimText,
       ).setOrigin(0.5, 0);

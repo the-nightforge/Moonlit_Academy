@@ -4,7 +4,7 @@ import {
   applyRunAction, createProfile, createRun, getValidTargets, isCardPlayable, mergeImportedProfile,
   parseProfile, reachableNodeIds, replayRun, starterDeck, unlockCard, validateDeck,
 } from "../src/index";
-import { testData } from "./helpers";
+import { testData, p0 } from "./helpers";
 
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
 
@@ -29,8 +29,8 @@ function botAction(data: GameData, run: RunState): RunAction {
 
 function combatAction(data: GameData, state: CombatState): Action {
   if (state.status === "mulligan") return { type: "mulligan", instanceIds: [] };
-  if (state.status === "choosing") return { type: "chooseCard", instanceId: state.pendingChoice!.options[0]! };
-  for (const instanceId of state.hand) {
+  if (state.status === "choosing") return { type: "chooseCard", instanceId: p0(state).pendingChoice!.options[0]! };
+  for (const instanceId of p0(state).hand) {
     if (!isCardPlayable(data, state, instanceId)) continue;
     const card = data.cards[state.cards[instanceId]!.cardId]!;
     if (card.target === "none") return { type: "playCard", instanceId };

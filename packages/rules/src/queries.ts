@@ -1,12 +1,15 @@
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
 import { activeModifiers } from "./moon";
+import { alliesOf, opponentsOf } from "./players";
 import { hasStatus } from "./statuses";
 import type { CardInstance, CombatState, GameData, HeroState } from "./types/index";
 
-/** Heroes owning a card instance: one, or two for a bond card. */
+/** Heroes owning a card instance: one, or two for a bond card — looked up in the card's seat. */
 export function cardOwners(state: CombatState, instance: CardInstance): (HeroState | undefined)[] {
-  return instance.ownerIds.map((ownerId) => state.heroes.find((hero) => hero.defId === ownerId));
+  return instance.ownerIds.map((ownerId) =>
+    state.heroes.find((hero) => hero.defId === ownerId && hero.player === instance.player),
+  );
 }
 
 /** Rejection reason tied to the card's owners, or null. */
@@ -39,13 +42,19 @@ function bloodMoonDiscount(data: GameData, state: CombatState, instance: CardIns
   return passive?.type === "bloodMoonOwnCardDiscount" ? passive.amount : 0;
 }
 
-export function getEffectiveCost(data: GameData, state: CombatState, instanceId: string): number {
+export function getEffectiveCost(
+  data: GameData,
+  state: CombatState,
+  instanceId: string,
+  player?: number,
+): number {
   const instance = state.cards[instanceId];
   const card = instance ? cardDefOf(data, state, instance) : undefined;
   if (!card) throw new Error(`getEffectiveCost: unknown card instance "${instanceId}"`);
+  const seat = player ?? instance!.player;
   let cost = card.cost;
   let floor = 0;
-  for (const modifier of activeModifiers(data, state)) {
+  for (const modifier of activeModifiers(data, state, seat)) {
     if (modifier.type === "costModifierForTag" && card.tags.includes(modifier.tag)) {
       cost += modifier.amount;
       floor = Math.max(floor, modifier.min);
@@ -59,27 +68,38 @@ export function getEffectiveCost(data: GameData, state: CombatState, instanceId:
 export function getValidTargets(data: GameData, state: CombatState, instanceId: string): string[] {
   const instance = state.cards[instanceId];
   const card = instance ? cardDefOf(data, state, instance) : undefined;
-  if (!card) return [];
+  if (!instance || !card) return [];
+  const source = state.heroes.find(
+    (hero) => hero.defId === instance.ownerIds[0] && hero.player === instance.player,
+  );
+  if (!source) return [];
   switch (card.target) {
     case "none":
       return [];
     case "enemy":
-      return state.enemies
-        .filter((enemy) => enemy.alive && !hasStatus(enemy, "stealth"))
-        .map((enemy) => enemy.id);
+      return opponentsOf(state, source)
+        .filter((unit) => unit.alive && !hasStatus(unit, "stealth"))
+        .map((unit) => unit.id);
     case "ally":
-      return state.heroes.filter((hero) => hero.alive).map((hero) => hero.id);
+      return alliesOf(state, source).filter((unit) => unit.alive).map((unit) => unit.id);
   }
 }
 
-export function isCardPlayable(data: GameData, state: CombatState, instanceId: string): boolean {
+export function isCardPlayable(
+  data: GameData,
+  state: CombatState,
+  instanceId: string,
+  player?: number,
+): boolean {
   if (state.status !== "playerTurn") return false;
   const instance = state.cards[instanceId];
   const card = instance ? cardDefOf(data, state, instance) : undefined;
-  if (!instance || !card || !state.hand.includes(instanceId)) return false;
+  if (!instance || !card) return false;
+  const seat = state.players[player ?? instance.player];
+  if (!seat || !seat.hand.includes(instanceId)) return false;
   if (ownerError(state, instance) !== null) return false;
   if (card.requiresBloodMoon && state.bloodMoonRounds === 0) return false;
-  if (state.moonPower < getEffectiveCost(data, state, instanceId)) return false;
+  if (seat.moonPower < getEffectiveCost(data, state, instanceId, seat.index)) return false;
   if (card.target !== "none" && getValidTargets(data, state, instanceId).length === 0) return false;
   return true;
 }

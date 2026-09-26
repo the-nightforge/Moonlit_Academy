@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { loadGameData } from "data";
+import { p0 } from "./helpers";
 
 declare const console: {
   log(...args: unknown[]): void;
@@ -52,7 +53,7 @@ const moonGuideId = Object.values(data.cards).find(
 // focuses lowest-HP enemy / lowest-ratio ally. Not optimal — a floor for difficulty.
 function combatAction(gameData: GameData, state: CombatState): Action {
   if (state.status === "mulligan") {
-    const expensive = state.hand.filter(
+    const expensive = p0(state).hand.filter(
       (id) => gameData.cards[state.cards[id]!.cardId]!.cost > 5,
     );
     return {
@@ -65,7 +66,7 @@ function combatAction(gameData: GameData, state: CombatState): Action {
     const nextFund =
       Math.min(curve.cap, curve.start + state.round * curve.perRound) +
       gameData.combatConfig.moonReserveMax;
-    const options = [...state.pendingChoice!.options].sort(
+    const options = [...p0(state).pendingChoice!.options].sort(
       (a, b) =>
         gameData.cards[state.cards[b]!.cardId]!.cost -
         gameData.cards[state.cards[a]!.cardId]!.cost,
@@ -90,9 +91,9 @@ function combatAction(gameData: GameData, state: CombatState): Action {
     walk(gameData.cards[state.cards[id]!.cardId]!.effects);
     return best;
   };
-  const playable = state.hand.filter((id) => isCardPlayable(gameData, state, id));
+  const playable = p0(state).hand.filter((id) => isCardPlayable(gameData, state, id));
   const ready = playable.filter((id) => state.cards[id]!.heldTurns >= heldThreshold(id));
-  const candidates = ready.length > 0 || state.hand.length < gameData.combatConfig.handSize ? ready : playable;
+  const candidates = ready.length > 0 || p0(state).hand.length < gameData.combatConfig.handSize ? ready : playable;
   const ordered = [...candidates].sort((a, b) => {
     const comboA = keywordsOf(a).includes("lien_hoan") ? 1 : 0;
     const comboB = keywordsOf(b).includes("lien_hoan") ? 1 : 0;
@@ -163,11 +164,11 @@ function simulate(
       } else if (event.type === "turnStarted" && event.side === "hero") {
         if (state.bloodMoonRounds > 0) sim.bloodMoonTurns += 1;
         sim.turns += 1;
-        sim.reserveSum += state.moonReserve;
+        sim.reserveSum += p0(state).moonReserve;
         sim.reserveSamples += 1;
         if (
-          state.hand.length === gameData.combatConfig.handSize &&
-          state.hand.every((id) => !isCardPlayable(gameData, state, id))
+          p0(state).hand.length === gameData.combatConfig.handSize &&
+          p0(state).hand.every((id) => !isCardPlayable(gameData, state, id))
         ) {
           sim.clogTurns += 1;
         }

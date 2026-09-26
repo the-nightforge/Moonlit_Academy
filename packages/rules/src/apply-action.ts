@@ -2,6 +2,7 @@ import { cloneState } from "./clone";
 import { resolveEffects } from "./effects";
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
+import { activePlayerState } from "./players";
 import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
 import { shuffle } from "./rng";
 import { runRelicHooks } from "./run-relic-hooks";
@@ -16,15 +17,17 @@ import type {
   Effect,
   GameData,
   HeroState,
+  PlayerState,
 } from "./types/index";
 
 export function getPlayCardError(
   data: GameData,
   state: CombatState,
   action: { type: "playCard"; instanceId: string; targetId?: string },
+  player: PlayerState = activePlayerState(state),
 ): string | null {
   const instance = state.cards[action.instanceId];
-  if (!instance || !state.hand.includes(action.instanceId)) {
+  if (!instance || instance.player !== player.index || !player.hand.includes(action.instanceId)) {
     return "card is not in hand";
   }
   const card = cardDefOf(data, state, instance);
@@ -32,7 +35,7 @@ export function getPlayCardError(
   const ownerProblem = ownerError(state, instance);
   if (ownerProblem !== null) return ownerProblem;
   if (card.requiresBloodMoon && state.bloodMoonRounds === 0) return "requires blood moon";
-  if (state.moonPower < getEffectiveCost(data, state, action.instanceId)) {
+  if (player.moonPower < getEffectiveCost(data, state, action.instanceId)) {
     return "not enough moonPower";
   }
   if (card.target === "none") {
@@ -49,6 +52,7 @@ export function getPlayCardError(
 function playCard(
   data: GameData,
   state: CombatState,
+  player: PlayerState,
   action: { type: "playCard"; instanceId: string; targetId?: string },
   events: CombatEvent[],
 ): void {
@@ -59,9 +63,9 @@ function playCard(
   const discounted = firstCardDiscount(data, state, instance.instanceId) > 0;
   const cost = getEffectiveCost(data, state, instance.instanceId);
 
-  state.moonPower -= cost;
-  events.push({ type: "moonPowerChanged", value: state.moonPower });
-  state.hand = state.hand.filter((id) => id !== instance.instanceId);
+  player.moonPower -= cost;
+  events.push({ type: "moonPowerChanged", value: player.moonPower });
+  player.hand = player.hand.filter((id) => id !== instance.instanceId);
   events.push({
     type: "cardPlayed",
     instanceId: instance.instanceId,
@@ -92,9 +96,9 @@ function playCard(
       removeStatus(attacker, "stealth", events);
     }
   }
-  runRelicHooks(data, state, events, { type: "cardPlayed", card, heroId: owner.id });
-  state.discardPile.push(instance.instanceId);
-  state.cardsPlayedThisTurn += 1;
+  runRelicHooks(data, state, events, { type: "cardPlayed", card, heroId: owner.id }, player.index);
+  player.discardPile.push(instance.instanceId);
+  player.cardsPlayedThisTurn += 1;
 }
 
 /** Owner(s) losing empower/stealth after an attack card: a bond card's damage actors. */
@@ -115,41 +119,52 @@ function attackCleanupTargets(card: CardDef, owners: HeroState[]): HeroState[] {
   return owners.filter((_, index) => damageActors.has(index));
 }
 
-export function getMulliganError(data: GameData, state: CombatState, instanceIds: string[]): string | null {
+export function getMulliganError(
+  data: GameData,
+  state: CombatState,
+  instanceIds: string[],
+  player: PlayerState = activePlayerState(state),
+): string | null {
   if (instanceIds.length > data.combatConfig.maxMulligan) return "too many cards to mulligan";
   if (new Set(instanceIds).size !== instanceIds.length) return "duplicate card in mulligan";
-  if (instanceIds.some((id) => !state.hand.includes(id))) return "card is not in hand";
+  if (instanceIds.some((id) => !player.hand.includes(id))) return "card is not in hand";
   return null;
 }
 
-function mulligan(data: GameData, state: CombatState, instanceIds: string[], events: CombatEvent[]): void {
-  const drawn = state.drawPile.splice(0, instanceIds.length);
+function mulligan(
+  data: GameData,
+  state: CombatState,
+  player: PlayerState,
+  instanceIds: string[],
+  events: CombatEvent[],
+): void {
+  const drawn = player.drawPile.splice(0, instanceIds.length);
   for (const id of drawn) state.cards[id]!.heldTurns = 0;
   let drawIndex = 0;
-  state.hand = state.hand.flatMap((id) => {
+  player.hand = player.hand.flatMap((id) => {
     if (!instanceIds.includes(id)) return [id];
     const replacement = drawn[drawIndex++];
     return replacement === undefined ? [] : [replacement];
   });
   events.push({ type: "mulliganed", returned: [...instanceIds], drawn });
   if (instanceIds.length > 0) {
-    const shuffled = shuffle([...state.drawPile, ...instanceIds], state.rngState);
-    state.drawPile = shuffled.items;
+    const shuffled = shuffle([...player.drawPile, ...instanceIds], state.rngState);
+    player.drawPile = shuffled.items;
     state.rngState = shuffled.rngState;
     events.push({ type: "deckShuffled" });
   }
-  startPlayerTurn(data, state, events);
-  runRelicHooks(data, state, events, { type: "combatStart" });
+  startPlayerTurn(data, state, player, events);
+  runRelicHooks(data, state, events, { type: "combatStart" }, player.index);
 }
 
-function chooseCard(state: CombatState, instanceId: string, events: CombatEvent[]): void {
-  const options = state.pendingChoice!.options;
+function chooseCard(state: CombatState, player: PlayerState, instanceId: string, events: CombatEvent[]): void {
+  const options = player.pendingChoice!.options;
   const bottomed = options.filter((id) => id !== instanceId);
   state.cards[instanceId]!.heldTurns = 0;
   state.cards[instanceId]!.chosenThisTurn = true;
-  state.hand.push(instanceId);
-  state.drawPile.push(...bottomed);
-  state.pendingChoice = null;
+  player.hand.push(instanceId);
+  player.drawPile.push(...bottomed);
+  player.pendingChoice = null;
   state.status = "playerTurn";
   events.push({ type: "cardChosen", instanceId, bottomed });
 }
@@ -181,28 +196,31 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
   if (blocked !== null) return { ok: false, error: blocked };
   switch (action.type) {
     case "mulligan": {
-      const error = getMulliganError(data, state, action.instanceIds);
+      const player = activePlayerState(state);
+      const error = getMulliganError(data, state, action.instanceIds, player);
       if (error !== null) return { ok: false, error };
       const next = cloneState(state);
       const events: CombatEvent[] = [];
-      mulligan(data, next, action.instanceIds, events);
+      mulligan(data, next, next.players[player.index]!, action.instanceIds, events);
       return { ok: true, state: next, events };
     }
     case "playCard": {
-      const error = getPlayCardError(data, state, action);
+      const player = activePlayerState(state);
+      const error = getPlayCardError(data, state, action, player);
       if (error !== null) return { ok: false, error };
       const next = cloneState(state);
       const events: CombatEvent[] = [];
-      playCard(data, next, action, events);
+      playCard(data, next, next.players[player.index]!, action, events);
       return { ok: true, state: next, events };
     }
     case "chooseCard": {
-      if (!state.pendingChoice!.options.includes(action.instanceId)) {
+      const player = activePlayerState(state);
+      if (!player.pendingChoice!.options.includes(action.instanceId)) {
         return { ok: false, error: "not a choice option" };
       }
       const next = cloneState(state);
       const events: CombatEvent[] = [];
-      chooseCard(next, action.instanceId, events);
+      chooseCard(next, next.players[player.index]!, action.instanceId, events);
       return { ok: true, state: next, events };
     }
     case "endTurn": {

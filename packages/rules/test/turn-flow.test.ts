@@ -5,14 +5,14 @@ import {
   isCardPlayable,
 } from "../src/index";
 import type { Action, CombatState, GameData } from "../src/index";
-import { makeTestCombat, setIntent } from "./helpers";
+import { makeTestCombat, setIntent, p0 } from "./helpers";
 import { strike9Intent } from "./fixtures";
 
 function pickAction(data: GameData, state: CombatState): Action {
-  if (state.status === "choosing" && state.pendingChoice) {
-    return { type: "chooseCard", instanceId: state.pendingChoice.options[0]! };
+  if (state.status === "choosing" && p0(state).pendingChoice) {
+    return { type: "chooseCard", instanceId: p0(state).pendingChoice!.options[0]! };
   }
-  for (const instanceId of state.hand) {
+  for (const instanceId of p0(state).hand) {
     if (!isCardPlayable(data, state, instanceId)) continue;
     const card = data.cards[state.cards[instanceId]!.cardId]!;
     if (card.target === "none") return { type: "playCard", instanceId };
@@ -60,18 +60,18 @@ describe("turn flow", () => {
         setIntent(s, 1, strike9Intent, "hero:m06");
       },
     });
-    const hand = [...state.hand];
+    const hand = [...p0(state).hand];
     const result = applyAction(data, state, { type: "endTurn" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.round).toBe(2);
     expect(result.state.moonIndex).toBe(2);
-    expect(result.state.moonPower).toBe(
+    expect(p0(result.state).moonPower).toBe(
       data.combatConfig.moonPower.start +
         data.combatConfig.moonPower.perRound +
         data.combatConfig.moonReserveMax,
     );
-    expect(result.state.hand).toEqual(hand);
+    expect(p0(result.state).hand).toEqual(hand);
     const types = result.events.map((e) => e.type);
     expect(types).not.toContain("cardDiscarded");
     expect(types).toContain("intentExecuted");
