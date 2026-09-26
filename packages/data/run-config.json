@@ -11,6 +11,6 @@
   ],
   "restHealRatio": 0.4,
   "reviveHpRatio": 0.4,
-  "rewardCardChoices": 3,
+  "augmentChoices": 3,
   "minDeckSize": 10
 }

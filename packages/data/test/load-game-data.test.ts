@@ -5,6 +5,7 @@ import enemiesJson from "../enemies.json";
 import encountersJson from "../encounters.json";
 import moonPhasesJson from "../moon-phases.json";
 import runRelicsJson from "../run-relics.json";
+import runAugmentsJson from "../run-augments.json";
 import runConfigJson from "../run-config.json";
 import combatConfigJson from "../combat-config.json";
 import keywordsJson from "../keywords.json";
@@ -19,6 +20,7 @@ function rawData(): any {
     encounters: encountersJson,
     moonPhases: moonPhasesJson,
     runRelics: runRelicsJson,
+    runAugments: runAugmentsJson,
     runConfig: runConfigJson,
     combatConfig: combatConfigJson,
     keywords: keywordsJson,
@@ -39,6 +41,11 @@ describe("loadGameData", () => {
       "enc_01", "enc_02", "enc_03", "enc_04", "enc_05", "enc_06", "enc_elite_01", "enc_elite_02",
     ]);
     expect(Object.keys(data.runRelics)).toHaveLength(10);
+    expect(Object.keys(data.augments)).toHaveLength(16);
+    expect(data.augments["aug_loan_dao"]?.modifiers?.[0]).toMatchObject({
+      type: "damageMultiplierForTag",
+      tag: "assassin",
+    });
     expect(data.runConfig.floors).toBe(8);
     expect(data.heroes["m05"]?.lockedCardIds).toEqual([
       "m05_huyet_chien",
@@ -249,6 +256,22 @@ describe("parseGameData validation", () => {
     const bad = rawData();
     bad.heroes[0].branches[0].cardIds[0] = bad.heroes[0].branches[1].cardIds[0];
     expect(() => parseGameData(bad)).toThrowError(/branches must split/);
+  });
+
+  it("rejects an augment id colliding with a run relic id", () => {
+    const raw = rawData();
+    raw.runAugments[0].id = "nguyet_giap_phu";
+    expect(() => parseGameData(raw)).toThrowError(/collides with a runRelic/);
+  });
+
+  it("augments allow card-only keywords but still reject chosen/stealBuff", () => {
+    const raw = rawData();
+    raw.runAugments[0].hooks[0].effects = [{ type: "drainMoonPower", amount: 1, to: "allEnemies" }];
+    expect(() => parseGameData(raw)).not.toThrowError();
+
+    const chosen = rawData();
+    chosen.runAugments[0].hooks[0].effects = [{ type: "damage", amount: 1, to: "chosen" }];
+    expect(() => parseGameData(chosen)).toThrowError(/aug_nguyet_trieu.*chosen/);
   });
 
   it("T157: rejects card-only keywords in enemy intents and relic hooks, and unknown card keywords", () => {

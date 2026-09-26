@@ -449,3 +449,39 @@ Bộ cơ bản theo tier: thường 90% / 9.3 vòng, Tinh Anh 81% / 11.2, boss 7
 12.0. Cạn Bài ≤ 6%, kẹt tay ≤ 1%, 0 lượt kẹt, 0/60 lá chưa được đánh. Nhịp Tu
 Luyện ~11.4 lượt tới cấp 6 (mục tiêu 8–12). Thăng cấp trong trận đơn: M05
 51/72, F04 40/48, M06 36/48, F03 44/72, **F02 28/48** (trước 6/48).
+
+# Playtest Notes — Lõi (augment thay lá thưởng)
+
+Thay thế lá thưởng sau trận bằng **chọn 1 trong 3 Lõi** (`run-augments.json`,
+16 Lõi, hook engine của Kỳ Vật) sau mọi trận thắng không phải boss; deck giữ
+nguyên 18 lá suốt lượt (chỉ nhỏ đi khi Nghỉ Chân bỏ lá).
+
+## Số đo sau thay đổi (4 đội × 6 loại deck × 20 seed = 480 lượt)
+
+**Lưu ý:** đo trên data 4b *trước* khi merge gói "Chỉnh sau 4b" từ main
+(NL start 3, HP địch ×0.9/0.8…) — sau merge cần đo lại.
+
+| Deck | Thắng% | Tầng TB | XP/lượt |
+|---|---|---|---|
+| Bộ cơ bản | 74% | 7.5 | 138.1 |
+| nhánh A 6/6/6 | 81% | 7.8 | 151.1 |
+| nhánh B 6/6/6 | 73% | 7.6 | 130.2 |
+| nhánh A 4/4/10 | 73% | 7.3 | 135.0 |
+| nhánh B 8/5/5 | 74% | 7.7 | 133.0 |
+| ngẫu nhiên | 78% | 7.6 | 138.3 |
+
+Theo tier: trận thường 96–99% / 7.2–8.5 vòng; Tinh Anh 90–100% / 6.8–8.9;
+boss 78–88% / 9.3–11.6 vòng. **Cạn Bài: boss 9–14%** (deck 18 cố định — đồng
+hồ cạn giờ chỉ cắn ở boss), trận thường ≤4%; kẹt tay ≤1%, 0 kẹt lượt.
+
+## Nhận định
+
+- Lõi mạnh hơn lá thưởng rất nhiều: win rate lượt ~25–59% → **73–81%**, boss
+  ~17–78% → 78–88%. Mỗi Lõi là buff vĩnh viễn nên lượt tích ~6–7 Lõi trước boss.
+- Bot chọn lá đầu tiên trong 3 lựa chọn (~ngẫu nhiên) — người chơi thật chọn
+  theo build sẽ mạnh hơn nữa.
+- Cân bằng hiện **dễ hơn mục tiêu**: nếu muốn giữ ~25–40% theo spec 4a §8 cần
+  nới địch hoặc giảm số Lõi/lượt (ví dụ chỉ cho sau Tinh Anh + trận thường
+  cách nhau). Chưa chỉnh — chờ duyệt.
+- Điểm cần chơi tay: Lõi có tạo cảm giác "build" mỗi lượt không; 16 Lõi có
+  đủ đa dạng; Lõi thay lá có làm Nghỉ Chân bỏ lá (minDeckSize) vô dụng không.

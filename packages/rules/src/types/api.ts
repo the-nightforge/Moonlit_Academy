@@ -1,5 +1,5 @@
 import type {
-  CardDef, CombatConfig, EnemyDef, EncounterDef, HeroDef, KeywordDef, MetaConfig, MoonPhaseDef, RunConfig, RunRelicDef,
+  CardDef, CombatConfig, EnemyDef, EncounterDef, HeroDef, KeywordDef, MetaConfig, MoonPhaseDef, RunAugmentDef, RunConfig, RunRelicDef,
 } from "./static";
 import type { CombatState } from "./state";
 import type { CombatEvent } from "./events";
@@ -11,6 +11,8 @@ export interface GameData {
   encounters: Record<string, EncounterDef>;
   moonPhases: MoonPhaseDef[];
   runRelics: Record<string, RunRelicDef>;
+  /** TFT-style augments ("Lõi") offered after every won combat. */
+  augments: Record<string, RunAugmentDef>;
   runConfig: RunConfig;
   combatConfig: CombatConfig;
   keywords: Record<string, KeywordDef>;

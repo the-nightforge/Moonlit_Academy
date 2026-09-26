@@ -84,7 +84,7 @@ describe("decks", () => {
     expect(() => createRun(data, { heroIds: TEAM, seed: 1, deckCardIds: ["f03_han_an"] })).toThrowError(/f03_han_an/);
   });
 
-  it("T168: reward choices come from the 12-card pools minus the deck, including locked cards", () => {
+  it("T168: reward offers 3 distinct unowned augments and never grows the deck", () => {
     const data = testData();
     const deck = starterDeck(data, TEAM);
     let run = createRun(data, { heroIds: TEAM, seed: 42, deckCardIds: deck }).run;
@@ -98,12 +98,14 @@ describe("decks", () => {
     act({ type: "combat", action: { type: "mulligan", instanceIds: [] } });
     for (const enemy of run.combat!.enemies) enemy.statuses.push({ id: "burn", value: 999 });
     act({ type: "combat", action: { type: "endTurn" } });
-    const choices = run.pendingReward!.cardChoices;
-    expect(choices).toHaveLength(data.runConfig.rewardCardChoices);
-    const pool = TEAM.flatMap((id) => [...data.heroes[id]!.cardIds, ...data.heroes[id]!.lockedCardIds]);
-    for (const cardId of choices) {
-      expect(pool).toContain(cardId);
-      expect(deck).not.toContain(cardId);
+    const choices = run.pendingReward!.augmentChoices;
+    expect(choices).toHaveLength(data.runConfig.augmentChoices);
+    expect(new Set(choices).size).toBe(choices.length);
+    for (const augmentId of choices) {
+      expect(data.augments[augmentId]).toBeDefined();
+      expect(run.augmentIds).not.toContain(augmentId);
     }
+    act({ type: "pickAugment", augmentId: choices[0]! });
+    expect(run.deck).toEqual(deck);
   });
 });

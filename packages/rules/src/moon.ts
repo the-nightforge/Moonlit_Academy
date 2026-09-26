@@ -2,7 +2,9 @@ import type { CardTag, GameData, MoonModifier, CombatState } from "./types/index
 
 /** Moon phase modifiers plus every held run relic's always-on modifiers. */
 export function activeModifiers(data: GameData, state: CombatState): MoonModifier[] {
-  const relicModifiers = state.runRelicIds.flatMap((id) => data.runRelics[id]?.modifiers ?? []);
+  const relicModifiers = state.runRelicIds.flatMap(
+    (id) => (data.runRelics[id] ?? data.augments[id])?.modifiers ?? [],
+  );
   return [...(data.moonPhases[state.moonIndex]?.modifiers ?? []), ...relicModifiers];
 }
 

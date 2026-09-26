@@ -30,11 +30,13 @@ export interface RunState {
   deck: string[];
   /** In acquisition order. */
   runRelicIds: string[];
+  /** Picked augments ("Lõi"), in acquisition order; each id appears at most once. */
+  augmentIds: string[];
   map: RunMap;
   /** Current node; null before entering floor 1. */
   position: string | null;
   combat: CombatState | null;
-  pendingReward: { cardChoices: string[]; runRelicId?: string } | null;
+  pendingReward: { augmentChoices: string[]; runRelicId?: string } | null;
   /** defId → combats in which the hero leveled up (mastery XP). */
   heroLevelUps: Record<string, number>;
 }
@@ -49,14 +51,15 @@ export interface RunSetup {
 export type RunAction =
   | { type: "chooseNode"; nodeId: string }
   | { type: "combat"; action: Action }
-  | { type: "pickCard"; cardId: string | null }
+  /** augmentId may be null only when augmentChoices is empty. */
+  | { type: "pickAugment"; augmentId: string | null }
   | { type: "rest"; choice: "heal" }
   | { type: "rest"; choice: "removeCard"; cardId: string }
   | { type: "continue" };
 
 export type RunEvent =
   | { type: "nodeEntered"; nodeId: string; nodeType: NodeType }
-  | { type: "cardAdded"; cardId: string }
+  | { type: "augmentGained"; augmentId: string }
   | { type: "cardRemoved"; cardId: string }
   | { type: "runRelicGained"; runRelicId: string }
   /** heroId is the hero's defId ("m05"). */

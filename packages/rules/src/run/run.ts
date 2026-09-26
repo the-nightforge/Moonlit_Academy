@@ -53,6 +53,7 @@ export function createRun(data: GameData, setup: RunSetup): { run: RunState; run
     heroes: heroDefs.map((hero) => ({ defId: hero.id, hp: hero.maxHp, maxHp: hero.maxHp })),
     deck: [...setup.deckCardIds],
     runRelicIds: [],
+    augmentIds: [],
     map,
     position: null,
     combat: null,
@@ -70,12 +71,14 @@ export function getRunActionError(data: GameData, run: RunState, action: RunActi
       return reachableNodeIds(run).includes(action.nodeId) ? null : "node is not reachable";
     case "combat":
       return run.status === "combat" && run.combat !== null ? null : "not in combat";
-    case "pickCard":
+    case "pickAugment":
       if (run.status !== "reward" || run.pendingReward === null) return "no reward to pick";
-      if (action.cardId !== null && !run.pendingReward.cardChoices.includes(action.cardId)) {
-        return "card is not a reward choice";
+      if (action.augmentId === null) {
+        return run.pendingReward.augmentChoices.length === 0 ? null : "must pick a lõi";
       }
-      return null;
+      return run.pendingReward.augmentChoices.includes(action.augmentId)
+        ? null
+        : "augment is not a reward choice";
     case "rest":
       if (run.status !== "rest") return "not resting";
       if (action.choice === "removeCard") {
@@ -103,13 +106,11 @@ function gainRunRelic(data: GameData, run: RunState, runEvents: RunEvent[]): str
   return runRelicId;
 }
 
-function drawCardChoices(data: GameData, run: RunState): string[] {
-  const pool = run.heroes
-    .flatMap((hero) => [...data.heroes[hero.defId]!.cardIds, ...data.heroes[hero.defId]!.lockedCardIds])
-    .filter((cardId) => !run.deck.includes(cardId));
+function drawAugmentChoices(data: GameData, run: RunState): string[] {
+  const pool = Object.keys(data.augments).filter((id) => !run.augmentIds.includes(id));
   const shuffled = shuffle(pool, run.rngState);
   run.rngState = shuffled.rngState;
-  return shuffled.items.slice(0, data.runConfig.rewardCardChoices);
+  return shuffled.items.slice(0, data.runConfig.augmentChoices);
 }
 
 function enterNode(
@@ -134,7 +135,7 @@ function enterNode(
         seed: Math.floor(roll.value * 2 ** 32),
         deckCardIds: [...run.deck],
         heroes: run.heroes.map(({ hp, maxHp }) => ({ hp, maxHp })),
-        runRelicIds: [...run.runRelicIds],
+        runRelicIds: [...run.runRelicIds, ...run.augmentIds],
       });
       run.combat = created.state;
       events.push(...created.events);
@@ -183,13 +184,13 @@ function finishCombat(data: GameData, run: RunState, runEvents: RunEvent[]): voi
     runEvents.push({ type: "runEnded", result: "won" });
     return;
   }
-  const cardChoices = drawCardChoices(data, run);
+  const augmentChoices = drawAugmentChoices(data, run);
   const runRelicId = node.type === "elite" ? gainRunRelic(data, run, runEvents) : undefined;
-  if (cardChoices.length === 0 && runRelicId === undefined) {
+  if (augmentChoices.length === 0 && runRelicId === undefined) {
     run.status = "map";
     return;
   }
-  run.pendingReward = { cardChoices, ...(runRelicId !== undefined ? { runRelicId } : {}) };
+  run.pendingReward = { augmentChoices, ...(runRelicId !== undefined ? { runRelicId } : {}) };
   run.status = "reward";
 }
 
@@ -218,10 +219,10 @@ export function applyRunAction(data: GameData, run: RunState, action: RunAction)
       }
       break;
     }
-    case "pickCard":
-      if (action.cardId !== null) {
-        next.deck.push(action.cardId);
-        runEvents.push({ type: "cardAdded", cardId: action.cardId });
+    case "pickAugment":
+      if (action.augmentId !== null) {
+        next.augmentIds.push(action.augmentId);
+        runEvents.push({ type: "augmentGained", augmentId: action.augmentId });
       }
       next.pendingReward = null;
       next.status = "map";
