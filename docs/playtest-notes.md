@@ -648,3 +648,52 @@ Hai mục tiêu ngược nhau khi chỉ giảm thu nhập (gói E/F/G: Legendary
 - Legendary duy nhất (Hoắc Liệt) là Hero khởi đầu: "Legendary đầu" luôn là bản trùng.
 - Pool Rare chỉ có Ôn Như Ý → Tinh Hồn 6 ngay ngày đầu với mọi gói; cần nội dung Rare
   (ví dụ vật phẩm 4e) nếu muốn nhịp này chậm lại.
+
+# Playtest Notes — Phase 4e (bước 4e.7)
+
+## Phương pháp
+
+- `run-playtest` (bật bằng `PLAYTEST_GEAR=1`): Bộ cơ bản, 4 đội × 20 seed mỗi dòng. Vũ
+  khí do Hero bản mệnh mang nếu có trong đội, nếu không thì Hero đầu đội; deck bỏ lá cuối
+  của người mang (18 ô). Nguyệt Bảo: deck giữ nguyên. Mỗi món đo ở R1 và R5.
+- Mục tiêu (`15` §8): không món nào làm thắng lượt tăng > 10 điểm ở R1. Sai số mỗi dòng
+  (80 lượt) khoảng ±5 điểm.
+
+## Gói đã áp dụng (đã duyệt — gói G1)
+
+| Món | Chỉnh | R1 trước → sau |
+|---|---|---|
+| Xích Diệm Thương | lá 8→6 damage, Thiêu Đốt 3→2; bản mệnh R1 chỉ Phản Đòn 3 (+1 Sức Mạnh dời lên R5) | +21 → +6 |
+| Bách Hoa Trâm | nội tại mỗi 2 lượt; lá Hồi Phục 3/5 → 2/4 | +20 → +10 |
+| Loan Linh Ấn | CM1 mỗi lá kỹ năng thứ 5 (thay vì 3); CM3–5 mỗi lá thứ 4 | +19 → +9 |
+| Tinh Bàn | R1 "Đầu trận +2 NL"; Dưỡng Nguyệt 1 dời lên R5 | +18 → +3 |
+| Liệt Cung | lá 3×2 → 2×2 | +16 → +11 |
+| Hàn Tuyết Song Kiếm | lá 4×2 → 3×2; bản mệnh R1 như bản thường | +13 → +6 |
+
+R2–R5 co lại theo cùng nguyên tắc (`03` §7).
+
+## Kết quả sau chỉnh (mốc Bộ cơ bản 43%)
+
+| Món | R1 | R5 | Món | R1 | R5 |
+|---|---|---|---|---|---|
+| Xích Diệm Thương | +6 | +19 | Thiên Sách | +1 | +6 |
+| Ảnh Nguyệt Chủy | +8 | +15 | Vọng Nguyệt Kính | +3 | +1 |
+| Hàn Tuyết Song Kiếm | +6 | +24 | Huyết Ngọc Bội | +1 | +9 |
+| Thiên Diện Phiến | +10 | +21 | Loan Linh Ấn | +9 | +18 |
+| Bách Hoa Trâm | +10 | +24 | Xích Diễm Châu | +1 | +14 |
+| Thiết Thuẫn | +9 | +6 | Bạch Lộ Hương Nang | +8 | +23 |
+| Liệt Cung | +11 | +18 | Huyền Vũ Giáp Phù | 0 | −1 |
+| Huyền Linh Kính | +3 | +13 | Trấn Hồn Linh | +10 | +34 |
+| Thanh Tâm Bình | +5 | +14 | | | |
+| Tinh Bàn | +3 | +15 | | | |
+
+Mọi lá Binh Khí đều từng được đánh.
+
+## Điểm mở
+
+- Liệt Cung +11 ở R1: sát ngưỡng, trong sai số. Lợi thế chủ yếu đến từ 2 bản lá rẻ trong
+  chồng bài (1 bản → −1); nếu chơi tay thấy mạnh, chỉnh `copies` thay vì damage.
+- Mục tiêu chỉ đặt cho R1. Ở R5 nhiều món +20 trở lên (Trấn Hồn Linh +34, Bách Hoa Trâm
+  +24, Hàn Tuyết Song Kiếm +24, Bạch Lộ Hương Nang +23) — đạt R5 cần 4 bản trùng.
+- Thiết Thuẫn và Huyền Vũ Giáp Phù yếu đi ở R5 so với R1: giáp nhiều hơn không đổi kết cục
+  với bot hiện tại; nên xem lại khi có chơi tay.
