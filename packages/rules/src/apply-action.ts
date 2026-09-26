@@ -72,7 +72,7 @@ function playCard(
     data,
     state,
     card.effects,
-    { source: owner, actors: owners, card, chosenId: action.targetId },
+    { source: owner, actors: owners, card, chosenId: action.targetId, instanceId: instance.instanceId },
     events,
   );
 
@@ -84,6 +84,7 @@ function playCard(
   }
   runRelicHooks(data, state, events, { type: "cardPlayed", card, heroId: owner.id });
   state.discardPile.push(instance.instanceId);
+  state.cardsPlayedThisTurn += 1;
 }
 
 /** Owner(s) losing empower/stealth after an attack card: a bond card's damage actors. */
@@ -93,7 +94,7 @@ function attackCleanupTargets(card: CardDef, owners: HeroState[]): HeroState[] {
   const walk = (effects: Effect[], inherited: number): void => {
     for (const effect of effects) {
       const actor = effect.actor ?? inherited;
-      if (effect.type === "damage") damageActors.add(actor);
+      if (effect.type === "damage" || effect.type === "missingHpDamage") damageActors.add(actor);
       if (effect.type === "conditional") {
         walk(effect.then, actor);
         walk(effect.else ?? [], actor);
@@ -113,6 +114,7 @@ export function getMulliganError(data: GameData, state: CombatState, instanceIds
 
 function mulligan(data: GameData, state: CombatState, instanceIds: string[], events: CombatEvent[]): void {
   const drawn = state.drawPile.splice(0, instanceIds.length);
+  for (const id of drawn) state.cards[id]!.heldTurns = 0;
   let drawIndex = 0;
   state.hand = state.hand.flatMap((id) => {
     if (!instanceIds.includes(id)) return [id];
@@ -133,6 +135,7 @@ function mulligan(data: GameData, state: CombatState, instanceIds: string[], eve
 function chooseCard(state: CombatState, instanceId: string, events: CombatEvent[]): void {
   const options = state.pendingChoice!.options;
   const bottomed = options.filter((id) => id !== instanceId);
+  state.cards[instanceId]!.heldTurns = 0;
   state.hand.push(instanceId);
   state.drawPile.push(...bottomed);
   state.pendingChoice = null;

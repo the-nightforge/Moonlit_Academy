@@ -40,17 +40,24 @@ export function createRun(data: GameData, setup: RunSetup): { run: RunState; run
     if (!hero) throw new Error(`createRun: unknown hero "${heroId}"`);
     return hero;
   });
+  for (const cardId of setup.deckCardIds) {
+    const ownerId = data.cards[cardId]?.ownerId;
+    if (ownerId === undefined || !setup.heroIds.includes(ownerId)) {
+      throw new Error(`createRun: deck card "${cardId}" is not owned by a hero in the team`);
+    }
+  }
   const { map, rngState } = generateMap(data, setup.seed);
   const run: RunState = {
     status: "map",
     rngState,
     heroes: heroDefs.map((hero) => ({ defId: hero.id, hp: hero.maxHp, maxHp: hero.maxHp })),
-    deck: heroDefs.flatMap((hero) => hero.cardIds),
+    deck: [...setup.deckCardIds],
     runRelicIds: [],
     map,
     position: null,
     combat: null,
     pendingReward: null,
+    heroLevelUps: {},
   };
   return { run, runEvents: [] };
 }
@@ -98,7 +105,7 @@ function gainRunRelic(data: GameData, run: RunState, runEvents: RunEvent[]): str
 
 function drawCardChoices(data: GameData, run: RunState): string[] {
   const pool = run.heroes
-    .flatMap((hero) => data.heroes[hero.defId]!.rewardCardIds)
+    .flatMap((hero) => [...data.heroes[hero.defId]!.cardIds, ...data.heroes[hero.defId]!.lockedCardIds])
     .filter((cardId) => !run.deck.includes(cardId));
   const shuffled = shuffle(pool, run.rngState);
   run.rngState = shuffled.rngState;
@@ -201,6 +208,11 @@ export function applyRunAction(data: GameData, run: RunState, action: RunAction)
       if (!result.ok) return { ok: false, error: result.error };
       next.combat = result.state;
       events.push(...result.events);
+      for (const event of result.events) {
+        if (event.type !== "heroLeveledUp") continue;
+        const defId = result.state.heroes.find((hero) => hero.id === event.heroId)!.defId;
+        next.heroLevelUps[defId] = (next.heroLevelUps[defId] ?? 0) + 1;
+      }
       if (result.state.status === "won" || result.state.status === "lost") {
         finishCombat(data, next, runEvents);
       }

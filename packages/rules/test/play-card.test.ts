@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "../src/index";
-import { chooseThreeCard } from "./fixtures";
+import {
+  armorBreakCard,
+  armorSixCard,
+  chooseThreeCard,
+  cleanseHealCard,
+  healFiveCard,
+  healSixCard,
+  regenThreeCard,
+} from "./fixtures";
 import { injectCard, instanceIdOf, makeTestCombat, setHand } from "./helpers";
 
 describe("playCard validation", () => {
@@ -52,15 +60,19 @@ describe("draw", () => {
         setHand(s, [
           "m05_liet_hoa_xung_phong",
           "m05_ho_gam",
-          "m05_thuong_pha",
           "m05_tran_bac_huyet_tinh",
-          "m05_bat_khuat",
-          "f04_thao_duoc",
-          "f04_bach_thao_huong",
-          "f04_linh_chi_ho_the",
-          "f04_tinh_tam_tra",
         ]),
     });
+    for (const fixture of [
+      armorBreakCard,
+      healSixCard,
+      healFiveCard,
+      regenThreeCard,
+      armorSixCard,
+      cleanseHealCard,
+    ]) {
+      injectCard(state, data, fixture);
+    }
     const top = state.drawPile.slice(0, 3);
     const instanceId = injectCard(state, data, chooseThreeCard);
     const result = applyAction(data, state, { type: "playCard", instanceId });

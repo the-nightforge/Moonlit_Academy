@@ -68,7 +68,7 @@ export const STATUS_LABELS: Record<StatusId, string> = {
   burn: "Đốt",
   regen: "Hồi",
   strength: "Mạnh",
-  empower: "Tích",
+  empower: "Cường",
   freeze: "Băng",
   reflect: "Phản",
 };

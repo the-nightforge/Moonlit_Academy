@@ -251,3 +251,32 @@ Bối cảnh thiết kế: `12-phase4a-spec.md`. Test luật dùng fixture cố 
 | T146 | M06 thăng cấp: lá riêng đầu tiên −3 (tối thiểu 0), sau giảm theo pha; không áp lá Song Hành |
 | T147 | Tất định: cùng seed + cùng chuỗi Action (có Đổi Bài, Chiêm Bài) → cùng state và event |
 | T148 | Schema: `copies` ∈ {1,2,3}; `intents` ≥ 1, cost ≥ 0; `start ≤ cap`; `chooseCard` chỉ ở cuối lá; config hợp lệ |
+
+---
+
+## Giai đoạn 4b
+
+Bối cảnh thiết kế: `13-phase4b-spec.md`. Luật từ khóa: `01`; luật hồ sơ / Tu Luyện / deck: `14`. Test luật dùng fixture cố định, không phụ thuộc số cân bằng.
+
+| Mã | Kịch bản |
+|---|---|
+| T149 | Tích Tụ: `heldTurns` = 0 khi vào tay (rút, Chiêm Bài, Đổi Bài), +1 cuối lượt sau bỏ Tàn Chiêu; ngưỡng đổi hiệu ứng |
+| T150 | Liên Hoàn: = 0 đầu lượt, +1 sau hook `cardPlayed`; lá đang đánh không tự đếm |
+| T151 | Tỏa Nguyệt: quỹ địch giảm (không âm), bỏ chiêu cuối chuỗi tới khi vừa, override còn, Dự Trữ tính lại, `intentsCancelled` |
+| T152 | Đoạt Nguyệt: người chơi nhận đúng tổng thực rút |
+| T153 | Dưỡng Nguyệt: +n từ lượt sau, cộng dồn, vượt trần |
+| T154 | Phẫn Huyết: gốc = floor(HP mất × ratio) lúc hit, qua Sức Mạnh / Suy Yếu / Dễ Vỡ; dùng được trong chiêu địch |
+| T155 | Dư Sinh: phần dư thành giáp × hệ số giáp pha trăng |
+| T156 | Tụ Dược: hồi = Hồi Phục × hệ số × hệ số hồi, gỡ Hồi Phục; không có Hồi Phục → không gì |
+| T157 | Schema: ràng buộc §2.3; `keywords` trỏ id có thật |
+| T158 | Data: 6 miễn phí + 6 khóa/Hero, không trùng, đúng chủ; ≥ 2 lá miễn phí cost ≤ 3; `copies` 1–3; `meta-config` hợp lệ (`masteryLevels` tăng dần, dài 6) |
+| T159 | `createProfile`; `masteryLevel` tại và quanh mỗi mốc |
+| T160 | `applyRunResult`: công thức XP, `levelBefore/After`, không sửa input |
+| T161 | `unlockCard`: hợp lệ; 3 lỗi |
+| T162 | `parseProfile`: hỏng → mới + `reset`; Hero / lá lạ bị bỏ; lượt mở quay lại; deck không hợp lệ được giữ |
+| T163 | `summarizeRun` + `RunState.heroLevelUps` đếm đúng qua nhiều trận |
+| T164 | `validateDeck`: từng mã lỗi |
+| T165 | `starterDeck` hợp lệ cho cả 10 bộ 3 Hero với hồ sơ mới |
+| T166 | `saveDeck` / `deleteDeck`: cấp id, tên, `maxDecks`, lưu nháp, `unknown deck` |
+| T167 | `createRun` dùng `deckCardIds`, từ chối lá ngoài đội |
+| T168 | Pool lá thưởng = 12 lá/Hero trừ deck, có lá khóa, không rỗng với Bộ cơ bản |

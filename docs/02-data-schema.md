@@ -35,10 +35,16 @@ export interface HeroDef {
   archetype: Archetype;
   rarity: Rarity;
   maxHp: number;
-  cardIds: string[];        // đúng 6 lá (GĐ 4a)
-  rewardCardIds: string[];  // GĐ3: lá thưởng (không trùng cardIds, ownerId = Hero này)
+  cardIds: string[];        // đúng 6 lá miễn phí (GĐ 4b)
+  lockedCardIds: string[];  // GĐ4b: đúng 6 lá khóa, mở bằng Tu Luyện (thay rewardCardIds); pool của Hero = cardIds + lockedCardIds (12 lá)
+  branches: [HeroBranch, HeroBranch];  // GĐ4b: hai nhánh × 6 lá; hợp hai nhánh = pool 12 lá
   levelUp: LevelUpDef;
   art: { portrait: string; levelUp: string }; // đường dẫn ảnh, prototype có thể để trống ""
+}
+
+export interface HeroBranch {
+  name: string;             // tên nhánh (chữ hiển thị), ví dụ "Huyết Chiến"
+  cardIds: string[];        // đúng 6 lá thuộc pool của Hero
 }
 
 export type LevelUpCounter =
@@ -79,6 +85,7 @@ export interface CardDef {
   effects: Effect[];
   text: string;             // mô tả hiển thị
   requiresBloodMoon?: boolean;          // GĐ2: chỉ hợp lệ khi tags có "forbidden"
+  keywords?: string[];      // GĐ4b: id từ khóa trong keywords.json (mục 1.9), client hiện khi di chuột
 }
 ```
 
@@ -91,7 +98,7 @@ export type TargetRef = "self" | "chosen" | "allEnemies" | "allAllies";
 // actor của conditional chứa nó.
 export type Effect = (
   | { type: "damage"; amount: number; to: TargetRef; hits?: number }   // hits mặc định 1
-  | { type: "heal"; amount: number; to: TargetRef }
+  | { type: "heal"; amount: number; to: TargetRef; overflow?: "armor" } // GĐ4b: overflow = Dư Sinh; chỉ lá bài
   | { type: "loseHp"; amount: number; to: TargetRef }
   | { type: "gainArmor"; amount: number; to: TargetRef }
   | { type: "removeArmor"; to: TargetRef }
@@ -100,6 +107,10 @@ export type Effect = (
   | { type: "cleanse"; to: TargetRef }                                   // gỡ mọi debuff
   | { type: "chooseCard"; look: number }                                 // GĐ4a: Chiêm Bài, look ≥ 1; thay "draw"
   | { type: "gainMoonPower"; amount: number }                            // cộng thẳng vào quỹ lượt
+  | { type: "drainMoonPower"; amount: number; to: TargetRef; steal?: true }   // GĐ4b: Tỏa / Đoạt Nguyệt; to chỉ "chosen" | "allEnemies"; chỉ lá bài
+  | { type: "gainMoonPowerPerTurn"; amount: number }                     // GĐ4b: Dưỡng Nguyệt; chỉ lá bài
+  | { type: "missingHpDamage"; ratio: number; to: TargetRef; hits?: number }  // GĐ4b: Phẫn Huyết; lá bài và chiêu địch
+  | { type: "burstRegen"; multiplier: number; to: TargetRef }            // GĐ4b: Tụ Dược; chỉ lá bài
   | { type: "shiftMoon"; amount: number }                                // âm = lùi pha
   | { type: "stealBuff"; count: number }                                 // GĐ2: từ mục tiêu chosen
   | { type: "bloodMoon"; rounds: number }                                // GĐ2
@@ -113,6 +124,8 @@ export type Condition =
   | { type: "targetHasStatus"; status: StatusId }
   | { type: "moonPhaseIs"; phase: MoonPhaseId }
   | { type: "bloodMoonActive" };                    // GĐ2: bloodMoonRounds > 0
+  | { type: "heldTurnsAtLeast"; turns: number }           // GĐ4b: Tích Tụ; chỉ lá bài
+  | { type: "cardsPlayedThisTurnAtLeast"; count: number } // GĐ4b: Liên Hoàn; chỉ lá bài
 ```
 
 **Quy tắc mở rộng:** thêm loại effect mới = thêm vào union + thêm `case` trong hàm `resolveEffect` + thêm test. Không viết logic riêng cho từng lá bài.
@@ -202,6 +215,40 @@ export interface CombatConfig {
 
 Mọi số nguyên ≥ 0; `moonPower.start ≤ moonPower.cap`; `handSize ≥ 1`. `GameData` thêm `combatConfig` (mục 4).
 
+### 1.9 Từ khóa — `keywords.json` [GĐ4b]
+```ts
+export interface KeywordDef {
+  id: string;
+  name: string;             // chữ hiển thị, ví dụ "Tích Tụ"
+  text: string;             // giải thích một câu, tiếng Việt
+}
+```
+
+`keywords.json` là mảng `KeywordDef`: 8 từ khóa GĐ4b (`tich_tu`, `lien_hoan`, `toa_nguyet`, `doat_nguyet`, `duong_nguyet`, `phan_huyet`, `du_sinh`, `tu_duoc`) + `chiem_bai` + các trạng thái đã có (`an_than`, `khieu_khich`, `suy_yeu`, `de_vo`, `danh_dau`, `thieu_dot`, `hoi_phuc`, `suc_manh`, `cuong_hoa`, `dong_bang`, `phan_don`) + `huyet_nguyet`. `GameData.keywords: Record<string, KeywordDef>` (mục 4); `CardDef.keywords` trỏ id trong bảng này, client hiện khi di chuột lên lá.
+
+### 1.10 Cấu hình meta — `meta-config.json` [GĐ4b]
+```json
+{
+  "masteryLevels": [30, 110, 230, 390, 590, 830],
+  "masteryXp": { "perFloor": 10, "win": 50, "heroLevelUp": 10 },
+  "deckSize": 18,
+  "minCardsPerHero": 4,
+  "maxDecks": 30
+}
+```
+
+```ts
+export interface MetaConfig {
+  masteryLevels: number[];   // XP cộng dồn cho cấp 1…6; tăng dần; độ dài = số lá khóa mỗi Hero (6)
+  masteryXp: { perFloor: number; win: number; heroLevelUp: number };
+  deckSize: number;
+  minCardsPerHero: number;
+  maxDecks: number;
+}
+```
+
+`GameData` thêm `metaConfig: MetaConfig` (mục 4).
+
 ---
 
 ## 2. Trạng thái trận đấu (runtime)
@@ -246,6 +293,7 @@ export interface CardInstance {
   instanceId: string;       // "c01"; lá Song Hành: "bond01"
   cardId: string;
   ownerIds: string[];       // id Hero, ví dụ ["m05"]; lá Song Hành: 2 id theo thứ tự bond.owners
+  heldTurns: number;        // GĐ4b: số lượt đã nằm trên tay (Tích Tụ); 0 khi lá vào tay
 }
 
 export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost";   // GĐ4a: mulligan, choosing
@@ -257,6 +305,8 @@ export interface CombatState {
   bloodMoonRounds: number;  // > 0 = đang Huyết Nguyệt (01 mục 7.4)
   moonPower: number;        // quỹ hiện tại của người chơi (gốc + Dự Trữ + cộng thêm)
   moonReserve: number;      // GĐ4a: Dự Trữ mang vào lượt này (để UI hiển thị)
+  moonPowerBonus: number;   // GĐ4b: quỹ cộng thêm mỗi đầu lượt (Dưỡng Nguyệt), không trần
+  cardsPlayedThisTurn: number;  // GĐ4b: số lá đã đánh trong lượt (Liên Hoàn); 0 đầu lượt
   pendingChoice: { kind: "chooseCard"; options: string[] } | null;   // GĐ4a: Chiêm Bài đang chờ chọn
   heroes: HeroState[];
   enemies: EnemyState[];
@@ -316,6 +366,7 @@ export type CombatEvent =
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
   | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }   // GĐ2; rounds 0 = hết
   | { type: "intentsRevealed"; enemyId: string; moonPower: number; intents: { intentId: string; cost: number; targetId: string | null }[] }  // GĐ4a: một event cho cả chuỗi mỗi địch (thay intentRevealed); chuỗi rỗng = Tụ Lực
+  | { type: "intentsCancelled"; enemyId: string; intentIds: string[] }   // GĐ4b: Tỏa/Đoạt Nguyệt hủy chiêu cuối chuỗi, theo thứ tự bị bỏ (01 §9.5)
   | { type: "intentExecuted"; enemyId: string; intentId: string; targetId: string | null }   // một event mỗi chiêu trong chuỗi
   | { type: "intentFizzled"; enemyId: string; intentId: string }                             // một event mỗi chiêu trong chuỗi
   | { type: "intentSkipped"; enemyId: string; reason: "freeze" }                             // một event cho cả chuỗi bị bỏ
@@ -341,6 +392,8 @@ export interface GameData {
   runRelics: Record<string, RunRelicDef>;  // GĐ3
   runConfig: RunConfig;                    // GĐ3
   combatConfig: CombatConfig;              // GĐ4a (mục 1.8)
+  keywords: Record<string, KeywordDef>;    // GĐ4b (mục 1.9)
+  metaConfig: MetaConfig;                  // GĐ4b (mục 1.10)
 }
 
 export interface CombatSetup {
@@ -391,12 +444,14 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
 - Ý định có effect `to: "chosen"` phải có `targeting`.
 - `moonPhases` đủ 8 phần tử, `index` 0–7 không trùng.
 - `enemyIds` của encounter trỏ tới kẻ địch tồn tại, 1–3 phần tử.
-- **[GĐ3]** `rewardCardIds` trỏ tới lá tồn tại, `ownerId` = Hero đó, không trùng `cardIds`.
+- **[GĐ4b]** `lockedCardIds` (thay `rewardCardIds` của GĐ3) trỏ tới lá tồn tại, `ownerId` = Hero đó, không trùng `cardIds`; `branches` chia đúng pool 12 lá (`cardIds + lockedCardIds`, không trùng); mỗi Hero có ≥ 2 lá miễn phí cost ≤ 3.
 - **[GĐ3]** Đúng 1 trận `boss`; ≥1 trận `normal` có `minFloor` ≤ 1; ≥1 trận `elite`.
 - **[GĐ3]** `runConfig`: mỗi tầng 1..`floors` có đúng 1 `floorRules`; tầng cuối là `boss` và chỉ tầng cuối có `boss`; `floorWidth.min ≤ max ≤ 2 × min`.
 - **[GĐ3]** Effect Kỳ Vật không dùng `to: "chosen"`, `stealBuff`, `actor`, condition `target…`; `heroDied` không dùng `actor: "trigger"`.
 - **[GĐ4a]** `copies` ∈ {1, 2, 3}; `intents` ≥ 1 phần tử, `cost` của chiêu là số nguyên ≥ 0; `EnemyDef.moonPower.start ≤ cap`; `combatConfig` hợp lệ (mọi số nguyên ≥ 0, `moonPower.start ≤ cap`, `handSize ≥ 1`).
 - **[GĐ4a]** `chooseCard` chỉ được là **effect cuối cùng** trong `effects` của một lá (không nằm trong `conditional`); không dùng trong `EnemyIntentDef`, `moonOverrides`/`bloodMoonOverride` hay hook Kỳ Vật.
+- **[GĐ4b]** `heldTurnsAtLeast`, `cardsPlayedThisTurnAtLeast`, `drainMoonPower`, `gainMoonPowerPerTurn`, `burstRegen`, `heal.overflow`: chỉ trên **lá bài**, không trong chiêu địch hay hook Kỳ Vật. `missingHpDamage`: lá bài và chiêu địch; không trong hook Kỳ Vật. `drainMoonPower.to` chỉ `chosen` (lá `target: "enemy"`) hoặc `allEnemies`.
+- **[GĐ4b]** `CardDef.keywords`: mỗi id phải có trong `keywords.json`. `metaConfig`: `masteryLevels` tăng dần, độ dài = số lá khóa mỗi Hero (6).
 
 Dữ liệu sai → báo lỗi rõ ràng ngay khi khởi động, không chạy game với dữ liệu lỗi.
 
@@ -412,11 +467,18 @@ interface RunState {
   rngState: number;
   heroes: { defId: string; hp: number; maxHp: number }[];  // theo thứ tự heroIds
   deck: string[];              // cardId, không gồm lá Song Hành
+  heroLevelUps: Record<string, number>;  // GĐ4b: defId → số trận Hero thăng cấp trong lượt chơi (14 §2.1)
   runRelicIds: string[];       // theo thứ tự nhận
   map: RunMap;
   position: string | null;     // nút hiện tại; null = chưa vào tầng 1
   combat: CombatState | null;
   pendingReward: { cardChoices: string[]; runRelicId?: string } | null;
+}
+
+interface RunSetup {
+  heroIds: [string, string, string];
+  seed: number;
+  deckCardIds: string[];       // GĐ4b: bắt buộc — deck đã chọn; `run.deck = deckCardIds` (14 §3.3)
 }
 ```
 
@@ -494,4 +556,40 @@ type HookTrigger =
   | { type: "heroDied" }
   | { type: "moonPhaseEntered"; phase?: MoonPhaseId }
   | { type: "bloodMoonStarted" };
+```
+
+---
+
+## 8. Hồ sơ và deck [GĐ4b]
+
+Các kiểu của `packages/rules/src/types/meta.ts`; luật đầy đủ ở `14-meta-rules.md`. Mọi hàm `meta/*` là hàm thuần, không sửa input.
+
+```ts
+export interface Profile {
+  version: 1;
+  heroes: Record<string, { xp: number; unlockedCardIds: string[] }>;
+  decks: SavedDeck[];
+}
+
+export interface SavedDeck {
+  id: string;                        // "d1", "d2", …
+  name: string;                      // 1–24 ký tự sau khi trim
+  heroIds: [string, string, string]; // thứ tự = vị trí trong đội
+  cardIds: string[];
+}
+
+export interface RunResult {
+  heroIds: [string, string, string];
+  floorReached: number;
+  won: boolean;
+  heroLevelUps: Record<string, number>; // defId → số trận Hero thăng cấp
+}
+
+export type DeckError =
+  | { code: "badHeroes" }                          // không đủ 3 Hero khác nhau có trong data
+  | { code: "wrongSize"; size: number }            // ≠ deckSize
+  | { code: "duplicateCard"; cardId: string }
+  | { code: "foreignCard"; cardId: string }        // không thuộc 3 Hero / lá Song Hành / không tồn tại
+  | { code: "tooFewForHero"; heroId: string; count: number }
+  | { code: "lockedCard"; cardId: string };        // chưa mở (không miễn phí, không trong unlockedCardIds)
 ```

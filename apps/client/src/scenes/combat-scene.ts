@@ -21,12 +21,16 @@ import {
   debugAddMoonPower,
   debugAdjustHeroHp,
   debugDrawCards,
+  debugGrantTeamXp,
   debugKillEnemy,
+  debugResetProfile,
   debugSetBloodMoon,
   debugSetMoon,
+  debugUnlockAll,
   describeEvent,
 } from "../debug";
 import manifest from "virtual:assets-manifest";
+import { showCardTooltip } from "../ui/card-tooltip";
 import { playEventQueue } from "../ui/event-animator";
 import {
   BLOOD_MOON_BG,
@@ -78,6 +82,7 @@ export class CombatScene extends Phaser.Scene {
   private inputLocked = false;
   private debugVisible = false;
   private mulliganPicks = new Set<string>();
+  private tooltip: Phaser.GameObjects.Container | null = null;
 
   constructor() {
     super("combat");
@@ -248,6 +253,8 @@ export class CombatScene extends Phaser.Scene {
 
   private renderAll() {
     this.root.removeAll(true);
+    this.tooltip?.destroy();
+    this.tooltip = null;
     this.cardViews.clear();
     const phase = this.gameData.moonPhases[this.state.moonIndex]!;
     const background = this.state.bloodMoonRounds > 0 ? BLOOD_MOON_BG : PHASE_BG[phase.id];
@@ -655,6 +662,13 @@ export class CombatScene extends Phaser.Scene {
         this.add.rectangle(-CARD_W / 2 + 34, -CARD_H / 2 + 14, 10, 1, 0xffffff, 0.7),
       );
     }
+    if (instance.heldTurns > 0 && card.keywords?.includes("tich_tu")) {
+      container.add(
+        this.add
+          .text(0, -CARD_H / 2 + 34, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold })
+          .setOrigin(0.5),
+      );
+    }
 
     container.add(
       this.add
@@ -702,6 +716,8 @@ export class CombatScene extends Phaser.Scene {
       useHandCursor: true,
     });
     container.on("pointerover", () => {
+      this.tooltip?.destroy();
+      this.tooltip = showCardTooltip(this, x + CARD_W / 2 + 10, y - 40, this.gameData, instance.cardId);
       if (!broken && (this.state.status === "playerTurn" || this.state.status === "mulligan")) {
         container.setScale(1.15);
         container.y = y - 18;
@@ -709,6 +725,8 @@ export class CombatScene extends Phaser.Scene {
       }
     });
     container.on("pointerout", () => {
+      this.tooltip?.destroy();
+      this.tooltip = null;
       container.setScale(1);
       container.y = y;
       container.setDepth(0);
@@ -778,8 +796,8 @@ export class CombatScene extends Phaser.Scene {
       cycleEncounter(1);
       this.syncFromSession();
     });
-    this.endScreenButton(WIDTH / 2 + 180, HEIGHT / 2 + 90, "Chọn đội", () =>
-      this.scene.start("team-select"),
+    this.endScreenButton(WIDTH / 2 + 180, HEIGHT / 2 + 90, "Chọn deck", () =>
+      this.scene.start("deck-select"),
     );
   }
 
@@ -841,7 +859,7 @@ export class CombatScene extends Phaser.Scene {
       this.syncFromSession();
     });
     y += 36;
-    this.debugButton(x + 14, y + 10, 100, "Chọn đội", () => this.scene.start("team-select"));
+    this.debugButton(x + 14, y + 10, 100, "Chọn deck", () => this.scene.start("deck-select"));
     this.text(x + 128, y + 10, "Huyết Nguyệt:", 11).setOrigin(0, 0.5);
     [0, 1, 2, 3].forEach((rounds, index) => {
       this.debugButton(x + 214 + index * 28, y + 10, 24, `${rounds}`, () => {
@@ -856,6 +874,19 @@ export class CombatScene extends Phaser.Scene {
     });
     this.debugButton(x + 134, y + 10, 80, "Rút 1 lá", () => {
       debugDrawCards(1);
+      this.renderAll();
+    });
+    y += 36;
+    this.debugButton(x + 14, y + 10, 100, "+100 XP đội", () => {
+      debugGrantTeamXp(100);
+      this.renderAll();
+    });
+    this.debugButton(x + 124, y + 10, 90, "Mở hết lá", () => {
+      debugUnlockAll();
+      this.renderAll();
+    });
+    this.debugButton(x + 224, y + 10, 90, "Xóa hồ sơ", () => {
+      debugResetProfile();
       this.renderAll();
     });
     y += 36;
@@ -904,6 +935,11 @@ export class CombatScene extends Phaser.Scene {
     this.text(30, 566, "◉".repeat(power - reserve), 16, COLORS.gold);
     if (reserve > 0) this.text(30 + (power - reserve) * 12, 566, "◈".repeat(reserve), 16, COLORS.costCheap);
     this.text(30, 592, reserve > 0 ? `${power} (Dự Trữ ${reserve})` : `${power}`, 12, COLORS.dimText);
+    const extras = [
+      this.state.cardsPlayedThisTurn > 0 ? `Liên Hoàn ${this.state.cardsPlayedThisTurn}` : "",
+      this.state.moonPowerBonus > 0 ? `+${this.state.moonPowerBonus}/lượt` : "",
+    ].filter((part) => part.length > 0);
+    if (extras.length > 0) this.text(30, 612, extras.join("  ·  "), 12, COLORS.gold);
 
     const hand = this.state.hand;
     const spacing = CARD_W + 10;

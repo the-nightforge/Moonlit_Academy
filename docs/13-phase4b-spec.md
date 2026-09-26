@@ -11,7 +11,7 @@ Thiết kế được chốt qua brainstorming (2026-09-25). Khi đưa vào tài
 **Điều kiện trước:** GĐ 4a (`12-phase4a-spec.md`) đã xong — thang cost 0–8, giữ
 tay, `copies`, Chiêm Bài, địch dùng Nguyệt Lực.
 
-**Trạng thái:** thiết kế đã duyệt, chưa đưa vào tài liệu luật.
+**Trạng thái:** đã đưa vào `01`, `02`, `04`, `06`, `07`, `14` (bước 4b.1).
 
 ---
 

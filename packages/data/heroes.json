@@ -7,26 +7,59 @@
     "rarity": "legendary",
     "maxHp": 40,
     "cardIds": [
-      "m05_liet_hoa_xung_phong",
-      "m05_ho_gam",
-      "m05_thuong_pha",
       "m05_tran_bac_huyet_tinh",
       "m05_bat_khuat",
-      "m05_bat_dong_nhu_son"
+      "m05_liet_hoa_xung_phong",
+      "m05_ho_gam",
+      "m05_bat_dong_nhu_son",
+      "m05_thuong_pha"
     ],
-    "rewardCardIds": [
-      "m05_thiet_bich",
+    "lockedCardIds": [
+      "m05_huyet_chien",
       "m05_no_hoa_lien_hoan",
-      "m05_huyet_chien"
+      "m05_liet_hoa_phan_thien",
+      "m05_thiet_bich",
+      "m05_huyet_thuan",
+      "m05_lo_luyen"
+    ],
+    "branches": [
+      {
+        "name": "Huyết Chiến",
+        "cardIds": [
+          "m05_tran_bac_huyet_tinh",
+          "m05_bat_khuat",
+          "m05_liet_hoa_xung_phong",
+          "m05_huyet_chien",
+          "m05_no_hoa_lien_hoan",
+          "m05_liet_hoa_phan_thien"
+        ]
+      },
+      {
+        "name": "Thiết Vệ",
+        "cardIds": [
+          "m05_ho_gam",
+          "m05_bat_dong_nhu_son",
+          "m05_thuong_pha",
+          "m05_thiet_bich",
+          "m05_huyet_thuan",
+          "m05_lo_luyen"
+        ]
+      }
     ],
     "levelUp": {
       "name": "Liệt Hỏa",
       "description": "Mọi đòn từ lá tấn công của Hoắc Liệt gây thêm 3 damage.",
       "counter": "damageTaken",
       "threshold": 15,
-      "passive": { "type": "attackDamageBonus", "amount": 3 }
+      "passive": {
+        "type": "attackDamageBonus",
+        "amount": 3
+      }
     },
-    "art": { "portrait": "", "levelUp": "" }
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    }
   },
   {
     "id": "f04",
@@ -36,26 +69,58 @@
     "rarity": "rare",
     "maxHp": 30,
     "cardIds": [
-      "f04_thao_duoc",
       "f04_bach_thao_huong",
       "f04_linh_chi_ho_the",
+      "f04_hoi_xuan_tan",
+      "f04_thao_duoc",
       "f04_tinh_tam_tra",
-      "f04_nguyet_quang_dan",
-      "f04_hoi_xuan_tan"
+      "f04_nguyet_quang_dan"
     ],
-    "rewardCardIds": [
-      "f04_bang_tam_quyet",
+    "lockedCardIds": [
+      "f04_xuan_phong",
       "f04_thanh_tam_chu",
-      "f04_nguyet_lo"
+      "f04_bach_hoa_tu_duoc",
+      "f04_bang_tam_quyet",
+      "f04_nguyet_lo",
+      "f04_tinh_tam_quyet"
+    ],
+    "branches": [
+      {
+        "name": "Bách Thảo",
+        "cardIds": [
+          "f04_bach_thao_huong",
+          "f04_linh_chi_ho_the",
+          "f04_hoi_xuan_tan",
+          "f04_xuan_phong",
+          "f04_thanh_tam_chu",
+          "f04_bach_hoa_tu_duoc"
+        ]
+      },
+      {
+        "name": "Tĩnh Tâm",
+        "cardIds": [
+          "f04_thao_duoc",
+          "f04_tinh_tam_tra",
+          "f04_nguyet_quang_dan",
+          "f04_bang_tam_quyet",
+          "f04_nguyet_lo",
+          "f04_tinh_tam_quyet"
+        ]
+      }
     ],
     "levelUp": {
       "name": "Bách Thảo",
       "description": "Khi lá của Ôn Như Ý áp Hồi Phục, mọi Hero còn sống đều nhận Hồi Phục.",
       "counter": "turnsWithAllyRegen",
       "threshold": 3,
-      "passive": { "type": "regenSpreadsToAllAllies" }
+      "passive": {
+        "type": "regenSpreadsToAllAllies"
+      }
     },
-    "art": { "portrait": "", "levelUp": "" }
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    }
   },
   {
     "id": "m06",
@@ -68,23 +133,56 @@
       "m06_anh_bo",
       "m06_am_tien",
       "m06_doat_menh",
+      "m06_phi_tieu",
       "m06_nguyet_anh_an",
-      "m06_song_nhan_loan_vu",
-      "m06_tang_anh_thich"
+      "m06_song_nhan_loan_vu"
     ],
-    "rewardCardIds": [
-      "m06_doc_tieu",
+    "lockedCardIds": [
+      "m06_tang_anh_thich",
       "m06_anh_phan_than",
-      "m06_tuyet_menh"
+      "m06_tuyet_menh",
+      "m06_doc_tieu",
+      "m06_anh_toc",
+      "m06_loan_anh"
+    ],
+    "branches": [
+      {
+        "name": "Ẩn Sát",
+        "cardIds": [
+          "m06_anh_bo",
+          "m06_am_tien",
+          "m06_doat_menh",
+          "m06_tang_anh_thich",
+          "m06_anh_phan_than",
+          "m06_tuyet_menh"
+        ]
+      },
+      {
+        "name": "Liên Hoàn",
+        "cardIds": [
+          "m06_phi_tieu",
+          "m06_nguyet_anh_an",
+          "m06_song_nhan_loan_vu",
+          "m06_doc_tieu",
+          "m06_anh_toc",
+          "m06_loan_anh"
+        ]
+      }
     ],
     "levelUp": {
       "name": "Vô Nguyệt",
       "description": "Từ lượt sau: lá đầu tiên của Tô Dạ mỗi lượt giảm 3 Nguyệt Lực.",
       "counter": "enemiesKilled",
       "threshold": 1,
-      "passive": { "type": "firstOwnCardDiscount", "amount": 3 }
+      "passive": {
+        "type": "firstOwnCardDiscount",
+        "amount": 3
+      }
     },
-    "art": { "portrait": "", "levelUp": "" }
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    }
   },
   {
     "id": "f03",
@@ -94,26 +192,58 @@
     "rarity": "epic",
     "maxHp": 32,
     "cardIds": [
-      "f03_suong_tram",
       "f03_han_an",
-      "f03_bang_phach_lien_kich",
       "f03_phong_tuyet_chuong",
-      "f03_tuyet_han",
-      "f03_tuyet_vu"
+      "f03_tuyet_vu",
+      "f03_suong_tram",
+      "f03_bang_phach_lien_kich",
+      "f03_tuyet_han"
     ],
-    "rewardCardIds": [
-      "f03_suong_giap",
+    "lockedCardIds": [
+      "f03_bang_cham",
+      "f03_han_khi_nhap_mach",
+      "f03_vinh_dong",
+      "f03_han_phong",
       "f03_bang_toai",
-      "f03_han_phong"
+      "f03_han_son_nhat_kiem"
+    ],
+    "branches": [
+      {
+        "name": "Băng Phong",
+        "cardIds": [
+          "f03_han_an",
+          "f03_phong_tuyet_chuong",
+          "f03_tuyet_vu",
+          "f03_bang_cham",
+          "f03_han_khi_nhap_mach",
+          "f03_vinh_dong"
+        ]
+      },
+      {
+        "name": "Hàn Kiếm",
+        "cardIds": [
+          "f03_suong_tram",
+          "f03_bang_phach_lien_kich",
+          "f03_tuyet_han",
+          "f03_han_phong",
+          "f03_bang_toai",
+          "f03_han_son_nhat_kiem"
+        ]
+      }
     ],
     "levelUp": {
       "name": "Hàn Sơn Kiếm",
       "description": "Damage từ lá của Tần Sương lên kẻ địch đang Đóng Băng tăng gấp đôi.",
       "counter": "freezesApplied",
       "threshold": 3,
-      "passive": { "type": "doubleDamageVsFrozen" }
+      "passive": {
+        "type": "doubleDamageVsFrozen"
+      }
     },
-    "art": { "portrait": "", "levelUp": "" }
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    }
   },
   {
     "id": "f02",
@@ -124,24 +254,56 @@
     "maxHp": 26,
     "cardIds": [
       "f02_dien_doat",
-      "f02_huyet_tram",
       "f02_anh_tap",
-      "f02_doi_van_chu",
-      "f02_phe_hon",
-      "f02_huyet_khe"
-    ],
-    "rewardCardIds": [
       "f02_dien_cu",
+      "f02_huyet_tram",
+      "f02_doi_van_chu",
+      "f02_phe_hon"
+    ],
+    "lockedCardIds": [
+      "f02_vong_nguyet_thu",
+      "f02_thien_dien",
       "f02_doat_hon_thich",
-      "f02_ta_nguyet_chu"
+      "f02_huyet_khe",
+      "f02_ta_nguyet_chu",
+      "f02_huyet_nguyet_than_cong"
+    ],
+    "branches": [
+      {
+        "name": "Thiên Diện",
+        "cardIds": [
+          "f02_dien_doat",
+          "f02_anh_tap",
+          "f02_dien_cu",
+          "f02_vong_nguyet_thu",
+          "f02_thien_dien",
+          "f02_doat_hon_thich"
+        ]
+      },
+      {
+        "name": "Huyết Nguyệt",
+        "cardIds": [
+          "f02_huyet_tram",
+          "f02_doi_van_chu",
+          "f02_phe_hon",
+          "f02_huyet_khe",
+          "f02_ta_nguyet_chu",
+          "f02_huyet_nguyet_than_cong"
+        ]
+      }
     ],
     "levelUp": {
       "name": "Thiên Diện",
       "description": "Mỗi buff Diệp Linh Lung cướp bằng lá của mình được thêm 1.",
       "counter": "buffsStolen",
       "threshold": 2,
-      "passive": { "type": "stealBonus" }
+      "passive": {
+        "type": "stealBonus"
+      }
     },
-    "art": { "portrait": "", "levelUp": "" }
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    }
   }
 ]

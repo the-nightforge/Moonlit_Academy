@@ -50,7 +50,15 @@
 | Trận thường / Tinh Anh / Boss (tier) | `normal` / `elite` / `boss` | `EncounterDef.tier` |
 | Nghỉ Chân | `rest` | Loại nút |
 | Kho Báu | `treasure` | Loại nút |
-| Lá thưởng | `rewardCard`, `rewardCardIds` | |
+| Lá thưởng | `rewardCard` | Lá chọn sau trận thắng; GĐ 4b: pool = `cardIds + lockedCardIds` của đội |
+| Tích Tụ | `heldTurns` | Số lượt lá nằm trên tay; điều kiện `heldTurnsAtLeast` |
+| Liên Hoàn | `cardsPlayedThisTurn` | Số lá đã đánh trong lượt; điều kiện `cardsPlayedThisTurnAtLeast` |
+| Tỏa Nguyệt | `drainMoonPower` | Rút Nguyệt Lực địch, hủy chiêu cuối chuỗi (`intentsCancelled`) |
+| Đoạt Nguyệt | `drainMoonPower` + `steal` | Như Tỏa Nguyệt, người chơi nhận đúng số Nguyệt Lực đã rút |
+| Dưỡng Nguyệt | `gainMoonPowerPerTurn` | `moonPowerBonus` cộng vào quỹ mỗi đầu lượt, không trần |
+| Phẫn Huyết | `missingHpDamage` | Damage gốc theo HP đã mất của đơn vị hành động |
+| Dư Sinh | `heal.overflow` | Phần hồi vượt HP tối đa thành giáp |
+| Tụ Dược | `burstRegen` | Kích nổ Hồi Phục: hồi ngay rồi gỡ Hồi Phục |
 | Hook (Kỳ Vật) | `hook`, `HookTrigger` | Thời điểm Kỳ Vật kích hoạt |
 
 ## Chỉ số và trạng thái
@@ -119,6 +127,17 @@
 | Nhóm vai trò | `archetype`: `vanguard`, `striker`, `controller`, `support`, `specialist` |
 | Độ hiếm | `rarity`: `common`, `rare`, `epic`, `legendary` |
 | Kỳ Vật | `runRelic` |
+
+## Hồ sơ, Tu Luyện và deck
+
+|| Tiếng Việt | Code | Ghi chú |
+||---|---|---|
+|| Hồ sơ | `profile`, `Profile` | Lưu lâu dài trong trình duyệt (`localStorage`) |
+|| Tu Luyện | `mastery` | XP từ lượt chơi; `masteryLevel`, `masteryLevels` trong `meta-config.json` |
+|| Lá khóa | `lockedCardIds` | 6 lá/Hero mở bằng Tu Luyện; pool = `cardIds` + `lockedCardIds` (12 lá) |
+|| Nhánh | `branches`, `HeroBranch` | Mỗi Hero 2 nhánh × 6 lá |
+|| Deck (đã lưu) | `SavedDeck` | Deck đặt tên 18 lá (`deckSize`) |
+|| Bộ cơ bản | `starterDeck` | Deck 18 lá miễn phí của đội, không lưu trong hồ sơ |
 
 ## Hệ thống sau này (chưa code)
 

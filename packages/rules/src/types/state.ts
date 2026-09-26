@@ -48,6 +48,8 @@ export interface CardInstance {
   cardId: string;
   /** One hero id; two for a bond card, in `bond.owners` order. */
   ownerIds: string[];
+  /** Turns spent in hand (Tích Tụ); 0 when the card enters the hand. */
+  heldTurns: number;
 }
 
 export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost";
@@ -60,6 +62,10 @@ export interface CombatState {
   moonPower: number;
   /** Moon power carried into this turn (reserve), for display. */
   moonReserve: number;
+  /** Dưỡng Nguyệt: extra moon power every turn start. */
+  moonPowerBonus: number;
+  /** Cards already played this player turn (Liên Hoàn). */
+  cardsPlayedThisTurn: number;
   heroes: HeroState[];
   enemies: EnemyState[];
   cards: Record<string, CardInstance>;
