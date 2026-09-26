@@ -159,3 +159,22 @@ mang là Hero X (`signatureHooks`). Mọi Hero mang được mọi vũ khí.
 dùng `lowestHp`; "kẻ địch" dùng `front` với `to: "allEnemies"`; "Hero kết liễu" dùng
 `trigger`. Banner Binh Khí Các: legendary 2, epic 4, rare 4; Nguyệt Bảo Các: legendary
 2, epic 3, rare 3 (theo cột độ hiếm ở trên).
+
+## 8. Đấu Trường — chỉ số PvP [GĐ5b]
+
+Chỉ số PvP đặt riêng trong `pvp-config.json` (`heroStats`, `secondPlayerBonus`,
+`roundCap`...), không đụng số liệu PvE.
+
+| Hero | HP PvP | HP PvE gốc | Thắng% đo (bot, 1440 trận/Hero) |
+|---|---|---|---|
+| Hoắc Liệt `m05` | 52 | 40 | 52% |
+| Ôn Như Ý `f04` | 40 | 30 | 44% |
+| Tô Dạ `m06` | 36 | 28 | 52% |
+| Tần Sương `f03` | 42 | 32 | 55% |
+| Diệp Linh Lung `f02` | 34 | 26 | 47% |
+
+Mô phỏng bot-đấu-bot (`PLAYTEST_PVP=1`, 1200 trận Bộ cơ bản): người đi trước
+thắng 54% (mục tiêu 47–53%), vòng trung vị 14 (mục tiêu 8–12), hòa roundCap 0%
+(mục tiêu <1%), mọi Hero 44–55% (mục tiêu 40–60%). Bù người đi sau +1 Nguyệt
+Lực. Hai chỉ số đầu ở mép/vượt mục tiêu — quyết định giữ nguyên, xem lại sau
+khi có người chơi thật (bot heuristic kéo dài trận hơn người).

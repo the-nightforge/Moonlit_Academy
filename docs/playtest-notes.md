@@ -697,3 +697,28 @@ Mọi lá Binh Khí đều từng được đánh.
   +24, Hàn Tuyết Song Kiếm +24, Bạch Lộ Hương Nang +23) — đạt R5 cần 4 bản trùng.
 - Thiết Thuẫn và Huyền Vũ Giáp Phù yếu đi ở R5 so với R1: giáp nhiều hơn không đổi kết cục
   với bot hiện tại; nên xem lại khi có chơi tay.
+
+## Phase 5b — mô phỏng PvP (bot đấu bot)
+
+`PLAYTEST_PVP=1 pnpm vitest run test/pvp-sim.test.ts`: 10 đội (C(5,3)) × 10 đội ×
+12 seed = 1200 trận, Bộ cơ bản không trang bị; lượt hai có trang bị PvP cơ bản
+ngẫu nhiên (1200 trận nữa). Sai số ±~2.9 điểm.
+
+| Chỉ số | Mục tiêu §4.9 | Không trang bị | Có trang bị |
+|---|---|---|---|
+| Người đi trước thắng | 47–53% | 54% | 55% |
+| Vòng trung vị | 8–12 | 14 | 16 |
+| Hero win | 40–60% | 44–55% | 45–53% |
+| Hòa roundCap | <1% | 0% | 0% |
+| Lá chưa từng đánh | — | 35/…(bot chỉ đánh tập con heuristic) | 35 |
+
+Quét chỉnh số (1200 trận/biến thể): `secondPlayerBonus` +1→+2 gần như không đổi
+tỉ lệ đi trước; `heroStats` ×0.8 → 53%/13 vòng; ×0.75 → 53–54%/12; ×0.7 →
+53%/12. Không biến thể nào vào giữa khoảng 8–12 vòng.
+
+**Quyết định (đã duyệt): giữ nguyên số hiện tại.** Đi trước 54–55% và vòng TB
+14–16 xem như chấp nhận được — bot heuristic chơi chậm/phòng thủ hơn người thật,
+nên con số sẽ khác khi có người chơi. Xem lại sau khi Đấu Trường có người chơi.
+
+Điểm mở: 35 lá không bao giờ được bot đánh (toàn nhánh nâng cấp `_plus` + lá
+điều kiện) — kỳ vọng của heuristic, cần kiểm khi chơi tay.
