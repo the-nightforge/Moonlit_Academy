@@ -13,11 +13,17 @@ class Ws {
   closeCode: number | null = null;
   private constructor(private readonly socket: WebSocket) {}
 
-  static async connect(app: FastifyInstance): Promise<Ws> {
+  static async connect(app: FastifyInstance, opts: { autoPong?: boolean } = {}): Promise<Ws> {
     await app.ready();
     const socket = await app.injectWS("/api/ws");
     const ws = new Ws(socket);
-    socket.on("message", (raw: Buffer) => ws.inbox.push(JSON.parse(raw.toString()) as Record<string, unknown>));
+    const autoPong = opts.autoPong ?? true;
+    socket.on("message", (raw: Buffer) => {
+      const message = JSON.parse(raw.toString()) as Record<string, unknown>;
+      ws.inbox.push(message);
+      // A real client answers every heartbeat (`16` §8.1).
+      if (autoPong && message.type === "ping") socket.send(JSON.stringify({ type: "pong" }));
+    });
     socket.on("close", (code: number) => {
       ws.closeCode = code;
     });
@@ -27,6 +33,11 @@ class Ws {
 
   send(message: unknown): void {
     this.socket.send(typeof message === "string" ? message : JSON.stringify(message));
+  }
+
+  /** Abrupt disconnect: drops the socket like a lost network (`17` §5.5). */
+  close(): void {
+    this.socket.terminate();
   }
 
   async settle(): Promise<void> {
@@ -51,6 +62,17 @@ const PING_MS = 20_000;
 
 function schedulerOf(server: TestServer): FakeScheduler {
   return server.deps.scheduler as FakeScheduler;
+}
+
+/**
+ * Advances the fake scheduler while keeping sockets alive: each ≤15 s chunk is
+ * followed by a settle so the auto-pong lands before the next 20 s heartbeat.
+ */
+async function advanceAlive(sched: FakeScheduler, ms: number, ...sockets: Ws[]): Promise<void> {
+  for (let left = ms; left > 0; left -= 15_000) {
+    sched.advance(Math.min(15_000, left));
+    for (const ws of sockets) await ws.settle();
+  }
 }
 
 async function hello(server: TestServer, ws: Ws, token: string): Promise<void> {
@@ -146,7 +168,7 @@ describe("realtime", () => {
     const sched = schedulerOf(server);
     const { token } = await register(server, "nguoi_choi");
 
-    const ws = await Ws.connect(server.app);
+    const ws = await Ws.connect(server.app, { autoPong: false });
     await hello(server, ws, token);
     ws.inbox.length = 0;
 
@@ -322,4 +344,119 @@ describe("realtime", () => {
     const welcome = ws2.last<{ activeMatch?: unknown }>("welcome")!;
     expect(welcome.activeMatch).toBeUndefined();
   });
+
+  it("T239 đồng hồ: mulligan hết giờ → mulligan []; lượt hết giờ → endTurn; 3 lần liên tiếp → forfeit timeout", async () => {
+    const server = testServer();
+    const sched = schedulerOf(server);
+    const { wsA, wsB, matchId } = await startPrivateMatch(server);
+
+    // Đổi Bài hết 30 s: server gửi thay `mulligan []` cho cả hai.
+    await advanceAlive(sched, 30_000, wsA, wsB);
+    const viewA = wsA.last<{ view: { status: string; players: { mulliganDone: boolean }[] } }>("match.events")!;
+    expect(viewA.view.players.every((p) => p.mulliganDone)).toBe(true);
+
+    // Mỗi lượt hết 60 s → endTurn thay; seat đầu hết giờ 3 lần liên tiếp → forfeit.
+    let end: { result: string; reason: string } | undefined;
+    for (let i = 0; i < 10 && !end; i++) {
+      await advanceAlive(sched, 60_000, wsA, wsB);
+      end =
+        (wsA.last<{ result: string; reason: string }>("match.end") as { result: string; reason: string } | undefined) ??
+        (wsB.last<{ result: string; reason: string }>("match.end") as { result: string; reason: string } | undefined);
+    }
+    expect(end).toBeDefined();
+    expect(end!.reason).toBe("timeout");
+  }, 60_000);
+
+  it("T239 kết nối lại: trong hạn nhận snapshot; quá hạn → forfeit disconnect; đồng hồ vẫn chạy", async () => {
+    const server = testServer();
+    const sched = schedulerOf(server);
+    const { wsA, wsB, matchId, a } = await startPrivateMatch(server);
+    const matchRow = () =>
+      server.db.prepare<[string], { status: string }>("SELECT status FROM matches WHERE id = ?").get(matchId)!;
+
+    // Qua Đổi Bài bình thường để vào lượt.
+    for (const ws of [wsA, wsB]) {
+      ws.send({ type: "match.action", matchId, seq: 1, action: { type: "mulligan", instanceIds: [] } });
+      await ws.settle();
+    }
+
+    // A mất kết nối → B nhận playerDisconnected; trận vẫn sống.
+    wsA.close();
+    await wsA.waitForClose();
+    const sawDisconnect = () =>
+      wsB.inbox.some((m) => (m.events as { type: string }[] | undefined)?.some((e) => e.type === "playerDisconnected"));
+    for (let i = 0; i < 100 && !sawDisconnect(); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    expect(sawDisconnect()).toBe(true);
+    expect(matchRow().status).toBe("playing");
+
+    // A kết nối lại trong reconnectSeconds → welcome.activeMatch đầy đủ.
+    await advanceAlive(sched, 10_000, wsB);
+    const wsA2 = await Ws.connect(server.app);
+    await hello(server, wsA2, a.token);
+    const welcome = wsA2.last<{ activeMatch?: { matchId: string; you: number; view: { status: string } } }>("welcome")!;
+    expect(welcome.activeMatch?.matchId).toBe(matchId);
+    expect(welcome.activeMatch?.you).toBe(0);
+
+    // Đồng hồ lượt vẫn chạy: hết 60 s kể từ khi vào lượt → server gửi action thay;
+    // trận tiếp tục (đồng hồ reconnect của A đã bị hủy khi kết nối lại).
+    await advanceAlive(sched, 60_000, wsA2, wsB);
+    expect(matchRow().status).toBe("playing");
+
+    // B mất kết nối và không quay lại → quá reconnectSeconds → forfeit disconnect.
+    wsB.close();
+    await wsB.waitForClose();
+    await advanceAlive(sched, 70_000, wsA2);
+    const end = wsA2.last<{ result: string; reason: string }>("match.end")!;
+    expect(end.reason).toBe("disconnect");
+    expect(end.result).toBe("won");
+    expect(matchRow().status).toBe("finished");
+  }, 60_000);
+
+  it("T238 practice.start: đấu máy nhịp 600–1200 ms, mode practice, không Elo/thưởng", async () => {
+    const server = testServer();
+    const sched = schedulerOf(server);
+    const { token } = await register(server, "nguoi_tap");
+    giveStarterDeck(server, accountIdOf(server, token), ["m05", "f04", "m06"]);
+    const ws = await Ws.connect(server.app);
+    await hello(server, ws, token);
+
+    ws.send({ type: "practice.start", mode: "pvp", deckId: "d1" });
+    await ws.settle();
+    const start = ws.last<{
+      matchId: string; mode: string; you: number;
+      others: { seat: number; username: string; connected: boolean }[];
+    }>("match.start")!;
+    expect(start.mode).toBe("practice");
+    expect(start.you).toBe(0);
+    expect(start.others).toEqual([{ seat: 1, username: "Vọng Nguyệt", connected: true }]);
+    const matchRow = server.db
+      .prepare<[string], { mode: string }>("SELECT mode FROM matches WHERE id = ?")
+      .get(start.matchId)!;
+    expect(matchRow.mode).toBe("practice");
+
+    // Đấu hết trận: người chơi hành động khi tới lượt; máy "nghĩ" 600–1200 ms.
+    const seat = new SeatDriver(ws, start.matchId, 0);
+    let end: { result: string; rating?: unknown } | undefined;
+    for (let i = 0; i < 4000 && !end; i++) {
+      server.now.value += 250;
+      await seat.refresh();
+      const view = seat.view as { status: string; players: { mulliganDone: boolean }[] } | undefined;
+      if (view) {
+        const mine =
+          view.status === "mulligan" ? !view.players[0]!.mulliganDone : view.status === "playerTurn" || view.status === "choosing";
+        if (mine) {
+          seat.sendAction(pvpBot(server.data, view as never, 0));
+          await seat.accepted();
+        }
+      }
+      sched.advance(1_200); // một nhịp "nghĩ" tối đa của máy
+      await seat.refresh();
+      end = seat.ended as { result: string } | undefined ?? undefined;
+    }
+    expect(end).toBeDefined();
+    expect(["won", "lost", "draw"]).toContain(end!.result);
+    expect(end!.rating).toBeUndefined(); // Đấu Tập không chạm Elo/Vinh Dự
+  }, 120_000);
 });

@@ -1,8 +1,10 @@
 import type { WebSocket } from "ws";
+import type { PvpSide } from "rules";
 import type { AppContext } from "../context";
-import { MatchRoom, send, startPvpMatch, type MatchSeat } from "./match-room";
+import { BotPlayer, botPvpSide } from "./bot-player";
+import { MatchRoom, send, startPvpMatch, type MatchMode } from "./match-room";
 import { clientMessageSchema, type ClientMessage, type ServerMessage } from "./protocol";
-import { RoomManager, type WaitingRoom } from "./rooms";
+import { resolvePvpSide, RoomManager, type WaitingRoom } from "./rooms";
 
 /** `16` §8.1: hello deadline, heartbeat period, misses tolerated, per-second cap. */
 export const HELLO_TIMEOUT_MS = 10_000;
@@ -204,9 +206,30 @@ export class RealtimeHub {
         if (room && seat) room.handleEmote(seat, message.emoteId);
         return;
       }
+      case "practice.start": {
+        if (this.matchByAccount.has(accountId)) {
+          this.reply(conn, { type: "error", error: "already in match" });
+          return;
+        }
+        if (message.mode !== "pvp") {
+          this.reply(conn, { type: "error", error: "not implemented" });
+          return;
+        }
+        const side = resolvePvpSide(this.ctx, accountId, message.deckId);
+        if (!side.ok) {
+          this.reply(conn, { type: "error", error: "invalid deck" });
+          return;
+        }
+        const seed = this.ctx.random(4).readUInt32BE(0);
+        // Practice matches never touch Elo / Vinh Dự / rewards (`17` §5.4).
+        this.launchMatch("practice", seed, [
+          { accountId, username: conn.username, side: side.side },
+          { accountId: null, username: "Vọng Nguyệt", side: botPvpSide(this.ctx, seed) },
+        ]);
+        return;
+      }
       case "queue.join":
       case "queue.leave":
-      case "practice.start":
         this.reply(conn, { type: "error", error: "not implemented" });
         return;
       default:
@@ -218,27 +241,40 @@ export class RealtimeHub {
     const [a, b] = room.members;
     if (!a || !b) return;
     const seed = this.ctx.random(4).readUInt32BE(0);
+    this.launchMatch("private", seed, [
+      { accountId: a.accountId, username: a.username, side: a.side },
+      { accountId: b.accountId, username: b.username, side: b.side },
+    ]);
+  }
+
+  /**
+   * Creates and registers a PvP match, arms a `BotPlayer` for `null` seats and
+   * notifies every connected human (`17` §5.3/§5.4).
+   */
+  private launchMatch(
+    mode: MatchMode,
+    seed: number,
+    players: [
+      { accountId: number | null; username: string; side: PvpSide },
+      { accountId: number | null; username: string; side: PvpSide },
+    ],
+  ): MatchRoom {
     const matchId = `m_${this.ctx.random(6).toString("hex")}_${this.matchCounter++}`;
-    const match = startPvpMatch(
-      this.ctx, "private", seed,
-      [
-        { accountId: a.accountId, username: a.username, side: a.side },
-        { accountId: b.accountId, username: b.username, side: b.side },
-      ],
-      matchId,
-      (finished) => this.dropMatch(finished),
-    );
+    const match = startPvpMatch(this.ctx, mode, seed, players, matchId, (finished) => this.dropMatch(finished));
     this.matches.set(matchId, match);
     for (const seat of match.seats) {
-      if (seat.accountId !== null) {
-        this.matchByAccount.set(seat.accountId, match);
-        const conn = this.byAccount.get(seat.accountId);
-        if (conn) {
-          match.attach(seat, conn.socket);
-          this.reply(conn, { type: "match.start", ...match.snapshotFor(seat.seat) });
-        }
+      if (seat.accountId === null) {
+        new BotPlayer(this.ctx, match, seat.seat, seed);
+        continue;
+      }
+      this.matchByAccount.set(seat.accountId, match);
+      const conn = this.byAccount.get(seat.accountId);
+      if (conn) {
+        match.attach(seat, conn.socket);
+        this.reply(conn, { type: "match.start", ...match.snapshotFor(seat.seat) });
       }
     }
+    return match;
   }
 
   private dropMatch(room: MatchRoom): void {
