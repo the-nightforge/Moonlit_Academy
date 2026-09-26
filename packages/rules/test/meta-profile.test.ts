@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { GameData, Profile, RunState } from "../src/index";
 import {
   applyRunAction, applyRunResult, createProfile, createRun, masteryLevel, parseProfile,
-  pendingUnlocks, summarizeRun, unlockCard,
+  pendingUnlocks, starterDeck, summarizeRun, unlockCard,
 } from "../src/index";
 import { testData } from "./helpers";
 
@@ -83,7 +83,7 @@ describe("profile and mastery", () => {
 
   it("T163: summarizeRun reports floor, result and hero level-ups counted across combats", () => {
     const data = testData();
-    let run = createRun(data, { heroIds: TEAM, seed: 42 }).run;
+    let run = createRun(data, { heroIds: TEAM, seed: 42, deckCardIds: starterDeck(data, TEAM) }).run;
     run = step(data, run, { type: "chooseNode", nodeId: run.map.floors[0]![0]!.id });
     run = step(data, run, { type: "combat", action: { type: "mulligan", instanceIds: [] } });
     const m05 = run.combat!.heroes[0]!;

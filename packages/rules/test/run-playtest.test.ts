@@ -14,6 +14,7 @@ import {
   getValidTargets,
   isCardPlayable,
   reachableNodeIds,
+  starterDeck,
 } from "../src/index";
 
 const data = loadGameData();
@@ -153,7 +154,7 @@ function emptyTierStats(): TierStats {
 }
 
 function simulateRun(heroIds: [string, string, string], seed: number) {
-  let run = createRun(data, { heroIds, seed }).run;
+  let run = createRun(data, { heroIds, seed, deckCardIds: starterDeck(data, heroIds) }).run;
   let fights = 0;
   let stalled = false;
   const tiers = new Map<string, TierStats>();

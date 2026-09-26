@@ -40,12 +40,18 @@ export function createRun(data: GameData, setup: RunSetup): { run: RunState; run
     if (!hero) throw new Error(`createRun: unknown hero "${heroId}"`);
     return hero;
   });
+  for (const cardId of setup.deckCardIds) {
+    const ownerId = data.cards[cardId]?.ownerId;
+    if (ownerId === undefined || !setup.heroIds.includes(ownerId)) {
+      throw new Error(`createRun: deck card "${cardId}" is not owned by a hero in the team`);
+    }
+  }
   const { map, rngState } = generateMap(data, setup.seed);
   const run: RunState = {
     status: "map",
     rngState,
     heroes: heroDefs.map((hero) => ({ defId: hero.id, hp: hero.maxHp, maxHp: hero.maxHp })),
-    deck: heroDefs.flatMap((hero) => hero.cardIds),
+    deck: [...setup.deckCardIds],
     runRelicIds: [],
     map,
     position: null,
@@ -99,7 +105,7 @@ function gainRunRelic(data: GameData, run: RunState, runEvents: RunEvent[]): str
 
 function drawCardChoices(data: GameData, run: RunState): string[] {
   const pool = run.heroes
-    .flatMap((hero) => data.heroes[hero.defId]!.lockedCardIds)
+    .flatMap((hero) => [...data.heroes[hero.defId]!.cardIds, ...data.heroes[hero.defId]!.lockedCardIds])
     .filter((cardId) => !run.deck.includes(cardId));
   const shuffled = shuffle(pool, run.rngState);
   run.rngState = shuffled.rngState;

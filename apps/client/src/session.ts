@@ -1,5 +1,5 @@
 import { loadGameData } from "data";
-import { createCombat, createRun } from "rules";
+import { createCombat, createRun, starterDeck } from "rules";
 import type { CombatEvent, CombatState, GameData, RunState } from "rules";
 
 export type Team = [string, string, string];
@@ -46,7 +46,8 @@ export function restartSession(
 export function startRun(heroIds: Team, seed = session.seed): void {
   session.heroIds = heroIds;
   session.seed = seed;
-  session.run = createRun(session.data, { heroIds, seed }).run;
+  // Task 6 replaces the starter deck with the player-chosen deck.
+  session.run = createRun(session.data, { heroIds, seed, deckCardIds: starterDeck(session.data, heroIds) }).run;
 }
 
 export function cycleEncounter(direction = 1): string {

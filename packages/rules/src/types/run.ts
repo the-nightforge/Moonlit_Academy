@@ -42,6 +42,8 @@ export interface RunState {
 export interface RunSetup {
   heroIds: [string, string, string];
   seed: number;
+  /** Validated by the caller (validateDeck); owners are re-checked here. */
+  deckCardIds: string[];
 }
 
 export type RunAction =
