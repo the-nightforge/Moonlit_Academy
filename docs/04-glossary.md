@@ -182,10 +182,24 @@
 | Nguyệt Trần | `moonDust` | Từ Nguyệt Bảo trùng khi Cộng Minh 5; GĐ 4 chỉ tích trữ |
 | Binh Khí Các / Nguyệt Bảo Các | `banner_weapons`, `banner_relics` | Banner trang bị |
 
+## Đấu Trường — PvP [GĐ5]
+
+| Tiếng Việt | Code | Ghi chú |
+|---|---|---|
+| Đấu Trường Công Bằng | `fairArena` | Chế độ 1v1 cân bằng: trang bị chuẩn hóa, Tinh Hồn về cấp lẻ (`01` §15) |
+| Hero thử | `trialHeroIds` | Hero chơi được trong PvP khi chưa sở hữu; chỉ 6 lá khởi đầu |
+| Trang bị PvP cơ bản | `freeWeaponIds`, `freeRelicIds` | Vũ khí / Nguyệt Bảo miễn phí trong PvP, cố định cấp 1 |
+| Người đi trước / đi sau | `firstPlayer` / seat kia | Bốc bằng RNG lúc tạo trận |
+| Bù người đi sau | `secondPlayerBonus` | Cộng Nguyệt Lực lượt đầu của người đi sau |
+| Góc nhìn người chơi | `viewFor(state, player)` | State đã che bài đối thủ (`01` §15.7) |
+| Che event | `redactEvents(events, player)` | Ẩn event lộ lá của đối thủ |
+| Đấu Tập | `practiceMode` | Trận PvP không tính điểm, không lên hạng |
+| Phòng riêng | `privateRoom` | Phòng mời bạn bè bằng mã |
+| Bảng chỉ số PvP | `pvpStats` | Điểm xếp hạng Elo, Vinh Dự, thắng/thua theo mùa |
+
 ## Hệ thống sau này (chưa code)
 
 | Tiếng Việt | Code |
 |---|---|
 | Vinh Dự | `honor` |
-| Đấu Trường Công Bằng | `fairArena` |
 | Hợp Kích | `coopCombo` |

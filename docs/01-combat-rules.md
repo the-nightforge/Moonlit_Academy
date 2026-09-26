@@ -608,3 +608,95 @@ Cùng một lần trigger: Kỳ Vật và Lõi (thứ tự `runRelicIds`) → Ng
 `loadout.relics`) → vũ khí theo vị trí người mang 0 → 2; trong mỗi nguồn theo thứ tự
 `hooks`. "Không đệ quy" (§13.4) áp cho mọi nguồn: trigger phát sinh trong effect của một
 hook bất kỳ không kích hoạt hook nào.
+
+---
+
+## 15. PvP — Đấu Trường Công Bằng [GĐ5]
+
+Trận 1v1 giữa hai người chơi (spec `17` §4). `mode = "pvp"`, `enemies` rỗng, hai seat
+`players[0]`/`players[1]`; unit id và instance id có tiền tố `p0_` / `p1_` (`02` §2).
+
+### 15.1 Tạo trận — `createPvpCombat(data, { seed, players: [PvpSide, PvpSide] })`
+
+`PvpSide = { heroIds, deckCardIds?, loadout }` — deck của mỗi người gồm lá deck, lá Song
+Hành đủ cặp của đội và lá Binh Khí như §2/§14.2. Thứ tự RNG (quan trọng cho chạy lại):
+
+1. Bốc `firstPlayer` (0/1) một lần.
+2. Với từng seat theo chỉ số 0 → 1: dựng chồng bài, xáo, Hero `hp = maxHp` theo
+   `pvp-config.heroStats`.
+3. Nguyệt Luân pha 1, `round = 1`, `bloodMoonRounds = 0`.
+4. Mỗi seat rút `handSize` lá, seat 0 trước.
+5. `status = "mulligan"`: **cả hai** Đổi Bài song song (Action `mulligan` có `player`).
+   Xáo lại dùng chung `rngState` theo thứ tự server nhận — thứ tự đó ghi vào nhật ký.
+6. Khi cả hai xong: đầu lượt người đi trước; hook `combatStart` của cả hai chạy sau hook
+   `playerTurnStart` của lượt đầu (người đi trước trước) — như §2 (T115).
+
+### 15.2 Lượt và vòng
+
+- Một vòng = lượt người đi trước + lượt người đi sau. Hết lượt người đi sau → cuối vòng.
+- **Đầu lượt** của P: như §3.1 nhưng chỉ cho **Hero của P** (xóa giáp + Phản Đòn, bộ đếm
+  đầu lượt, Thiêu Đốt / Hồi Phục, mất HP Huyết Nguyệt, rút bù, Cạn Bài của P, hook
+  `playerTurnStart` của P). Nguyệt Lực của P = `base(round) + moonReserve +
+  moonPowerBonus` của P.
+- **Bù người đi sau:** lượt đầu tiên của người đi sau cộng `secondPlayerBonus.moonPower`
+  vào quỹ; phần dư vào Dự Trữ theo luật thường (trần `moonReserveMax`).
+- **Trong lượt:** chỉ P gửi Action; Action của seat kia bị từ chối `"not your turn"`.
+- **Cuối lượt** của P: như §3.3 bước 0–4 cho P (hook `playerTurnEnd` của P, Tàn Chiêu,
+  Tích Tụ, Dự Trữ, gỡ Đóng Băng trên Hero P). P đi trước → đầu lượt người đi sau; ngược
+  lại → cuối vòng.
+- **Cuối vòng:** tiến Nguyệt Luân, giảm `bloodMoonRounds` (§9.4 bước 2–3). Không có bước
+  lên chuỗi địch. Rồi đầu lượt người đi trước.
+- Pha trăng và Huyết Nguyệt dùng chung cho cả hai seat.
+
+### 15.3 Thời hạn trạng thái
+
+- Trạng thái loại "Thời hạn" lưu số **lượt** = `2 × thời hạn` khi áp (cộng dồn cũng
+  `2 ×`); giảm 1 ở **cuối mỗi lượt** của bất kỳ người chơi nào. Hiển thị `ceil(/2)`.
+- Kết quả: thời hạn 1 luôn kéo qua đúng một lượt của phía kia, bất kể ai áp.
+- Trạng thái khác (cộng dồn, vĩnh viễn, một lần, Phản Đòn) giữ §6.
+- Đóng Băng trên Hero P: Hero đó không đánh được lá trong **lượt kế tiếp của P**, gỡ ở
+  cuối lượt đó. Không có tác dụng "bỏ chuỗi / Dự Trữ về 0" (chỉ cho kẻ địch PvE).
+
+### 15.4 Mục tiêu
+
+- `target: "enemy"` = Hero còn sống của **đối thủ**, không Ẩn Thân; có Hero đối thủ đang
+  Khiêu Khích → bắt buộc chọn Hero đó.
+- `ally`/`self`/`allAllies`/`allEnemies`: theo seat (`alliesOf`/`opponentsOf`).
+- Hiệu ứng pha "cho cả hai phe" (Trăng Tròn hồi ×2, Hạ Huyền giáp ×1.5…) áp cho cả hai.
+
+### 15.5 Effect có nghĩa riêng trong PvP
+
+| Effect | PvE | PvP |
+|---|---|---|
+| `drainMoonPower` (Tỏa / Đoạt Nguyệt) | Rút quỹ + hủy chiêu từng kẻ địch | Rút **Dự Trữ của đối thủ** một lần: `min(amount, opponent.moonReserve)`; `steal` → quỹ người đánh `+=`. Không có chiêu để hủy |
+| Bộ đếm `enemiesKilled` (M06) | Kẻ địch ngã | Hero đối thủ ngã (vẫn "do lá của M06") |
+| Hook `enemyKilled` / `heroDied` | Kẻ địch / Hero ngã | `enemyKilled` chạy hook của **người kết liễu**; `heroDied` chạy hook của **người mất Hero** |
+| Hook `moonPhaseEntered`, `bloodMoonStarted` | — | Chạy hook của **cả hai**: người đang có lượt trước, rồi người kia |
+
+Mọi effect khác giữ nguyên (đơn vị hành động, `to`, công thức damage §10).
+
+### 15.6 Thắng / thua / hòa
+
+- P thua khi mọi Hero của P ngã, hoặc P Cạn Bài ở đầu lượt của P.
+- Cả hai phe cùng hết Hero trong một effect → **người đang có lượt thắng** (ưu tiên
+  thắng, tương tự §11).
+- `round > roundCap` → **hòa** (`winner = "draw"`).
+- Ngoài luật (server quyết): **bỏ cuộc**, hết giờ `timeoutsToForfeit` lượt liên tiếp,
+  mất kết nối quá `reconnectSeconds` — Action hệ thống `{ type: "forfeit", player,
+  reason, system: true }` chỉ server tạo; client gửi bị từ chối. `winner` = seat còn lại.
+
+### 15.7 Góc nhìn và che thông tin — `viewFor(state, player)`
+
+| Phần | Người xem thấy |
+|---|---|
+| Tay, Chiêm Bài của mình | Đầy đủ |
+| Tay đối thủ | Số lá; instance id `hidden_<n>` |
+| Chồng rút của cả hai | Chỉ số lá (id giả `hidden_…`) |
+| Chồng bỏ của cả hai | Đầy đủ |
+| Hero, trạng thái, giáp, Nguyệt Lực, Dự Trữ | Đầy đủ |
+| Trang bị, Nguyệt Bảo của đối thủ | Đầy đủ |
+| `rngState` | `0` |
+
+`redactEvents(events, player)`: event lộ lá đối thủ (`cardsDrawn`, `mulliganed`,
+`choiceOpened`, `cardChosen`, `deckShuffled`) đổi thành bản chỉ có số lượng; `cardPlayed`
+giữ nguyên. Client nhận `{ events, view }` sau mỗi Action (server làm authority).

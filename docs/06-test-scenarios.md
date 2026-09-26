@@ -349,3 +349,18 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T213 | **[GĐ5]** Bộ ghi vàng: 200 trận / lượt chơi bot PvE, event và state cuối khớp bản ghi trước khi đổi state |
 | T214 | **[GĐ5]** Phiếu lượt chơi GĐ 4c/4d/4e (mẫu trong test) chạy lại ra đúng `result` cũ |
 | T215 | **[GĐ5]** Hai người chơi cùng Hero: unit id / instance id có tiền tố `p<n>_`, không va chạm |
+| T216 | **[GĐ5]** `createPvpCombat`: `firstPlayer` bốc đúng 1 lần bằng RNG; HP theo `pvp-config.heroStats`; mỗi seat rút `handSize` (seat 0 trước); id có tiền tố |
+| T217 | **[GĐ5]** Đổi Bài song song: `status = "mulligan"` nhận `mulligan` của cả hai seat; seat xong trước vẫn phải chờ; xáo lại theo thứ tự nhận |
+| T218 | **[GĐ5]** Action của seat không có lượt → `"not your turn"`; hook `combatStart` chạy sau `playerTurnStart` lượt đầu, người đi trước trước |
+| T219 | **[GĐ5]** Bù người đi sau: lượt đầu của seat sau `+= secondPlayerBonus.moonPower`, phần dư vào Dự Trữ theo trần `moonReserveMax` |
+| T220 | **[GĐ5]** Thời hạn trạng thái = `2 ×` gốc, giảm cuối mỗi lượt của cả hai; hiển thị `ceil(/2)`; thời hạn 1 luôn sống qua đúng một lượt đối phương |
+| T221 | **[GĐ5]** Mục tiêu: Khiêu Khích của Hero đối thủ bắt chọn Hero đó; Đóng Băng trên Hero P chặn lá trong lượt kế của P, gỡ cuối lượt đó |
+| T222 | **[GĐ5]** `drainMoonPower` PvP rút Dự Trữ đối thủ một lần (`min(amount, moonReserve)`); `steal` cộng quỹ người đánh |
+| T223 | **[GĐ5]** `enemiesKilled` đếm Hero đối thủ ngã; `enemyKilled` chạy hook người kết liễu, `heroDied` chạy hook người mất; `moonPhaseEntered` chạy hook cả hai theo thứ tự lượt |
+| T224 | **[GĐ5]** Thắng/thua/hòa: hết Hero, Cạn Bài của từng seat; cùng hết trong một effect → người có lượt thắng; `round > roundCap` → `draw` |
+| T225 | **[GĐ5]** `forfeit`: chỉ `system: true` được chấp nhận; client gửi bị từ chối; `winner` = seat còn lại |
+| T226 | **[GĐ5]** `buildPvpLoadout`: Tinh Hồn → cấp lẻ trần 5, cờ `pvp` tắt ngưỡng chẵn/lá "+"; vũ khí sở hữu giữ Tinh Luyện, miễn phí Tinh Luyện 1; Hero thử Tinh Hồn 0 |
+| T227 | **[GĐ5]** `validateDeck` `mode: "pvp"`: Hero thử / trang bị miễn phí hợp lệ dù chưa sở hữu; Hero vừa chưa sở hữu vừa ngoài `trialHeroIds` → `unownedHero` |
+| T228 | **[GĐ5]** `viewFor`: tay đối thủ thành `hidden_<n>` chỉ còn số lượng; chồng rút cả hai chỉ số; `rngState = 0`; bỏ/trang bị/Nguyệt Lực/Dự Trữ đầy đủ |
+| T229 | **[GĐ5]** `redactEvents`: `cardsDrawn`/`mulliganed`/`choiceOpened`/`cardChosen`/`deckShuffled` của đối thủ thành số lượng; `cardPlayed` giữ nguyên |
+| T230 | **[GĐ5]** `pvpBot` chơi trên `viewFor` 1000 bước không lỗi; `replayMatch` tái hiện đúng state + event từ nhật ký |

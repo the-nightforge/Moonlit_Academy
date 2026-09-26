@@ -172,6 +172,12 @@ chiếm 1 ô dù lá có 2 bản). Lá Binh Khí **không** tính vào `minCards
 
 `validateDeck(data, profile, deck): DeckError[]` — kiểm tra mọi luật, trả mọi lỗi theo thứ tự trên (rỗng = hợp lệ).
 
+**[GĐ5]** `validateDeck(data, profile, deck, { mode: "pvp" })`: Hero trong
+`trialHeroIds` được coi là đã sở hữu (đóng góp đúng 6 lá khởi đầu — xem §12
+`buildPvpLoadout`); vũ khí/Nguyệt Bảo trong `freeWeaponIds`/`freeRelicIds` được coi là đã
+sở hữu. Mọi luật khác giữ nguyên. Deck ngoài lẻ vẫn là bản lưu đầy đủ của người chơi —
+server đọc deck đã lưu để dựng `PvpSide` cho trận Đấu Trường.
+
 ### 3.2 Hàm
 
 | Hàm | Luật |
@@ -443,6 +449,13 @@ interface Loadout {
   trong lượt chơi dùng loadout của lượt chơi.
 - Phiếu lượt chơi (§4.1) chụp thêm `loadout` lúc cấp; nộp kết quả chạy lại với đúng
   loadout đó (đổi Tinh Hồn sau khi cấp phiếu không ảnh hưởng lượt đang chơi).
+- **[GĐ5]** `buildPvpLoadout(data, profile, heroIds)` cho Đấu Trường (`17` §3.2):
+  Tinh Hồn → cấp lẻ trần 5 (1→1, 2→1, 3→3, 4→3, 5→5, 6→5; ngưỡng chẵn / lá "+" tắt bằng
+  cờ `pvp: true` trên Loadout); `levelUpForm` theo hồ sơ. Vũ khí sở hữu → giữ Tinh Luyện
+  (không trần); chưa sở hữu → `freeWeaponIds` Tinh Luyện 1. Nguyệt Bảo tương tự với
+  `freeRelicIds` Cộng Minh 1. Hero thử (chưa sở hữu, có trong `trialHeroIds`): Tinh Hồn 0,
+  không trang bị; `hero not owned` nếu vừa chưa sở hữu vừa không trong `trialHeroIds`.
+  Deck của Hero thử chỉ gồm 6 lá khởi đầu của Hero đó.
 
 ## 13. Binh Khí và Nguyệt Bảo **[GĐ4e]**
 

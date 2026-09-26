@@ -322,6 +322,36 @@ Hero; `signatureHeroId` là Hero có thật; `signatureHooks` chỉ khi có `sig
 của Lõi (`11` §3.3); `actor` / `owner` / `killer` `"wearer"` chỉ trong hook vũ khí;
 `onLevelUp` theo ràng buộc effect của lá không có mục tiêu chọn (`to` ≠ `"chosen"`).
 
+### 1.13 Cấu hình PvP — `pvp-config.json` [GĐ5]
+
+```ts
+export interface PvpConfig {
+  heroStats: Record<string, { maxHp: number }>;   // HP trận Đấu Trường theo Hero
+  trialHeroIds: string[];                          // Hero thử: chơi được khi chưa sở hữu
+  freeWeaponIds: string[];                         // vũ khí cơ bản, miễn phí (Tinh Luyện 1)
+  freeRelicIds: string[];                          // Nguyệt Bảo cơ bản, miễn phí (Cộng Minh 1)
+  secondPlayerBonus: { moonPower: number };        // bù người đi sau, lượt đầu (01 §15.2)
+  turnSeconds: number;                             // 60 — giới hạn một lượt (server đếm)
+  mulliganSeconds: number;                         // 30 — giới hạn Đổi Bài
+  timeoutsToForfeit: number;                       // 3 — số lượt hết giờ liên tiếp → thua
+  reconnectSeconds: number;                        // 60 — chờ kết nối lại trước khi thua
+  roundCap: number;                                // 30 — trần vòng, quá thì hòa
+}
+```
+
+Kiểm tra khi nạp: `heroStats` phủ mọi Hero trong `heroes.json` (id lạ → lỗi);
+`trialHeroIds`, `freeWeaponIds`, `freeRelicIds` tham chiếu id có thật; mọi số > 0;
+`roundCap` chẵn.
+
+```ts
+// Một bên trận PvP (17 §4.1)
+export interface PvpSide {
+  heroIds: [string, string, string];
+  deckCardIds?: string[];   // 18 ô như CombatSetup; thiếu = lá mặc định của đội
+  loadout: Loadout;         // pvp: true — từ buildPvpLoadout (14 §12)
+}
+```
+
 ---
 
 ## 2. Trạng thái trận đấu (runtime)
@@ -369,7 +399,8 @@ export interface CardInstance {
   heldTurns: number;        // GĐ4b: số lượt đã nằm trên tay (Tích Tụ); 0 khi lá vào tay
 }
 
-export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost";   // GĐ4a: mulligan, choosing
+export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost"
+  | "opponentTurn";   // [GĐ5] chỉ xuất hiện trong viewFor của seat đang chờ, không lưu state (17 §4.2)
 export type CombatMode = "pve" | "pvp" | "coop";   // [GĐ5] spec 17 §2.2
 
 // [GĐ5] Mọi thứ gắn với một người chơi nằm trong PlayerState; PvE = đúng 1 người chơi.
@@ -417,11 +448,17 @@ cũ chạy lại được. Truy cập thành phần theo người chơi qua `pla
 
 ```ts
 export type Action =
-  | { type: "mulligan"; instanceIds: string[] }        // GĐ4a: Đổi Bài (01 §2.1)
-  | { type: "playCard"; instanceId: string; targetId?: string }
-  | { type: "chooseCard"; instanceId: string }         // GĐ4a: Chiêm Bài (01 §3.2)
-  | { type: "endTurn" };
+  | { type: "mulligan"; instanceIds: string[]; player?: number }   // GĐ4a; [GĐ5] PvP: seat nào đổi
+  | { type: "playCard"; instanceId: string; targetId?: string; player?: number }   // [GĐ5] seat thực hiện
+  | { type: "chooseCard"; instanceId: string; player?: number }    // GĐ4a: Chiêm Bài (01 §3.2)
+  | { type: "endTurn"; player?: number }
+  | { type: "forfeit"; player: number; reason: "resign" | "timeout" | "disconnect"; system: true };   // [GĐ5] chỉ server tạo (01 §15.6)
 ```
+
+**[GĐ5]** `player` mặc định `activePlayer`. Trận 2 người chơi: Action có `player` ≠
+`activePlayer` → lỗi `"not your turn"` (riêng `mulligan` nhận cả hai seat vì đổi song
+song, và `forfeit` luôn hợp lệ — là action hệ thống). `forfeit` không phải Action client
+gửi được; nó chỉ xuất hiện trong nhật ký trận do server chèn.
 
 Action hợp lệ theo `status` **[GĐ4a]**:
 
@@ -435,7 +472,7 @@ Action hợp lệ theo `status` **[GĐ4a]**:
 ```ts
 export type CombatEvent =
   | { type: "combatStarted" }
-  | { type: "turnStarted"; side: "hero" | "enemy"; round: number }
+  | { type: "turnStarted"; side: "hero" | "enemy"; round: number; player?: number }   // [GĐ5] PvP: seat có lượt (side luôn "hero")
   | { type: "cardsDrawn"; instanceIds: string[] }
   | { type: "deckShuffled" }                       // GĐ4a: chỉ khi xáo lúc tạo trận và sau Đổi Bài (không còn xáo chồng bỏ)
   | { type: "mulliganed"; returned: string[]; drawn: string[] }    // GĐ4a
@@ -466,8 +503,17 @@ export type CombatEvent =
   | { type: "runRelicTriggered"; runRelicId: string }   // GĐ3
   | { type: "relicTriggered"; relicId: string }          // GĐ4e (Nguyệt Bảo)
   | { type: "weaponTriggered"; weaponId: string; heroId: string }   // GĐ4e
-  | { type: "combatEnded"; result: "won" | "lost" };
+  | { type: "playerForfeited"; player: number; reason: "resign" | "timeout" | "disconnect" }    // [GĐ5]
+  | { type: "playerDisconnected"; player: number }                                             // [GĐ5]
+  | { type: "combatEnded"; result: "won" | "lost" | "draw"; winner?: number | "draw" };   // [GĐ5] PvP
 ```
+
+**[GĐ5]** Trong trận 2 người chơi, các event gắn với một seat mang thêm `player: number`:
+`turnStarted`, `cardsDrawn`, `deckShuffled`, `mulliganed`, `choiceOpened`, `cardChosen`,
+`deckedOut`, `cardsPurged`, `moonReserveChanged`, `cardPlayed`, `cardDiscarded`,
+`moonPowerChanged`, `runRelicTriggered`, `relicTriggered`. PvE giữ event cũ không trường
+`player` để nhật ký / bản ghi vàng khớp. Client PvP không nhận state thô — nhận gói
+`{ events, view }` đã qua `viewFor` / `redactEvents` (`01` §15.7).
 
 Event là **nguồn duy nhất** để client phát animation. Mọi thay đổi state có ý nghĩa hiển thị phải có event tương ứng, theo đúng thứ tự xảy ra.
 
@@ -504,6 +550,12 @@ export type ActionResult =
 
 export function createCombat(data: GameData, setup: CombatSetup): { state: CombatState; events: CombatEvent[] };
 export function applyAction(data: GameData, state: CombatState, action: Action): ActionResult;
+
+// [GĐ5] PvP (mục 1.13, luật 01 §15)
+export function createPvpCombat(data: GameData, setup: { seed: number; players: [PvpSide, PvpSide] }): { state: CombatState; events: CombatEvent[] };
+export function viewFor(state: CombatState, player: number): CombatState;                  // góc nhìn đã che (01 §15.7)
+export function redactEvents(events: CombatEvent[], player: number): CombatEvent[];        // che event lộ bài đối thủ
+export function replayMatch(data: GameData, setup: { seed: number; players: [PvpSide, PvpSide] }, actions: Action[]): { state: CombatState; events: CombatEvent[] };
 
 // Hỗ trợ UI
 export function getEffectiveCost(data: GameData, state: CombatState, instanceId: string): number;
