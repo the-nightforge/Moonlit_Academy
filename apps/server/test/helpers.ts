@@ -2,10 +2,12 @@ import { createHash } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { dataVersion, loadGameData } from "data";
 import type { GameData, Loadout, RunAction, RunSetup, RunState } from "rules";
-import { applyRunAction, cardDefOf, createRun, getValidTargets, isCardPlayable, reachableNodeIds } from "rules";
+import { applyRunAction, cardDefOf, createRun, getValidTargets, isCardPlayable, reachableNodeIds, starterDeck } from "rules";
+import { hashToken } from "../src/auth";
 import { buildApp } from "../src/app";
 import type { AppDeps } from "../src/context";
 import { openDb, type Db } from "../src/db";
+import type { Scheduler } from "../src/scheduler";
 
 export interface TestServer {
   app: FastifyInstance;
@@ -30,9 +32,53 @@ export function testServer(): TestServer {
     }
     return out;
   };
-  const deps: AppDeps = { db, data, clock: () => now.value, random };
+  const deps: AppDeps = { db, data, clock: () => now.value, random, scheduler: fakeScheduler() };
   const app = buildApp(deps);
   return { app, db, data, now, version: dataVersion(data), deps };
+}
+
+export interface FakeScheduler extends Scheduler {
+  /** Moves the fake clock forward and fires every due task, in order. */
+  advance(ms: number): void;
+  pending(): number;
+}
+
+/** Deterministic timers for realtime tests (`16` §8.1). */
+export function fakeScheduler(): FakeScheduler {
+  let now = 0;
+  let nextId = 1;
+  const tasks: { id: number; at: number; fn: () => void }[] = [];
+  return {
+    setTimeout(fn, ms) {
+      const id = nextId++;
+      tasks.push({ id, at: now + ms, fn });
+      return id;
+    },
+    clearTimeout(handle) {
+      const index = tasks.findIndex((t) => t.id === handle);
+      if (index >= 0) tasks.splice(index, 1);
+    },
+    advance(ms) {
+      const until = now + ms;
+      for (;;) {
+        const due = tasks.filter((t) => t.at <= until).sort((a, b) => a.at - b.at)[0];
+        if (!due) break;
+        now = Math.max(now, due.at);
+        tasks.splice(tasks.indexOf(due), 1);
+        due.fn();
+      }
+      now = until;
+    },
+    pending: () => tasks.length,
+  };
+}
+
+/** Writes a valid starter deck (18 cards, no gear) into the account's profile. */
+export function giveStarterDeck(server: TestServer, accountId: number, heroIds: [string, string, string]): void {
+  const row = server.db.prepare<[number], { profile_json: string }>("SELECT profile_json FROM profiles WHERE account_id = ?").get(accountId)!;
+  const profile = JSON.parse(row.profile_json) as { decks: unknown[] };
+  profile.decks = [{ id: "d1", name: "Phòng", heroIds, cardIds: starterDeck(server.data, heroIds) }];
+  server.db.prepare("UPDATE profiles SET profile_json = ? WHERE account_id = ?").run(JSON.stringify(profile), accountId);
 }
 
 export async function call(
@@ -53,6 +99,14 @@ export async function call(
 export async function register(server: TestServer, username = "linh_lung", password = "trang-sang-8") {
   const response = await call(server, "POST", "/api/auth/register", { body: { username, password } });
   return response.body as { token: string; profile: unknown; rev: number };
+}
+
+export function accountIdOf(server: TestServer, token: string): number {
+  const row = server.db
+    .prepare<[string], { account_id: number }>("SELECT account_id FROM sessions WHERE token_hash = ?")
+    .get(hashToken(token));
+  if (!row) throw new Error("no session for token");
+  return row.account_id;
 }
 
 /** Plays a run to the end with the simplest legal policy; returns the actions sent. */

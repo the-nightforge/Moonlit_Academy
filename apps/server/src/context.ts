@@ -4,6 +4,7 @@ import { parseProfile } from "rules";
 import type { z } from "zod";
 import { hashToken } from "./auth";
 import type { Db } from "./db";
+import { realScheduler, type Scheduler } from "./scheduler";
 
 /** Session lifetime after last use (`16` §3). */
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -26,14 +27,19 @@ export interface AppDeps {
   clock: () => number;
   /** `bytes` random bytes. */
   random: (bytes: number) => Buffer;
+  /** Timers for realtime rooms; production uses `realScheduler`, tests fake it. */
+  scheduler?: Scheduler;
 }
 
 /** Everything a route needs: dependencies plus shared helpers. */
 export interface AppContext extends AppDeps {
   dataVersion: string;
+  scheduler: Scheduler;
   parseBody<T>(schema: z.ZodType<T>, body: unknown): T;
   /** The signed-in account for this request; throws 401 otherwise. Slides the session. */
   requireAccount(request: FastifyRequest): number;
+  /** The account holding `token`, or null — for the WebSocket `hello` (`16` §8.1). */
+  accountByToken(token: string): number | null;
   readProfile(accountId: number): { profile: Profile; rev: number };
   /**
    * Applies a pure rule to the account's profile in one transaction (`16` §2):
@@ -90,9 +96,23 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
     })();
   }
 
+  function accountByToken(token: string): number | null {
+    const session = findSession.get(hashToken(token));
+    if (!session) return null;
+    const now = clock();
+    if (now - session.last_used_at > SESSION_TTL_MS) {
+      dropSession.run(hashToken(token));
+      return null;
+    }
+    touchSession.run(now, hashToken(token));
+    return session.account_id;
+  }
+
   return {
     ...deps,
     dataVersion,
+    scheduler: deps.scheduler ?? realScheduler,
+    accountByToken,
     parseBody(schema, body) {
       const parsed = schema.safeParse(body);
       if (!parsed.success) throw new HttpError(400, "bad request", { issues: parsed.error.issues });
@@ -102,16 +122,9 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
       const header = request.headers.authorization;
       const token = header?.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : "";
       if (token === "") throw new HttpError(401, "unauthorized");
-      const tokenHash = hashToken(token);
-      const session = findSession.get(tokenHash);
-      if (!session) throw new HttpError(401, "unauthorized");
-      const now = clock();
-      if (now - session.last_used_at > SESSION_TTL_MS) {
-        dropSession.run(tokenHash);
-        throw new HttpError(401, "unauthorized");
-      }
-      touchSession.run(now, tokenHash);
-      return session.account_id;
+      const accountId = accountByToken(token);
+      if (accountId === null) throw new HttpError(401, "unauthorized");
+      return accountId;
     },
     readProfile,
     mutateProfile,

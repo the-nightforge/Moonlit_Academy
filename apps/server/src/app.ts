@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { dataVersion } from "data";
 import { createContext, HttpError, type AppDeps } from "./context";
+import { registerRealtime } from "./realtime/socket";
 import { registerAuthRoutes } from "./routes/auth";
 import { registerGachaRoutes } from "./routes/gacha";
 import { registerProfileRoutes } from "./routes/profile";
@@ -14,7 +15,8 @@ export function buildApp(deps: AppDeps): FastifyInstance {
 
   // Every request but the health check must run the same game data (`16` §2).
   app.addHook("onRequest", async (request) => {
-    if (request.url === "/api/health") return;
+    // `/api/ws` authenticates via `hello` inside the socket, not headers (`16` §8.1).
+    if (request.url === "/api/health" || request.url === "/api/ws") return;
     if (request.headers["x-data-version"] !== ctx.dataVersion) {
       throw new HttpError(409, "outdated client", { dataVersion: ctx.dataVersion });
     }
@@ -38,5 +40,6 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   registerRunRoutes(app, ctx);
   registerGachaRoutes(app, ctx);
   registerShopRoutes(app, ctx);
+  registerRealtime(app, ctx);
   return app;
 }

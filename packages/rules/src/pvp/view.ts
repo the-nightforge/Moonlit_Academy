@@ -22,6 +22,9 @@ export function viewFor(state: CombatState, player: number): CombatState {
   }
   opponent.hand = opponent.hand.map((_, i) => `hidden_hand_${i}`);
   opponent.drawPile = opponent.drawPile.map((_, i) => `hidden_deck_${i}`);
+  // Both draw piles are counts-only (`17` §4.8) — including the viewer's own.
+  const self = view.players[player]!;
+  self.drawPile = self.drawPile.map((_, i) => `hidden_deck_${i}`);
   opponent.pendingChoice = null;
   // A status belonging to the other seat reads as opponentTurn for the viewer.
   if (

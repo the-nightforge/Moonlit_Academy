@@ -8,7 +8,7 @@ export default defineConfig({
     ssr: true,
     emptyOutDir: true,
     rollupOptions: {
-      external: ["better-sqlite3", "fastify", "zod"],
+      external: ["better-sqlite3", "fastify", "zod", "@fastify/websocket", "ws"],
     },
   },
   ssr: {
