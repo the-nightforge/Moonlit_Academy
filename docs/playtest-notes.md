@@ -53,10 +53,6 @@ UI: đổi mục tiêu theo Khiêu Khích, xem số damage ý định trước k
 - enc_02 thua khi damage dàn đều 3 mục tiêu → focus-fire là quyết định
   quan trọng, tốt cho "cảm giác phải suy nghĩ".
 
-## Điểm cần theo dõi khi playtest tay
-
-- [ ] Animation lượt địch đủ rõ ai đánh ai không?
-
 ## Không chỉnh data
 
 Chưa thay đổi `data/*.json`: kết quả nằm trong ngưỡng chấp nhận được cho
@@ -132,13 +128,6 @@ Có: 0–4 lần/trận. Boss (pha Hạ Huyền) và *Phong Tuyết Chướng* �
 - Tag theo pha có tác dụng đo được: đội mốc đổi kết quả ở enc_02/enc_03 so với
   giai đoạn 1 dù không có Hero mới (Hổ Gầm rẻ hơn ở Hạ Huyền, lá hồi của F04 rẻ
   hơn ở Trăng Tròn).
-
-## Điểm cần theo dõi khi playtest tay
-
-- [ ] Huyết Nguyệt: người chơi có chủ động để dành Đổi Vận Chú + Phệ Hồn không?
-- [ ] Cướp buff (Diện Đoạt, Ảnh Đấu) có đáng một lượt không?
-- [ ] Lá Song Hành có dễ nhận ra trên tay (viền 2 màu, nhãn) không?
-- [ ] Animation cướp buff, tia Phản Đòn, Huyết Nguyệt có rõ không?
 
 ## Điều chỉnh F02 (`09` mục 12, đã duyệt)
 
@@ -259,13 +248,6 @@ quả y hệt); các đòn bẩy tầng 1 hoặc tệ hơn hoặc nằm trong nh
 hơn enc_02 sau nerf; `enc_00` làm loãng cả tầng giữa). ~25% lượt chết ở tầng 1–2
 là độ khó chấp nhận được cho sàn kỹ năng.
 
-## Điểm cần theo dõi khi chơi tay
-
-- [ ] Bản đồ đọc có dễ không; có muốn đi đường Tinh Anh không?
-- [ ] Lá thưởng có tạo lựa chọn thật không?
-- [ ] Kỳ Vật có cảm nhận được trong trận không?
-- [ ] Một lượt chơi dài bao lâu?
-
 # Playtest Notes — Phase 4a (bước 4a.8)
 
 Playtest scripted: `packages/rules/test/playtest.test.ts` (trận đơn) và
@@ -323,14 +305,6 @@ So mục tiêu §8: trận thường/Tinh Anh 8–12 vòng ✓ (8.2–9.9), Cạ
 đã duyệt gói P thay vì gói X 22.5% để giữ độ khó; người chơi thật sẽ cao
 hơn sàn). Boss còn là chốt chặn chính (17% trận boss thắng).
 
-## Điểm cần theo dõi khi chơi tay
-
-- [ ] Đổi Bài có tạo quyết định thật không (hay luôn bỏ 2 lá đắt)?
-- [ ] Dự Trữ có được dùng chủ động không (nhịp lượt xanh để vòng sau bùng)?
-- [ ] Đồng hồ Cạn Bài có gây áp lực đúng không?
-- [ ] Chuỗi chiêu địch có đọc được không; Tụ Lực có đủ cảnh báo?
-- [ ] Chiêm Bài có đáng cost không; lấy lá đắt hay lá rẻ?
-
 
 # Playtest Notes — Phase 4b (bước 4b.7)
 
@@ -374,33 +348,15 @@ hơn, độ khó thật cần xác nhận bằng chơi tay.
   phòng thủ/kiểm soát (Thiết Vệ, Tĩnh Tâm, Hàn Kiếm, Huyết Nguyệt) cũng khó
   cho bot hơn.
 
-## Điểm cần theo dõi khi chơi tay
-
-- [ ] Tích Tụ có đáng giữ lá qua lượt không?
-- [ ] Liên Hoàn có tạo thứ tự đánh thú vị không?
-- [ ] Tỏa Nguyệt có thấy rõ chiêu địch bị hủy không?
-- [ ] Tụ Dược có tạo nhịp "rải Hồi rồi nổ" không?
-- [ ] Mở khóa (Tu Luyện) có hào hứng không; ~10 lượt tới cấp 6 có hợp lý?
-- [ ] Deck nhánh có khác cảm giác Bộ cơ bản không?
-
-## Còn mở sau 4b (đo lại trên data hiện tại)
+## Các mục đã đóng sau 4b
 
 Các mục đã đóng nhờ số đo 4b (đã xóa khỏi checklist cũ): trận thường dài quá
 (nay 7.9 vòng TB), F04 ít thăng cấp (nay 38/48 trận), Nguyệt Quang Dẫn 2 NL
 (nay cost 4 theo kinh tế 4a), tay kẹt vì Tàn Chiêu (nay bỏ cuối lượt, kẹt tay
 0–5%), boss quá dài (nay 10–12 vòng), m06+f02+f03 0/20 (nay 50% với Bộ cơ
 bản), tỷ lệ thắng bot 10–15% (nay 59%). Sau "Chỉnh sau 4b" đóng thêm: game dễ
-hơn mục tiêu (bot 59% → 44%), F02 gần như không thăng cấp (6/48 → 28/48).
-
-- [ ] **Chênh lệch đội (chưa sửa được):** Bộ cơ bản m05+f04+m06 30%,
-      m06+f02+f03 25%, m05+f03+f04 80% lượt thắng. Đã thử 8 hoán đổi lá miễn
-      phí ↔ khóa (Băng Tâm Quyết, Xuân Phong, Ảnh Phân Thân, Tàng Ảnh Thích,
-      Huyết Chiến…): không cái nào kéo đội yếu lên, bỏ Nguyệt Quang Dẫn còn
-      làm m05+f04+m06 tụt 30% → 5–10%. Cần xem lại bằng chơi tay trước khi
-      chỉnh tiếp (có thể do heuristic chơi F04/M06 kém, không phải data).
-- [ ] **Nhánh A mạnh hơn hẳn nhánh B ở m06+f02+f03** (60–85% vs 25–30%);
-      tính chung mọi đội nhánh B chỉ kém Bộ cơ bản 3–4 điểm.
-- [ ] Huyết Nguyệt vẫn hiếm: TB 0.5 lượt/trận (tối đa 3).
+hơn mục tiêu (bot 59% → 44%), F02 gần như không thăng cấp (6/48 → 28/48). Sau
+"vòng 2" đóng nốt: chênh lệch đội, nhánh A/B, Huyết Nguyệt hiếm.
 
 ## Chỉnh sau 4b (đã duyệt)
 
@@ -450,6 +406,118 @@ Bộ cơ bản theo tier: thường 90% / 9.3 vòng, Tinh Anh 81% / 11.2, boss 7
 Luyện ~11.4 lượt tới cấp 6 (mục tiêu 8–12). Thăng cấp trong trận đơn: M05
 51/72, F04 40/48, M06 36/48, F03 44/72, **F02 28/48** (trước 6/48).
 
+## Chỉnh sau 4b — vòng 2
+
+Ablation bằng file tạm, 4 đội × 6 deck × 40–80 seed (20 seed của
+`run-playtest` nhiễu ±10 điểm/đội — số dưới đây là 80 seed).
+
+**Chênh lệch đội.** Nguyên nhân chính là lá Song Hành, không phải Hero:
+m05+f04+m06 có 0 lá Song Hành, m05+f03+f02 / m06+f02+f03 có 1, m05+f03+f04 có
+2 (cả hai Đóng Băng). Bỏ mọi lá Song Hành: m05+f03+f04 78% → 43%, các đội khác
+gần như không đổi. *Tuyết Trung Tống Thán* (2 NL, Đóng Băng + Hồi Phục) là lá
+quyết định.
+
+| Biến thể (80 seed) | Bộ cơ bản | m05+f04+m06 | m05+f03+f02 | m06+f02+f03 | m05+f03+f04 |
+|---|---|---|---|---|---|
+| Sau vòng 1 | 37% | 18% | 43% | 23% | 66% |
+| Tuyết Trung `copies` 2 + boss 85 + F04 đổi Thảo Dược ↔ Băng Tâm Quyết | 37% | 24% | 45% | 25% | 54% |
+| **+ Đổi Vận Chú 4 → 3** | **38%** | **24%** | **40%** | **34%** | **54%** |
+
+Thử và bỏ: bot không hồi máu khi cả đội ≥ 85% HP (không đổi), thêm lá Song
+Hành giáp/hồi cho M05+F04 (không giúp m05+f04+m06), F04 đổi Hồi Xuân Tán /
+Linh Chi / Nguyệt Quang Dẫn lấy Băng Tâm Quyết (m05+f04+m06 tụt 8–23%),
+enc_02 (Ảnh Hồ ×3) `minFloor` 2, Ảnh Hồ HP 19 (không đổi). m05+f04+m06 thấp
+nhất vì không có Song Hành lẫn Đóng Băng — chấp nhận như bản sắc đội.
+
+**Tiêu chí đóng:** mọi đội ≥ 20%, chênh lệch ≤ 30 điểm, Bộ cơ bản 35–45%, mọi
+loại deck trong ±15 điểm so với Bộ cơ bản (spec 4b §8) — đạt: 24–54%, 38%,
+nhánh A 6/6/6 52% / nhánh B 6/6/6 33% / A 4/4/10 44% / B 8/5/5 30% / ngẫu
+nhiên 43%. Khoảng cách nhánh A–B của riêng m06+f02+f03 là do nhánh A của đội
+đó mạnh (Ảnh Sát + Cướp), không phải nhánh B yếu so với Bộ cơ bản.
+
+**Huyết Nguyệt.** Đo riêng đội có F02: 0.8 lượt/trận với Bộ cơ bản và nhánh B.
+Kéo Huyết Nguyệt của Đổi Vận Chú 2 → 3 vòng tăng lên 1.4 lượt/trận nhưng đội
+F02 thua nhiều hơn (m06+f02+f03 25% → 18%): Huyết Nguyệt là rủi ro hai chiều
+đúng thiết kế, tần suất hiện tại cân bằng. Không đổi thời lượng; Đổi Vận Chú
+rẻ hơn (ở trên) giúp đội F02 mà không đổi tần suất.
+
+Đã áp dụng:
+
+- *Tuyết Trung Tống Thán* `copies` 3 → 2.
+- Boss *Thần Viên Trấn Nguyệt* `maxHp` 90 → 85 (bù lại độ khó chung).
+- F04: *Băng Tâm Quyết* vào bộ miễn phí, *Thảo Dược* thành lá khóa (cùng nhánh
+  Tĩnh Tâm, cùng cost 2; F04 có lá khống chế từ đầu).
+- *Đổi Vận Chú* cost 4 → 3.
+
+`run-playtest` (seed 1–20, sau chỉnh): Bộ cơ bản 45%, thường 89% / 9.3 vòng,
+Tinh Anh 88% / 9.9, boss 73% / 11.9; nhịp Tu Luyện ~11.4 lượt tới cấp 6.
+
+## Câu hỏi chơi tay — trả lời bằng đo đạc và sửa UI
+
+Những câu "chơi tay" ở các giai đoạn trước đã được trả lời theo một trong hai
+cách, rồi xóa khỏi checklist.
+
+**1. So chiến thuật bot** (file tạm, 4 đội × 6 deck × 40 seed, Bộ cơ bản; mốc
+42%). Chơi khéo thắng nhiều hơn rõ → cơ chế tạo quyết định thật.
+
+| Câu hỏi | Chơi khéo | Đối chứng | Kết luận |
+|---|---|---|---|
+| Tích Tụ có đáng giữ lá? | giữ tới ngưỡng 42% | đánh ngay 31% (nhánh B 30% → 18%) | Có |
+| Liên Hoàn có tạo thứ tự đánh? | lá thường trước 42% | không xếp 36% | Có |
+| Để dành Đổi Vận Chú + Phệ Hồn? | để dành 46% | đánh ngay 42% (đội F02 +12–15 điểm) | Có — người chơi nên để dành |
+| Cướp buff có đáng? | có 42% | bỏ mọi `stealBuff` 39% | Có, nhỏ; nay còn tính vào thăng cấp F02 |
+| Kỳ Vật có cảm nhận được? | có 42% | không Kỳ Vật 38% (nhánh B 8/5/5 −13) | Có |
+| Lá thưởng có tạo lựa chọn? | lấy lá đầu 42%, lá đắt 39% | bỏ qua 34% | Có (lá thưởng nay đã thay bằng Lõi — xem cuối file) |
+| Có muốn đi đường Tinh Anh? | săn 43% / mặc định 42% / né 42% | — | Rủi ro ≈ phần thưởng: lựa chọn trung lập, đúng ý |
+| Deck nhánh có khác Bộ cơ bản? | Huyết Nguyệt/trận (đội F02): nhánh A 0.15, nhánh B 0.82; thắng 54% vs 30% | — | Khác rõ về nhịp và độ khó |
+| Tụ Dược "rải Hồi rồi nổ"? | nhắm Hero có Hồi ≥ 3: 42% | nhắm bừa 45% | **Không** — xem dưới |
+
+*Tụ Dược:* Hồi Phục `v` tự hồi tổng v + (v−1) + … + 1, nên *Linh Chi Hộ Thể*
+(Tụ Dược ×1) luôn lỗ khi nổ (v = 3: hồi 3 thay vì 6). Đã chỉnh Tụ Dược ×1 → ×2
+(*Linh Chi Hộ Thể*), ×2 → ×3 (*Bách Hoa Tụ Dược*): với v ≤ 3, nổ ≥ để tự hồi và
+có ngay. Tỉ lệ thắng không đổi (43%) — bot không bị giới hạn bởi hồi máu.
+
+**2. Số đo trực tiếp.**
+
+- *Một lượt chơi dài bao lâu?* Trung bình 4.3 trận, 42 lượt người chơi, ~100
+  lá được đánh mỗi lượt chơi → ước tính 15–20 phút cho người thật.
+- *Đồng hồ Cạn Bài có gây áp lực?* Cuối trận chồng còn trung bình 35–38%;
+  chồng cạn hẳn ở 5–12% trận, thua vì Cạn Bài 3–5% (chủ yếu trận boss dài):
+  áp lực chỉ đến ở trận kéo dài, đúng mục tiêu < 10%.
+- *Mở khóa (Tu Luyện) ~10 lượt tới cấp 6?* ~11.4 lượt, trong mục tiêu 8–12.
+
+**3. Kiểm tra UI** (chạy client, chụp màn hình bằng Playwright):
+
+- Lượt địch "ai đánh ai": trước chỉ nhích 18% về phía mục tiêu. Nay hiện tên
+  chiêu dưới kẻ địch và tia đỏ tới mục tiêu (chiêu lan: tia tới mọi Hero).
+- Chuỗi chiêu địch đọc được (tên, cost, damage, mục tiêu). Tụ Lực trước chỉ
+  ghi "⋯ Tụ Lực"; nay "⋯ Tụ Lực · vòng sau NL X", đổi thành "⚠" khi X đủ cho
+  chiêu đắt nhất (`previewEnemyIntent.nextRoundMoonPower`, T170).
+- Tỏa Nguyệt: trước ghi số chiêu bị hủy; nay ghi tên chiêu bị hủy.
+- Cướp buff (nhãn buff bay từ nạn nhân sang kẻ cướp), tia Phản Đòn, Huyết
+  Nguyệt (chớp đỏ toàn màn, banner, nền đỏ, đếm vòng): đã có sẵn.
+- Lá Song Hành: viền màu Hero thứ hai + nhãn "Song Hành" (tăng cỡ 9 → 11px).
+- Bản đồ: thêm chú thích biểu tượng (⚔ ☠ 🏮 🎁 🌕 kèm ý nghĩa) và số tầng.
+
+## Quyết định thiết kế (đã duyệt)
+
+Ba cơ chế kinh tế 4a không tạo quyết định theo số đo; người dùng đã chọn:
+
+- **Chiêm Bài — lá chọn rẻ hơn (luật mới, T171):** lá lấy qua Chiêm Bài giảm
+  `combatConfig.chooseCardDiscount` = 1 NL tới hết lượt. Trước: bỏ hẳn Chiêm
+  Bài 42% → 42%. Sau (80 seed): Bộ cơ bản 41% có vs 41% bỏ hẳn, nhánh A 57% vs
+  53%; giảm 2 không tốt hơn (42%). Ở cấp bot Nguyệt Lực mới là nút thắt nên
+  chọn lá ít đổi kết quả; luật mới cho người chơi lý do cụ thể "Chiêm Bài rồi
+  đánh ngay lá vừa lấy". Không phải điểm mở: muốn Chiêm Bài mạnh hơn nữa thì
+  phải đổi kinh tế tay/Nguyệt Lực.
+- **Đổi Bài — giữ làm van an toàn:** bỏ lá đắt 42%, giữ nguyên 41%, bỏ 2 lá
+  đầu 41%. Vai trò là tránh tay xấu gây ức chế, không cần là quyết định lớn.
+- **Dự Trữ — giữ nguyên:** tự giữ ≤ 3 NL thừa (Dự Trữ TB 0.4–0.6) để làm mượt
+  nhịp; cố tình nhịn đánh không được thưởng (42% → 38%), chấp nhận.
+
+Không còn mục mở trong các phần trên. Phần Lõi bên dưới (merge từ `main`) còn
+việc chờ duyệt; các số đo ở trên là trước khi có Lõi.
+
 # Playtest Notes — Lõi (augment thay lá thưởng)
 
 Thay thế lá thưởng sau trận bằng **chọn 1 trong 3 Lõi** (`run-augments.json`,
@@ -485,3 +553,15 @@ hồ cạn giờ chỉ cắn ở boss), trận thường ≤4%; kẹt tay ≤1%,
   cách nhau). Chưa chỉnh — chờ duyệt.
 - Điểm cần chơi tay: Lõi có tạo cảm giác "build" mỗi lượt không; 16 Lõi có
   đủ đa dạng; Lõi thay lá có làm Nghỉ Chân bỏ lá (minDeckSize) vô dụng không.
+
+## Đo lại sau khi merge (Lõi + các gói chỉnh sau 4b)
+
+`run-playtest`, seed 1–20: Bộ cơ bản **64%**, nhánh A 6/6/6 83%, nhánh B 6/6/6
+59%, nhánh A 4/4/10 68%, nhánh B 8/5/5 63%, ngẫu nhiên 68%. Bộ cơ bản theo tier:
+thường 96% / 8.9 vòng, Tinh Anh 94% / 9.2, boss 77% / 10.6, **Cạn Bài ở boss
+17%**.
+
+- [ ] Vẫn dễ hơn mục tiêu (bot 35–45%) dù đã có gói chỉnh sau 4b (trước Lõi:
+      ~40%). Cần chỉnh số Lõi hoặc độ khó — chờ duyệt.
+- [ ] Cạn Bài ở boss 17% (mục tiêu < 10%): deck 18 lá cố định, trận boss dài.
+

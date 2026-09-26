@@ -1,5 +1,6 @@
 import { computeDamageAmount, type EffectContext } from "./effects";
 import { reresolveTarget } from "./enemy-turn";
+import { baseMoonPower } from "./moon-power";
 import { hasStatus } from "./statuses";
 import type {
   CombatState,
@@ -26,6 +27,8 @@ export interface IntentPreview {
 export interface EnemyPlanPreview {
   skipped: boolean;
   intents: IntentPreview[];
+  /** Fund the enemy plans with next round: base of round + 1 plus its current reserve. */
+  nextRoundMoonPower: number;
 }
 
 function previewIntent(
@@ -85,5 +88,8 @@ export function previewEnemyIntent(
   return {
     skipped: hasStatus(enemy, "freeze"),
     intents: enemy.plannedIntents.map((planned) => previewIntent(data, state, enemy, planned)),
+    nextRoundMoonPower:
+      baseMoonPower(data.enemies[enemy.defId]!.moonPower, data.combatConfig.moonPower.perRound, state.round + 1) +
+      enemy.moonReserve,
   };
 }

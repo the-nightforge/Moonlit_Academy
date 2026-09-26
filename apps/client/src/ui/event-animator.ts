@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import type { CombatEvent, CombatState, GameData } from "rules";
+import type { CombatEvent, CombatState, GameData, IntentDef } from "rules";
 import { STATUS_LABELS, TEXT_BASE } from "./theme";
 
 const WIDTH = 1280;
@@ -64,6 +64,18 @@ function flash(
   });
 }
 
+/** Looks up an intent of an enemy by id, including moon/blood moon overrides. */
+function findIntent(ctx: AnimContext, enemyId: string, intentId: string): IntentDef | undefined {
+  const defId = ctx.state.enemies.find((enemy) => enemy.id === enemyId)?.defId;
+  const def = defId !== undefined ? ctx.gameData.enemies[defId] : undefined;
+  if (!def) return undefined;
+  return [
+    ...def.intents,
+    ...(def.moonOverrides ?? []).map((entry) => entry.intent),
+    ...(def.bloodMoonOverride ? [def.bloodMoonOverride] : []),
+  ].find((intent) => intent.id === intentId);
+}
+
 function instant(): Promise<void> {
   return Promise.resolve();
 }
@@ -83,19 +95,22 @@ function isBloodMoonLoss(
   return event?.type === "hpLost" && event.cause === "bloodMoon";
 }
 
-/** A line from one unit to another that fades out (reflect). */
+/** A line from one unit to another that fades out (reflect, enemy attacks). */
 function beam(
   scene: Phaser.Scene,
   from: { x: number; y: number },
   to: { x: number; y: number },
+  color = 0x9fd4ff,
+  duration = 250,
+  width = 3,
 ): Promise<void> {
   return new Promise((resolve) => {
     const g = scene.add.graphics().setDepth(96);
-    g.lineStyle(3, 0x9fd4ff, 1).lineBetween(from.x, from.y, to.x, to.y);
+    g.lineStyle(width, color, 1).lineBetween(from.x, from.y, to.x, to.y);
     scene.tweens.add({
       targets: g,
       alpha: 0,
-      duration: 250,
+      duration,
       onComplete: () => {
         g.destroy();
         resolve();
@@ -352,16 +367,24 @@ function animateEvent(
     case "intentsCancelled": {
       const anchor = anchorOf(event.enemyId);
       if (!anchor) return instant();
-      return floatText(scene, anchor.x, anchor.y - 110, `Tỏa Nguyệt: hủy ${event.intentIds.length} chiêu`, "#9fd4ff", 13, 300);
+      const names = event.intentIds.map((id) => findIntent(ctx, event.enemyId, id)?.name ?? id);
+      return floatText(scene, anchor.x, anchor.y - 110, `Tỏa Nguyệt hủy: ${names.join(", ")}`, "#9fd4ff", 13, 450);
     }
     case "intentExecuted": {
       const anchor = anchorOf(event.enemyId);
       const view = ctx.unitViews.get(event.enemyId);
       if (!anchor || !view) return instant();
       const target = event.targetId ? anchorOf(event.targetId) : undefined;
+      const intent = findIntent(ctx, event.enemyId, event.intentId);
+      // Untargeted attacks (area damage) point at every living hero.
+      const aimed = target
+        ? [target]
+        : intent?.kind === "attack"
+          ? ctx.state.heroes.filter((hero) => hero.alive).flatMap((hero) => anchorOf(hero.id) ?? [])
+          : [];
       const dx = target ? (target.x - anchor.x) * 0.18 : 0;
-      const dy = target ? (target.y - anchor.y) * 0.18 : 0;
-      return new Promise((resolve) => {
+      const dy = target ? (target.y - anchor.y) * 0.18 : (aimed.length > 0 ? 20 : 0);
+      const lunge = new Promise<void>((resolve) => {
         scene.tweens.add({
           targets: view,
           x: anchor.x + dx,
@@ -371,6 +394,11 @@ function animateEvent(
           onComplete: () => resolve(),
         });
       });
+      return Promise.all([
+        lunge,
+        floatText(scene, anchor.x, anchor.y + 90, intent?.name ?? "", "#ffb070", 18, 550),
+        ...aimed.map((to) => beam(scene, anchor, to, 0xff7050, 550, 5)),
+      ]).then(() => undefined);
     }
     case "intentSkipped": {
       const anchor = anchorOf(event.enemyId);

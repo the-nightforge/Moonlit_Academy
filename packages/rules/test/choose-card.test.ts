@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyAction } from "../src/index";
+import { applyAction, getEffectiveCost } from "../src/index";
 import { instanceIdOf, makeTestCombat, setHand } from "./helpers";
 
 function setupGuide() {
@@ -69,4 +69,36 @@ describe("chooseCard (Chiêm Bài)", () => {
     expect(empty.state.status).toBe("playerTurn");
     expect(empty.events.some((e) => e.type === "choiceOpened" || e.type === "cardsDrawn")).toBe(false);
   });
+
+  it("T171: the card taken by Chiêm Bài costs chooseCardDiscount less until end of turn", () => {
+    const { data, state } = setupGuide();
+    const top = state.drawPile.slice(0, 3) as [string, string, string];
+    const played = applyAction(data, state, { type: "playCard", instanceId: instanceIdOf(state, "f04_nguyet_quang_dan") });
+    expect(played.ok).toBe(true);
+    if (!played.ok) return;
+    const before = getEffectiveCost(data, played.state, top[0]);
+    const chosen = applyAction(data, played.state, { type: "chooseCard", instanceId: top[0] });
+    expect(chosen.ok).toBe(true);
+    if (!chosen.ok) return;
+    const discount = data.combatConfig.chooseCardDiscount;
+    expect(getEffectiveCost(data, chosen.state, top[0])).toBe(Math.max(0, before - discount));
+
+    const ended = applyAction(data, chosen.state, { type: "endTurn" });
+    expect(ended.ok).toBe(true);
+    if (!ended.ok) return;
+    expect(ended.state.cards[top[0]]!.chosenThisTurn).toBeUndefined();
+
+    const one = setupGuide();
+    const last = one.state.drawPile[0]!;
+    one.state.drawPile = [last];
+    const baseCost = getEffectiveCost(one.data, one.state, last);
+    const took = applyAction(one.data, one.state, {
+      type: "playCard",
+      instanceId: instanceIdOf(one.state, "f04_nguyet_quang_dan"),
+    });
+    expect(took.ok).toBe(true);
+    if (!took.ok) return;
+    expect(getEffectiveCost(one.data, took.state, last)).toBe(Math.max(0, baseCost - discount));
+  });
 });
+

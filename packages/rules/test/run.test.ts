@@ -233,7 +233,7 @@ describe("run lifecycle", () => {
     expect(done.pendingReward).toBeNull();
   });
 
-  it("T115: a picked augment's hook is active in the next combat", () => {
+  it("T172: a picked augment's hook is active in the next combat", () => {
     const { data, run } = newRun();
     run.augmentIds.push("aug_cuong_hoa");
     const entered = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) }).run;

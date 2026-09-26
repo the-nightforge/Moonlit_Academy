@@ -71,7 +71,7 @@
   {
     "id": "moon_ape",
     "name": "Thần Viên Trấn Nguyệt",
-    "maxHp": 90,
+    "maxHp": 85,
     "moonPower": { "start": 2, "cap": 8 },
     "intents": [
       { "id": "ape_guard", "name": "Nguyệt Giáp", "kind": "defend", "cost": 2,

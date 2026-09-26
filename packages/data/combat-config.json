@@ -1,6 +1,7 @@
 {
   "moonPower": { "start": 3, "perRound": 1, "cap": 8 },
   "moonReserveMax": 3,
+  "chooseCardDiscount": 1,
   "handSize": 6,
   "maxMulligan": 2,
   "maxIntentsPerRound": 3,

@@ -235,6 +235,7 @@ export const combatConfigSchema = z.object({
     cap: z.number().int().nonnegative(),
   }),
   moonReserveMax: z.number().int().nonnegative(),
+  chooseCardDiscount: z.number().int().nonnegative(),
   handSize: z.number().int().positive(),
   maxMulligan: z.number().int().nonnegative(),
   maxIntentsPerRound: z.number().int().positive(),

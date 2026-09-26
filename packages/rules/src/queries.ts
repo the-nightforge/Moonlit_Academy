@@ -40,7 +40,8 @@ export function getEffectiveCost(data: GameData, state: CombatState, instanceId:
       floor = Math.max(floor, modifier.min);
     }
   }
-  return Math.max(0, Math.max(0, floor, cost) - firstCardDiscount(data, state, instanceId));
+  const chosen = instance!.chosenThisTurn ? data.combatConfig.chooseCardDiscount : 0;
+  return Math.max(0, Math.max(0, floor, cost) - firstCardDiscount(data, state, instanceId) - chosen);
 }
 
 export function getValidTargets(data: GameData, state: CombatState, instanceId: string): string[] {

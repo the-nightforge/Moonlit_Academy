@@ -75,12 +75,13 @@ Người chơi thực hiện bất kỳ số lượng hành động nào:
   - `k = 1`: lá đó vào tay luôn, không dừng (`cardsDrawn`).
   - `k ≥ 2`: `pendingChoice = { options }`, `status = "choosing"`, event `choiceOpened`. Action `chooseCard` (phải thuộc `options`): lá đó vào tay, các lá còn lại **xuống đáy chồng theo thứ tự `options`**, `status = "playerTurn"`, event `cardChosen`. Vì `chooseCard` luôn là effect cuối, không còn effect nào chờ.
   - Tay luôn còn chỗ vì lá đang đánh đã rời tay (tay ≤ `handSize − 1`).
+- **Lá lấy qua Chiêm Bài rẻ hơn** (cả khi `k = 1` và khi chọn): đánh dấu `chosenThisTurn`; tới hết lượt người chơi này cost giảm `combatConfig.chooseCardDiscount` (áp sau mọi giảm cost khác, tối thiểu 0). Cuối lượt người chơi mọi dấu `chosenThisTurn` bị xóa **[chỉnh sau 4b]**.
 - Khi Chiêm Bài mở lựa chọn, phần còn lại của việc đánh lá (gỡ Tích Lực/Ẩn Thân của lá tấn công, hook Kỳ Vật `cardPlayed`, lá vào chồng bỏ) **chạy ngay**, không chờ người chơi chọn — các bước đó không phụ thuộc lá được chọn, nên không cần lưu "phần việc còn lại".
 
 ### 3.3 Cuối lượt người chơi (theo thứ tự)
 0. **[GĐ3]** Kích hoạt hook Kỳ Vật `playerTurnEnd` (§13). Nếu trận kết thúc: dừng.
 1. **Không bỏ tay.** Chỉ bỏ các lá **Tàn Chiêu** (có owner đã ngã) vào `discardPile` → `cardDiscarded`. Lá cần Huyết Nguyệt và lá của Hero bị Đóng Băng ở lại tay.
-2. Mọi lá còn trên tay: `heldTurns += 1` (Tích Tụ, mục 4.1) **[GĐ4b]**.
+2. Mọi lá còn trên tay: `heldTurns += 1` (Tích Tụ, mục 4.1) **[GĐ4b]**. Xóa mọi dấu `chosenThisTurn` (Chiêm Bài, mục 3.2).
 3. `moonReserve = min(moonReserveMax, moonPower)`; event `moonReserveChanged`.
 4. Hero bị Đóng Băng trong lượt này: gỡ trạng thái Đóng Băng.
 5. Chuyển sang lượt kẻ địch (mục 9.3), rồi cuối vòng (mục 9.4).

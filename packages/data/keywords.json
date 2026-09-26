@@ -7,7 +7,7 @@
   { "id": "phan_huyet", "name": "Phẫn Huyết", "text": "Gây damage theo số HP người đánh đã mất." },
   { "id": "du_sinh", "name": "Dư Sinh", "text": "Phần hồi máu vượt HP tối đa biến thành giáp." },
   { "id": "tu_duoc", "name": "Tụ Dược", "text": "Kích nổ Hồi Phục: hồi ngay theo Hồi Phục còn lại, rồi mất Hồi Phục." },
-  { "id": "chiem_bai", "name": "Chiêm Bài", "text": "Xem các lá trên cùng chồng bài, lấy 1, các lá còn lại xuống đáy chồng." },
+  { "id": "chiem_bai", "name": "Chiêm Bài", "text": "Xem các lá trên cùng chồng bài, lấy 1 (lượt này rẻ hơn 1 Nguyệt Lực), các lá còn lại xuống đáy chồng." },
   { "id": "an_than", "name": "Ẩn Thân", "text": "Không bị chọn làm mục tiêu đơn; mất khi đánh lá tấn công." },
   { "id": "khieu_khich", "name": "Khiêu Khích", "text": "Kẻ địch buộc phải nhắm vào Hero này." },
   { "id": "suy_yeu", "name": "Suy Yếu", "text": "Gây ít damage hơn (×0.75)." },

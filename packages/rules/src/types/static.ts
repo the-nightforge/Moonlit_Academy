@@ -219,6 +219,8 @@ export type RunAugmentDef = RunRelicDef;
 export interface CombatConfig {
   moonPower: { start: number; perRound: number; cap: number };
   moonReserveMax: number;
+  /** Chiêm Bài: the card taken this way costs this much less until end of turn. */
+  chooseCardDiscount: number;
   handSize: number;
   maxMulligan: number;
   maxIntentsPerRound: number;

@@ -66,4 +66,17 @@ describe("previewEnemyIntent", () => {
     expect(preview?.intents[0]?.targetId).toBeNull();
     expect(preview?.intents[0]?.damages).toEqual([]);
   });
+
+  it("T170: nextRoundMoonPower = base of next round + current reserve (Tụ Lực warning)", () => {
+    const { data, state } = makeTestCombat();
+    const enemy = state.enemies[0]!;
+    const curve = data.enemies[enemy.defId]!.moonPower;
+    enemy.plannedIntents = [];
+    enemy.moonReserve = 2;
+
+    const preview = previewEnemyIntent(data, state, enemy);
+    const expected =
+      Math.min(curve.cap, curve.start + state.round * data.combatConfig.moonPower.perRound) + 2;
+    expect(preview?.nextRoundMoonPower).toBe(expected);
+  });
 });

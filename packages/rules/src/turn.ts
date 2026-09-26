@@ -101,6 +101,7 @@ export function runEndTurn(data: GameData, state: CombatState, events: CombatEve
     events.push({ type: "cardDiscarded", instanceIds: broken });
   }
   for (const id of state.hand) state.cards[id]!.heldTurns += 1;
+  for (const instance of Object.values(state.cards)) delete instance.chosenThisTurn;
   const reserve = Math.min(data.combatConfig.moonReserveMax, state.moonPower);
   if (reserve !== state.moonReserve) {
     state.moonReserve = reserve;
