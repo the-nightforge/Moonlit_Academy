@@ -5,19 +5,9 @@ declare const console: {
   log(...args: unknown[]): void;
   table(...args: unknown[]): void;
 };
-import type { Action, CombatEvent, CombatState, Effect, GameData, RunAction, RunSetup, RunState } from "../src/index";
-import {
-  applyRunAction,
-  createRun,
-  findNode,
-  getEffectiveCost,
-  getValidTargets,
-  isCardPlayable,
-  reachableNodeIds,
-  shuffle,
-  replayRun,
-  starterDeck,
-} from "../src/index";
+import type { CombatEvent, CombatState, GameData, Loadout, RunAction, RunSetup } from "../src/index";
+import { applyRunAction, createRun, findNode, isCardPlayable, replayRun, shuffle, starterDeck } from "../src/index";
+import { runAction } from "./playtest-bot";
 
 const data = loadGameData();
 const TEAMS: [string, string, string][] = [
@@ -29,123 +19,6 @@ const TEAMS: [string, string, string][] = [
 const SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);
 const MAX_STEPS = 20000;
 const MAX_COMBAT_ROUNDS = 60;
-
-// Phase 4a heuristic: mulligan cards above the doubling curve, Chiêm Bài picks
-// the most expensive card affordable next round, plays costliest first,
-// focuses lowest-HP enemy / lowest-ratio ally.
-function combatAction(gameData: GameData, state: CombatState): Action {
-  if (state.status === "mulligan") {
-    const expensive = state.hand.filter(
-      (id) => gameData.cards[state.cards[id]!.cardId]!.cost > 5,
-    );
-    return {
-      type: "mulligan",
-      instanceIds: expensive.slice(0, gameData.combatConfig.maxMulligan),
-    };
-  }
-  if (state.status === "choosing") {
-    const curve = gameData.combatConfig.moonPower;
-    const nextFund =
-      Math.min(curve.cap, curve.start + state.round * curve.perRound) +
-      gameData.combatConfig.moonReserveMax;
-    const options = [...state.pendingChoice!.options].sort(
-      (a, b) =>
-        gameData.cards[state.cards[b]!.cardId]!.cost -
-        gameData.cards[state.cards[a]!.cardId]!.cost,
-    );
-    const pick =
-      options.find(
-        (id) => gameData.cards[state.cards[id]!.cardId]!.cost <= nextFund,
-      ) ?? options[0]!;
-    return { type: "chooseCard", instanceId: pick };
-  }
-  const keywordsOf = (id: string) => gameData.cards[state.cards[id]!.cardId]!.keywords ?? [];
-  const heldThreshold = (id: string): number => {
-    let best = 0;
-    const walk = (effects: Effect[]) => {
-      for (const effect of effects) {
-        if (effect.type !== "conditional") continue;
-        if (effect.condition.type === "heldTurnsAtLeast") best = Math.max(best, effect.condition.turns);
-        walk(effect.then);
-        walk(effect.else ?? []);
-      }
-    };
-    walk(gameData.cards[state.cards[id]!.cardId]!.effects);
-    return best;
-  };
-  const playable = state.hand.filter((id) => isCardPlayable(gameData, state, id));
-  const ready = playable.filter((id) => state.cards[id]!.heldTurns >= heldThreshold(id));
-  const candidates = ready.length > 0 || state.hand.length < gameData.combatConfig.handSize ? ready : playable;
-  const ordered = [...candidates].sort((a, b) => {
-    const comboA = keywordsOf(a).includes("lien_hoan") ? 1 : 0;
-    const comboB = keywordsOf(b).includes("lien_hoan") ? 1 : 0;
-    if (comboA !== comboB) return comboA - comboB; // non-combo cards first
-    return getEffectiveCost(gameData, state, b) - getEffectiveCost(gameData, state, a);
-  });
-  for (const instanceId of ordered) {
-    const card = gameData.cards[state.cards[instanceId]!.cardId]!;
-    if (card.target === "none") return { type: "playCard", instanceId };
-    const targets = getValidTargets(gameData, state, instanceId);
-    let targetId: string | undefined;
-    if (card.target === "enemy") {
-      const drains = keywordsOf(instanceId).some((k) => k === "toa_nguyet" || k === "doat_nguyet");
-      const chainCost = (id: string) => state.enemies.find((e) => e.id === id)!.plannedIntents.reduce((s, p) => s + p.cost, 0);
-      const hp = (id: string) => state.enemies.find((e) => e.id === id)!.hp;
-      targetId = [...targets].sort((a, b) => (drains ? chainCost(b) - chainCost(a) : hp(a) - hp(b)))[0];
-    } else {
-      const burst = keywordsOf(instanceId).includes("tu_duoc");
-      const regen = (id: string) => state.heroes.find((h) => h.id === id)!.statuses.find((s) => s.id === "regen")?.value ?? 0;
-      const ratio = (id: string) => { const h = state.heroes.find((u) => u.id === id)!; return h.hp / h.maxHp; };
-      const pool = burst ? targets.filter((id) => regen(id) >= 3) : targets;
-      targetId = [...pool].sort((a, b) => ratio(a) - ratio(b))[0];
-    }
-    if (targetId !== undefined) return { type: "playCard", instanceId, targetId };
-  }
-  return { type: "endTurn" };
-}
-
-function hpRatio(run: RunState): number {
-  const hp = run.heroes.reduce((sum, h) => sum + h.hp, 0);
-  return hp / run.heroes.reduce((sum, h) => sum + h.maxHp, 0);
-}
-
-// Healthy: fight, then treasure, then rest, elite last. Below 60% HP: rest first, elite never if avoidable.
-function nodeScore(run: RunState, nodeId: string): number {
-  const low = hpRatio(run) < 0.6;
-  const type = findNode(run, nodeId)!.type;
-  if (type === "rest") return low ? 0 : 2;
-  if (type === "treasure") return 1;
-  if (type === "elite") return low ? 9 : 3;
-  return low ? 5 : 1;
-}
-
-function runAction(gameData: GameData, run: RunState): RunAction {
-  switch (run.status) {
-    case "map":
-      return {
-        type: "chooseNode",
-        nodeId: reachableNodeIds(run).sort((a, b) => nodeScore(run, a) - nodeScore(run, b))[0]!,
-      };
-    case "combat":
-      return { type: "combat", action: combatAction(gameData, run.combat!) };
-    case "reward":
-      return { type: "pickAugment", augmentId: run.pendingReward!.augmentChoices[0] ?? null };
-    case "rest": {
-      if (hpRatio(run) < 0.6 || run.deck.length <= gameData.runConfig.minDeckSize) {
-        return { type: "rest", choice: "heal" };
-      }
-      const cheapest = [...run.deck].sort(
-        (a, b) => gameData.cards[a]!.cost - gameData.cards[b]!.cost,
-      )[0]!;
-      return { type: "rest", choice: "removeCard", cardId: cheapest };
-    }
-    case "treasure":
-      return { type: "continue" };
-    case "won":
-    case "lost":
-      throw new Error("run is over");
-  }
-}
 
 interface TierStats {
   fights: number;
@@ -214,9 +87,9 @@ const DECK_VARIANTS: { label: string; build: (team: [string, string, string], se
   { label: "ngẫu nhiên", build: (team, seed) => randomDeck(data, team, seed * 7919) },
 ];
 
-function simulateRun(heroIds: [string, string, string], seed: number, deckCardIds: string[]) {
+function simulateRun(heroIds: [string, string, string], seed: number, deckCardIds: string[], loadout?: Loadout) {
   const setup: RunSetup = { heroIds, seed, deckCardIds };
-  let run = createRun(data, setup).run;
+  let run = createRun(data, setup, loadout).run;
   const actions: RunAction[] = [];
   let fights = 0;
   let stalled = false;
@@ -283,7 +156,7 @@ function simulateRun(heroIds: [string, string, string], seed: number, deckCardId
     run = result.run;
   }
   // Server replay (`14` §4.2): the recorded actions rebuild exactly this run.
-  if (!stalled) expect(replayRun(data, setup, actions)).toEqual({ ok: true, run });
+  if (!stalled) expect(replayRun(data, setup, actions, loadout)).toEqual({ ok: true, run });
   const { perFloor, win, heroLevelUp } = data.metaConfig.masteryXp;
   const floor = run.position ? findNode(run, run.position)!.floor : 0;
   const xpAvg =
@@ -381,6 +254,29 @@ describe("run playtest", () => {
       console.table(rows);
     });
   }
+
+  // Phase 4d (`15` §8): every hero at the same Tinh Hồn, starter deck; C0 vs C6 within 15 points.
+  it("thắng lượt theo Tinh Hồn 0 / 2 / 4 / 6", { timeout: 600_000 }, () => {
+    const rows = [0, 2, 4, 6].map((constellation) => {
+      let won = 0;
+      let floorSum = 0;
+      let runs = 0;
+      for (const team of TEAMS) {
+        const loadout: Loadout = {
+          heroes: Object.fromEntries(team.map((id) => [id, { constellation, levelUpForm: "base" as const }])),
+        };
+        for (const seed of SEEDS) {
+          const row = simulateRun(team, seed, starterDeck(data, team), loadout);
+          runs += 1;
+          floorSum += row.floor;
+          if (row.result === "won") won += 1;
+        }
+      }
+      return { "Tinh Hồn": constellation, lượt: runs, "thắng%": `${((won / runs) * 100).toFixed(0)}%`, tầng_TB: (floorSum / runs).toFixed(1) };
+    });
+    console.log("\n=== Bộ cơ bản theo Tinh Hồn (mọi Hero cùng cấp) ===");
+    console.table(rows);
+  });
 
   it("tổng hợp theo loại deck", () => {
     const rows = [...allDeckStats.entries()].map(([label, agg]) => ({
