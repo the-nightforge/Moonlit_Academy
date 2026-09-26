@@ -81,6 +81,11 @@ Không có khôi phục mật khẩu.
 `POST /api/runs`, `/finish`, `/abandon` không cần `If-Match` khi không đổi hồ sơ; riêng
 `/finish` đổi hồ sơ → cần `If-Match`.
 
+Thứ tự kiểm tra của `/finish`: phiếu (`404` → `409 run closed` → `410` → `409 outdated
+client`), rồi body (Action sai cấu trúc → `400 bad request`, phiếu vẫn `open`), rồi chạy
+lại (`422`), rồi `If-Match` và ghi hồ sơ. Ghi hồ sơ và đóng phiếu (`finished`) nằm trong
+cùng một transaction; `409 stale profile` để phiếu `open` cho client gửi lại.
+
 ---
 
 ## 5. Lưu trữ (SQLite)

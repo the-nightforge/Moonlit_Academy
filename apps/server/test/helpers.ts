@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { dataVersion, loadGameData } from "data";
-import type { GameData } from "rules";
+import type { GameData, RunAction, RunSetup, RunState } from "rules";
+import { applyRunAction, createRun, getValidTargets, isCardPlayable, reachableNodeIds } from "rules";
 import { buildApp } from "../src/app";
 import type { AppDeps } from "../src/context";
 import { openDb, type Db } from "../src/db";
@@ -52,4 +53,50 @@ export async function call(
 export async function register(server: TestServer, username = "linh_lung", password = "trang-sang-8") {
   const response = await call(server, "POST", "/api/auth/register", { body: { username, password } });
   return response.body as { token: string; profile: unknown; rev: number };
+}
+
+/** Plays a run to the end with the simplest legal policy; returns the actions sent. */
+export function playRun(data: GameData, setup: RunSetup): { run: RunState; actions: RunAction[] } {
+  let run = createRun(data, setup).run;
+  const actions: RunAction[] = [];
+  while (run.status !== "won" && run.status !== "lost") {
+    const action = botAction(data, run);
+    const result = applyRunAction(data, run, action);
+    if (!result.ok) throw new Error(result.error);
+    actions.push(action);
+    run = result.run;
+  }
+  return { run, actions };
+}
+
+function botAction(data: GameData, run: RunState): RunAction {
+  switch (run.status) {
+    case "map":
+      return { type: "chooseNode", nodeId: reachableNodeIds(run)[0]! };
+    case "combat": {
+      const state = run.combat!;
+      if (state.status === "mulligan") return { type: "combat", action: { type: "mulligan", instanceIds: [] } };
+      if (state.status === "choosing") {
+        return { type: "combat", action: { type: "chooseCard", instanceId: state.pendingChoice!.options[0]! } };
+      }
+      for (const instanceId of state.hand) {
+        if (!isCardPlayable(data, state, instanceId)) continue;
+        if (data.cards[state.cards[instanceId]!.cardId]!.target === "none") {
+          return { type: "combat", action: { type: "playCard", instanceId } };
+        }
+        const targetId = getValidTargets(data, state, instanceId)[0];
+        if (targetId !== undefined) return { type: "combat", action: { type: "playCard", instanceId, targetId } };
+      }
+      return { type: "combat", action: { type: "endTurn" } };
+    }
+    case "reward":
+      return { type: "pickAugment", augmentId: run.pendingReward!.augmentChoices[0] ?? null };
+    case "rest":
+      return { type: "rest", choice: "heal" };
+    case "treasure":
+      return { type: "continue" };
+    case "won":
+    case "lost":
+      throw new Error("run is over");
+  }
 }
