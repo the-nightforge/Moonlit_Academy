@@ -1,4 +1,4 @@
-# 07 — Kế hoạch code (Giai đoạn 0–4c)
+# 07 — Kế hoạch code (Giai đoạn 0–4d)
 
 Mỗi bước là **một phiên làm việc** với AI. Dán prompt mẫu (chỉnh nếu cần), để AI làm xong, **tự chạy thử**, commit, rồi mới sang bước sau.
 
@@ -210,9 +210,22 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 ### Bước 4c.6 — Client
 > Đăng nhập / đăng ký, `api.ts`, hồ sơ từ server, lượt chơi qua phiếu, nhập hồ sơ cũ, chế độ mất kết nối (chỉ Trận lẻ).
 
-## Sau giai đoạn 4c
+## Giai đoạn 4d — Tiền tệ, nhiệm vụ, gacha Hero, Tinh Hồn
 
-Theo `15-phase4-spec.md` và `00-gdd.md` mục 12:
-- Giai đoạn 4d: tiền tệ, nhiệm vụ, gacha Hero, Tinh Hồn (`15` §3).
+Đặc tả: `15-phase4-spec.md` §3. Luật vào `14` (§5–§12), `01` §8 (Tinh Hồn 2, 4), API vào `16` §4.1, thuật ngữ vào `04`, test vào `06` (T183–T196). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-28-phase4d-economy-gacha.md`. Tinh Hồn 5 (dạng thăng cấp thứ hai) dời sang 4e.
+
+### Bước 4d.1 — Cập nhật tài liệu
+### Bước 4d.2 — Kinh tế
+> Quà tài khoản, thưởng lượt chơi, kỳ ngày/tuần, nhiệm vụ, thành tựu (data + luật + server). T183–T185.
+### Bước 4d.3 — Gacha
+> Banner Hero, bảo hiểm, bảo vệ người mới, bản trùng, nhật ký quay. T186–T191.
+### Bước 4d.4 — Tinh Hồn và loadout
+> Lá "+", `constellationThreshold`, `buildLoadout`, phiếu chụp loadout, cửa hàng Nguyệt Tinh. T192–T196.
+### Bước 4d.5 — Client
+> Tiền tệ, gacha, kho Hero, nhiệm vụ, cửa hàng.
+### Bước 4d.6 — Mô phỏng kinh tế + chỉnh số
+
+## Sau giai đoạn 4d
+
 - Giai đoạn 4e: Binh Khí, Nguyệt Bảo, Tinh Luyện, Cộng Minh (`15` §4).
 - Giai đoạn 5–6: giao thức mạng PvP và co-op.

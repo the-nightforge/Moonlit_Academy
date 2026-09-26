@@ -302,3 +302,24 @@ Bối cảnh thiết kế: `15-phase4-spec.md`. Luật hồ sơ / lượt chơi 
 | T181 | Hero chưa sở hữu: `validateDeck` → `unownedHero`; `unlockCard` → `"hero not owned"`; `POST /runs` với deck đó → `400 invalid deck` |
 | T182 | `dataVersion`: cùng data (khác thứ tự khóa) → cùng giá trị; đổi một số → khác |
 
+## Giai đoạn 4d
+
+Bối cảnh: `15-phase4-spec.md` §3. Luật: `14` §5–§12, `01` §8 (Tinh Hồn), API `16` §4.1. Test luật dùng `now` và `rngState` cố định.
+
+| Mã | Kịch bản |
+|---|---|
+| T183 | `grantStarterGift` một lần; `applyRunResult` + `applyRunRewards`: Nguyệt Ngọc theo tầng/thắng, `firstWinOfDay` một lần mỗi ngày (mốc 21:00 UTC), bộ đếm kỳ và `stats` |
+| T184 | `dayKey`/`weekKey` quanh mốc 21:00 UTC và đầu tuần ISO; nhiệm vụ: tiến độ theo kỳ, sang kỳ reset, `claimMission` lỗi `not complete` / `already claimed` / `unknown mission` |
+| T185 | Thành tựu tự nhận đúng một lần (thắng đầu, Song Hành, Tu Luyện 6, đủ Hero, tầng 8 Bộ cơ bản, mở hết lá) |
+| T186 | Gacha tất định: cùng hồ sơ + `rngState` → cùng kết quả; quay 10 = 10 lượt liên tiếp, trừ `pullCost × 10` |
+| T187 | Bảo hiểm Epic: lượt thứ `epicPity` chưa có Epic+ → chắc chắn Epic+; Legendary đặt lại cả hai bộ đếm |
+| T188 | Bảo hiểm Legendary: lượt `legendaryPity` chắc chắn; tỉ lệ mềm từ `legendarySoftPityStart` đúng công thức |
+| T189 | Độ hiếm rỗng hạ rồi nâng đúng thứ tự; bảo vệ người mới chỉ chọn Hero Epic chưa sở hữu |
+| T190 | Không đủ Nguyệt Ngọc → lỗi, hồ sơ và bảo hiểm không đổi; route quay ghi hồ sơ + nhật ký cùng transaction |
+| T191 | Hero mới → sở hữu; trùng → Tinh Hồn +1 (cấp 1/3 thêm `bonusUnlocks`); Tinh Hồn 6 + trùng → Nguyệt Tinh theo độ hiếm |
+| T192 | `bonusUnlocks` cộng vào `pendingUnlocks`, không vượt số lá khóa |
+| T193 | Tinh Hồn 2: trận dùng `constellationThreshold`; M06 tính kẻ địch ngã do Phản Đòn |
+| T194 | Tinh Hồn 4: lá chủ lực trong deck thành lá "+" khi tạo lượt chơi / trận |
+| T195 | `buildLoadout` từ hồ sơ; phiếu chụp loadout, nộp chạy lại với loadout đó dù Tinh Hồn đổi sau; `levelUpForm` luôn `base` ở 4d |
+| T196 | Cửa hàng Nguyệt Tinh: giá, giới hạn tuần (reset sang tuần mới), `heroChoice` chỉ Hero đúng độ hiếm chưa sở hữu |
+

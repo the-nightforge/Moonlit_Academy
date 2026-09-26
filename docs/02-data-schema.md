@@ -251,6 +251,31 @@ export interface MetaConfig {
 
 `GameData` thêm `metaConfig: MetaConfig` (mục 4).
 
+### 1.11 Kinh tế, nhiệm vụ, thành tựu, banner [GĐ4c–4d]
+
+Luật đầy đủ ở `14-meta-rules.md` §1, §5–§11.
+
+| File | Kiểu | `GameData` |
+|---|---|---|
+| `economy-config.json` | `EconomyConfig` (`14` §1): `starterHeroIds` (4c); `starterGift`, `pullCost`, `runRewards`, `resetUtcHour`, `gacha`, `dupeMoonStar`, `moonStarShop` (4d) | `economyConfig` |
+| `missions.json` | `MissionDef[]` (`14` §7) | `missions: Record<id, MissionDef>` |
+| `achievements.json` | `AchievementDef[]` (`14` §8) | `achievements: Record<id, AchievementDef>` |
+| `banners.json` | `BannerDef[]` (`14` §9) | `banners: Record<id, BannerDef>` |
+
+Trường mới **[GĐ4d]**:
+
+```ts
+// heroes.json
+levelUp: LevelUpDef & { constellationThreshold: number };   // ≤ threshold (Tinh Hồn 2)
+signature: { cardId: string; plusCardId: string };          // Tinh Hồn 4
+// cards.json
+plusOf?: string;   // lá "+" của lá chủ lực: cùng ownerId, cost, copies; không thuộc pool Hero nào
+```
+
+Kiểm tra khi nạp thêm: id nhiệm vụ / thành tựu / banner / mặt hàng duy nhất; `bondCardId`
+của thành tựu là lá Song Hành; pool banner là Hero có thật, đúng độ hiếm, không trùng;
+`signature` khớp luật trên; mọi lá có `plusOf` được đúng một Hero dùng làm `plusCardId`.
+
 ---
 
 ## 2. Trạng thái trận đấu (runtime)

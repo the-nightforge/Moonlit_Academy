@@ -26,9 +26,12 @@ tài liệu này giữ bối cảnh và lý do.
 **Điều kiện trước:** GĐ 4b + Lõi (`13`, `11` §3.3) và các gói chỉnh sau 4b đã vào
 `main`.
 
-**Trạng thái:** đã duyệt (2026-09-27), gồm mọi điểm ở §11. 4c: kế hoạch
-`docs/superpowers/plans/2026-09-27-phase4c-server-accounts.md`; đã đưa vào `14`, `16`,
-`04`, `06`, `07`, `CLAUDE.md` (bước 4c.1).
+**Trạng thái:** đã duyệt (2026-09-27), gồm mọi điểm ở §11. 4c xong (bước 4c.1–4c.6).
+4d: kế hoạch `docs/superpowers/plans/2026-09-28-phase4d-economy-gacha.md`; đã đưa vào
+`01`, `02`, `04`, `06`, `07`, `14`, `16` (bước 4d.1). Chốt thêm 2026-09-28: Tinh Hồn 5
+dời sang 4e; thành tựu Song Hành = một thành tựu mỗi lá Song Hành; quà tài khoản tự nhận
+khi đăng ký hoặc đăng nhập nếu chưa nhận; lá "+" nằm trong `cards.json` (`plusOf`),
+`heroes.json signature` chỉ giữ id.
 
 **Thư viện mới cần duyệt** (CLAUDE.md: không thêm thư viện khi chưa hỏi): `fastify`,
 `better-sqlite3` (+ `@types/better-sqlite3`) cho `apps/server`. Không thêm thư viện

@@ -145,21 +145,36 @@
 || Chạy lại | `replay`, `replayRun` | Server chạy lại chuỗi `RunAction` để xác nhận kết quả trước khi thưởng |
 || Phiên bản dữ liệu | `dataVersion` | Băm của `GameData`; client và server phải khớp |
 
+## Kinh tế và gacha [GĐ4d]
+
+|| Tiếng Việt | Code | Ghi chú |
+||---|---|---|
+|| Nguyệt Ngọc | `moonJade` | Tiền quay gacha; kiếm từ lượt chơi, nhiệm vụ, thành tựu, quà |
+|| Nguyệt Tinh | `moonStar` | Từ bản trùng khi Tinh Hồn đã 6; tiêu ở cửa hàng Nguyệt Tinh |
+|| Quà tài khoản mới | `starterGift` | Nhận một lần |
+|| Kỳ ngày / kỳ tuần | `dayKey`, `weekKey` | Đổi lúc 04:00 giờ Việt Nam (tuần: sáng thứ Hai) |
+|| Nhiệm vụ | `mission`, `MissionDef` | Ngày / tuần; nhận thưởng bằng tay |
+|| Thành tựu | `achievement`, `AchievementDef` | Một lần, tự nhận |
+|| Banner gacha | `banner`, `BannerDef` | GĐ 4d: Triệu Hồi Anh Hùng |
+|| Lượt quay | `pull` | 1 hoặc 10 lượt mỗi giao dịch |
+|| Bảo hiểm (pity) | `pity` | `sinceEpic`, `sinceLegendary` theo banner |
+|| Bảo vệ người mới | `newPlayerEpicHero` | Epic trên banner Hero ưu tiên Hero chưa sở hữu |
+|| Tinh Hồn | `constellation` | 0–6, tăng khi quay trùng Hero |
+|| Lá chủ lực / lá "+" | `signature`, `plusCardId`, `plusOf` | Tinh Hồn 4 |
+|| Dạng thăng cấp thứ hai | `altLevelUp`, `levelUpForm` | Tinh Hồn 5 (luật trận GĐ 4e) |
+|| Cửa hàng Nguyệt Tinh | `moonStarShop` | Giới hạn mua theo tuần |
+|| Loadout | `Loadout`, `buildLoadout` | Tinh Hồn (4d), trang bị (4e) của đội mang vào lượt chơi |
+
 ## Hệ thống sau này (chưa code)
 
 | Tiếng Việt | Code |
 |---|---|
 | Binh Khí | `weapon` |
 | Nguyệt Bảo | `relic` |
-| Tinh Hồn | `constellation` |
 | Tinh Luyện | `refinement` |
 | Cộng Minh | `resonance` |
-| Nguyệt Ngọc | `moonJade` |
-| Nguyệt Tinh | `moonStar` |
 | Huyền Thiết | `darkIron` |
 | Nguyệt Trần | `moonDust` |
 | Vinh Dự | `honor` |
-| Banner gacha | `banner` |
-| Bảo hiểm (pity) | `pity` |
 | Đấu Trường Công Bằng | `fairArena` |
 | Hợp Kích | `coopCombo` |

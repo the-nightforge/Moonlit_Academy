@@ -86,6 +86,27 @@ client`), rồi body (Action sai cấu trúc → `400 bad request`, phiếu vẫ
 lại (`422`), rồi `If-Match` và ghi hồ sơ. Ghi hồ sơ và đóng phiếu (`finished`) nằm trong
 cùng một transaction; `409 stale profile` để phiếu `open` cho client gửi lại.
 
+### 4.1 Thay đổi và route mới (GĐ 4d)
+
+- **Quà tài khoản:** `register` và `login` gọi `grantStarterGift` (`14` §5) trong cùng
+  transaction ghi hồ sơ (đăng nhập: chỉ ghi và tăng `rev` khi thật sự trao quà).
+- **`POST /api/runs`:** chụp thêm `loadout = buildLoadout(profile, heroIds)` và ghi phiếu
+  có phải Bộ cơ bản không (`starter_deck`). Trả `{ runId, setup, loadout }`.
+- **`/finish`:** chạy lại với `loadout` của phiếu; sau `applyRunResult` gọi
+  `applyRunRewards(result, { now, starterDeck })`; trả thêm `rewards`.
+- **`POST /api/profile/unlock`:** sau `unlockCard` gọi `recordProgress({ cardsUnlocked: 1 })`
+  và `checkAchievements`.
+
+| Route | Body | Kết quả / lỗi |
+|---|---|---|
+| `POST /api/missions/:id/claim` | — | `claimMission` (`14` §7) → `{ profile, rev }` |
+| `GET /api/gacha/banners` | — | `{ banners: BannerDef[], gacha, pullCost, pity }` (`pity` của người chơi theo banner) |
+| `POST /api/gacha/:bannerId/pull` | `{ count: 1 \| 10 }` | Seed = `random(4)` uint32 → `pullMany` (`14` §9); ghi `pulls` cùng transaction → `{ profile, rev, results }` |
+| `GET /api/gacha/history` | query `banner?`, `page?` (0-based) | 20 bản ghi mới nhất mỗi trang: `{ entries: { bannerId, results, createdAt }[] }` (không trả seed cho client) |
+| `POST /api/shop/:itemId/buy` | `{ heroId? }` | `buyShopItem` (`14` §11) → `{ profile, rev }` |
+
+Mọi route đổi hồ sơ ở trên cần `If-Match`.
+
 ---
 
 ## 5. Lưu trữ (SQLite)
@@ -101,6 +122,13 @@ foreign_keys = ON`; `journal_mode = WAL` cho file DB.
 | `sessions` | `token_hash TEXT PK`, `account_id INTEGER NOT NULL → accounts`, `last_used_at INTEGER NOT NULL` |
 | `profiles` | `account_id INTEGER PK → accounts`, `profile_json TEXT NOT NULL`, `rev INTEGER NOT NULL`, `updated_at INTEGER NOT NULL` |
 | `runs` | `id TEXT PK` (16 byte base64url), `account_id INTEGER NOT NULL → accounts`, `status TEXT NOT NULL` (`open`/`finished`/`abandoned`/`rejected`), `setup_json TEXT NOT NULL`, `data_version TEXT NOT NULL`, `created_at INTEGER NOT NULL`, `finished_at INTEGER`, `result_json TEXT` |
+
+**Migration 2 (GĐ 4d):**
+
+| Thay đổi | Cột |
+|---|---|
+| `runs` thêm | `loadout_json TEXT` (null với phiếu cũ → chạy lại không loadout), `starter_deck INTEGER NOT NULL DEFAULT 0` |
+| Bảng mới `pulls` | `id INTEGER PK`, `account_id INTEGER NOT NULL → accounts`, `banner_id TEXT NOT NULL`, `count INTEGER NOT NULL`, `seed INTEGER NOT NULL`, `results_json TEXT NOT NULL`, `created_at INTEGER NOT NULL`; chỉ mục `(account_id, created_at)` |
 
 Thời gian lưu dạng ms UTC từ `clock()`. Mọi thao tác "đọc hồ sơ → hàm thuần → ghi hồ
 sơ (+ bảng `runs`)" chạy trong một transaction đồng bộ của better-sqlite3.

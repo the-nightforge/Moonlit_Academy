@@ -279,6 +279,13 @@ Ví dụ — `bloodMoon(2)` đánh trong lượt người chơi vòng N:
 
 *Ghi chú: GDD ghi ngưỡng F04 là 4; prototype dùng 3 vì trận ngắn. GDD ghi F02 "Cướp 3 buff"; dùng 2 sau playtest 2.8 (`09` mục 12), trả về 3 và tính thêm Đoạt Nguyệt sau playtest 4b (`playtest-notes.md`, chỉnh sau 4b).*
 
+- **Tinh Hồn [GĐ4d]** (`14` §10; `createCombat` / `createRun` nhận tham số `loadout`):
+  - **Cấp ≥ 2:** ngưỡng thăng cấp của Hero đó = `levelUp.constellationThreshold` thay
+    `threshold`. Riêng M06 (`enemiesKilled`): tính cả kẻ địch ngã do Phản Đòn của M06.
+  - **Cấp ≥ 4:** khi tạo trận / lượt chơi, mọi bản của lá `signature.cardId` trong deck
+    của Hero đó được thay bằng `signature.plusCardId` (cùng owner, cost, `copies`). Lá "+"
+    là lá riêng của Hero, chịu mọi luật lá bình thường.
+  - Cấp 1, 3, 5, 6 không đổi luật trận ở GĐ 4d (cấp 5: GĐ 4e).
 - "Lá của Hero X" trong cột Nội tại **không** gồm lá Song Hành: nội tại thăng cấp không áp cho lá Song Hành **[GĐ2]**.
 - Bộ đếm tính cho **đơn vị hành động** của effect, kể cả trong lá Song Hành (mục 5.4). Riêng `enemiesKilled` tính khi kẻ địch ngã do damage từ lá có đơn vị hành động là M06; kẻ địch ngã do Phản Đòn **không** tính.
 

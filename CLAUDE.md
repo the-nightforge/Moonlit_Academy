@@ -3,7 +3,7 @@
 ## Dự án
 **Vọng Nguyệt Thư Viện**: webgame thẻ bài cổ phong 2D. Hero Deckbuilder (3 Hero + deck 20 lá), cơ chế Nguyệt Luân (8 pha trăng thay đổi luật), sau này có gacha, co-op realtime và PvP. Dự án cá nhân, không có thanh toán.
 
-**Giai đoạn hiện tại:** 4c — server + tài khoản, hồ sơ lưu trên server, server chạy lại lượt chơi để trao thưởng (`docs/15-phase4-spec.md`, `docs/16-server-api.md`). Chưa làm gacha (4d), trang bị (4e), PvP, co-op.
+**Giai đoạn hiện tại:** 4d — tiền tệ, nhiệm vụ, thành tựu, gacha Hero, Tinh Hồn (`docs/15-phase4-spec.md` §3, luật ở `docs/14-meta-rules.md` §5–§12). Đã có: server + tài khoản + lượt chơi có xác nhận (4c). Chưa làm trang bị (4e), PvP, co-op.
 
 ## Công nghệ
 - TypeScript (strict) cho toàn bộ dự án
