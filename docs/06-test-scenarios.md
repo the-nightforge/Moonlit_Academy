@@ -379,3 +379,17 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T243 | **[GĐ5]** `buyHonorItem`: `limitPerWeek`/`limitPerMonth` chặn đúng kỳ; `"not enough honor"`; `heroChoice` cần Hero đúng độ hiếm chưa sở hữu; `relicChoice` qua `grantItem` (trùng → Cộng Minh +1) |
 | T244 | **[GĐ5]** Trận `ranked` kết thúc: Elo hai phía + Vinh Dự + `match_players` ghi trong một transaction; `match.end` mang `rating`/`rewards`/`profileRev`; `private`/`practice` không đổi Điểm/Vinh Dự |
 | T245 | **[GĐ5]** Giới hạn tần suất: đăng ký 5/giờ và đăng nhập 20/phút theo IP (`TRUST_PROXY` tin `X-Forwarded-For`); `Origin` ngoài `ALLOWED_ORIGINS` bị từ chối nâng cấp WebSocket (403) và route đổi hồ sơ |
+| T246 | **[GĐ6]** `createCoopCombat`: 6 Hero vị trí 0–5 (`player` đúng seat, id có tiền tố), chồng bài / Nguyệt Lực / tay riêng, pha trăng chung, boss lên chuỗi đầu |
+| T247 | **[GĐ6]** Lượt đồng thời: Action của hai người xen kẽ đều được áp; người đã Xong bị từ chối; cả hai Xong → cuối lượt 0 → 1 → lượt địch |
+| T248 | **[GĐ6]** `ally` chọn Hero đồng đội trong 6; `allAllies`/hook `each`/`lowestHp`/`front` chỉ 3 Hero của người đánh |
+| T249 | **[GĐ6]** Đổi Vận của người A đổi pha cho người B ngay trong lượt |
+| T250 | **[GĐ6]** Chiêu địch chọn mục tiêu trong 6 Hero; Khiêu Khích của Hero người B đổi mục tiêu chiêu nhắm Hero người A |
+| T251 | **[GĐ6]** Hợp Kích *Băng Nguyệt Kế*: A đánh lá `scheme`, B đánh lá F03 áp `freeze` → mọi kẻ địch Đóng Băng; lần 2 trong trận không kích hoạt |
+| T252 | **[GĐ6]** Hợp Kích không kích hoạt khi cả hai lá cùng một người; mỗi lá chỉ dùng cho một Hợp Kích |
+| T253 | **[GĐ6]** *Ám Ảnh Tuyệt Sát*: địch ≤ 25% HP ngã (`execute`), không ai đủ ngưỡng → `elseEffects` (8 damage mọi kẻ địch) |
+| T254 | **[GĐ6]** *Nguyệt Quang Phổ Chiếu*: hồi cho cả 6 Hero, Trăng Tròn ×2 |
+| T255 | **[GĐ6]** Boss: vào giai đoạn 2 ở 75% (`onEnter` Sức Mạnh, Huyết Nguyệt không giảm dưới 1); rời giai đoạn 2 → Huyết Nguyệt giảm bình thường |
+| T256 | **[GĐ6]** Boss: một đòn vượt hai ngưỡng → vào lần lượt, `onEnter` đúng thứ tự; chuỗi đã lên không đổi |
+| T257 | **[GĐ6]** Boss giai đoạn 4: sau 2 vòng còn sống → hồi 50%, gỡ debuff, về giai đoạn 3; lần sau ≤ 25% không đếm ngược |
+| T258 | **[GĐ6]** Cạn Bài của một người → 3 Hero người đó ngã (`deckedOut { player }`), đồng đội đánh tiếp; `forfeit` co-op → Hero người đó ngã |
+| T259 | **[GĐ6]** Hết giờ lượt đồng đội: server gửi `endTurn` thay người chưa Xong (`system`), `chooseCard` đầu tiên nếu đang chọn |

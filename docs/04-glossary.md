@@ -203,8 +203,19 @@
 | Hàng chờ xếp hạng | `queue` | Ghép trận ranked theo chênh Điểm (`16` §8.8) |
 | Trận xếp hạng | `ranked` | Trận tính Elo và Vinh Dự |
 
+## Liên Thủ — co-op [GĐ6]
+
+| Tiếng Việt | Code | Ghi chú |
+|---|---|---|
+| Liên Thủ | `coop` | Chế độ 2 người đánh chung boss (`01` §16) |
+| Lượt đồng đội | `simultaneous turn` | Cả hai người cùng đánh trong một lượt, áp theo thứ tự nhận |
+| Xong | `done` | Người chơi bấm Xong = `endTurn` của riêng mình trong lượt đồng đội |
+| Hợp Kích | `coopCombo` | Đòn phối hợp: lá người A + lá người B trong cùng lượt (`01` §16.4) |
+| Boss Nguyệt Thực | `eclipse_lord` | Boss co-op *Nguyệt Thực Ma Quân*, 4 giai đoạn (`01` §16.5) |
+| Giai đoạn boss | `boss.phase` | 1 Trăng Khuyết · 2 Huyết Nguyệt · 3 Nguyệt Ấn · 4 Nguyệt Thực |
+| Đếm ngược hồi sinh | `reviveCountdown` | Giai đoạn 4: về 0 khi boss còn sống → hồi 50% HP một lần |
+
 ## Hệ thống sau này (chưa code)
 
 | Tiếng Việt | Code |
 |---|---|
-| Hợp Kích | `coopCombo` |
