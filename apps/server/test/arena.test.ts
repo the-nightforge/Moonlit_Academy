@@ -215,9 +215,10 @@ describe("arena", () => {
     wsC.send({ type: "queue.join", mode: "ranked", deckId: "d1" });
     await wsC.settle();
     expect(wsC.last("error")).toMatchObject({ error: "invalid deck" });
+    // The co-op queue exists now (T260); a player without a saved deck still can't join.
     wsC.send({ type: "queue.join", mode: "coop", deckId: "d1" });
     await wsC.settle();
-    expect(wsC.last("error")).toMatchObject({ error: "not implemented" });
+    expect(wsC.last("error")).toMatchObject({ error: "invalid deck" });
 
     // queue.leave removes the entry (re-join does not hit "already in queue").
     const d = await register(server, "player_d");

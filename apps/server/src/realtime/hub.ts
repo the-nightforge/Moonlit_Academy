@@ -1,11 +1,11 @@
 import type { WebSocket } from "ws";
-import type { PvpSide } from "rules";
+import type { CoopSide, PvpSide } from "rules";
 import type { AppContext } from "../context";
-import { BotPlayer, botPvpSide } from "./bot-player";
-import { MatchRoom, send, startPvpMatch, type MatchMode } from "./match-room";
+import { BotPlayer, botCoopSide, botPvpSide } from "./bot-player";
+import { MatchRoom, send, startCoopMatch, startPvpMatch, type MatchMode } from "./match-room";
 import { clientMessageSchema, type ClientMessage, type ServerMessage } from "./protocol";
-import { RankedQueue } from "./queue";
-import { resolvePvpSide, RoomManager, type WaitingRoom } from "./rooms";
+import { CoopQueue, RankedQueue } from "./queue";
+import { resolveCoopSide, resolvePvpSide, RoomManager, type WaitingRoom } from "./rooms";
 
 /** `16` §8.1: hello deadline, heartbeat period, misses tolerated, per-second cap. */
 export const HELLO_TIMEOUT_MS = 10_000;
@@ -41,6 +41,7 @@ export class RealtimeHub {
   private matchCounter = 0;
   readonly rooms: RoomManager;
   readonly queue: RankedQueue;
+  readonly coopQueue: CoopQueue;
 
   constructor(private readonly ctx: AppContext) {
     this.rooms = new RoomManager(
@@ -56,6 +57,17 @@ export class RealtimeHub {
         this.launchMatch("ranked", seed, [
           { accountId: a.accountId, username: a.username, side: a.side, rating: a.rating },
           { accountId: b.accountId, username: b.username, side: b.side, rating: b.rating },
+        ]);
+      },
+    );
+    this.coopQueue = new CoopQueue(
+      ctx,
+      (accountId, message) => send(this.byAccount.get(accountId)?.socket, message),
+      (a, b) => {
+        const seed = this.ctx.random(4).readUInt32BE(0);
+        this.launchMatch("coop", seed, [
+          { accountId: a.accountId, username: a.username, side: a.side },
+          { accountId: b.accountId, username: b.username, side: b.side },
         ]);
       },
     );
@@ -179,6 +191,7 @@ export class RealtimeHub {
     else return;
     this.rooms.disconnect(conn.accountId);
     this.queue.leave(conn.accountId);
+    this.coopQueue.leave(conn.accountId);
     const room = this.matchByAccount.get(conn.accountId);
     const seat = room?.seatOf(conn.accountId);
     if (room && seat) room.detach(seat);
@@ -192,10 +205,12 @@ export class RealtimeHub {
         return;
       case "room.create":
         this.queue.leave(accountId); // another mode means leaving the queue
+        this.coopQueue.leave(accountId);
         this.rooms.create(accountId, message.mode, message.deckId);
         return;
       case "room.join":
         this.queue.leave(accountId);
+        this.coopQueue.leave(accountId);
         this.rooms.join(accountId, message.code, message.deckId);
         return;
       case "room.leave":
@@ -231,8 +246,19 @@ export class RealtimeHub {
           return;
         }
         this.queue.leave(accountId);
-        if (message.mode !== "pvp") {
-          this.reply(conn, { type: "error", error: "not implemented" });
+        this.coopQueue.leave(accountId);
+        const seed = this.ctx.random(4).readUInt32BE(0);
+        // Practice matches never touch Elo / Vinh Dự / rewards (`17` §5.4).
+        if (message.mode === "coop") {
+          const coop = resolveCoopSide(this.ctx, accountId, message.deckId);
+          if (!coop.ok) {
+            this.reply(conn, { type: "error", error: "invalid deck" });
+            return;
+          }
+          this.launchMatch("coop_practice", seed, [
+            { accountId, username: conn.username, side: coop.side },
+            { accountId: null, username: "Đồng Hành", side: botCoopSide(this.ctx, seed) },
+          ]);
           return;
         }
         const side = resolvePvpSide(this.ctx, accountId, message.deckId);
@@ -240,8 +266,6 @@ export class RealtimeHub {
           this.reply(conn, { type: "error", error: "invalid deck" });
           return;
         }
-        const seed = this.ctx.random(4).readUInt32BE(0);
-        // Practice matches never touch Elo / Vinh Dự / rewards (`17` §5.4).
         this.launchMatch("practice", seed, [
           { accountId, username: conn.username, side: side.side },
           { accountId: null, username: "Vọng Nguyệt", side: botPvpSide(this.ctx, seed) },
@@ -249,10 +273,6 @@ export class RealtimeHub {
         return;
       }
       case "queue.join": {
-        if (message.mode !== "ranked") {
-          this.reply(conn, { type: "error", error: "not implemented" });
-          return;
-        }
         const live = this.matchByAccount.get(accountId);
         if (live && !live.ended) {
           this.reply(conn, { type: "error", error: "already in match" });
@@ -262,10 +282,31 @@ export class RealtimeHub {
           this.reply(conn, { type: "error", error: "already in room" });
           return;
         }
+        if (message.mode === "coop") {
+          if (this.coopQueue.entryOf(accountId) !== undefined) {
+            this.reply(conn, { type: "error", error: "already in queue" });
+            return;
+          }
+          this.queue.leave(accountId); // switching queues leaves the other one
+          const side = resolveCoopSide(this.ctx, accountId, message.deckId);
+          if (!side.ok) {
+            this.reply(conn, { type: "error", error: "invalid deck", errors: side.errors } as ServerMessage);
+            return;
+          }
+          this.coopQueue.join({
+            accountId,
+            username: conn.username,
+            deckId: message.deckId,
+            side: side.side,
+            joinedAt: this.ctx.clock(),
+          });
+          return;
+        }
         if (this.queue.entryOf(accountId) !== undefined) {
           this.reply(conn, { type: "error", error: "already in queue" });
           return;
         }
+        this.coopQueue.leave(accountId);
         const side = resolvePvpSide(this.ctx, accountId, message.deckId);
         if (!side.ok) {
           this.reply(conn, { type: "error", error: "invalid deck", errors: side.errors } as ServerMessage);
@@ -284,6 +325,7 @@ export class RealtimeHub {
       }
       case "queue.leave":
         this.queue.leave(accountId);
+        this.coopQueue.leave(accountId);
         return;
       default:
         this.reply(conn, { type: "error", error: "bad message" });
@@ -294,26 +336,50 @@ export class RealtimeHub {
     const [a, b] = room.members;
     if (!a || !b) return;
     const seed = this.ctx.random(4).readUInt32BE(0);
-    this.launchMatch("private", seed, [
+    // Private rooms never pay out — PvP Elo and co-op rewards both stay off.
+    this.launchMatch(room.mode === "coop" ? "coop_private" : "private", seed, [
       { accountId: a.accountId, username: a.username, side: a.side },
       { accountId: b.accountId, username: b.username, side: b.side },
     ]);
   }
 
   /**
-   * Creates and registers a PvP match, arms a `BotPlayer` for `null` seats and
-   * notifies every connected human (`17` §5.3/§5.4).
+   * Creates and registers a match, arms a `BotPlayer` for `null` seats and
+   * notifies every connected human (`17` §5.3/§5.4, §9.1).
    */
   private launchMatch(
     mode: MatchMode,
     seed: number,
     players: [
-      { accountId: number | null; username: string; side: PvpSide; rating?: number },
-      { accountId: number | null; username: string; side: PvpSide; rating?: number },
+      { accountId: number | null; username: string; side: PvpSide | CoopSide; rating?: number },
+      { accountId: number | null; username: string; side: PvpSide | CoopSide; rating?: number },
     ],
   ): MatchRoom {
     const matchId = `m_${this.ctx.random(6).toString("hex")}_${this.matchCounter++}`;
-    const match = startPvpMatch(this.ctx, mode, seed, players, matchId, (finished) => this.dropMatch(finished));
+    const coop = mode === "coop" || mode === "coop_private" || mode === "coop_practice";
+    const match = coop
+      ? startCoopMatch(
+          this.ctx,
+          mode,
+          seed,
+          players as [
+            { accountId: number | null; username: string; side: CoopSide; rating?: number },
+            { accountId: number | null; username: string; side: CoopSide; rating?: number },
+          ],
+          matchId,
+          (finished) => this.dropMatch(finished),
+        )
+      : startPvpMatch(
+          this.ctx,
+          mode,
+          seed,
+          players as [
+            { accountId: number | null; username: string; side: PvpSide; rating?: number },
+            { accountId: number | null; username: string; side: PvpSide; rating?: number },
+          ],
+          matchId,
+          (finished) => this.dropMatch(finished),
+        );
     this.matches.set(matchId, match);
     for (const seat of match.seats) {
       if (seat.accountId === null) {

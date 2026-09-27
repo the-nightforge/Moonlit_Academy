@@ -1,5 +1,5 @@
-import type { PvpSide } from "rules";
-import { buildPvpLoadout, validateDeck } from "rules";
+import type { CoopSide, PvpSide } from "rules";
+import { buildLoadout, buildPvpLoadout, validateDeck } from "rules";
 import type { AppContext } from "../context";
 import type { ClientMessage } from "./protocol";
 import type { MatchSeat } from "./match-room";
@@ -14,7 +14,7 @@ interface RoomMember {
   accountId: number;
   username: string;
   deckId: string;
-  side: PvpSide;
+  side: PvpSide | CoopSide;
   socket?: unknown;
 }
 
@@ -27,7 +27,7 @@ export interface WaitingRoom {
   expiryHandle: unknown;
 }
 
-export type DeckResolution = { ok: true; side: PvpSide } | { ok: false; errors: { code: string }[] };
+export type DeckResolution = { ok: true; side: PvpSide | CoopSide } | { ok: false; errors: { code: string }[] };
 
 /**
  * Resolves `deckId` inside the account's profile into a normalized PvP side
@@ -42,6 +42,31 @@ export function resolvePvpSide(ctx: AppContext, accountId: number, deckId: strin
   const loadout = buildPvpLoadout(ctx.data, profile, deck);
   if (!loadout.ok) return { ok: false, errors: [{ code: loadout.error }] };
   return { ok: true, side: { heroIds: deck.heroIds, deckCardIds: deck.cardIds, loadout: loadout.loadout } };
+}
+
+/**
+ * Resolves `deckId` into a co-op side (`17` §8.1): the saved deck validated
+ * under PvE rules plus the player's full-strength `buildLoadout`.
+ */
+export function resolveCoopSide(ctx: AppContext, accountId: number, deckId: string): DeckResolution {
+  const { profile } = ctx.readProfile(accountId);
+  const deck = profile.decks.find((d) => d.id === deckId);
+  if (!deck) return { ok: false, errors: [{ code: "invalid deck" }] };
+  const errors = validateDeck(ctx.data, profile, deck);
+  if (errors.length > 0) return { ok: false, errors };
+  const loadout = buildLoadout(ctx.data, profile, deck);
+  if (!loadout.ok) return { ok: false, errors: [{ code: loadout.error }] };
+  return { ok: true, side: { heroIds: deck.heroIds, deckCardIds: deck.cardIds, loadout: loadout.loadout } };
+}
+
+/** Resolves a deck for the room's mode — PvP-normalized or full-strength. */
+function resolveSide(
+  ctx: AppContext,
+  accountId: number,
+  deckId: string,
+  mode: "pvp" | "coop",
+): DeckResolution {
+  return mode === "coop" ? resolveCoopSide(ctx, accountId, deckId) : resolvePvpSide(ctx, accountId, deckId);
 }
 
 /**
@@ -69,15 +94,11 @@ export class RoomManager {
   }
 
   create(accountId: number, mode: "pvp" | "coop", deckId: string): void {
-    if (mode !== "pvp") {
-      this.sendTo(accountId, { type: "error", error: "coop not implemented" });
-      return;
-    }
     if (this.roomOf(accountId)) {
       this.sendTo(accountId, { type: "error", error: "already in room" });
       return;
     }
-    const side = resolvePvpSide(this.ctx, accountId, deckId);
+    const side = resolveSide(this.ctx, accountId, deckId, mode);
     if (!side.ok) {
       this.sendTo(accountId, { type: "error", error: "invalid deck", errors: side.errors });
       return;
@@ -109,7 +130,7 @@ export class RoomManager {
       this.sendTo(accountId, { type: "error", error: "room full" });
       return;
     }
-    const side = resolvePvpSide(this.ctx, accountId, deckId);
+    const side = resolveSide(this.ctx, accountId, deckId, room.mode);
     if (!side.ok) {
       this.sendTo(accountId, { type: "error", error: "invalid deck", errors: side.errors });
       return;

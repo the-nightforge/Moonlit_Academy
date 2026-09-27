@@ -33,6 +33,7 @@ export function createProfile(data: GameData): Profile {
     shop: { weekKey: "", bought: {} },
     honorShop: { weekKey: "", monthKey: "", bought: {}, boughtMonth: {} },
     arena: { rating: 1000, wins: 0, losses: 0, draws: 0, rankedGames: 0, honorDay: { dayKey: "", gained: 0 } },
+    coop: { dayKey: "", clears: 0, rewarded: 0 },
     achievements: [],
     stats: {},
     flags: { starterGiftClaimed: false, localImportDone: false },
@@ -223,6 +224,13 @@ export function parseProfile(data: GameData, raw: unknown): { profile: Profile; 
       draws: count(raw.arena.draws),
       rankedGames: count(raw.arena.rankedGames),
       honorDay: { dayKey: typeof honorDay.dayKey === "string" ? honorDay.dayKey : "", gained: count(honorDay.gained) },
+    };
+  }
+  if (isRecord(raw.coop)) {
+    profile.coop = {
+      dayKey: typeof raw.coop.dayKey === "string" ? raw.coop.dayKey : "",
+      clears: count(raw.coop.clears),
+      rewarded: count(raw.coop.rewarded),
     };
   }
   profile.achievements = strings(raw.achievements);

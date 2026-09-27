@@ -461,9 +461,25 @@ export const coopComboDefSchema = z.object({
   effects: z.array(effectSchema).min(1),
 });
 
+const coopRewardSchema = z.object({
+  moonJade: z.number().int().nonnegative().default(0),
+  moonDust: z.number().int().nonnegative().default(0),
+});
+
 export const coopConfigSchema = z.object({
   turnSeconds: z.number().int().positive(),
   reconnectSeconds: z.number().int().positive(),
+  /** The fixed co-op raid encounter (must have `tier: "coop"`, `17` §9.1). */
+  encounterId: z.string().min(1),
+  rewards: z.object({
+    win: coopRewardSchema,
+    loss: coopRewardSchema,
+    /** Extra currency on the first rewarded win of a game day. */
+    firstWinOfDay: coopRewardSchema,
+  }),
+  /** Matches per game day that pay out; later matches are free of rewards. */
+  rewardedMatchesPerDay: z.number().int().positive(),
+  emotes: z.array(z.string().min(1)).optional(),
 });
 
 export const rawGameDataSchema = z.object({

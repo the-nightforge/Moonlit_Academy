@@ -1,4 +1,19 @@
 {
   "turnSeconds": 45,
-  "reconnectSeconds": 60
+  "reconnectSeconds": 60,
+  "encounterId": "enc_coop_01",
+  "rewards": {
+    "win": { "moonJade": 40, "moonDust": 3 },
+    "loss": { "moonJade": 10, "moonDust": 1 },
+    "firstWinOfDay": { "moonJade": 20 }
+  },
+  "rewardedMatchesPerDay": 3,
+  "emotes": [
+    "Ta lo boss",
+    "Cứu ta",
+    "Chờ ta Đổi Vận",
+    "Hợp Kích đi",
+    "Giỏi lắm",
+    "Chịu rồi"
+  ]
 }

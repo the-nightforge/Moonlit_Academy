@@ -446,12 +446,26 @@ export interface PvpConfig {
   emotes?: string[];
 }
 
+/** Currency paid for one co-op result (`14` §15). */
+export interface CoopReward {
+  moonJade: number;
+  moonDust: number;
+}
+
 /** Co-op configuration — `coop-config.json` (`02` §1.14). */
 export interface CoopConfig {
   /** Simultaneous-turn clock; the server auto-submits `endTurn` (`01` §16.2). */
   turnSeconds: number;
   /** Grace before a disconnected player's heroes fall (`01` §16.6). */
   reconnectSeconds: number;
+  /** The fixed raid encounter (tier `"coop"`). */
+  encounterId: string;
+  /** Rewards per result and the first-win-of-the-day bonus (`14` §15). */
+  rewards: { win: CoopReward; loss: CoopReward; firstWinOfDay: CoopReward };
+  /** Queue matches per game day that pay out (`14` §15). */
+  rewardedMatchesPerDay: number;
+  /** Fixed co-op emotes (`17` §9.3). */
+  emotes?: string[];
 }
 
 /** One card's half of a Hợp Kích pair (`02` §1.14). */

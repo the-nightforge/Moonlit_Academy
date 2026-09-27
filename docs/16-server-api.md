@@ -363,3 +363,29 @@ gửi `match.end` không có `rating`/`rewards`.
 | `GET /api/arena/history?page=` | 20 trận gần nhất của mình: mode, đối thủ, kết quả, Δ Điểm, lúc đấu |
 | `GET /api/arena/leaderboard` | Top 50 `rating` (tên, điểm, bậc, thắng/thua) + dòng của mình |
 | `POST /api/shop/honor/:itemId/buy` | `buyHonorItem` (`14` §14.4); `If-Match` bắt buộc; 200 → hồ sơ mới |
+
+### 8.9 Liên Thủ (GĐ 6b.1)
+
+- `queue.join { mode: "coop" }` — hàng chờ co-op riêng (`CoopQueue`, `queue.ts`):
+  FIFO, ghép hai người đầu hàng; deck kiểm `validateDeck` chế độ pve (mỗi người
+  một đội 3 Hero). Trận dựng bằng `createCoopCombat` (encounter
+  `coopConfig.encounterId` = `enc_coop_01`), `mode: "coop"`.
+- `room.create { mode: "coop" }` / `room.join` — phòng riêng co-op
+  (`coop_private`): hai người mỗi người một seat, không thưởng.
+- `practice.start { mode: "coop" }` — `coop_practice`: seat 1 là `coopBot`
+  (đồng đội máy), không thưởng.
+- Phòng co-op trong `match-room.ts`: góc nhìn `coopViewFor` — tay đồng đội lộ bài,
+  chồng cả hai seat và RNG ẩn (T262); event qua `coopRedactEvents` cùng quy ước
+  PvP. Cả hai seat act trong lượt chung; seat đã `done` bị từ chối (`"already
+  done"`). Hết 45 s (`coopConfig.turnSeconds`) server tự gửi `endTurn
+  { system: true }` cho từng seat chưa Xong — `coopEndTurn` tự chọn Chiêm Bài
+  `options[0]` nếu đang chọn (T259). `match.resign` và quá hạn kết nối lại →
+  Action hệ thống `forfeit`: Hero seat đó ngã, đồng đội đánh tiếp (T261).
+- Kết thúc (`§8.3`): `applyCoopResult` (`14` §15) cho **từng ghế người** trong một
+  transaction; `match.end` mang `result` của đội cộng `rewards`/`profileRev` riêng
+  ghế đó — ghế bỏ cuộc luôn `result: "lost"`, `rewards: null`. `coop_private` /
+  `coop_practice` gửi `match.end` không `rewards`.
+
+| Route | Kết quả |
+|---|---|
+| `GET /api/coop/me` | `{ clearsToday, rewardClaimsLeft }` của tài khoản trong kỳ ngày hiện tại |

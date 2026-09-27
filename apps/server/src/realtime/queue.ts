@@ -1,4 +1,4 @@
-import type { PvpSide } from "rules";
+import type { CoopSide, PvpSide } from "rules";
 import type { AppContext } from "../context";
 
 /** Ranked queue tuning (`17` §6.1). */
@@ -95,5 +95,69 @@ export class RankedQueue {
 
   private sendStatus(entry: QueueEntry, waitingSeconds: number): void {
     this.sendTo(entry.accountId, { type: "queue.status", mode: "ranked", waitingSeconds });
+  }
+}
+
+/** One player waiting for a co-op match; `side` is the full PvE-strength loadout. */
+export interface CoopQueueEntry {
+  accountId: number;
+  username: string;
+  deckId: string;
+  side: CoopSide;
+  joinedAt: number;
+}
+
+/**
+ * The co-op queue (`17` §9.1): no rating and no rematch rules — partners are
+ * allies, so the two longest-waiting entries pair up in arrival order.
+ * `queue.status` ticks every second exactly like the ranked queue.
+ */
+export class CoopQueue {
+  private readonly entries = new Map<number, CoopQueueEntry>();
+
+  constructor(
+    private readonly ctx: AppContext,
+    private readonly sendTo: (accountId: number, message: unknown) => void,
+    private readonly startMatch: (a: CoopQueueEntry, b: CoopQueueEntry) => void,
+  ) {
+    this.arm();
+  }
+
+  entryOf(accountId: number): CoopQueueEntry | undefined {
+    return this.entries.get(accountId);
+  }
+
+  join(entry: CoopQueueEntry): void {
+    if (this.entries.has(entry.accountId)) return;
+    this.entries.set(entry.accountId, entry);
+    this.sendTo(entry.accountId, { type: "queue.status", mode: "coop", waitingSeconds: 0 });
+  }
+
+  leave(accountId: number): void {
+    this.entries.delete(accountId);
+  }
+
+  private arm(): void {
+    this.ctx.scheduler.setTimeout(() => this.tick(), QUEUE_TICK_MS);
+  }
+
+  private tick(): void {
+    this.arm();
+    const now = this.ctx.clock();
+    const waiting = [...this.entries.values()];
+    for (const entry of waiting) {
+      this.sendTo(entry.accountId, {
+        type: "queue.status",
+        mode: "coop",
+        waitingSeconds: Math.floor((now - entry.joinedAt) / 1000),
+      });
+    }
+    // Map iteration order is insertion order — the two earliest arrivals pair.
+    while (this.entries.size >= 2) {
+      const [a, b] = [...this.entries.values()];
+      this.entries.delete(a!.accountId);
+      this.entries.delete(b!.accountId);
+      this.startMatch(a!, b!);
+    }
   }
 }

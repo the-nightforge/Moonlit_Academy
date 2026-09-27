@@ -393,3 +393,6 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T257 | **[GĐ6]** Boss giai đoạn 4: sau 2 vòng còn sống → hồi 50%, gỡ debuff, về giai đoạn 3; lần sau ≤ 25% không đếm ngược |
 | T258 | **[GĐ6]** Cạn Bài của một người → 3 Hero người đó ngã (`deckedOut { player }`), đồng đội đánh tiếp; `forfeit` co-op → Hero người đó ngã |
 | T259 | **[GĐ6]** Hết giờ lượt đồng đội: server gửi `endTurn` thay người chưa Xong (`system`), `chooseCard` đầu tiên nếu đang chọn |
+| T260 | **[GĐ6]** Phòng co-op qua `injectWS`: 2 kết nối, đánh hết trận bằng bot, thưởng mỗi người, trần 3 trận / ngày |
+| T261 | **[GĐ6]** Co-op: một người bỏ cuộc → Hero người đó ngã, người còn lại thắng một mình được thưởng; người bỏ cuộc không thưởng |
+| T262 | **[GĐ6]** Góc nhìn co-op thấy tay đồng đội, không thấy chồng rút / `rngState` |

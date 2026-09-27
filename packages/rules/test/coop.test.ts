@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 import type { CardDef, CombatEvent, CombatState, CoopSide, GameData, Loadout } from "../src/index";
-import { applyAction, coopBot, createCoopCombat, getValidTargets } from "../src/index";
+import {
+  applyAction,
+  applyCoopResult,
+  coopBot,
+  coopRedactEvents,
+  coopViewFor,
+  createCoopCombat,
+  createProfile,
+  dayKey,
+  getValidTargets,
+  replayMatch,
+} from "../src/index";
 import { idleIntent, strike9Intent } from "./fixtures";
 import { makeEnemiesIdle, setPlan, testData } from "./helpers";
 
@@ -697,5 +708,146 @@ describe("co-op combat", () => {
         encounterId: "enc_coop_01",
       }),
     ).toThrow(/unknown hero/);
+  });
+});
+
+/** Sunday 2026-09-27 12:00 UTC — same anchor as the honor tests. */
+const NOW = Date.UTC(2026, 8, 27, 12);
+const NEXT_DAY = NOW + 26 * 60 * 60 * 1000;
+
+describe("co-op rewards (`17` §9.2)", () => {
+  const settle = (profile: Parameters<typeof applyCoopResult>[1], opts: Parameters<typeof applyCoopResult>[2]) =>
+    applyCoopResult(testData(), profile, opts);
+
+  it("T260 (rules): win pays 40/3 plus the first-win bonus once; loss pays 10/1; cap is 3 rewarded matches per game day", () => {
+    const data = testData();
+    const day = dayKey(data, NOW);
+
+    let profile = createProfile(data);
+    const first = settle(profile, { result: "won", forfeited: false, now: NOW });
+    expect(first.rewards).toEqual({ moonJade: 60, moonDust: 3, firstWin: true });
+    expect(first.profile.currencies).toMatchObject({ moonJade: 60, moonDust: 3 });
+    expect(first.profile.coop).toEqual({ dayKey: day, clears: 1, rewarded: 1 });
+
+    profile = first.profile;
+    const second = settle(profile, { result: "won", forfeited: false, now: NOW });
+    expect(second.rewards).toEqual({ moonJade: 40, moonDust: 3, firstWin: false });
+
+    profile = second.profile;
+    const loss = settle(profile, { result: "lost", forfeited: false, now: NOW });
+    expect(loss.rewards).toEqual({ moonJade: 10, moonDust: 1, firstWin: false });
+    expect(loss.profile.coop).toMatchObject({ clears: 2, rewarded: 3 });
+
+    // Fourth match: still counted, but the daily reward pool is exhausted.
+    const capped = settle(loss.profile, { result: "won", forfeited: false, now: NOW });
+    expect(capped.rewards).toBeNull();
+    expect(capped.profile.coop).toMatchObject({ clears: 3, rewarded: 3 });
+    expect(capped.profile.currencies.moonJade).toBe(60 + 40 + 10);
+
+    // A new game day resets both counters and the first-win bonus returns.
+    const tomorrow = settle(capped.profile, { result: "won", forfeited: false, now: NEXT_DAY });
+    expect(tomorrow.rewards).toEqual({ moonJade: 60, moonDust: 3, firstWin: true });
+  });
+
+  it("T261 (rules): a forfeited seat gets nothing and keeps its claims; the surviving partner is paid normally", () => {
+    const data = testData();
+    const quitter = createProfile(data);
+    const left = settle(quitter, { result: "lost", forfeited: true, now: NOW });
+    expect(left.rewards).toBeNull();
+    expect(left.profile.coop).toEqual({ dayKey: dayKey(data, NOW), clears: 0, rewarded: 0 });
+    expect(left.profile.currencies.moonJade).toBe(0);
+
+    const survivor = settle(createProfile(data), { result: "won", forfeited: false, now: NOW });
+    expect(survivor.rewards).toEqual({ moonJade: 60, moonDust: 3, firstWin: true });
+    expect(survivor.profile.coop.clears).toBe(1);
+  });
+
+  it("leaves the input profile untouched", () => {
+    const profile = createProfile(testData());
+    const snapshot = JSON.stringify(profile);
+    settle(profile, { result: "won", forfeited: false, now: NOW });
+    expect(JSON.stringify(profile)).toBe(snapshot);
+  });
+});
+
+describe("co-op view (`17` §9.1)", () => {
+  it("T262 (rules): partner hand stays visible while both draw piles, the partner's choice and rngState are hidden", () => {
+    const { data, state } = makeCoopCombat();
+    state.players[1]!.pendingChoice = {
+      kind: "chooseCard",
+      options: state.players[1]!.drawPile.slice(0, 3),
+    };
+
+    const view = coopViewFor(state, 0);
+    // rngState never leaks.
+    expect(view.rngState).toBe(0);
+    expect(state.rngState).not.toBe(0);
+    // The partner's hand is fully visible — every instance id resolves.
+    expect(view.players[1]!.hand).toEqual(state.players[1]!.hand);
+    for (const id of view.players[1]!.hand) {
+      expect(view.cards[id]).toBeDefined();
+      expect(view.cards[id]!.cardId).toBe(state.cards[id]!.cardId);
+    }
+    // Both draw piles are count-only placeholders — including the viewer's own.
+    for (const seat of view.players) {
+      expect(seat.drawPile).toHaveLength(state.players[seat.index]!.drawPile.length);
+      expect(seat.drawPile.every((id) => id.startsWith("hidden_deck_"))).toBe(true);
+    }
+    // The partner's in-flight choice is dropped; the viewer's would survive.
+    expect(view.players[1]!.pendingChoice).toBeNull();
+    // The shared turn stays playerTurn for both seats — no opponentTurn remap.
+    expect(view.status).toBe("playerTurn");
+    // The real state is untouched.
+    expect(state.players[1]!.pendingChoice).not.toBeNull();
+  });
+
+  it("T262 (rules): coopRedactEvents keeps partner card identity but strips pile-order leaks", () => {
+    const events: CombatEvent[] = [
+      { type: "cardsDrawn", instanceIds: ["i1", "i2"], player: 1 },
+      { type: "mulliganed", returned: ["r1"], drawn: ["d1"], player: 1 },
+      { type: "cardPlayed", instanceId: "p1", cost: 1, player: 1 },
+      { type: "choiceOpened", options: ["o1", "o2", "o3"], player: 1 },
+      { type: "cardChosen", instanceId: "c1", bottomed: ["b1", "b2"], player: 1 },
+    ];
+    const redacted = coopRedactEvents(events, 0);
+    // Partner hand events pass through — the hand is public to allies.
+    expect(redacted[0]).toEqual(events[0]);
+    expect(redacted[1]).toEqual(events[1]);
+    expect(redacted[2]).toEqual(events[2]);
+    // Chiêm Bài options and bottomed cards hide draw-pile order.
+    expect(redacted[3]).toEqual({
+      type: "choiceOpened",
+      options: ["hidden_option_0", "hidden_option_1", "hidden_option_2"],
+      player: 1,
+    });
+    expect(redacted[4]).toEqual({
+      type: "cardChosen",
+      instanceId: "c1",
+      bottomed: ["hidden_bottomed_0", "hidden_bottomed_1"],
+      player: 1,
+    });
+  });
+
+  it("T260 (rules): replayMatch mode coop reproduces a match bit-for-bit", () => {
+    const players: [CoopSide, CoopSide] = [coopSide(["m05", "f04", "m06"]), coopSide(["f02", "f03", "m05"])];
+    const data = testData();
+    const created = createCoopCombat(data, { seed: 7, players, encounterId: "enc_coop_01" });
+    let state = created.state;
+    const log: { player: number; action: Parameters<typeof applyAction>[2] }[] = [];
+    for (let step = 0; step < 60 && state.status !== "won" && state.status !== "lost"; step++) {
+      const seat =
+        state.status === "mulligan"
+          ? state.players.find((entry) => !entry.mulliganDone)!.index
+          : (state.players.find((entry) => !entry.done) ?? state.players[0]!).index;
+      const action = coopBot(data, state, seat);
+      const result = applyAction(data, state, action);
+      if (!result.ok) throw new Error(`action ${action.type} rejected: ${result.error}`);
+      log.push({ player: seat, action });
+      state = result.state;
+    }
+
+    const replayed = replayMatch(data, { seed: 7, players, mode: "coop", encounterId: "enc_coop_01" }, log);
+    expect(replayed.state).toEqual(state);
+    expect(replayed.state.status).toBe(state.status);
   });
 });

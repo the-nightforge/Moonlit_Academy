@@ -6,6 +6,7 @@ import { WS_CONNECT_LIMIT } from "./rate-limit";
 import { registerRealtime } from "./realtime/socket";
 import { registerArenaRoutes } from "./routes/arena";
 import { registerAuthRoutes } from "./routes/auth";
+import { registerCoopRoutes } from "./routes/coop";
 import { registerGachaRoutes } from "./routes/gacha";
 import { registerProfileRoutes } from "./routes/profile";
 import { registerRunRoutes } from "./routes/runs";
@@ -60,6 +61,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   registerGachaRoutes(app, ctx);
   registerShopRoutes(app, ctx);
   registerArenaRoutes(app, ctx);
+  registerCoopRoutes(app, ctx);
   registerRealtime(app, ctx);
   startBackups(ctx);
   return app;

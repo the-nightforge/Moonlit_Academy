@@ -384,7 +384,17 @@ export interface PvpSide {
 export interface CoopConfig {
   turnSeconds: number;        // 45 — giới hạn lượt đồng đội (server đếm)
   reconnectSeconds: number;   // 60 — chờ kết nối lại trước khi Hero người đó ngã
+  encounterId: string;        // "enc_coop_01" — encounter tier "coop" dựng trận
+  rewards: {                  // thưởng mỗi người mỗi trận có thưởng (`14` §15)
+    win: CoopReward;          //   { moonJade, moonDust } — thắng
+    loss: CoopReward;         //   thua (không bỏ cuộc)
+    firstWinOfDay: CoopReward;//   cộng thêm cho trận thắng đầu tiên trong ngày
+  };
+  rewardedMatchesPerDay: number; // 3 — trần trận có thưởng mỗi kỳ ngày
+  emotes: string[];           // biểu cảm nhanh trong trận co-op
 }
+
+export interface CoopReward { moonJade: number; moonDust: number; }
 
 // Một đòn Hợp Kích: hai lá của hai người khác nhau (01 §16.4).
 export interface CoopComboDef {
@@ -664,7 +674,7 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
 - **[GĐ4a]** `chooseCard` chỉ được là **effect cuối cùng** trong `effects` của một lá (không nằm trong `conditional`); không dùng trong `EnemyIntentDef`, `moonOverrides`/`bloodMoonOverride` hay hook Kỳ Vật.
 - **[GĐ4b]** `heldTurnsAtLeast`, `cardsPlayedThisTurnAtLeast`, `drainMoonPower`, `gainMoonPowerPerTurn`, `burstRegen`, `heal.overflow`: chỉ trên **lá bài**, không trong chiêu địch hay hook Kỳ Vật. `missingHpDamage`: lá bài và chiêu địch; không trong hook Kỳ Vật. `drainMoonPower.to` chỉ `chosen` (lá `target: "enemy"`) hoặc `allEnemies`.
 - **[GĐ4b]** `CardDef.keywords`: mỗi id phải có trong `keywords.json`. `metaConfig`: `masteryLevels` tăng dần, độ dài = số lá khóa mỗi Hero (6).
-- **[GĐ6]** `execute` chỉ xuất hiện trong `effects` của `coop-combos.json` (không lá bài, không chiêu địch, không hook). `CardMatcher`: `ownerId` trỏ Hero tồn tại; `appliesStatus`, `effect`, `moonPhaseAfter` tham chiếu id có thật. `BossPhaseDef.phases`: `hpBelow` giai đoạn 1 = 1, các giai đoạn sau giảm dần trong (0, 1]; `reviveAfterRounds` chỉ ở giai đoạn cuối; `bloodMoonWhileActive`, `alwaysPlan` là cờ boolean. Encounter `tier: "coop"` không xuất hiện trên bản đồ lượt chơi; `enemyIds` của nó trỏ địch có `phases` hợp lệ.
+- **[GĐ6]** `execute` chỉ xuất hiện trong `effects` của `coop-combos.json` (không lá bài, không chiêu địch, không hook). `CardMatcher`: `ownerId` trỏ Hero tồn tại; `appliesStatus`, `effect`, `moonPhaseAfter` tham chiếu id có thật. `BossPhaseDef.phases`: `hpBelow` giai đoạn 1 = 1, các giai đoạn sau giảm dần trong (0, 1]; `reviveAfterRounds` chỉ ở giai đoạn cuối; `bloodMoonWhileActive`, `alwaysPlan` là cờ boolean. Encounter `tier: "coop"` không xuất hiện trên bản đồ lượt chơi; `enemyIds` của nó trỏ địch có `phases` hợp lệ. `coopConfig.encounterId` trỏ encounter có `tier: "coop"`; `reconnectSeconds > turnSeconds`; các `reward`/`rewardedMatchesPerDay` không âm.
 
 Dữ liệu sai → báo lỗi rõ ràng ngay khi khởi động, không chạy game với dữ liệu lỗi.
 

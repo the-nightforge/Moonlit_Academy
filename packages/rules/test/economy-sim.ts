@@ -1,8 +1,9 @@
 import { loadGameData } from "data";
 import type { GameData, Profile, RunResult } from "../src/index";
 import {
-  applyPvpResult, applyRunAction, applyRunResult, applyRunRewards, buyHonorItem, buyShopItem, claimMission, createProfile,
-  createRun, grantStarterGift, nextRandom, pendingUnlocks, pullMany, starterDeck, summarizeRun, unlockCard,
+  applyCoopResult, applyPvpResult, applyRunAction, applyRunResult, applyRunRewards, buyHonorItem, buyShopItem,
+  claimMission, createProfile, createRun, grantStarterGift, nextRandom, pendingUnlocks, pullMany, starterDeck,
+  summarizeRun, unlockCard,
 } from "../src/index";
 import { runAction } from "./playtest-bot";
 
@@ -213,6 +214,47 @@ export function printPvp(stats: PvpStats, pveJadePerDay: number): void {
     "vé Hero Epic": stats.heroTickets,
     "vé Nguyệt Bảo Rare": stats.relicTickets,
     "Vinh Dự dư": stats.honorLeft,
+  }]);
+}
+
+// Phase 6b — the co-op player (`17` §9.2): one queue match a day at the boss's
+// target win band for starter teams (`17` §8.8: 35–50%). Wins pay `rewards.win`
+// plus `firstWinOfDay` on the day's first clear; losses pay `rewards.loss`.
+// `rewardedMatchesPerDay` (3) is never reached at one match a day.
+const COOP_WINS_PER_5_DAYS = 2; // 40% — middle of the §8.8 target band.
+
+export interface CoopStats {
+  jadePerDay: number;
+  dustPerDay: number;
+}
+
+export function simulateCoop(data: GameData): CoopStats {
+  let profile = createProfile(data);
+  let jade = 0;
+  let dust = 0;
+  for (let day = 0; day < DAYS; day++) {
+    const now = START + day * DAY_MS + 20 * 60 * 60 * 1000;
+    const applied = applyCoopResult(data, profile, {
+      result: day % 5 < COOP_WINS_PER_5_DAYS ? "won" : "lost",
+      forfeited: false,
+      now,
+    });
+    if (applied.rewards) {
+      jade += applied.rewards.moonJade;
+      dust += applied.rewards.moonDust;
+    }
+    profile = applied.profile;
+  }
+  return { jadePerDay: jade / DAYS, dustPerDay: dust / DAYS };
+}
+
+export function printCoop(stats: CoopStats, pveJadePerDay: number): void {
+  console.log(`\n=== Người chơi Liên Thủ: 1 trận hàng chờ/ngày, thắng ${COOP_WINS_PER_5_DAYS}/5 × ${DAYS} ngày ===`);
+  console.table([{
+    "Nguyệt Ngọc/ngày (co-op)": stats.jadePerDay.toFixed(1),
+    "Nguyệt Trần/ngày": stats.dustPerDay.toFixed(1),
+    "Nguyệt Ngọc/ngày người chỉ PvE": pveJadePerDay.toFixed(0),
+    "trần cho phép (+20%)": (pveJadePerDay * 0.2).toFixed(1),
   }]);
 }
 

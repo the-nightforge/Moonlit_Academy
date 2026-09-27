@@ -564,3 +564,46 @@ Dự; giới hạn `limitPerWeek` / `limitPerMonth`.
   `rarity` → `grantItem` (trùng → Cộng Minh +1 như gacha); sai → `"invalid relic"`,
   thiếu → `"relic required"`.
 - Trừ `cost` Vinh Dự, đếm `bought`/`boughtMonth`, `checkAchievements`.
+
+## 15. Liên Thủ — thưởng co-op **[GĐ6]**
+
+### 15.1 `profile.coop`
+
+```ts
+coop: {
+  dayKey: string;    // kỳ ngày đang tính (`dayKey`, §6)
+  clears: number;    // số trận thắng trong kỳ ngày
+  rewarded: number;  // số trận đã trao thưởng trong kỳ ngày
+}
+```
+
+`parseProfile` điền mặc định `{ dayKey: "", clears: 0, rewarded: 0 }` cho hồ sơ cũ
+thiếu trường. Chỉ trận `coop` qua hàng chờ đổi `coop` — phòng riêng và đồng đội máy
+không thưởng (`16` §8.9).
+
+### 15.2 Thưởng co-op — `coop-rewards.ts`
+
+`applyCoopResult(data, profile, opts)` — server gọi **một lần cho mỗi ghế người** khi
+trận `coop` kết thúc, trong transaction ghi trận (`16` §8.3):
+
+```ts
+opts: {
+  result: "won" | "lost";  // kết quả chung của đội — co-op không hòa (`01` §16.6)
+  forfeited: boolean;      // ghế này bỏ cuộc (resign/disconnect/timeout trong nhật ký)
+  now: number;
+}
+→ { ok: true, profile, rewards: { moonJade, moonDust, firstWin } | null }
+```
+
+- `dayKey(now)` đổi → reset `clears`/`rewarded`. Thắng → `clears += 1` (kể cả trận
+  không còn lượt thưởng).
+- `forfeited` → **không thưởng, không tiêu lượt `rewarded`**; người còn lại thắng
+  một mình nhận thưởng thắng thường (`17` §9.2).
+- `rewarded ≥ rewardedMatchesPerDay` (3, `coop-config`) → `rewards: null`; trận vẫn
+  chơi và tính `clears` bình thường.
+- Thưởng gốc `rewards.win` (40 Ngọc, 3 Trần) / `rewards.loss` (10, 1); trận thắng
+  **đầu tiên** trong ngày thêm `firstWinOfDay` (+20 Ngọc) — cờ `firstWin` trong kết
+  quả. Nguyệt Trần hiện chỉ tích trữ (`17` §9.2).
+- `firstWinOfDay` chỉnh 40 → 20 theo `economy-sim`: 1 trận/ngày ở tỉ lệ thắng 40%
+  (giữa band `17` §8.8) cho 30 Ngọc/ngày — dưới trần +20% so với chỉ PvE; ở đỉnh
+  band 50% cho 35/ngày vẫn dưới trần.

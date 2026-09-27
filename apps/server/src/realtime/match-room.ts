@@ -1,6 +1,17 @@
 import type { WebSocket } from "ws";
-import type { Action, CombatEvent, CombatState, Profile, PvpSide } from "rules";
-import { applyAction, applyPvpResult, createPvpCombat, ratingChange, redactEvents, viewFor } from "rules";
+import type { Action, CombatEvent, CombatState, CoopRewards, CoopSide, Profile, PvpSide } from "rules";
+import {
+  applyAction,
+  applyCoopResult,
+  applyPvpResult,
+  coopRedactEvents,
+  coopViewFor,
+  createCoopCombat,
+  createPvpCombat,
+  ratingChange,
+  redactEvents,
+  viewFor,
+} from "rules";
 import type { AppContext } from "../context";
 import type { MatchSnapshot } from "./protocol";
 
@@ -75,6 +86,19 @@ export class MatchRoom {
     return this.seats.find((s) => s.accountId === accountId);
   }
 
+  /** Co-op rooms share one view model (`17` §9.1) — partner hands stay visible. */
+  private get isCoop(): boolean {
+    return this.mode === "coop" || this.mode === "coop_private" || this.mode === "coop_practice";
+  }
+
+  private viewFor(seat: number): CombatState {
+    return this.isCoop ? coopViewFor(this.state, seat) : viewFor(this.state, seat);
+  }
+
+  private redact(events: CombatEvent[], seat: number): CombatEvent[] {
+    return this.isCoop ? coopRedactEvents(events, seat) : redactEvents(events, seat);
+  }
+
   /** `16` §8.2 `match.start` / `welcome.activeMatch` snapshot for one seat. */
   snapshotFor(seat: number): MatchSnapshot {
     return {
@@ -84,7 +108,7 @@ export class MatchRoom {
       others: this.seats
         .filter((s) => s.seat !== seat)
         .map((s) => ({ seat: s.seat, username: s.username, rating: s.rating, connected: s.connected })),
-      view: viewFor(this.state, seat),
+      view: this.viewFor(seat),
       deadline: this.deadline,
       eventSeq: this.eventSeq,
     };
@@ -110,10 +134,11 @@ export class MatchRoom {
     seat.connected = false;
     if (this.ended) return;
     this.push([{ type: "playerDisconnected", player: seat.seat }]);
+    const reconnectSeconds = this.isCoop ? this.ctx.data.coopConfig.reconnectSeconds : this.ctx.data.pvpConfig.reconnectSeconds;
     const handle = this.ctx.scheduler.setTimeout(() => {
       this.disconnectHandles.delete(seat.seat);
       this.applyLogged(seat, { type: "forfeit", player: seat.seat, reason: "disconnect", system: true });
-    }, this.ctx.data.pvpConfig.reconnectSeconds * 1000);
+    }, reconnectSeconds * 1000);
     this.disconnectHandles.set(seat.seat, handle);
   }
 
@@ -157,6 +182,10 @@ export class MatchRoom {
   canAct(seat: number): boolean {
     if (this.ended) return false;
     if (this.state.status === "mulligan") return !this.state.players[seat]!.mulliganDone;
+    if (this.isCoop) {
+      // The shared co-op turn is open to both seats until each is done.
+      return this.state.status === "playerTurn" && !this.state.players[seat]!.done;
+    }
     return (this.state.status === "playerTurn" || this.state.status === "choosing") && this.state.activePlayer === seat;
   }
 
@@ -192,9 +221,13 @@ export class MatchRoom {
     }
     const seconds =
       this.state.status === "mulligan"
-        ? this.ctx.data.pvpConfig.mulliganSeconds
+        ? this.isCoop
+          ? this.ctx.data.coopConfig.turnSeconds
+          : this.ctx.data.pvpConfig.mulliganSeconds
         : this.state.status === "playerTurn" || this.state.status === "choosing"
-          ? this.ctx.data.pvpConfig.turnSeconds
+          ? this.isCoop
+            ? this.ctx.data.coopConfig.turnSeconds
+            : this.ctx.data.pvpConfig.turnSeconds
           : 0;
     this.deadline = seconds === 0 ? null : this.ctx.clock() + seconds * 1000;
     if (seconds > 0 && !this.ended) {
@@ -220,6 +253,22 @@ export class MatchRoom {
       }
       return;
     }
+    if (this.isCoop) {
+      // `17` §9.1 — the shared 45 s clock ends every unfinished seat: resolve a
+      // pending Chiêm Bài with its first option, then a system `endTurn`.
+      for (const seat of this.seats) {
+        if (this.state.status !== "playerTurn" || this.state.players[seat.seat]!.done) continue;
+        this.timedOut(seat);
+        if (this.ended) return;
+        const pending = this.state.players[seat.seat]!.pendingChoice;
+        if (pending && pending.options[0] !== undefined) {
+          if (!this.applyLogged(seat, { type: "chooseCard", instanceId: pending.options[0], player: seat.seat })) return;
+        }
+        if (this.state.status !== "playerTurn" || this.state.players[seat.seat]!.done) continue;
+        if (!this.applyLogged(seat, { type: "endTurn", player: seat.seat, system: true })) return;
+      }
+      return;
+    }
     const seat = this.seats[this.state.activePlayer];
     if (!seat) return;
     this.timedOut(seat);
@@ -240,7 +289,7 @@ export class MatchRoom {
     }
   }
 
-  /** Sends every seated human `redactEvents` + `viewFor` from their own seat. */
+  /** Sends every seated human the redacted events + their own seat view. */
   private push(events: CombatEvent[]): void {
     this.eventSeq += 1;
     for (const seat of this.seats) {
@@ -248,8 +297,8 @@ export class MatchRoom {
         type: "match.events",
         matchId: this.matchId,
         eventSeq: this.eventSeq,
-        events: redactEvents(events, seat.seat),
-        view: viewFor(this.state, seat.seat),
+        events: this.redact(events, seat.seat),
+        view: this.viewFor(seat.seat),
         deadline: this.deadline,
       });
     }
@@ -268,8 +317,18 @@ export class MatchRoom {
     this.disconnectHandles.clear();
     const forfeit = [...this.actions].reverse().find((a) => a.action.type === "forfeit");
     if (forfeit && forfeit.action.type === "forfeit") this.endReason = forfeit.action.reason;
+    // Co-op: which seats personally abandoned the match (`17` §9.2).
+    const forfeited = new Set(
+      this.actions.filter((a) => a.action.type === "forfeit").map((a) => a.player),
+    );
     const winner = this.state.winner;
-    const resultJson = JSON.stringify({ winner: winner ?? "draw", reason: this.endReason, rounds: this.state.round });
+    const resultJson = this.isCoop
+      ? JSON.stringify({
+          winner: this.state.status === "won" ? "players" : "boss",
+          reason: this.endReason,
+          rounds: this.state.round,
+        })
+      : JSON.stringify({ winner: winner ?? "draw", reason: this.endReason, rounds: this.state.round });
     const finishMatch = this.ctx.db.prepare(
       "UPDATE matches SET status = 'finished', finished_at = ?, result_json = ? WHERE id = ?",
     );
@@ -277,17 +336,27 @@ export class MatchRoom {
     const seatResultRanked = this.ctx.db.prepare(
       "UPDATE match_players SET result = ?, rating_before = ?, rating_after = ? WHERE match_id = ? AND slot = ?",
     );
-    const resultOf = (seat: number): "won" | "lost" | "draw" =>
-      winner === "draw" || winner === undefined ? "draw" : seat === winner ? "won" : "lost";
-    // Ranked matches settle Elo and Vinh Dự for both players; private and
-    // practice matches only record the result (`17` §6.4, `16` §8.8).
+    const resultOf = (seat: number): "won" | "lost" | "draw" => {
+      if (this.isCoop) {
+        // A forfeiting seat loses personally even if the partner wins alone.
+        if (this.state.status === "won" && !forfeited.has(seat)) return "won";
+        return "lost";
+      }
+      return winner === "draw" || winner === undefined ? "draw" : seat === winner ? "won" : "lost";
+    };
+    // Ranked matches settle Elo and Vinh Dự for both players; queue co-op pays
+    // the §9.2 rewards; private and practice matches only record the result.
     const ranked = this.mode === "ranked" && this.seats.every((seat) => seat.accountId !== null);
+    const rewardedCoop = this.mode === "coop";
     // Elo deltas compare pre-match ratings — capture both profiles first.
     const profiles = new Map<number, Profile>();
-    if (ranked) {
-      for (const seat of this.seats) profiles.set(seat.seat, this.ctx.readProfile(seat.accountId!).profile);
+    if (ranked || rewardedCoop) {
+      for (const seat of this.seats) {
+        if (seat.accountId !== null) profiles.set(seat.seat, this.ctx.readProfile(seat.accountId).profile);
+      }
     }
     const settled = new Map<number, { before: number; after: number; honor: number; rev: number }>();
+    const coopPaid = new Map<number, { rewards: CoopRewards | null; rev: number }>();
     // The match record, seat results and both profile updates land in one
     // transaction (`16` §8.3): a crash mid-write leaves the row consistent.
     this.ctx.db.transaction(() => {
@@ -297,6 +366,18 @@ export class MatchRoom {
         const mine = profiles.get(seat.seat);
         if (mine === undefined) {
           seatResult.run(result, this.matchId, seat.seat);
+          continue;
+        }
+        if (rewardedCoop) {
+          // §9.2 — a forfeited seat is settled as a personal loss with no reward.
+          const applied = applyCoopResult(this.ctx.data, mine, {
+            result: result === "won" ? "won" : "lost",
+            forfeited: forfeited.has(seat.seat),
+            now: this.ctx.clock(),
+          });
+          const rev = this.ctx.saveProfile(seat.accountId!, applied.profile);
+          seatResult.run(result, this.matchId, seat.seat);
+          coopPaid.set(seat.seat, { rewards: applied.rewards, rev });
           continue;
         }
         const opponent = this.seats.find((s) => s.seat !== seat.seat)!;
@@ -319,6 +400,7 @@ export class MatchRoom {
     for (const seat of this.seats) {
       const result = resultOf(seat.seat);
       const extras = settled.get(seat.seat);
+      const coop = coopPaid.get(seat.seat);
       send(seat.socket, {
         type: "match.end",
         matchId: this.matchId,
@@ -327,6 +409,7 @@ export class MatchRoom {
         ...(extras
           ? { rating: { before: extras.before, after: extras.after }, rewards: { honor: extras.honor }, profileRev: extras.rev }
           : {}),
+        ...(coop ? { rewards: coop.rewards, profileRev: coop.rev } : {}),
       });
     }
     // The room lives 60 s so clients can fetch late messages, then leaves memory.
@@ -352,5 +435,34 @@ export function startPvpMatch(
     connected: p.accountId === null, consecutiveTimeouts: 0,
   }));
   const setupJson = JSON.stringify({ players: [players[0].side, players[1].side] });
+  return new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, drop);
+}
+
+/**
+ * Creates a co-op match room (`17` §9.1) on the configured encounter. The
+ * setup row carries `mode`/`encounterId` so `replayMatch` rebuilds it exactly.
+ */
+export function startCoopMatch(
+  ctx: AppContext,
+  mode: MatchMode,
+  seed: number,
+  players: [
+    { accountId: number | null; username: string; side: CoopSide; rating?: number },
+    { accountId: number | null; username: string; side: CoopSide; rating?: number },
+  ],
+  matchId: string,
+  drop: (room: MatchRoom) => void,
+): MatchRoom {
+  const encounterId = ctx.data.coopConfig.encounterId;
+  const { state } = createCoopCombat(ctx.data, {
+    seed,
+    players: [players[0].side, players[1].side],
+    encounterId,
+  });
+  const seats: MatchSeat[] = players.map((p, seat) => ({
+    seat, accountId: p.accountId, username: p.username, rating: p.rating, nextSeq: 1,
+    connected: p.accountId === null, consecutiveTimeouts: 0,
+  }));
+  const setupJson = JSON.stringify({ mode: "coop", encounterId, players: [players[0].side, players[1].side] });
   return new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, drop);
 }

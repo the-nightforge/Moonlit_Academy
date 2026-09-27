@@ -95,6 +95,8 @@ export interface Profile {
   honorShop: { weekKey: string; monthKey: string; bought: Record<string, number>; boughtMonth: Record<string, number> };
   /** Ranked arena record (`14` §14.1); default 1000 / 0-0-0. */
   arena: ArenaStats;
+  /** Co-op raid per-day counters (`14` §15); resets when `dayKey` rolls over. */
+  coop: { dayKey: string; clears: number; rewarded: number };
   achievements: string[];
   stats: Record<string, number>;
   flags: { starterGiftClaimed: boolean; localImportDone: boolean };

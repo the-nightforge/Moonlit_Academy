@@ -534,6 +534,12 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   if (coopConfig.reconnectSeconds <= coopConfig.turnSeconds) {
     errors.push("coopConfig: reconnectSeconds must exceed turnSeconds");
   }
+  const coopEncounter = encounters.find((encounter) => encounter.id === coopConfig.encounterId);
+  if (coopEncounter === undefined) {
+    errors.push(`coopConfig: encounterId references missing encounter "${coopConfig.encounterId}"`);
+  } else if (coopEncounter.tier !== "coop") {
+    errors.push(`coopConfig: encounter "${coopConfig.encounterId}" is not tier "coop"`);
+  }
 
   return errors;
 }

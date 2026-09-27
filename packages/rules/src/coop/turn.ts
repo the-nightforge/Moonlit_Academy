@@ -82,6 +82,11 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
     }
     runRelicHooks(data, state, events, { type: "playerTurnStart" }, seat.index);
   }
+  // A seat with no living heroes — forfeit, Cạn Bài, a wipe — can never act;
+  // the shared turn must not wait on it (`01` §16.6).
+  for (const seat of state.players) {
+    if (heroesOf(state, seat.index).every((hero) => !hero.alive)) seat.done = true;
+  }
 }
 
 /**
@@ -108,7 +113,14 @@ export function coopEndTurn(
     events.push({ type: "cardChosen", instanceId, bottomed, player: seat.index });
   }
   seat.done = true;
-  if (!state.players.every((other) => other.done)) return;
+  // A seat whose heroes all fell mid-turn counts as done — it cannot act again.
+  if (
+    !state.players.every(
+      (other) => other.done || heroesOf(state, other.index).every((hero) => !hero.alive),
+    )
+  ) {
+    return;
+  }
   for (const other of state.players) {
     endSeatTurn(data, state, other, events);
     if (state.status === "won" || state.status === "lost") return;

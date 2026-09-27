@@ -423,7 +423,12 @@ describe("weapons, moon relics and second level-up forms", () => {
 describe("co-op data", () => {
   it("loads the eclipse boss, its co-op encounter and the three combos", () => {
     const data = loadGameData();
-    expect(data.coopConfig).toEqual({ turnSeconds: 45, reconnectSeconds: 60 });
+    expect(data.coopConfig).toMatchObject({
+      turnSeconds: 45,
+      reconnectSeconds: 60,
+      encounterId: "enc_coop_01",
+      rewardedMatchesPerDay: 3,
+    });
     expect(Object.keys(data.coopCombos)).toEqual([
       "combo_bang_nguyet_ke", "combo_am_anh_tuyet_sat", "combo_nguyet_quang_pho_chieu",
     ]);
@@ -482,5 +487,15 @@ describe("co-op data", () => {
     const chosen = rawData();
     chosen.coopCombos[0].effects.push({ type: "damage", amount: 1, to: "chosen" });
     expect(() => parseGameData(chosen)).toThrow(/must not use to "chosen"/);
+  });
+
+  it("rejects a coopConfig encounterId that is missing or not tier coop", () => {
+    const missing = rawData();
+    missing.coopConfig.encounterId = "enc_nope";
+    expect(() => parseGameData(missing)).toThrow(/encounterId references missing encounter "enc_nope"/);
+
+    const wrongTier = rawData();
+    wrongTier.coopConfig.encounterId = "enc_01";
+    expect(() => parseGameData(wrongTier)).toThrow(/is not tier "coop"/);
   });
 });
