@@ -42,6 +42,8 @@ export interface CombatSession {
   match: NetMatch | null;
   /** Code of the private room the player is hosting/waiting in (arena). */
   roomCode: string | null;
+  /** Mutes incoming match emotes (`pvp-config.emotes`). */
+  emotesMuted: boolean;
 }
 
 export function newCombatSession(
@@ -58,7 +60,7 @@ export function newCombatSession(
     data, state, events, seed, encounterId, heroIds, deckCardIds: deck, run: null,
     profile: createProfile(data), rev: 0, online: false, ticket: null, editingDeck: null, lastGains: null,
     lastRewards: null, notices: [], runSubmitted: false, loadout,
-    net: null, match: null, roomCode: null,
+    net: null, match: null, roomCode: null, emotesMuted: false,
   };
 }
 

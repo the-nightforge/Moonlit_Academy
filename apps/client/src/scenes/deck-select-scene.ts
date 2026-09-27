@@ -117,7 +117,7 @@ export class DeckSelectScene extends Phaser.Scene {
     addButton(this, this.root, 975, 30, 100, "Kho đồ", () => this.scene.start("armory"), online);
     addButton(this, this.root, 1080, 30, 100, `Nhiệm vụ${canClaim ? " ●" : ""}`, () => this.scene.start("missions"), online);
     addButton(this, this.root, 1195, 30, 120, `Tu Luyện${canUnlock ? " ●" : ""}`, () => this.scene.start("mastery"), online);
-    addButton(this, this.root, 1090, 480, 200, "Đấu Trường (thử)", () => this.scene.start("arena"), online);
+    addButton(this, this.root, 1090, 480, 200, "Đấu Trường", () => this.scene.start("arena"), online);
     if (online) {
       addCurrencyBar(this, this.root, 175, 30, session.profile.currencies);
       addButton(this, this.root, 90, 30, 140, "Đăng xuất", () => {

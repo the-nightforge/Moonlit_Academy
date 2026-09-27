@@ -14,7 +14,14 @@ export class NetMatch {
   readonly others: { seat: number; username: string; connected: boolean }[];
   view: CombatState;
   deadline: number | null;
-  ended: { result: "won" | "lost" | "draw"; reason: string } | null = null;
+  /** Ranked matches carry rating/rewards and the new profile rev (`16` §8.8). */
+  ended: {
+    result: "won" | "lost" | "draw";
+    reason: string;
+    rating?: { before: number; after: number };
+    rewards?: { honor: number };
+    profileRev?: number;
+  } | null = null;
 
   private seq = 1;
   private lastEventSeq: number;
@@ -22,6 +29,7 @@ export class NetMatch {
   onPush: (events: CombatEvent[], view: CombatState) => void = () => {};
   onEnd: (result: "won" | "lost" | "draw", reason: string) => void = () => {};
   onRejected: (reason: string) => void = () => {};
+  onEmote: (from: number, emoteId: string) => void = () => {};
 
   constructor(
     private readonly net: NetSocket,
@@ -50,6 +58,11 @@ export class NetMatch {
     this.net.send({ type: "match.resign", matchId: this.matchId });
   }
 
+  /** Fixed chat emote (`17` §7.3); the client throttles to one per 3 s. */
+  sendEmote(emoteId: string): void {
+    this.net.send({ type: "match.emote", matchId: this.matchId, emoteId });
+  }
+
   /** `true` while the seat may legally act from its own view. */
   canAct(): boolean {
     const status = this.view.status;
@@ -76,11 +89,20 @@ export class NetMatch {
         this.onRejected(message.reason);
         return true;
       case "match.end":
-        this.ended = { result: message.result, reason: message.reason };
+        this.ended = {
+          result: message.result,
+          reason: message.reason,
+          rating: message.rating,
+          rewards: message.rewards,
+          profileRev: message.profileRev,
+        };
         this.onEnd(message.result, message.reason);
         return true;
+      case "match.emote":
+        this.onEmote(message.from, message.emoteId);
+        return true;
       default:
-        return true; // match.emote and future match.* frames for this id
+        return true; // future match.* frames for this id
     }
   }
 

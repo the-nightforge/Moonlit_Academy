@@ -151,12 +151,12 @@ test("phòng riêng PvP: hai trình duyệt đấu, tải lại một bên vào 
   await enterArena(pageB);
 
   // A tạo phòng; lấy mã từ session; B vào bằng mã.
-  await clickDesign(pageA, 640, 480); // "Tạo phòng riêng"
+  await clickDesign(pageA, 640, 470); // "Tạo phòng riêng"
   await expect.poll(async () => (await vn(pageA)).roomCode as string | null).not.toBeNull();
   const code = (await vn(pageA)).roomCode as string;
 
   pageB.once("dialog", (dialog) => void dialog.accept(code));
-  await clickDesign(pageB, 880, 480); // "Vào phòng (mã)"
+  await clickDesign(pageB, 880, 470); // "Vào phòng (mã)"
 
   await expect.poll(() => sceneKey(pageA), { timeout: 30_000 }).toBe("combat");
   await expect.poll(() => sceneKey(pageB)).toBe("combat");
@@ -195,7 +195,7 @@ test("đấu tập: practice.start mở trận với máy, máy tự đánh", as
   const page = await signedInPage(browser, acc.token);
   await enterArena(page);
 
-  await clickDesign(page, 400, 480); // "Đấu Tập (máy)"
+  await clickDesign(page, 400, 518); // "Đấu Tập (máy)"
   await expect.poll(() => sceneKey(page), { timeout: 30_000 }).toBe("combat");
 
   // Người chơi Đổi Bài; máy tự hoàn tất mulligan sau nhịp nghĩ.

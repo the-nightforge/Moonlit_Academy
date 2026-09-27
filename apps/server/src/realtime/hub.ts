@@ -142,9 +142,10 @@ export class RealtimeHub {
       stale.close(CLOSE_REPLACED, "replaced");
     }
     this.byAccount.set(accountId, conn);
-    // Reconnecting mid-match hands the seat's socket to this connection.
+    // Reconnecting mid-match hands the seat's socket to this connection; a
+    // finished room lingers ~60 s for late frames but is not rejoinable.
     const room = this.matchByAccount.get(accountId);
-    const seat = room?.seatOf(accountId);
+    const seat = room && !room.ended ? room.seatOf(accountId) : undefined;
     if (room && seat) room.attach(seat, conn.socket);
     this.reply(conn, {
       type: "welcome",
@@ -223,7 +224,9 @@ export class RealtimeHub {
         return;
       }
       case "practice.start": {
-        if (this.matchByAccount.has(accountId)) {
+        // A finished room lingers ~60 s for late frames — only a live match blocks.
+        const live = this.matchByAccount.get(accountId);
+        if (live && !live.ended) {
           this.reply(conn, { type: "error", error: "already in match" });
           return;
         }
@@ -250,7 +253,8 @@ export class RealtimeHub {
           this.reply(conn, { type: "error", error: "not implemented" });
           return;
         }
-        if (this.matchByAccount.has(accountId)) {
+        const live = this.matchByAccount.get(accountId);
+        if (live && !live.ended) {
           this.reply(conn, { type: "error", error: "already in match" });
           return;
         }

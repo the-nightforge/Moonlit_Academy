@@ -17,6 +17,7 @@ import type {
   GameData,
   StatusInstance,
 } from "rules";
+import { resumeSession } from "../account";
 import { applyRecordedRunAction } from "../run-session";
 import type { NetMatch } from "../net/match";
 import type { ServerMessage } from "../net/protocol";
@@ -89,6 +90,8 @@ export class CombatScene extends Phaser.Scene {
   private mySeat = 0;
   private timerText: Phaser.GameObjects.Text | null = null;
   private netDown = false;
+  private emotePanel = false;
+  private lastEmoteAt = 0;
 
   constructor() {
     super("combat");
@@ -109,6 +112,7 @@ export class CombatScene extends Phaser.Scene {
     this.mySeat = this.netMatch?.you ?? 0;
     this.netDown = false;
     this.timerText = null;
+    this.emotePanel = false;
     this.targeting = null;
     this.validTargetIds.clear();
     this.mulliganPicks.clear();
@@ -159,11 +163,16 @@ export class CombatScene extends Phaser.Scene {
     match.onEnd = () => {
       this.inputLocked = true;
       this.renderAll();
+      // Ranked matches settle server-side; pull the fresh profile (rating, Vinh Dự).
+      if (match.ended?.profileRev !== undefined && match.ended.profileRev !== session.rev) {
+        void resumeSession().catch(() => {});
+      }
     };
     match.onRejected = (reason) => {
       this.inputLocked = false;
       this.showError(reason);
     };
+    match.onEmote = (from, emoteId) => this.showEmote(from, emoteId);
   }
 
   private unbindNet(): void {
@@ -171,6 +180,18 @@ export class CombatScene extends Phaser.Scene {
     this.netMatch.onPush = () => {};
     this.netMatch.onEnd = () => {};
     this.netMatch.onRejected = () => {};
+    this.netMatch.onEmote = () => {};
+  }
+
+  /** Incoming/own emote: a fading line under the opponent strip (`17` §7.3). */
+  private showEmote(from: number, emoteId: string): void {
+    if (from !== this.mySeat && session.emotesMuted) return;
+    const name = from === this.mySeat ? "Bạn" : (this.netMatch?.others.find((o) => o.seat === from)?.username ?? "Đối thủ");
+    const text = this.add
+      .text(WIDTH / 2, 78, `${name}: ${emoteId}`, { ...TEXT_BASE, fontSize: "15px", color: COLORS.gold })
+      .setOrigin(0.5)
+      .setDepth(150);
+    this.tweens.add({ targets: text, alpha: 0, delay: 2400, duration: 600, onComplete: () => text.destroy() });
   }
 
   /** A `match.events` push: animate the events, then render the new view. */
@@ -346,6 +367,7 @@ export class CombatScene extends Phaser.Scene {
     }
     this.renderHeroes();
     this.renderBottomBar();
+    if (this.netMatch && !this.netMatch.ended) this.renderEmoteControls();
     if (this.targeting !== null) this.renderTargetingHint();
     if (this.state.status === "won" || this.state.status === "lost") {
       this.renderCombatEnd();
@@ -700,6 +722,57 @@ export class CombatScene extends Phaser.Scene {
     }
   }
 
+  /** Fixed emote list + mute (`17` §7.3, `pvp-config.emotes`); one send per 3 s. */
+  private renderEmoteControls(): void {
+    const btn = this.add.rectangle(1204, 36, 110, 30, COLORS.button);
+    btn.setStrokeStyle(1, this.emotePanel ? COLORS.goldFill : COLORS.panelBorder);
+    btn.setInteractive({ useHandCursor: true });
+    btn.on("pointerover", () => btn.setFillStyle(0x3a5090));
+    btn.on("pointerout", () => btn.setFillStyle(COLORS.button));
+    btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) {
+        this.emotePanel = !this.emotePanel;
+        this.renderAll();
+      }
+    });
+    this.root.add(btn);
+    this.text(1204, 36, `${session.emotesMuted ? "🔕" : "💬"} Biểu cảm`, 12).setOrigin(0.5);
+    if (!this.emotePanel) return;
+    const emotes = this.gameData.pvpConfig.emotes ?? [];
+    const layer = this.add.container(0, 0).setDepth(120);
+    this.root.add(layer);
+    const panelH = emotes.length * 34 + 50;
+    layer.add(this.add.rectangle(1120, 60 + panelH / 2, 220, panelH, 0x0f1530).setStrokeStyle(1, COLORS.panelBorder));
+    emotes.forEach((emote, index) => {
+      const y = 76 + index * 34;
+      const row = this.add.rectangle(1120, y, 208, 30, 0x141b33).setInteractive({ useHandCursor: true });
+      row.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button !== 0) return;
+        const now = Date.now();
+        if (now - this.lastEmoteAt < 3000) {
+          this.showError("Chờ một chút giữa hai biểu cảm");
+          return;
+        }
+        this.lastEmoteAt = now;
+        this.netMatch!.sendEmote(emote);
+        this.emotePanel = false;
+        this.renderAll();
+      });
+      layer.add(row);
+      layer.add(this.add.text(1120, y, emote, { ...TEXT_BASE, fontSize: "13px", color: COLORS.text }).setOrigin(0.5));
+    });
+    const muteY = 76 + emotes.length * 34;
+    const mute = this.add.rectangle(1120, muteY, 208, 30, 0x203040).setInteractive({ useHandCursor: true });
+    mute.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) {
+        session.emotesMuted = !session.emotesMuted;
+        this.renderAll();
+      }
+    });
+    layer.add(mute);
+    layer.add(this.add.text(1120, muteY, session.emotesMuted ? "Bật biểu cảm" : "Tắt biểu cảm", { ...TEXT_BASE, fontSize: "12px", color: COLORS.dimText }).setOrigin(0.5));
+  }
+
   private renderReconnectOverlay() {
     this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.55).setDepth(200));
     this.text(WIDTH / 2, HEIGHT / 2, "Mất kết nối — đang kết nối lại…", 20, COLORS.gold)
@@ -996,17 +1069,33 @@ export class CombatScene extends Phaser.Scene {
       };
       this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.65));
       this.text(
-        WIDTH / 2, HEIGHT / 2 - 30,
+        WIDTH / 2, HEIGHT / 2 - 40,
         draw ? "HÒA" : won ? "THẮNG" : "THUA",
         56,
         draw ? COLORS.dimText : won ? COLORS.gold : "#cc5555",
       ).setOrigin(0.5);
       this.text(
-        WIDTH / 2, HEIGHT / 2 + 30,
+        WIDTH / 2, HEIGHT / 2 + 20,
         (won || draw ? reasons : myReasons)[end?.reason ?? "combat"] ?? "",
         16, COLORS.dimText,
       ).setOrigin(0.5);
-      this.endScreenButton(WIDTH / 2, HEIGHT / 2 + 90, "Về Đấu Trường", () => {
+      // Ranked settlement arrives with match.end (`16` §8.8).
+      if (end?.rating) {
+        const delta = end.rating.after - end.rating.before;
+        this.text(
+          WIDTH / 2, HEIGHT / 2 + 50,
+          `Điểm xếp hạng: ${end.rating.before} → ${end.rating.after} (${delta >= 0 ? "+" : ""}${delta})`,
+          15, COLORS.gold,
+        ).setOrigin(0.5);
+      }
+      if (end?.rewards && end.rewards.honor > 0) {
+        this.text(
+          WIDTH / 2, HEIGHT / 2 + 72,
+          `+${end.rewards.honor} Vinh Dự ❖`,
+          14, COLORS.gold,
+        ).setOrigin(0.5);
+      }
+      this.endScreenButton(WIDTH / 2, HEIGHT / 2 + 116, "Về Đấu Trường", () => {
         session.match = null;
         this.scene.start("arena");
       });
