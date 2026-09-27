@@ -564,9 +564,11 @@ thường 96% / 8.9 vòng, Tinh Anh 94% / 9.2, boss 77% / 10.6, **Cạn Bài ở
 - [x] Vẫn dễ hơn mục tiêu (bot 35–45%) dù đã có gói chỉnh sau 4b (trước Lõi:
       ~40%). Cần chỉnh số Lõi hoặc độ khó — chờ duyệt.
       → **Đã duyệt gói L** (xem "Chỉnh sau Lõi").
-- [ ] Cạn Bài ở boss 17% → nay 10–18% tùy deck (mục tiêu < 10%): deck 18 lá
+- [x] Cạn Bài ở boss 17% → nay 10–18% tùy deck (mục tiêu < 10%): deck 18 lá
       cố định, trận boss dài. Cải thiện nhẹ sau gói L (trận boss ngắn đi) nhưng
       vẫn trên ngưỡng ở deck thiên phòng thủ.
+      → **Chấp nhận** (đã duyệt): chỉ deck thiên phòng thủ chịu, xem là rủi ro
+      thiết kế của lối chơi kéo dài trận.
 
 ## Chỉnh sau Lõi (đã duyệt)
 
@@ -597,9 +599,9 @@ lượt tới cấp 6 (mục tiêu 8–12).
 
 ### Điểm mở mới
 
-- Chênh lệch đội/deck rộng hơn: Bộ cơ bản của m05+f04+m06 chỉ 5%, nhánh A
-  4/4/10 của m05+f03+f04 0% (chết sớm tầng 2–3) — xem lại bằng chơi tay,
-  có thể do heuristic không chơi tốt các deck tập trung.
+(Đã đóng — đã duyệt "chấp nhận rủi ro thiết kế": Bộ cơ bản của m05+f04+m06
+5% và nhánh A 4/4/10 của m05+f03+f04 0% là hệ quả của deck cực đoan/không
+Song Hành trên bot heuristic; người chơi thật chơi tốt hơn.)
 
 
 # Playtest Notes — Phase 4d (bước 4d.6)
@@ -645,9 +647,9 @@ Hai mục tiêu ngược nhau khi chỉ giảm thu nhập (gói E/F/G: Legendary
 
 ## Điểm mở
 
-- Legendary duy nhất (Hoắc Liệt) là Hero khởi đầu: "Legendary đầu" luôn là bản trùng.
-- Pool Rare chỉ có Ôn Như Ý → Tinh Hồn 6 ngay ngày đầu với mọi gói; cần nội dung Rare
-  (ví dụ vật phẩm 4e) nếu muốn nhịp này chậm lại.
+(Đã đóng — đã duyệt "chấp nhận tạm": Legendary đầu là bản trùng Hoắc Liệt và
+Rare Ôn Như Ý → Tinh Hồn 6 ngày đầu là hành vi đúng của gacha hiện tại; nội
+dung Rare mới là việc của giai đoạn nội dung sau.)
 
 # Playtest Notes — Phase 4e (bước 4e.7)
 
@@ -691,12 +693,9 @@ Mọi lá Binh Khí đều từng được đánh.
 
 ## Điểm mở
 
-- Liệt Cung +11 ở R1: sát ngưỡng, trong sai số. Lợi thế chủ yếu đến từ 2 bản lá rẻ trong
-  chồng bài (1 bản → −1); nếu chơi tay thấy mạnh, chỉnh `copies` thay vì damage.
-- Mục tiêu chỉ đặt cho R1. Ở R5 nhiều món +20 trở lên (Trấn Hồn Linh +34, Bách Hoa Trâm
-  +24, Hàn Tuyết Song Kiếm +24, Bạch Lộ Hương Nang +23) — đạt R5 cần 4 bản trùng.
-- Thiết Thuẫn và Huyền Vũ Giáp Phù yếu đi ở R5 so với R1: giáp nhiều hơn không đổi kết cục
-  với bot hiện tại; nên xem lại khi có chơi tay.
+(Đã đóng — đã duyệt: Liệt Cung chỉnh lá Liệt Tiễn `hits` 2 → 1 (giữ `copies`
+2), đo lại R1 **+8** / R5 +17 trong ngưỡng; các món R5 >+20 giữ nguyên vì đạt
+R5 cần 4 bản trùng; giáp yếu ở R5 là giới hạn của bot, không chỉnh.)
 
 ## Phase 5b — mô phỏng PvP (bot đấu bot)
 
@@ -718,7 +717,8 @@ tỉ lệ đi trước; `heroStats` ×0.8 → 53%/13 vòng; ×0.75 → 53–54%/
 
 **Quyết định (đã duyệt): giữ nguyên số hiện tại.** Đi trước 54–55% và vòng TB
 14–16 xem như chấp nhận được — bot heuristic chơi chậm/phòng thủ hơn người thật,
-nên con số sẽ khác khi có người chơi. Xem lại sau khi Đấu Trường có người chơi.
+nên con số sẽ khác khi có người chơi. Đấu Trường nay đã chạy trên server
+(Vercel + Render); xem lại bằng data người chơi thật thay vì sim lại.
 
-Điểm mở: 35 lá không bao giờ được bot đánh (toàn nhánh nâng cấp `_plus` + lá
-điều kiện) — kỳ vọng của heuristic, cần kiểm khi chơi tay.
+(Điểm mở "35 lá bot không đánh" đã đóng: toàn lá nhánh `_plus` + lá điều kiện —
+giới hạn kỳ vọng của heuristic, kiểm chứng bằng chơi tay khi có.)
