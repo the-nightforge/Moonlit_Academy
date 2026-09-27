@@ -485,3 +485,10 @@ export interface PvpSide {
   /** Normalized by `buildPvpLoadout` — `pvp: true` (`14` §12). */
   loadout: Loadout;
 }
+
+/** One side of a co-op match (`17` §8.1) — full PvE-strength loadout. */
+export interface CoopSide {
+  heroIds: [string, string, string];
+  deckCardIds?: string[];
+  loadout: Loadout;
+}

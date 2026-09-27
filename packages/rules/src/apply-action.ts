@@ -1,8 +1,9 @@
 import { cloneState } from "./clone";
-import { resolveEffects } from "./effects";
+import { coopEndTurn, startCoopTurn } from "./coop/turn";
+import { checkCombatEnd, processDeaths, resolveEffects } from "./effects";
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
-import { activePlayerState, seatTag } from "./players";
+import { activePlayerState, heroesOf, seatTag } from "./players";
 import { pvpEndTurn } from "./pvp/turn";
 import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
 import { shuffle } from "./rng";
@@ -38,6 +39,10 @@ export function getPlayCardError(
   if (card.requiresBloodMoon && state.bloodMoonRounds === 0) return "requires blood moon";
   if (player.moonPower < getEffectiveCost(data, state, action.instanceId)) {
     return "not enough moonPower";
+  }
+  if (state.mode === "coop") {
+    if (player.done) return "already done";
+    if (player.pendingChoice !== null) return "choice pending";
   }
   if (card.target === "none") {
     if (action.targetId !== undefined) return "card takes no target";
@@ -101,6 +106,14 @@ function playCard(
   runRelicHooks(data, state, events, { type: "cardPlayed", card, heroId: owner.id }, player.index);
   player.discardPile.push(instance.instanceId);
   player.cardsPlayedThisTurn += 1;
+  if (state.mode === "coop") {
+    // Combo detection (§16.4) reads this journal; resolved in receipt order.
+    state.playedThisTurn!.push({
+      player: player.index,
+      instanceId: instance.instanceId,
+      cardId: instance.cardId,
+    });
+  }
 }
 
 /** Owner(s) losing empower/stealth after an attack card: a bond card's damage actors. */
@@ -167,6 +180,16 @@ function mulligan(
     }
     return;
   }
+  if (state.mode === "coop") {
+    // Both seats mulligan in parallel (`01` §16.1); the second one opens the
+    // shared turn, then combatStart hooks fire in seat order.
+    if (!state.players.every((seat) => seat.mulliganDone)) return;
+    startCoopTurn(data, state, events);
+    for (const seat of state.players) {
+      runRelicHooks(data, state, events, { type: "combatStart" }, seat.index);
+    }
+    return;
+  }
   startPlayerTurn(data, state, player, events);
   runRelicHooks(data, state, events, { type: "combatStart" }, player.index);
 }
@@ -186,6 +209,17 @@ function chooseCard(state: CombatState, player: PlayerState, instanceId: string,
 function statusError(state: CombatState, action: Action, player: PlayerState): string | null {
   if (action.type === "mulligan") {
     return state.status === "mulligan" && !player.mulliganDone ? null : "mulligan already done";
+  }
+  if (state.mode === "coop") {
+    // `01` §16.2: the turn is shared — a pending Chiêm Bài still answers first
+    // (an endTurn auto-picks it), and a seat that pressed Xong is out.
+    if (state.status === "mulligan") return "mulligan pending";
+    if (action.type === "chooseCard") {
+      return player.pendingChoice === null ? "no pending choice" : null;
+    }
+    if (player.pendingChoice !== null && action.type !== "endTurn") return "choice pending";
+    if (state.status === "playerTurn") return player.done ? "already done" : null;
+    return "not the player turn";
   }
   switch (state.status) {
     case "mulligan":
@@ -207,16 +241,38 @@ function statusError(state: CombatState, action: Action, player: PlayerState): s
 }
 
 /**
- * `17` §4.6 — a forfeit resolves the match. `system: true` is set by the server
- * (resign command, timeout, disconnect); a client-originated action never has it.
+ * `17` §4.6 — a forfeit resolves a PvP match; in co-op the seat's three heroes
+ * fall and the partner fights on (`01` §16.6). `system: true` is set by the
+ * server (resign command, timeout, disconnect); a client action never has it.
  */
 function forfeit(data: GameData, state: CombatState, action: Extract<Action, { type: "forfeit" }>): ActionResult {
-  if (state.mode !== "pvp") return { ok: false, error: "forfeit is only valid in pvp" };
+  if (state.mode !== "pvp" && state.mode !== "coop") {
+    return { ok: false, error: "forfeit is only valid in pvp or coop" };
+  }
   if (state.status === "won" || state.status === "lost") {
     return { ok: false, error: "match already ended" };
   }
   const loser = state.players[action.player];
   if (!loser) return { ok: false, error: "unknown player" };
+  if (state.mode === "coop") {
+    const next = cloneState(state);
+    const events: CombatEvent[] = [
+      { type: "playerForfeited", player: loser.index, reason: action.reason },
+    ];
+    const seat = next.players[loser.index]!;
+    seat.done = true;
+    seat.mulliganDone = true;
+    if (seat.pendingChoice !== null) {
+      seat.drawPile.push(...seat.pendingChoice.options);
+      seat.pendingChoice = null;
+    }
+    for (const hero of heroesOf(next, seat.index)) {
+      if (hero.alive) hero.hp = 0;
+    }
+    processDeaths(data, next, events, undefined);
+    checkCombatEnd(next, events);
+    return { ok: true, state: next, events };
+  }
   const winner = state.players.find((seat) => seat.index !== loser.index)!;
   const next = cloneState(state);
   next.winner = winner.index;
@@ -237,9 +293,11 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
   const seat = state.players[action.player ?? state.activePlayer];
   if (!seat) return { ok: false, error: "unknown player" };
   // Only the active seat acts (`17` §4.2) — except a seat that still owes its
-  // mulligan while the mulligan phase is open.
+  // mulligan while the mulligan phase is open, or either co-op seat during the
+  // shared turn (`01` §16.2).
   const ownMulliganPending = state.status === "mulligan" && !seat.mulliganDone;
-  if (seat.index !== state.activePlayer && !ownMulliganPending) {
+  const coopSharedTurn = state.mode === "coop" && state.status === "playerTurn";
+  if (seat.index !== state.activePlayer && !ownMulliganPending && !coopSharedTurn) {
     return { ok: false, error: "not your turn" };
   }
   const blocked = statusError(state, action, seat);
@@ -273,7 +331,9 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
     case "endTurn": {
       const next = cloneState(state);
       const events: CombatEvent[] = [];
-      if (next.mode === "pvp") {
+      if (next.mode === "coop") {
+        coopEndTurn(data, next, next.players[seat.index]!, events);
+      } else if (next.mode === "pvp") {
         pvpEndTurn(data, next, events);
       } else {
         runEndTurn(data, next, events);

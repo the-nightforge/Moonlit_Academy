@@ -298,7 +298,8 @@ export function resolveEffect(
         return;
       }
       seat.pendingChoice = { kind: "chooseCard", options };
-      state.status = "choosing";
+      // Co-op keeps the shared turn open while one seat answers (`01` §16.2).
+      if (state.mode !== "coop") state.status = "choosing";
       events.push({ type: "choiceOpened", options, ...seatTag(state, seat.index) });
       return;
     }
@@ -577,7 +578,12 @@ export function resolveEffects(
     checkLevelUps(data, state, events);
     if (checkCombatEnd(state, events)) return;
     if (!ctx.noHooks) {
-      fireEventHooks(data, state, events, start, bloodMoonBefore);
+      // Co-op: the acting seat may not be `activePlayer` (the shared-turn marker).
+      const actingSeat =
+        ctx.source.side === "hero"
+          ? (playerOf(state, ctx.source.id)?.index ?? state.activePlayer)
+          : state.activePlayer;
+      fireEventHooks(data, state, events, start, bloodMoonBefore, actingSeat);
       if (checkCombatEnd(state, events)) return;
     }
     // An actor that died mid-resolution (e.g. to reflect) stops its card or intent.

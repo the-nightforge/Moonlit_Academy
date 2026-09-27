@@ -1,9 +1,5 @@
-import { heroesOf, seatTag } from "../players";
-import { cardOwners } from "../queries";
-import { runRelicHooks } from "../run-relic-hooks";
-import { removeStatus } from "../statuses";
-import { advanceRound, startPlayerTurn, tickDurations } from "../turn";
-import type { CombatEvent, CombatState, GameData, PlayerState } from "../types/index";
+import { advanceRound, endSeatTurn, startPlayerTurn, tickDurations } from "../turn";
+import type { CombatEvent, CombatState, GameData } from "../types/index";
 
 /**
  * `17` §4.2–4.3 — a PvP turn end: the seat's own cleanup (turn-end hooks, broken
@@ -13,24 +9,8 @@ import type { CombatEvent, CombatState, GameData, PlayerState } from "../types/i
  */
 export function pvpEndTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
   const player = state.players[state.activePlayer]!;
-  runRelicHooks(data, state, events, { type: "playerTurnEnd" }, player.index);
+  endSeatTurn(data, state, player, events);
   if (state.status === "won" || state.status === "lost") return;
-  const broken = player.hand.filter((id) =>
-    cardOwners(state, state.cards[id]!).some((owner) => !owner?.alive),
-  );
-  if (broken.length > 0) {
-    player.hand = player.hand.filter((id) => !broken.includes(id));
-    player.discardPile.push(...broken);
-    events.push({ type: "cardDiscarded", instanceIds: broken, ...seatTag(state, player.index) });
-  }
-  for (const id of player.hand) state.cards[id]!.heldTurns += 1;
-  for (const instance of Object.values(state.cards)) delete instance.chosenThisTurn;
-  const reserve = Math.min(data.combatConfig.moonReserveMax, player.moonPower);
-  if (reserve !== player.moonReserve) {
-    player.moonReserve = reserve;
-    events.push({ type: "moonReserveChanged", side: "hero", value: reserve, ...seatTag(state, player.index) });
-  }
-  for (const hero of heroesOf(state, player.index)) removeStatus(hero, "freeze", events);
   tickDurations(state, events);
 
   const next = (player.index === state.firstPlayer ? 1 - player.index : state.firstPlayer!) as 0 | 1;

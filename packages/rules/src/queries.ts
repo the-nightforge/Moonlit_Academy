@@ -87,8 +87,11 @@ export function getValidTargets(data: GameData, state: CombatState, instanceId: 
       }
       return targets.map((unit) => unit.id);
     }
-    case "ally":
-      return alliesOf(state, source).filter((unit) => unit.alive).map((unit) => unit.id);
+    case "ally": {
+      // Co-op: a targeted heal/buff may pick any of the six heroes (`01` §16.3).
+      const allies = state.mode === "coop" ? state.heroes : alliesOf(state, source);
+      return allies.filter((unit) => unit.alive).map((unit) => unit.id);
+    }
   }
 }
 
@@ -104,6 +107,7 @@ export function isCardPlayable(
   if (!instance || !card) return false;
   const seat = state.players[player ?? instance.player];
   if (!seat || !seat.hand.includes(instanceId)) return false;
+  if (state.mode === "coop" && (seat.done || seat.pendingChoice !== null)) return false;
   if (ownerError(state, instance) !== null) return false;
   if (card.requiresBloodMoon && state.bloodMoonRounds === 0) return false;
   if (seat.moonPower < getEffectiveCost(data, state, instanceId, seat.index)) return false;

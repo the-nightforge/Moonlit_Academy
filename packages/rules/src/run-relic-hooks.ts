@@ -168,9 +168,10 @@ export function fireEventHooks(
   bloodMoonBefore: number,
   player: number = state.activePlayer,
 ): void {
-  // PvP world events (moon shifts) fire hooks for both seats, active player first (`17` §4.5).
+  // Multiplayer world events (moon shifts, blood moon) fire hooks for both
+  // seats, the acting seat first (`17` §4.5 / `01` §16.2).
   const moonSeats =
-    state.mode === "pvp"
+    state.mode !== "pve"
       ? [player, ...state.players.map((seat) => seat.index).filter((i) => i !== player)]
       : [player];
   // Sampled before any hook effects below run: bloodMoonStarted only reacts to

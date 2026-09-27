@@ -501,7 +501,7 @@ describe("T225 forfeit", () => {
       cards: {},
       rngState: 1,
     }, { type: "forfeit", player: 0, reason: "resign", system: true });
-    expect(result).toEqual({ ok: false, error: "forfeit is only valid in pvp" });
+    expect(result).toEqual({ ok: false, error: "forfeit is only valid in pvp or coop" });
   });
 });
 

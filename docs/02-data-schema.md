@@ -489,9 +489,9 @@ export interface CombatState {
   rngState: number;
   winner?: number | "draw"; // PvP (17 §4.6)
   // [GĐ6] co-op (`01` §16.2/§16.5):
-  comboUsed?: Record<string, number>;          // số lần mỗi Hợp Kích đã dùng (vòng này / trận)
+  comboUsed?: Record<string, { total: number; round: number }>;  // tổng trận + vòng dùng gần nhất
   playedThisTurn?: { player: number; instanceId: string; cardId: string }[];  // xóa đầu mỗi lượt đồng đội
-  boss?: { phase: 1 | 2 | 3 | 4; reviveCountdown: number | null; revived: boolean };
+  boss?: { enemyId: string; phase: number; reviveCountdown: number | null; revived: boolean };
 }
 ```
 

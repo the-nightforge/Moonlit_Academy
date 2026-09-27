@@ -116,8 +116,17 @@ export function endRound(data: GameData, state: CombatState, events: CombatEvent
   planEnemyIntents(data, state, events);
 }
 
-export function runEndTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
-  const player = state.players[state.activePlayer]!;
+/**
+ * §3.3 end-of-turn cleanup for one seat: turn-end hooks, discard of cards whose
+ * owners died, held-turn counters, Moon Reserve, freeze removal. PvE, PvP and
+ * co-op all run this per seat (co-op runs it for seat 0 then seat 1).
+ */
+export function endSeatTurn(
+  data: GameData,
+  state: CombatState,
+  player: PlayerState,
+  events: CombatEvent[],
+): void {
   runRelicHooks(data, state, events, { type: "playerTurnEnd" }, player.index);
   // Combat may end inside playerTurnEnd hooks. Written as a won/lost check so
   // TS keeps `status` un-narrowed for the identical guards after runEnemyTurn.
@@ -138,6 +147,12 @@ export function runEndTurn(data: GameData, state: CombatState, events: CombatEve
     events.push({ type: "moonReserveChanged", side: "hero", value: reserve, ...seatTag(state, player.index) });
   }
   for (const hero of heroesOf(state, player.index)) removeStatus(hero, "freeze", events);
+}
+
+export function runEndTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
+  const player = state.players[state.activePlayer]!;
+  endSeatTurn(data, state, player, events);
+  if (state.status === "won" || state.status === "lost") return;
   runEnemyTurn(data, state, events);
   if (state.status !== "enemyTurn") return;
   endRound(data, state, events);

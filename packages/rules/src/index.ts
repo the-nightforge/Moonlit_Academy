@@ -12,6 +12,7 @@ export {
 export { cardDefOf, relicAt, weaponAt, weaponCardDef, weaponHooks } from "./gear";
 export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-combat";
 export { createPvpCombat } from "./pvp/create";
+export { createCoopCombat } from "./coop/create";
 export { pvpBot } from "./pvp/bot";
 export { replayMatch } from "./pvp/replay";
 export { redactEvents, viewFor } from "./pvp/view";

@@ -112,6 +112,17 @@ export interface PlayerState {
   done: boolean;
 }
 
+/** [GĐ6] Co-op boss progress (`01` §16.5). */
+export interface CoopBossState {
+  enemyId: string;
+  /** Index into `EnemyDef.phases` + 1 (phases are 1-based in the docs). */
+  phase: number;
+  /** Phase-4 countdown; null outside the final phase. */
+  reviveCountdown: number | null;
+  /** The boss already recovered once — no second countdown. */
+  revived: boolean;
+}
+
 export interface CombatState {
   mode: CombatMode;
   status: CombatStatus;
@@ -130,6 +141,12 @@ export interface CombatState {
   winner?: number | "draw";
   /** [GĐ5] PvP: seat taking the first turn of each round (`17` §4.1). */
   firstPlayer?: number;
+  /** [GĐ6] co-op: per-combo totals and the round each combo last fired (`01` §16.4). */
+  comboUsed?: Record<string, { total: number; round: number }>;
+  /** [GĐ6] co-op: cards played in this shared turn, in receipt order (`01` §16.4). */
+  playedThisTurn?: { player: number; instanceId: string; cardId: string }[];
+  /** [GĐ6] co-op: boss phase progress when the encounter's enemy has `phases`. */
+  boss?: CoopBossState;
 }
 
 export interface CombatWeapon {

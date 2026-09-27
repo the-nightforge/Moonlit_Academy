@@ -4,7 +4,8 @@ export type Action =
   | { type: "playCard"; instanceId: string; targetId?: string; player?: number }
   | { type: "mulligan"; instanceIds: string[]; player?: number }
   | { type: "chooseCard"; instanceId: string; player?: number }
-  | { type: "endTurn"; player?: number }
+  /** `system` marks a server-forced end turn (co-op turn timer, `17` §8.3). */
+  | { type: "endTurn"; player?: number; system?: true }
   /**
    * [GĐ5] Server-only system action (`01` §15.6): the seat `player` loses the
    * match. Clients cannot send it — `applyAction` rejects it without `system`.
