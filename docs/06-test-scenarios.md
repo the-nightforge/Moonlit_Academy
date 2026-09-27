@@ -378,3 +378,4 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T242 | **[GĐ5]** `applyPvpResult`: thắng +20 / hòa +12 / thua +8 Vinh Dự; trần 120/kỳ ngày (vượt trần chỉ còn Elo); thua do `resign`/`disconnect`/`timeout` trước vòng 3 → 0 Vinh Dự |
 | T243 | **[GĐ5]** `buyHonorItem`: `limitPerWeek`/`limitPerMonth` chặn đúng kỳ; `"not enough honor"`; `heroChoice` cần Hero đúng độ hiếm chưa sở hữu; `relicChoice` qua `grantItem` (trùng → Cộng Minh +1) |
 | T244 | **[GĐ5]** Trận `ranked` kết thúc: Elo hai phía + Vinh Dự + `match_players` ghi trong một transaction; `match.end` mang `rating`/`rewards`/`profileRev`; `private`/`practice` không đổi Điểm/Vinh Dự |
+| T245 | **[GĐ5]** Giới hạn tần suất: đăng ký 5/giờ và đăng nhập 20/phút theo IP (`TRUST_PROXY` tin `X-Forwarded-For`); `Origin` ngoài `ALLOWED_ORIGINS` bị từ chối nâng cấp WebSocket (403) và route đổi hồ sơ |

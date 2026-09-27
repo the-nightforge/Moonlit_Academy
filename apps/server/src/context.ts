@@ -3,7 +3,9 @@ import type { GameData, Profile } from "rules";
 import { parseProfile } from "rules";
 import type { z } from "zod";
 import { hashToken } from "./auth";
+import { DEV_CONFIG, type ServerConfig } from "./config";
 import type { Db } from "./db";
+import { RateLimiter } from "./rate-limit";
 import { realScheduler, type Scheduler } from "./scheduler";
 
 /** Session lifetime after last use (`16` §3). */
@@ -29,12 +31,17 @@ export interface AppDeps {
   random: (bytes: number) => Buffer;
   /** Timers for realtime rooms; production uses `realScheduler`, tests fake it. */
   scheduler?: Scheduler;
+  /** Production settings (`16` §7.1); tests leave the dev defaults. */
+  config?: Partial<ServerConfig>;
 }
 
 /** Everything a route needs: dependencies plus shared helpers. */
 export interface AppContext extends AppDeps {
   dataVersion: string;
   scheduler: Scheduler;
+  config: ServerConfig;
+  /** Per-IP sliding-window limits (`16` §7.2). */
+  limiter: RateLimiter;
   parseBody<T>(schema: z.ZodType<T>, body: unknown): T;
   /** The signed-in account for this request; throws 401 otherwise. Slides the session. */
   requireAccount(request: FastifyRequest): number;
@@ -123,6 +130,8 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
     ...deps,
     dataVersion,
     scheduler: deps.scheduler ?? realScheduler,
+    config: { ...DEV_CONFIG, ...deps.config },
+    limiter: new RateLimiter(clock),
     accountByToken,
     parseBody(schema, body) {
       const parsed = schema.safeParse(body);

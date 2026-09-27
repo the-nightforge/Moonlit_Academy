@@ -5,6 +5,7 @@ import {
   USERNAME_PATTERN, hashPassword, hashToken, isValidPassword, newToken, normalizeUsername, verifyPassword,
 } from "../auth";
 import { HttpError, type AppContext } from "../context";
+import { LOGIN_LIMIT, REGISTER_LIMIT } from "../rate-limit";
 
 /** Wrong passwords in a row before an account is locked, and for how long (`16` §3). */
 export const MAX_FAILED_LOGINS = 5;
@@ -42,6 +43,9 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
   }
 
   app.post("/api/auth/register", async (request, reply) => {
+    if (ctx.config.production && !ctx.limiter.allow(`register:${request.ip}`, REGISTER_LIMIT.limit, REGISTER_LIMIT.windowMs)) {
+      throw new HttpError(429, "rate limited");
+    }
     const body = ctx.parseBody(credentials, request.body);
     const username = normalizeUsername(body.username);
     if (!USERNAME_PATTERN.test(username)) throw new HttpError(400, "invalid username");
@@ -66,6 +70,9 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
   });
 
   app.post("/api/auth/login", async (request) => {
+    if (ctx.config.production && !ctx.limiter.allow(`login:${request.ip}`, LOGIN_LIMIT.limit, LOGIN_LIMIT.windowMs)) {
+      throw new HttpError(429, "rate limited");
+    }
     const body = ctx.parseBody(credentials, request.body);
     const account = findAccount.get(normalizeUsername(body.username));
     if (!account) throw new HttpError(401, "invalid credentials");

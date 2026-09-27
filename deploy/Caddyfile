@@ -1,0 +1,19 @@
+# Vọng Nguyệt Thư Viện — reverse proxy mẫu (`16` §7).
+# Đổi `vong-nguyet.example.com` thành tên miền thật; Caddy tự xin HTTPS
+# (Let's Encrypt). Chép vào /etc/caddy/Caddyfile rồi `systemctl reload caddy`.
+
+vong-nguyet.example.com {
+	encode zstd gzip
+
+	# API + WebSocket (`/api/ws` nâng cấp tự động qua reverse_proxy).
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8787
+	}
+
+	# Client tĩnh — SPA fallback về index.html.
+	handle {
+		root * /srv/vong-nguyet/apps/client/dist
+		try_files {path} /index.html
+		file_server
+	}
+}

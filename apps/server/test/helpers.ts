@@ -5,6 +5,7 @@ import type { GameData, Loadout, RunAction, RunSetup, RunState } from "rules";
 import { applyRunAction, cardDefOf, createRun, getValidTargets, isCardPlayable, reachableNodeIds, starterDeck } from "rules";
 import { hashToken } from "../src/auth";
 import { buildApp } from "../src/app";
+import type { ServerConfig } from "../src/config";
 import type { AppDeps } from "../src/context";
 import { openDb, type Db } from "../src/db";
 import type { Scheduler } from "../src/scheduler";
@@ -20,7 +21,7 @@ export interface TestServer {
 }
 
 /** App on an in-memory database with a fake clock and deterministic "random" bytes. */
-export function testServer(): TestServer {
+export function testServer(config?: Partial<ServerConfig>): TestServer {
   const data = loadGameData();
   const db = openDb(":memory:");
   const now = { value: Date.UTC(2026, 8, 27, 12) };
@@ -32,7 +33,7 @@ export function testServer(): TestServer {
     }
     return out;
   };
-  const deps: AppDeps = { db, data, clock: () => now.value, random, scheduler: fakeScheduler() };
+  const deps: AppDeps = { db, data, clock: () => now.value, random, scheduler: fakeScheduler(), config };
   const app = buildApp(deps);
   return { app, db, data, now, version: dataVersion(data), deps };
 }
@@ -85,9 +86,9 @@ export async function call(
   server: TestServer,
   method: "GET" | "POST" | "PUT" | "DELETE",
   url: string,
-  options: { body?: unknown; token?: string; rev?: number; version?: string } = {},
+  options: { body?: unknown; token?: string; rev?: number; version?: string; headers?: Record<string, string> } = {},
 ) {
-  const headers: Record<string, string> = { "x-data-version": options.version ?? server.version };
+  const headers: Record<string, string> = { "x-data-version": options.version ?? server.version, ...options.headers };
   if (options.token) headers.authorization = `Bearer ${options.token}`;
   if (options.rev !== undefined) headers["if-match"] = String(options.rev);
   const response = await server.app.inject({

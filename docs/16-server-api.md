@@ -170,6 +170,90 @@ sơ (+ bảng `runs`)" chạy trong một transaction đồng bộ của better-
 
 ---
 
+## 7. Triển khai Internet (GĐ 5e)
+
+Một VPS duy nhất chạy server + Caddy đứng trước làm reverse proxy. SQLite cần ổ đĩa
+bền và là nguồn chân lý duy nhất nên không scale ngang; file tĩnh của client do Caddy
+phục vụ (không cần `@fastify/static`).
+
+```text
+Internet ──HTTPS/WSS──> Caddy ──> 127.0.0.1:8787  (node apps/server/dist/main.js, systemd)
+                          │
+                          └─ file tĩnh: apps/client/dist  (mọi route ngoài /api/*)
+```
+
+- `Caddy` tự xin/gia hạn HTTPS (Let's Encrypt); chuyển mọi request `/api/*` (gồm nâng
+  cấp WebSocket `/api/ws`) tới server, còn lại phục vụ `apps/client/dist`.
+- `deploy/`: `Caddyfile`, `vong-nguyet.service` (systemd), `README.md` hướng dẫn cài
+  Node 22 → `pnpm install --frozen-lockfile` → `pnpm build` → chạy, sao lưu/khôi phục.
+  File mẫu không chứa bí mật hay tên miền thật.
+
+### 7.1 Biến môi trường
+
+`config.ts` đọc và kiểm bằng zod khi khởi động; ở production thiếu biến bắt buộc →
+lỗi rõ và không lắng nghe.
+
+| Biến | Mặc định | Production | Ý nghĩa |
+|---|---|---|---|
+| `PORT` | `8787` | `8787` | Cổng server |
+| `HOST` | `127.0.0.1` | `127.0.0.1` | Chỉ lắng nghe loopback (Caddy lo TLS) |
+| `DB_PATH` | `./data/vong-nguyet.db` | bắt buộc chỉ rõ | File SQLite; tạo thư mục nếu thiếu |
+| `NODE_ENV` | — | `production` | Bật chế độ production (kiểm `Origin`, giới hạn tần suất) |
+| `TRUST_PROXY` | — | `1` | Tin `X-Forwarded-For` của Caddy → IP thật cho giới hạn tần suất |
+| `ALLOWED_ORIGINS` | — | bắt buộc | Danh sách origin `https://...` phân tách bằng dấu phẩy |
+| `BACKUP_DIR` | — | bắt buộc | Thư mục nhận bản sao lưu `db.backup()` |
+
+`NODE_ENV` khác `production` (dev/test): `TRUST_PROXY`, `ALLOWED_ORIGINS`,
+`BACKUP_DIR` không bắt buộc; không có `ALLOWED_ORIGINS` thì bỏ kiểm `Origin`,
+không có `BACKUP_DIR` thì tắt sao lưu định kỳ.
+
+### 7.2 Giới hạn tần suất (`rate-limit.ts`)
+
+Cửa sổ trượt trong bộ nhớ, viết tay — không thêm thư viện. IP lấy từ
+`request.ip` (đã qua `TRUST_PROXY`). Chỉ áp khi `NODE_ENV=production` — dev/test
+không giới hạn (giới hạn IP cần `TRUST_PROXY` mới có nghĩa).
+
+| Đối tượng | Giới hạn | Vượt → |
+|---|---|---|
+| `POST /api/auth/register` | 5 / giờ / IP | `429 { error: "rate limited" }` |
+| `POST /api/auth/login` | 20 / phút / IP (ngoài khóa tài khoản sẵn có) | `429` |
+| Nâng cấp `GET /api/ws` | 3 kết nối / IP / 10 giây | `429` (từ chối trước khi nâng cấp) |
+| Tin nhắn WebSocket | 30 tin / giây / kết nối (đã có ở §8.1) | đóng `4429` |
+
+### 7.3 Kiểm `Origin`
+
+Khi `ALLOWED_ORIGINS` được đặt (production): header `Origin` có mặt phải thuộc danh
+sách, áp cho nâng cấp WebSocket (origin lạ → từ chối nâng cấp, `403`) và mọi route
+đổi hồ sơ (POST/PATCH/DELETE — `403 { error: "forbidden origin" }`). Request không
+mang `Origin` (curl, client không phải trình duyệt) vẫn được phục vụ — `Origin` là
+rào chống CSRF/cross-site, không phải xác thực.
+
+### 7.4 Sao lưu / khôi phục
+
+- `backup.ts`: `scheduler` đặt `db.backup(BACKUP_DIR/vong-nguyet-<ISO>.db)` mỗi 6 giờ;
+  sau mỗi lần dọn bản cũ, chỉ giữ **14** bản mới nhất (≈ 3,5 ngày).
+- Khôi phục (trong `deploy/README.md` và `apps/server/README`): dừng service → chép
+  bản sao lưu đè `DB_PATH` → khởi động lại. Khôi phục khi server đang chạy không an
+  toàn (WAL).
+- Bản sao lưu nằm ngoài repo; thư mục backup thêm vào `.gitignore` không cần thiết
+  vì `BACKUP_DIR` trỏ ra ngoài.
+
+### 7.5 Log
+
+Fastify logger JSON ra stdout (systemd gom qua `journalctl -u vong-nguyet`). Không
+bao giờ log token phiên, mật khẩu (kể cả băm), nội dung body của route auth, hay
+payload tin nhắn trận. Log WS chỉ ở mức sự kiện (kết nối/đóng/mã đóng), không log
+nội dung tin.
+
+### 7.6 Build client production
+
+`VITE_API_BASE` rỗng → client gọi cùng origin `/api/*` (không cần CORS, không cần
+biến khác). Lớp socket tự chọn `wss://` khi trang chạy `https://` (§8.1). Caddy phục
+vụ `apps/client/dist` như static SPA: route không khớp file thật rơi về
+`index.html`.
+
+---
+
 ## 8. Kết nối realtime (GĐ 5c)
 
 ### 8.1 Kết nối

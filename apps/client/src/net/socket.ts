@@ -1,5 +1,5 @@
 import { dataVersion } from "data";
-import { auth } from "../api";
+import { API_BASE, auth } from "../api";
 import { session } from "../session";
 import type { MatchSnapshot, ServerMessage } from "./protocol";
 
@@ -29,8 +29,10 @@ export class NetSocket {
   connect(): void {
     this.manualClose = false;
     if (this.ws !== null) return;
-    const scheme = window.location.protocol === "https:" ? "wss:" : "ws:";
-    this.ws = new WebSocket(`${scheme}//${window.location.host}/api/ws`);
+    // Same origin as the API (`VITE_API_BASE`); `wss://` under `https://` (`16` §7.6).
+    const url = new URL(`${API_BASE}/api/ws`, window.location.href);
+    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    this.ws = new WebSocket(url);
     this.ws.onopen = () => {
       this.ws!.send(JSON.stringify({ type: "hello", token: auth.token ?? "", dataVersion: dataVersion(session.data) }));
     };
