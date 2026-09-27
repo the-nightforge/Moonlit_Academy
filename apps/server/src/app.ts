@@ -17,8 +17,29 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   const ctx = createContext(deps, dataVersion(deps.data));
   const app = Fastify({ logger: ctx.config.production, trustProxy: ctx.config.trustProxy });
 
+  // CORS (cross-origin client hosting, e.g. Vercel → Render): the API answers
+  // browser preflights and echoes `Access-Control-Allow-Origin` only for
+  // origins in `allowedOrigins` (`16` §7.3). Same-origin dev has no list and
+  // emits nothing.
+  app.addHook("onSend", async (request, reply) => {
+    const origin = request.headers.origin;
+    if (typeof origin === "string" && ctx.config.allowedOrigins.includes(origin)) {
+      reply.header("access-control-allow-origin", origin);
+      reply.header("vary", "Origin");
+    }
+  });
+  app.options("/*", async (_request, reply) =>
+    reply
+      .code(204)
+      .header("access-control-allow-methods", "GET,POST,PUT,DELETE,OPTIONS")
+      .header("access-control-allow-headers", "authorization,content-type,if-match,x-data-version")
+      .header("access-control-max-age", "86400")
+      .send(),
+  );
+
   // Every request but the health check must run the same game data (`16` §2).
   app.addHook("onRequest", async (request) => {
+    if (request.method === "OPTIONS") return; // CORS preflight — answered above
     // Production: a foreign `Origin` cannot mutate profiles or open a socket —
     // requests without `Origin` (curl, non-browser clients) pass (`16` §7.3).
     if (ctx.config.allowedOrigins.length > 0) {

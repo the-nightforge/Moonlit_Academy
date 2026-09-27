@@ -115,6 +115,34 @@ describe("T245 rate limits and Origin checks", () => {
     socket.close();
   });
 
+  it("answers CORS for the allowed origin only — headers on API + preflight", async () => {
+    const server = await prodServer();
+    const health = await server.app.inject({
+      method: "GET",
+      url: "/api/health",
+      headers: { origin: ORIGIN },
+    });
+    expect(health.headers["access-control-allow-origin"]).toBe(ORIGIN);
+
+    // Preflight: 204 with the allow headers, skipping the data-version gate.
+    const preflight = await server.app.inject({
+      method: "OPTIONS",
+      url: "/api/auth/login",
+      headers: { origin: ORIGIN, "access-control-request-method": "POST" },
+    });
+    expect(preflight.statusCode).toBe(204);
+    expect(preflight.headers["access-control-allow-origin"]).toBe(ORIGIN);
+    expect(preflight.headers["access-control-allow-headers"]).toContain("x-data-version");
+
+    // A foreign origin gets no CORS headers — the browser blocks the response.
+    const evil = await server.app.inject({
+      method: "OPTIONS",
+      url: "/api/auth/login",
+      headers: { origin: "https://evil.example.net" },
+    });
+    expect(evil.headers["access-control-allow-origin"]).toBeUndefined();
+  });
+
   it("dev config does not rate-limit or check Origin", async () => {
     const server = await testServer();
     // IP rate limits and the Origin gate are production-only (`16` §7.2/§7.3).
