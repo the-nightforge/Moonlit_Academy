@@ -15,7 +15,24 @@
   "timeoutsToForfeit": 3,
   "reconnectSeconds": 60,
   "roundCap": 30,
-  "tiers": [],
-  "honorShop": [],
-  "emotes": []
+  "tiers": [
+    { "id": "dong_sinh", "name": "Đồng Sinh", "minRating": 0 },
+    { "id": "tu_tai", "name": "Tú Tài", "minRating": 1100 },
+    { "id": "cu_nhan", "name": "Cử Nhân", "minRating": 1250 },
+    { "id": "tien_si", "name": "Tiến Sĩ", "minRating": 1400 },
+    { "id": "trang_nguyen", "name": "Trạng Nguyên", "minRating": 1600 }
+  ],
+  "honorShop": [
+    { "id": "honor_pull", "item": { "type": "moonJade", "amount": 160 }, "cost": 150, "limitPerWeek": 2 },
+    { "id": "honor_epic_hero", "item": { "type": "heroChoice", "rarity": "epic" }, "cost": 600, "limitPerMonth": 1 },
+    { "id": "honor_relic_rare", "item": { "type": "relicChoice", "rarity": "rare" }, "cost": 250, "limitPerWeek": 1 }
+  ],
+  "emotes": [
+    "Chào đạo hữu",
+    "Hay lắm",
+    "Đa tạ chỉ giáo",
+    "Nguyệt thần phù hộ",
+    "Chuộc lỗi",
+    "Hẹn gặp lại"
+  ]
 }

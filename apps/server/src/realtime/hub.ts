@@ -4,6 +4,7 @@ import type { AppContext } from "../context";
 import { BotPlayer, botPvpSide } from "./bot-player";
 import { MatchRoom, send, startPvpMatch, type MatchMode } from "./match-room";
 import { clientMessageSchema, type ClientMessage, type ServerMessage } from "./protocol";
+import { RankedQueue } from "./queue";
 import { resolvePvpSide, RoomManager, type WaitingRoom } from "./rooms";
 
 /** `16` §8.1: hello deadline, heartbeat period, misses tolerated, per-second cap. */
@@ -39,12 +40,24 @@ export class RealtimeHub {
   private readonly matchByAccount = new Map<number, MatchRoom>();
   private matchCounter = 0;
   readonly rooms: RoomManager;
+  readonly queue: RankedQueue;
 
   constructor(private readonly ctx: AppContext) {
     this.rooms = new RoomManager(
       ctx,
       (accountId, message) => send(this.byAccount.get(accountId)?.socket, message),
       (room) => this.beginPrivateMatch(room),
+    );
+    this.queue = new RankedQueue(
+      ctx,
+      (accountId, message) => send(this.byAccount.get(accountId)?.socket, message),
+      (a, b) => {
+        const seed = this.ctx.random(4).readUInt32BE(0);
+        this.launchMatch("ranked", seed, [
+          { accountId: a.accountId, username: a.username, side: a.side, rating: a.rating },
+          { accountId: b.accountId, username: b.username, side: b.side, rating: b.rating },
+        ]);
+      },
     );
   }
 
@@ -164,6 +177,7 @@ export class RealtimeHub {
     if (this.byAccount.get(conn.accountId) === conn) this.byAccount.delete(conn.accountId);
     else return;
     this.rooms.disconnect(conn.accountId);
+    this.queue.leave(conn.accountId);
     const room = this.matchByAccount.get(conn.accountId);
     const seat = room?.seatOf(conn.accountId);
     if (room && seat) room.detach(seat);
@@ -176,9 +190,11 @@ export class RealtimeHub {
         conn.missedPings = 0;
         return;
       case "room.create":
+        this.queue.leave(accountId); // another mode means leaving the queue
         this.rooms.create(accountId, message.mode, message.deckId);
         return;
       case "room.join":
+        this.queue.leave(accountId);
         this.rooms.join(accountId, message.code, message.deckId);
         return;
       case "room.leave":
@@ -211,6 +227,7 @@ export class RealtimeHub {
           this.reply(conn, { type: "error", error: "already in match" });
           return;
         }
+        this.queue.leave(accountId);
         if (message.mode !== "pvp") {
           this.reply(conn, { type: "error", error: "not implemented" });
           return;
@@ -228,9 +245,41 @@ export class RealtimeHub {
         ]);
         return;
       }
-      case "queue.join":
+      case "queue.join": {
+        if (message.mode !== "ranked") {
+          this.reply(conn, { type: "error", error: "not implemented" });
+          return;
+        }
+        if (this.matchByAccount.has(accountId)) {
+          this.reply(conn, { type: "error", error: "already in match" });
+          return;
+        }
+        if (this.rooms.roomOf(accountId) !== undefined) {
+          this.reply(conn, { type: "error", error: "already in room" });
+          return;
+        }
+        if (this.queue.entryOf(accountId) !== undefined) {
+          this.reply(conn, { type: "error", error: "already in queue" });
+          return;
+        }
+        const side = resolvePvpSide(this.ctx, accountId, message.deckId);
+        if (!side.ok) {
+          this.reply(conn, { type: "error", error: "invalid deck", errors: side.errors } as ServerMessage);
+          return;
+        }
+        const { profile } = this.ctx.readProfile(accountId);
+        this.queue.join({
+          accountId,
+          username: conn.username,
+          deckId: message.deckId,
+          side: side.side,
+          rating: profile.arena.rating,
+          joinedAt: this.ctx.clock(),
+        });
+        return;
+      }
       case "queue.leave":
-        this.reply(conn, { type: "error", error: "not implemented" });
+        this.queue.leave(accountId);
         return;
       default:
         this.reply(conn, { type: "error", error: "bad message" });
@@ -255,8 +304,8 @@ export class RealtimeHub {
     mode: MatchMode,
     seed: number,
     players: [
-      { accountId: number | null; username: string; side: PvpSide },
-      { accountId: number | null; username: string; side: PvpSide },
+      { accountId: number | null; username: string; side: PvpSide; rating?: number },
+      { accountId: number | null; username: string; side: PvpSide; rating?: number },
     ],
   ): MatchRoom {
     const matchId = `m_${this.ctx.random(6).toString("hex")}_${this.matchCounter++}`;

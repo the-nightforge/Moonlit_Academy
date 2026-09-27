@@ -54,7 +54,9 @@ export {
   recordProgress,
 } from "./meta/economy";
 export type { RunRewards } from "./meta/economy";
-export { dayKey, weekKey } from "./meta/periods";
+export { dayKey, monthKey, weekKey } from "./meta/periods";
+export { ratingChange, tierFor, RATING_START } from "./meta/rating";
+export { applyPvpResult, buyHonorItem, HONOR_PER_DAY } from "./meta/honor";
 export { grantHeroItem, legendaryRate, pullMany } from "./meta/gacha";
 export { buildLoadout, buildPvpLoadout } from "./meta/loadout";
 export { buyShopItem } from "./meta/shop";

@@ -80,7 +80,7 @@ describe("gear in decks, gacha and loadouts", () => {
     data.economyConfig.gacha.epicPity = 1000;
     data.banners["banner_weapons"]!.pool = { legendary: [], epic: [], rare: ["w_thiet_thuan"], common: [] };
     data.banners["banner_relics"]!.pool = { legendary: [], epic: [], rare: ["r_tran_hon_linh"], common: [] };
-    const start = { ...createProfile(data), currencies: { moonJade: 10_000, moonStar: 0, darkIron: 0, moonDust: 0 } };
+    const start = { ...createProfile(data), currencies: { moonJade: 10_000, moonStar: 0, darkIron: 0, moonDust: 0, honor: 0 } };
 
     const weapons = pullMany(data, start, "banner_weapons", 10, 5, NOW);
     if (!weapons.ok) throw new Error(weapons.error);
@@ -104,7 +104,7 @@ describe("gear in decks, gacha and loadouts", () => {
     // No new-player protection on gear banners: epic pulls may repeat an owned weapon.
     const epic = testData();
     epic.economyConfig.gacha.rates = { legendary: 0, epic: 1 };
-    const owned = { ...createProfile(epic), currencies: { moonJade: 10_000, moonStar: 0, darkIron: 0, moonDust: 0 } };
+    const owned = { ...createProfile(epic), currencies: { moonJade: 10_000, moonStar: 0, darkIron: 0, moonDust: 0, honor: 0 } };
     owned.weapons = { w_anh_nguyet_chuy: { refinement: 1 } };
     const results = [1, 2, 3, 4, 5, 6, 7, 8].flatMap((seed) => {
       const pulled = pullMany(epic, owned, "banner_weapons", 1, seed, NOW);

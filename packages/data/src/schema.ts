@@ -322,14 +322,18 @@ export const metaConfigSchema = z.object({
 const nonNegativeInt = z.number().int().nonnegative();
 const probability = z.number().min(0).max(1);
 
+/** What a shop sells (`14` §11); `relicChoice` is honor-shop only (`14` §14.4). */
+export const shopItemSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("moonJade"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("heroChoice"), rarity: raritySchema }),
+  z.object({ type: z.literal("relicChoice"), rarity: raritySchema }),
+]);
+
 export const shopItemDefSchema = z.object({
   id: idSchema,
   price: z.number().int().positive(),
   limitPerWeek: z.number().int().positive(),
-  item: z.discriminatedUnion("type", [
-    z.object({ type: z.literal("moonJade"), amount: z.number().int().positive() }),
-    z.object({ type: z.literal("heroChoice"), rarity: raritySchema }),
-  ]),
+  item: shopItemSchema,
 });
 
 export const economyConfigSchema = z.object({
@@ -404,9 +408,10 @@ export const pvpConfigSchema = z.object({
   tiers: z.array(z.object({ id: idSchema, name: z.string().min(1), minRating: z.number().int() })).optional(),
   honorShop: z.array(z.object({
     id: idSchema,
-    item: z.string().min(1),
+    item: shopItemSchema,
     cost: z.number().int().positive(),
-    weeklyLimit: z.number().int().positive().optional(),
+    limitPerWeek: z.number().int().positive().optional(),
+    limitPerMonth: z.number().int().positive().optional(),
   })).optional(),
   emotes: z.array(z.string().min(1)).optional(),
 });

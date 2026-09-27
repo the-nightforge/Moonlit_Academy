@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { dataVersion } from "data";
 import { createContext, HttpError, type AppDeps } from "./context";
 import { registerRealtime } from "./realtime/socket";
+import { registerArenaRoutes } from "./routes/arena";
 import { registerAuthRoutes } from "./routes/auth";
 import { registerGachaRoutes } from "./routes/gacha";
 import { registerProfileRoutes } from "./routes/profile";
@@ -40,6 +41,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   registerRunRoutes(app, ctx);
   registerGachaRoutes(app, ctx);
   registerShopRoutes(app, ctx);
+  registerArenaRoutes(app, ctx);
   registerRealtime(app, ctx);
   return app;
 }

@@ -1,14 +1,15 @@
 import type { GameData, Profile } from "../types/index";
 import { checkAchievements, recordProgress } from "./economy";
-import { grantHeroItem } from "./gacha";
+import { grantGearItem, grantHeroItem } from "./gacha";
 
-/** Buys a moon star shop item (`14` §11); `heroId` picks the hero of a hero choice. */
+/** Buys a moon star shop item (`14` §11); `heroId`/`relicId` pick a choice item. */
 export function buyShopItem(
   data: GameData,
   profile: Profile,
   itemId: string,
   now: number,
   heroId?: string,
+  relicId?: string,
 ): { ok: true; profile: Profile; achievements: string[] } | { ok: false; error: string } {
   const item = data.economyConfig.moonStarShop.find((entry) => entry.id === itemId);
   if (!item) return { ok: false, error: "unknown item" };
@@ -25,6 +26,13 @@ export function buyShopItem(
       const hero = data.heroes[heroId];
       if (!hero || hero.rarity !== item.item.rarity || next.heroes[heroId]) return { ok: false, error: "invalid hero" };
       grantHeroItem(data, next, heroId);
+      break;
+    }
+    case "relicChoice": {
+      if (relicId === undefined) return { ok: false, error: "relic required" };
+      const relic = data.relics[relicId];
+      if (!relic || relic.rarity !== item.item.rarity) return { ok: false, error: "invalid relic" };
+      grantGearItem(data, next, "relic", relicId);
       break;
     }
     default: {

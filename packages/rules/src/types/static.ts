@@ -326,11 +326,26 @@ export interface EconomyConfig {
   moonStarShop: ShopItemDef[];
 }
 
+/** What a shop sells (`14` §11, §14.4); `relicChoice` is honor-shop only. */
+export type ShopItem =
+  | { type: "moonJade"; amount: number }
+  | { type: "heroChoice"; rarity: Rarity }
+  | { type: "relicChoice"; rarity: Rarity };
+
 export type ShopItemDef = {
   id: string;
   price: number;
   limitPerWeek: number;
-  item: { type: "moonJade"; amount: number } | { type: "heroChoice"; rarity: Rarity };
+  item: ShopItem;
+};
+
+/** An honor shop entry — priced in Vinh Dự, weekly and/or monthly limits (`14` §14.4). */
+export type HonorShopItemDef = {
+  id: string;
+  item: ShopItem;
+  cost: number;
+  limitPerWeek?: number;
+  limitPerMonth?: number;
 };
 
 export type MissionGoalType =
@@ -401,9 +416,9 @@ export interface PvpConfig {
   reconnectSeconds: number;
   /** Hard round cap; beyond it the match is a draw (`17` §4.6). */
   roundCap: number;
-  /** Ranking tiers, honor shop and fixed emotes (filled in later tasks). */
+  /** Ranking tiers, honor shop and fixed emotes (`14` §14). */
   tiers?: { id: string; name: string; minRating: number }[];
-  honorShop?: { id: string; item: string; cost: number; weeklyLimit?: number }[];
+  honorShop?: HonorShopItemDef[];
   emotes?: string[];
 }
 

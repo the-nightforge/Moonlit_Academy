@@ -23,3 +23,8 @@ export function weekKey(data: GameData, now: number): string {
   const week = 1 + Math.floor((thursday.getTime() - Date.UTC(year, 0, 1)) / DAY_MS / 7);
   return `${year}-W${String(week).padStart(2, "0")}`;
 }
+
+/** "YYYY-MM" of the game month containing `now` (`14` §14.4). */
+export function monthKey(data: GameData, now: number): string {
+  return gameDate(data, now).toISOString().slice(0, 7);
+}

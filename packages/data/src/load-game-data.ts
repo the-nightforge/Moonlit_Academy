@@ -441,6 +441,20 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       errors.push(`pvpConfig: unknown free relic "${id}"`);
     }
   }
+  // Tiers ascend by minRating; honor shop choices must name a rarity that exists.
+  const tiers = pvpConfig.tiers ?? [];
+  for (let i = 1; i < tiers.length; i++) {
+    if (tiers[i]!.minRating <= tiers[i - 1]!.minRating) errors.push("pvpConfig: tiers must ascend by minRating");
+  }
+  for (const entry of pvpConfig.honorShop ?? []) {
+    const item = entry.item;
+    if (item.type === "heroChoice" && !heroes.some((hero) => hero.rarity === item.rarity)) {
+      errors.push(`pvpConfig: honorShop "${entry.id}" has no hero of rarity "${item.rarity}"`);
+    }
+    if (item.type === "relicChoice" && !relics.some((relic) => relic.rarity === item.rarity)) {
+      errors.push(`pvpConfig: honorShop "${entry.id}" has no relic of rarity "${item.rarity}"`);
+    }
+  }
 
   for (const hero of heroes) {
     const effects = hero.altLevelUp.onLevelUp ?? [];

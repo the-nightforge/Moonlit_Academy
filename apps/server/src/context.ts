@@ -42,6 +42,11 @@ export interface AppContext extends AppDeps {
   accountByToken(token: string): number | null;
   readProfile(accountId: number): { profile: Profile; rev: number };
   /**
+   * Writes `profile` back with `rev + 1` inside the caller's transaction —
+   * server-authoritative changes (match settlement) carry no `If-Match`.
+   */
+  saveProfile(accountId: number, profile: Profile): number;
+  /**
    * Applies a pure rule to the account's profile in one transaction (`16` §2):
    * checks `If-Match` against `rev`, turns a rule error into 400, writes `rev + 1`.
    */
@@ -96,6 +101,12 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
     })();
   }
 
+  function saveProfile(accountId: number, profile: Profile): number {
+    const rev = readProfile(accountId).rev + 1;
+    writeProfile.run(JSON.stringify(profile), rev, clock(), accountId);
+    return rev;
+  }
+
   function accountByToken(token: string): number | null {
     const session = findSession.get(hashToken(token));
     if (!session) return null;
@@ -127,6 +138,7 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
       return accountId;
     },
     readProfile,
+    saveProfile,
     mutateProfile,
   };
 }

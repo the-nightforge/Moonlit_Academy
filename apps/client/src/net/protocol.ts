@@ -20,7 +20,15 @@ export type ServerMessage =
   | ({ type: "match.start" } & MatchSnapshot)
   | { type: "match.events"; matchId: string; eventSeq: number; events: CombatEvent[]; view: CombatState; deadline: number | null }
   | { type: "match.rejected"; matchId: string; seq: number; reason: string }
-  | { type: "match.end"; matchId: string; result: "won" | "lost" | "draw"; reason: string; rating?: { before: number; after: number }; rewards?: unknown }
+  | {
+      type: "match.end";
+      matchId: string;
+      result: "won" | "lost" | "draw";
+      reason: string;
+      rating?: { before: number; after: number };
+      rewards?: { honor: number };
+      profileRev?: number;
+    }
   | { type: "match.emote"; matchId: string; from: number; emoteId: string }
   | { type: "error"; error: string }
   | { type: "ping" };

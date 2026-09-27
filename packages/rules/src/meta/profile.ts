@@ -25,12 +25,14 @@ export function createProfile(data: GameData): Profile {
     version: 2,
     heroes: Object.fromEntries(data.economyConfig.starterHeroIds.map((id) => [id, newHero()])),
     decks: [],
-    currencies: { moonJade: 0, moonStar: 0, darkIron: 0, moonDust: 0 },
+    currencies: { moonJade: 0, moonStar: 0, darkIron: 0, moonDust: 0, honor: 0 },
     weapons: {},
     relics: {},
     pity: {},
     missions: emptyMissions(),
     shop: { weekKey: "", bought: {} },
+    honorShop: { weekKey: "", monthKey: "", bought: {}, boughtMonth: {} },
+    arena: { rating: 1000, wins: 0, losses: 0, draws: 0, rankedGames: 0, honorDay: { dayKey: "", gained: 0 } },
     achievements: [],
     stats: {},
     flags: { starterGiftClaimed: false, localImportDone: false },
@@ -171,6 +173,7 @@ export function parseProfile(data: GameData, raw: unknown): { profile: Profile; 
     moonStar: count(currencies.moonStar),
     darkIron: count(currencies.darkIron),
     moonDust: count(currencies.moonDust),
+    honor: count(currencies.honor),
   };
   if (isRecord(raw.weapons)) {
     for (const [id, entry] of Object.entries(raw.weapons)) {
@@ -201,6 +204,25 @@ export function parseProfile(data: GameData, raw: unknown): { profile: Profile; 
     profile.shop = {
       weekKey: typeof raw.shop.weekKey === "string" ? raw.shop.weekKey : "",
       bought: counters(raw.shop.bought),
+    };
+  }
+  if (isRecord(raw.honorShop)) {
+    profile.honorShop = {
+      weekKey: typeof raw.honorShop.weekKey === "string" ? raw.honorShop.weekKey : "",
+      monthKey: typeof raw.honorShop.monthKey === "string" ? raw.honorShop.monthKey : "",
+      bought: counters(raw.honorShop.bought),
+      boughtMonth: counters(raw.honorShop.boughtMonth),
+    };
+  }
+  if (isRecord(raw.arena)) {
+    const honorDay = isRecord(raw.arena.honorDay) ? raw.arena.honorDay : {};
+    profile.arena = {
+      rating: count(raw.arena.rating) || 1000,
+      wins: count(raw.arena.wins),
+      losses: count(raw.arena.losses),
+      draws: count(raw.arena.draws),
+      rankedGames: count(raw.arena.rankedGames),
+      honorDay: { dayKey: typeof honorDay.dayKey === "string" ? honorDay.dayKey : "", gained: count(honorDay.gained) },
     };
   }
   profile.achievements = strings(raw.achievements);

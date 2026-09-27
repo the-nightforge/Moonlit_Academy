@@ -1,6 +1,6 @@
 import type { WebSocket } from "ws";
-import type { Action, CombatEvent, CombatState, PvpSide } from "rules";
-import { applyAction, createPvpCombat, redactEvents, viewFor } from "rules";
+import type { Action, CombatEvent, CombatState, Profile, PvpSide } from "rules";
+import { applyAction, applyPvpResult, createPvpCombat, ratingChange, redactEvents, viewFor } from "rules";
 import type { AppContext } from "../context";
 import type { MatchSnapshot } from "./protocol";
 
@@ -11,6 +11,8 @@ export interface MatchSeat {
   seat: number;
   accountId: number | null;
   username: string;
+  /** Arena rating at match start — shown in `others` and used as `rating_before`. */
+  rating?: number;
   socket?: WebSocket;
   /** Next `seq` this seat may send: accepted actions + 1 (`16` §8.2). */
   nextSeq: number;
@@ -79,7 +81,9 @@ export class MatchRoom {
       matchId: this.matchId,
       mode: this.mode,
       you: seat,
-      others: this.seats.filter((s) => s.seat !== seat).map((s) => ({ seat: s.seat, username: s.username, connected: s.connected })),
+      others: this.seats
+        .filter((s) => s.seat !== seat)
+        .map((s) => ({ seat: s.seat, username: s.username, rating: s.rating, connected: s.connected })),
       view: viewFor(this.state, seat),
       deadline: this.deadline,
       eventSeq: this.eventSeq,
@@ -270,17 +274,60 @@ export class MatchRoom {
       "UPDATE matches SET status = 'finished', finished_at = ?, result_json = ? WHERE id = ?",
     );
     const seatResult = this.ctx.db.prepare("UPDATE match_players SET result = ? WHERE match_id = ? AND slot = ?");
-    // The match record and every seat result land in one transaction (`16` §8.3).
+    const seatResultRanked = this.ctx.db.prepare(
+      "UPDATE match_players SET result = ?, rating_before = ?, rating_after = ? WHERE match_id = ? AND slot = ?",
+    );
+    const resultOf = (seat: number): "won" | "lost" | "draw" =>
+      winner === "draw" || winner === undefined ? "draw" : seat === winner ? "won" : "lost";
+    // Ranked matches settle Elo and Vinh Dự for both players; private and
+    // practice matches only record the result (`17` §6.4, `16` §8.8).
+    const ranked = this.mode === "ranked" && this.seats.every((seat) => seat.accountId !== null);
+    // Elo deltas compare pre-match ratings — capture both profiles first.
+    const profiles = new Map<number, Profile>();
+    if (ranked) {
+      for (const seat of this.seats) profiles.set(seat.seat, this.ctx.readProfile(seat.accountId!).profile);
+    }
+    const settled = new Map<number, { before: number; after: number; honor: number; rev: number }>();
+    // The match record, seat results and both profile updates land in one
+    // transaction (`16` §8.3): a crash mid-write leaves the row consistent.
     this.ctx.db.transaction(() => {
       finishMatch.run(this.ctx.clock(), resultJson, this.matchId);
       for (const seat of this.seats) {
-        const result = winner === "draw" || winner === undefined ? "draw" : seat.seat === winner ? "won" : "lost";
-        seatResult.run(result, this.matchId, seat.seat);
+        const result = resultOf(seat.seat);
+        const mine = profiles.get(seat.seat);
+        if (mine === undefined) {
+          seatResult.run(result, this.matchId, seat.seat);
+          continue;
+        }
+        const opponent = this.seats.find((s) => s.seat !== seat.seat)!;
+        const theirs = profiles.get(opponent.seat)!;
+        const score = result === "won" ? 1 : result === "lost" ? 0 : 0.5;
+        const before = mine.arena.rating;
+        const delta = ratingChange(mine.arena, theirs.arena, score);
+        const applied = applyPvpResult(this.ctx.data, mine, {
+          result,
+          reason: this.endReason,
+          round: this.state.round,
+          now: this.ctx.clock(),
+          ratingDelta: delta,
+        });
+        const rev = this.ctx.saveProfile(seat.accountId!, applied.profile);
+        seatResultRanked.run(result, before, applied.profile.arena.rating, this.matchId, seat.seat);
+        settled.set(seat.seat, { before, after: applied.profile.arena.rating, honor: applied.honor, rev });
       }
     })();
     for (const seat of this.seats) {
-      const result = winner === "draw" || winner === undefined ? "draw" : seat.seat === winner ? "won" : "lost";
-      send(seat.socket, { type: "match.end", matchId: this.matchId, result, reason: this.endReason });
+      const result = resultOf(seat.seat);
+      const extras = settled.get(seat.seat);
+      send(seat.socket, {
+        type: "match.end",
+        matchId: this.matchId,
+        result,
+        reason: this.endReason,
+        ...(extras
+          ? { rating: { before: extras.before, after: extras.after }, rewards: { honor: extras.honor }, profileRev: extras.rev }
+          : {}),
+      });
     }
     // The room lives 60 s so clients can fetch late messages, then leaves memory.
     this.cleanupHandle = this.ctx.scheduler.setTimeout(() => this.drop(this), 60_000);
@@ -292,13 +339,16 @@ export function startPvpMatch(
   ctx: AppContext,
   mode: MatchMode,
   seed: number,
-  players: [{ accountId: number | null; username: string; side: PvpSide }, { accountId: number | null; username: string; side: PvpSide }],
+  players: [
+    { accountId: number | null; username: string; side: PvpSide; rating?: number },
+    { accountId: number | null; username: string; side: PvpSide; rating?: number },
+  ],
   matchId: string,
   drop: (room: MatchRoom) => void,
 ): MatchRoom {
   const { state } = createPvpCombat(ctx.data, { seed, players: [players[0].side, players[1].side] });
   const seats: MatchSeat[] = players.map((p, seat) => ({
-    seat, accountId: p.accountId, username: p.username, nextSeq: 1,
+    seat, accountId: p.accountId, username: p.username, rating: p.rating, nextSeq: 1,
     connected: p.accountId === null, consecutiveTimeouts: 0,
   }));
   const setupJson = JSON.stringify({ players: [players[0].side, players[1].side] });

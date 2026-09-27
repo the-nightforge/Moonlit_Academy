@@ -263,7 +263,9 @@ PvP (`validateDeck` chế độ pvp — lỗi → `error "invalid deck"` kèm `e
 không đang ở phòng/trận khác. Mỗi giây (`scheduler`) ghép cặp có |Δ Điểm| nhỏ
 nhất trong khoảng `±100 + 50 × (giây chờ của người chờ lâu hơn / 10)`; không ghép
 lại một đối thủ trong 2 trận xếp hạng gần nhất của 10 phút qua. `queue.leave` rời
-hàng chờ; `queue.status { inQueue, waitSeconds }` báo trạng thái.
+hàng chờ; `queue.status { mode, waitingSeconds }` (spec §5.2) báo trạng thái — gửi
+ngay khi vào hàng (`waitingSeconds: 0`) rồi mỗi giây trong khi chờ; rời hàng chờ
+không có tin xác nhận (client tự chuyển trạng thái).
 
 Trận `ranked` kết thúc (`§8.3`): `ratingChange` cho từng phía + `applyPvpResult`
 (`14` §14) + `match_players` trong **một transaction**; `match.end` mang
