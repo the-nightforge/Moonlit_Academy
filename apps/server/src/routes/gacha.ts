@@ -26,7 +26,7 @@ export function registerGachaRoutes(app: FastifyInstance, ctx: AppContext): void
   );
 
   app.get("/api/gacha/banners", async (request) => {
-    const { profile } = ctx.readProfile(ctx.requireAccount(request));
+    const { profile } = await ctx.readProfile(await ctx.requireAccount(request));
     return {
       banners: Object.values(data.banners),
       gacha: data.economyConfig.gacha,
@@ -36,23 +36,23 @@ export function registerGachaRoutes(app: FastifyInstance, ctx: AppContext): void
   });
 
   app.post<{ Params: { bannerId: string } }>("/api/gacha/:bannerId/pull", async (request) => {
-    const accountId = ctx.requireAccount(request);
+    const accountId = await ctx.requireAccount(request);
     const { count } = ctx.parseBody(pullBody, request.body);
     const seed = random(4).readUInt32BE(0);
     const { bannerId } = request.params;
     // The profile change and its log entry commit together (T190).
-    return db.transaction(() => {
-      const outcome = ctx.mutateProfile(accountId, request, (profile) => pullMany(data, profile, bannerId, count, seed, clock()));
-      insertPull.run(accountId, bannerId, count, seed, JSON.stringify(outcome.results), clock());
+    return db.transaction(async () => {
+      const outcome = await ctx.mutateProfile(accountId, request, (profile) => pullMany(data, profile, bannerId, count, seed, clock()));
+      await insertPull.run(accountId, bannerId, count, seed, JSON.stringify(outcome.results), clock());
       return outcome;
-    })();
+    });
   });
 
   app.get("/api/gacha/history", async (request) => {
-    const accountId = ctx.requireAccount(request);
+    const accountId = await ctx.requireAccount(request);
     const { banner, page } = ctx.parseBody(historyQuery, request.query);
     const bannerId = banner ?? null;
-    const rows = history.all(accountId, bannerId, bannerId, HISTORY_PAGE_SIZE, page * HISTORY_PAGE_SIZE);
+    const rows = await history.all(accountId, bannerId, bannerId, HISTORY_PAGE_SIZE, page * HISTORY_PAGE_SIZE);
     return {
       entries: rows.map((row) => ({ bannerId: row.banner_id, results: JSON.parse(row.results_json), createdAt: row.created_at })),
     };

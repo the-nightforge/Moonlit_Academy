@@ -27,7 +27,7 @@ export interface QueueEntry {
  */
 export class RankedQueue {
   private readonly entries = new Map<number, QueueEntry>();
-  private readonly recentOpponents: (accountId: number) => number[];
+  private readonly recentOpponents: (accountId: number) => Promise<number[]>;
 
   constructor(
     private readonly ctx: AppContext,
@@ -42,8 +42,9 @@ export class RankedQueue {
        WHERE mine.account_id = ? AND m.finished_at > ?
        ORDER BY m.finished_at DESC LIMIT ${REMATCH_MATCHES}`,
     );
-    this.recentOpponents = (accountId) =>
-      recent.all(accountId, ctx.clock() - REMATCH_WINDOW_MS).flatMap((row) => (row.opponent === null ? [] : [row.opponent]));
+    this.recentOpponents = async (accountId) =>
+      (await recent.all(accountId, ctx.clock() - REMATCH_WINDOW_MS))
+        .flatMap((row) => (row.opponent === null ? [] : [row.opponent]));
     this.arm();
   }
 
@@ -63,10 +64,10 @@ export class RankedQueue {
   }
 
   private arm(): void {
-    this.ctx.scheduler.setTimeout(() => this.tick(), QUEUE_TICK_MS);
+    this.ctx.scheduler.setTimeout(() => void this.tick(), QUEUE_TICK_MS);
   }
 
-  private tick(): void {
+  private async tick(): Promise<void> {
     this.arm();
     const now = this.ctx.clock();
     const waiting = [...this.entries.values()];
@@ -86,7 +87,7 @@ export class RankedQueue {
     candidates.sort((x, y) => x.gap - y.gap);
     for (const { a, b } of candidates) {
       if (!this.entries.has(a.accountId) || !this.entries.has(b.accountId)) continue;
-      if (this.recentOpponents(a.accountId).includes(b.accountId)) continue;
+      if ((await this.recentOpponents(a.accountId)).includes(b.accountId)) continue;
       this.entries.delete(a.accountId);
       this.entries.delete(b.accountId);
       this.startMatch(a, b);

@@ -10,7 +10,7 @@ export function registerShopRoutes(app: FastifyInstance, ctx: AppContext): void 
   const { data, clock } = ctx;
 
   app.post<{ Params: { itemId: string } }>("/api/shop/:itemId/buy", async (request) => {
-    const accountId = ctx.requireAccount(request);
+    const accountId = await ctx.requireAccount(request);
     const { heroId } = ctx.parseBody(buyBody, request.body ?? {});
     return ctx.mutateProfile(accountId, request, (profile) => buyShopItem(data, profile, request.params.itemId, clock(), heroId));
   });

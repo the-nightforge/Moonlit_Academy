@@ -1,6 +1,9 @@
 # Vọng Nguyệt Thư Viện — systemd unit mẫu (`16` §7).
-# Chép vào /etc/systemd/system/vong-nguyet.service, sửa ALLOWED_ORIGINS thành
-# tên miền thật, rồi `systemctl enable --now vong-nguyet`.
+# Chép vào /etc/systemd/system/vong-nguyet.service, sửa DATABASE_URL và
+# ALLOWED_ORIGINS thành giá trị thật, rồi `systemctl enable --now vong-nguyet`.
+#
+# DATABASE_URL: Supabase "Transaction pooler" (port 6543) hoặc Postgres tự cài
+# trên VPS — vd. postgresql://vongnguyet:<mật-khẩu>@127.0.0.1:5432/vongnguyet
 
 [Unit]
 Description=Vong Nguyet Thu Vien server
@@ -13,9 +16,11 @@ WorkingDirectory=/srv/vong-nguyet
 Environment=NODE_ENV=production
 Environment=PORT=8787
 Environment=HOST=127.0.0.1
-Environment=DB_PATH=/srv/vong-nguyet/data/vong-nguyet.db
+Environment=DATABASE_URL=postgresql://vongnguyet:CHANGE-ME@127.0.0.1:5432/vongnguyet
 Environment=TRUST_PROXY=1
 Environment=ALLOWED_ORIGINS=https://vong-nguyet.example.com
+# Đặt BACKUP_DIR để server tự `pg_dump` mỗi 6 h (cần postgres-client trên PATH).
+# Bỏ trống nếu DB là Supabase — dùng managed backups của Supabase thay.
 Environment=BACKUP_DIR=/srv/vong-nguyet/backups
 ExecStart=/usr/bin/node apps/server/dist/main.js
 Restart=on-failure

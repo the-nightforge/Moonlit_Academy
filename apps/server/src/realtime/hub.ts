@@ -28,6 +28,8 @@ export interface Connection {
   msgCount: number;
   helloHandle: unknown;
   pingHandle: unknown;
+  /** Serialises `dispatch` — two quick messages never interleave mid-await. */
+  chain: Promise<void>;
 }
 
 /**
@@ -47,17 +49,17 @@ export class RealtimeHub {
     this.rooms = new RoomManager(
       ctx,
       (accountId, message) => send(this.byAccount.get(accountId)?.socket, message),
-      (room) => this.beginPrivateMatch(room),
+      (room) => void this.beginPrivateMatch(room).catch((error: unknown) => console.error("beginPrivateMatch failed:", error)),
     );
     this.queue = new RankedQueue(
       ctx,
       (accountId, message) => send(this.byAccount.get(accountId)?.socket, message),
       (a, b) => {
         const seed = this.ctx.random(4).readUInt32BE(0);
-        this.launchMatch("ranked", seed, [
+        void this.launchMatch("ranked", seed, [
           { accountId: a.accountId, username: a.username, side: a.side, rating: a.rating },
           { accountId: b.accountId, username: b.username, side: b.side, rating: b.rating },
-        ]);
+        ]).catch((error: unknown) => console.error("launchMatch ranked failed:", error));
       },
     );
     this.coopQueue = new CoopQueue(
@@ -65,10 +67,10 @@ export class RealtimeHub {
       (accountId, message) => send(this.byAccount.get(accountId)?.socket, message),
       (a, b) => {
         const seed = this.ctx.random(4).readUInt32BE(0);
-        this.launchMatch("coop", seed, [
+        void this.launchMatch("coop", seed, [
           { accountId: a.accountId, username: a.username, side: a.side },
           { accountId: b.accountId, username: b.username, side: b.side },
-        ]);
+        ]).catch((error: unknown) => console.error("launchMatch coop failed:", error));
       },
     );
   }
@@ -82,6 +84,7 @@ export class RealtimeHub {
         if (conn.accountId === null) socket.close(CLOSE_UNAUTHORIZED, "unauthorized");
       }, HELLO_TIMEOUT_MS),
       pingHandle: undefined,
+      chain: Promise.resolve(),
     };
     socket.on("message", (raw: Buffer | string) => this.onRaw(conn, raw));
     socket.on("close", () => this.onClose(conn));
@@ -111,11 +114,15 @@ export class RealtimeHub {
       return;
     }
     if (conn.accountId === null) {
-      if (message.data.type === "hello") this.onHello(conn, message.data.token, message.data.dataVersion);
+      if (message.data.type === "hello") void this.onHello(conn, message.data.token, message.data.dataVersion);
       else this.reply(conn, { type: "error", error: "bad message" });
       return;
     }
-    this.dispatch(conn, message.data);
+    // Serialise dispatches per connection: an awaited DB call must not let a
+    // later message overtake an earlier one.
+    conn.chain = conn.chain.then(() => this.dispatch(conn, message.data)).catch((error) => {
+      console.error("dispatch failed:", error);
+    });
   }
 
   private rateLimit(conn: Connection): boolean {
@@ -132,8 +139,8 @@ export class RealtimeHub {
     return true;
   }
 
-  private onHello(conn: Connection, token: string, dataVersion: string): void {
-    const accountId = this.ctx.accountByToken(token);
+  private async onHello(conn: Connection, token: string, dataVersion: string): Promise<void> {
+    const accountId = await this.ctx.accountByToken(token);
     if (accountId === null) {
       conn.socket.close(CLOSE_UNAUTHORIZED, "unauthorized");
       return;
@@ -144,7 +151,7 @@ export class RealtimeHub {
     }
     this.ctx.scheduler.clearTimeout(conn.helloHandle);
     conn.accountId = accountId;
-    conn.username = this.rooms.usernameOf(accountId);
+    conn.username = await this.rooms.usernameOf(accountId);
     // One connection per account: a newer socket replaces the old one (`17` §5.1).
     const old = this.byAccount.get(accountId);
     if (old && old !== conn) {
@@ -197,7 +204,7 @@ export class RealtimeHub {
     if (room && seat) room.detach(seat);
   }
 
-  private dispatch(conn: Connection, message: ClientMessage): void {
+  private async dispatch(conn: Connection, message: ClientMessage): Promise<void> {
     const accountId = conn.accountId!;
     switch (message.type) {
       case "pong":
@@ -206,12 +213,12 @@ export class RealtimeHub {
       case "room.create":
         this.queue.leave(accountId); // another mode means leaving the queue
         this.coopQueue.leave(accountId);
-        this.rooms.create(accountId, message.mode, message.deckId);
+        await this.rooms.create(accountId, message.mode, message.deckId);
         return;
       case "room.join":
         this.queue.leave(accountId);
         this.coopQueue.leave(accountId);
-        this.rooms.join(accountId, message.code, message.deckId);
+        await this.rooms.join(accountId, message.code, message.deckId);
         return;
       case "room.leave":
         this.rooms.leave(accountId);
@@ -250,23 +257,23 @@ export class RealtimeHub {
         const seed = this.ctx.random(4).readUInt32BE(0);
         // Practice matches never touch Elo / Vinh Dự / rewards (`17` §5.4).
         if (message.mode === "coop") {
-          const coop = resolveCoopSide(this.ctx, accountId, message.deckId);
+          const coop = await resolveCoopSide(this.ctx, accountId, message.deckId);
           if (!coop.ok) {
             this.reply(conn, { type: "error", error: "invalid deck" });
             return;
           }
-          this.launchMatch("coop_practice", seed, [
+          await this.launchMatch("coop_practice", seed, [
             { accountId, username: conn.username, side: coop.side },
             { accountId: null, username: "Đồng Hành", side: botCoopSide(this.ctx, seed) },
           ]);
           return;
         }
-        const side = resolvePvpSide(this.ctx, accountId, message.deckId);
+        const side = await resolvePvpSide(this.ctx, accountId, message.deckId);
         if (!side.ok) {
           this.reply(conn, { type: "error", error: "invalid deck" });
           return;
         }
-        this.launchMatch("practice", seed, [
+        await this.launchMatch("practice", seed, [
           { accountId, username: conn.username, side: side.side },
           { accountId: null, username: "Vọng Nguyệt", side: botPvpSide(this.ctx, seed) },
         ]);
@@ -288,7 +295,7 @@ export class RealtimeHub {
             return;
           }
           this.queue.leave(accountId); // switching queues leaves the other one
-          const side = resolveCoopSide(this.ctx, accountId, message.deckId);
+          const side = await resolveCoopSide(this.ctx, accountId, message.deckId);
           if (!side.ok) {
             this.reply(conn, { type: "error", error: "invalid deck", errors: side.errors } as ServerMessage);
             return;
@@ -307,12 +314,12 @@ export class RealtimeHub {
           return;
         }
         this.coopQueue.leave(accountId);
-        const side = resolvePvpSide(this.ctx, accountId, message.deckId);
+        const side = await resolvePvpSide(this.ctx, accountId, message.deckId);
         if (!side.ok) {
           this.reply(conn, { type: "error", error: "invalid deck", errors: side.errors } as ServerMessage);
           return;
         }
-        const { profile } = this.ctx.readProfile(accountId);
+        const { profile } = await this.ctx.readProfile(accountId);
         this.queue.join({
           accountId,
           username: conn.username,
@@ -332,12 +339,12 @@ export class RealtimeHub {
     }
   }
 
-  private beginPrivateMatch(room: WaitingRoom): void {
+  private async beginPrivateMatch(room: WaitingRoom): Promise<void> {
     const [a, b] = room.members;
     if (!a || !b) return;
     const seed = this.ctx.random(4).readUInt32BE(0);
     // Private rooms never pay out — PvP Elo and co-op rewards both stay off.
-    this.launchMatch(room.mode === "coop" ? "coop_private" : "private", seed, [
+    await this.launchMatch(room.mode === "coop" ? "coop_private" : "private", seed, [
       { accountId: a.accountId, username: a.username, side: a.side },
       { accountId: b.accountId, username: b.username, side: b.side },
     ]);
@@ -347,17 +354,17 @@ export class RealtimeHub {
    * Creates and registers a match, arms a `BotPlayer` for `null` seats and
    * notifies every connected human (`17` §5.3/§5.4, §9.1).
    */
-  private launchMatch(
+  private async launchMatch(
     mode: MatchMode,
     seed: number,
     players: [
       { accountId: number | null; username: string; side: PvpSide | CoopSide; rating?: number },
       { accountId: number | null; username: string; side: PvpSide | CoopSide; rating?: number },
     ],
-  ): MatchRoom {
+  ): Promise<MatchRoom> {
     const matchId = `m_${this.ctx.random(6).toString("hex")}_${this.matchCounter++}`;
     const coop = mode === "coop" || mode === "coop_private" || mode === "coop_practice";
-    const match = coop
+    const match = await (coop
       ? startCoopMatch(
           this.ctx,
           mode,
@@ -379,7 +386,7 @@ export class RealtimeHub {
           ],
           matchId,
           (finished) => this.dropMatch(finished),
-        );
+        ));
     this.matches.set(matchId, match);
     for (const seat of match.seats) {
       if (seat.accountId === null) {

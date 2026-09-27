@@ -33,9 +33,15 @@ class Ws {
     this.socket.send(typeof message === "string" ? message : JSON.stringify(message));
   }
 
+  /** Waits until the inbox stays quiet for two ticks — async handlers (DB) need several macrotasks. */
   async settle(): Promise<void> {
-    await new Promise((resolve) => setImmediate(resolve));
-    await new Promise((resolve) => setImmediate(resolve));
+    let quiet = 0;
+    let seen = -1;
+    for (let i = 0; i < 100 && (quiet < 3 || i < 10); i++) {
+      await new Promise((resolve) => setImmediate(resolve));
+      quiet = this.inbox.length === seen ? quiet + 1 : 0;
+      seen = this.inbox.length;
+    }
   }
 
   last<T = Record<string, unknown>>(type: string): T | undefined {
@@ -95,8 +101,8 @@ class CoopDriver {
 async function coopPair(server: TestServer) {
   const a = await register(server, "coop_a");
   const b = await register(server, "coop_b");
-  giveStarterDeck(server, accountIdOf(server, a.token), ["m05", "f04", "m06"]);
-  giveStarterDeck(server, accountIdOf(server, b.token), ["m05", "f04", "m06"]);
+  await giveStarterDeck(server, await accountIdOf(server, a.token), ["m05", "f04", "m06"]);
+  await giveStarterDeck(server, await accountIdOf(server, b.token), ["m05", "f04", "m06"]);
   const wsA = await Ws.connect(server.app);
   const wsB = await Ws.connect(server.app);
   await hello(server, wsA, a.token);
@@ -160,7 +166,7 @@ interface CoopEnd {
 
 describe("co-op realtime (`17` §9)", () => {
   it("T260: queue co-op pays both winners; the fourth match of the day is playable but unrewarded", async () => {
-    const server = testServer();
+    const server = await testServer();
     shrinkBoss(server, 10);
     const { a, wsA, wsB } = await coopPair(server);
 
@@ -185,11 +191,11 @@ describe("co-op realtime (`17` §9)", () => {
     expect(me.status).toBe(200);
     expect(me.body).toMatchObject({ clearsToday: 4, rewardClaimsLeft: 0 });
 
-    const row = server.db
+    const row = (await server.db
       .prepare<[number], { profile_json: string }>(
         "SELECT profile_json FROM profiles WHERE account_id = ?",
       )
-      .get(accountIdOf(server, a.token))!;
+      .get(await accountIdOf(server, a.token)))!;
     const profile = JSON.parse(row.profile_json) as {
       currencies: { moonJade: number; moonDust: number };
       coop: { clears: number; rewarded: number };
@@ -201,7 +207,7 @@ describe("co-op realtime (`17` §9)", () => {
   }, 120_000);
 
   it("T261: a forfeiter gets nothing while the surviving partner wins alone and is paid", async () => {
-    const server = testServer();
+    const server = await testServer();
     shrinkBoss(server, 6);
     const { a, b, wsA, wsB } = await coopPair(server);
     const { matchId, seatA, seatB } = await queueCoopMatch(server, wsA, wsB);
@@ -238,7 +244,7 @@ describe("co-op realtime (`17` §9)", () => {
     const meB = await call(server, "GET", "/api/coop/me", { token: b.token });
     expect(meB.body).toMatchObject({ clearsToday: 1, rewardClaimsLeft: 2 });
 
-    const rows = server.db
+    const rows = await server.db
       .prepare<[string], { slot: number; result: string }>(
         "SELECT slot, result FROM match_players WHERE match_id = ? ORDER BY slot",
       )
@@ -247,7 +253,7 @@ describe("co-op realtime (`17` §9)", () => {
   }, 120_000);
 
   it("T262: the seat view shows the partner's hand but hides both draw piles and rngState", async () => {
-    const server = testServer();
+    const server = await testServer();
     const { wsA, wsB } = await coopPair(server);
     const { seatA, seatB } = await queueCoopMatch(server, wsA, wsB);
     await seatA.refresh();
@@ -312,7 +318,7 @@ describe("co-op realtime (`17` §9)", () => {
   }, 60_000);
 
   it("private and practice co-op matches run but never pay rewards", async () => {
-    const server = testServer();
+    const server = await testServer();
     shrinkBoss(server, 6);
     const sched = schedulerOf(server);
     const { a, wsA, wsB } = await coopPair(server);

@@ -1,7 +1,8 @@
 # Render Blueprint — backend Vọng Nguyệt (`deploy/vercel-render.md`).
-# Free plan: filesystem is ephemeral — SQLite is wiped on redeploy/restart.
-# To keep data, upgrade to a paid plan, attach a disk mounted at /var/data and
-# change DB_PATH/BACKUP_DIR to /var/data/... (see the guide).
+# Database lives in Supabase Postgres (DATABASE_URL) — no disk needed on Render,
+# data survives redeploys on the free plan. Backups: Supabase managed backups
+# (Dashboard → Database → Backups); a local pg_dump schedule only runs when
+# BACKUP_DIR is set, which this Blueprint intentionally leaves off.
 services:
   - type: web
     name: vong-nguyet
@@ -17,10 +18,10 @@ services:
         value: production
       - key: TRUST_PROXY
         value: "1"
-      - key: DB_PATH
-        value: ./data/vong-nguyet.db
-      - key: BACKUP_DIR
-        value: ./data/backups
+      # Supabase production project: Dashboard → Connect → Transaction pooler
+      # (port 6543). Paste the full connection string with the real password.
+      - key: DATABASE_URL
+        sync: false
       # Fill with the Vercel domain after deploying the client, e.g.
       # https://vong-nguyet.vercel.app — the server refuses other origins.
       - key: ALLOWED_ORIGINS

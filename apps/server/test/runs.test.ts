@@ -4,18 +4,18 @@ import {
   type Loadout, type RunSetup, type SavedDeck,
 } from "rules";
 import { TICKET_TTL_MS } from "../src/routes/runs";
-import { call, playRun, register, testServer } from "./helpers";
+import { call, playRun, register, testServer, type TestServer } from "./helpers";
 
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
 
 async function signedIn() {
-  const server = testServer();
+  const server = await testServer();
   const { token } = await register(server);
   return { server, token };
 }
 
-function runStatus(server: ReturnType<typeof testServer>, runId: string) {
-  return (server.db.prepare("SELECT status FROM runs WHERE id = ?").get(runId) as { status: string }).status;
+async function runStatus(server: TestServer, runId: string) {
+  return ((await server.db.prepare("SELECT status FROM runs WHERE id = ?").get(runId)) as { status: string }).status;
 }
 
 describe("run tickets", () => {
@@ -29,7 +29,7 @@ describe("run tickets", () => {
 
     const second = await call(server, "POST", "/api/runs", { token, body: { deckId: "starter", heroIds: TEAM } });
     expect(second.body.setup.seed).not.toBe(setup.seed);
-    expect(runStatus(server, first.body.runId)).toBe("abandoned");
+    expect(await runStatus(server, first.body.runId)).toBe("abandoned");
     expect((await call(server, "POST", `/api/runs/${first.body.runId}/finish`, { token, rev: 1, body: { actions: [] } })).body)
       .toEqual({ error: "run closed" });
 
@@ -39,7 +39,7 @@ describe("run tickets", () => {
 
     // A ticket issued for other game data (server updated since) cannot take a result.
     const third = await call(server, "POST", "/api/runs", { token, body: { deckId: "starter", heroIds: TEAM } });
-    server.db.prepare("UPDATE runs SET data_version = 'old' WHERE id = ?").run(third.body.runId);
+    await server.db.prepare("UPDATE runs SET data_version = 'old' WHERE id = ?").run(third.body.runId);
     expect((await call(server, "POST", `/api/runs/${third.body.runId}/finish`, { token, rev: 1, body: { actions: [] } })).body)
       .toMatchObject({ error: "outdated client" });
 
@@ -58,7 +58,7 @@ describe("run tickets", () => {
 
     const unfinished = await call(server, "POST", `/api/runs/${ticket.body.runId}/finish`, { token, rev: 2, body: { actions: actions.slice(0, 5) } });
     expect(unfinished.body).toEqual({ error: "run not finished" });
-    expect(runStatus(server, ticket.body.runId)).toBe("open");
+    expect(await runStatus(server, ticket.body.runId)).toBe("open");
 
     const finished = await call(server, "POST", `/api/runs/${ticket.body.runId}/finish`, { token, rev: 2, body: { actions } });
     expect(finished.status).toBe(200);
@@ -69,7 +69,7 @@ describe("run tickets", () => {
     const expected = { profile: paid.profile };
     expect(finished.body).toEqual({ profile: paid.profile, rev: 3, gains: mastery.gains, rewards: paid.rewards });
     expect(paid.rewards.moonJade).toBeGreaterThan(0);
-    expect(runStatus(server, ticket.body.runId)).toBe("finished");
+    expect(await runStatus(server, ticket.body.runId)).toBe("finished");
     expect((await call(server, "POST", `/api/runs/${ticket.body.runId}/finish`, { token, rev: 3, body: { actions } })).body)
       .toEqual({ error: "run closed" });
 
@@ -80,7 +80,7 @@ describe("run tickets", () => {
     const refused = await call(server, "POST", `/api/runs/${cheat.body.runId}/finish`, { token, rev: 3, body: { actions: tampered } });
     expect(refused.status).toBe(422);
     expect(refused.body).toMatchObject({ error: "replay failed", step: 2 });
-    expect(runStatus(server, cheat.body.runId)).toBe("rejected");
+    expect(await runStatus(server, cheat.body.runId)).toBe("rejected");
     expect((await call(server, "GET", "/api/profile", { token })).body).toEqual({ profile: expected.profile, rev: 3 });
     expect((await call(server, "POST", `/api/runs/${cheat.body.runId}/finish`, { token, rev: 3, body: { actions: [{ type: "fly" }] } })).status)
       .toBe(409);
@@ -95,18 +95,18 @@ describe("run tickets", () => {
     const malformed = await call(server, "POST", `/api/runs/${ticket.body.runId}/finish`, { token, rev: 1, body: { actions: [{ type: "fly" }] } });
     expect(malformed.status).toBe(400);
     expect(malformed.body.error).toBe("bad request");
-    expect(runStatus(server, ticket.body.runId)).toBe("open");
+    expect(await runStatus(server, ticket.body.runId)).toBe("open");
   });
 
   it("T195: a ticket snapshots the team's constellations; later changes do not affect its replay", async () => {
     const { server, token } = await signedIn();
-    const setConstellation = (constellation: number) => {
-      const row = server.db.prepare("SELECT profile_json FROM profiles").get() as { profile_json: string };
+    const setConstellation = async (constellation: number) => {
+      const row = (await server.db.prepare("SELECT profile_json FROM profiles").get()) as { profile_json: string };
       const profile = parseProfile(server.data, JSON.parse(row.profile_json)).profile;
       profile.heroes["m05"]!.constellation = constellation;
-      server.db.prepare("UPDATE profiles SET profile_json = ?").run(JSON.stringify(profile));
+      await server.db.prepare("UPDATE profiles SET profile_json = ?").run(JSON.stringify(profile));
     };
-    setConstellation(4);
+    await setConstellation(4);
     const ticket = await call(server, "POST", "/api/runs", { token, body: { deckId: "starter", heroIds: TEAM } });
     const loadout = ticket.body.loadout as Loadout;
     expect(loadout.heroes["m05"]).toEqual({ constellation: 4, levelUpForm: "base", weaponId: null, refinement: 0 });
@@ -123,7 +123,7 @@ describe("run tickets", () => {
   it("a ticket issued before loadouts existed replays without one", async () => {
     const { server, token } = await signedIn();
     const ticket = await call(server, "POST", "/api/runs", { token, body: { deckId: "starter", heroIds: TEAM } });
-    server.db.prepare("UPDATE runs SET loadout_json = NULL WHERE id = ?").run(ticket.body.runId);
+    await server.db.prepare("UPDATE runs SET loadout_json = NULL WHERE id = ?").run(ticket.body.runId);
     const { actions } = playRun(server.data, ticket.body.setup);
     expect(replayRun(server.data, ticket.body.setup, actions).ok).toBe(true);
     const finished = await call(server, "POST", `/api/runs/${ticket.body.runId}/finish`, { token, rev: 1, body: { actions } });

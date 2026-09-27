@@ -36,9 +36,15 @@ class Ws {
     this.socket.terminate();
   }
 
+  /** Waits until the inbox stays quiet for two ticks — async handlers (DB) need several macrotasks. */
   async settle(): Promise<void> {
-    await new Promise((resolve) => setImmediate(resolve));
-    await new Promise((resolve) => setImmediate(resolve));
+    let quiet = 0;
+    let seen = -1;
+    for (let i = 0; i < 100 && (quiet < 3 || i < 10); i++) {
+      await new Promise((resolve) => setImmediate(resolve));
+      quiet = this.inbox.length === seen ? quiet + 1 : 0;
+      seen = this.inbox.length;
+    }
   }
 
   async waitForClose(): Promise<void> {
@@ -62,38 +68,38 @@ async function hello(server: TestServer, ws: Ws, token: string): Promise<void> {
 }
 
 /** Patches `profile.arena` of the account straight in the DB (ranked setup only). */
-function setArena(server: TestServer, accountId: number, arena: Partial<Profile["arena"]>): void {
-  const row = server.db.prepare<[number], { profile_json: string }>("SELECT profile_json FROM profiles WHERE account_id = ?").get(accountId)!;
+async function setArena(server: TestServer, accountId: number, arena: Partial<Profile["arena"]>): Promise<void> {
+  const row = (await server.db.prepare<[number], { profile_json: string }>("SELECT profile_json FROM profiles WHERE account_id = ?").get(accountId))!;
   const profile = JSON.parse(row.profile_json) as Profile;
   profile.arena = { ...profile.arena, ...arena };
-  server.db.prepare("UPDATE profiles SET profile_json = ? WHERE account_id = ?").run(JSON.stringify(profile), accountId);
+  await server.db.prepare("UPDATE profiles SET profile_json = ? WHERE account_id = ?").run(JSON.stringify(profile), accountId);
 }
 
-function readArena(server: TestServer, accountId: number): Profile["arena"] & { honor: number } {
-  const row = server.db.prepare<[number], { profile_json: string }>("SELECT profile_json FROM profiles WHERE account_id = ?").get(accountId)!;
+async function readArena(server: TestServer, accountId: number): Promise<Profile["arena"] & { honor: number }> {
+  const row = (await server.db.prepare<[number], { profile_json: string }>("SELECT profile_json FROM profiles WHERE account_id = ?").get(accountId))!;
   const profile = JSON.parse(row.profile_json) as Profile;
   return { ...profile.arena, honor: profile.currencies.honor };
 }
 
 /** Inserts a finished ranked match between two accounts `ageMs` ago (rematch window setup). */
-function insertRankedMatch(server: TestServer, id: string, aId: number, bId: number, ageMs: number): void {
+async function insertRankedMatch(server: TestServer, id: string, aId: number, bId: number, ageMs: number): Promise<void> {
   const at = server.now.value - ageMs;
-  server.db
+  await server.db
     .prepare(
       "INSERT INTO matches (id, mode, data_version, seed, setup_json, actions_json, status, created_at, finished_at) VALUES (?, 'ranked', ?, 0, '{}', '[]', 'finished', ?, ?)",
     )
     .run(id, server.version, at, at);
-  const player = server.db.prepare("INSERT INTO match_players (match_id, account_id, slot, result) VALUES (?, ?, ?, ?)");
-  player.run(id, aId, 0, "won");
-  player.run(id, bId, 1, "lost");
+  const player = await server.db.prepare("INSERT INTO match_players (match_id, account_id, slot, result) VALUES (?, ?, ?, ?)");
+  await player.run(id, aId, 0, "won");
+  await player.run(id, bId, 1, "lost");
 }
 
 /** Two queued players with starter decks; returns sockets after `queue.join` went out. */
 async function queueTwo(server: TestServer) {
   const a = await register(server, "player_a");
   const b = await register(server, "player_b");
-  giveStarterDeck(server, accountIdOf(server, a.token), ["m05", "f04", "m06"]);
-  giveStarterDeck(server, accountIdOf(server, b.token), ["m06", "f03", "f02"]);
+  await giveStarterDeck(server, await accountIdOf(server, a.token), ["m05", "f04", "m06"]);
+  await giveStarterDeck(server, await accountIdOf(server, b.token), ["m06", "f03", "f02"]);
   const wsA = await Ws.connect(server.app);
   const wsB = await Ws.connect(server.app);
   await hello(server, wsA, a.token);
@@ -107,7 +113,7 @@ async function queueTwo(server: TestServer) {
 
 describe("arena", () => {
   it("T241 hàng chờ: ghép cặp trong khoảng điểm; khoảng nới theo thời gian chờ; không ghép lại đối thủ gần nhất", async () => {
-    const server = testServer();
+    const server = await testServer();
     const sched = schedulerOf(server);
 
     // --- same rating → paired on the first tick ---
@@ -132,9 +138,9 @@ describe("arena", () => {
     // --- gap 250 > ±100 → no pair; after 30 s of waiting the window reaches 250 ---
     const c = await register(server, "player_c");
     const d = await register(server, "player_d");
-    giveStarterDeck(server, accountIdOf(server, c.token), ["m05", "f04", "m06"]);
-    giveStarterDeck(server, accountIdOf(server, d.token), ["m06", "f03", "f02"]);
-    setArena(server, accountIdOf(server, d.token), { rating: 1250 });
+    await giveStarterDeck(server, await accountIdOf(server, c.token), ["m05", "f04", "m06"]);
+    await giveStarterDeck(server, await accountIdOf(server, d.token), ["m06", "f03", "f02"]);
+    await setArena(server, await accountIdOf(server, d.token), { rating: 1250 });
     const wsC = await Ws.connect(server.app);
     const wsD = await Ws.connect(server.app);
     await hello(server, wsC, c.token);
@@ -163,10 +169,10 @@ describe("arena", () => {
     const e = await register(server, "player_e");
     const f = await register(server, "player_f");
     const g = await register(server, "player_g");
-    giveStarterDeck(server, accountIdOf(server, e.token), ["m05", "f04", "m06"]);
-    giveStarterDeck(server, accountIdOf(server, f.token), ["m06", "f03", "f02"]);
-    giveStarterDeck(server, accountIdOf(server, g.token), ["m05", "f04", "m06"]);
-    insertRankedMatch(server, "m_recent", accountIdOf(server, e.token), accountIdOf(server, f.token), 2 * 60_000);
+    await giveStarterDeck(server, await accountIdOf(server, e.token), ["m05", "f04", "m06"]);
+    await giveStarterDeck(server, await accountIdOf(server, f.token), ["m06", "f03", "f02"]);
+    await giveStarterDeck(server, await accountIdOf(server, g.token), ["m05", "f04", "m06"]);
+    await insertRankedMatch(server, "m_recent", await accountIdOf(server, e.token), await accountIdOf(server, f.token), 2 * 60_000);
     const wsE = await Ws.connect(server.app);
     const wsF = await Ws.connect(server.app);
     const wsG = await Ws.connect(server.app);
@@ -188,15 +194,15 @@ describe("arena", () => {
   }, 60_000);
 
   it("T241 hàng chờ: đối thủ cũ quá 10 phút → ghép lại được; lỗi deck/bảo vệ khác chế độ", async () => {
-    const server = testServer();
+    const server = await testServer();
     const sched = schedulerOf(server);
 
     const a = await register(server, "player_a");
     const b = await register(server, "player_b");
-    giveStarterDeck(server, accountIdOf(server, a.token), ["m05", "f04", "m06"]);
-    giveStarterDeck(server, accountIdOf(server, b.token), ["m06", "f03", "f02"]);
+    await giveStarterDeck(server, await accountIdOf(server, a.token), ["m05", "f04", "m06"]);
+    await giveStarterDeck(server, await accountIdOf(server, b.token), ["m06", "f03", "f02"]);
     // Their last ranked match ended 11 minutes ago — outside the rematch window.
-    insertRankedMatch(server, "m_old", accountIdOf(server, a.token), accountIdOf(server, b.token), 11 * 60_000);
+    await insertRankedMatch(server, "m_old", await accountIdOf(server, a.token), await accountIdOf(server, b.token), 11 * 60_000);
     const wsA = await Ws.connect(server.app);
     const wsB = await Ws.connect(server.app);
     await hello(server, wsA, a.token);
@@ -222,7 +228,7 @@ describe("arena", () => {
 
     // queue.leave removes the entry (re-join does not hit "already in queue").
     const d = await register(server, "player_d");
-    giveStarterDeck(server, accountIdOf(server, d.token), ["m05", "f04", "m06"]);
+    await giveStarterDeck(server, await accountIdOf(server, d.token), ["m05", "f04", "m06"]);
     const wsD = await Ws.connect(server.app);
     await hello(server, wsD, d.token);
     wsD.send({ type: "queue.join", mode: "ranked", deckId: "d1" });
@@ -242,7 +248,7 @@ describe("arena", () => {
   }, 60_000);
 
   it("T244 trận xếp hạng: Elo hai phía + Vinh Dự + match_players trong một transaction; match.end đầy đủ", async () => {
-    const server = testServer();
+    const server = await testServer();
     const sched = schedulerOf(server);
     const { wsA, wsB, a, b } = await queueTwo(server);
     sched.advance(1_000);
@@ -262,7 +268,7 @@ describe("arena", () => {
     expect(endB).toMatchObject({ result: "won", rating: { before: 1000, after: 1020 }, rewards: { honor: 20 }, profileRev: 2 });
 
     // The DB rows and both profiles landed together.
-    const players = server.db
+    const players = await server.db
       .prepare<[string], { slot: number; result: string; rating_before: number; rating_after: number }>(
         "SELECT slot, result, rating_before, rating_after FROM match_players WHERE match_id = ? ORDER BY slot",
       )
@@ -271,14 +277,14 @@ describe("arena", () => {
       { slot: 0, result: "lost", rating_before: 1000, rating_after: 980 },
       { slot: 1, result: "won", rating_before: 1000, rating_after: 1020 },
     ]);
-    const arenaA = readArena(server, accountIdOf(server, a.token));
-    const arenaB = readArena(server, accountIdOf(server, b.token));
+    const arenaA = await readArena(server, await accountIdOf(server, a.token));
+    const arenaB = await readArena(server, await accountIdOf(server, b.token));
     expect(arenaA).toMatchObject({ rating: 980, losses: 1, rankedGames: 1, honor: 0 });
     expect(arenaB).toMatchObject({ rating: 1020, wins: 1, rankedGames: 1, honor: 20 });
   }, 60_000);
 
   it("route: /api/arena/me, /history, /leaderboard và POST /api/shop/honor/:itemId/buy", async () => {
-    const server = testServer();
+    const server = await testServer();
     const sched = schedulerOf(server);
     const { wsA, wsB, a, b } = await queueTwo(server);
     sched.advance(1_000);
@@ -287,8 +293,8 @@ describe("arena", () => {
     wsA.send({ type: "match.resign", matchId });
     await wsA.settle();
     await wsB.settle();
-    const aId = accountIdOf(server, a.token);
-    const bId = accountIdOf(server, b.token);
+    const aId = await accountIdOf(server, a.token);
+    const bId = await accountIdOf(server, b.token);
 
     // /me
     const me = await call(server, "GET", "/api/arena/me", { token: a.token });
@@ -310,8 +316,8 @@ describe("arena", () => {
     // /leaderboard — under 5 ranked games nobody qualifies; patch games in.
     const board = await call(server, "GET", "/api/arena/leaderboard", { token: a.token });
     expect(board.body).toMatchObject({ entries: [], me: { username: "player_a", rating: 980, rank: null } });
-    setArena(server, aId, { rankedGames: 5 });
-    setArena(server, bId, { rankedGames: 10 });
+    await setArena(server, aId, { rankedGames: 5 });
+    await setArena(server, bId, { rankedGames: 10 });
     const board2 = await call(server, "GET", "/api/arena/leaderboard", { token: a.token });
     expect(board2.body.entries.map((e: { username: string }) => e.username)).toEqual(["player_b", "player_a"]);
     expect(board2.body.me).toMatchObject({ rank: 2, rating: 980 });
@@ -319,11 +325,11 @@ describe("arena", () => {
     // honor shop route: If-Match enforced, rules enforced.
     expect((await call(server, "POST", "/api/shop/honor/honor_pull/buy", { token: b.token })).status).toBe(428);
     expect((await call(server, "POST", "/api/shop/honor/honor_pull/buy", { token: b.token, rev: 2 })).status).toBe(400);
-    const row = server.db.prepare<[number], { profile_json: string }>("SELECT profile_json FROM profiles WHERE account_id = ?").get(bId)!;
+    const row = (await server.db.prepare<[number], { profile_json: string }>("SELECT profile_json FROM profiles WHERE account_id = ?").get(bId))!;
     const rich = JSON.parse(row.profile_json) as Profile;
     rich.currencies.honor = 500;
     rich.currencies.moonJade = 0;
-    server.db.prepare("UPDATE profiles SET profile_json = ? WHERE account_id = ?").run(JSON.stringify(rich), bId);
+    await server.db.prepare("UPDATE profiles SET profile_json = ? WHERE account_id = ?").run(JSON.stringify(rich), bId);
     const bought = await call(server, "POST", "/api/shop/honor/honor_pull/buy", { token: b.token, rev: 2, body: {} });
     expect(bought.status).toBe(200);
     expect(bought.body.profile.currencies).toMatchObject({ honor: 350, moonJade: 160 });

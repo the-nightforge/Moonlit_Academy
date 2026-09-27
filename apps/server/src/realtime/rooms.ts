@@ -33,8 +33,8 @@ export type DeckResolution = { ok: true; side: PvpSide | CoopSide } | { ok: fals
  * Resolves `deckId` inside the account's profile into a normalized PvP side
  * (`17` §6.2): the deck must be a saved deck and pass `validateDeck` in pvp mode.
  */
-export function resolvePvpSide(ctx: AppContext, accountId: number, deckId: string): DeckResolution {
-  const { profile } = ctx.readProfile(accountId);
+export async function resolvePvpSide(ctx: AppContext, accountId: number, deckId: string): Promise<DeckResolution> {
+  const { profile } = await ctx.readProfile(accountId);
   const deck = profile.decks.find((d) => d.id === deckId);
   if (!deck) return { ok: false, errors: [{ code: "invalid deck" }] };
   const errors = validateDeck(ctx.data, profile, deck, { mode: "pvp" });
@@ -48,8 +48,8 @@ export function resolvePvpSide(ctx: AppContext, accountId: number, deckId: strin
  * Resolves `deckId` into a co-op side (`17` §8.1): the saved deck validated
  * under PvE rules plus the player's full-strength `buildLoadout`.
  */
-export function resolveCoopSide(ctx: AppContext, accountId: number, deckId: string): DeckResolution {
-  const { profile } = ctx.readProfile(accountId);
+export async function resolveCoopSide(ctx: AppContext, accountId: number, deckId: string): Promise<DeckResolution> {
+  const { profile } = await ctx.readProfile(accountId);
   const deck = profile.decks.find((d) => d.id === deckId);
   if (!deck) return { ok: false, errors: [{ code: "invalid deck" }] };
   const errors = validateDeck(ctx.data, profile, deck);
@@ -60,12 +60,12 @@ export function resolveCoopSide(ctx: AppContext, accountId: number, deckId: stri
 }
 
 /** Resolves a deck for the room's mode — PvP-normalized or full-strength. */
-function resolveSide(
+async function resolveSide(
   ctx: AppContext,
   accountId: number,
   deckId: string,
   mode: "pvp" | "coop",
-): DeckResolution {
+): Promise<DeckResolution> {
   return mode === "coop" ? resolveCoopSide(ctx, accountId, deckId) : resolvePvpSide(ctx, accountId, deckId);
 }
 
@@ -83,8 +83,10 @@ export class RoomManager {
     private readonly startMatch: (room: WaitingRoom) => void,
   ) {}
 
-  usernameOf(accountId: number): string {
-    const row = this.ctx.db.prepare<[number], { username: string }>("SELECT username FROM accounts WHERE id = ?").get(accountId);
+  async usernameOf(accountId: number): Promise<string> {
+    const row = await this.ctx.db
+      .prepare<[number], { username: string }>("SELECT username FROM accounts WHERE id = ?")
+      .get(accountId);
     return row?.username ?? "?";
   }
 
@@ -93,12 +95,12 @@ export class RoomManager {
     return code === undefined ? undefined : this.rooms.get(code);
   }
 
-  create(accountId: number, mode: "pvp" | "coop", deckId: string): void {
+  async create(accountId: number, mode: "pvp" | "coop", deckId: string): Promise<void> {
     if (this.roomOf(accountId)) {
       this.sendTo(accountId, { type: "error", error: "already in room" });
       return;
     }
-    const side = resolveSide(this.ctx, accountId, deckId, mode);
+    const side = await resolveSide(this.ctx, accountId, deckId, mode);
     if (!side.ok) {
       this.sendTo(accountId, { type: "error", error: "invalid deck", errors: side.errors });
       return;
@@ -107,7 +109,7 @@ export class RoomManager {
     const expiryHandle = this.ctx.scheduler.setTimeout(() => this.expire(code), ROOM_TTL_MS);
     const room: WaitingRoom = {
       code, mode, hostId: accountId,
-      members: [{ accountId, username: this.usernameOf(accountId), deckId, side: side.side }],
+      members: [{ accountId, username: await this.usernameOf(accountId), deckId, side: side.side }],
       expiresAt: this.ctx.clock() + ROOM_TTL_MS,
       expiryHandle,
     };
@@ -116,7 +118,7 @@ export class RoomManager {
     this.sendTo(accountId, { type: "room.created", code, mode, players: this.publicMembers(room) });
   }
 
-  join(accountId: number, code: string, deckId: string): void {
+  async join(accountId: number, code: string, deckId: string): Promise<void> {
     const room = this.rooms.get(code.toUpperCase());
     if (!room || this.ctx.clock() >= room.expiresAt) {
       this.sendTo(accountId, { type: "error", error: "unknown room" });
@@ -130,12 +132,12 @@ export class RoomManager {
       this.sendTo(accountId, { type: "error", error: "room full" });
       return;
     }
-    const side = resolveSide(this.ctx, accountId, deckId, room.mode);
+    const side = await resolveSide(this.ctx, accountId, deckId, room.mode);
     if (!side.ok) {
       this.sendTo(accountId, { type: "error", error: "invalid deck", errors: side.errors });
       return;
     }
-    room.members.push({ accountId, username: this.usernameOf(accountId), deckId, side: side.side });
+    room.members.push({ accountId, username: await this.usernameOf(accountId), deckId, side: side.side });
     this.byAccount.set(accountId, room.code);
     if (room.members.length >= ROOM_CAPACITY) this.begin(room);
     else this.broadcast(room, { type: "room.updated", code: room.code, mode: room.mode, players: this.publicMembers(room) });

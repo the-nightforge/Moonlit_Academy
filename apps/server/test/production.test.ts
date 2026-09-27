@@ -13,7 +13,7 @@ function prodServer() {
 
 describe("T245 rate limits and Origin checks", () => {
   it("register is limited to 5/hour per IP via X-Forwarded-For", async () => {
-    const server = prodServer();
+    const server = await prodServer();
     const ip = { "x-forwarded-for": "203.0.113.7" };
     for (let i = 0; i < 5; i++) {
       const res = await call(server, "POST", "/api/auth/register", {
@@ -44,7 +44,7 @@ describe("T245 rate limits and Origin checks", () => {
   });
 
   it("login is limited to 20/minute per IP", async () => {
-    const server = prodServer();
+    const server = await prodServer();
     const ip = { "x-forwarded-for": "203.0.113.9" };
     // Unknown usernames still consume attempts — the limit precedes auth.
     for (let i = 0; i < 20; i++) {
@@ -68,7 +68,7 @@ describe("T245 rate limits and Origin checks", () => {
   });
 
   it("websocket upgrade is limited to 3 connections per IP per 10s", async () => {
-    const server = prodServer();
+    const server = await prodServer();
     await server.app.ready();
     // injectWS upgrades a fake request without a socket — pass `remoteAddress`
     // so trustProxy can read `X-Forwarded-For` like Caddy sets it.
@@ -85,7 +85,7 @@ describe("T245 rate limits and Origin checks", () => {
   });
 
   it("a foreign Origin cannot mutate profiles or open a socket", async () => {
-    const server = prodServer();
+    const server = await prodServer();
     const evil = { origin: "https://evil.example.net" };
     const login = await call(server, "POST", "/api/auth/login", {
       body: { username: "nobody", password: "x" },
@@ -116,7 +116,7 @@ describe("T245 rate limits and Origin checks", () => {
   });
 
   it("dev config does not rate-limit or check Origin", async () => {
-    const server = testServer();
+    const server = await testServer();
     // IP rate limits and the Origin gate are production-only (`16` §7.2/§7.3).
     for (let i = 0; i < 6; i++) {
       const res = await call(server, "POST", "/api/auth/register", {

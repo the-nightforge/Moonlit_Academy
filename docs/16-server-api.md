@@ -12,12 +12,13 @@ sơ và không tự tính luật.
 
 ## 1. Chạy server
 
-- `apps/server`: Node 22, Fastify 5, better-sqlite3 (+ `@types/node`,
-  `@types/better-sqlite3`). Bundle bằng Vite SSR build (gộp `rules`, `data`; để ngoài
-  `fastify`, `better-sqlite3`, `zod`). `pnpm-workspace.yaml` cho phép script build của
-  `better-sqlite3` (`onlyBuiltDependencies`) để module native được biên dịch khi cài.
-- Biến môi trường: `PORT` (mặc định `8787`), `HOST` (mặc định `127.0.0.1`), `DB_PATH` (mặc định
-  `./data/vong-nguyet.db`, tạo thư mục nếu thiếu).
+- `apps/server`: Node 22, Fastify 5, Postgres qua `postgres` (postgres.js)
+  (+ `@types/node`). DB host là Supabase (dev/prod là hai project riêng —
+  `deploy/vercel-render.md`). Bundle bằng Vite SSR build (gộp `rules`, `data`;
+  để ngoài `fastify`, `postgres`, `zod`). Test chạy trên `pg-mem` trong bộ nhớ.
+- Biến môi trường: `DATABASE_URL` (chuỗi kết nối Postgres — Supabase pooler
+  6543, bắt buộc mọi chế độ; dev để trong `apps/server/.env`), `PORT`
+  (mặc định `8787`), `HOST` (mặc định `127.0.0.1`, production `0.0.0.0`).
 - `pnpm --filter server dev` (build theo dõi + `node --watch`), `pnpm --filter server
   start`, `pnpm --filter server test`. `pnpm dev` ở gốc chạy client và server song song.
 - Client dev gọi `/api/...` qua proxy Vite tới `http://localhost:8787`.
@@ -123,29 +124,34 @@ Mọi route đổi hồ sơ ở trên cần `If-Match`.
 
 ---
 
-## 5. Lưu trữ (SQLite)
+## 5. Lưu trữ (Postgres)
 
-Bảng `schema_version(version INTEGER)`; migration đánh số, chạy khi mở DB. `PRAGMA
-foreign_keys = ON`; `journal_mode = WAL` cho file DB.
+Bảng `schema_version(version BIGINT)`; migration đánh số, chạy khi mở DB trong
+một transaction mỗi migration. `db.ts` bọc `postgres`/`SqlRunner`: call site
+giữ placeholder `?` được viết lại thành `$1..$n`, transaction lồng nhau nhập
+vào transaction mở (AsyncLocalStorage), kết quả `BIGINT` chuẩn hóa về number.
+Test: `pg-mem` qua `dbFromRunner`/`memRunner` trong `test/helpers.ts`
+(transaction giả lập bằng `mem.backup()`/`restore()`).
 
 **Migration 1:**
 
 | Bảng | Cột |
 |---|---|
-| `accounts` | `id INTEGER PK`, `username TEXT UNIQUE NOT NULL`, `password_hash TEXT NOT NULL`, `created_at INTEGER NOT NULL`, `failed_logins INTEGER NOT NULL DEFAULT 0`, `locked_until INTEGER` |
-| `sessions` | `token_hash TEXT PK`, `account_id INTEGER NOT NULL → accounts`, `last_used_at INTEGER NOT NULL` |
-| `profiles` | `account_id INTEGER PK → accounts`, `profile_json TEXT NOT NULL`, `rev INTEGER NOT NULL`, `updated_at INTEGER NOT NULL` |
-| `runs` | `id TEXT PK` (16 byte base64url), `account_id INTEGER NOT NULL → accounts`, `status TEXT NOT NULL` (`open`/`finished`/`abandoned`/`rejected`), `setup_json TEXT NOT NULL`, `data_version TEXT NOT NULL`, `created_at INTEGER NOT NULL`, `finished_at INTEGER`, `result_json TEXT` |
+| `accounts` | `id BIGINT GENERATED ALWAYS AS IDENTITY PK`, `username TEXT UNIQUE NOT NULL`, `password_hash TEXT NOT NULL`, `created_at BIGINT NOT NULL`, `failed_logins BIGINT NOT NULL DEFAULT 0`, `locked_until BIGINT` |
+| `sessions` | `token_hash TEXT PK`, `account_id BIGINT NOT NULL → accounts`, `last_used_at BIGINT NOT NULL` |
+| `profiles` | `account_id BIGINT PK → accounts`, `profile_json TEXT NOT NULL`, `rev BIGINT NOT NULL`, `updated_at BIGINT NOT NULL` |
+| `runs` | `id TEXT PK` (16 byte base64url), `account_id BIGINT NOT NULL → accounts`, `status TEXT NOT NULL` (`open`/`finished`/`abandoned`/`rejected`), `setup_json TEXT NOT NULL`, `data_version TEXT NOT NULL`, `created_at BIGINT NOT NULL`, `finished_at BIGINT`, `result_json TEXT` |
 
 **Migration 2 (GĐ 4d):**
 
 | Thay đổi | Cột |
 |---|---|
-| `runs` thêm | `loadout_json TEXT` (null với phiếu cũ → chạy lại không loadout), `starter_deck INTEGER NOT NULL DEFAULT 0` |
-| Bảng mới `pulls` | `id INTEGER PK`, `account_id INTEGER NOT NULL → accounts`, `banner_id TEXT NOT NULL`, `count INTEGER NOT NULL`, `seed INTEGER NOT NULL`, `results_json TEXT NOT NULL`, `created_at INTEGER NOT NULL`; chỉ mục `(account_id, created_at)` |
+| `runs` thêm | `loadout_json TEXT` (null với phiếu cũ → chạy lại không loadout), `starter_deck BIGINT NOT NULL DEFAULT 0` |
+| Bảng mới `pulls` | `id BIGINT GENERATED ALWAYS AS IDENTITY PK`, `account_id BIGINT NOT NULL → accounts`, `banner_id TEXT NOT NULL`, `count BIGINT NOT NULL`, `seed BIGINT NOT NULL`, `results_json TEXT NOT NULL`, `created_at BIGINT NOT NULL`; chỉ mục `(account_id, created_at)` |
 
-Thời gian lưu dạng ms UTC từ `clock()`. Mọi thao tác "đọc hồ sơ → hàm thuần → ghi hồ
-sơ (+ bảng `runs`)" chạy trong một transaction đồng bộ của better-sqlite3.
+Thời gian lưu dạng ms UTC từ `clock()` (cột `BIGINT`). Mọi thao tác "đọc hồ sơ
+→ hàm thuần → ghi hồ sơ (+ bảng `runs`)" chạy trong một transaction async;
+khoá lạc quan của hồ sơ vẫn là `rev` + `If-Match` như cũ.
 
 ---
 
@@ -172,9 +178,10 @@ sơ (+ bảng `runs`)" chạy trong một transaction đồng bộ của better-
 
 ## 7. Triển khai Internet (GĐ 5e)
 
-Một VPS duy nhất chạy server + Caddy đứng trước làm reverse proxy. SQLite cần ổ đĩa
-bền và là nguồn chân lý duy nhất nên không scale ngang; file tĩnh của client do Caddy
-phục vụ (không cần `@fastify/static`).
+Một VPS duy nhất chạy server + Caddy đứng trước làm reverse proxy; Postgres là
+nguồn chân lý duy nhất nên không scale ngang (Supabase hoặc Postgres tự host).
+File tĩnh của client do Caddy phục vụ (không cần `@fastify/static`). Phương án
+PaaS: Vercel (client) + Render (server) + Supabase — `deploy/vercel-render.md`.
 
 ```text
 Internet ──HTTPS/WSS──> Caddy ──> 127.0.0.1:8787  (node apps/server/dist/main.js, systemd)
@@ -197,15 +204,16 @@ lỗi rõ và không lắng nghe.
 |---|---|---|---|
 | `PORT` | `8787` | `8787` | Cổng server |
 | `HOST` | `127.0.0.1` | `127.0.0.1` | Chỉ lắng nghe loopback (Caddy lo TLS) |
-| `DB_PATH` | `./data/vong-nguyet.db` | bắt buộc chỉ rõ | File SQLite; tạo thư mục nếu thiếu |
+| `DATABASE_URL` | — | bắt buộc ở mọi chế độ | Chuỗi Postgres — Supabase pooler 6543; dev dùng project Supabase riêng (`apps/server/.env`) |
 | `NODE_ENV` | — | `production` | Bật chế độ production (kiểm `Origin`, giới hạn tần suất) |
 | `TRUST_PROXY` | — | `1` | Tin `X-Forwarded-For` của Caddy → IP thật cho giới hạn tần suất |
 | `ALLOWED_ORIGINS` | — | bắt buộc | Danh sách origin `https://...` phân tách bằng dấu phẩy |
-| `BACKUP_DIR` | — | bắt buộc | Thư mục nhận bản sao lưu `db.backup()` |
+| `BACKUP_DIR` | — | tùy chọn | Thư mục nhận dump `pg_dump`; trống → tắt sao lưu định kỳ (Supabase có managed backups) |
 
 `NODE_ENV` khác `production` (dev/test): `TRUST_PROXY`, `ALLOWED_ORIGINS`,
 `BACKUP_DIR` không bắt buộc; không có `ALLOWED_ORIGINS` thì bỏ kiểm `Origin`,
-không có `BACKUP_DIR` thì tắt sao lưu định kỳ.
+không có `BACKUP_DIR` thì tắt sao lưu định kỳ. `DATABASE_URL` bắt buộc cả dev
+(test dùng `pg-mem`, không đụng env).
 
 ### 7.2 Giới hạn tần suất (`rate-limit.ts`)
 
@@ -230,11 +238,13 @@ rào chống CSRF/cross-site, không phải xác thực.
 
 ### 7.4 Sao lưu / khôi phục
 
-- `backup.ts`: `scheduler` đặt `db.backup(BACKUP_DIR/vong-nguyet-<ISO>.db)` mỗi 6 giờ;
-  sau mỗi lần dọn bản cũ, chỉ giữ **14** bản mới nhất (≈ 3,5 ngày).
-- Khôi phục (trong `deploy/README.md` và `apps/server/README`): dừng service → chép
-  bản sao lưu đè `DB_PATH` → khởi động lại. Khôi phục khi server đang chạy không an
-  toàn (WAL).
+- `backup.ts`: khi `BACKUP_DIR` được đặt, `scheduler` spawn `pg_dump` mỗi 6 giờ
+  ra `BACKUP_DIR/vong-nguyet-<ISO>.sql`; sau mỗi lần dọn bản cũ, chỉ giữ **14**
+  bản mới nhất (≈ 3,5 ngày). Lỗi `pg_dump` chỉ log, không fatal. Với Supabase
+  (không có `pg_dump` trên Render) để trống `BACKUP_DIR` và dùng managed
+  backups: Dashboard → Database → Backups.
+- Khôi phục (trong `deploy/README.md`): `psql "$DATABASE_URL" -f <dump>.sql`
+  khi server dừng, hoặc restore snapshot trên Supabase Dashboard.
 - Bản sao lưu nằm ngoài repo; thư mục backup thêm vào `.gitignore` không cần thiết
   vì `BACKUP_DIR` trỏ ra ngoài.
 

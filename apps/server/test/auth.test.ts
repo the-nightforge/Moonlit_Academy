@@ -10,7 +10,7 @@ const DAY = 24 * 60 * 60 * 1000;
 describe("accounts and sessions", () => {
   // Scrypt hashing makes this CPU-bound; allow headroom under parallel load.
   it("T173: register, login, logout; duplicate names; lockout after repeated wrong passwords; only hashes stored", { timeout: 20_000 }, async () => {
-    const server = testServer();
+    const server = await testServer();
     const created = await call(server, "POST", "/api/auth/register", { body: { username: "  Linh_Lung ", password: "trang-sang-8" } });
     expect(created.status).toBe(201);
     expect(created.body).toMatchObject({ rev: 1, profile: grantStarterGift(server.data, createProfile(server.data)).profile });
@@ -25,10 +25,10 @@ describe("accounts and sessions", () => {
     expect((await call(server, "POST", "/api/auth/register", { body: { username: 5 } })).status).toBe(400);
 
     // Only hashes reach the database.
-    const account = server.db.prepare("SELECT password_hash FROM accounts").get() as { password_hash: string };
+    const account = await server.db.prepare("SELECT password_hash FROM accounts").get() as { password_hash: string };
     expect(account.password_hash).not.toContain("trang-sang-8");
     expect(account.password_hash).toMatch(/^[0-9a-f]{32}:[0-9a-f]{128}$/);
-    const sessions = server.db.prepare("SELECT token_hash FROM sessions").all() as { token_hash: string }[];
+    const sessions = await server.db.prepare("SELECT token_hash FROM sessions").all() as { token_hash: string }[];
     expect(sessions.map((row) => row.token_hash)).not.toContain(token);
 
     const login = await call(server, "POST", "/api/auth/login", { body: { username: "LINH_LUNG", password: "trang-sang-8" } });
@@ -56,27 +56,27 @@ describe("accounts and sessions", () => {
   });
 
   it("T174: a session expires 30 days after its last use; each use extends it", async () => {
-    const server = testServer();
+    const server = await testServer();
     const { token } = await register(server);
     const ctx = createContext(server.deps, server.version);
     const request = { headers: { authorization: `Bearer ${token}` } } as unknown as FastifyRequest;
-    const lastUsed = () => (server.db.prepare("SELECT last_used_at FROM sessions").get() as { last_used_at: number }).last_used_at;
+    const lastUsed = async () => ((await server.db.prepare("SELECT last_used_at FROM sessions").get()) as { last_used_at: number }).last_used_at;
 
     server.now.value += SESSION_TTL_MS - DAY;
-    expect(ctx.requireAccount(request)).toBe(1);
-    expect(lastUsed()).toBe(server.now.value);
+    expect(await ctx.requireAccount(request)).toBe(1);
+    expect(await lastUsed()).toBe(server.now.value);
     server.now.value += SESSION_TTL_MS - DAY; // 58 days after login, 29 after last use
-    expect(ctx.requireAccount(request)).toBe(1);
+    expect(await ctx.requireAccount(request)).toBe(1);
 
     server.now.value += SESSION_TTL_MS + 1; // unused for more than 30 days
-    expect(() => ctx.requireAccount(request)).toThrow("unauthorized");
-    expect(server.db.prepare("SELECT COUNT(*) AS n FROM sessions").get()).toEqual({ n: 0 });
+    await expect(ctx.requireAccount(request)).rejects.toThrow("unauthorized");
+    expect(await server.db.prepare("SELECT COUNT(*) AS n FROM sessions").get()).toEqual({ n: 0 });
     const bad = { headers: { authorization: "Bearer khong-phai-token" } } as unknown as FastifyRequest;
-    expect(() => ctx.requireAccount(bad)).toThrow("unauthorized");
+    await expect(ctx.requireAccount(bad)).rejects.toThrow("unauthorized");
   });
 
   it("rejects requests for other game data, except the health check", async () => {
-    const server = testServer();
+    const server = await testServer();
     expect((await call(server, "POST", "/api/auth/login", { body: {}, version: "0000000000000000" })).body)
       .toEqual({ error: "outdated client", dataVersion: server.version });
     const health = await server.app.inject({ method: "GET", url: "/api/health" });

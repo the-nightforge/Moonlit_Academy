@@ -4,12 +4,12 @@ import { call, register, testServer } from "./helpers";
 
 describe("moon star shop route", () => {
   it("T196: buying spends moon stars and counts toward the weekly limit; refusals change nothing", async () => {
-    const server = testServer();
+    const server = await testServer();
     const { token } = await register(server);
-    const row = server.db.prepare("SELECT profile_json FROM profiles").get() as { profile_json: string };
+    const row = await server.db.prepare("SELECT profile_json FROM profiles").get() as { profile_json: string };
     const profile = parseProfile(server.data, JSON.parse(row.profile_json)).profile;
     profile.currencies.moonStar = 1000;
-    server.db.prepare("UPDATE profiles SET profile_json = ?").run(JSON.stringify(profile));
+    await server.db.prepare("UPDATE profiles SET profile_json = ?").run(JSON.stringify(profile));
     const pullItem = server.data.economyConfig.moonStarShop.find((item) => item.id === "shop_pull")!;
 
     expect((await call(server, "POST", "/api/shop/shop_pull/buy", { token, body: {} })).status).toBe(428);

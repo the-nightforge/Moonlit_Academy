@@ -5,23 +5,23 @@
   "type": "module",
   "scripts": {
     "build": "vite build --ssr src/main.ts --outDir dist",
-    "dev": "vite build --ssr src/main.ts --outDir dist --watch & node --watch dist/main.js",
-    "start": "node dist/main.js",
+    "dev": "vite build --ssr src/main.ts --outDir dist --watch & node --env-file-if-exists=.env --watch dist/main.js",
+    "start": "node --env-file-if-exists=.env dist/main.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@fastify/websocket": "^11.3.1",
-    "better-sqlite3": "^13.0.3",
     "data": "workspace:*",
     "fastify": "^5.12.5",
+    "postgres": "^3.4.9",
     "rules": "workspace:*",
     "zod": "~4.6.5"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.0.0",
     "@types/ws": "^8.18.1",
+    "pg-mem": "^3.0.14",
     "vite": "^8.3.0"
   }
 }
