@@ -58,7 +58,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   return {
     production,
     port: e.PORT ? Number(e.PORT) : DEV_CONFIG.port,
-    host: e.HOST ?? DEV_CONFIG.host,
+    // PaaS (Render/Railway/Fly) health checks need a public bind; dev stays loopback.
+    host: e.HOST ?? (production ? "0.0.0.0" : DEV_CONFIG.host),
     dbPath: e.DB_PATH ?? DEV_CONFIG.dbPath,
     trustProxy: e.TRUST_PROXY === "1" || e.TRUST_PROXY === "true",
     allowedOrigins: (e.ALLOWED_ORIGINS ?? "").split(",").map((o) => o.trim()).filter((o) => o !== ""),

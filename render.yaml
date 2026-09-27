@@ -1,0 +1,27 @@
+# Render Blueprint — backend Vọng Nguyệt (`deploy/vercel-render.md`).
+# Free plan: filesystem is ephemeral — SQLite is wiped on redeploy/restart.
+# To keep data, upgrade to a paid plan, attach a disk mounted at /var/data and
+# change DB_PATH/BACKUP_DIR to /var/data/... (see the guide).
+services:
+  - type: web
+    name: vong-nguyet
+    runtime: node
+    plan: free
+    healthCheckPath: /api/health
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    startCommand: node apps/server/dist/main.js
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: DB_PATH
+        value: ./data/vong-nguyet.db
+      - key: BACKUP_DIR
+        value: ./data/backups
+      # Fill with the Vercel domain after deploying the client, e.g.
+      # https://vong-nguyet.vercel.app — the server refuses other origins.
+      - key: ALLOWED_ORIGINS
+        sync: false
