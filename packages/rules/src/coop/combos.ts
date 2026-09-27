@@ -1,5 +1,6 @@
 import { checkCombatEnd, resolveEffects } from "../effects";
 import { cardDefOf } from "../gear";
+import { isCardPlayable } from "../queries";
 import type {
   CardMatcher,
   CombatEvent,
@@ -62,6 +63,68 @@ export function entryMatchesPart(
   entry: PlayedEntry,
 ): boolean {
   return cardMatchesPart(data, cardDefOf(data, state, state.cards[entry.instanceId]!), part, entry.moonAfter);
+}
+
+/** Moon indices a card could leave behind — its own `shiftMoon` effects move it. */
+export function reachableMoons(data: GameData, state: CombatState, card: { effects: Effect[] } | undefined): Set<number> {
+  const lands = new Set<number>([state.moonIndex]);
+  if (card === undefined) return lands;
+  const walk = (effects: Effect[]): void => {
+    for (const effect of effects) {
+      if (effect.type === "shiftMoon") {
+        lands.add((state.moonIndex + effect.amount) % data.moonPhases.length);
+      }
+      if (effect.type === "conditional") {
+        walk(effect.then);
+        walk(effect.else ?? []);
+      }
+    }
+  };
+  walk(card.effects);
+  return lands;
+}
+
+/**
+ * `17` §9.3 — hand cards of `seatIndex` that would complete a Hợp Kích half the
+ * partner already played this turn, mapped to the combo id. File order decides
+ * like `fireCoopCombos`; a card gets its first matching combo. Pure query for
+ * the bot and the client highlight — never mutates.
+ */
+export function comboHintFor(data: GameData, state: CombatState, seatIndex: number): Map<string, string> {
+  const hints = new Map<string, string>();
+  const seat = state.players[seatIndex];
+  if (!seat || state.mode !== "coop") return hints;
+  const journal = state.playedThisTurn ?? [];
+  const used = state.comboUsed ?? {};
+  for (const combo of Object.values(data.coopCombos)) {
+    const counts = used[combo.id];
+    if (counts?.round === state.round) continue;
+    if (combo.limit.perCombat !== undefined && (counts?.total ?? 0) >= combo.limit.perCombat) continue;
+    for (const [mine, theirs] of [
+      [0, 1],
+      [1, 0],
+    ] as const) {
+      const partner = journal.find(
+        (entry) =>
+          entry.player !== seatIndex &&
+          entry.comboId === undefined &&
+          entryMatchesPart(data, state, combo.parts[theirs], entry),
+      );
+      if (partner === undefined) continue;
+      for (const instanceId of seat.hand) {
+        if (hints.has(instanceId)) continue;
+        if (!isCardPlayable(data, state, instanceId, seatIndex)) continue;
+        const card = cardDefOf(data, state, state.cards[instanceId]!);
+        for (const moon of reachableMoons(data, state, card)) {
+          if (cardMatchesPart(data, card, combo.parts[mine], moon)) {
+            hints.set(instanceId, combo.id);
+            break;
+          }
+        }
+      }
+    }
+  }
+  return hints;
 }
 
 /**

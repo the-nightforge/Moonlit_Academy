@@ -1,8 +1,8 @@
 import { chooseCombatAction } from "../bot";
 import { cardDefOf } from "../gear";
-import { getValidTargets, isCardPlayable } from "../queries";
-import type { Action, CardDef, CombatState, Effect, GameData } from "../types/index";
-import { cardMatchesPart, entryMatchesPart } from "./combos";
+import { getValidTargets } from "../queries";
+import type { Action, CardDef, CombatState, GameData } from "../types/index";
+import { comboHintFor } from "./combos";
 
 /** Hero ids that enemy intent chains currently aim at (`17` §8.8 — guard the marked ally). */
 function threatenedHeroes(state: CombatState): Set<string> {
@@ -13,24 +13,6 @@ function threatenedHeroes(state: CombatState): Set<string> {
     }
   }
   return marked;
-}
-
-/** Moon indices this card could leave behind — its own `shiftMoon` effects move it. */
-function reachableMoons(data: GameData, state: CombatState, card: CardDef): Set<number> {
-  const lands = new Set<number>([state.moonIndex]);
-  const walk = (effects: Effect[]): void => {
-    for (const effect of effects) {
-      if (effect.type === "shiftMoon") {
-        lands.add((state.moonIndex + effect.amount) % data.moonPhases.length);
-      }
-      if (effect.type === "conditional") {
-        walk(effect.then);
-        walk(effect.else ?? []);
-      }
-    }
-  };
-  walk(card.effects);
-  return lands;
 }
 
 function pickTarget(data: GameData, state: CombatState, card: CardDef, instanceId: string): string | undefined {
@@ -51,39 +33,14 @@ function pickTarget(data: GameData, state: CombatState, card: CardDef, instanceI
 
 /**
  * A card in `seat`'s hand that completes a Hợp Kích half-finished by the
- * partner (`17` §8.8). Combos are tried in file order, like the real matcher.
+ * partner (`17` §8.8) — `comboHintFor` finds them in file order.
  */
 function comboCompletion(data: GameData, state: CombatState, seatIndex: number): Action | null {
-  const seat = state.players[seatIndex]!;
-  const journal = state.playedThisTurn ?? [];
-  const used = state.comboUsed ?? {};
-  for (const combo of Object.values(data.coopCombos)) {
-    const counts = used[combo.id];
-    if (counts?.round === state.round) continue;
-    if (combo.limit.perCombat !== undefined && (counts?.total ?? 0) >= combo.limit.perCombat) continue;
-    for (const [mine, theirs] of [
-      [0, 1],
-      [1, 0],
-    ] as const) {
-      const partner = journal.find(
-        (entry) =>
-          entry.player !== seatIndex &&
-          entry.comboId === undefined &&
-          entryMatchesPart(data, state, combo.parts[theirs], entry),
-      );
-      if (partner === undefined) continue;
-      for (const instanceId of seat.hand) {
-        if (!isCardPlayable(data, state, instanceId, seatIndex)) continue;
-        const card = cardDefOf(data, state, state.cards[instanceId]!)!;
-        const fits = [...reachableMoons(data, state, card)].some((moon) =>
-          cardMatchesPart(data, card, combo.parts[mine], moon),
-        );
-        if (!fits) continue;
-        const targetId = pickTarget(data, state, card, instanceId);
-        if (card.target !== "none" && targetId === undefined) continue;
-        return { type: "playCard", instanceId, ...(targetId !== undefined ? { targetId } : {}) };
-      }
-    }
+  for (const instanceId of comboHintFor(data, state, seatIndex).keys()) {
+    const card = cardDefOf(data, state, state.cards[instanceId]!)!;
+    const targetId = pickTarget(data, state, card, instanceId);
+    if (card.target !== "none" && targetId === undefined) continue;
+    return { type: "playCard", instanceId, ...(targetId !== undefined ? { targetId } : {}) };
   }
   return null;
 }

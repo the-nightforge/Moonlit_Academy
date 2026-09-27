@@ -29,7 +29,7 @@ và lý do.
 
 **Điều kiện trước:** GĐ 4e (`15` §4) và gói chỉnh G1 đã vào `main`.
 
-**Trạng thái:** đã duyệt (2026-09-30) — toàn bộ §12 theo phương án đề xuất: `@fastify/websocket` được duyệt; trang bị PvP theo danh sách free; boss giai đoạn 4 = đếm ngược; chỗ tiêu Nguyệt Trần/Huyền Thiết để sau GĐ 6; chưa thêm nhiệm vụ PvP/co-op.
+**Trạng thái:** đã duyệt (2026-09-30) — toàn bộ §12 theo phương án đề xuất: `@fastify/websocket` được duyệt; trang bị PvP theo danh sách free; boss giai đoạn 4 = đếm ngược; chỗ tiêu Nguyệt Trần/Huyền Thiết để sau GĐ 6; chưa thêm nhiệm vụ PvP/co-op. **Đã cài đặt** 5a→6b.2 (rules, server, client, e2e); còn 5e.2 triển khai thật cùng người dùng. Số thưởng co-op được chỉnh theo `economy-sim`: `firstWinOfDay` 20 Ngọc (xem `14` §15).
 
 **Thư viện mới cần duyệt** (CLAUDE.md): `@fastify/websocket` (kéo theo `ws`, `@types/ws`)
 cho `apps/server`. Client dùng `WebSocket` có sẵn của trình duyệt. Không thêm thư viện

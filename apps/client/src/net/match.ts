@@ -14,12 +14,12 @@ export class NetMatch {
   readonly others: { seat: number; username: string; connected: boolean }[];
   view: CombatState;
   deadline: number | null;
-  /** Ranked matches carry rating/rewards and the new profile rev (`16` §8.8). */
+  /** Ranked and queue co-op matches carry rewards and the new profile rev (`16` §8.8/§8.9). */
   ended: {
     result: "won" | "lost" | "draw";
     reason: string;
     rating?: { before: number; after: number };
-    rewards?: { honor: number };
+    rewards?: { honor?: number; moonJade?: number; moonDust?: number; firstWin?: boolean };
     profileRev?: number;
   } | null = null;
 
@@ -66,7 +66,10 @@ export class NetMatch {
   /** `true` while the seat may legally act from its own view. */
   canAct(): boolean {
     const status = this.view.status;
-    if (status === "mulligan") return !this.view.players[this.you]!.mulliganDone;
+    const seat = this.view.players[this.you]!;
+    if (status === "mulligan") return !seat.mulliganDone;
+    // Co-op keeps `playerTurn` open for both seats; a finished seat is done.
+    if (this.view.mode === "coop" && seat.done) return false;
     return status === "playerTurn" || status === "choosing";
   }
 

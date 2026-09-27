@@ -14,6 +14,7 @@ export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-co
 export { createPvpCombat } from "./pvp/create";
 export { createCoopCombat } from "./coop/create";
 export { coopBot } from "./coop/bot";
+export { comboHintFor } from "./coop/combos";
 export { pvpBot } from "./pvp/bot";
 export { replayMatch } from "./pvp/replay";
 export { redactEvents, viewFor } from "./pvp/view";

@@ -3,6 +3,7 @@ import type { CardDef, CombatEvent, CombatState, CoopSide, GameData, Loadout } f
 import {
   applyAction,
   applyCoopResult,
+  comboHintFor,
   coopBot,
   coopRedactEvents,
   coopViewFor,
@@ -348,6 +349,41 @@ describe("co-op combat", () => {
     state = result.state;
     expect(result.events.some((event) => event.type === "coopComboTriggered")).toBe(false);
     expect(state.comboUsed).toEqual({ combo_bang_nguyet_ke: { total: 1, round: 1 } });
+  });
+
+  it("comboHintFor flags only a hand card completing the partner's half (`17` §9.3)", () => {
+    const { data, state: created } = makeCoopCombat({
+      side0: coopSide(["m05", "f04", "f02"]),
+      side1: coopSide(["f03", "m06", "m05"]),
+      setup: (state) => {
+        state.players[0]!.moonPower = 20;
+        state.players[1]!.moonPower = 20;
+      },
+    });
+    let state = created;
+    const boss = () => state.enemies[0]!;
+    const schemeId = injectSeatCard(state, data, data.cards["f02_dien_doat"]!, 0);
+    const freezeId = injectSeatCard(state, data, data.cards["f03_han_an"]!, 1);
+
+    // Nothing played yet — no hint on either seat.
+    expect(comboHintFor(data, state, 0).size).toBe(0);
+    expect(comboHintFor(data, state, 1).size).toBe(0);
+
+    let result = applyAction(data, state, { type: "playCard", player: 0, instanceId: schemeId, targetId: boss().id });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+
+    // Seat 1's freeze card now completes the scheme half seat 0 played.
+    expect(comboHintFor(data, state, 1).get(freezeId)).toBe("combo_bang_nguyet_ke");
+    // The acting seat's own journal does not hint to itself.
+    expect(comboHintFor(data, state, 0).size).toBe(0);
+
+    result = applyAction(data, state, { type: "playCard", player: 1, instanceId: freezeId, targetId: boss().id });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    // Consumed combo halves stop hinting (perCombat spent and cards marked).
+    expect(comboHintFor(data, state, 0).size).toBe(0);
+    expect(comboHintFor(data, state, 1).size).toBe(0);
   });
 
   it("T252: a combo needs both seats; a consumed card cannot feed another combo", () => {

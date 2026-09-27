@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { auth, initApi, setToken } from "./api";
 import { ArenaScene } from "./scenes/arena-scene";
+import { CoopLobbyScene } from "./scenes/coop-lobby-scene";
 import { LoginScene } from "./scenes/login-scene";
 import { session } from "./session";
 import { CombatScene } from "./scenes/combat-scene";
@@ -29,7 +30,7 @@ const game = new Phaser.Game({
   },
   scene: [
     LoginScene, DeckSelectScene, DeckBuilderScene, MasteryScene, GachaScene, ShopScene, HeroesScene, MissionsScene, ArmoryScene,
-    ArenaScene, CombatScene, RunScene,
+    ArenaScene, CoopLobbyScene, CombatScene, RunScene,
   ],
 });
 

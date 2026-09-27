@@ -26,7 +26,8 @@ export type ServerMessage =
       result: "won" | "lost" | "draw";
       reason: string;
       rating?: { before: number; after: number };
-      rewards?: { honor: number };
+      /** Ranked pays `honor`; queue co-op pays `moonJade`/`moonDust` (`16` §8.8/§8.9). */
+      rewards?: { honor?: number; moonJade?: number; moonDust?: number; firstWin?: boolean };
       profileRev?: number;
     }
   | { type: "match.emote"; matchId: string; from: number; emoteId: string }

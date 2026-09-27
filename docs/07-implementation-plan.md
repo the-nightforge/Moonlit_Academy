@@ -268,7 +268,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 ## Giai đoạn 6 — Co-op (Liên Thủ)
 
 ### Bước 6a.1–6a.5 — Luật co-op
-> Tài liệu + nội dung (3 Hợp Kích, Boss *Nguyệt Thực Ma Quân* 4 giai đoạn — duyệt); `coop-config`, `coop-combos`, `phases`, effect `execute`; `createCoopCombat`, lượt đồng thời, mục tiêu co-op; `coopBot`, mô phỏng + chỉnh số (duyệt). T246–T259.
+> Tài liệu + nội dung (3 Hợp Kích, Boss *Nguyệt Thực Ma Quân* 4 giai đoạn — duyệt); `coop-config`, `coop-combos`, `phases`, effect `execute`; `createCoopCombat`, lượt đồng thời, mục tiêu co-op; `coopBot`, mô phỏng + chỉnh số (duyệt). T246–T259. *(Đã xong.)*
 
 ### Bước 6b.1–6b.2 — Co-op trên server + client
-> `coop-room`, hàng chờ / Phòng riêng / đồng đội máy, thưởng co-op (`14` §15); client Liên Thủ (sảnh, màn trận 6 Hero, banner Hợp Kích). T260–T262.
+> `coop-room`, hàng chờ / Phòng riêng / đồng đội máy, thưởng co-op (`14` §15); client Liên Thủ (sảnh, màn trận 6 Hero, banner Hợp Kích). T260–T262. *(Đã xong.)*
