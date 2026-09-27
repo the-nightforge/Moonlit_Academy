@@ -44,15 +44,15 @@ export interface AppContext extends AppDeps {
   limiter: RateLimiter;
   parseBody<T>(schema: z.ZodType<T>, body: unknown): T;
   /** The signed-in account for this request; throws 401 otherwise. Slides the session. */
-  requireAccount(request: FastifyRequest): number;
+  requireAccount(request: FastifyRequest): Promise<number>;
   /** The account holding `token`, or null — for the WebSocket `hello` (`16` §8.1). */
-  accountByToken(token: string): number | null;
-  readProfile(accountId: number): { profile: Profile; rev: number };
+  accountByToken(token: string): Promise<number | null>;
+  readProfile(accountId: number): Promise<{ profile: Profile; rev: number }>;
   /**
    * Writes `profile` back with `rev + 1` inside the caller's transaction —
    * server-authoritative changes (match settlement) carry no `If-Match`.
    */
-  saveProfile(accountId: number, profile: Profile): number;
+  saveProfile(accountId: number, profile: Profile): Promise<number>;
   /**
    * Applies a pure rule to the account's profile in one transaction (`16` §2):
    * checks `If-Match` against `rev`, turns a rule error into 400, writes `rev + 1`.
@@ -61,7 +61,7 @@ export interface AppContext extends AppDeps {
     accountId: number,
     request: FastifyRequest,
     change: (profile: Profile) => ProfileChange<T>,
-  ): { profile: Profile; rev: number } & T;
+  ): Promise<{ profile: Profile; rev: number } & T>;
 }
 
 export type ProfileChange<T> =
@@ -82,8 +82,8 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
     "UPDATE profiles SET profile_json = ?, rev = ?, updated_at = ? WHERE account_id = ?",
   );
 
-  function readProfile(accountId: number): { profile: Profile; rev: number } {
-    const row = selectProfile.get(accountId);
+  async function readProfile(accountId: number): Promise<{ profile: Profile; rev: number }> {
+    const row = await selectProfile.get(accountId);
     if (!row) throw new HttpError(404, "unknown account");
     return { profile: parseProfile(data, JSON.parse(row.profile_json)).profile, rev: row.rev };
   }
@@ -92,37 +92,42 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
     accountId: number,
     request: FastifyRequest,
     change: (profile: Profile) => ProfileChange<T>,
-  ): { profile: Profile; rev: number } & T {
+  ): Promise<{ profile: Profile; rev: number } & T> {
     const header = request.headers["if-match"];
     const expected = typeof header === "string" && /^\d+$/.test(header.trim()) ? Number(header.trim()) : null;
     if (expected === null) throw new HttpError(428, "if-match required");
-    return db.transaction(() => {
-      const current = readProfile(accountId);
+    return db.transaction(async () => {
+      const current = await readProfile(accountId);
       if (current.rev !== expected) throw new HttpError(409, "stale profile", current);
       const result = change(current.profile);
       if (!result.ok) throw new HttpError(400, result.error);
       const { ok: _ok, profile, ...extra } = result;
       const rev = current.rev + 1;
-      writeProfile.run(JSON.stringify(profile), rev, clock(), accountId);
+      await writeProfile.run(JSON.stringify(profile), rev, clock(), accountId);
       return { ...extra, profile, rev } as unknown as { profile: Profile; rev: number } & T;
-    })();
+    });
   }
 
-  function saveProfile(accountId: number, profile: Profile): number {
-    const rev = readProfile(accountId).rev + 1;
-    writeProfile.run(JSON.stringify(profile), rev, clock(), accountId);
-    return rev;
+  const bumpProfile = db.prepare<[string, number, number], { rev: number }>(
+    "UPDATE profiles SET profile_json = ?, rev = rev + 1, updated_at = ? WHERE account_id = ? RETURNING rev",
+  );
+
+  /** `rev = rev + 1` in the UPDATE itself — concurrent writers serialise on the row lock. */
+  async function saveProfile(accountId: number, profile: Profile): Promise<number> {
+    const row = await bumpProfile.get(JSON.stringify(profile), clock(), accountId);
+    if (!row) throw new HttpError(404, "unknown account");
+    return row.rev;
   }
 
-  function accountByToken(token: string): number | null {
-    const session = findSession.get(hashToken(token));
+  async function accountByToken(token: string): Promise<number | null> {
+    const session = await findSession.get(hashToken(token));
     if (!session) return null;
     const now = clock();
     if (now - session.last_used_at > SESSION_TTL_MS) {
-      dropSession.run(hashToken(token));
+      await dropSession.run(hashToken(token));
       return null;
     }
-    touchSession.run(now, hashToken(token));
+    await touchSession.run(now, hashToken(token));
     return session.account_id;
   }
 
@@ -138,11 +143,11 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
       if (!parsed.success) throw new HttpError(400, "bad request", { issues: parsed.error.issues });
       return parsed.data;
     },
-    requireAccount(request) {
+    async requireAccount(request) {
       const header = request.headers.authorization;
       const token = header?.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : "";
       if (token === "") throw new HttpError(401, "unauthorized");
-      const accountId = accountByToken(token);
+      const accountId = await accountByToken(token);
       if (accountId === null) throw new HttpError(401, "unauthorized");
       return accountId;
     },

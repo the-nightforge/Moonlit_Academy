@@ -55,8 +55,8 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
   const closeRun = db.prepare("UPDATE runs SET status = ?, finished_at = ?, result_json = ? WHERE id = ?");
 
   /** The account's open ticket `runId`, or the reason it cannot take a result. */
-  function openRun(runId: string, accountId: number): RunRow {
-    const run = findRun.get(runId, accountId);
+  async function openRun(runId: string, accountId: number): Promise<RunRow> {
+    const run = await findRun.get(runId, accountId);
     if (!run) throw new HttpError(404, "unknown run");
     if (run.status !== "open") throw new HttpError(409, "run closed");
     if (clock() - run.created_at > TICKET_TTL_MS) throw new HttpError(410, "ticket expired");
@@ -65,9 +65,9 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
   }
 
   app.post("/api/runs", async (request, reply) => {
-    const accountId = ctx.requireAccount(request);
+    const accountId = await ctx.requireAccount(request);
     const body = ctx.parseBody(startBody, request.body);
-    const { profile } = ctx.readProfile(accountId);
+    const { profile } = await ctx.readProfile(accountId);
     let deck: SavedDeck | Omit<SavedDeck, "id" | "name">;
     if ("heroIds" in body) {
       deck = { heroIds: body.heroIds, cardIds: starterDeck(data, body.heroIds) };
@@ -85,17 +85,17 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
 
     const setup: RunSetup = { heroIds: deck.heroIds, seed: random(4).readUInt32BE(0), deckCardIds: [...deck.cardIds] };
     const runId = random(16).toString("base64url");
-    db.transaction(() => {
+    await db.transaction(async () => {
       const now = clock();
-      abandonOpen.run(now, accountId);
-      insertRun.run(runId, accountId, JSON.stringify(setup), ctx.dataVersion, now, "heroIds" in body ? 1 : 0, JSON.stringify(loadout));
-    })();
+      await abandonOpen.run(now, accountId);
+      await insertRun.run(runId, accountId, JSON.stringify(setup), ctx.dataVersion, now, "heroIds" in body ? 1 : 0, JSON.stringify(loadout));
+    });
     return reply.code(201).send({ runId, setup, loadout });
   });
 
   app.post<{ Params: { id: string } }>("/api/runs/:id/finish", async (request) => {
-    const accountId = ctx.requireAccount(request);
-    const run = openRun(request.params.id, accountId);
+    const accountId = await ctx.requireAccount(request);
+    const run = await openRun(request.params.id, accountId);
     const { actions } = ctx.parseBody(finishBody, request.body);
     const setup = JSON.parse(run.setup_json) as RunSetup;
 
@@ -103,29 +103,29 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
     const loadout = run.loadout_json === null ? undefined : (JSON.parse(run.loadout_json) as Loadout);
     const replay = replayRun(data, setup, actions, loadout);
     if (!replay.ok) {
-      closeRun.run("rejected", clock(), JSON.stringify({ step: replay.step, reason: replay.reason }), run.id);
+      await closeRun.run("rejected", clock(), JSON.stringify({ step: replay.step, reason: replay.reason }), run.id);
       throw new HttpError(422, "replay failed", { step: replay.step, reason: replay.reason });
     }
     if (replay.run.status !== "won" && replay.run.status !== "lost") throw new HttpError(422, "run not finished");
 
     const result = summarizeRun(data, replay.run);
-    return db.transaction(() => {
-      const outcome = ctx.mutateProfile(accountId, request, (profile) => {
+    return db.transaction(async () => {
+      const outcome = await ctx.mutateProfile(accountId, request, (profile) => {
         const mastery = applyRunResult(data, profile, result);
         const paid = applyRunRewards(data, mastery.profile, result, { now: clock(), starterDeck: run.starter_deck === 1 });
         return { ok: true, profile: paid.profile, gains: mastery.gains, rewards: paid.rewards };
       });
-      closeRun.run("finished", clock(), JSON.stringify(result), run.id);
+      await closeRun.run("finished", clock(), JSON.stringify(result), run.id);
       return outcome;
-    })();
+    });
   });
 
   app.post<{ Params: { id: string } }>("/api/runs/:id/abandon", async (request, reply) => {
-    const accountId = ctx.requireAccount(request);
-    const run = findRun.get(request.params.id, accountId);
+    const accountId = await ctx.requireAccount(request);
+    const run = await findRun.get(request.params.id, accountId);
     if (!run) throw new HttpError(404, "unknown run");
     if (run.status !== "open") throw new HttpError(409, "run closed");
-    closeRun.run("abandoned", clock(), null, run.id);
+    await closeRun.run("abandoned", clock(), null, run.id);
     return reply.code(204).send();
   });
 }

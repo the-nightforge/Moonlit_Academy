@@ -7,8 +7,9 @@ import { hashToken } from "../src/auth";
 import { buildApp } from "../src/app";
 import type { ServerConfig } from "../src/config";
 import type { AppDeps } from "../src/context";
-import { openDb, type Db } from "../src/db";
+import { dbFromRunner, migrate, type Db, type SqlRunner } from "../src/db";
 import type { Scheduler } from "../src/scheduler";
+import { newDb } from "pg-mem";
 
 export interface TestServer {
   app: FastifyInstance;
@@ -20,10 +21,46 @@ export interface TestServer {
   deps: AppDeps;
 }
 
+/**
+ * pg-mem `createPg` client as a `SqlRunner`. Cross-call transactions aren't
+ * supported by the adapter, so `begin` snapshots the whole database with
+ * `mem.backup()` and restores on failure — sequential tests never interleave
+ * transactions, and no transaction mutates the schema after migrations run.
+ */
+function memRunner(): SqlRunner {
+  const mem = newDb();
+  const client = new (mem.adapters.createPg().Client)();
+  return {
+    async unsafe(query, params = []) {
+      const result = await client.query(query, params as unknown[]);
+      const rows = result.rows as unknown[] & { count?: number };
+      rows.count = result.rowCount ?? undefined;
+      return rows;
+    },
+    async begin(fn) {
+      const backup = mem.backup();
+      try {
+        return await fn(this);
+      } catch (error) {
+        backup.restore();
+        throw error;
+      }
+    },
+    end: () => client.end(),
+  };
+}
+
+/** In-memory Postgres (pg-mem) migrated like production — replaces `:memory:` SQLite. */
+export async function openTestDb(): Promise<Db> {
+  const db = dbFromRunner(memRunner());
+  await migrate(db);
+  return db;
+}
+
 /** App on an in-memory database with a fake clock and deterministic "random" bytes. */
-export function testServer(config?: Partial<ServerConfig>): TestServer {
+export async function testServer(config?: Partial<ServerConfig>): Promise<TestServer> {
   const data = loadGameData();
-  const db = openDb(":memory:");
+  const db = await openTestDb();
   const now = { value: Date.UTC(2026, 8, 27, 12) };
   let counter = 0;
   const random = (bytes: number) => {
@@ -75,11 +112,13 @@ export function fakeScheduler(): FakeScheduler {
 }
 
 /** Writes a valid starter deck (18 cards, no gear) into the account's profile. */
-export function giveStarterDeck(server: TestServer, accountId: number, heroIds: [string, string, string]): void {
-  const row = server.db.prepare<[number], { profile_json: string }>("SELECT profile_json FROM profiles WHERE account_id = ?").get(accountId)!;
+export async function giveStarterDeck(server: TestServer, accountId: number, heroIds: [string, string, string]): Promise<void> {
+  const row = (await server.db
+    .prepare<[number], { profile_json: string }>("SELECT profile_json FROM profiles WHERE account_id = ?")
+    .get(accountId))!;
   const profile = JSON.parse(row.profile_json) as { decks: unknown[] };
   profile.decks = [{ id: "d1", name: "Phòng", heroIds, cardIds: starterDeck(server.data, heroIds) }];
-  server.db.prepare("UPDATE profiles SET profile_json = ? WHERE account_id = ?").run(JSON.stringify(profile), accountId);
+  await server.db.prepare("UPDATE profiles SET profile_json = ? WHERE account_id = ?").run(JSON.stringify(profile), accountId);
 }
 
 export async function call(
@@ -102,8 +141,8 @@ export async function register(server: TestServer, username = "linh_lung", passw
   return response.body as { token: string; profile: unknown; rev: number };
 }
 
-export function accountIdOf(server: TestServer, token: string): number {
-  const row = server.db
+export async function accountIdOf(server: TestServer, token: string): Promise<number> {
+  const row = await server.db
     .prepare<[string], { account_id: number }>("SELECT account_id FROM sessions WHERE token_hash = ?")
     .get(hashToken(token));
   if (!row) throw new Error("no session for token");

@@ -11,7 +11,7 @@
 - `apps/client`: Vite + Phaser (bản ổn định mới nhất)
 - `packages/rules`: TypeScript thuần
 - `packages/data`: JSON + schema zod để kiểm tra dữ liệu khi nạp
-- `apps/server`: Node + Fastify + SQLite (better-sqlite3), bundle bằng Vite SSR build
+- `apps/server`: Node + Fastify + Postgres (`postgres`/postgres.js, Supabase — dev/prod là hai project riêng), bundle bằng Vite SSR build; test dùng `pg-mem`
 - Test: Vitest
 
 ## Cấu trúc
@@ -26,7 +26,7 @@ vong-nguyet/
 │   └── data/             # heroes, cards, enemies, encounters, moon-phases, weapons, relics… (.json) + schema
 └── apps/
     ├── client/           # Phaser: hiển thị, input, animation
-    └── server/           # Fastify + SQLite: tài khoản, hồ sơ, phiếu lượt chơi
+    └── server/           # Fastify + Postgres (Supabase): tài khoản, hồ sơ, phiếu lượt chơi
 ```
 
 ## Lệnh
@@ -58,7 +58,7 @@ pnpm typecheck
 - ID dữ liệu: `snake_case` chữ thường (`m05`, `m05_liet_hoa_xung_phong`, `puppet_guard`).
 - Kiểu dữ liệu và hàm: `PascalCase` cho type, `camelCase` cho hàm/biến.
 - Ưu tiên union type có trường `type` (discriminated union) cho `Effect`, `Action`, `CombatEvent`, và `switch` đầy đủ với kiểm tra `never`.
-- Không thêm thư viện mới khi chưa hỏi. Đã duyệt: `fastify`, `better-sqlite3`, `@types/better-sqlite3`, `@types/node`, `@fastify/websocket` (+ `ws`, `@types/ws`) (chỉ trong `apps/server`).
+- Không thêm thư viện mới khi chưa hỏi. Đã duyệt: `fastify`, `postgres`, `pg-mem` (test), `@types/node`, `@fastify/websocket` (+ `ws`, `@types/ws`) (chỉ trong `apps/server`).
 
 ## Khi hoàn thành một bước
 Báo lại ngắn gọn: đã làm gì, file nào thay đổi, test nào đã thêm, kết quả `pnpm test`, và điểm nào trong tài liệu còn mơ hồ.

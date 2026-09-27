@@ -12,7 +12,7 @@ try {
   process.exit(1);
 }
 
-const db = openDb(config.dbPath);
+const db = await openDb(config.databaseUrl);
 const app = buildApp({
   db,
   data: loadGameData(),

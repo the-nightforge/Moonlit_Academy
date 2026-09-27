@@ -7,8 +7,8 @@ export function registerCoopRoutes(app: FastifyInstance, ctx: AppContext): void 
   const { data, clock } = ctx;
 
   app.get("/api/coop/me", async (request) => {
-    const accountId = ctx.requireAccount(request);
-    const { profile } = ctx.readProfile(accountId);
+    const accountId = await ctx.requireAccount(request);
+    const { profile } = await ctx.readProfile(accountId);
     const today = dayKey(data, clock());
     const coop = profile.coop.dayKey === today ? profile.coop : { clears: 0, rewarded: 0 };
     return {

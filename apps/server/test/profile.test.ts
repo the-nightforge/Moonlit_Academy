@@ -6,16 +6,16 @@ import { call, register, testServer, type TestServer } from "./helpers";
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
 
 async function signedIn() {
-  const server = testServer();
+  const server = await testServer();
   const { token } = await register(server);
   return { server, token };
 }
 
-function setXp(server: TestServer, heroId: string, xp: number) {
-  const row = server.db.prepare("SELECT profile_json FROM profiles").get() as { profile_json: string };
+async function setXp(server: TestServer, heroId: string, xp: number) {
+  const row = (await server.db.prepare("SELECT profile_json FROM profiles").get()) as { profile_json: string };
   const profile = JSON.parse(row.profile_json) as Profile;
   profile.heroes[heroId]!.xp = xp;
-  server.db.prepare("UPDATE profiles SET profile_json = ?").run(JSON.stringify(profile));
+  await server.db.prepare("UPDATE profiles SET profile_json = ?").run(JSON.stringify(profile));
 }
 
 describe("profile routes", () => {
@@ -42,7 +42,7 @@ describe("profile routes", () => {
     const locked = server.data.heroes["m05"]!.lockedCardIds[0]!;
     expect((await call(server, "POST", "/api/profile/unlock", { token, rev: 3, body: { heroId: "m05", cardId: locked } })).body)
       .toEqual({ error: "no pending unlock" });
-    setXp(server, "m05", server.data.metaConfig.masteryLevels[0]!);
+    await setXp(server, "m05", server.data.metaConfig.masteryLevels[0]!);
     const unlocked = await call(server, "POST", "/api/profile/unlock", { token, rev: 3, body: { heroId: "m05", cardId: locked } });
     expect(unlocked.body.rev).toBe(4);
     expect(unlocked.body.profile.heroes.m05.unlockedCardIds).toEqual([locked]);

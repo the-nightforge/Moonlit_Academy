@@ -40,9 +40,15 @@ class Ws {
     this.socket.terminate();
   }
 
+  /** Waits until the inbox stays quiet for two ticks — async handlers (DB) need several macrotasks. */
   async settle(): Promise<void> {
-    await new Promise((resolve) => setImmediate(resolve));
-    await new Promise((resolve) => setImmediate(resolve));
+    let quiet = 0;
+    let seen = -1;
+    for (let i = 0; i < 100 && (quiet < 3 || i < 10); i++) {
+      await new Promise((resolve) => setImmediate(resolve));
+      quiet = this.inbox.length === seen ? quiet + 1 : 0;
+      seen = this.inbox.length;
+    }
   }
 
   /** Polls until `closeCode` is set (close frames travel several stream ticks). */
@@ -84,8 +90,8 @@ async function hello(server: TestServer, ws: Ws, token: string): Promise<void> {
 async function startPrivateMatch(server: TestServer) {
   const a = await register(server, "player_a");
   const b = await register(server, "player_b");
-  giveStarterDeck(server, accountIdOf(server, a.token), ["m05", "f04", "m06"]);
-  giveStarterDeck(server, accountIdOf(server, b.token), ["m06", "f03", "f02"]);
+  await giveStarterDeck(server, await accountIdOf(server, a.token), ["m05", "f04", "m06"]);
+  await giveStarterDeck(server, await accountIdOf(server, b.token), ["m06", "f03", "f02"]);
   const wsA = await Ws.connect(server.app);
   const wsB = await Ws.connect(server.app);
   await hello(server, wsA, a.token);
@@ -136,7 +142,7 @@ class SeatDriver {
 
 describe("realtime", () => {
   it("T231 hello: thiếu → 4401 sau 10 s; sai token → 4401; lệch dataVersion → 4409; hợp lệ → welcome", async () => {
-    const server = testServer();
+    const server = await testServer();
     const sched = schedulerOf(server);
     const { token } = await register(server, "nguoi_choi");
 
@@ -164,7 +170,7 @@ describe("realtime", () => {
   });
 
   it("T233 tin sai schema / >16 KB → bad message không đóng; >30 tin/s → 4429; không pong 2 nhịp → ngắt", async () => {
-    const server = testServer();
+    const server = await testServer();
     const sched = schedulerOf(server);
     const { token } = await register(server, "nguoi_choi");
 
@@ -203,7 +209,7 @@ describe("realtime", () => {
   });
 
   it("T232 một kết nối/tài khoản: kết nối mới đóng cũ 4000 và welcome mang activeMatch", async () => {
-    const server = testServer();
+    const server = await testServer();
     const { wsA, matchId, a } = await startPrivateMatch(server);
     expect(matchId).toBeTruthy();
 
@@ -218,7 +224,7 @@ describe("realtime", () => {
   });
 
   it("phòng riêng: hai client đấu hết trận qua action log tuần tự", async () => {
-    const server = testServer();
+    const server = await testServer();
     const { wsA, wsB, matchId } = await startPrivateMatch(server);
     const seatA = new SeatDriver(wsA, matchId, 0);
     const seatB = new SeatDriver(wsB, matchId, 1);
@@ -250,7 +256,7 @@ describe("realtime", () => {
   }, 120_000);
 
   it("T234 seq: trùng → im lặng; nhảy cóc → bad seq; sai lượt → rejected", async () => {
-    const server = testServer();
+    const server = await testServer();
     const { wsA, wsB, matchId } = await startPrivateMatch(server);
     const seatA = new SeatDriver(wsA, matchId, 0);
     const seatB = new SeatDriver(wsB, matchId, 1);
@@ -285,7 +291,7 @@ describe("realtime", () => {
   }, 60_000);
 
   it("T235 sau mỗi Action mỗi người nhận góc nhìn riêng: tay đối thủ chỉ còn số lượng", async () => {
-    const server = testServer();
+    const server = await testServer();
     const { wsA, wsB, matchId } = await startPrivateMatch(server);
     const viewA = (wsA.last<{ view: { players: { hand: string[]; drawPile: string[] }[] } }>("match.start"))!.view;
     expect(viewA.players[0]!.hand.every((id) => !id.startsWith("hidden_"))).toBe(true);
@@ -297,7 +303,7 @@ describe("realtime", () => {
   });
 
   it("T236/T237 match.end ghi DB một transaction; replayMatch tái hiện trận; phòng xóa sau 60 s", async () => {
-    const server = testServer();
+    const server = await testServer();
     const sched = schedulerOf(server);
     const { wsA, wsB, matchId, a } = await startPrivateMatch(server);
     const seatA = new SeatDriver(wsA, matchId, 0);
@@ -315,13 +321,13 @@ describe("realtime", () => {
     expect(endA.reason).toBe("resign");
     expect(endB.result).toBe("won");
 
-    const matchRow = server.db
+    const matchRow = (await server.db
       .prepare<[string], { status: string; actions_json: string; result_json: string }>(
         "SELECT status, actions_json, result_json FROM matches WHERE id = ?",
       )
-      .get(matchId)!;
+      .get(matchId))!;
     expect(matchRow.status).toBe("finished");
-    const players = server.db
+    const players = await server.db
       .prepare<[string], { slot: number; result: string }>(
         "SELECT slot, result FROM match_players WHERE match_id = ? ORDER BY slot",
       )
@@ -329,9 +335,9 @@ describe("realtime", () => {
     expect(players.map((p) => p.result)).toEqual(["lost", "won"]);
 
     // T237: replayMatch từ nhật ký đã lưu.
-    const setup = server.db
+    const setup = (await server.db
       .prepare<[string], { setup_json: string; seed: number }>("SELECT setup_json, seed FROM matches WHERE id = ?")
-      .get(matchId)!;
+      .get(matchId))!;
     const actions = JSON.parse(matchRow.actions_json) as { player: number; action: Action }[];
     const replay = replayMatch(server.data, { seed: setup.seed, players: JSON.parse(setup.setup_json).players }, actions);
     expect(replay.state.status).toBe("won");
@@ -346,7 +352,7 @@ describe("realtime", () => {
   });
 
   it("T239 đồng hồ: mulligan hết giờ → mulligan []; lượt hết giờ → endTurn; 3 lần liên tiếp → forfeit timeout", async () => {
-    const server = testServer();
+    const server = await testServer();
     const sched = schedulerOf(server);
     const { wsA, wsB, matchId } = await startPrivateMatch(server);
 
@@ -368,11 +374,11 @@ describe("realtime", () => {
   }, 60_000);
 
   it("T239 kết nối lại: trong hạn nhận snapshot; quá hạn → forfeit disconnect; đồng hồ vẫn chạy", async () => {
-    const server = testServer();
+    const server = await testServer();
     const sched = schedulerOf(server);
     const { wsA, wsB, matchId, a } = await startPrivateMatch(server);
-    const matchRow = () =>
-      server.db.prepare<[string], { status: string }>("SELECT status FROM matches WHERE id = ?").get(matchId)!;
+    const matchRow = async () =>
+      (await server.db.prepare<[string], { status: string }>("SELECT status FROM matches WHERE id = ?").get(matchId))!;
 
     // Qua Đổi Bài bình thường để vào lượt.
     for (const ws of [wsA, wsB]) {
@@ -389,7 +395,7 @@ describe("realtime", () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
     expect(sawDisconnect()).toBe(true);
-    expect(matchRow().status).toBe("playing");
+    expect((await matchRow()).status).toBe("playing");
 
     // A kết nối lại trong reconnectSeconds → welcome.activeMatch đầy đủ.
     await advanceAlive(sched, 10_000, wsB);
@@ -402,7 +408,7 @@ describe("realtime", () => {
     // Đồng hồ lượt vẫn chạy: hết 60 s kể từ khi vào lượt → server gửi action thay;
     // trận tiếp tục (đồng hồ reconnect của A đã bị hủy khi kết nối lại).
     await advanceAlive(sched, 60_000, wsA2, wsB);
-    expect(matchRow().status).toBe("playing");
+    expect((await matchRow()).status).toBe("playing");
 
     // B mất kết nối và không quay lại → quá reconnectSeconds → forfeit disconnect.
     wsB.close();
@@ -411,14 +417,14 @@ describe("realtime", () => {
     const end = wsA2.last<{ result: string; reason: string }>("match.end")!;
     expect(end.reason).toBe("disconnect");
     expect(end.result).toBe("won");
-    expect(matchRow().status).toBe("finished");
+    expect((await matchRow()).status).toBe("finished");
   }, 60_000);
 
   it("T238 practice.start: đấu máy nhịp 600–1200 ms, mode practice, không Elo/thưởng", async () => {
-    const server = testServer();
+    const server = await testServer();
     const sched = schedulerOf(server);
     const { token } = await register(server, "nguoi_tap");
-    giveStarterDeck(server, accountIdOf(server, token), ["m05", "f04", "m06"]);
+    await giveStarterDeck(server, await accountIdOf(server, token), ["m05", "f04", "m06"]);
     const ws = await Ws.connect(server.app);
     await hello(server, ws, token);
 
@@ -431,9 +437,9 @@ describe("realtime", () => {
     expect(start.mode).toBe("practice");
     expect(start.you).toBe(0);
     expect(start.others).toEqual([{ seat: 1, username: "Vọng Nguyệt", connected: true }]);
-    const matchRow = server.db
+    const matchRow = (await server.db
       .prepare<[string], { mode: string }>("SELECT mode FROM matches WHERE id = ?")
-      .get(start.matchId)!;
+      .get(start.matchId))!;
     expect(matchRow.mode).toBe("practice");
 
     // Đấu hết trận: người chơi hành động khi tới lượt; máy "nghĩ" 600–1200 ms.

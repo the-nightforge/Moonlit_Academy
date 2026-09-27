@@ -22,8 +22,8 @@ interface AccountRow {
 
 export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void {
   const { db, data, clock, random } = ctx;
-  const insertAccount = db.prepare(
-    "INSERT INTO accounts (username, password_hash, created_at) VALUES (?, ?, ?)",
+  const insertAccount = db.prepare<unknown[], { id: number }>(
+    "INSERT INTO accounts (username, password_hash, created_at) VALUES (?, ?, ?) RETURNING id",
   );
   const insertProfile = db.prepare(
     "INSERT INTO profiles (account_id, profile_json, rev, updated_at) VALUES (?, ?, 1, ?)",
@@ -36,9 +36,9 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
   const deleteSession = db.prepare("DELETE FROM sessions WHERE token_hash = ?");
   const writeProfile = db.prepare("UPDATE profiles SET profile_json = ?, rev = rev + 1, updated_at = ? WHERE account_id = ?");
 
-  function openSession(accountId: number): string {
+  async function openSession(accountId: number): Promise<string> {
     const { token, tokenHash } = newToken(random);
-    insertSession.run(tokenHash, accountId, clock());
+    await insertSession.run(tokenHash, accountId, clock());
     return token;
   }
 
@@ -50,20 +50,21 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
     const username = normalizeUsername(body.username);
     if (!USERNAME_PATTERN.test(username)) throw new HttpError(400, "invalid username");
     if (!isValidPassword(body.password)) throw new HttpError(400, "invalid password");
-    if (findAccount.get(username)) throw new HttpError(409, "username taken");
+    if (await findAccount.get(username)) throw new HttpError(409, "username taken");
     const passwordHash = await hashPassword(body.password, random);
     const profile = grantStarterGift(data, createProfile(data)).profile;
     let token: string;
     try {
-      token = db.transaction(() => {
+      token = await db.transaction(async () => {
         const now = clock();
-        const accountId = Number(insertAccount.run(username, passwordHash, now).lastInsertRowid);
-        insertProfile.run(accountId, JSON.stringify(profile), now);
+        const row = await insertAccount.get(username, passwordHash, now);
+        const accountId = Number(row!.id);
+        await insertProfile.run(accountId, JSON.stringify(profile), now);
         return openSession(accountId);
-      })();
+      });
     } catch (error) {
       // Another request took the name while the password was hashing.
-      if ((error as { code?: string }).code === "SQLITE_CONSTRAINT_UNIQUE") throw new HttpError(409, "username taken");
+      if ((error as { code?: string }).code === "23505") throw new HttpError(409, "username taken");
       throw error;
     }
     return reply.code(201).send({ token, profile, rev: 1 });
@@ -74,7 +75,7 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
       throw new HttpError(429, "rate limited");
     }
     const body = ctx.parseBody(credentials, request.body);
-    const account = findAccount.get(normalizeUsername(body.username));
+    const account = await findAccount.get(normalizeUsername(body.username));
     if (!account) throw new HttpError(401, "invalid credentials");
     const now = clock();
     if (account.locked_until !== null && now < account.locked_until) {
@@ -82,24 +83,24 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
     }
     if (!(await verifyPassword(body.password, account.password_hash))) {
       const failures = account.failed_logins + 1;
-      if (failures >= MAX_FAILED_LOGINS) setFailures.run(0, now + LOCK_MS, account.id);
-      else setFailures.run(failures, null, account.id);
+      if (failures >= MAX_FAILED_LOGINS) await setFailures.run(0, now + LOCK_MS, account.id);
+      else await setFailures.run(failures, null, account.id);
       throw new HttpError(401, "invalid credentials");
     }
-    setFailures.run(0, null, account.id);
-    const token = db.transaction(() => {
+    await setFailures.run(0, null, account.id);
+    const token = await db.transaction(async () => {
       // Accounts made before the gift existed receive it at their next sign-in (`16` §4.1).
-      const gift = grantStarterGift(data, ctx.readProfile(account.id).profile);
-      if (gift.granted) writeProfile.run(JSON.stringify(gift.profile), now, account.id);
+      const gift = grantStarterGift(data, (await ctx.readProfile(account.id)).profile);
+      if (gift.granted) await writeProfile.run(JSON.stringify(gift.profile), now, account.id);
       return openSession(account.id);
-    })();
-    return { token, ...ctx.readProfile(account.id) };
+    });
+    return { token, ...(await ctx.readProfile(account.id)) };
   });
 
   app.post("/api/auth/logout", async (request, reply) => {
-    ctx.requireAccount(request);
+    await ctx.requireAccount(request);
     const token = request.headers.authorization!.slice("Bearer ".length).trim();
-    deleteSession.run(hashToken(token));
+    await deleteSession.run(hashToken(token));
     return reply.code(204).send();
   });
 }

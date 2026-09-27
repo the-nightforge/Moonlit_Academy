@@ -57,6 +57,7 @@ export class MatchRoom {
   private cleanupHandle: unknown;
   private endReason = "combat";
   private turnHandle: unknown;
+  private writeChain: Promise<unknown> = Promise.resolve();
   private readonly disconnectHandles = new Map<number, unknown>();
 
   constructor(
@@ -66,20 +67,24 @@ export class MatchRoom {
     readonly seed: number,
     readonly seats: MatchSeat[],
     private state: CombatState,
-    setupJson: string,
+    private readonly setupJson: string,
     private readonly drop: (room: MatchRoom) => void,
   ) {
-    const insertMatch = ctx.db.prepare(
+    this.armClock();
+  }
+
+  /** Writes the `matches`/`match_players` rows; factories await this once. */
+  async persist(): Promise<void> {
+    const insertMatch = this.ctx.db.prepare(
       "INSERT INTO matches (id, mode, data_version, seed, setup_json, actions_json, status, created_at) VALUES (?, ?, ?, ?, ?, '[]', 'playing', ?)",
     );
-    const insertPlayer = ctx.db.prepare(
+    const insertPlayer = this.ctx.db.prepare(
       "INSERT INTO match_players (match_id, account_id, slot) VALUES (?, ?, ?)",
     );
-    ctx.db.transaction(() => {
-      insertMatch.run(matchId, mode, ctx.dataVersion, seed, setupJson, ctx.clock());
-      for (const seat of seats) insertPlayer.run(matchId, seat.accountId, seat.seat);
-    })();
-    this.armClock();
+    await this.ctx.db.transaction(async () => {
+      await insertMatch.run(this.matchId, this.mode, this.ctx.dataVersion, this.seed, this.setupJson, this.ctx.clock());
+      for (const seat of this.seats) await insertPlayer.run(this.matchId, seat.accountId, seat.seat);
+    });
   }
 
   seatOf(accountId: number): MatchSeat | undefined {
@@ -207,10 +212,24 @@ export class MatchRoom {
   private commit(seat: MatchSeat, action: Action, state: CombatState, events: CombatEvent[]): void {
     this.state = state;
     this.actions.push({ player: seat.seat, action });
-    this.ctx.db.prepare("UPDATE matches SET actions_json = ? WHERE id = ?").run(JSON.stringify(this.actions), this.matchId);
+    // Serialise actions_json writes so a later commit cannot lose to an earlier one.
+    const actionsJson = JSON.stringify(this.actions);
+    const matchId = this.matchId;
+    this.writeChain = this.writeChain.then(async () => {
+      try {
+        await this.ctx.db.prepare("UPDATE matches SET actions_json = ? WHERE id = ?").run(actionsJson, matchId);
+      } catch (error) {
+        console.error("persist actions failed", error);
+      }
+    });
     this.armClock();
     this.push(events);
-    if (this.state.status === "won" || this.state.status === "lost") this.finish();
+    if (this.state.status === "won" || this.state.status === "lost") {
+      // Settlement waits for the final actions_json write to land first.
+      void this.writeChain.then(() => this.finish()).catch((error) => {
+        console.error("finish failed:", error);
+      });
+    }
   }
 
   /** Re-arms the turn/mulligan clock to match the current state (`17` §4.7). */
@@ -305,7 +324,7 @@ export class MatchRoom {
     this.onPushed?.();
   }
 
-  private finish(): void {
+  private async finish(): Promise<void> {
     if (this.ended) return;
     this.ended = true;
     this.deadline = null;
@@ -352,20 +371,20 @@ export class MatchRoom {
     const profiles = new Map<number, Profile>();
     if (ranked || rewardedCoop) {
       for (const seat of this.seats) {
-        if (seat.accountId !== null) profiles.set(seat.seat, this.ctx.readProfile(seat.accountId).profile);
+        if (seat.accountId !== null) profiles.set(seat.seat, (await this.ctx.readProfile(seat.accountId)).profile);
       }
     }
     const settled = new Map<number, { before: number; after: number; honor: number; rev: number }>();
     const coopPaid = new Map<number, { rewards: CoopRewards | null; rev: number }>();
     // The match record, seat results and both profile updates land in one
     // transaction (`16` §8.3): a crash mid-write leaves the row consistent.
-    this.ctx.db.transaction(() => {
-      finishMatch.run(this.ctx.clock(), resultJson, this.matchId);
+    await this.ctx.db.transaction(async () => {
+      await finishMatch.run(this.ctx.clock(), resultJson, this.matchId);
       for (const seat of this.seats) {
         const result = resultOf(seat.seat);
         const mine = profiles.get(seat.seat);
         if (mine === undefined) {
-          seatResult.run(result, this.matchId, seat.seat);
+          await seatResult.run(result, this.matchId, seat.seat);
           continue;
         }
         if (rewardedCoop) {
@@ -375,8 +394,8 @@ export class MatchRoom {
             forfeited: forfeited.has(seat.seat),
             now: this.ctx.clock(),
           });
-          const rev = this.ctx.saveProfile(seat.accountId!, applied.profile);
-          seatResult.run(result, this.matchId, seat.seat);
+          const rev = await this.ctx.saveProfile(seat.accountId!, applied.profile);
+          await seatResult.run(result, this.matchId, seat.seat);
           coopPaid.set(seat.seat, { rewards: applied.rewards, rev });
           continue;
         }
@@ -392,11 +411,11 @@ export class MatchRoom {
           now: this.ctx.clock(),
           ratingDelta: delta,
         });
-        const rev = this.ctx.saveProfile(seat.accountId!, applied.profile);
-        seatResultRanked.run(result, before, applied.profile.arena.rating, this.matchId, seat.seat);
+        const rev = await this.ctx.saveProfile(seat.accountId!, applied.profile);
+        await seatResultRanked.run(result, before, applied.profile.arena.rating, this.matchId, seat.seat);
         settled.set(seat.seat, { before, after: applied.profile.arena.rating, honor: applied.honor, rev });
       }
-    })();
+    });
     for (const seat of this.seats) {
       const result = resultOf(seat.seat);
       const extras = settled.get(seat.seat);
@@ -418,7 +437,7 @@ export class MatchRoom {
 }
 
 /** Creates a `pvp` match room and its `matches`/`match_players` rows (`17` §5.3). */
-export function startPvpMatch(
+export async function startPvpMatch(
   ctx: AppContext,
   mode: MatchMode,
   seed: number,
@@ -428,21 +447,23 @@ export function startPvpMatch(
   ],
   matchId: string,
   drop: (room: MatchRoom) => void,
-): MatchRoom {
+): Promise<MatchRoom> {
   const { state } = createPvpCombat(ctx.data, { seed, players: [players[0].side, players[1].side] });
   const seats: MatchSeat[] = players.map((p, seat) => ({
     seat, accountId: p.accountId, username: p.username, rating: p.rating, nextSeq: 1,
     connected: p.accountId === null, consecutiveTimeouts: 0,
   }));
   const setupJson = JSON.stringify({ players: [players[0].side, players[1].side] });
-  return new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, drop);
+  const room = new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, drop);
+  await room.persist();
+  return room;
 }
 
 /**
  * Creates a co-op match room (`17` §9.1) on the configured encounter. The
  * setup row carries `mode`/`encounterId` so `replayMatch` rebuilds it exactly.
  */
-export function startCoopMatch(
+export async function startCoopMatch(
   ctx: AppContext,
   mode: MatchMode,
   seed: number,
@@ -452,7 +473,7 @@ export function startCoopMatch(
   ],
   matchId: string,
   drop: (room: MatchRoom) => void,
-): MatchRoom {
+): Promise<MatchRoom> {
   const encounterId = ctx.data.coopConfig.encounterId;
   const { state } = createCoopCombat(ctx.data, {
     seed,
@@ -464,5 +485,7 @@ export function startCoopMatch(
     connected: p.accountId === null, consecutiveTimeouts: 0,
   }));
   const setupJson = JSON.stringify({ mode: "coop", encounterId, players: [players[0].side, players[1].side] });
-  return new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, drop);
+  const room = new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, drop);
+  await room.persist();
+  return room;
 }
