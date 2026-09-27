@@ -62,6 +62,13 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
       then: z.array(effectSchema),
       else: z.array(effectSchema).optional(),
     }),
+    z.object({
+      actor,
+      type: z.literal("execute"),
+      threshold: z.number().gt(0).lte(1),
+      to: targetRefSchema,
+      elseEffects: z.array(effectSchema).optional(),
+    }),
   ]),
 );
 
@@ -141,6 +148,16 @@ export const intentDefSchema = z.object({
 
 export const enemyIntentDefSchema = intentDefSchema.extend({
   cost: z.number().int().nonnegative(),
+  alwaysPlan: z.boolean().optional(),
+});
+
+export const bossPhaseDefSchema = z.object({
+  hpBelow: z.number().gt(0).lte(1),
+  intents: z.array(enemyIntentDefSchema).min(1),
+  maxIntentsPerRound: z.number().int().positive().optional(),
+  onEnter: z.array(effectSchema).min(1).optional(),
+  bloodMoonWhileActive: z.literal(true).optional(),
+  reviveAfterRounds: z.number().int().positive().optional(),
 });
 
 export const enemyDefSchema = z.object({
@@ -154,6 +171,7 @@ export const enemyDefSchema = z.object({
   }),
   moonOverrides: z.array(z.object({ phase: moonPhaseIdSchema, intent: intentDefSchema })).optional(),
   bloodMoonOverride: intentDefSchema.optional(),
+  phases: z.array(bossPhaseDefSchema).min(1).optional(),
   art: z.object({ portrait: z.string() }),
 });
 
@@ -161,7 +179,7 @@ export const encounterDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
   enemyIds: z.array(idSchema).min(1).max(3),
-  tier: z.enum(["normal", "elite", "boss"]),
+  tier: z.enum(["normal", "elite", "boss", "coop"]),
   minFloor: z.number().int().positive().optional(),
 });
 
@@ -416,6 +434,38 @@ export const pvpConfigSchema = z.object({
   emotes: z.array(z.string().min(1)).optional(),
 });
 
+const effectTypeSchema = z.enum([
+  "damage", "heal", "loseHp", "gainArmor", "removeArmor", "applyStatus", "cleanse",
+  "chooseCard", "gainMoonPower", "shiftMoon", "stealBuff", "bloodMoon",
+  "drainMoonPower", "gainMoonPowerPerTurn", "missingHpDamage", "burstRegen",
+  "conditional", "execute",
+]);
+
+export const cardMatcherSchema = z.object({
+  tag: cardTagSchema.optional(),
+  ownerId: idSchema.optional(),
+  appliesStatus: statusIdSchema.optional(),
+  effect: effectTypeSchema.optional(),
+  moonPhaseAfter: moonPhaseIdSchema.optional(),
+});
+
+export const coopComboDefSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1),
+  text: z.string().min(1),
+  parts: z.tuple([cardMatcherSchema, cardMatcherSchema]),
+  limit: z.object({
+    perRound: z.literal(1),
+    perCombat: z.number().int().positive().optional(),
+  }),
+  effects: z.array(effectSchema).min(1),
+});
+
+export const coopConfigSchema = z.object({
+  turnSeconds: z.number().int().positive(),
+  reconnectSeconds: z.number().int().positive(),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
@@ -435,4 +485,6 @@ export const rawGameDataSchema = z.object({
   weapons: z.array(weaponDefSchema),
   relics: z.array(relicDefSchema),
   pvpConfig: pvpConfigSchema,
+  coopConfig: coopConfigSchema,
+  coopCombos: z.array(coopComboDefSchema),
 });

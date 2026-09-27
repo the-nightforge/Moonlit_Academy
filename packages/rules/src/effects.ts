@@ -446,6 +446,21 @@ export function resolveEffect(
       if (seat) seat.moonPowerBonus += effect.amount;
       return;
     }
+    case "execute": {
+      // Hợp Kích only (`01` §16.4): targets under the HP threshold die outright;
+      // when nothing qualifies, `elseEffects` run once.
+      const executed = resolveTargets(state, effect.to, ctx).filter(
+        (target) => target.hp / target.maxHp <= effect.threshold,
+      );
+      if (executed.length === 0) {
+        resolveEffects(data, state, effect.elseEffects ?? [], { ...ctx, noHooks: true }, events);
+        return;
+      }
+      for (const target of executed) {
+        killUnit(data, state, target, events, { id: ctx.source.id, cardDamage: ctx.card !== undefined });
+      }
+      return;
+    }
     default: {
       const exhaustive: never = effect;
       throw new Error(`unknown effect: ${JSON.stringify(exhaustive)}`);

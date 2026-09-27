@@ -207,5 +207,109 @@
     "art": {
       "portrait": ""
     }
+  },
+  {
+    "id": "eclipse_lord",
+    "name": "Nguyệt Thực Ma Quân",
+    "maxHp": 210,
+    "moonPower": { "start": 4, "cap": 12 },
+    "intents": [
+      { "id": "ecl_nguyet_nha", "name": "Nguyệt Nha", "kind": "attack", "targeting": "lowestHp", "cost": 3,
+        "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }] },
+      { "id": "ecl_trieu_nguyet", "name": "Triều Nguyệt", "kind": "attack", "cost": 4,
+        "effects": [{ "type": "damage", "amount": 5, "to": "allEnemies" }] },
+      { "id": "ecl_nguyet_mac", "name": "Nguyệt Mạc", "kind": "defend", "cost": 3,
+        "effects": [
+          { "type": "gainArmor", "amount": 10, "to": "self" },
+          { "type": "applyStatus", "status": "regen", "amount": 2, "to": "self" }
+        ] },
+      { "id": "ecl_am_trieu", "name": "Ám Triệu", "kind": "debuff", "targeting": "random", "cost": 2,
+        "effects": [
+          { "type": "applyStatus", "status": "weak", "amount": 2, "to": "chosen" },
+          { "type": "applyStatus", "status": "vulnerable", "amount": 1, "to": "chosen" }
+        ] }
+    ],
+    "phases": [
+      {
+        "hpBelow": 1,
+        "maxIntentsPerRound": 4,
+        "intents": [
+          { "id": "ecl_nguyet_nha", "name": "Nguyệt Nha", "kind": "attack", "targeting": "lowestHp", "cost": 3,
+            "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }] },
+          { "id": "ecl_trieu_nguyet", "name": "Triều Nguyệt", "kind": "attack", "cost": 4,
+            "effects": [{ "type": "damage", "amount": 5, "to": "allEnemies" }] },
+          { "id": "ecl_nguyet_mac", "name": "Nguyệt Mạc", "kind": "defend", "cost": 3,
+            "effects": [
+              { "type": "gainArmor", "amount": 10, "to": "self" },
+              { "type": "applyStatus", "status": "regen", "amount": 2, "to": "self" }
+            ] },
+          { "id": "ecl_am_trieu", "name": "Ám Triệu", "kind": "debuff", "targeting": "random", "cost": 2,
+            "effects": [
+              { "type": "applyStatus", "status": "weak", "amount": 2, "to": "chosen" },
+              { "type": "applyStatus", "status": "vulnerable", "amount": 1, "to": "chosen" }
+            ] }
+        ]
+      },
+      {
+        "hpBelow": 0.75,
+        "maxIntentsPerRound": 4,
+        "bloodMoonWhileActive": true,
+        "onEnter": [{ "type": "applyStatus", "status": "strength", "amount": 2, "to": "self" }],
+        "intents": [
+          { "id": "ecl_huyet_trao", "name": "Huyết Trảo", "kind": "attack", "targeting": "lowestHp", "cost": 4,
+            "effects": [{ "type": "damage", "amount": 12, "to": "chosen" }] },
+          { "id": "ecl_huyet_vu", "name": "Huyết Vũ", "kind": "attack", "cost": 5,
+            "effects": [{ "type": "damage", "amount": 7, "to": "allEnemies" }] },
+          { "id": "ecl_huyet_bich", "name": "Huyết Bích", "kind": "defend", "cost": 4,
+            "effects": [
+              { "type": "gainArmor", "amount": 14, "to": "self" },
+              { "type": "applyStatus", "status": "reflect", "amount": 2, "to": "self" }
+            ] },
+          { "id": "ecl_cuong_nguyet", "name": "Cuồng Nguyệt", "kind": "buff", "cost": 4,
+            "effects": [{ "type": "applyStatus", "status": "strength", "amount": 3, "to": "self" }] }
+        ]
+      },
+      {
+        "hpBelow": 0.5,
+        "maxIntentsPerRound": 4,
+        "intents": [
+          { "id": "ecl_thuc_nguyet_tram", "name": "Thực Nguyệt Trảm", "kind": "attack", "targeting": "random", "cost": 6, "alwaysPlan": true,
+            "effects": [{ "type": "damage", "amount": 18, "to": "chosen" }] },
+          { "id": "ecl_nguyet_an", "name": "Nguyệt Ấn", "kind": "debuff", "targeting": "random", "cost": 3,
+            "effects": [
+              { "type": "applyStatus", "status": "mark", "amount": 2, "to": "chosen" },
+              { "type": "applyStatus", "status": "weak", "amount": 1, "to": "chosen" }
+            ] },
+          { "id": "ecl_anh_ba", "name": "Ảnh Ba", "kind": "attack", "cost": 4,
+            "effects": [{ "type": "damage", "amount": 6, "to": "allEnemies" }] },
+          { "id": "ecl_nguyet_tu", "name": "Nguyệt Tụ", "kind": "defend", "cost": 4,
+            "effects": [
+              { "type": "heal", "amount": 12, "to": "self" },
+              { "type": "cleanse", "to": "self" }
+            ] }
+        ]
+      },
+      {
+        "hpBelow": 0.25,
+        "maxIntentsPerRound": 4,
+        "reviveAfterRounds": 2,
+        "intents": [
+          { "id": "ecl_thon_nguyet", "name": "Thôn Nguyệt", "kind": "attack", "targeting": "highestHp", "cost": 5,
+            "effects": [{ "type": "damage", "amount": 14, "to": "chosen" }] },
+          { "id": "ecl_nguyet_diet", "name": "Nguyệt Diệt", "kind": "attack", "cost": 7,
+            "effects": [{ "type": "damage", "amount": 10, "to": "allEnemies" }] },
+          { "id": "ecl_tan_nguyet_bich", "name": "Tận Nguyệt Bích", "kind": "defend", "cost": 4,
+            "effects": [{ "type": "gainArmor", "amount": 18, "to": "self" }] },
+          { "id": "ecl_doan_menh", "name": "Đoản Mệnh", "kind": "debuff", "targeting": "lowestHp", "cost": 3,
+            "effects": [
+              { "type": "applyStatus", "status": "vulnerable", "amount": 2, "to": "chosen" },
+              { "type": "applyStatus", "status": "weak", "amount": 1, "to": "chosen" }
+            ] }
+        ]
+      }
+    ],
+    "art": {
+      "portrait": ""
+    }
   }
 ]

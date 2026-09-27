@@ -130,6 +130,9 @@ export type Effect = (
   | { type: "missingHpDamage"; ratio: number; to: TargetRef; hits?: number }
   | { type: "burstRegen"; multiplier: number; to: TargetRef }
   | { type: "conditional"; condition: Condition; then: Effect[]; else?: Effect[] }
+  /** Co-op Hợp Kích only (`02` §6): kills targets at or under `threshold` of maxHp,
+   *  else runs `elseEffects` once. */
+  | { type: "execute"; threshold: number; to: TargetRef; elseEffects?: Effect[] }
 ) & { actor?: 0 | 1 };
 
 export type Condition =
@@ -153,7 +156,11 @@ export interface IntentDef {
   effects: Effect[];
 }
 
-export type EnemyIntentDef = IntentDef & { cost: number };
+export type EnemyIntentDef = IntentDef & {
+  cost: number;
+  /** Co-op bosses: planned every round when affordable, before weighted picks (`01` §16.5). */
+  alwaysPlan?: boolean;
+};
 
 export interface EnemyDef {
   id: string;
@@ -163,10 +170,27 @@ export interface EnemyDef {
   moonPower: { start: number; cap: number };
   moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];
   bloodMoonOverride?: IntentDef;
+  /** Co-op boss phases (`01` §16.5); absent on normal enemies. */
+  phases?: BossPhaseDef[];
   art: { portrait: string };
 }
 
-export type EncounterTier = "normal" | "elite" | "boss";
+/** One boss phase: replaces `EnemyDef.intents` while active (`02` §1.5). */
+export interface BossPhaseDef {
+  /** Enters when hp/maxHp falls below this; phase 1 is always 1, then decreasing. */
+  hpBelow: number;
+  intents: EnemyIntentDef[];
+  /** Overrides `combatConfig.maxIntentsPerRound`. */
+  maxIntentsPerRound?: number;
+  /** Runs on entry, the boss acting. */
+  onEnter?: Effect[];
+  /** Blood moon rounds never tick below 1 while this phase is active. */
+  bloodMoonWhileActive?: true;
+  /** Last phase only: rounds until the boss revives. */
+  reviveAfterRounds?: number;
+}
+
+export type EncounterTier = "normal" | "elite" | "boss" | "coop";
 
 export interface EncounterDef {
   id: string;
@@ -420,6 +444,37 @@ export interface PvpConfig {
   tiers?: { id: string; name: string; minRating: number }[];
   honorShop?: HonorShopItemDef[];
   emotes?: string[];
+}
+
+/** Co-op configuration — `coop-config.json` (`02` §1.14). */
+export interface CoopConfig {
+  /** Simultaneous-turn clock; the server auto-submits `endTurn` (`01` §16.2). */
+  turnSeconds: number;
+  /** Grace before a disconnected player's heroes fall (`01` §16.6). */
+  reconnectSeconds: number;
+}
+
+/** One card's half of a Hợp Kích pair (`02` §1.14). */
+export interface CardMatcher {
+  tag?: CardTag;
+  ownerId?: string;
+  /** Card carries this `applyStatus` (nested `conditional` counts). */
+  appliesStatus?: StatusId;
+  /** Card carries an effect of this type (nested `conditional` counts). */
+  effect?: Effect["type"];
+  /** After the card resolves, the moon sits on this phase. */
+  moonPhaseAfter?: MoonPhaseId;
+}
+
+/** A Hợp Kích — one matched card from each player in the same turn (`01` §16.4). */
+export interface CoopComboDef {
+  id: string;
+  name: string;
+  text: string;
+  parts: [CardMatcher, CardMatcher];
+  limit: { perRound: 1; perCombat?: number };
+  /** Resolve with the triggering card's hero acting; `allAllies` covers 6 heroes. */
+  effects: Effect[];
 }
 
 /** One side of a PvP match (`17` §4.1). */

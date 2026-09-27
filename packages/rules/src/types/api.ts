@@ -1,5 +1,5 @@
 import type {
-  AchievementDef, BannerDef, CardDef, CombatConfig, EconomyConfig, EnemyDef, MissionDef, EncounterDef, HeroDef, KeywordDef, MetaConfig, MoonPhaseDef, PvpConfig, RunAugmentDef, RunConfig, RunRelicDef, WeaponDef, RelicDef,
+  AchievementDef, BannerDef, CardDef, CombatConfig, CoopComboDef, CoopConfig, EconomyConfig, EnemyDef, MissionDef, EncounterDef, HeroDef, KeywordDef, MetaConfig, MoonPhaseDef, PvpConfig, RunAugmentDef, RunConfig, RunRelicDef, WeaponDef, RelicDef,
 } from "./static";
 import type { CombatState } from "./state";
 import type { CombatEvent } from "./events";
@@ -24,6 +24,8 @@ export interface GameData {
   weapons: Record<string, WeaponDef>;
   relics: Record<string, RelicDef>;
   pvpConfig: PvpConfig;
+  coopConfig: CoopConfig;
+  coopCombos: Record<string, CoopComboDef>;
 }
 
 export interface CombatSetup {
