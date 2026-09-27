@@ -19,7 +19,8 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
       instanceIds: expensive.slice(0, data.combatConfig.maxMulligan),
     };
   }
-  if (state.status === "choosing") {
+  // Co-op keeps status playerTurn while a seat answers a choice (`01` §16.2).
+  if (state.status === "choosing" || player.pendingChoice !== null) {
     const options = player.pendingChoice?.options ?? [];
     const curve = data.combatConfig.moonPower;
     const nextFund =

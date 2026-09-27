@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CardDef, CombatEvent, CombatState, CoopSide, GameData, Loadout } from "../src/index";
-import { applyAction, createCoopCombat, getValidTargets } from "../src/index";
-import { strike9Intent } from "./fixtures";
+import { applyAction, coopBot, createCoopCombat, getValidTargets } from "../src/index";
+import { idleIntent, strike9Intent } from "./fixtures";
 import { makeEnemiesIdle, setPlan, testData } from "./helpers";
 
 const baseLoadout = (): Loadout => ({ heroes: {} });
@@ -121,7 +121,9 @@ describe("co-op combat", () => {
     let result = applyAction(data, state, { type: "playCard", player: 1, instanceId: seatOneCard });
     if (!result.ok) throw new Error(result.error);
     state = result.state;
-    expect(state.playedThisTurn).toEqual([{ player: 1, instanceId: seatOneCard, cardId: "test_p1_ping" }]);
+    expect(state.playedThisTurn).toEqual([
+      { player: 1, instanceId: seatOneCard, cardId: "test_p1_ping", moonAfter: state.moonIndex },
+    ]);
 
     result = applyAction(data, state, { type: "playCard", player: 0, instanceId: seatZeroCard });
     if (!result.ok) throw new Error(result.error);
@@ -285,6 +287,398 @@ describe("co-op combat", () => {
     expect(timedOut.state.players[0]!.pendingChoice).toBeNull();
     expect(timedOut.state.players[0]!.done).toBe(true);
     expect(timedOut.state.status).toBe("playerTurn");
+  });
+
+  it("T251: Băng Nguyệt Kế freezes every enemy and fires once per combat", () => {
+    const { data, state: created } = makeCoopCombat({
+      side0: coopSide(["m05", "f04", "f02"]),
+      side1: coopSide(["f03", "m06", "m05"]),
+      setup: (state) => {
+        state.players[0]!.moonPower = 20;
+        state.players[1]!.moonPower = 20;
+      },
+    });
+    let state = created;
+    const boss = () => state.enemies[0]!;
+    const schemeId = injectSeatCard(state, data, data.cards["f02_dien_doat"]!, 0);
+    const freezeId = injectSeatCard(state, data, data.cards["f03_han_an"]!, 1);
+
+    let result = applyAction(data, state, { type: "playCard", player: 0, instanceId: schemeId, targetId: boss().id });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(result.events.some((event) => event.type === "coopComboTriggered")).toBe(false);
+
+    // Seat 1's freeze completes the pair — Băng Nguyệt Kế fires.
+    result = applyAction(data, state, { type: "playCard", player: 1, instanceId: freezeId, targetId: boss().id });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    const trigger = result.events.find((event) => event.type === "coopComboTriggered");
+    expect(trigger).toMatchObject({ comboId: "combo_bang_nguyet_ke", player: 1 });
+    expect(trigger?.type === "coopComboTriggered" ? trigger.cardIds : []).toEqual(
+      expect.arrayContaining([freezeId, schemeId]),
+    );
+    expect(boss().statuses.some((entry) => entry.id === "freeze")).toBe(true);
+    expect(state.comboUsed).toEqual({ combo_bang_nguyet_ke: { total: 1, round: 1 } });
+
+    // Round 2 with a fresh pair of matching cards — perCombat: 1 blocks it.
+    for (const seat of [0, 1]) {
+      const ended = applyAction(data, state, { type: "endTurn", player: seat });
+      if (!ended.ok) throw new Error(ended.error);
+      state = ended.state;
+    }
+    expect(state.round).toBe(2);
+    const scheme2 = injectSeatCard(state, data, data.cards["f02_vong_nguyet_thu"]!, 0);
+    const freeze2 = injectSeatCard(state, data, data.cards["f03_vinh_dong"]!, 1);
+    result = applyAction(data, state, { type: "playCard", player: 0, instanceId: scheme2, targetId: boss().id });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    result = applyAction(data, state, { type: "playCard", player: 1, instanceId: freeze2 });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(result.events.some((event) => event.type === "coopComboTriggered")).toBe(false);
+    expect(state.comboUsed).toEqual({ combo_bang_nguyet_ke: { total: 1, round: 1 } });
+  });
+
+  it("T252: a combo needs both seats; a consumed card cannot feed another combo", () => {
+    const { data, state: created } = makeCoopCombat({
+      mutateData: makeEnemiesIdle,
+      side0: coopSide(["m05", "f04", "f02"]),
+      side1: coopSide(["f02", "m06", "f03"]),
+      setup: (state) => {
+        state.players[0]!.moonPower = 20;
+        state.players[1]!.moonPower = 20;
+      },
+    });
+    let state = created;
+    const boss = () => state.enemies[0]!;
+    // Seat 1 holds both halves of Ám Ảnh Tuyệt Sát — same player, so nothing fires.
+    const loseHpP1 = injectSeatCard(state, data, data.cards["f02_huyet_tram"]!, 1);
+    const stealthP1 = injectSeatCard(state, data, data.cards["m06_anh_bo"]!, 1);
+    const loseHpP0 = injectSeatCard(state, data, data.cards["f02_huyet_khe"]!, 0);
+    const loseHpP0b = injectSeatCard(state, data, data.cards["f02_ta_nguyet_chu"]!, 0);
+
+    let result = applyAction(data, state, { type: "playCard", player: 1, instanceId: loseHpP1, targetId: boss().id });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    result = applyAction(data, state, { type: "playCard", player: 1, instanceId: stealthP1 });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(result.events.some((event) => event.type === "coopComboTriggered")).toBe(false);
+
+    // Seat 0's loseHp card completes the partner's stealth → the combo fires.
+    result = applyAction(data, state, { type: "playCard", player: 0, instanceId: loseHpP0 });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(
+      result.events.some((event) => event.type === "coopComboTriggered" && event.comboId === "combo_am_anh_tuyet_sat"),
+    ).toBe(true);
+
+    // The consumed stealth card cannot pair again — no second trigger.
+    const entryOf = (id: string) => state.playedThisTurn!.find((entry) => entry.instanceId === id)!;
+    expect(entryOf(stealthP1).comboId).toBe("combo_am_anh_tuyet_sat");
+    expect(entryOf(loseHpP0).comboId).toBe("combo_am_anh_tuyet_sat");
+    expect(entryOf(loseHpP1).comboId).toBeUndefined();
+    result = applyAction(data, state, { type: "playCard", player: 0, instanceId: loseHpP0b });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(result.events.some((event) => event.type === "coopComboTriggered")).toBe(false);
+    expect(entryOf(loseHpP0b).comboId).toBeUndefined();
+  });
+
+  it("T253: Ám Ảnh Tuyệt Sát executes enemies at ≤25% HP or burns 8 otherwise", () => {
+    const pair = () => {
+      const combo = makeCoopCombat({
+        mutateData: makeEnemiesIdle,
+        side0: coopSide(["m05", "f04", "f02"]),
+        side1: coopSide(["f02", "m06", "f03"]),
+        setup: (state) => {
+          state.players[0]!.moonPower = 20;
+          state.players[1]!.moonPower = 20;
+        },
+      });
+      injectSeatCard(combo.state, combo.data, combo.data.cards["m06_anh_bo"]!, 1);
+      injectSeatCard(combo.state, combo.data, combo.data.cards["f02_huyet_khe"]!, 0);
+      return combo;
+    };
+
+    // Boss at 24% — the execute branch kills it outright.
+    const { data, state: at24 } = pair();
+    let state = at24;
+    state.enemies[0]!.hp = 50;
+    let result = applyAction(data, state, {
+      type: "playCard",
+      player: 1,
+      instanceId: `test_m06_anh_bo_1`,
+    });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    result = applyAction(data, state, { type: "playCard", player: 0, instanceId: `test_f02_huyet_khe_0` });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(
+      result.events.some((event) => event.type === "coopComboTriggered" && event.comboId === "combo_am_anh_tuyet_sat"),
+    ).toBe(true);
+    expect(state.enemies[0]!.alive).toBe(false);
+    expect(result.events.some((event) => event.type === "unitDied" && event.unitId === state.enemies[0]!.id)).toBe(true);
+    expect(state.status).toBe("won");
+
+    // Boss at 96% — nobody qualifies, so the fallback hits every enemy for 8.
+    const { data: data2, state: at96 } = pair();
+    let state2 = at96;
+    state2.enemies[0]!.hp = 200;
+    result = applyAction(data2, state2, { type: "playCard", player: 1, instanceId: `test_m06_anh_bo_1` });
+    if (!result.ok) throw new Error(result.error);
+    state2 = result.state;
+    result = applyAction(data2, state2, { type: "playCard", player: 0, instanceId: `test_f02_huyet_khe_0` });
+    if (!result.ok) throw new Error(result.error);
+    state2 = result.state;
+    expect(
+      result.events.some((event) => event.type === "coopComboTriggered" && event.comboId === "combo_am_anh_tuyet_sat"),
+    ).toBe(true);
+    expect(state2.enemies[0]!.alive).toBe(true);
+    expect(state2.enemies[0]!.hp).toBe(200 - 8);
+  });
+
+  it("T254: Nguyệt Quang Phổ Chiếu heals all six heroes, doubled under full moon", () => {
+    const { data, state: created } = makeCoopCombat({
+      mutateData: makeEnemiesIdle,
+      side0: coopSide(["m05", "f04", "f02"]),
+      side1: coopSide(["f02", "m06", "f03"]),
+      setup: (state) => {
+        for (const hero of state.heroes) hero.hp = hero.maxHp - 20;
+      },
+    });
+    let state = created;
+    const shiftFar = injectSeatCard(state, data, freeCard("test_shift_2", "f04", [{ type: "shiftMoon", amount: 2 }]), 0);
+    const shiftNear = injectSeatCard(state, data, freeCard("test_shift_1", "f04", [{ type: "shiftMoon", amount: 1 }]), 0);
+    const heal = injectSeatCard(state, data, freeCard("test_heal_1", "m06", [{ type: "heal", amount: 1, to: "self" }]), 1);
+
+    // The shift leaves the moon short of full — the heal card cannot complete it.
+    let result = applyAction(data, state, { type: "playCard", player: 0, instanceId: shiftFar });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    result = applyAction(data, state, { type: "playCard", player: 1, instanceId: heal });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(result.events.some((event) => event.type === "coopComboTriggered")).toBe(false);
+
+    // A second shift lands on Trăng Tròn — the earlier heal card completes it.
+    const baseline = state.heroes.map((hero) => hero.hp);
+    result = applyAction(data, state, { type: "playCard", player: 0, instanceId: shiftNear });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(data.moonPhases[state.moonIndex]!.id).toBe("full");
+    expect(
+      result.events.some(
+        (event) => event.type === "coopComboTriggered" && event.comboId === "combo_nguyet_quang_pho_chieu",
+      ),
+    ).toBe(true);
+    // heal 6 × Trăng Tròn 2 = 12 on all six heroes (`01` §16.4 comboScope).
+    const healed = result.events.filter((event) => event.type === "healed");
+    expect(healed).toHaveLength(6);
+    state.heroes.forEach((hero, index) => {
+      expect(hero.hp).toBe(Math.min(hero.maxHp, baseline[index]! + 12));
+    });
+  });
+
+  it("T255: phase 2 grants strength and floors Blood Moon at 1 until it ends", () => {
+    const { data, state: created } = makeCoopCombat({
+      mutateData: (data) => {
+        makeEnemiesIdle(data);
+        for (const phase of data.enemies["eclipse_lord"]!.phases!) {
+          phase.intents = [{ ...idleIntent, cost: 0 }];
+        }
+      },
+      setup: (state) => {
+        state.enemies[0]!.hp = 150;
+      },
+    });
+    let state = created;
+    const boss = () => state.enemies[0]!;
+    const ping = injectSeatCard(state, data, freeCard("test_ping", "m05", [{ type: "gainArmor", amount: 1, to: "self" }]), 0);
+
+    let result = applyAction(data, state, { type: "playCard", player: 0, instanceId: ping });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(state.boss).toMatchObject({ phase: 2 });
+    expect(result.events.some((event) => event.type === "bossPhaseChanged" && event.phase === 2)).toBe(true);
+    expect(boss().statuses.find((entry) => entry.id === "strength")?.value).toBe(2);
+    expect(state.bloodMoonRounds).toBe(1);
+
+    // Blood Moon cannot drop below 1 while phase 2 is active.
+    for (let round = 0; round < 2; round++) {
+      for (const seat of [0, 1]) {
+        const ended = applyAction(data, state, { type: "endTurn", player: seat });
+        if (!ended.ok) throw new Error(ended.error);
+        state = ended.state;
+      }
+      expect(state.bloodMoonRounds).toBe(1);
+    }
+
+    // Leaving phase 2 lets Blood Moon decay normally.
+    boss().hp = 100;
+    const ping2 = injectSeatCard(state, data, freeCard("test_ping_2", "f04", [{ type: "gainArmor", amount: 1, to: "self" }]), 0);
+    result = applyAction(data, state, { type: "playCard", player: 0, instanceId: ping2 });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(state.boss).toMatchObject({ phase: 3 });
+    for (const seat of [0, 1]) {
+      result = applyAction(data, state, { type: "endTurn", player: seat });
+      if (!result.ok) throw new Error(result.error);
+      state = result.state;
+    }
+    expect(state.bloodMoonRounds).toBe(0);
+    expect(result.events.some((event) => event.type === "bloodMoonChanged" && event.rounds === 0)).toBe(true);
+  });
+
+  it("T256: one hit crossing two thresholds enters each phase in order; planned intents stay", () => {
+    const { data, state: created } = makeCoopCombat({
+      setup: (state) => {
+        state.enemies[0]!.hp = 160;
+        setPlan(state, 0, [{ intent: idleIntent, targetId: null }]);
+      },
+    });
+    let state = created;
+    const boss = () => state.enemies[0]!;
+    const hit = injectSeatCard(
+      state,
+      data,
+      freeCard("test_hit_60", "m05", [{ type: "damage", amount: 60, to: "chosen" }], "enemy"),
+      0,
+    );
+
+    const result = applyAction(data, state, { type: "playCard", player: 0, instanceId: hit, targetId: boss().id });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(boss().hp).toBe(100);
+    const phases = result.events.filter((event) => event.type === "bossPhaseChanged").map((event) => event.phase);
+    expect(phases).toEqual([2, 3]);
+    // Phase 2's onEnter ran before phase 3 began.
+    expect(boss().statuses.find((entry) => entry.id === "strength")?.value).toBe(2);
+    // The chain planned at creation stays untouched until the next planning step.
+    expect(boss().plannedIntents.map((planned) => planned.intent.id)).toEqual(["idle"]);
+
+    for (const seat of [0, 1]) {
+      const ended = applyAction(data, state, { type: "endTurn", player: seat });
+      if (!ended.ok) throw new Error(ended.error);
+      state = ended.state;
+    }
+    // Round-2 planning already draws from the phase-3 pool (the idle stand-in is gone).
+    expect(boss().plannedIntents.map((planned) => planned.intent.id)).not.toEqual(["idle"]);
+    // alwaysPlan leads the chain only once the fund covers cost 6 (round 3: 4+2+reserve).
+    for (const seat of [0, 1]) {
+      const ended = applyAction(data, state, { type: "endTurn", player: seat });
+      if (!ended.ok) throw new Error(ended.error);
+      state = ended.state;
+    }
+    const chain = boss().plannedIntents.map((planned) => planned.intent.id);
+    expect(chain[0]).toBe("ecl_thuc_nguyet_tram");
+    expect(chain.length).toBeGreaterThan(0);
+  });
+
+  it("T257: phase 4 revives once after two rounds; later threshold hits skip the countdown", () => {
+    const reviveSetup = () =>
+      makeCoopCombat({
+        mutateData: (data) => {
+          makeEnemiesIdle(data);
+          for (const phase of data.enemies["eclipse_lord"]!.phases!) {
+            phase.intents = [{ ...idleIntent, cost: 0 }];
+          }
+        },
+        setup: (state) => {
+          state.enemies[0]!.hp = 55;
+          state.enemies[0]!.statuses.push({ id: "weak", value: 99 });
+        },
+      });
+    const endBothTurns = (data: GameData, state: CombatState) => {
+      for (const seat of [0, 1]) {
+        const ended = applyAction(data, state, { type: "endTurn", player: seat });
+        if (!ended.ok) throw new Error(ended.error);
+        state = ended.state;
+      }
+      return state;
+    };
+
+    const { data, state: created } = reviveSetup();
+    let state = created;
+    const boss = () => state.enemies[0]!;
+    const hit = injectSeatCard(
+      state,
+      data,
+      freeCard("test_hit_10", "m05", [{ type: "damage", amount: 10, to: "chosen" }], "enemy"),
+      0,
+    );
+    let result = applyAction(data, state, { type: "playCard", player: 0, instanceId: hit, targetId: boss().id });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(state.boss).toMatchObject({ phase: 4, reviveCountdown: 2, revived: false });
+
+    state = endBothTurns(data, state);
+    expect(state.boss).toMatchObject({ phase: 4, reviveCountdown: 1 });
+
+    state = endBothTurns(data, state);
+    expect(state.boss).toMatchObject({ phase: 3, reviveCountdown: null, revived: true });
+    expect(boss().hp).toBe(Math.ceil(210 * 0.5));
+    expect(boss().statuses.some((entry) => entry.id === "weak")).toBe(false);
+
+    // Crossing the same threshold again does not restart the countdown.
+    const hit2 = injectSeatCard(
+      state,
+      data,
+      freeCard("test_hit_60b", "f04", [{ type: "damage", amount: 60, to: "chosen" }], "enemy"),
+      0,
+    );
+    result = applyAction(data, state, { type: "playCard", player: 0, instanceId: hit2, targetId: boss().id });
+    if (!result.ok) throw new Error(result.error);
+    state = result.state;
+    expect(state.boss).toMatchObject({ phase: 4, reviveCountdown: null, revived: true });
+
+    // A boss killed while the countdown ticks stays dead — plain victory.
+    const second = reviveSetup();
+    let state2 = second.state;
+    const hitA = injectSeatCard(
+      state2,
+      second.data,
+      freeCard("test_hit_10b", "m05", [{ type: "damage", amount: 10, to: "chosen" }], "enemy"),
+      0,
+    );
+    result = applyAction(second.data, state2, { type: "playCard", player: 0, instanceId: hitA, targetId: "enemy:0" });
+    if (!result.ok) throw new Error(result.error);
+    state2 = endBothTurns(second.data, result.state);
+    expect(state2.boss).toMatchObject({ phase: 4, reviveCountdown: 1 });
+    const kill = injectSeatCard(
+      state2,
+      second.data,
+      freeCard("test_hit_99", "f02", [{ type: "damage", amount: 50, to: "chosen" }], "enemy"),
+      1,
+    );
+    result = applyAction(second.data, state2, { type: "playCard", player: 1, instanceId: kill, targetId: "enemy:0" });
+    if (!result.ok) throw new Error(result.error);
+    expect(result.state.status).toBe("won");
+    expect(result.state.boss).toMatchObject({ reviveCountdown: 1 });
+  });
+
+  it("coopBot plays valid actions for both seats through several rounds", () => {
+    const { data, state: created } = makeCoopCombat({
+      mutateData: (data) => {
+        makeEnemiesIdle(data);
+        for (const phase of data.enemies["eclipse_lord"]!.phases!) {
+          phase.intents = [{ ...idleIntent, cost: 0 }];
+        }
+      },
+    });
+    let state = created;
+    for (let step = 0; step < 400 && state.status !== "won" && state.status !== "lost"; step++) {
+      const seat =
+        state.status === "mulligan"
+          ? state.players.find((entry) => !entry.mulliganDone)!.index
+          : (state.players.find((entry) => !entry.done) ?? state.players[0]!).index;
+      const action = coopBot(data, state, seat);
+      const result = applyAction(data, state, action);
+      if (!result.ok) throw new Error(`coopBot action ${action.type} rejected: ${result.error}`);
+      state = result.state;
+    }
+    expect(state.round).toBeGreaterThanOrEqual(3);
   });
 
   it("co-op requires a coop-tier encounter and known heroes", () => {

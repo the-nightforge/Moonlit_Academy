@@ -1,3 +1,4 @@
+import { tickBossRevive } from "./coop/boss";
 import { refillHand } from "./draw";
 import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "./effects";
 import { runEnemyTurn } from "./enemy-turn";
@@ -103,8 +104,17 @@ export function advanceRound(data: GameData, state: CombatState, events: CombatE
   fireEventHooks(data, state, events, events.length - 1, state.bloodMoonRounds);
   if (checkCombatEnd(state, events)) return;
   if (state.bloodMoonRounds > 0) {
-    state.bloodMoonRounds -= 1;
-    events.push({ type: "bloodMoonChanged", rounds: state.bloodMoonRounds, cause: "roundEnd" });
+    // A `bloodMoonWhileActive` boss phase keeps Blood Moon at 1+ (`01` §16.5).
+    const enemy = state.boss !== undefined ? state.enemies.find((e) => e.id === state.boss!.enemyId) : undefined;
+    const floor =
+      enemy !== undefined && data.enemies[enemy.defId]?.phases?.[state.boss!.phase - 1]?.bloodMoonWhileActive === true
+        ? 1
+        : 0;
+    const rounds = Math.max(floor, state.bloodMoonRounds - 1);
+    if (rounds !== state.bloodMoonRounds) {
+      state.bloodMoonRounds = rounds;
+      events.push({ type: "bloodMoonChanged", rounds, cause: "roundEnd" });
+    }
   }
   state.round += 1;
 }
@@ -113,6 +123,8 @@ export function endRound(data: GameData, state: CombatState, events: CombatEvent
   tickDurations(state, events);
   advanceRound(data, state, events);
   if (state.status === "won" || state.status === "lost") return;
+  tickBossRevive(data, state, events);
+  if (["won", "lost"].includes(state.status)) return;
   planEnemyIntents(data, state, events);
 }
 

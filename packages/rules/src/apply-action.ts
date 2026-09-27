@@ -1,4 +1,5 @@
 import { cloneState } from "./clone";
+import { fireCoopCombos } from "./coop/combos";
 import { coopEndTurn, startCoopTurn } from "./coop/turn";
 import { checkCombatEnd, processDeaths, resolveEffects } from "./effects";
 import { cardDefOf } from "./gear";
@@ -104,16 +105,20 @@ function playCard(
     }
   }
   runRelicHooks(data, state, events, { type: "cardPlayed", card, heroId: owner.id }, player.index);
-  player.discardPile.push(instance.instanceId);
-  player.cardsPlayedThisTurn += 1;
-  if (state.mode === "coop") {
-    // Combo detection (§16.4) reads this journal; resolved in receipt order.
-    state.playedThisTurn!.push({
+  if (state.mode === "coop" && !["won", "lost"].includes(state.status)) {
+    // `01` §16.4 — journal the card, then see if it completes a Hợp Kích with a
+    // partner's earlier card; combos fire before the card hits the discard pile.
+    const entry = {
       player: player.index,
       instanceId: instance.instanceId,
       cardId: instance.cardId,
-    });
+      moonAfter: state.moonIndex,
+    };
+    state.playedThisTurn!.push(entry);
+    fireCoopCombos(data, state, player, entry, owner, events);
   }
+  player.discardPile.push(instance.instanceId);
+  player.cardsPlayedThisTurn += 1;
 }
 
 /** Owner(s) losing empower/stealth after an attack card: a bond card's damage actors. */

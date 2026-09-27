@@ -1,3 +1,4 @@
+import { checkBossPhase } from "./coop/boss";
 import { drainEnemyMoonPower } from "./intent";
 import { bumpCounter, checkLevelUps, levelUpPassive } from "./levelup";
 import {
@@ -47,6 +48,8 @@ export interface EffectContext {
   noHooks?: boolean;
   /** Tàn Ảnh: cards counted as already played this turn on top of the real count. */
   comboBonus?: number;
+  /** Hợp Kích effects: `allAllies` means all six heroes, not the actor's three (`01` §16.4). */
+  comboScope?: true;
 }
 
 function findUnit(state: CombatState, unitId: string | undefined): UnitState | undefined {
@@ -78,6 +81,9 @@ function resolveTargets(state: CombatState, to: TargetRef, ctx: EffectContext): 
     case "allEnemies":
       return opponentsOf(state, ctx.source).filter((unit) => unit.alive);
     case "allAllies":
+      if (ctx.comboScope === true && state.mode === "coop") {
+        return state.heroes.filter((unit) => unit.alive);
+      }
       return alliesOf(state, ctx.source).filter((unit) => unit.alive);
   }
 }
@@ -576,6 +582,7 @@ export function resolveEffects(
         ctx.card !== undefined && (effect.type === "damage" || effect.type === "missingHpDamage"),
     });
     checkLevelUps(data, state, events);
+    checkBossPhase(data, state, events);
     if (checkCombatEnd(state, events)) return;
     if (!ctx.noHooks) {
       // Co-op: the acting seat may not be `activePlayer` (the shared-turn marker).
@@ -604,6 +611,9 @@ export function tickUnitStatuses(
     if (burn.value <= 0) removeStatus(unit, "burn", events);
     processDeaths(data, state, events, undefined);
     checkLevelUps(data, state, events);
+    // Burn ticks live outside resolveEffects — a boss crossing a phase
+    // threshold here still transitions (`01` §16.5).
+    checkBossPhase(data, state, events);
     if (!unit.alive) return;
   }
   const regen = getStatus(unit, "regen");

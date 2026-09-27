@@ -490,7 +490,7 @@ export interface CombatState {
   winner?: number | "draw"; // PvP (17 §4.6)
   // [GĐ6] co-op (`01` §16.2/§16.5):
   comboUsed?: Record<string, { total: number; round: number }>;  // tổng trận + vòng dùng gần nhất
-  playedThisTurn?: { player: number; instanceId: string; cardId: string }[];  // xóa đầu mỗi lượt đồng đội
+  playedThisTurn?: { player: number; instanceId: string; cardId: string; comboId?: string; moonAfter: number }[];  // xóa đầu mỗi lượt đồng đội
   boss?: { enemyId: string; phase: number; reviveCountdown: number | null; revived: boolean };
 }
 ```

@@ -143,8 +143,8 @@ export interface CombatState {
   firstPlayer?: number;
   /** [GĐ6] co-op: per-combo totals and the round each combo last fired (`01` §16.4). */
   comboUsed?: Record<string, { total: number; round: number }>;
-  /** [GĐ6] co-op: cards played in this shared turn, in receipt order (`01` §16.4). */
-  playedThisTurn?: { player: number; instanceId: string; cardId: string }[];
+  /** [GĐ6] co-op: cards played in this shared turn, in receipt order (`01` §16.4). `comboId` marks a card already consumed by a Hợp Kích; `moonAfter` is the moon index right after the card resolved. */
+  playedThisTurn?: { player: number; instanceId: string; cardId: string; comboId?: string; moonAfter: number }[];
   /** [GĐ6] co-op: boss phase progress when the encounter's enemy has `phases`. */
   boss?: CoopBossState;
 }

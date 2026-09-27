@@ -147,6 +147,10 @@ export function describeEvent(
       return `${name(event.heroId)} thăng cấp: ${event.name}`;
     case "unitDied":
       return `${name(event.unitId)} ngã`;
+    case "coopComboTriggered":
+      return `Hợp Kích: ${data.coopCombos[event.comboId]?.name ?? event.comboId}`;
+    case "bossPhaseChanged":
+      return `${name(event.enemyId)} → giai đoạn ${event.phase}`;
     case "playerForfeited":
       return `Người chơi ${event.player} bỏ cuộc (${event.reason})`;
     case "playerDisconnected":

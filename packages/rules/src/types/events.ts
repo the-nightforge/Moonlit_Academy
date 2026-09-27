@@ -34,7 +34,7 @@ export type CombatEvent =
   | { type: "choiceOpened"; options: string[]; player?: number }
   | { type: "cardChosen"; instanceId: string; bottomed: string[]; player?: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
-  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }
+  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" | "boss" }
   | {
       type: "intentsRevealed";
       enemyId: string;
@@ -50,6 +50,10 @@ export type CombatEvent =
   | { type: "weaponTriggered"; weaponId: string; heroId: string; player?: number }
   | { type: "heroLeveledUp"; heroId: string; name: string }
   | { type: "unitDied"; unitId: string; killerId?: string }
+  /** [GĐ6] A Hợp Kích fired — both matched card instances (`01` §16.4). */
+  | { type: "coopComboTriggered"; comboId: string; cardIds: [string, string]; player: number }
+  /** [GĐ6] The co-op boss entered/leaves a phase, including the phase-3 revive (`01` §16.5). */
+  | { type: "bossPhaseChanged"; enemyId: string; phase: number }
   /** [GĐ5] Emitted when a server-side forfeit resolves the match. */
   | { type: "playerForfeited"; player: number; reason: "resign" | "timeout" | "disconnect" }
   /** [GĐ5] Server notification inside `match.events`; never produced by `applyAction`. */
