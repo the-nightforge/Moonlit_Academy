@@ -1054,7 +1054,7 @@
      "type": "damage",
      "amount": 2,
      "to": "chosen",
-     "hits": 2
+     "hits": 1
     },
     {
      "type": "applyStatus",
@@ -1063,7 +1063,7 @@
      "to": "chosen"
     }
    ],
-   "text": "Gây 2 damage ×2, Đánh Dấu 1 vòng.",
+   "text": "Gây 2 damage, Đánh Dấu 1 vòng.",
    "keywords": [
     "danh_dau"
    ]
