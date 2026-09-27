@@ -1,3 +1,4 @@
+import { bossPhaseOf } from "./coop/boss";
 import { baseMoonPower } from "./moon-power";
 import { nextRandom } from "./rng";
 import { hasStatus } from "./statuses";
@@ -89,6 +90,10 @@ export function planEnemyIntents(data: GameData, state: CombatState, events: Com
   for (const enemy of state.enemies) {
     if (!enemy.alive) continue;
     const def = data.enemies[enemy.defId]!;
+    // Co-op boss: the current phase supplies the intent pool and chain cap (`01` §16.5).
+    const phase = bossPhaseOf(data, state, enemy, def);
+    const intents = phase?.intents ?? def.intents;
+    const maxIntents = phase?.maxIntentsPerRound ?? maxIntentsPerRound;
     const fund = baseMoonPower(def.moonPower, moonPower.perRound, state.round) + enemy.moonReserve;
     let left = fund;
     const chain: PlannedIntent[] = [];
@@ -96,10 +101,18 @@ export function planEnemyIntents(data: GameData, state: CombatState, events: Com
       (state.bloodMoonRounds > 0 ? def.bloodMoonOverride : undefined) ??
       def.moonOverrides?.find((entry) => entry.phase === phaseId)?.intent;
     if (override) chain.push({ intent: override, cost: 0, targetId: null });
-    const top = def.intents.reduce((best, intent) => (intent.cost > best.cost ? intent : best));
     const used = new Set<string>();
-    while (chain.length < maxIntentsPerRound) {
-      const affordable = def.intents.filter((intent) => intent.cost <= left && !used.has(intent.id));
+    // `alwaysPlan` intents lead the chain while the fund covers them (`01` §16.5).
+    for (const intent of intents) {
+      if (chain.length >= maxIntents) break;
+      if (!intent.alwaysPlan || used.has(intent.id) || intent.cost > left) continue;
+      chain.push({ intent, cost: intent.cost, targetId: null });
+      used.add(intent.id);
+      left -= intent.cost;
+    }
+    const top = intents.reduce((best, intent) => (intent.cost > best.cost ? intent : best));
+    while (chain.length < maxIntents) {
+      const affordable = intents.filter((intent) => intent.cost <= left && !used.has(intent.id));
       if (affordable.length === 0) break;
       const pick =
         affordable.includes(top) && !enemy.lastIntentIds.includes(top.id)

@@ -1,79 +1,11 @@
-import type { Action, CombatState, Effect, GameData, RunAction, RunState } from "../src/index";
-import { cardDefOf, findNode, getEffectiveCost, getValidTargets, isCardPlayable, reachableNodeIds } from "../src/index";
+import type { Action, CombatState, GameData, RunAction, RunState } from "../src/index";
+import { chooseCombatAction } from "../src/bot";
+import { findNode, reachableNodeIds } from "../src/index";
 
 /** The playtest bot shared by `run-playtest` and the economy simulation. */
-// Phase 4a heuristic: mulligan cards above the doubling curve, Chiêm Bài picks
-// the most expensive card affordable next round, plays costliest first,
-// focuses lowest-HP enemy / lowest-ratio ally.
+// Phase 4a heuristic lives in `src/bot.ts` (chooseCombatAction) — shared with pvpBot.
 export function combatAction(gameData: GameData, state: CombatState): Action {
-  if (state.status === "mulligan") {
-    const expensive = state.hand.filter(
-      (id) => cardDefOf(gameData, state, state.cards[id]!)!.cost > 5,
-    );
-    return {
-      type: "mulligan",
-      instanceIds: expensive.slice(0, gameData.combatConfig.maxMulligan),
-    };
-  }
-  if (state.status === "choosing") {
-    const curve = gameData.combatConfig.moonPower;
-    const nextFund =
-      Math.min(curve.cap, curve.start + state.round * curve.perRound) +
-      gameData.combatConfig.moonReserveMax;
-    const options = [...state.pendingChoice!.options].sort(
-      (a, b) =>
-        cardDefOf(gameData, state, state.cards[b]!)!.cost -
-        cardDefOf(gameData, state, state.cards[a]!)!.cost,
-    );
-    const pick =
-      options.find(
-        (id) => cardDefOf(gameData, state, state.cards[id]!)!.cost <= nextFund,
-      ) ?? options[0]!;
-    return { type: "chooseCard", instanceId: pick };
-  }
-  const keywordsOf = (id: string) => cardDefOf(gameData, state, state.cards[id]!)!.keywords ?? [];
-  const heldThreshold = (id: string): number => {
-    let best = 0;
-    const walk = (effects: Effect[]) => {
-      for (const effect of effects) {
-        if (effect.type !== "conditional") continue;
-        if (effect.condition.type === "heldTurnsAtLeast") best = Math.max(best, effect.condition.turns);
-        walk(effect.then);
-        walk(effect.else ?? []);
-      }
-    };
-    walk(cardDefOf(gameData, state, state.cards[id]!)!.effects);
-    return best;
-  };
-  const playable = state.hand.filter((id) => isCardPlayable(gameData, state, id));
-  const ready = playable.filter((id) => state.cards[id]!.heldTurns >= heldThreshold(id));
-  const candidates = ready.length > 0 || state.hand.length < gameData.combatConfig.handSize ? ready : playable;
-  const ordered = [...candidates].sort((a, b) => {
-    const comboA = keywordsOf(a).includes("lien_hoan") ? 1 : 0;
-    const comboB = keywordsOf(b).includes("lien_hoan") ? 1 : 0;
-    if (comboA !== comboB) return comboA - comboB; // non-combo cards first
-    return getEffectiveCost(gameData, state, b) - getEffectiveCost(gameData, state, a);
-  });
-  for (const instanceId of ordered) {
-    const card = cardDefOf(gameData, state, state.cards[instanceId]!)!;
-    if (card.target === "none") return { type: "playCard", instanceId };
-    const targets = getValidTargets(gameData, state, instanceId);
-    let targetId: string | undefined;
-    if (card.target === "enemy") {
-      const drains = keywordsOf(instanceId).some((k) => k === "toa_nguyet" || k === "doat_nguyet");
-      const chainCost = (id: string) => state.enemies.find((e) => e.id === id)!.plannedIntents.reduce((s, p) => s + p.cost, 0);
-      const hp = (id: string) => state.enemies.find((e) => e.id === id)!.hp;
-      targetId = [...targets].sort((a, b) => (drains ? chainCost(b) - chainCost(a) : hp(a) - hp(b)))[0];
-    } else {
-      const burst = keywordsOf(instanceId).includes("tu_duoc");
-      const regen = (id: string) => state.heroes.find((h) => h.id === id)!.statuses.find((s) => s.id === "regen")?.value ?? 0;
-      const ratio = (id: string) => { const h = state.heroes.find((u) => u.id === id)!; return h.hp / h.maxHp; };
-      const pool = burst ? targets.filter((id) => regen(id) >= 3) : targets;
-      targetId = [...pool].sort((a, b) => ratio(a) - ratio(b))[0];
-    }
-    if (targetId !== undefined) return { type: "playCard", instanceId, targetId };
-  }
-  return { type: "endTurn" };
+  return chooseCombatAction(gameData, state, 0);
 }
 
 export function hpRatio(run: RunState): number {

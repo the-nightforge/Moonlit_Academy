@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CardDef, CombatState, Effect, GameData, IntentDef } from "../src/index";
 import { applyAction, drawCards } from "../src/index";
 import { idleIntent, strike9Intent } from "./fixtures";
-import { idleEnemies, injectCard, makeEnemiesIdle, makeTestCombat, setIntent } from "./helpers";
+import { idleEnemies, injectCard, makeEnemiesIdle, makeTestCombat, setIntent, p0 } from "./helpers";
 
 function card(id: string, effects: Effect[], target: CardDef["target"] = "enemy", type: CardDef["type"] = "attack"): CardDef {
   return { id, name: id, ownerId: "m05", cost: 0, copies: 1, type, tags: [], target, effects, text: "" };
@@ -54,9 +54,9 @@ describe("phase 4b keywords", () => {
     const before = next.state.enemies[0]!.hp;
     expect(play(held.data, next.state, later, "enemy:0").state.enemies[0]!.hp).toBe(before - 10);
 
-    const top = next.state.drawPile[0]!;
+    const top = p0(next.state).drawPile[0]!;
     next.state.cards[top]!.heldTurns = 5;
-    drawCards(next.state, 1, []);
+    drawCards(next.state, p0(next.state), 1, []);
     expect(next.state.cards[top]!.heldTurns).toBe(0);
   });
 
@@ -66,11 +66,11 @@ describe("phase 4b keywords", () => {
     const hp = state.enemies[0]!.hp;
     const afterFirst = play(data, state, first, "enemy:0");
     expect(afterFirst.state.enemies[0]!.hp).toBe(hp - 1);
-    expect(afterFirst.state.cardsPlayedThisTurn).toBe(1);
+    expect(p0(afterFirst.state).cardsPlayedThisTurn).toBe(1);
     const second = injectCard(afterFirst.state, data, { ...comboCard, id: "test_combo_2" });
     const afterSecond = play(data, afterFirst.state, second, "enemy:0");
     expect(afterSecond.state.enemies[0]!.hp).toBe(hp - 1 - 10);
-    expect(end(data, afterSecond.state).state.cardsPlayedThisTurn).toBe(0);
+    expect(p0(end(data, afterSecond.state).state).cardsPlayedThisTurn).toBe(0);
   });
 
   it("T151: Tỏa Nguyệt drains the fund and cancels intents from the chain's end", () => {
@@ -103,9 +103,9 @@ describe("phase 4b keywords", () => {
   it("T152: Đoạt Nguyệt gives the player exactly what was drained", () => {
     const { data, state } = makeTestCombat();
     state.enemies[1]!.moonPower = 1;
-    const power = state.moonPower;
+    const power = p0(state).moonPower;
     const steal = injectCard(state, data, card("test_steal", [{ type: "drainMoonPower", amount: 2, to: "chosen", steal: true }], "enemy", "skill"));
-    expect(play(data, state, steal, "enemy:1").state.moonPower).toBe(power + 1);
+    expect(p0(play(data, state, steal, "enemy:1").state).moonPower).toBe(power + 1);
   });
 
   it("T153: Dưỡng Nguyệt adds moon power every later turn, stacks and exceeds the cap", () => {
@@ -113,18 +113,18 @@ describe("phase 4b keywords", () => {
     const curve = data.combatConfig.moonPower;
     const grow = card("test_grow", [{ type: "gainMoonPowerPerTurn", amount: 2 }], "none", "skill");
     const once = play(data, state, injectCard(state, data, grow), undefined);
-    expect(once.state.moonPowerBonus).toBe(2);
+    expect(p0(once.state).moonPowerBonus).toBe(2);
     const twice = play(data, once.state, injectCard(once.state, data, { ...grow, id: "test_grow_2" }), undefined);
-    expect(twice.state.moonPowerBonus).toBe(4);
-    twice.state.moonPower = 0;
+    expect(p0(twice.state).moonPowerBonus).toBe(4);
+    p0(twice.state).moonPower = 0;
     const next = end(data, twice.state);
-    expect(next.state.moonPower).toBe(Math.min(curve.cap, curve.start + curve.perRound) + 4);
+    expect(p0(next.state).moonPower).toBe(Math.min(curve.cap, curve.start + curve.perRound) + 4);
     let current = next.state;
     for (let i = 0; i < 8; i++) {
-      current.moonPower = 0;
+      p0(current).moonPower = 0;
       current = end(data, current).state;
     }
-    expect(current.moonPower).toBe(curve.cap + 4);
+    expect(p0(current).moonPower).toBe(curve.cap + 4);
   });
 
   it("T154: Phẫn Huyết deals damage from missing HP through the damage formula, cards and intents", () => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CombatEvent, CombatState, GameData, RunRelicDef } from "../src/index";
 import { applyAction } from "../src/index";
 import { armorBreakCard, idleIntent, strike9Intent } from "./fixtures";
-import { idleEnemies, injectCard, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand, setIntent } from "./helpers";
+import { idleEnemies, injectCard, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand, setIntent, p0 } from "./helpers";
 
 function play(data: GameData, state: CombatState, cardId: string, targetId?: string) {
   return applyAction(data, state, {
@@ -45,7 +45,7 @@ describe("run relic hooks", () => {
     const b = applyAction(without.data, without.state, { type: "endTurn" });
     expect(a.ok && b.ok).toBe(true);
     if (!a.ok || !b.ok) return;
-    expect(a.state.moonPower).toBe(b.state.moonPower + 2);
+    expect(p0(a.state).moonPower).toBe(p0(b.state).moonPower + 2);
   });
 
   it("T117: every third attack card grants 2 moon power", () => {
@@ -53,7 +53,7 @@ describe("run relic hooks", () => {
       runRelicIds: ["tam_tuyet_kiem_pho"],
       setup: (s) => {
         setHand(s, ["m05_liet_hoa_xung_phong", "m05_ho_gam", "m06_am_tien"]);
-        s.moonPower = 10;
+        p0(s).moonPower = 10;
       },
     });
     injectCard(state, data, { ...armorBreakCard, cost: 2 });
@@ -64,19 +64,19 @@ describe("run relic hooks", () => {
       if (!result.ok) return;
       current = result.state;
     }
-    expect(current.moonPower).toBe(2);
+    expect(p0(current).moonPower).toBe(2);
     const last = play(data, current, "m06_am_tien", "enemy:0");
     expect(last.ok).toBe(true);
     if (!last.ok) return;
     expect(triggered(last.events)).toEqual(["tam_tuyet_kiem_pho"]);
-    expect(last.state.moonPower).toBe(2);
+    expect(p0(last.state).moonPower).toBe(2);
   });
 
   it("T118: cardPlayed filters by tag and uses the card owner (bond: owners[0])", () => {
     const { data, state } = makeTestCombat({
       runRelicIds: ["han_ngoc"],
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["m06_nguyet_anh_an"]);
       },
     });
@@ -159,7 +159,7 @@ describe("run relic hooks", () => {
       runRelicIds: ["bach_lo_huong_tui"],
       setup: (s) => {
         s.moonIndex = 3;
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["f04_nguyet_quang_dan"]);
       },
     });
@@ -176,7 +176,7 @@ describe("run relic hooks", () => {
       heroIds: team,
       runRelicIds: ["huyet_nguyet_phu"],
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["f02_doi_van_chu"]);
       },
     });
@@ -190,7 +190,7 @@ describe("run relic hooks", () => {
       runRelicIds: ["huyet_nguyet_phu"],
       setup: (s) => {
         s.bloodMoonRounds = 1;
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["f02_doi_van_chu"]);
       },
     });

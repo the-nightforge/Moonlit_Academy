@@ -1,6 +1,8 @@
 import { loadGameData } from "data";
 import { createCombat, createProfile, starterDeck } from "rules";
 import type { CombatEvent, CombatState, GameData, Loadout, MasteryGain, Profile, RunRewards, RunState, SavedDeck } from "rules";
+import type { NetMatch } from "./net/match";
+import type { NetSocket } from "./net/socket";
 import type { RunTicket } from "./run-session";
 
 export type Team = [string, string, string];
@@ -34,6 +36,14 @@ export interface CombatSession {
   runSubmitted: boolean;
   /** Tinh Hồn and gear of the single combat's team (built from the profile). */
   loadout: Loadout | undefined;
+  /** The realtime socket (`16` §8); created on entering the arena. */
+  net: NetSocket | null;
+  /** The live network match the combat scene is bound to, if any. */
+  match: NetMatch | null;
+  /** Code of the private room the player is hosting/waiting in (arena). */
+  roomCode: string | null;
+  /** Mutes incoming match emotes (`pvp-config.emotes`). */
+  emotesMuted: boolean;
 }
 
 export function newCombatSession(
@@ -50,6 +60,7 @@ export function newCombatSession(
     data, state, events, seed, encounterId, heroIds, deckCardIds: deck, run: null,
     profile: createProfile(data), rev: 0, online: false, ticket: null, editingDeck: null, lastGains: null,
     lastRewards: null, notices: [], runSubmitted: false, loadout,
+    net: null, match: null, roomCode: null, emotesMuted: false,
   };
 }
 

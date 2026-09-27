@@ -62,6 +62,13 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
       then: z.array(effectSchema),
       else: z.array(effectSchema).optional(),
     }),
+    z.object({
+      actor,
+      type: z.literal("execute"),
+      threshold: z.number().gt(0).lte(1),
+      to: targetRefSchema,
+      elseEffects: z.array(effectSchema).optional(),
+    }),
   ]),
 );
 
@@ -141,6 +148,16 @@ export const intentDefSchema = z.object({
 
 export const enemyIntentDefSchema = intentDefSchema.extend({
   cost: z.number().int().nonnegative(),
+  alwaysPlan: z.boolean().optional(),
+});
+
+export const bossPhaseDefSchema = z.object({
+  hpBelow: z.number().gt(0).lte(1),
+  intents: z.array(enemyIntentDefSchema).min(1),
+  maxIntentsPerRound: z.number().int().positive().optional(),
+  onEnter: z.array(effectSchema).min(1).optional(),
+  bloodMoonWhileActive: z.literal(true).optional(),
+  reviveAfterRounds: z.number().int().positive().optional(),
 });
 
 export const enemyDefSchema = z.object({
@@ -154,6 +171,7 @@ export const enemyDefSchema = z.object({
   }),
   moonOverrides: z.array(z.object({ phase: moonPhaseIdSchema, intent: intentDefSchema })).optional(),
   bloodMoonOverride: intentDefSchema.optional(),
+  phases: z.array(bossPhaseDefSchema).min(1).optional(),
   art: z.object({ portrait: z.string() }),
 });
 
@@ -161,7 +179,7 @@ export const encounterDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
   enemyIds: z.array(idSchema).min(1).max(3),
-  tier: z.enum(["normal", "elite", "boss"]),
+  tier: z.enum(["normal", "elite", "boss", "coop"]),
   minFloor: z.number().int().positive().optional(),
 });
 
@@ -322,14 +340,18 @@ export const metaConfigSchema = z.object({
 const nonNegativeInt = z.number().int().nonnegative();
 const probability = z.number().min(0).max(1);
 
+/** What a shop sells (`14` §11); `relicChoice` is honor-shop only (`14` §14.4). */
+export const shopItemSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("moonJade"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("heroChoice"), rarity: raritySchema }),
+  z.object({ type: z.literal("relicChoice"), rarity: raritySchema }),
+]);
+
 export const shopItemDefSchema = z.object({
   id: idSchema,
   price: z.number().int().positive(),
   limitPerWeek: z.number().int().positive(),
-  item: z.discriminatedUnion("type", [
-    z.object({ type: z.literal("moonJade"), amount: z.number().int().positive() }),
-    z.object({ type: z.literal("heroChoice"), rarity: raritySchema }),
-  ]),
+  item: shopItemSchema,
 });
 
 export const economyConfigSchema = z.object({
@@ -390,6 +412,76 @@ export const achievementDefSchema = z.object({
   reward: z.object({ moonJade: z.number().int().positive() }),
 });
 
+export const pvpConfigSchema = z.object({
+  heroStats: z.record(z.string(), z.object({ maxHp: z.number().int().positive() })),
+  trialHeroIds: z.array(idSchema),
+  freeWeaponIds: z.array(idSchema),
+  freeRelicIds: z.array(idSchema),
+  secondPlayerBonus: z.object({ moonPower: z.number().int().nonnegative() }),
+  turnSeconds: z.number().int().positive(),
+  mulliganSeconds: z.number().int().positive(),
+  timeoutsToForfeit: z.number().int().positive(),
+  reconnectSeconds: z.number().int().positive(),
+  roundCap: z.number().int().positive(),
+  tiers: z.array(z.object({ id: idSchema, name: z.string().min(1), minRating: z.number().int() })).optional(),
+  honorShop: z.array(z.object({
+    id: idSchema,
+    item: shopItemSchema,
+    cost: z.number().int().positive(),
+    limitPerWeek: z.number().int().positive().optional(),
+    limitPerMonth: z.number().int().positive().optional(),
+  })).optional(),
+  emotes: z.array(z.string().min(1)).optional(),
+});
+
+const effectTypeSchema = z.enum([
+  "damage", "heal", "loseHp", "gainArmor", "removeArmor", "applyStatus", "cleanse",
+  "chooseCard", "gainMoonPower", "shiftMoon", "stealBuff", "bloodMoon",
+  "drainMoonPower", "gainMoonPowerPerTurn", "missingHpDamage", "burstRegen",
+  "conditional", "execute",
+]);
+
+export const cardMatcherSchema = z.object({
+  tag: cardTagSchema.optional(),
+  ownerId: idSchema.optional(),
+  appliesStatus: statusIdSchema.optional(),
+  effect: effectTypeSchema.optional(),
+  moonPhaseAfter: moonPhaseIdSchema.optional(),
+});
+
+export const coopComboDefSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1),
+  text: z.string().min(1),
+  parts: z.tuple([cardMatcherSchema, cardMatcherSchema]),
+  limit: z.object({
+    perRound: z.literal(1),
+    perCombat: z.number().int().positive().optional(),
+  }),
+  effects: z.array(effectSchema).min(1),
+});
+
+const coopRewardSchema = z.object({
+  moonJade: z.number().int().nonnegative().default(0),
+  moonDust: z.number().int().nonnegative().default(0),
+});
+
+export const coopConfigSchema = z.object({
+  turnSeconds: z.number().int().positive(),
+  reconnectSeconds: z.number().int().positive(),
+  /** The fixed co-op raid encounter (must have `tier: "coop"`, `17` §9.1). */
+  encounterId: z.string().min(1),
+  rewards: z.object({
+    win: coopRewardSchema,
+    loss: coopRewardSchema,
+    /** Extra currency on the first rewarded win of a game day. */
+    firstWinOfDay: coopRewardSchema,
+  }),
+  /** Matches per game day that pay out; later matches are free of rewards. */
+  rewardedMatchesPerDay: z.number().int().positive(),
+  emotes: z.array(z.string().min(1)).optional(),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
@@ -408,4 +500,7 @@ export const rawGameDataSchema = z.object({
   banners: z.array(bannerDefSchema),
   weapons: z.array(weaponDefSchema),
   relics: z.array(relicDefSchema),
+  pvpConfig: pvpConfigSchema,
+  coopConfig: coopConfigSchema,
+  coopCombos: z.array(coopComboDefSchema),
 });

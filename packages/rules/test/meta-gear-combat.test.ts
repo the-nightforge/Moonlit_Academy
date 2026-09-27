@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CardDef, CombatState, GameData, Loadout } from "../src/index";
 import { applyAction, cardDefOf, getEffectiveCost, getPlayCardError, weaponAt } from "../src/index";
 import { cloneState } from "../src/clone";
-import { idleEnemies, injectCard, makeTestCombat } from "./helpers";
+import { idleEnemies, injectCard, makeTestCombat, p0 } from "./helpers";
 
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
 
@@ -29,9 +29,9 @@ function play(data: GameData, state: CombatState, instanceId: string, targetId?:
 
 /** Moves a weapon card instance into the hand. */
 function draw(state: CombatState, instanceId: string): string {
-  state.drawPile = state.drawPile.filter((id) => id !== instanceId);
-  state.discardPile = state.discardPile.filter((id) => id !== instanceId);
-  if (!state.hand.includes(instanceId)) state.hand.push(instanceId);
+  p0(state).drawPile = p0(state).drawPile.filter((id) => id !== instanceId);
+  p0(state).discardPile = p0(state).discardPile.filter((id) => id !== instanceId);
+  if (!p0(state).hand.includes(instanceId)) p0(state).hand.push(instanceId);
   return instanceId;
 }
 
@@ -41,7 +41,7 @@ const zeroCost = (id: string, ownerId: string, tags: CardDef["tags"], effects: C
 describe("weapons and moon relics in combat", () => {
   it("T198: a weapon adds its copies as cards of the wearer; they break with the wearer and count for its level-up", () => {
     const { data, state } = makeTestCombat({ loadout: gear({ m05: ["w_thiet_thuan", 1] }) });
-    expect(state.weapons).toEqual([{ heroId: "m05", weaponId: "w_thiet_thuan", refinement: 1 }]);
+    expect(p0(state).weapons).toEqual([{ heroId: "m05", weaponId: "w_thiet_thuan", refinement: 1 }]);
     const weaponCards = Object.values(state.cards).filter((card) => card.cardId === "w_thiet_thuan");
     expect(weaponCards.map((card) => card.instanceId).sort()).toEqual(["wpn_m05_1", "wpn_m05_2"]);
     expect(weaponCards.every((card) => card.ownerIds.join() === "m05")).toBe(true);
@@ -87,10 +87,10 @@ describe("weapons and moon relics in combat", () => {
     const ids = [1, 2, 3].map((n) => injectCard(state, dagger.data, zeroCost(`test_own_assassin_${n}`, "m06", ["assassin"])));
     state = play(dagger.data, state, ids[0]!).state;
     state = play(dagger.data, state, ids[1]!).state;
-    const power = state.moonPower;
+    const power = p0(state).moonPower;
     state = play(dagger.data, state, ids[2]!).state;
-    expect(state.moonPower).toBe(power + 2);
-    expect(state.runRelicCounters["w_anh_nguyet_chuy@m06#0"]).toBe(3);
+    expect(p0(state).moonPower).toBe(power + 2);
+    expect(p0(state).hookCounters["w_anh_nguyet_chuy@m06#0"]).toBe(3);
 
     // Liệt Cung: only kills by the wearer give moon power.
     const bow = makeTestCombat({ encounterId: "enc_06", loadout: gear({ f04: ["w_liet_cung", 1] }) });
@@ -105,7 +105,7 @@ describe("weapons and moon relics in combat", () => {
     const byF04 = injectCard(afterM05.state, bow.data, { ...hit("f04", 2), target: "enemy", type: "attack" });
     const afterF04 = play(bow.data, afterM05.state, byF04, afterM05.state.enemies[1]!.id);
     expect(afterF04.events).toContainEqual({ type: "weaponTriggered", weaponId: "w_liet_cung", heroId: "f04" });
-    expect(afterF04.state.moonPower).toBe(afterM05.state.moonPower + 1);
+    expect(p0(afterF04.state).moonPower).toBe(p0(afterM05.state).moonPower + 1);
 
     // Bách Hoa Trâm (every 2nd turn end) acts through the lowest-HP hero, but only while its wearer stands.
     const hairpin = makeTestCombat({ loadout: gear({ f04: ["w_bach_hoa_tram", 1] }) });
@@ -121,7 +121,7 @@ describe("weapons and moon relics in combat", () => {
     const fallen = applyAction(hairpin.data, hairpin.state, { type: "endTurn" });
     if (!fallen.ok) throw new Error(fallen.error);
     expect(fallen.events.some((event) => event.type === "weaponTriggered")).toBe(false);
-    expect(fallen.state.runRelicCounters["w_bach_hoa_tram@f04#0"]).toBeUndefined();
+    expect(p0(fallen.state).hookCounters["w_bach_hoa_tram@f04#0"]).toBeUndefined();
   });
 
   it("T200: refinement applies R2..Rn changes in order to the card and the passives", () => {

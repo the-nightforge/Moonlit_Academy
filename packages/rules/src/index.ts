@@ -1,7 +1,26 @@
 export type * from "./types/index";
 export { nextRandom, shuffle } from "./rng";
+export {
+  activePlayerState,
+  alliesOf,
+  heroesOf,
+  opponentsOf,
+  playerOf,
+  playerOfCard,
+  prefixedId,
+} from "./players";
 export { cardDefOf, relicAt, weaponAt, weaponCardDef, weaponHooks } from "./gear";
 export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-combat";
+export { createPvpCombat } from "./pvp/create";
+export { createCoopCombat } from "./coop/create";
+export { coopBot } from "./coop/bot";
+export { comboHintFor } from "./coop/combos";
+export { pvpBot } from "./pvp/bot";
+export { replayMatch } from "./pvp/replay";
+export { redactEvents, viewFor } from "./pvp/view";
+export { coopRedactEvents, coopViewFor } from "./coop/view";
+export { chooseCombatAction } from "./bot";
+export { displayDuration, getStatus, hasStatus } from "./statuses";
 export { applyAction } from "./apply-action";
 export { getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
 export { getMulliganError, getPlayCardError } from "./apply-action";
@@ -39,9 +58,13 @@ export {
   recordProgress,
 } from "./meta/economy";
 export type { RunRewards } from "./meta/economy";
-export { dayKey, weekKey } from "./meta/periods";
+export { dayKey, monthKey, weekKey } from "./meta/periods";
+export { ratingChange, tierFor, RATING_START } from "./meta/rating";
+export { applyPvpResult, buyHonorItem, HONOR_PER_DAY } from "./meta/honor";
+export { applyCoopResult } from "./meta/coop-rewards";
+export type { CoopResultOpts, CoopRewards } from "./meta/coop-rewards";
 export { grantHeroItem, legendaryRate, pullMany } from "./meta/gacha";
-export { buildLoadout } from "./meta/loadout";
+export { buildLoadout, buildPvpLoadout } from "./meta/loadout";
 export { buyShopItem } from "./meta/shop";
 export type { PullResult } from "./meta/gacha";
 export type { ReplayResult } from "./meta/replay";

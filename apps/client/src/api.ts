@@ -3,6 +3,12 @@ import type { GameData } from "rules";
 
 const TOKEN_KEY = "vong-nguyet.token";
 
+/**
+ * API origin prefix (`16` §7.6): empty in production builds (same origin behind
+ * Caddy); set `VITE_API_BASE=https://host` to point a build at another server.
+ */
+export const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/+$/, "");
+
 /** A failed API call: HTTP status (0 = no connection), error code from the server, full body. */
 export class ApiError extends Error {
   constructor(
@@ -43,7 +49,7 @@ let version = "";
 /** True when the API server answers (used before showing the sign-in form). */
 export async function serverReachable(): Promise<boolean> {
   try {
-    const response = await fetch("/api/health");
+    const response = await fetch(`${API_BASE}/api/health`);
     if (!response.ok) return false;
     const body = (await response.json()) as { ok?: boolean };
     return body.ok === true;
@@ -69,7 +75,7 @@ export async function api<T>(
   if (options.body !== undefined) headers["content-type"] = "application/json";
   let response: Response;
   try {
-    response = await fetch(`/api${path}`, {
+    response = await fetch(`${API_BASE}/api${path}`, {
       method,
       headers,
       ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),

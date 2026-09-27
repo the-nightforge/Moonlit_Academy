@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CombatState, GameData } from "../src/index";
 import { applyAction } from "../src/index";
 import { stealOneCard, twoHitCard } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setHand } from "./helpers";
+import { injectCard, instanceIdOf, makeTestCombat, setHand, p0 } from "./helpers";
 
 const TEAM: [string, string, string] = ["m05", "f03", "f02"];
 
@@ -35,7 +35,7 @@ describe("F02 Diệp Linh Lung", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m05", "m06", "f02"],
       setup: (s) => {
-        s.moonPower = 10;
+        p0(s).moonPower = 10;
         s.enemies[0]!.moonPower = 3;
         setHand(s, ["bond_anh_dau"]);
       },
@@ -48,7 +48,7 @@ describe("F02 Diệp Linh Lung", () => {
     if (!result.ok) return;
     expect(hero(result.state, "f02").statuses).toEqual([{ id: "strength", value: 2 }]);
     expect(result.state.enemies[0]?.moonPower).toBe(2);
-    expect(result.state.moonPower).toBe(9);
+    expect(p0(result.state).moonPower).toBe(9);
   });
 });
 
@@ -86,7 +86,7 @@ describe("F03 Tần Sương", () => {
     let current = state;
     for (const [index, targetId] of ["enemy:0", "enemy:1", "enemy:2"].entries()) {
       setHand(current, ["f03_han_an"]);
-      current.moonPower = 3;
+      p0(current).moonPower = 3;
       const result = play(data, current, "f03_han_an", targetId);
       expect(result.ok).toBe(true);
       if (!result.ok) return;

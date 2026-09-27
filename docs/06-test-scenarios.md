@@ -346,3 +346,53 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T210 | F03 *Hàn Kiếm*: lượt damage đầu tiên mỗi lượt từ lá F03 → Dễ Vỡ 1 vòng; đòn sau không; đặt lại lượt sau |
 | T211 | F02 *Huyết Diện*: lá F02 −1 NL khi Huyết Nguyệt (tối thiểu 0), hết Huyết Nguyệt thì mất |
 | T212 | Kiểm tra dữ liệu khi nạp: `wearer` ngoài hook vũ khí, effect cấm trong hook, `refinement` ≠ 4 mục, `resonance` ≠ 5 cấp, id trùng → lỗi |
+| T213 | **[GĐ5]** Bộ ghi vàng: 200 trận / lượt chơi bot PvE, event và state cuối khớp bản ghi trước khi đổi state |
+| T214 | **[GĐ5]** Phiếu lượt chơi GĐ 4c/4d/4e (mẫu trong test) chạy lại ra đúng `result` cũ |
+| T215 | **[GĐ5]** Hai người chơi cùng Hero: unit id / instance id có tiền tố `p<n>_`, không va chạm |
+| T216 | **[GĐ5]** `createPvpCombat`: `firstPlayer` bốc đúng 1 lần bằng RNG; HP theo `pvp-config.heroStats`; mỗi seat rút `handSize` (seat 0 trước); id có tiền tố |
+| T217 | **[GĐ5]** Đổi Bài song song: `status = "mulligan"` nhận `mulligan` của cả hai seat; seat xong trước vẫn phải chờ; xáo lại theo thứ tự nhận |
+| T218 | **[GĐ5]** Action của seat không có lượt → `"not your turn"`; hook `combatStart` chạy sau `playerTurnStart` lượt đầu, người đi trước trước |
+| T219 | **[GĐ5]** Bù người đi sau: lượt đầu của seat sau `+= secondPlayerBonus.moonPower`, phần dư vào Dự Trữ theo trần `moonReserveMax` |
+| T220 | **[GĐ5]** Thời hạn trạng thái = `2 ×` gốc, giảm cuối mỗi lượt của cả hai; hiển thị `ceil(/2)`; thời hạn 1 luôn sống qua đúng một lượt đối phương |
+| T221 | **[GĐ5]** Mục tiêu: Khiêu Khích của Hero đối thủ bắt chọn Hero đó; Đóng Băng trên Hero P chặn lá trong lượt kế của P, gỡ cuối lượt đó |
+| T222 | **[GĐ5]** `drainMoonPower` PvP rút Dự Trữ đối thủ một lần (`min(amount, moonReserve)`); `steal` cộng quỹ người đánh |
+| T223 | **[GĐ5]** `enemiesKilled` đếm Hero đối thủ ngã; `enemyKilled` chạy hook người kết liễu, `heroDied` chạy hook người mất; `moonPhaseEntered` chạy hook cả hai theo thứ tự lượt |
+| T224 | **[GĐ5]** Thắng/thua/hòa: hết Hero, Cạn Bài của từng seat; cùng hết trong một effect → người có lượt thắng; `round > roundCap` → `draw` |
+| T225 | **[GĐ5]** `forfeit`: chỉ `system: true` được chấp nhận; client gửi bị từ chối; `winner` = seat còn lại |
+| T226 | **[GĐ5]** `buildPvpLoadout`: Tinh Hồn → cấp lẻ trần 5, cờ `pvp` tắt ngưỡng chẵn/lá "+"; mọi vũ khí về Tinh Luyện 1, mọi Nguyệt Bảo về Cộng Minh 1; Hero thử Tinh Hồn 0 |
+| T227 | **[GĐ5]** `validateDeck` `mode: "pvp"`: Hero thử / trang bị miễn phí hợp lệ dù chưa sở hữu; Hero vừa chưa sở hữu vừa ngoài `trialHeroIds` → `unownedHero` |
+| T228 | **[GĐ5]** `viewFor`: tay đối thủ thành `hidden_<n>` chỉ còn số lượng; chồng rút cả hai chỉ số; `rngState = 0`; bỏ/trang bị/Nguyệt Lực/Dự Trữ đầy đủ |
+| T229 | **[GĐ5]** `redactEvents`: `cardsDrawn`/`mulliganed`/`choiceOpened`/`cardChosen`/`deckShuffled` của đối thủ thành số lượng; `cardPlayed` giữ nguyên |
+| T230 | **[GĐ5]** `pvpBot` chơi trên `viewFor` 1000 bước không lỗi; `replayMatch` tái hiện đúng state + event từ nhật ký |
+| T231 | **[GĐ5]** `hello`: thiếu/sai token → đóng 4401; lệch `dataVersion` → 4409; hợp lệ → `welcome` kèm `serverTime` |
+| T232 | **[GĐ5]** Một kết nối/tài khoản: kết nối thứ hai đóng kết nối cũ mã 4000 và trả `welcome.activeMatch` |
+| T233 | **[GĐ5]** Tin sai schema / >16 KB → `error bad message` (không đóng); >30 tin/s → đóng 4429; không `pong` 2 nhịp → mất kết nối |
+| T234 | **[GĐ5]** `match.action`: `seq` trùng → bỏ qua im lặng; nhảy cóc → `rejected bad seq`; sai lượt/sai quyền → `rejected`, state không đổi |
+| T235 | **[GĐ5]** Sau mỗi Action, mỗi người nhận `redactEvents(events, i)` + `viewFor(state, i)` — tay đối thủ chỉ còn số lượng |
+| T236 | **[GĐ5]** `match.end`: ghi `matches` + cập nhật hồ sơ trong một transaction; phòng xóa khỏi bộ nhớ sau 60 s |
+| T237 | **[GĐ5]** `replayMatch` từ `setup_json` + `actions_json` tái hiện đúng trận đã lưu |
+| T238 | **[GĐ5]** `practice.start`: máy đấu trên góc nhìn của nó, nhịp 600–1200 ms; không Elo/thưởng; `mode: practice` |
+| T239 | **[GĐ5]** Kết nối lại trong `reconnectSeconds` nhận snapshot đầy đủ; quá hạn → `forfeit disconnect`; đồng hồ vẫn chạy khi mất kết nối |
+| T240 | **[GĐ5]** `ratingChange`: `K=40` khi `rankedGames < 10`, `K=24` sau; `expected` theo công thức Elo; thắng kẻ mạnh hơn đổi nhiều điểm hơn; điểm không xuống dưới 0 |
+| T241 | **[GĐ5]** Hàng chờ: ghép cặp |Δ Điểm| nhỏ nhất trong `±100 + 50×(giây chờ/10)`; khoảng nới theo thời gian chờ; không ghép lại đối thủ trong 2 trận xếp hạng gần nhất của 10 phút |
+| T242 | **[GĐ5]** `applyPvpResult`: thắng +20 / hòa +12 / thua +8 Vinh Dự; trần 120/kỳ ngày (vượt trần chỉ còn Elo); thua do `resign`/`disconnect`/`timeout` trước vòng 3 → 0 Vinh Dự |
+| T243 | **[GĐ5]** `buyHonorItem`: `limitPerWeek`/`limitPerMonth` chặn đúng kỳ; `"not enough honor"`; `heroChoice` cần Hero đúng độ hiếm chưa sở hữu; `relicChoice` qua `grantItem` (trùng → Cộng Minh +1) |
+| T244 | **[GĐ5]** Trận `ranked` kết thúc: Elo hai phía + Vinh Dự + `match_players` ghi trong một transaction; `match.end` mang `rating`/`rewards`/`profileRev`; `private`/`practice` không đổi Điểm/Vinh Dự |
+| T245 | **[GĐ5]** Giới hạn tần suất: đăng ký 5/giờ và đăng nhập 20/phút theo IP (`TRUST_PROXY` tin `X-Forwarded-For`); `Origin` ngoài `ALLOWED_ORIGINS` bị từ chối nâng cấp WebSocket (403) và route đổi hồ sơ |
+| T246 | **[GĐ6]** `createCoopCombat`: 6 Hero vị trí 0–5 (`player` đúng seat, id có tiền tố), chồng bài / Nguyệt Lực / tay riêng, pha trăng chung, boss lên chuỗi đầu |
+| T247 | **[GĐ6]** Lượt đồng thời: Action của hai người xen kẽ đều được áp; người đã Xong bị từ chối; cả hai Xong → cuối lượt 0 → 1 → lượt địch |
+| T248 | **[GĐ6]** `ally` chọn Hero đồng đội trong 6; `allAllies`/hook `each`/`lowestHp`/`front` chỉ 3 Hero của người đánh |
+| T249 | **[GĐ6]** Đổi Vận của người A đổi pha cho người B ngay trong lượt |
+| T250 | **[GĐ6]** Chiêu địch chọn mục tiêu trong 6 Hero; Khiêu Khích của Hero người B đổi mục tiêu chiêu nhắm Hero người A |
+| T251 | **[GĐ6]** Hợp Kích *Băng Nguyệt Kế*: A đánh lá `scheme`, B đánh lá F03 áp `freeze` → mọi kẻ địch Đóng Băng; lần 2 trong trận không kích hoạt |
+| T252 | **[GĐ6]** Hợp Kích không kích hoạt khi cả hai lá cùng một người; mỗi lá chỉ dùng cho một Hợp Kích |
+| T253 | **[GĐ6]** *Ám Ảnh Tuyệt Sát*: địch ≤ 25% HP ngã (`execute`), không ai đủ ngưỡng → `elseEffects` (8 damage mọi kẻ địch) |
+| T254 | **[GĐ6]** *Nguyệt Quang Phổ Chiếu*: hồi cho cả 6 Hero, Trăng Tròn ×2 |
+| T255 | **[GĐ6]** Boss: vào giai đoạn 2 ở 75% (`onEnter` Sức Mạnh, Huyết Nguyệt không giảm dưới 1); rời giai đoạn 2 → Huyết Nguyệt giảm bình thường |
+| T256 | **[GĐ6]** Boss: một đòn vượt hai ngưỡng → vào lần lượt, `onEnter` đúng thứ tự; chuỗi đã lên không đổi |
+| T257 | **[GĐ6]** Boss giai đoạn 4: sau 2 vòng còn sống → hồi 50%, gỡ debuff, về giai đoạn 3; lần sau ≤ 25% không đếm ngược |
+| T258 | **[GĐ6]** Cạn Bài của một người → 3 Hero người đó ngã (`deckedOut { player }`), đồng đội đánh tiếp; `forfeit` co-op → Hero người đó ngã |
+| T259 | **[GĐ6]** Hết giờ lượt đồng đội: server gửi `endTurn` thay người chưa Xong (`system`), `chooseCard` đầu tiên nếu đang chọn |
+| T260 | **[GĐ6]** Phòng co-op qua `injectWS`: 2 kết nối, đánh hết trận bằng bot, thưởng mỗi người, trần 3 trận / ngày |
+| T261 | **[GĐ6]** Co-op: một người bỏ cuộc → Hero người đó ngã, người còn lại thắng một mình được thưởng; người bỏ cuộc không thưởng |
+| T262 | **[GĐ6]** Góc nhìn co-op thấy tay đồng đội, không thấy chồng rút / `rngState` |

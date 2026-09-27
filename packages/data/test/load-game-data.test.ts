@@ -16,6 +16,9 @@ import achievementsJson from "../achievements.json";
 import bannersJson from "../banners.json";
 import weaponsJson from "../weapons.json";
 import relicsJson from "../relics.json";
+import pvpConfigJson from "../pvp-config.json";
+import coopConfigJson from "../coop-config.json";
+import coopCombosJson from "../coop-combos.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -37,6 +40,9 @@ function rawData(): any {
     banners: bannersJson,
     weapons: weaponsJson,
     relics: relicsJson,
+    pvpConfig: pvpConfigJson,
+    coopConfig: coopConfigJson,
+    coopCombos: coopCombosJson,
   }));
 }
 
@@ -47,10 +53,11 @@ describe("loadGameData", () => {
     expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02"]);
     expect(Object.keys(data.cards)).toHaveLength(68); // 60 hero + 3 bond + 5 constellation-4 plus cards
     expect(Object.keys(data.enemies)).toEqual([
-      "puppet_guard", "shadow_fox", "moon_ape", "book_wraith", "black_guard", "fox_king",
+      "puppet_guard", "shadow_fox", "moon_ape", "book_wraith", "black_guard", "fox_king", "eclipse_lord",
     ]);
     expect(Object.keys(data.encounters)).toEqual([
       "enc_01", "enc_02", "enc_03", "enc_04", "enc_05", "enc_06", "enc_elite_01", "enc_elite_02",
+      "enc_coop_01",
     ]);
     expect(Object.keys(data.runRelics)).toHaveLength(10);
     expect(Object.keys(data.augments)).toHaveLength(16);
@@ -387,5 +394,108 @@ describe("weapons, moon relics and second level-up forms", () => {
     const onLevelUp = rawData();
     onLevelUp.heroes[0].altLevelUp.onLevelUp = [{ type: "damage", amount: 3, to: "chosen" }];
     expect(() => parseGameData(onLevelUp)).toThrow(/altLevelUp.onLevelUp: effects must not use to "chosen"/);
+  });
+
+  it("pvpConfig: arena stats cover every hero and every referenced id exists", () => {
+    const data = loadGameData();
+    expect(Object.keys(data.pvpConfig.heroStats).sort()).toEqual(Object.keys(data.heroes).sort());
+    expect(data.pvpConfig.trialHeroIds).toHaveLength(Object.keys(data.heroes).length);
+    for (const id of data.pvpConfig.freeWeaponIds) expect(data.weapons[id]).toBeDefined();
+    for (const id of data.pvpConfig.freeRelicIds) expect(data.relics[id]).toBeDefined();
+    expect(data.pvpConfig.secondPlayerBonus.moonPower).toBeGreaterThan(0);
+    expect(data.pvpConfig.roundCap).toBeGreaterThan(0);
+
+    const missing = rawData();
+    delete missing.pvpConfig.heroStats.m05;
+    expect(() => parseGameData(missing)).toThrow(/pvpConfig: heroStats missing "m05"/);
+    const unknown = rawData();
+    unknown.pvpConfig.trialHeroIds.push("x99");
+    expect(() => parseGameData(unknown)).toThrow(/pvpConfig: unknown trial hero "x99"/);
+    const free = rawData();
+    free.pvpConfig.freeWeaponIds.push("w_nope");
+    expect(() => parseGameData(free)).toThrow(/pvpConfig: unknown free weapon "w_nope"/);
+    const badNumber = rawData();
+    badNumber.pvpConfig.turnSeconds = 0;
+    expect(() => parseGameData(badNumber)).toThrow(/Invalid game data/);
+  });
+});
+
+describe("co-op data", () => {
+  it("loads the eclipse boss, its co-op encounter and the three combos", () => {
+    const data = loadGameData();
+    expect(data.coopConfig).toMatchObject({
+      turnSeconds: 45,
+      reconnectSeconds: 60,
+      encounterId: "enc_coop_01",
+      rewardedMatchesPerDay: 3,
+    });
+    expect(Object.keys(data.coopCombos)).toEqual([
+      "combo_bang_nguyet_ke", "combo_am_anh_tuyet_sat", "combo_nguyet_quang_pho_chieu",
+    ]);
+    const boss = data.enemies["eclipse_lord"]!;
+    expect(boss.maxHp).toBe(210);
+    expect(boss.moonPower).toEqual({ start: 4, cap: 12 });
+    expect(boss.phases).toHaveLength(4);
+    expect(boss.phases!.map((phase) => phase.hpBelow)).toEqual([1, 0.75, 0.5, 0.25]);
+    expect(boss.phases!.every((phase) => phase.maxIntentsPerRound === 4)).toBe(true);
+    expect(boss.phases![1]).toMatchObject({ bloodMoonWhileActive: true });
+    expect(boss.phases![2]!.intents.find((i) => i.id === "ecl_thuc_nguyet_tram")).toMatchObject({ alwaysPlan: true });
+    expect(boss.phases![3]).toMatchObject({ reviveAfterRounds: 2 });
+    expect(data.encounters["enc_coop_01"]).toMatchObject({ enemyIds: ["eclipse_lord"], tier: "coop" });
+    expect(data.coopCombos["combo_am_anh_tuyet_sat"]!.effects[0]).toMatchObject({
+      type: "execute", threshold: 0.25,
+    });
+  });
+
+  it("rejects execute outside co-op combos", () => {
+    const card = rawData();
+    card.cards[0].effects.push({ type: "execute", threshold: 0.5, to: "allEnemies" });
+    expect(() => parseGameData(card)).toThrow(/execute is only allowed in co-op combos/);
+
+    const intent = rawData();
+    intent.enemies[0].intents[0].effects.push({ type: "execute", threshold: 0.5, to: "allEnemies" });
+    expect(() => parseGameData(intent)).toThrow(/execute is only allowed in co-op combos/);
+
+    const hook = rawData();
+    hook.runRelics[0].hooks[0].effects.push({ type: "execute", threshold: 0.5, to: "allEnemies" });
+    expect(() => parseGameData(hook)).toThrow(/execute is only allowed in co-op combos/);
+  });
+
+  it("rejects phases without hpBelow 1 first, non-decreasing thresholds and early reviveAfterRounds", () => {
+    const notOne = rawData();
+    notOne.enemies.find((e: any) => e.id === "eclipse_lord").phases[0].hpBelow = 0.9;
+    expect(() => parseGameData(notOne)).toThrow(/phases\[0\].hpBelow must be 1/);
+
+    const flat = rawData();
+    flat.enemies.find((e: any) => e.id === "eclipse_lord").phases[2].hpBelow = 0.75;
+    expect(() => parseGameData(flat)).toThrow(/hpBelow must strictly decrease/);
+
+    const earlyRevive = rawData();
+    earlyRevive.enemies.find((e: any) => e.id === "eclipse_lord").phases[0].reviveAfterRounds = 2;
+    expect(() => parseGameData(earlyRevive)).toThrow(/reviveAfterRounds only on the last phase/);
+  });
+
+  it("rejects a combo matcher naming a missing hero and a co-op encounter without phased enemies", () => {
+    const badOwner = rawData();
+    badOwner.coopCombos[0].parts[0].ownerId = "ghost";
+    expect(() => parseGameData(badOwner)).toThrow(/ownerId references missing hero "ghost"/);
+
+    const badEncounter = rawData();
+    badEncounter.encounters.find((e: any) => e.id === "enc_coop_01").enemyIds = ["puppet_guard"];
+    expect(() => parseGameData(badEncounter)).toThrow(/co-op enemies need phases/);
+
+    const chosen = rawData();
+    chosen.coopCombos[0].effects.push({ type: "damage", amount: 1, to: "chosen" });
+    expect(() => parseGameData(chosen)).toThrow(/must not use to "chosen"/);
+  });
+
+  it("rejects a coopConfig encounterId that is missing or not tier coop", () => {
+    const missing = rawData();
+    missing.coopConfig.encounterId = "enc_nope";
+    expect(() => parseGameData(missing)).toThrow(/encounterId references missing encounter "enc_nope"/);
+
+    const wrongTier = rawData();
+    wrongTier.coopConfig.encounterId = "enc_01";
+    expect(() => parseGameData(wrongTier)).toThrow(/is not tier "coop"/);
   });
 });

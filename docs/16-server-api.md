@@ -167,3 +167,225 @@ sơ (+ bảng `runs`)" chạy trong một transaction đồng bộ của better-
   trống, chỉ **Trận lẻ**; Lượt chơi, xếp/xóa deck, Tu Luyện bị khóa.
 - Công cụ debug sửa hồ sơ (+XP, mở hết lá, xóa hồ sơ) đã bỏ (hồ sơ chỉ đổi trên
   server); sửa trận bằng debug trong lượt chơi làm server từ chối kết quả (có cảnh báo).
+
+---
+
+## 7. Triển khai Internet (GĐ 5e)
+
+Một VPS duy nhất chạy server + Caddy đứng trước làm reverse proxy. SQLite cần ổ đĩa
+bền và là nguồn chân lý duy nhất nên không scale ngang; file tĩnh của client do Caddy
+phục vụ (không cần `@fastify/static`).
+
+```text
+Internet ──HTTPS/WSS──> Caddy ──> 127.0.0.1:8787  (node apps/server/dist/main.js, systemd)
+                          │
+                          └─ file tĩnh: apps/client/dist  (mọi route ngoài /api/*)
+```
+
+- `Caddy` tự xin/gia hạn HTTPS (Let's Encrypt); chuyển mọi request `/api/*` (gồm nâng
+  cấp WebSocket `/api/ws`) tới server, còn lại phục vụ `apps/client/dist`.
+- `deploy/`: `Caddyfile`, `vong-nguyet.service` (systemd), `README.md` hướng dẫn cài
+  Node 22 → `pnpm install --frozen-lockfile` → `pnpm build` → chạy, sao lưu/khôi phục.
+  File mẫu không chứa bí mật hay tên miền thật.
+
+### 7.1 Biến môi trường
+
+`config.ts` đọc và kiểm bằng zod khi khởi động; ở production thiếu biến bắt buộc →
+lỗi rõ và không lắng nghe.
+
+| Biến | Mặc định | Production | Ý nghĩa |
+|---|---|---|---|
+| `PORT` | `8787` | `8787` | Cổng server |
+| `HOST` | `127.0.0.1` | `127.0.0.1` | Chỉ lắng nghe loopback (Caddy lo TLS) |
+| `DB_PATH` | `./data/vong-nguyet.db` | bắt buộc chỉ rõ | File SQLite; tạo thư mục nếu thiếu |
+| `NODE_ENV` | — | `production` | Bật chế độ production (kiểm `Origin`, giới hạn tần suất) |
+| `TRUST_PROXY` | — | `1` | Tin `X-Forwarded-For` của Caddy → IP thật cho giới hạn tần suất |
+| `ALLOWED_ORIGINS` | — | bắt buộc | Danh sách origin `https://...` phân tách bằng dấu phẩy |
+| `BACKUP_DIR` | — | bắt buộc | Thư mục nhận bản sao lưu `db.backup()` |
+
+`NODE_ENV` khác `production` (dev/test): `TRUST_PROXY`, `ALLOWED_ORIGINS`,
+`BACKUP_DIR` không bắt buộc; không có `ALLOWED_ORIGINS` thì bỏ kiểm `Origin`,
+không có `BACKUP_DIR` thì tắt sao lưu định kỳ.
+
+### 7.2 Giới hạn tần suất (`rate-limit.ts`)
+
+Cửa sổ trượt trong bộ nhớ, viết tay — không thêm thư viện. IP lấy từ
+`request.ip` (đã qua `TRUST_PROXY`). Chỉ áp khi `NODE_ENV=production` — dev/test
+không giới hạn (giới hạn IP cần `TRUST_PROXY` mới có nghĩa).
+
+| Đối tượng | Giới hạn | Vượt → |
+|---|---|---|
+| `POST /api/auth/register` | 5 / giờ / IP | `429 { error: "rate limited" }` |
+| `POST /api/auth/login` | 20 / phút / IP (ngoài khóa tài khoản sẵn có) | `429` |
+| Nâng cấp `GET /api/ws` | 3 kết nối / IP / 10 giây | `429` (từ chối trước khi nâng cấp) |
+| Tin nhắn WebSocket | 30 tin / giây / kết nối (đã có ở §8.1) | đóng `4429` |
+
+### 7.3 Kiểm `Origin`
+
+Khi `ALLOWED_ORIGINS` được đặt (production): header `Origin` có mặt phải thuộc danh
+sách, áp cho nâng cấp WebSocket (origin lạ → từ chối nâng cấp, `403`) và mọi route
+đổi hồ sơ (POST/PATCH/DELETE — `403 { error: "forbidden origin" }`). Request không
+mang `Origin` (curl, client không phải trình duyệt) vẫn được phục vụ — `Origin` là
+rào chống CSRF/cross-site, không phải xác thực.
+
+### 7.4 Sao lưu / khôi phục
+
+- `backup.ts`: `scheduler` đặt `db.backup(BACKUP_DIR/vong-nguyet-<ISO>.db)` mỗi 6 giờ;
+  sau mỗi lần dọn bản cũ, chỉ giữ **14** bản mới nhất (≈ 3,5 ngày).
+- Khôi phục (trong `deploy/README.md` và `apps/server/README`): dừng service → chép
+  bản sao lưu đè `DB_PATH` → khởi động lại. Khôi phục khi server đang chạy không an
+  toàn (WAL).
+- Bản sao lưu nằm ngoài repo; thư mục backup thêm vào `.gitignore` không cần thiết
+  vì `BACKUP_DIR` trỏ ra ngoài.
+
+### 7.5 Log
+
+Fastify logger JSON ra stdout (systemd gom qua `journalctl -u vong-nguyet`). Không
+bao giờ log token phiên, mật khẩu (kể cả băm), nội dung body của route auth, hay
+payload tin nhắn trận. Log WS chỉ ở mức sự kiện (kết nối/đóng/mã đóng), không log
+nội dung tin.
+
+### 7.6 Build client production
+
+`VITE_API_BASE` rỗng → client gọi cùng origin `/api/*` (không cần CORS, không cần
+biến khác). Lớp socket tự chọn `wss://` khi trang chạy `https://` (§8.1). Caddy phục
+vụ `apps/client/dist` như static SPA: route không khớp file thật rơi về
+`index.html`.
+
+---
+
+## 8. Kết nối realtime (GĐ 5c)
+
+### 8.1 Kết nối
+
+- `GET /api/ws` nâng cấp WebSocket (`@fastify/websocket`). Tin nhắn đầu tiên phải là
+  `hello { token, dataVersion }` trong 10 giây; sai token → đóng `4401`; lệch
+  `dataVersion` → `4409`. Token **không** đi trong URL (tránh lọt vào log proxy).
+- Một kết nối mỗi tài khoản: kết nối mới cùng tài khoản đóng kết nối cũ (`4000
+  "replaced"`) và nhận lại trận đang chơi qua `welcome.activeMatch` (§8.4).
+- Server gửi `ping` mỗi 20 giây; client trả `pong`; không trả lời 2 lần → coi mất
+  kết nối (§8.4).
+- Tin nhắn JSON ≤ 16 KB, kiểm bằng zod (`realtime/protocol.ts`); sai cấu trúc →
+  `error { error: "bad message" }`, không đóng. Quá 30 tin/giây → đóng `4429`.
+
+| Mã đóng | Nghĩa |
+|---|---|
+| `4000` | `replaced` — kết nối khác của cùng tài khoản thay thế |
+| `4401` | `unauthorized` — token sai/hết hạn hoặc thiếu `hello` |
+| `4409` | `outdated client` — `dataVersion` lệch |
+| `4429` | `rate limited` — quá 30 tin/giây |
+
+### 8.2 Tin nhắn (spec `17` §5.2)
+
+Client → server: `hello`, `queue.join`, `queue.leave`, `room.create`, `room.join`,
+`room.leave`, `practice.start`, `match.action { matchId, seq, action }`,
+`match.resign`, `match.emote`, `pong`.
+
+Server → client: `welcome { account, activeMatch?, serverTime }`, `queue.status`,
+`room.created` / `room.updated`, `match.start` (MatchSnapshot), `match.events
+{ matchId, eventSeq, events, view, deadline }`, `match.rejected { matchId, seq,
+reason }`, `match.end { matchId, result, reason, rating?, rewards?, profileRev? }`,
+`match.emote`, `error`, `ping`.
+
+- `seq` trong `match.action` = số Action của riêng người đó đã được chấp nhận + 1;
+  trùng → bỏ qua im lặng; nhảy cóc → `match.rejected "bad seq"`.
+- `eventSeq` tăng dần mỗi `match.events`; client thấy lỗ hổng → chờ snapshot kế
+  hoặc kết nối lại.
+- `deadline` = thời điểm hết lượt (ms UTC server); client bù lệch giờ bằng
+  `serverTime` trong `welcome`.
+
+### 8.3 Phòng trận (`match-room.ts`)
+
+- Giữ `state` đầy đủ, nhật ký Action, đồng hồ, kết nối từng người. Mọi Action xử
+  lý tuần tự trong phòng (Node đơn luồng; không `await` giữa đọc/ghi state).
+- `match.action`: kiểm `seq` → quyền (PvP: đúng lượt; co-op: chưa `done`) →
+  `applyAction`. Lỗi luật → `match.rejected`. Thành công → ghi nhật ký, gửi mỗi
+  người `redactEvents(events, i)` + `viewFor(state, i)`, đặt lại đồng hồ khi đổi
+  lượt.
+- Trận kết thúc → ghi bản ghi + cập nhật hồ sơ (Elo, Vinh Dự, thưởng co-op) trong
+  **một transaction** → `match.end` → xóa phòng khỏi bộ nhớ sau 60 giây.
+
+### 8.4 Mất kết nối và kết nối lại
+
+- Mất kết nối giữa trận: phòng giữ nguyên, đồng hồ lượt **vẫn chạy**; người kia
+  nhận `match.events` kèm `playerDisconnected`.
+- Kết nối lại trong `reconnectSeconds`: `welcome.activeMatch` mang snapshot đầy
+  đủ (góc nhìn + `eventSeq` + `deadline`); client dựng lại màn trận.
+- Quá hạn → Action hệ thống `forfeit { reason: "disconnect" }`. Tải lại trang =
+  kết nối lại (token trong `localStorage`).
+
+### 8.5 Đấu Tập (`practice.start`)
+
+- Server tạo phòng với một người chơi máy (`bot-player.ts`) dùng `pvpBot` /
+  `coopBot` trên **góc nhìn** của nó; máy "nghĩ" 600–1200 ms/Action qua
+  `scheduler`. Deck máy PvP: một đội ngẫu nhiên (seed trận), Bộ cơ bản, trang bị
+  PvP cơ bản ngẫu nhiên.
+- Không thưởng, không Elo, không nhiệm vụ/thành tựu. Bản ghi vẫn lưu
+  (`mode: "practice"`).
+
+### 8.6 Lưu trận — Migration 3
+
+| Bảng | Cột |
+|---|---|
+| `matches` | `id TEXT PK`, `mode TEXT` (`ranked`/`private`/`practice`/`coop`/`coop_private`/`coop_practice`), `data_version TEXT`, `seed INTEGER`, `setup_json TEXT`, `actions_json TEXT` (`{ player, action }[]`), `status TEXT` (`playing`/`finished`/`void`), `result_json TEXT`, `created_at`, `finished_at` |
+| `match_players` | `match_id → matches`, `account_id → accounts` (null với máy), `slot INTEGER`, `result TEXT`, `rating_before INTEGER`, `rating_after INTEGER`; PK `(match_id, slot)`; chỉ mục `(account_id, match_id)` |
+
+- Ghi `matches` lúc bắt đầu (`playing`) và kết thúc (`finished`). Server khởi
+  động: mọi trận `playing` → `void` (không Elo, không thưởng).
+- `replayMatch(data, setup, actions)` dựng lại trận để debug và test (T237).
+
+### 8.7 Route mới (5c)
+
+| Route | Kết quả |
+|---|---|
+| `GET /api/ws` | Nâng cấp WebSocket (§8.1) |
+
+### 8.8 Hàng chờ xếp hạng và route Đấu Trường (5d)
+
+`realtime/queue.ts` (spec `17` §6.1): `queue.join { mode, deckId }` cần deck hợp lệ
+PvP (`validateDeck` chế độ pvp — lỗi → `error "invalid deck"` kèm `errors`) và
+không đang ở phòng/trận khác. Mỗi giây (`scheduler`) ghép cặp có |Δ Điểm| nhỏ
+nhất trong khoảng `±100 + 50 × (giây chờ của người chờ lâu hơn / 10)`; không ghép
+lại một đối thủ trong 2 trận xếp hạng gần nhất của 10 phút qua. `queue.leave` rời
+hàng chờ; `queue.status { mode, waitingSeconds }` (spec §5.2) báo trạng thái — gửi
+ngay khi vào hàng (`waitingSeconds: 0`) rồi mỗi giây trong khi chờ; rời hàng chờ
+không có tin xác nhận (client tự chuyển trạng thái).
+
+Trận `ranked` kết thúc (`§8.3`): `ratingChange` cho từng phía + `applyPvpResult`
+(`14` §14) + `match_players` trong **một transaction**; `match.end` mang
+`rating: { before, after }`, `rewards: { honor: số Vinh Dự nhận được }`,
+`profileRev` (revision mới — client làm mới hồ sơ). Trận `private`/`practice`
+gửi `match.end` không có `rating`/`rewards`.
+
+| Route | Kết quả |
+|---|---|
+| `GET /api/arena/me` | `{ arena, tier, honorToday: { gained, cap } }` của tài khoản |
+| `GET /api/arena/history?page=` | 20 trận gần nhất của mình: mode, đối thủ, kết quả, Δ Điểm, lúc đấu |
+| `GET /api/arena/leaderboard` | Top 50 `rating` (tên, điểm, bậc, thắng/thua) + dòng của mình |
+| `POST /api/shop/honor/:itemId/buy` | `buyHonorItem` (`14` §14.4); `If-Match` bắt buộc; 200 → hồ sơ mới |
+
+### 8.9 Liên Thủ (GĐ 6b.1)
+
+- `queue.join { mode: "coop" }` — hàng chờ co-op riêng (`CoopQueue`, `queue.ts`):
+  FIFO, ghép hai người đầu hàng; deck kiểm `validateDeck` chế độ pve (mỗi người
+  một đội 3 Hero). Trận dựng bằng `createCoopCombat` (encounter
+  `coopConfig.encounterId` = `enc_coop_01`), `mode: "coop"`.
+- `room.create { mode: "coop" }` / `room.join` — phòng riêng co-op
+  (`coop_private`): hai người mỗi người một seat, không thưởng.
+- `practice.start { mode: "coop" }` — `coop_practice`: seat 1 là `coopBot`
+  (đồng đội máy), không thưởng.
+- Phòng co-op trong `match-room.ts`: góc nhìn `coopViewFor` — tay đồng đội lộ bài,
+  chồng cả hai seat và RNG ẩn (T262); event qua `coopRedactEvents` cùng quy ước
+  PvP. Cả hai seat act trong lượt chung; seat đã `done` bị từ chối (`"already
+  done"`). Hết 45 s (`coopConfig.turnSeconds`) server tự gửi `endTurn
+  { system: true }` cho từng seat chưa Xong — `coopEndTurn` tự chọn Chiêm Bài
+  `options[0]` nếu đang chọn (T259). `match.resign` và quá hạn kết nối lại →
+  Action hệ thống `forfeit`: Hero seat đó ngã, đồng đội đánh tiếp (T261).
+- Kết thúc (`§8.3`): `applyCoopResult` (`14` §15) cho **từng ghế người** trong một
+  transaction; `match.end` mang `result` của đội cộng `rewards`/`profileRev` riêng
+  ghế đó — ghế bỏ cuộc luôn `result: "lost"`, `rewards: null`. `coop_private` /
+  `coop_practice` gửi `match.end` không `rewards`.
+
+| Route | Kết quả |
+|---|---|
+| `GET /api/coop/me` | `{ clearsToday, rewardClaimsLeft }` của tài khoản trong kỳ ngày hiện tại |

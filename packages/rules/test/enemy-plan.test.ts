@@ -3,7 +3,7 @@ import type { CombatState, EnemyIntentDef, GameData } from "../src/index";
 import { applyAction } from "../src/index";
 import { planEnemyIntents } from "../src/intent";
 import { idleIntent, strike9Intent } from "./fixtures";
-import { instanceIdOf, makeTestCombat, setIntent, setPlan } from "./helpers";
+import { instanceIdOf, makeTestCombat, setIntent, setPlan, p0 } from "./helpers";
 
 function end(data: GameData, state: CombatState) {
   const result = applyAction(data, state, { type: "endTurn" });
@@ -138,16 +138,16 @@ describe("enemy moon power plans", () => {
         log.push(...result.events);
         return result.state;
       };
-      let current = step(state, { type: "mulligan", instanceIds: state.hand.slice(0, 2) });
+      let current = step(state, { type: "mulligan", instanceIds: p0(state).hand.slice(0, 2) });
       // Force a Chiêm Bài into the sequence: Nguyệt Quang Dẫn to hand, enough moon power.
       const guide = instanceIdOf(current, "f04_nguyet_quang_dan");
-      current.drawPile = current.drawPile.filter((id) => id !== guide);
-      current.discardPile = current.discardPile.filter((id) => id !== guide);
-      if (!current.hand.includes(guide)) current.hand.push(guide);
-      current.moonPower = 11;
+      p0(current).drawPile = p0(current).drawPile.filter((id) => id !== guide);
+      p0(current).discardPile = p0(current).discardPile.filter((id) => id !== guide);
+      if (!p0(current).hand.includes(guide)) p0(current).hand.push(guide);
+      p0(current).moonPower = 11;
       current = step(current, { type: "playCard", instanceId: guide });
       expect(current.status).toBe("choosing");
-      current = step(current, { type: "chooseCard", instanceId: current.pendingChoice!.options[0]! });
+      current = step(current, { type: "chooseCard", instanceId: p0(current).pendingChoice!.options[0]! });
       for (let turn = 0; turn < 4 && current.status === "playerTurn"; turn++) {
         current = step(current, { type: "endTurn" });
       }

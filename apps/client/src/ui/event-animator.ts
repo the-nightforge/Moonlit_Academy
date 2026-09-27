@@ -10,6 +10,8 @@ export interface AnimContext {
   state: CombatState;
   unitAnchors: Map<string, { x: number; y: number }>;
   unitViews: Map<string, Phaser.GameObjects.Container>;
+  /** The local player's seat in a PvP view (`17` §4.8); 0 in PvE. */
+  mySeat?: number;
 }
 
 function floatText(
@@ -205,7 +207,14 @@ function animateEvent(
 
   switch (event.type) {
     case "turnStarted": {
-      const label = event.side === "hero" ? "— Lượt người chơi —" : "— Lượt kẻ địch —";
+      const label =
+        event.player !== undefined
+          ? event.player === ctx.mySeat
+            ? "— Lượt của bạn —"
+            : "— Lượt đối thủ —"
+          : event.side === "hero"
+            ? "— Lượt người chơi —"
+            : "— Lượt kẻ địch —";
       return floatText(scene, WIDTH / 2, 96, label, "#cfd6f0", 16, 350);
     }
     case "cardsDrawn": {
@@ -451,6 +460,25 @@ function animateEvent(
     }
     case "combatEnded":
       return instant();
+    case "playerForfeited": {
+      const reasons: Record<string, string> = {
+        resign: "bỏ cuộc",
+        timeout: "hết giờ",
+        disconnect: "mất kết nối",
+      };
+      const who = event.player === ctx.mySeat ? "Bạn" : "Đối thủ";
+      return floatText(scene, WIDTH / 2, 300, `${who} ${reasons[event.reason] ?? event.reason}`, "#ff8080", 22, 700);
+    }
+    case "playerDisconnected":
+      return floatText(
+        scene,
+        WIDTH / 2,
+        300,
+        event.player === ctx.mySeat ? "Bạn đang ngoại tuyến" : "Đối thủ mất kết nối…",
+        "#8b93b8",
+        16,
+        600,
+      );
     case "mulliganed":
       return floatText(scene, WIDTH / 2, 520, `Đổi ${event.returned.length} lá`, "#cfd6f0", 14, 250);
     case "choiceOpened":

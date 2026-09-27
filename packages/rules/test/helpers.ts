@@ -1,10 +1,15 @@
 import { loadGameData } from "data";
-import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, Loadout, Profile } from "../src/index";
+import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, Loadout, PlayerState, Profile } from "../src/index";
 import { applyAction, createCombat } from "../src/index";
 import { idleIntent } from "./fixtures";
 
 export function testData(): GameData {
   return loadGameData();
+}
+
+/** Seat 0 — every PvE combat's only player (`17` §2.1). */
+export function p0(state: CombatState): PlayerState {
+  return state.players[0]!;
 }
 
 /** A new profile that owns every hero (tests of rules that do not care about ownership). */
@@ -66,17 +71,17 @@ export function instanceIdOf(state: CombatState, cardId: string): string {
 export function setHand(state: CombatState, cardIds: string[]): void {
   const ids = cardIds.map((cardId) => instanceIdOf(state, cardId));
   const wanted = new Set(ids);
-  state.discardPile.push(...state.hand.filter((id) => !wanted.has(id)));
-  state.hand = [];
+  p0(state).discardPile.push(...p0(state).hand.filter((id) => !wanted.has(id)));
+  p0(state).hand = [];
   for (const id of ids) {
-    for (const pile of [state.drawPile, state.discardPile]) {
+    for (const pile of [p0(state).drawPile, p0(state).discardPile]) {
       const index = pile.indexOf(id);
       if (index >= 0) {
         pile.splice(index, 1);
         break;
       }
     }
-    state.hand.push(id);
+    p0(state).hand.push(id);
   }
 }
 
@@ -114,7 +119,7 @@ export function injectCard(state: CombatState, data: GameData, card: CardDef): s
   data.cards[card.id] = card;
   const instanceId = `test_${card.id}`;
   const ownerIds = card.bond ? [...card.bond.owners] : [card.ownerId!];
-  state.cards[instanceId] = { instanceId, cardId: card.id, ownerIds, heldTurns: 0 };
-  state.hand.push(instanceId);
+  state.cards[instanceId] = { instanceId, cardId: card.id, ownerIds, player: 0, heldTurns: 0 };
+  p0(state).hand.push(instanceId);
   return instanceId;
 }

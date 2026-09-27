@@ -8,7 +8,8 @@ import { call, register, testServer } from "./helpers";
 const DAY = 24 * 60 * 60 * 1000;
 
 describe("accounts and sessions", () => {
-  it("T173: register, login, logout; duplicate names; lockout after repeated wrong passwords; only hashes stored", async () => {
+  // Scrypt hashing makes this CPU-bound; allow headroom under parallel load.
+  it("T173: register, login, logout; duplicate names; lockout after repeated wrong passwords; only hashes stored", { timeout: 20_000 }, async () => {
     const server = testServer();
     const created = await call(server, "POST", "/api/auth/register", { body: { username: "  Linh_Lung ", password: "trang-sang-8" } });
     expect(created.status).toBe(201);

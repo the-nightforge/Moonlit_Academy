@@ -3,7 +3,7 @@
 ## Dự án
 **Vọng Nguyệt Thư Viện**: webgame thẻ bài cổ phong 2D. Hero Deckbuilder (3 Hero + deck 20 lá), cơ chế Nguyệt Luân (8 pha trăng thay đổi luật), sau này có gacha, co-op realtime và PvP. Dự án cá nhân, không có thanh toán.
 
-**Giai đoạn hiện tại:** 4e — Binh Khí, Nguyệt Bảo, Tinh Luyện, Cộng Minh, Tinh Hồn 5 (`docs/15-phase4-spec.md` §4, luật ở `docs/01-combat-rules.md` §14 và `docs/14-meta-rules.md` §13). Đã có: server + tài khoản (4c), tiền tệ + gacha Hero + Tinh Hồn (4d). Chưa làm PvP, co-op.
+**Giai đoạn hiện tại:** 6 xong — PvP (Đấu Trường, hạng Elo, Vinh Dự, Phòng riêng, Đấu Tập) và co-op Liên Thủ (lượt đồng thời, Hợp Kích, Boss Nguyệt Thực 4 giai đoạn, thưởng co-op) đã đủ trên rules + server + client theo `docs/17-phase5-6-spec.md`. Còn lại: 5e.2 triển khai Internet thật (hoãn, làm cùng người dùng).
 
 ## Công nghệ
 - TypeScript (strict) cho toàn bộ dự án
@@ -58,7 +58,7 @@ pnpm typecheck
 - ID dữ liệu: `snake_case` chữ thường (`m05`, `m05_liet_hoa_xung_phong`, `puppet_guard`).
 - Kiểu dữ liệu và hàm: `PascalCase` cho type, `camelCase` cho hàm/biến.
 - Ưu tiên union type có trường `type` (discriminated union) cho `Effect`, `Action`, `CombatEvent`, và `switch` đầy đủ với kiểm tra `never`.
-- Không thêm thư viện mới khi chưa hỏi. Đã duyệt: `fastify`, `better-sqlite3`, `@types/better-sqlite3`, `@types/node` (chỉ trong `apps/server`).
+- Không thêm thư viện mới khi chưa hỏi. Đã duyệt: `fastify`, `better-sqlite3`, `@types/better-sqlite3`, `@types/node`, `@fastify/websocket` (+ `ws`, `@types/ws`) (chỉ trong `apps/server`).
 
 ## Khi hoàn thành một bước
 Báo lại ngắn gọn: đã làm gì, file nào thay đổi, test nào đã thêm, kết quả `pnpm test`, và điểm nào trong tài liệu còn mơ hồ.

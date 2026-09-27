@@ -1,0 +1,46 @@
+[
+  {
+    "id": "combo_bang_nguyet_ke",
+    "name": "Băng Nguyệt Kế",
+    "text": "Đóng Băng toàn bộ kẻ địch (boss bỏ cả chuỗi vòng này).",
+    "parts": [
+      { "tag": "scheme" },
+      { "ownerId": "f03", "appliesStatus": "freeze" }
+    ],
+    "limit": { "perRound": 1, "perCombat": 1 },
+    "effects": [
+      { "type": "applyStatus", "status": "freeze", "amount": 1, "to": "allEnemies" }
+    ]
+  },
+  {
+    "id": "combo_am_anh_tuyet_sat",
+    "name": "Ám Ảnh Tuyệt Sát",
+    "text": "Thực tử mọi kẻ địch còn ≤ 25% HP; không ai ngã → 8 sát thương lên toàn bộ kẻ địch.",
+    "parts": [
+      { "ownerId": "m06", "appliesStatus": "stealth" },
+      { "ownerId": "f02", "effect": "loseHp" }
+    ],
+    "limit": { "perRound": 1 },
+    "effects": [
+      {
+        "type": "execute",
+        "threshold": 0.25,
+        "to": "allEnemies",
+        "elseEffects": [{ "type": "damage", "amount": 8, "to": "allEnemies" }]
+      }
+    ]
+  },
+  {
+    "id": "combo_nguyet_quang_pho_chieu",
+    "name": "Nguyệt Quang Phổ Chiếu",
+    "text": "Hồi 6 HP cho cả sáu Hero (dưới Trăng Tròn: ×2).",
+    "parts": [
+      { "effect": "shiftMoon", "moonPhaseAfter": "full" },
+      { "effect": "heal" }
+    ],
+    "limit": { "perRound": 1 },
+    "effects": [
+      { "type": "heal", "amount": 6, "to": "allAllies" }
+    ]
+  }
+]

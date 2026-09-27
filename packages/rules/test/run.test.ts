@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GameData, NodeType, RunAction, RunState } from "../src/index";
 import { applyRunAction, createRun, reachableNodeIds, starterDeck } from "../src/index";
-import { testData } from "./helpers";
+import { testData, p0 } from "./helpers";
 
 const DEFAULT_TEAM: [string, string, string] = ["m05", "f04", "m06"];
 
@@ -237,7 +237,7 @@ describe("run lifecycle", () => {
     const { data, run } = newRun();
     run.augmentIds.push("aug_cuong_hoa");
     const entered = act(data, run, { type: "chooseNode", nodeId: firstNodeId(run) }).run;
-    expect(entered.combat!.runRelicIds).toContain("aug_cuong_hoa");
+    expect(p0(entered.combat!).runRelicIds).toContain("aug_cuong_hoa");
     // combatStart hooks fire after the mulligan resolves.
     const playing = keepHand(data, entered);
     for (const hero of playing.combat!.heroes) {

@@ -18,13 +18,17 @@ import achievementsJson from "../achievements.json";
 import bannersJson from "../banners.json";
 import weaponsJson from "../weapons.json";
 import relicsJson from "../relics.json";
+import pvpConfigJson from "../pvp-config.json";
+import coopConfigJson from "../coop-config.json";
+import coopCombosJson from "../coop-combos.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
     (effect) =>
       test(effect) ||
       (effect.type === "conditional" &&
-        (someEffect(effect.then, test) || someEffect(effect.else ?? [], test))),
+        (someEffect(effect.then, test) || someEffect(effect.else ?? [], test))) ||
+      (effect.type === "execute" && someEffect(effect.elseEffects ?? [], test)),
   );
 }
 
@@ -37,7 +41,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig, coopConfig, coopCombos } =
     parsed;
   const errors: string[] = [];
 
@@ -51,6 +55,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     ["keywords", keywords],
     ["weapons", weapons],
     ["relics", relics],
+    ["coopCombos", coopCombos],
   ] as const;
   for (const [label, defs] of groups) {
     const seen = new Set<string>();
@@ -96,6 +101,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
     if (card.target !== "none" && !usesChosen) {
       errors.push(`${label}: target "${card.target}" requires at least one effect with to "chosen"`);
+    }
+    if (someEffect(card.effects, (effect) => effect.type === "execute")) {
+      errors.push(`${label}: execute is only allowed in co-op combos`);
     }
     const chooseIndex = card.effects.findIndex((effect) => effect.type === "chooseCard");
     if ((chooseIndex >= 0 && chooseIndex !== card.effects.length - 1) || nestedChoose(card.effects)) {
@@ -148,15 +156,19 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     if (enemy.moonPower.start > enemy.moonPower.cap) {
       errors.push(`enemy "${enemy.id}": moonPower start must be <= cap`);
     }
-    const intentIds = new Set<string>();
-    for (const intent of enemy.intents) {
-      if (intentIds.has(intent.id)) errors.push(`enemy "${enemy.id}": duplicate intent id "${intent.id}"`);
-      intentIds.add(intent.id);
+    const intentLists = [enemy.intents, ...(enemy.phases ?? []).map((phase) => phase.intents)];
+    for (const list of intentLists) {
+      const intentIds = new Set<string>();
+      for (const intent of list) {
+        if (intentIds.has(intent.id)) errors.push(`enemy "${enemy.id}": duplicate intent id "${intent.id}"`);
+        intentIds.add(intent.id);
+      }
     }
     const intents = [
       ...enemy.intents,
       ...(enemy.moonOverrides ?? []).map((override) => override.intent),
       ...(enemy.bloodMoonOverride ? [enemy.bloodMoonOverride] : []),
+      ...(enemy.phases ?? []).flatMap((phase) => phase.intents),
     ];
     for (const intent of intents) {
       if (effectsUseChosen(intent.effects) && intent.targeting === undefined) {
@@ -168,8 +180,34 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(intent.effects, (effect) => effect.type === "chooseCard")) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": chooseCard is not allowed`);
       }
+      if (someEffect(intent.effects, (effect) => effect.type === "execute")) {
+        errors.push(`enemy "${enemy.id}" intent "${intent.id}": execute is only allowed in co-op combos`);
+      }
       if (someEffect(intent.effects, cardOnly)) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": card-only keyword`);
+      }
+    }
+    // Boss phases (`01` §16.5): first threshold is 1, then strictly decreasing;
+    // the revive countdown only lives on the final phase.
+    const phases = enemy.phases ?? [];
+    if (phases.length > 0 && phases[0]!.hpBelow !== 1) {
+      errors.push(`enemy "${enemy.id}": phases[0].hpBelow must be 1`);
+    }
+    for (let i = 1; i < phases.length; i++) {
+      if (phases[i]!.hpBelow >= phases[i - 1]!.hpBelow) {
+        errors.push(`enemy "${enemy.id}": phases hpBelow must strictly decrease`);
+      }
+    }
+    for (const [index, phase] of phases.entries()) {
+      if (phase.reviveAfterRounds !== undefined && index !== phases.length - 1) {
+        errors.push(`enemy "${enemy.id}": reviveAfterRounds only on the last phase`);
+      }
+      const onEnter = phase.onEnter ?? [];
+      if (effectsUseChosen(onEnter) || someEffect(onEnter, (e) => e.type === "stealBuff")) {
+        errors.push(`enemy "${enemy.id}" phase ${index + 1}: onEnter must not use to "chosen" or stealBuff`);
+      }
+      if (someEffect(onEnter, (e) => e.type === "chooseCard" || e.type === "execute" || e.actor !== undefined)) {
+        errors.push(`enemy "${enemy.id}" phase ${index + 1}: onEnter must not use chooseCard, execute or actor`);
       }
     }
   }
@@ -187,6 +225,13 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     for (const enemyId of encounter.enemyIds) {
       if (!enemyById.has(enemyId)) {
         errors.push(`encounter "${encounter.id}": enemyIds references missing enemy "${enemyId}"`);
+      }
+    }
+    if (encounter.tier === "coop") {
+      for (const enemyId of encounter.enemyIds) {
+        if ((enemyById.get(enemyId)?.phases?.length ?? 0) === 0) {
+          errors.push(`encounter "${encounter.id}": co-op enemies need phases`);
+        }
       }
     }
   }
@@ -353,6 +398,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(hook.effects, (effect) => effect.type === "chooseCard")) {
         errors.push(`${hookLabel}: effects must not use chooseCard`);
       }
+      if (someEffect(hook.effects, (effect) => effect.type === "execute")) {
+        errors.push(`${hookLabel}: execute is only allowed in co-op combos`);
+      }
       if (!allowCardOnly && someEffect(hook.effects, (e) => cardOnly(e) || e.type === "missingHpDamage")) {
         errors.push(`${hookLabel}: card-only keyword`);
       }
@@ -418,16 +466,79 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       checkHooks(`relic "${relic.id}" resonance ${index + 1}`, level.hooks ?? [], true, false);
     }
   }
+  // PvP config (`17` §3.1): every hero has arena HP; trial and free ids must exist.
+  for (const hero of heroes) {
+    if (pvpConfig.heroStats[hero.id] === undefined) {
+      errors.push(`pvpConfig: heroStats missing "${hero.id}"`);
+    }
+  }
+  for (const id of Object.keys(pvpConfig.heroStats)) {
+    if (!heroById.has(id)) errors.push(`pvpConfig: heroStats references unknown hero "${id}"`);
+  }
+  for (const id of pvpConfig.trialHeroIds) {
+    if (!heroById.has(id)) errors.push(`pvpConfig: unknown trial hero "${id}"`);
+  }
+  for (const id of pvpConfig.freeWeaponIds) {
+    if (!weapons.some((weapon) => weapon.id === id)) {
+      errors.push(`pvpConfig: unknown free weapon "${id}"`);
+    }
+  }
+  for (const id of pvpConfig.freeRelicIds) {
+    if (!relics.some((relic) => relic.id === id)) {
+      errors.push(`pvpConfig: unknown free relic "${id}"`);
+    }
+  }
+  // Tiers ascend by minRating; honor shop choices must name a rarity that exists.
+  const tiers = pvpConfig.tiers ?? [];
+  for (let i = 1; i < tiers.length; i++) {
+    if (tiers[i]!.minRating <= tiers[i - 1]!.minRating) errors.push("pvpConfig: tiers must ascend by minRating");
+  }
+  for (const entry of pvpConfig.honorShop ?? []) {
+    const item = entry.item;
+    if (item.type === "heroChoice" && !heroes.some((hero) => hero.rarity === item.rarity)) {
+      errors.push(`pvpConfig: honorShop "${entry.id}" has no hero of rarity "${item.rarity}"`);
+    }
+    if (item.type === "relicChoice" && !relics.some((relic) => relic.rarity === item.rarity)) {
+      errors.push(`pvpConfig: honorShop "${entry.id}" has no relic of rarity "${item.rarity}"`);
+    }
+  }
+
   for (const hero of heroes) {
     const effects = hero.altLevelUp.onLevelUp ?? [];
     const label = `hero "${hero.id}" altLevelUp.onLevelUp`;
     if (effectsUseChosen(effects)) errors.push(`${label}: effects must not use to "chosen" or stealBuff`);
-    if (someEffect(effects, (effect) => effect.type === "chooseCard" || effect.actor !== undefined)) {
-      errors.push(`${label}: effects must not use chooseCard or actor`);
+    if (someEffect(effects, (effect) => effect.type === "chooseCard" || effect.type === "execute" || effect.actor !== undefined)) {
+      errors.push(`${label}: effects must not use chooseCard, execute or actor`);
     }
     if (someEffect(effects, (effect) => effect.type === "conditional" && effect.condition.type.startsWith("target"))) {
       errors.push(`${label}: conditions must not reference a target`);
     }
+  }
+
+  // Co-op combos (`01` §16.4, `02` §1.14): matchers name real heroes; effects
+  // resolve with no chosen target and no actor, like hook effects.
+  for (const combo of coopCombos) {
+    const label = `coopCombo "${combo.id}"`;
+    for (const part of combo.parts) {
+      if (part.ownerId !== undefined && !heroById.has(part.ownerId)) {
+        errors.push(`${label}: matcher ownerId references missing hero "${part.ownerId}"`);
+      }
+    }
+    if (effectsUseChosen(combo.effects) || someEffect(combo.effects, (e) => e.type === "stealBuff")) {
+      errors.push(`${label}: effects must not use to "chosen" or stealBuff`);
+    }
+    if (someEffect(combo.effects, (e) => e.type === "chooseCard" || e.actor !== undefined)) {
+      errors.push(`${label}: effects must not use chooseCard or actor`);
+    }
+  }
+  if (coopConfig.reconnectSeconds <= coopConfig.turnSeconds) {
+    errors.push("coopConfig: reconnectSeconds must exceed turnSeconds");
+  }
+  const coopEncounter = encounters.find((encounter) => encounter.id === coopConfig.encounterId);
+  if (coopEncounter === undefined) {
+    errors.push(`coopConfig: encounterId references missing encounter "${coopConfig.encounterId}"`);
+  } else if (coopEncounter.tier !== "coop") {
+    errors.push(`coopConfig: encounter "${coopConfig.encounterId}" is not tier "coop"`);
   }
 
   return errors;
@@ -442,7 +553,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig, coopConfig, coopCombos } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -462,6 +573,9 @@ export function parseGameData(raw: unknown): GameData {
     banners: Object.fromEntries(banners.map((banner) => [banner.id, banner])),
     weapons: Object.fromEntries(weapons.map((weapon) => [weapon.id, weapon])),
     relics: Object.fromEntries(relics.map((relic) => [relic.id, relic])),
+    pvpConfig,
+    coopConfig,
+    coopCombos: Object.fromEntries(coopCombos.map((combo) => [combo.id, combo])),
   };
 }
 
@@ -484,5 +598,8 @@ export function loadGameData(): GameData {
     banners: bannersJson,
     weapons: weaponsJson,
     relics: relicsJson,
+    pvpConfig: pvpConfigJson,
+    coopConfig: coopConfigJson,
+    coopCombos: coopCombosJson,
   });
 }

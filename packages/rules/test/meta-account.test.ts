@@ -4,7 +4,7 @@ import {
   applyRunAction, createProfile, createRun, getValidTargets, isCardPlayable, mergeImportedProfile,
   parseProfile, reachableNodeIds, replayRun, starterDeck, unlockCard, validateDeck,
 } from "../src/index";
-import { testData } from "./helpers";
+import { testData, p0 } from "./helpers";
 
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
 
@@ -29,8 +29,8 @@ function botAction(data: GameData, run: RunState): RunAction {
 
 function combatAction(data: GameData, state: CombatState): Action {
   if (state.status === "mulligan") return { type: "mulligan", instanceIds: [] };
-  if (state.status === "choosing") return { type: "chooseCard", instanceId: state.pendingChoice!.options[0]! };
-  for (const instanceId of state.hand) {
+  if (state.status === "choosing") return { type: "chooseCard", instanceId: p0(state).pendingChoice!.options[0]! };
+  for (const instanceId of p0(state).hand) {
     if (!isCardPlayable(data, state, instanceId)) continue;
     const card = data.cards[state.cards[instanceId]!.cardId]!;
     if (card.target === "none") return { type: "playCard", instanceId };
@@ -79,7 +79,7 @@ describe("accounts: profile v2, ownership, import, replay", () => {
     });
     expect(profile.heroes["f03"]).toBeUndefined();
     expect(profile.decks).toEqual(raw.decks);
-    expect(profile.currencies).toEqual({ moonJade: 0, moonStar: 0, darkIron: 0, moonDust: 0 });
+    expect(profile.currencies).toEqual({ moonJade: 0, moonStar: 0, darkIron: 0, moonDust: 0, honor: 0 });
 
     const v2 = parseProfile(data, {
       version: 2,
@@ -91,7 +91,7 @@ describe("accounts: profile v2, ownership, import, replay", () => {
     expect(v2.reset).toBe(false);
     expect(v2.profile.heroes["f03"]).toEqual({ xp: 10, unlockedCardIds: [], constellation: 6, bonusUnlocks: 0, levelUpForm: "alt" });
     expect(v2.profile.heroes["m05"]).toBeDefined(); // starter heroes are always owned
-    expect(v2.profile.currencies).toEqual({ moonJade: 320, moonStar: 0, darkIron: 0, moonDust: 0 });
+    expect(v2.profile.currencies).toEqual({ moonJade: 320, moonStar: 0, darkIron: 0, moonDust: 0, honor: 0 });
     expect(v2.profile.flags).toEqual({ starterGiftClaimed: false, localImportDone: true });
     expect(v2.profile.stats).toEqual({ runsWon: 3, bad: 0 });
     expect(v2.profile.decks).toEqual([]);

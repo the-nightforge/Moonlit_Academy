@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, isCardPlayable } from "../src/index";
 import { aoeFiveCard, healFiveCard, idleIntent, killThenArmorCard, strike9Intent } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setIntent } from "./helpers";
+import { injectCard, instanceIdOf, makeTestCombat, setIntent, p0 } from "./helpers";
 
 describe("combat end", () => {
   it("T57: killing the last enemy wins the combat", () => {
@@ -77,7 +77,7 @@ describe("combat end", () => {
     ).toBe(true);
 
     const m06Card = instanceIdOf(result.state, "m06_am_tien");
-    result.state.hand.push(m06Card);
+    p0(result.state).hand.push(m06Card);
     expect(isCardPlayable(data, result.state, m06Card)).toBe(false);
     const attempt = applyAction(data, result.state, {
       type: "playCard",

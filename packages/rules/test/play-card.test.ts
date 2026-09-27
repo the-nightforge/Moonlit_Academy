@@ -9,13 +9,13 @@ import {
   healSixCard,
   regenThreeCard,
 } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setHand } from "./helpers";
+import { injectCard, instanceIdOf, makeTestCombat, setHand, p0 } from "./helpers";
 
 describe("playCard validation", () => {
   it("T04: rejects playCard when moonPower is below the card cost", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 1;
+        p0(s).moonPower = 1;
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },
     });
@@ -31,7 +31,7 @@ describe("playCard validation", () => {
 
   it("T05: rejects playCard for a card not in hand", () => {
     const { data, state } = makeTestCombat();
-    const notInHand = state.drawPile[0]!;
+    const notInHand = p0(state).drawPile[0]!;
     const result = applyAction(data, state, {
       type: "playCard",
       instanceId: notInHand,
@@ -73,19 +73,19 @@ describe("draw", () => {
     ]) {
       injectCard(state, data, fixture);
     }
-    const top = state.drawPile.slice(0, 3);
+    const top = p0(state).drawPile.slice(0, 3);
     const instanceId = injectCard(state, data, chooseThreeCard);
     const result = applyAction(data, state, { type: "playCard", instanceId });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.status).toBe("choosing");
-    expect(result.state.pendingChoice).toEqual({ kind: "chooseCard", options: top });
+    expect(p0(result.state).pendingChoice).toEqual({ kind: "chooseCard", options: top });
     const picked = applyAction(data, result.state, { type: "chooseCard", instanceId: top[0]! });
     expect(picked.ok).toBe(true);
     if (!picked.ok) return;
-    expect(picked.state.hand).toHaveLength(10);
+    expect(p0(picked.state).hand).toHaveLength(10);
     expect(picked.events.some((event) => event.type === "cardDiscarded")).toBe(false);
-    expect(picked.state.discardPile).toContain(instanceId);
+    expect(p0(picked.state).discardPile).toContain(instanceId);
   });
 });

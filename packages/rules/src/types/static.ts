@@ -1,3 +1,5 @@
+import type { Loadout } from "./meta";
+
 export type Faction = "thanhLoan" | "huyenVu" | "bachLo" | "xichDien" | "neutral";
 export type Archetype = "vanguard" | "striker" | "controller" | "support" | "specialist";
 export type Rarity = "common" | "rare" | "epic" | "legendary";
@@ -128,6 +130,9 @@ export type Effect = (
   | { type: "missingHpDamage"; ratio: number; to: TargetRef; hits?: number }
   | { type: "burstRegen"; multiplier: number; to: TargetRef }
   | { type: "conditional"; condition: Condition; then: Effect[]; else?: Effect[] }
+  /** Co-op Hợp Kích only (`02` §6): kills targets at or under `threshold` of maxHp,
+   *  else runs `elseEffects` once. */
+  | { type: "execute"; threshold: number; to: TargetRef; elseEffects?: Effect[] }
 ) & { actor?: 0 | 1 };
 
 export type Condition =
@@ -151,7 +156,11 @@ export interface IntentDef {
   effects: Effect[];
 }
 
-export type EnemyIntentDef = IntentDef & { cost: number };
+export type EnemyIntentDef = IntentDef & {
+  cost: number;
+  /** Co-op bosses: planned every round when affordable, before weighted picks (`01` §16.5). */
+  alwaysPlan?: boolean;
+};
 
 export interface EnemyDef {
   id: string;
@@ -161,10 +170,27 @@ export interface EnemyDef {
   moonPower: { start: number; cap: number };
   moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];
   bloodMoonOverride?: IntentDef;
+  /** Co-op boss phases (`01` §16.5); absent on normal enemies. */
+  phases?: BossPhaseDef[];
   art: { portrait: string };
 }
 
-export type EncounterTier = "normal" | "elite" | "boss";
+/** One boss phase: replaces `EnemyDef.intents` while active (`02` §1.5). */
+export interface BossPhaseDef {
+  /** Enters when hp/maxHp falls below this; phase 1 is always 1, then decreasing. */
+  hpBelow: number;
+  intents: EnemyIntentDef[];
+  /** Overrides `combatConfig.maxIntentsPerRound`. */
+  maxIntentsPerRound?: number;
+  /** Runs on entry, the boss acting. */
+  onEnter?: Effect[];
+  /** Blood moon rounds never tick below 1 while this phase is active. */
+  bloodMoonWhileActive?: true;
+  /** Last phase only: rounds until the boss revives. */
+  reviveAfterRounds?: number;
+}
+
+export type EncounterTier = "normal" | "elite" | "boss" | "coop";
 
 export interface EncounterDef {
   id: string;
@@ -324,11 +350,26 @@ export interface EconomyConfig {
   moonStarShop: ShopItemDef[];
 }
 
+/** What a shop sells (`14` §11, §14.4); `relicChoice` is honor-shop only. */
+export type ShopItem =
+  | { type: "moonJade"; amount: number }
+  | { type: "heroChoice"; rarity: Rarity }
+  | { type: "relicChoice"; rarity: Rarity };
+
 export type ShopItemDef = {
   id: string;
   price: number;
   limitPerWeek: number;
-  item: { type: "moonJade"; amount: number } | { type: "heroChoice"; rarity: Rarity };
+  item: ShopItem;
+};
+
+/** An honor shop entry — priced in Vinh Dự, weekly and/or monthly limits (`14` §14.4). */
+export type HonorShopItemDef = {
+  id: string;
+  item: ShopItem;
+  cost: number;
+  limitPerWeek?: number;
+  limitPerMonth?: number;
 };
 
 export type MissionGoalType =
@@ -379,4 +420,89 @@ export interface MetaConfig {
   maxDecks: number;
   /** Moon relics per deck (`14` §3.1). */
   maxRelics: number;
+}
+
+/** Fair Arena configuration — `pvp-config.json` (`02` §1.13, `17` §3.1). */
+export interface PvpConfig {
+  /** Per-hero HP in the arena (every hero must have an entry). */
+  heroStats: Record<string, { maxHp: number }>;
+  /** Heroes playable without ownership (starter cards only). */
+  trialHeroIds: string[];
+  /** Gear usable without ownership, normalized to level 1. */
+  freeWeaponIds: string[];
+  freeRelicIds: string[];
+  /** Moon power granted to the second player on their first turn. */
+  secondPlayerBonus: { moonPower: number };
+  /** Server timers (`01` §15.2, `17` §4.7). */
+  turnSeconds: number;
+  mulliganSeconds: number;
+  timeoutsToForfeit: number;
+  reconnectSeconds: number;
+  /** Hard round cap; beyond it the match is a draw (`17` §4.6). */
+  roundCap: number;
+  /** Ranking tiers, honor shop and fixed emotes (`14` §14). */
+  tiers?: { id: string; name: string; minRating: number }[];
+  honorShop?: HonorShopItemDef[];
+  emotes?: string[];
+}
+
+/** Currency paid for one co-op result (`14` §15). */
+export interface CoopReward {
+  moonJade: number;
+  moonDust: number;
+}
+
+/** Co-op configuration — `coop-config.json` (`02` §1.14). */
+export interface CoopConfig {
+  /** Simultaneous-turn clock; the server auto-submits `endTurn` (`01` §16.2). */
+  turnSeconds: number;
+  /** Grace before a disconnected player's heroes fall (`01` §16.6). */
+  reconnectSeconds: number;
+  /** The fixed raid encounter (tier `"coop"`). */
+  encounterId: string;
+  /** Rewards per result and the first-win-of-the-day bonus (`14` §15). */
+  rewards: { win: CoopReward; loss: CoopReward; firstWinOfDay: CoopReward };
+  /** Queue matches per game day that pay out (`14` §15). */
+  rewardedMatchesPerDay: number;
+  /** Fixed co-op emotes (`17` §9.3). */
+  emotes?: string[];
+}
+
+/** One card's half of a Hợp Kích pair (`02` §1.14). */
+export interface CardMatcher {
+  tag?: CardTag;
+  ownerId?: string;
+  /** Card carries this `applyStatus` (nested `conditional` counts). */
+  appliesStatus?: StatusId;
+  /** Card carries an effect of this type (nested `conditional` counts). */
+  effect?: Effect["type"];
+  /** After the card resolves, the moon sits on this phase. */
+  moonPhaseAfter?: MoonPhaseId;
+}
+
+/** A Hợp Kích — one matched card from each player in the same turn (`01` §16.4). */
+export interface CoopComboDef {
+  id: string;
+  name: string;
+  text: string;
+  parts: [CardMatcher, CardMatcher];
+  limit: { perRound: 1; perCombat?: number };
+  /** Resolve with the triggering card's hero acting; `allAllies` covers 6 heroes. */
+  effects: Effect[];
+}
+
+/** One side of a PvP match (`17` §4.1). */
+export interface PvpSide {
+  heroIds: [string, string, string];
+  /** 18 slots like `CombatSetup.deckCardIds`; default: the team's cards. */
+  deckCardIds?: string[];
+  /** Normalized by `buildPvpLoadout` — `pvp: true` (`14` §12). */
+  loadout: Loadout;
+}
+
+/** One side of a co-op match (`17` §8.1) — full PvE-strength loadout. */
+export interface CoopSide {
+  heroIds: [string, string, string];
+  deckCardIds?: string[];
+  loadout: Loadout;
 }

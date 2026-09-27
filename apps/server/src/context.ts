@@ -3,7 +3,10 @@ import type { GameData, Profile } from "rules";
 import { parseProfile } from "rules";
 import type { z } from "zod";
 import { hashToken } from "./auth";
+import { DEV_CONFIG, type ServerConfig } from "./config";
 import type { Db } from "./db";
+import { RateLimiter } from "./rate-limit";
+import { realScheduler, type Scheduler } from "./scheduler";
 
 /** Session lifetime after last use (`16` §3). */
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -26,15 +29,30 @@ export interface AppDeps {
   clock: () => number;
   /** `bytes` random bytes. */
   random: (bytes: number) => Buffer;
+  /** Timers for realtime rooms; production uses `realScheduler`, tests fake it. */
+  scheduler?: Scheduler;
+  /** Production settings (`16` §7.1); tests leave the dev defaults. */
+  config?: Partial<ServerConfig>;
 }
 
 /** Everything a route needs: dependencies plus shared helpers. */
 export interface AppContext extends AppDeps {
   dataVersion: string;
+  scheduler: Scheduler;
+  config: ServerConfig;
+  /** Per-IP sliding-window limits (`16` §7.2). */
+  limiter: RateLimiter;
   parseBody<T>(schema: z.ZodType<T>, body: unknown): T;
   /** The signed-in account for this request; throws 401 otherwise. Slides the session. */
   requireAccount(request: FastifyRequest): number;
+  /** The account holding `token`, or null — for the WebSocket `hello` (`16` §8.1). */
+  accountByToken(token: string): number | null;
   readProfile(accountId: number): { profile: Profile; rev: number };
+  /**
+   * Writes `profile` back with `rev + 1` inside the caller's transaction —
+   * server-authoritative changes (match settlement) carry no `If-Match`.
+   */
+  saveProfile(accountId: number, profile: Profile): number;
   /**
    * Applies a pure rule to the account's profile in one transaction (`16` §2):
    * checks `If-Match` against `rev`, turns a rule error into 400, writes `rev + 1`.
@@ -90,9 +108,31 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
     })();
   }
 
+  function saveProfile(accountId: number, profile: Profile): number {
+    const rev = readProfile(accountId).rev + 1;
+    writeProfile.run(JSON.stringify(profile), rev, clock(), accountId);
+    return rev;
+  }
+
+  function accountByToken(token: string): number | null {
+    const session = findSession.get(hashToken(token));
+    if (!session) return null;
+    const now = clock();
+    if (now - session.last_used_at > SESSION_TTL_MS) {
+      dropSession.run(hashToken(token));
+      return null;
+    }
+    touchSession.run(now, hashToken(token));
+    return session.account_id;
+  }
+
   return {
     ...deps,
     dataVersion,
+    scheduler: deps.scheduler ?? realScheduler,
+    config: { ...DEV_CONFIG, ...deps.config },
+    limiter: new RateLimiter(clock),
+    accountByToken,
     parseBody(schema, body) {
       const parsed = schema.safeParse(body);
       if (!parsed.success) throw new HttpError(400, "bad request", { issues: parsed.error.issues });
@@ -102,18 +142,12 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
       const header = request.headers.authorization;
       const token = header?.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : "";
       if (token === "") throw new HttpError(401, "unauthorized");
-      const tokenHash = hashToken(token);
-      const session = findSession.get(tokenHash);
-      if (!session) throw new HttpError(401, "unauthorized");
-      const now = clock();
-      if (now - session.last_used_at > SESSION_TTL_MS) {
-        dropSession.run(tokenHash);
-        throw new HttpError(401, "unauthorized");
-      }
-      touchSession.run(now, tokenHash);
-      return session.account_id;
+      const accountId = accountByToken(token);
+      if (accountId === null) throw new HttpError(401, "unauthorized");
+      return accountId;
     },
     readProfile,
+    saveProfile,
     mutateProfile,
   };
 }

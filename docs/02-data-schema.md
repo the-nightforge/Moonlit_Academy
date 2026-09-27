@@ -115,6 +115,10 @@ export type Effect = (
   | { type: "stealBuff"; count: number }                                 // GĐ2: từ mục tiêu chosen
   | { type: "bloodMoon"; rounds: number }                                // GĐ2
   | { type: "conditional"; condition: Condition; then: Effect[]; else?: Effect[] }
+  | { type: "execute"; threshold: number; to: TargetRef; elseEffects?: Effect[] }
+      // GĐ6: chỉ trong effects của Hợp Kích (01 §16.4) — kẻ địch trong `to` có
+      // hp ≤ floor(maxHp × threshold) ngã ngay, không qua giáp; không ai đủ
+      // ngưỡng → chạy elseEffects.
 ) & { actor?: 0 | 1 };
 
 export type Condition =
@@ -147,6 +151,7 @@ export interface IntentDef {
 
 export interface EnemyIntentDef extends IntentDef {
   cost: number;           // GĐ4a: số nguyên ≥ 0 — Nguyệt Lực địch trả để đánh chiêu
+  alwaysPlan?: boolean;   // GĐ6: luôn có trong chuỗi khi đủ quỹ (lên trước weightedPick)
 }
 
 export interface EnemyDef {
@@ -157,7 +162,18 @@ export interface EnemyDef {
   moonPower: { start: number; cap: number };   // GĐ4a: start ≤ cap; perRound dùng chung của CombatConfig
   moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];   // intent không có cost
   bloodMoonOverride?: IntentDef;  // GĐ2: ưu tiên hơn moonOverrides khi đang Huyết Nguyệt; không có cost
+  phases?: BossPhaseDef[];        // GĐ6: boss nhiều giai đoạn (co-op); thiếu → địch thường
   art: { portrait: string };
+}
+
+// GĐ6 (01 §16.5): bộ chiêu thay thế từ lần lên chuỗi kế tiếp khi boss vào giai đoạn.
+export interface BossPhaseDef {
+  hpBelow: number;                 // tỉ lệ HP để vào giai đoạn (giai đoạn 1 = 1, sau giảm dần)
+  intents: EnemyIntentDef[];       // thay EnemyDef.intents trong giai đoạn
+  maxIntentsPerRound?: number;     // ghi đè combatConfig (boss co-op đánh nhiều chiêu hơn)
+  onEnter?: Effect[];              // chạy ngay khi vào giai đoạn (đơn vị hành động: boss)
+  bloodMoonWhileActive?: true;     // GĐ6: bloodMoonRounds không giảm dưới 1 (giai đoạn 2)
+  reviveAfterRounds?: number;      // GĐ6: chỉ giai đoạn cuối — đếm ngược hồi sinh
 }
 ```
 
@@ -167,7 +183,7 @@ export interface EncounterDef {
   id: string;
   name: string;
   enemyIds: string[];       // 1–3, theo vị trí
-  tier: "normal" | "elite" | "boss";  // GĐ3
+  tier: "normal" | "elite" | "boss" | "coop";  // GĐ3; GĐ6: "coop" không vào bản đồ lượt chơi
   minFloor?: number;                  // GĐ3, mặc định 1
 }
 ```
@@ -322,6 +338,87 @@ Hero; `signatureHeroId` là Hero có thật; `signatureHooks` chỉ khi có `sig
 của Lõi (`11` §3.3); `actor` / `owner` / `killer` `"wearer"` chỉ trong hook vũ khí;
 `onLevelUp` theo ràng buộc effect của lá không có mục tiêu chọn (`to` ≠ `"chosen"`).
 
+### 1.13 Cấu hình PvP — `pvp-config.json` [GĐ5]
+
+```ts
+export interface PvpConfig {
+  heroStats: Record<string, { maxHp: number }>;   // HP trận Đấu Trường theo Hero
+  trialHeroIds: string[];                          // Hero thử: chơi được khi chưa sở hữu
+  freeWeaponIds: string[];                         // vũ khí cơ bản, miễn phí (Tinh Luyện 1)
+  freeRelicIds: string[];                          // Nguyệt Bảo cơ bản, miễn phí (Cộng Minh 1)
+  secondPlayerBonus: { moonPower: number };        // bù người đi sau, lượt đầu (01 §15.2)
+  turnSeconds: number;                             // 60 — giới hạn một lượt (server đếm)
+  mulliganSeconds: number;                         // 30 — giới hạn Đổi Bài
+  timeoutsToForfeit: number;                       // 3 — số lượt hết giờ liên tiếp → thua
+  reconnectSeconds: number;                        // 60 — chờ kết nối lại trước khi thua
+  roundCap: number;                                // 30 — trần vòng, quá tròn → hòa
+  tiers?: { id: string; name: string; minRating: number }[];    // bậc xếp hạng (§5d)
+  // cửa hàng Vinh Dự — `item` như mặt hàng Nguyệt Tinh + "relicChoice"; giá bằng Vinh Dự
+  honorShop?: {
+    id: string;
+    item: ShopItemDef["item"] | { type: "relicChoice"; rarity: Rarity };
+    cost: number;
+    limitPerWeek?: number;
+    limitPerMonth?: number;                      // kỳ tháng theo monthKey (`14` §14.4)
+  }[];
+  emotes?: string[];                               // câu biểu cảm cố định
+}
+```
+
+Kiểm tra khi nạp: `heroStats` phủ mọi Hero trong `heroes.json` (id lạ → lỗi);
+`trialHeroIds`, `freeWeaponIds`, `freeRelicIds` tham chiếu id có thật; mọi số > 0;
+`roundCap` chẵn.
+
+```ts
+// Một bên trận PvP (17 §4.1)
+export interface PvpSide {
+  heroIds: [string, string, string];
+  deckCardIds?: string[];   // 18 ô như CombatSetup; thiếu = lá mặc định của đội
+  loadout: Loadout;         // pvp: true — từ buildPvpLoadout (14 §12)
+}
+```
+
+### 1.14 Cấu hình co-op — `coop-config.json`, `coop-combos.json` [GĐ6]
+
+```ts
+export interface CoopConfig {
+  turnSeconds: number;        // 45 — giới hạn lượt đồng đội (server đếm)
+  reconnectSeconds: number;   // 60 — chờ kết nối lại trước khi Hero người đó ngã
+  encounterId: string;        // "enc_coop_01" — encounter tier "coop" dựng trận
+  rewards: {                  // thưởng mỗi người mỗi trận có thưởng (`14` §15)
+    win: CoopReward;          //   { moonJade, moonDust } — thắng
+    loss: CoopReward;         //   thua (không bỏ cuộc)
+    firstWinOfDay: CoopReward;//   cộng thêm cho trận thắng đầu tiên trong ngày
+  };
+  rewardedMatchesPerDay: number; // 3 — trần trận có thưởng mỗi kỳ ngày
+  emotes: string[];           // biểu cảm nhanh trong trận co-op
+}
+
+export interface CoopReward { moonJade: number; moonDust: number; }
+
+// Một đòn Hợp Kích: hai lá của hai người khác nhau (01 §16.4).
+export interface CoopComboDef {
+  id: string;
+  name: string;
+  text: string;                                // mô tả hiển thị
+  parts: [CardMatcher, CardMatcher];           // mỗi lá của một người; thứ tự không quan trọng
+  limit: { perRound: 1; perCombat?: number };
+  effects: Effect[];                           // đơn vị hành động: Hero đánh lá kích hoạt
+}
+
+export interface CardMatcher {
+  tag?: CardTag;                               // lá có tag này
+  ownerId?: string;                            // Hero (defId) sở hữu lá
+  appliesStatus?: StatusId;                    // lá có applyStatus này (kể cả trong conditional)
+  effect?: Effect["type"];                     // lá có effect loại này (kể cả trong conditional)
+  moonPhaseAfter?: MoonPhaseId;                // sau khi lá kích hoạt giải quyết, pha là pha này
+}
+```
+
+Kiểm tra khi nạp: `ownerId` trỏ Hero tồn tại; `appliesStatus`/`effect`/`moonPhaseAfter`
+tham chiếu id có thật; `effects` của Hợp Kích mới được dùng `execute` (§6); `limit` hợp
+lệ.
+
 ---
 
 ## 2. Trạng thái trận đấu (runtime)
@@ -369,29 +466,51 @@ export interface CardInstance {
   heldTurns: number;        // GĐ4b: số lượt đã nằm trên tay (Tích Tụ); 0 khi lá vào tay
 }
 
-export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost";   // GĐ4a: mulligan, choosing
+export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost"
+  | "opponentTurn";   // [GĐ5] chỉ xuất hiện trong viewFor của seat đang chờ, không lưu state (17 §4.2)
+export type CombatMode = "pve" | "pvp" | "coop";   // [GĐ5] spec 17 §2.2
+
+// [GĐ5] Mọi thứ gắn với một người chơi nằm trong PlayerState; PvE = đúng 1 người chơi.
+export interface PlayerState {
+  index: number;            // 0 hoặc 1
+  heroIds: string[];        // unit id của các Hero của người chơi này
+  drawPile: string[]; hand: string[]; discardPile: string[];
+  moonPower: number; moonReserve: number; moonPowerBonus: number;
+  cardsPlayedThisTurn: number;
+  pendingChoice: { kind: "chooseCard"; options: string[] } | null;
+  weapons: CombatWeapon[];                       // GĐ4e
+  relics: { id: string; resonance: number }[];   // GĐ4e
+  runRelicIds: string[];                         // GĐ3 (chỉ PvE: Kỳ Vật, Lõi)
+  hookCounters: Record<string, number>;          // tên cũ: runRelicCounters
+  done: boolean;                                 // co-op: đã bấm Xong (17 §8.3)
+}
 
 export interface CombatState {
+  mode: CombatMode;         // [GĐ5]
   status: CombatStatus;
+  activePlayer: number;     // [GĐ5] PvP: người đang có lượt; PvE / co-op: 0
   round: number;
   moonIndex: number;        // 0–7
   bloodMoonRounds: number;  // > 0 = đang Huyết Nguyệt (01 mục 7.4)
-  moonPower: number;        // quỹ hiện tại của người chơi (gốc + Dự Trữ + cộng thêm)
-  moonReserve: number;      // GĐ4a: Dự Trữ mang vào lượt này (để UI hiển thị)
-  moonPowerBonus: number;   // GĐ4b: quỹ cộng thêm mỗi đầu lượt (Dưỡng Nguyệt), không trần
-  cardsPlayedThisTurn: number;  // GĐ4b: số lá đã đánh trong lượt (Liên Hoàn); 0 đầu lượt
-  pendingChoice: { kind: "chooseCard"; options: string[] } | null;   // GĐ4a: Chiêm Bài đang chờ chọn
-  heroes: HeroState[];
-  enemies: EnemyState[];
+  players: PlayerState[];   // [GĐ5] PvE: 1; PvP, co-op: 2
+  heroes: HeroState[];      // HeroState thêm `player: number` (chỉ số trong players)
+  enemies: EnemyState[];    // PvP: rỗng
   cards: Record<string, CardInstance>;  // theo instanceId
-  drawPile: string[];       // instanceId, phần tử đầu = lá rút tiếp theo
-  hand: string[];
-  discardPile: string[];
   rngState: number;
-  runRelicIds: string[];                  // GĐ3
-  runRelicCounters: Record<string, number>;  // GĐ3: "<relicId>#<hookIndex>"
+  winner?: number | "draw"; // PvP (17 §4.6)
+  // [GĐ6] co-op (`01` §16.2/§16.5):
+  comboUsed?: Record<string, { total: number; round: number }>;  // tổng trận + vòng dùng gần nhất
+  playedThisTurn?: { player: number; instanceId: string; cardId: string; comboId?: string; moonAfter: number }[];  // xóa đầu mỗi lượt đồng đội
+  boss?: { enemyId: string; phase: number; reviveCountdown: number | null; revived: boolean };
 }
 ```
+
+**[GĐ5] Quy tắc id có tiền tố** (spec `17` §2.2): khi trận có 2 người chơi, unit id và
+instance id có tiền tố `p<n>_` (`p0_m05`, `p1_c12`, `p1_wpn_m05_1`) để hai người chơi được
+chọn cùng Hero / cùng lá. PvE giữ id cũ không tiền tố (`m05`, `c12`…) để phiếu lượt chơi
+cũ chạy lại được. Truy cập thành phần theo người chơi qua `players.ts` (`playerOf`,
+`activePlayerState`, `alliesOf`, `opponentsOf`, `prefixedId`); **không** đọc trường trong
+`players[i]` bằng tay ngoài các hàm đó.
 
 ---
 
@@ -399,11 +518,17 @@ export interface CombatState {
 
 ```ts
 export type Action =
-  | { type: "mulligan"; instanceIds: string[] }        // GĐ4a: Đổi Bài (01 §2.1)
-  | { type: "playCard"; instanceId: string; targetId?: string }
-  | { type: "chooseCard"; instanceId: string }         // GĐ4a: Chiêm Bài (01 §3.2)
-  | { type: "endTurn" };
+  | { type: "mulligan"; instanceIds: string[]; player?: number }   // GĐ4a; [GĐ5] PvP: seat nào đổi
+  | { type: "playCard"; instanceId: string; targetId?: string; player?: number }   // [GĐ5] seat thực hiện
+  | { type: "chooseCard"; instanceId: string; player?: number }    // GĐ4a: Chiêm Bài (01 §3.2)
+  | { type: "endTurn"; player?: number }
+  | { type: "forfeit"; player: number; reason: "resign" | "timeout" | "disconnect"; system: true };   // [GĐ5] chỉ server tạo (01 §15.6)
 ```
+
+**[GĐ5]** `player` mặc định `activePlayer`. Trận 2 người chơi: Action có `player` ≠
+`activePlayer` → lỗi `"not your turn"` (riêng `mulligan` nhận cả hai seat vì đổi song
+song, và `forfeit` luôn hợp lệ — là action hệ thống). `forfeit` không phải Action client
+gửi được; nó chỉ xuất hiện trong nhật ký trận do server chèn.
 
 Action hợp lệ theo `status` **[GĐ4a]**:
 
@@ -417,13 +542,13 @@ Action hợp lệ theo `status` **[GĐ4a]**:
 ```ts
 export type CombatEvent =
   | { type: "combatStarted" }
-  | { type: "turnStarted"; side: "hero" | "enemy"; round: number }
+  | { type: "turnStarted"; side: "hero" | "enemy"; round: number; player?: number }   // [GĐ5] PvP: seat có lượt (side luôn "hero")
   | { type: "cardsDrawn"; instanceIds: string[] }
   | { type: "deckShuffled" }                       // GĐ4a: chỉ khi xáo lúc tạo trận và sau Đổi Bài (không còn xáo chồng bỏ)
   | { type: "mulliganed"; returned: string[]; drawn: string[] }    // GĐ4a
   | { type: "choiceOpened"; options: string[] }                    // GĐ4a
   | { type: "cardChosen"; instanceId: string; bottomed: string[] } // GĐ4a
-  | { type: "deckedOut" }                          // GĐ4a: ngay trước combatEnded { result: "lost" }
+  | { type: "deckedOut" }                          // GĐ4a: ngay trước combatEnded { result: "lost" }; GĐ6 co-op: mang `player` — chỉ Hero người đó ngã
   | { type: "cardsPurged"; heroId: string; instanceIds: string[] } // GĐ4a: Tán Chiêu
   | { type: "moonReserveChanged"; side: "hero" | "enemy"; enemyId?: string; value: number }  // GĐ4a
   | { type: "cardPlayed"; instanceId: string; targetId?: string; cost: number }
@@ -448,8 +573,19 @@ export type CombatEvent =
   | { type: "runRelicTriggered"; runRelicId: string }   // GĐ3
   | { type: "relicTriggered"; relicId: string }          // GĐ4e (Nguyệt Bảo)
   | { type: "weaponTriggered"; weaponId: string; heroId: string }   // GĐ4e
-  | { type: "combatEnded"; result: "won" | "lost" };
+  | { type: "playerForfeited"; player: number; reason: "resign" | "timeout" | "disconnect" }    // [GĐ5]
+  | { type: "playerDisconnected"; player: number }                                             // [GĐ5]
+  | { type: "coopComboTriggered"; comboId: string; cardIds: string[] }    // [GĐ6] trước event của effects (01 §16.4)
+  | { type: "bossPhaseChanged"; enemyId: string; phase: number }          // [GĐ6] (01 §16.5)
+  | { type: "combatEnded"; result: "won" | "lost" | "draw"; winner?: number | "draw" };   // [GĐ5] PvP
 ```
+
+**[GĐ5]** Trong trận 2 người chơi, các event gắn với một seat mang thêm `player: number`:
+`turnStarted`, `cardsDrawn`, `deckShuffled`, `mulliganed`, `choiceOpened`, `cardChosen`,
+`deckedOut`, `cardsPurged`, `moonReserveChanged`, `cardPlayed`, `cardDiscarded`,
+`moonPowerChanged`, `runRelicTriggered`, `relicTriggered`. PvE giữ event cũ không trường
+`player` để nhật ký / bản ghi vàng khớp. Client PvP không nhận state thô — nhận gói
+`{ events, view }` đã qua `viewFor` / `redactEvents` (`01` §15.7).
 
 Event là **nguồn duy nhất** để client phát animation. Mọi thay đổi state có ý nghĩa hiển thị phải có event tương ứng, theo đúng thứ tự xảy ra.
 
@@ -486,6 +622,17 @@ export type ActionResult =
 
 export function createCombat(data: GameData, setup: CombatSetup): { state: CombatState; events: CombatEvent[] };
 export function applyAction(data: GameData, state: CombatState, action: Action): ActionResult;
+
+// [GĐ5] PvP (mục 1.13, luật 01 §15)
+export function createPvpCombat(data: GameData, setup: { seed: number; players: [PvpSide, PvpSide] }): { state: CombatState; events: CombatEvent[] };
+export function viewFor(state: CombatState, player: number): CombatState;                  // góc nhìn đã che (01 §15.7)
+export function redactEvents(events: CombatEvent[], player: number): CombatEvent[];        // che event lộ bài đối thủ
+export function replayMatch(data: GameData, setup: { seed: number; players: [PvpSide, PvpSide] }, actions: Action[]): { state: CombatState; events: CombatEvent[] };
+
+// [GĐ6] co-op (mục 1.14, luật 01 §16)
+export interface CoopSide { heroIds: [string, string, string]; deckCardIds?: string[]; loadout: Loadout }
+export function createCoopCombat(data: GameData, setup: { seed: number; players: [CoopSide, CoopSide]; encounterId: string }): { state: CombatState; events: CombatEvent[] };
+export function coopBot(data: GameData, view: CombatState, player: number): Action;   // bot trên góc nhìn (01 §16.4/§8.8 spec)
 
 // Hỗ trợ UI
 export function getEffectiveCost(data: GameData, state: CombatState, instanceId: string): number;
@@ -527,6 +674,7 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
 - **[GĐ4a]** `chooseCard` chỉ được là **effect cuối cùng** trong `effects` của một lá (không nằm trong `conditional`); không dùng trong `EnemyIntentDef`, `moonOverrides`/`bloodMoonOverride` hay hook Kỳ Vật.
 - **[GĐ4b]** `heldTurnsAtLeast`, `cardsPlayedThisTurnAtLeast`, `drainMoonPower`, `gainMoonPowerPerTurn`, `burstRegen`, `heal.overflow`: chỉ trên **lá bài**, không trong chiêu địch hay hook Kỳ Vật. `missingHpDamage`: lá bài và chiêu địch; không trong hook Kỳ Vật. `drainMoonPower.to` chỉ `chosen` (lá `target: "enemy"`) hoặc `allEnemies`.
 - **[GĐ4b]** `CardDef.keywords`: mỗi id phải có trong `keywords.json`. `metaConfig`: `masteryLevels` tăng dần, độ dài = số lá khóa mỗi Hero (6).
+- **[GĐ6]** `execute` chỉ xuất hiện trong `effects` của `coop-combos.json` (không lá bài, không chiêu địch, không hook). `CardMatcher`: `ownerId` trỏ Hero tồn tại; `appliesStatus`, `effect`, `moonPhaseAfter` tham chiếu id có thật. `BossPhaseDef.phases`: `hpBelow` giai đoạn 1 = 1, các giai đoạn sau giảm dần trong (0, 1]; `reviveAfterRounds` chỉ ở giai đoạn cuối; `bloodMoonWhileActive`, `alwaysPlan` là cờ boolean. Encounter `tier: "coop"` không xuất hiện trên bản đồ lượt chơi; `enemyIds` của nó trỏ địch có `phases` hợp lệ. `coopConfig.encounterId` trỏ encounter có `tier: "coop"`; `reconnectSeconds > turnSeconds`; các `reward`/`rewardedMatchesPerDay` không âm.
 
 Dữ liệu sai → báo lỗi rõ ràng ngay khi khởi động, không chạy game với dữ liệu lỗi.
 

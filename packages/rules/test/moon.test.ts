@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, getEffectiveCost } from "../src/index";
 import { armorSixCard, healFiveCard, rewindMoonCard, stealthOneCard } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setHand } from "./helpers";
+import { injectCard, instanceIdOf, makeTestCombat, setHand, p0 } from "./helpers";
 
 describe("moon phases", () => {
   it("T21: new moon boosts assassin card damage by 1.5x", () => {
@@ -135,7 +135,7 @@ describe("moon phases", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 3;
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         s.heroes[1]!.hp = 20;
         setHand(s, ["f04_nguyet_quang_dan"]);
       },
@@ -154,7 +154,7 @@ describe("moon phases", () => {
 
     const picked = applyAction(data, shifted.state, {
       type: "chooseCard",
-      instanceId: shifted.state.pendingChoice!.options[0]!,
+      instanceId: p0(shifted.state).pendingChoice!.options[0]!,
     });
     expect(picked.ok).toBe(true);
     if (!picked.ok) return;
@@ -172,7 +172,7 @@ describe("moon phases", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 7;
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["f04_nguyet_quang_dan"]);
       },
     });
@@ -217,7 +217,7 @@ describe("moon phases", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 3;
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         s.enemies[1]!.moonReserve = 3; // lets the round-2 replan afford the fox's top intent
         setHand(s, ["f04_nguyet_quang_dan"]);
       },
@@ -231,7 +231,7 @@ describe("moon phases", () => {
 
     const picked = applyAction(data, shifted.state, {
       type: "chooseCard",
-      instanceId: shifted.state.pendingChoice!.options[0]!,
+      instanceId: p0(shifted.state).pendingChoice!.options[0]!,
     });
     expect(picked.ok).toBe(true);
     if (!picked.ok) return;

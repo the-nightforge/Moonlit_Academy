@@ -182,10 +182,40 @@
 | Nguyệt Trần | `moonDust` | Từ Nguyệt Bảo trùng khi Cộng Minh 5; GĐ 4 chỉ tích trữ |
 | Binh Khí Các / Nguyệt Bảo Các | `banner_weapons`, `banner_relics` | Banner trang bị |
 
+## Đấu Trường — PvP [GĐ5]
+
+| Tiếng Việt | Code | Ghi chú |
+|---|---|---|
+| Đấu Trường Công Bằng | `fairArena` | Chế độ 1v1 cân bằng: trang bị chuẩn hóa, Tinh Hồn về cấp lẻ (`01` §15) |
+| Hero thử | `trialHeroIds` | Hero chơi được trong PvP khi chưa sở hữu; chỉ 6 lá khởi đầu |
+| Trang bị PvP cơ bản | `freeWeaponIds`, `freeRelicIds` | Vũ khí / Nguyệt Bảo miễn phí trong PvP, cố định cấp 1 |
+| Người đi trước / đi sau | `firstPlayer` / seat kia | Bốc bằng RNG lúc tạo trận |
+| Bù người đi sau | `secondPlayerBonus` | Cộng Nguyệt Lực lượt đầu của người đi sau |
+| Góc nhìn người chơi | `viewFor(state, player)` | State đã che bài đối thủ (`01` §15.7) |
+| Che event | `redactEvents(events, player)` | Ẩn event lộ lá của đối thủ |
+| Đấu Tập | `practiceMode` | Trận PvP không tính điểm, không lên hạng |
+| Phòng riêng | `privateRoom` | Phòng mời bạn bè bằng mã |
+| Bảng chỉ số PvP | `pvpStats` | Điểm xếp hạng Elo, Vinh Dự, thắng/thua theo mùa |
+| Điểm Đấu Trường | `arena.rating` | Điểm Elo của hồ sơ (`14` §14.2), khởi đầu 1000 |
+| Bậc | `tier` | Tên hiển thị theo Điểm (`pvp-config.tiers`): Đồng Sinh → Trạng Nguyên |
+| Vinh Dự | `honor` | Tiền tệ PvP (`currencies.honor`), trần 120/kỳ ngày |
+| Cửa hàng Vinh Dự | `honorShop` | Mặt hàng mua bằng Vinh Dự (`14` §14.4) |
+| Hàng chờ xếp hạng | `queue` | Ghép trận ranked theo chênh Điểm (`16` §8.8) |
+| Trận xếp hạng | `ranked` | Trận tính Elo và Vinh Dự |
+
+## Liên Thủ — co-op [GĐ6]
+
+| Tiếng Việt | Code | Ghi chú |
+|---|---|---|
+| Liên Thủ | `coop` | Chế độ 2 người đánh chung boss (`01` §16) |
+| Lượt đồng đội | `simultaneous turn` | Cả hai người cùng đánh trong một lượt, áp theo thứ tự nhận |
+| Xong | `done` | Người chơi bấm Xong = `endTurn` của riêng mình trong lượt đồng đội |
+| Hợp Kích | `coopCombo` | Đòn phối hợp: lá người A + lá người B trong cùng lượt (`01` §16.4) |
+| Boss Nguyệt Thực | `eclipse_lord` | Boss co-op *Nguyệt Thực Ma Quân*, 4 giai đoạn (`01` §16.5) |
+| Giai đoạn boss | `boss.phase` | 1 Trăng Khuyết · 2 Huyết Nguyệt · 3 Nguyệt Ấn · 4 Nguyệt Thực |
+| Đếm ngược hồi sinh | `reviveCountdown` | Giai đoạn 4: về 0 khi boss còn sống → hồi 50% HP một lần |
+
 ## Hệ thống sau này (chưa code)
 
 | Tiếng Việt | Code |
 |---|---|
-| Vinh Dự | `honor` |
-| Đấu Trường Công Bằng | `fairArena` |
-| Hợp Kích | `coopCombo` |

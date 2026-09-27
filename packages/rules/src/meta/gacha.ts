@@ -105,6 +105,12 @@ export function grantHeroItem(data: GameData, profile: Profile, heroId: string):
   return grantHero(data, profile, heroId, data.heroes[heroId]!.rarity);
 }
 
+/** Owns a weapon or relic as if pulled (honor shop choice, `14` §14.4). Mutates `profile`. */
+export function grantGearItem(data: GameData, profile: Profile, kind: "weapon" | "relic", itemId: string): PullResult {
+  const rarity = kind === "weapon" ? data.weapons[itemId]!.rarity : data.relics[itemId]!.rarity;
+  return grantGear(data, profile, kind, itemId, rarity);
+}
+
 /** One pull on `bannerId` (`14` §9 steps 1–7). Mutates `profile`; returns the next RNG state. */
 function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: number): { result: PullResult; rngState: number } {
   const banner = data.banners[bannerId]!;

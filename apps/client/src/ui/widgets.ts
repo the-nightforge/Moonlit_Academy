@@ -39,16 +39,20 @@ export function addButton(
   addText(scene, parent, x, y, label, 13, enabled ? COLORS.text : COLORS.dimText).setOrigin(0.5);
 }
 
-/** "Nguyệt Ngọc N · Nguyệt Tinh M" from the local profile copy. */
+/** "Nguyệt Ngọc N · Nguyệt Tinh M · Vinh Dự K" from the local profile copy. */
 export function addCurrencyBar(
   scene: Phaser.Scene,
   parent: Phaser.GameObjects.Container,
   x: number,
   y: number,
-  currencies: { moonJade: number; moonStar: number },
+  currencies: { moonJade: number; moonStar: number; honor?: number },
 ): Phaser.GameObjects.Text {
-  const text = `◆ ${CURRENCY_LABELS.moonJade} ${currencies.moonJade}   ✦ ${CURRENCY_LABELS.moonStar} ${currencies.moonStar}`;
-  return addText(scene, parent, x, y, text, 14, COLORS.gold).setOrigin(0, 0.5);
+  const honor = currencies.honor === undefined ? "" : `   ❖ ${CURRENCY_LABELS.honor} ${currencies.honor}`;
+  return addText(
+    scene, parent, x, y,
+    `◆ ${CURRENCY_LABELS.moonJade} ${currencies.moonJade}   ✦ ${CURRENCY_LABELS.moonStar} ${currencies.moonStar}${honor}`,
+    14, COLORS.gold,
+  ).setOrigin(0, 0.5);
 }
 
 /** A message that fades out by itself (gifts, achievements). */

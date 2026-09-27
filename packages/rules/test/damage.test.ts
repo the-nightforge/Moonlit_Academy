@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "../src/index";
 import { aoeFiveCard, armorBreakCard } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setHand } from "./helpers";
+import { injectCard, instanceIdOf, makeTestCombat, setHand, p0 } from "./helpers";
 
 function play(data: Parameters<typeof applyAction>[0], state: Parameters<typeof applyAction>[1], cardId: string, targetId?: string) {
   return applyAction(data, state, {
@@ -15,7 +15,7 @@ describe("card damage", () => {
   it("T10: Liet Hoa Xung Phong deals 8 at full hp", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },
     });
@@ -25,9 +25,9 @@ describe("card damage", () => {
     expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 8);
     const damage = result.events.find((event) => event.type === "damageDealt");
     expect(damage).toMatchObject({ sourceId: "hero:m05", targetId: "enemy:0", amount: 8, blocked: 0, hpLost: 8 });
-    expect(result.state.moonPower).toBe(7);
-    expect(result.state.hand).toHaveLength(0);
-    expect(result.state.discardPile).toContain(
+    expect(p0(result.state).moonPower).toBe(7);
+    expect(p0(result.state).hand).toHaveLength(0);
+    expect(p0(result.state).discardPile).toContain(
       instanceIdOf(state, "m05_liet_hoa_xung_phong"),
     );
   });
@@ -35,7 +35,7 @@ describe("card damage", () => {
   it("T11: Liet Hoa Xung Phong deals 12 when owner below 50% hp", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         s.heroes[0]!.hp = 19;
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },
@@ -49,7 +49,7 @@ describe("card damage", () => {
   it("T12: selfHpBelow is strictly below (50% exactly deals 8)", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         s.heroes[0]!.hp = 20;
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },
@@ -63,7 +63,7 @@ describe("card damage", () => {
   it("T13: armor blocks before hp", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         s.enemies[0]!.armor = 5;
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },

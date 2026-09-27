@@ -10,6 +10,8 @@ export interface Loadout {
   }>;
   /** Moon relics (phase 4e); missing = none. */
   relics?: { id: string; resonance: number }[];
+  /** [GĐ5] Fair Arena loadout: even constellation thresholds and "+" cards stay off (`17` §3.2). */
+  pvp?: boolean;
 }
 
 export interface SavedDeck {
@@ -39,6 +41,20 @@ export interface ProfileCurrencies {
   moonStar: number;
   darkIron: number;
   moonDust: number;
+  /** Vinh Dự — honor earned in ranked PvP (`14` §14.3). */
+  honor: number;
+}
+
+/** Ranked arena record of the profile (`14` §14.1). */
+export interface ArenaStats {
+  rating: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  /** Ranked matches played — picks K in `ratingChange`. */
+  rankedGames: number;
+  /** Honor granted in the current game day (cap 120, `14` §14.3). */
+  honorDay: { dayKey: string; gained: number };
 }
 
 /** Counters of one day or week (`14` §7). */
@@ -75,6 +91,12 @@ export interface Profile {
   missions: MissionState;
   /** Moon star shop purchases this week (`14` §11). */
   shop: { weekKey: string; bought: Record<string, number> };
+  /** Honor shop purchases per period (`14` §14.4). */
+  honorShop: { weekKey: string; monthKey: string; bought: Record<string, number>; boughtMonth: Record<string, number> };
+  /** Ranked arena record (`14` §14.1); default 1000 / 0-0-0. */
+  arena: ArenaStats;
+  /** Co-op raid per-day counters (`14` §15); resets when `dayKey` rolls over. */
+  coop: { dayKey: string; clears: number; rewarded: number };
   achievements: string[];
   stats: Record<string, number>;
   flags: { starterGiftClaimed: boolean; localImportDone: boolean };

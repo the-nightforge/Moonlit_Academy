@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CombatState, GameData } from "../src/index";
 import { applyAction, getEffectiveCost } from "../src/index";
-import { idleEnemies, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand } from "./helpers";
+import { idleEnemies, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand, p0 } from "./helpers";
 
 function end(data: GameData, state: CombatState) {
   const result = applyAction(data, state, { type: "endTurn" });
@@ -13,13 +13,13 @@ describe("moon power economy", () => {
   it("T128: base moon power ramps by round and caps at the configured cap", () => {
     const { data, state } = makeTestCombat({ mutateData: makeEnemiesIdle, setup: idleEnemies });
     const { start, perRound, cap } = data.combatConfig.moonPower;
-    expect(state.moonPower).toBe(start);
+    expect(p0(state).moonPower).toBe(start);
     let current = state;
     const seen: number[] = [];
     for (let i = 0; i < 7; i++) {
-      current.moonPower = 0; // spend everything: no reserve
+      p0(current).moonPower = 0; // spend everything: no reserve
       current = end(data, current).state;
-      seen.push(current.moonPower);
+      seen.push(p0(current).moonPower);
     }
     expect(seen).toEqual(
       Array.from({ length: 7 }, (_, i) => Math.min(cap, start + perRound * (i + 1))),
@@ -31,23 +31,23 @@ describe("moon power economy", () => {
     const { start, perRound, cap } = data.combatConfig.moonPower;
     const reserveMax = data.combatConfig.moonReserveMax;
     const r2 = end(data, state);
-    expect(r2.state.moonReserve).toBe(reserveMax);
-    expect(r2.state.moonPower).toBe(start + perRound + reserveMax);
+    expect(p0(r2.state).moonReserve).toBe(reserveMax);
+    expect(p0(r2.state).moonPower).toBe(start + perRound + reserveMax);
     expect(r2.events).toContainEqual({ type: "moonReserveChanged", side: "hero", value: reserveMax });
 
-    r2.state.moonPower = 5; // more than the reserve max left unspent
+    p0(r2.state).moonPower = 5; // more than the reserve max left unspent
     const r3 = end(data, r2.state);
-    expect(r3.state.moonReserve).toBe(reserveMax);
-    expect(r3.state.moonPower).toBe(Math.min(cap, start + perRound * 2) + reserveMax);
+    expect(p0(r3.state).moonReserve).toBe(reserveMax);
+    expect(p0(r3.state).moonPower).toBe(Math.min(cap, start + perRound * 2) + reserveMax);
 
     let current = r3.state;
     for (let i = 0; i < 4; i++) current = end(data, current).state;
     expect(current.round).toBe(7);
-    expect(current.moonPower).toBe(Math.min(cap, start + perRound * 6) + reserveMax);
+    expect(p0(current).moonPower).toBe(Math.min(cap, start + perRound * 6) + reserveMax);
 
-    current.moonPower = 0;
+    p0(current).moonPower = 0;
     const drained = end(data, current);
-    expect(drained.state.moonReserve).toBe(0);
+    expect(p0(drained.state).moonReserve).toBe(0);
     expect(drained.events).toContainEqual({ type: "moonReserveChanged", side: "hero", value: 0 });
   });
 
@@ -58,7 +58,7 @@ describe("moon power economy", () => {
         const m06 = s.heroes[0]!;
         m06.leveledUp = true;
         m06.firstCardDiscountActive = true;
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["m06_doat_menh", "m06_am_tien", "m06_nguyet_anh_an", "bond_anh_dau"]);
       },
     });
@@ -72,7 +72,7 @@ describe("moon power economy", () => {
     const played = applyAction(data, state, { type: "playCard", instanceId: doatMenh, targetId: "enemy:0" });
     expect(played.ok).toBe(true);
     if (!played.ok) return;
-    expect(played.state.moonPower).toBe(11 - 1);
+    expect(p0(played.state).moonPower).toBe(11 - 1);
     expect(getEffectiveCost(data, played.state, amTien)).toBe(2);
 
     // Moon phase reduction applies first: Thượng Huyền control −2, then −3, floored at 0.

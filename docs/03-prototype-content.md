@@ -159,3 +159,89 @@ mang là Hero X (`signatureHooks`). Mọi Hero mang được mọi vũ khí.
 dùng `lowestHp`; "kẻ địch" dùng `front` với `to: "allEnemies"`; "Hero kết liễu" dùng
 `trigger`. Banner Binh Khí Các: legendary 2, epic 4, rare 4; Nguyệt Bảo Các: legendary
 2, epic 3, rare 3 (theo cột độ hiếm ở trên).
+
+## 8. Đấu Trường — chỉ số PvP [GĐ5b]
+
+Chỉ số PvP đặt riêng trong `pvp-config.json` (`heroStats`, `secondPlayerBonus`,
+`roundCap`...), không đụng số liệu PvE.
+
+| Hero | HP PvP | HP PvE gốc | Thắng% đo (bot, 1440 trận/Hero) |
+|---|---|---|---|
+| Hoắc Liệt `m05` | 52 | 40 | 52% |
+| Ôn Như Ý `f04` | 40 | 30 | 44% |
+| Tô Dạ `m06` | 36 | 28 | 52% |
+| Tần Sương `f03` | 42 | 32 | 55% |
+| Diệp Linh Lung `f02` | 34 | 26 | 47% |
+
+Mô phỏng bot-đấu-bot (`PLAYTEST_PVP=1`, 1200 trận Bộ cơ bản): người đi trước
+thắng 54% (mục tiêu 47–53%), vòng trung vị 14 (mục tiêu 8–12), hòa roundCap 0%
+(mục tiêu <1%), mọi Hero 44–55% (mục tiêu 40–60%). Bù người đi sau +1 Nguyệt
+Lực. Hai chỉ số đầu ở mép/vượt mục tiêu — quyết định giữ nguyên, xem lại sau
+khi có người chơi thật (bot heuristic kéo dài trận hơn người).
+
+## 9. Liên Thủ — nội dung co-op [GĐ6a]
+
+### 9.1 Hợp Kích — `coop-combos.json`
+
+Ba đòn theo spec `17` §8.5; `CardMatcher` khớp một lá mỗi người (`01` §16.4).
+
+| id | Tên | Người A | Người B | Hiệu ứng | Giới hạn |
+|---|---|---|---|---|---|
+| `combo_bang_nguyet_ke` | Băng Nguyệt Kế | lá `tag: scheme` | lá của `f03` áp `freeze` | `applyStatus freeze 1` lên `allEnemies` (boss bỏ cả chuỗi vòng này) | 1/vòng, 1/trận |
+| `combo_am_anh_tuyet_sat` | Ám Ảnh Tuyệt Sát | lá của `m06` áp `stealth` | lá của `f02` có effect `loseHp` (Đoạt Mệnh) | `execute threshold 0.25 allEnemies`; không ai ngã → `damage 8 allEnemies` | 1/vòng |
+| `combo_nguyet_quang_pho_chieu` | Nguyệt Quang Phổ Chiếu | lá `shiftMoon` kết thúc ở pha `full` | lá có effect `heal` | `heal 6 allAllies` (6 Hero; Trăng Tròn ×2 → 12) | 1/vòng |
+
+*Ruling:* spec ghi người B của *Ám Ảnh Tuyệt Sát* là "lá của F02 áp debuff", nhưng F02
+không có lá nào áp trạng thái — đặc trưng của F02 là Đoạt Mệnh (`loseHp`, 6 lá). Đổi
+matcher B thành `{ ownerId: "f02", effect: "loseHp" }` để giữ cặp M06–F02.
+
+*Ghi chú:* lá `scheme` hiện thuộc F02 — Hợp Kích dùng `tag` nên Hero Thanh Loan sau này
+tự được hưởng.
+
+### 9.2 Boss — `eclipse_lord` *Nguyệt Thực Ma Quân*
+
+`maxHp` 210 (≈ 2.2 × `moon_ape` 94), `moonPower { start: 4, cap: 12 }`, `intents` gốc =
+giai đoạn 1. `phases` theo `01` §16.5; `maxIntentsPerRound` 4 mọi giai đoạn.
+
+**Giai đoạn 1 — Trăng Khuyết** (`hpBelow: 1`)
+
+| intent | kind | cost | targeting | effects |
+|---|---|---|---|---|
+| `ecl_nguyet_nha` — Nguyệt Nha | attack | 3 | lowestHp | damage 9 `chosen` |
+| `ecl_trieu_nguyet` — Triều Nguyệt | attack | 4 | — | damage 5 `allEnemies` |
+| `ecl_nguyet_mac` — Nguyệt Mạc | defend | 3 | — | gainArmor 10 `self`, `regen` 2 `self` |
+| `ecl_am_trieu` — Ám Triệu | debuff | 2 | random | `weak` 2 `chosen`, `vulnerable` 1 `chosen` |
+
+**Giai đoạn 2 — Huyết Nguyệt** (`hpBelow: 0.75`, `bloodMoonWhileActive`,
+`onEnter: [applyStatus strength 2 self]`)
+
+| intent | kind | cost | targeting | effects |
+|---|---|---|---|---|
+| `ecl_huyet_trao` — Huyết Trảo | attack | 4 | lowestHp | damage 12 `chosen` |
+| `ecl_huyet_vu` — Huyết Vũ | attack | 5 | — | damage 7 `allEnemies` |
+| `ecl_huyet_bich` — Huyết Bích | defend | 4 | — | gainArmor 14 `self`, `reflect` 2 `self` |
+| `ecl_cuong_nguyet` — Cuồng Nguyệt | buff | 4 | — | `strength` 3 `self` |
+
+**Giai đoạn 3 — Nguyệt Ấn** (`hpBelow: 0.5`)
+
+| intent | kind | cost | targeting | effects |
+|---|---|---|---|---|
+| `ecl_thuc_nguyet_tram` — Thực Nguyệt Trảm | attack | 6 | random | damage 18 `chosen` — `alwaysPlan` (mỗi chuỗi có khi đủ quỹ; mục tiêu hiện rõ ở ý định) |
+| `ecl_nguyet_an` — Nguyệt Ấn | debuff | 3 | random | `mark` 2 `chosen`, `weak` 1 `chosen` |
+| `ecl_anh_ba` — Ảnh Ba | attack | 4 | — | damage 6 `allEnemies` |
+| `ecl_nguyet_tu` — Nguyệt Tụ | defend | 4 | — | heal 12 `self`, `cleanse` `self` |
+
+**Giai đoạn 4 — Nguyệt Thực** (`hpBelow: 0.25`, `reviveAfterRounds: 2`)
+
+| intent | kind | cost | targeting | effects |
+|---|---|---|---|---|
+| `ecl_thon_nguyet` — Thôn Nguyệt | attack | 5 | highestHp | damage 14 `chosen` |
+| `ecl_nguyet_diet` — Nguyệt Diệt | attack | 7 | — | damage 10 `allEnemies` |
+| `ecl_tan_nguyet_bich` — Tận Nguyệt Bích | defend | 4 | — | gainArmor 18 `self` |
+| `ecl_doan_menh` — Đoản Mệnh | debuff | 3 | lowestHp | `vulnerable` 2 `chosen`, `weak` 1 `chosen` |
+
+Encounter `enc_coop_01` — "Đại Nghiễn Nguyệt Thực": `enemyIds: ["eclipse_lord"]`,
+`tier: "coop"` (không vào bản đồ lượt chơi).
+
+Cường độ tham chiếu mục tiêu spec `17` §8.8: Bộ cơ bản không trang bị thắng 35–50%,
+vòng trung vị 10–14 — sẽ hiệu chỉnh sau `coop-sim`.

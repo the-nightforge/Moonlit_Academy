@@ -53,6 +53,31 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX pulls_by_account ON pulls(account_id, created_at);
   `,
+  // 3 — phase 5c: realtime match records (`16` §8.6).
+  `
+  CREATE TABLE matches (
+    id TEXT PRIMARY KEY,
+    mode TEXT NOT NULL,
+    data_version TEXT NOT NULL,
+    seed INTEGER NOT NULL,
+    setup_json TEXT NOT NULL,
+    actions_json TEXT NOT NULL,
+    status TEXT NOT NULL,
+    result_json TEXT,
+    created_at INTEGER NOT NULL,
+    finished_at INTEGER
+  );
+  CREATE TABLE match_players (
+    match_id TEXT NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+    account_id INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
+    slot INTEGER NOT NULL,
+    result TEXT,
+    rating_before INTEGER,
+    rating_after INTEGER,
+    PRIMARY KEY (match_id, slot)
+  );
+  CREATE INDEX match_players_by_account ON match_players(account_id, match_id);
+  `,
 ];
 
 /** Opens (or creates) the database at `path` (":memory:" for tests) and migrates it. */
@@ -71,5 +96,7 @@ export function openDb(path: string): Db {
       db.prepare("UPDATE schema_version SET version = ?").run(version + 1);
     })();
   }
+  // A restart voids matches that were `playing` — no Elo, no rewards (`16` §8.6).
+  db.exec("UPDATE matches SET status = 'void' WHERE status = 'playing'");
   return db;
 }

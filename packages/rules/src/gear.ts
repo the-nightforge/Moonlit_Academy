@@ -56,7 +56,7 @@ export function weaponCardDef(data: GameData, weapon: CombatWeapon): CardDef {
 export function cardDefOf(data: GameData, state: CombatState, instance: CardInstance): CardDef | undefined {
   const card = data.cards[instance.cardId];
   if (card) return card;
-  const weapon = state.weapons.find(
+  const weapon = state.players[instance.player]?.weapons.find(
     (entry) => entry.weaponId === instance.cardId && entry.heroId === instance.ownerIds[0],
   );
   return weapon ? weaponCardDef(data, weapon) : undefined;

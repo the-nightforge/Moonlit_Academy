@@ -1,26 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { makeTestCombat } from "./helpers";
+import { makeTestCombat, p0 } from "./helpers";
 
 describe("createCombat", () => {
   it("T01: initializes the combat state per spec", () => {
     const pending = makeTestCombat({ mulligan: "pending" });
     expect(pending.state.status).toBe("mulligan");
-    expect(pending.state.hand).toHaveLength(6);
+    expect(p0(pending.state).hand).toHaveLength(6);
     expect(pending.events.some((e) => e.type === "turnStarted")).toBe(false);
 
     const { data, state, events } = makeTestCombat();
     expect(state.status).toBe("playerTurn");
     expect(state.round).toBe(1);
     expect(state.moonIndex).toBe(1);
-    expect(state.moonPower).toBe(data.combatConfig.moonPower.start);
+    expect(p0(state).moonPower).toBe(data.combatConfig.moonPower.start);
     expect(state.bloodMoonRounds).toBe(0);
 
     const deckSize = ["m05", "f04", "m06"]
       .flatMap((heroId) => data.heroes[heroId]!.cardIds)
       .reduce((total, cardId) => total + data.cards[cardId]!.copies, 0);
-    expect(state.hand).toHaveLength(6);
-    expect(state.drawPile).toHaveLength(deckSize - 6);
-    expect(state.discardPile).toHaveLength(0);
+    expect(p0(state).hand).toHaveLength(6);
+    expect(p0(state).drawPile).toHaveLength(deckSize - 6);
+    expect(p0(state).discardPile).toHaveLength(0);
     expect(Object.keys(state.cards)).toHaveLength(deckSize);
 
     expect(state.heroes.map((hero) => hero.defId)).toEqual(["m05", "f04", "m06"]);
@@ -56,8 +56,8 @@ describe("createCombat", () => {
     const first = makeTestCombat();
     const second = makeTestCombat();
 
-    expect(second.state.drawPile).toEqual(first.state.drawPile);
-    expect(second.state.hand).toEqual(first.state.hand);
+    expect(p0(second.state).drawPile).toEqual(p0(first.state).drawPile);
+    expect(p0(second.state).hand).toEqual(p0(first.state).hand);
     expect(second.state.rngState).toBe(first.state.rngState);
   });
 });

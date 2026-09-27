@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "../src/index";
 import { armorBreakCard, cleanseHealCard } from "./fixtures";
-import { idleEnemies, injectCard, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand } from "./helpers";
+import { idleEnemies, injectCard, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand, p0 } from "./helpers";
 
 function play(data: Parameters<typeof applyAction>[0], state: Parameters<typeof applyAction>[1], cardId: string, targetId?: string) {
   return applyAction(data, state, {
@@ -15,7 +15,7 @@ describe("statuses", () => {
   it("T16: vulnerable multiplies damage taken by 1.5", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         s.enemies[0]!.statuses.push({ id: "vulnerable", value: 1 });
         setHand(s, ["m05_liet_hoa_xung_phong"]);
       },
@@ -29,7 +29,7 @@ describe("statuses", () => {
   it("T18: empower adds to the next attack card and is consumed", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["m05_tran_bac_huyet_tinh", "m05_liet_hoa_xung_phong"]);
       },
     });
@@ -43,7 +43,7 @@ describe("statuses", () => {
     expect(second.ok).toBe(true);
     if (!second.ok) return;
     expect(second.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 12);
-    expect(second.state.moonPower).toBe(7);
+    expect(p0(second.state).moonPower).toBe(7);
     expect(second.state.heroes[0]?.statuses.some((s) => s.id === "empower")).toBe(false);
     expect(
       second.events.some((e) => e.type === "statusRemoved" && e.status === "empower"),
@@ -53,7 +53,7 @@ describe("statuses", () => {
   it("T19: empower is spent after one attack card", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, [
           "m05_tran_bac_huyet_tinh",
           "m05_liet_hoa_xung_phong",
@@ -76,7 +76,7 @@ describe("statuses", () => {
   it("T37: mark adds +3 only to attacks of the hero who applied it", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
-        s.moonPower = 11;
+        p0(s).moonPower = 11;
         setHand(s, ["m06_nguyet_anh_an", "m06_am_tien"]);
       },
     });

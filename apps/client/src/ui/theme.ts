@@ -184,6 +184,14 @@ export const API_ERROR_TEXT: Record<string, string> = {
   "not complete": "Nhiệm vụ chưa hoàn thành",
   "unknown item": "Không tìm thấy vật phẩm",
   "weekly limit": "Đã đạt giới hạn mua trong tuần",
+  "monthly limit": "Đã đạt giới hạn mua trong tháng",
+  "not enough honor": "Không đủ Vinh Dự",
+  "relic required": "Hãy chọn một Nguyệt Bảo",
+  "invalid relic": "Không chọn được Nguyệt Bảo này",
+  "already in queue": "Đang trong hàng chờ — hãy hủy chờ trước",
+  "already in room": "Đang ở một phòng khác",
+  "already in match": "Đang trong một trận",
+  "no match": "Không có trận nào",
   "hero required": "Hãy chọn một Hero",
   "invalid hero": "Không chọn được Hero này",
   "weapon not owned": "Chưa sở hữu vũ khí này",
@@ -191,7 +199,7 @@ export const API_ERROR_TEXT: Record<string, string> = {
   "constellation too low": "Cần Tinh Hồn 5 để chọn dạng thăng cấp thứ hai",
 };
 
-export const CURRENCY_LABELS = { moonJade: "Nguyệt Ngọc", moonStar: "Nguyệt Tinh" } as const;
+export const CURRENCY_LABELS = { moonJade: "Nguyệt Ngọc", moonStar: "Nguyệt Tinh", honor: "Vinh Dự" } as const;
 
 /** Rarity names as the spec writes them ("còn N lượt tới Epic chắc chắn", `15` §3.5). */
 export const RARITY_LABELS: Record<Rarity, string> = {
@@ -221,4 +229,5 @@ export const CONSTELLATION_TEXT: readonly string[] = [
 export const SHOP_ITEM_LABELS = {
   moonJade: (amount: number) => `${amount} ${CURRENCY_LABELS.moonJade}`,
   heroChoice: (rarity: Rarity) => `Chọn 1 Hero ${RARITY_LABELS[rarity]} chưa sở hữu`,
+  relicChoice: (rarity: Rarity) => `Chọn 1 Nguyệt Bảo ${RARITY_LABELS[rarity]}`,
 };

@@ -19,13 +19,13 @@ export function bondCardsForTeam(data: GameData, heroIds: readonly string[]): Ca
   );
 }
 
-/** At constellation 4 a hero's signature card becomes its "+" version (`01` §8). */
+/** At constellation 4 a hero's signature card becomes its "+" version (`01` §8); never in PvP (`17` §3.2). */
 export function applySignatureCards(data: GameData, deckCardIds: readonly string[], loadout?: Loadout): string[] {
   return deckCardIds.map((cardId) => {
     const ownerId = data.cards[cardId]?.ownerId;
     const hero = ownerId !== undefined ? data.heroes[ownerId] : undefined;
     const constellation = ownerId !== undefined ? (loadout?.heroes[ownerId]?.constellation ?? 0) : 0;
-    return hero && constellation >= 4 && hero.signature.cardId === cardId ? hero.signature.plusCardId : cardId;
+    return hero && constellation >= 4 && loadout?.pvp !== true && hero.signature.cardId === cardId ? hero.signature.plusCardId : cardId;
   });
 }
 
@@ -59,7 +59,7 @@ export function createCombat(
     for (let copy = 0; copy < card.copies; copy++) {
       deckIndex += 1;
       const instanceId = `c${String(deckIndex).padStart(2, "0")}`;
-      cards[instanceId] = { instanceId, cardId, ownerIds: [card.ownerId], heldTurns: 0 };
+      cards[instanceId] = { instanceId, cardId, ownerIds: [card.ownerId], player: 0, heldTurns: 0 };
       drawPile.push(instanceId);
     }
   }
@@ -68,7 +68,7 @@ export function createCombat(
     for (let copy = 0; copy < card.copies; copy++) {
       bondIndex += 1;
       const instanceId = `bond${String(bondIndex).padStart(2, "0")}`;
-      cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [...card.bond!.owners], heldTurns: 0 };
+      cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [...card.bond!.owners], player: 0, heldTurns: 0 };
       drawPile.push(instanceId);
     }
   }
@@ -83,7 +83,7 @@ export function createCombat(
     weapons.push({ heroId, weaponId, refinement: Math.min(5, Math.max(1, gear?.refinement ?? 1)) });
     for (let copy = 1; copy <= def.card.copies; copy++) {
       const instanceId = `wpn_${heroId}_${copy}`;
-      cards[instanceId] = { instanceId, cardId: weaponId, ownerIds: [heroId], heldTurns: 0 };
+      cards[instanceId] = { instanceId, cardId: weaponId, ownerIds: [heroId], player: 0, heldTurns: 0 };
       drawPile.push(instanceId);
     }
   }
@@ -100,6 +100,7 @@ export function createCombat(
     id: `hero:${hero.id}`,
     defId: hero.id,
     side: "hero",
+    player: 0,
     position,
     hp: setup.heroes?.[position]?.hp ?? hero.maxHp,
     maxHp: setup.heroes?.[position]?.maxHp ?? hero.maxHp,
@@ -109,6 +110,7 @@ export function createCombat(
     levelUpCounter: 0,
     leveledUp: false,
     constellation: loadout?.heroes[hero.id]?.constellation ?? 0,
+    ...(loadout?.pvp === true ? { pvp: true } : {}),
     firstCardDiscountUsedThisTurn: false,
     firstCardDiscountActive: false,
     levelUpForm: loadout?.heroes[hero.id]?.levelUpForm ?? "base",
@@ -137,29 +139,39 @@ export function createCombat(
   });
 
   const state: CombatState = {
+    mode: "pve",
     status: "mulligan",
+    activePlayer: 0,
     round: 1,
     moonIndex: 1,
     bloodMoonRounds: 0,
-    moonPower: 0,
-    moonReserve: 0,
-    moonPowerBonus: 0,
-    cardsPlayedThisTurn: 0,
+    players: [
+      {
+        index: 0,
+        heroIds: heroes.map((hero) => hero.id),
+        drawPile: shuffled.items,
+        hand: [],
+        discardPile: [],
+        moonPower: 0,
+        moonReserve: 0,
+        moonPowerBonus: 0,
+        cardsPlayedThisTurn: 0,
+        pendingChoice: null,
+        hookCounters: {},
+        weapons,
+        relics,
+        runRelicIds: [...(setup.runRelicIds ?? [])],
+        mulliganDone: false,
+        done: false,
+      },
+    ],
     heroes,
     enemies,
     cards,
-    drawPile: shuffled.items,
-    hand: [],
-    discardPile: [],
-    pendingChoice: null,
     rngState,
-    runRelicIds: [...(setup.runRelicIds ?? [])],
-    runRelicCounters: {},
-    weapons,
-    relics,
   };
 
   planEnemyIntents(data, state, events);
-  drawCards(state, data.combatConfig.handSize, events);
+  drawCards(state, state.players[0]!, data.combatConfig.handSize, events);
   return { state, events };
 }

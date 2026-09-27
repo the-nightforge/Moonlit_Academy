@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { loadGameData } from "data";
+import { p0 } from "./helpers";
 
 declare const console: {
   log(...args: unknown[]): void;
@@ -104,11 +105,11 @@ function simulateRun(heroIds: [string, string, string], seed: number, deckCardId
       tiers.set(currentTier, tier);
       if (event.type === "turnStarted" && event.side === "hero") {
         tier.turns += 1;
-        tier.reserveSum += state.moonReserve;
+        tier.reserveSum += p0(state).moonReserve;
         tier.reserveSamples += 1;
         if (
-          state.hand.length === data.combatConfig.handSize &&
-          state.hand.every((id) => !isCardPlayable(data, state, id))
+          p0(state).hand.length === data.combatConfig.handSize &&
+          p0(state).hand.every((id) => !isCardPlayable(data, state, id))
         ) {
           tier.clogTurns += 1;
         }

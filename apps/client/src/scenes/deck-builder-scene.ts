@@ -17,6 +17,8 @@ export class DeckBuilderScene extends Phaser.Scene {
   private tooltip: Phaser.GameObjects.Container | null = null;
   /** Open gear picker: a hero's weapon slot or a relic slot index. */
   private picker: { kind: "weapon"; heroId: string } | { kind: "relic"; slot: number } | null = null;
+  /** "Xem theo luật PvP" (`17` §7.2): trial heroes, free gear, everything at R1/CM1. */
+  private pvpView = false;
 
   constructor() {
     super("deck-builder");
@@ -26,6 +28,7 @@ export class DeckBuilderScene extends Phaser.Scene {
     useDesignCamera(this);
     this.root = this.add.container(0, 0);
     this.picker = null;
+    this.pvpView = false;
     this.render();
   }
 
@@ -52,12 +55,17 @@ export class DeckBuilderScene extends Phaser.Scene {
     this.tooltip = null;
     const data = session.data;
     addText(this, this.root, WIDTH / 2, 24, `Xếp deck — ${this.deck.name}`, 22, COLORS.gold).setOrigin(0.5);
+    addButton(this, this.root, WIDTH - 110, 24, 180, this.pvpView ? "Luật PvP: bật" : "Luật PvP: tắt", () => {
+      this.pvpView = !this.pvpView;
+      this.render();
+    });
     this.deck.heroIds.forEach((heroId, column) => {
       const hero = data.heroes[heroId]!;
       const x0 = 40 + column * COLUMN_W;
       const count = this.deck.cardIds.filter((id) => data.cards[id]?.ownerId === heroId).length;
       const low = count < data.metaConfig.minCardsPerHero;
-      addText(this, this.root, x0, 58, `${hero.name}  (${count})`, 16, low ? "#ff8080" : COLORS.text);
+      const trial = this.pvpView && session.profile.heroes[heroId] === undefined && data.pvpConfig.trialHeroIds.includes(heroId);
+      addText(this, this.root, x0, 58, `${hero.name}${trial ? " (Thử)" : ""}  (${count})`, 16, low ? "#ff8080" : COLORS.text);
       let y = 90;
       for (const branch of hero.branches) {
         addText(this, this.root, x0, y, `— ${branch.name} —`, 12, COLORS.dimText);
@@ -70,7 +78,7 @@ export class DeckBuilderScene extends Phaser.Scene {
       }
       this.renderWeaponSlot(heroId, x0, 532);
     });
-    const errors = validateDeck(data, session.profile, this.deck);
+    const errors = validateDeck(data, session.profile, this.deck, this.pvpView ? { mode: "pvp" } : undefined);
     const weapons = deckWeapons(this.deck);
     const weaponCopies = weapons.reduce((sum, [, weaponId]) => sum + (data.weapons[weaponId]?.card.copies ?? 0), 0);
     const copies = this.deck.cardIds.reduce((sum, id) => sum + (data.cards[id]?.copies ?? 0), 0) + weaponCopies;
@@ -79,12 +87,16 @@ export class DeckBuilderScene extends Phaser.Scene {
     const weaponNote = weapons.length > 0 ? ` (gồm ${weapons.length} lá Binh Khí)` : "";
     addText(this, this.root, 40, 560, `Deck ${size}/${data.metaConfig.deckSize}${weaponNote}  ·  Chồng bài ${copies} bản`, 15);
     addText(this, this.root, 40, 584, `Cost 0–8: ${curve.join(" · ")}`, 13, COLORS.dimText);
-    addText(this, this.root, 40, 608, errors.length === 0 ? "✓ Deck hợp lệ" : `⚠ ${describeDeckError(data, errors[0]!)}`, 13, errors.length === 0 ? COLORS.gold : "#ff8080");
+    const okText = this.pvpView ? "✓ Deck hợp lệ PvP" : "✓ Deck hợp lệ";
+    addText(this, this.root, 40, 608, errors.length === 0 ? okText : `⚠ ${describeDeckError(data, errors[0]!)}`, 13, errors.length === 0 ? COLORS.gold : "#ff8080");
     for (let slot = 0; slot < data.metaConfig.maxRelics; slot++) {
       const relicId = this.deck.relicIds?.[slot];
       const relic = relicId ? data.relics[relicId] : undefined;
       const level = relicId ? session.profile.relics[relicId]?.resonance : undefined;
-      const label = relic ? `☾ ${relic.name} · CM${level ?? "?"}` : `☾ Nguyệt Bảo ${slot + 1}: trống`;
+      const freePvp = relicId !== undefined && this.pvpView && level === undefined && data.pvpConfig.freeRelicIds.includes(relicId);
+      const label = relic
+        ? `☾ ${relic.name} · ${this.pvpView ? "CM1" : `CM${level ?? "?"}`}${freePvp ? " (PvP)" : ""}`
+        : `☾ Nguyệt Bảo ${slot + 1}: trống`;
       addButton(this, this.root, 130 + slot * 230, 660, 220, label, () => this.openPicker({ kind: "relic", slot }));
     }
     addButton(this, this.root, WIDTH - 470, 660, 140, "Đổi tên", () => {
@@ -118,7 +130,10 @@ export class DeckBuilderScene extends Phaser.Scene {
     const weaponId = this.deck.weapons?.[heroId] ?? null;
     const weapon = weaponId ? data.weapons[weaponId] : undefined;
     const refinement = weaponId ? session.profile.weapons[weaponId]?.refinement : undefined;
-    const label = weapon ? `⚔ ${weapon.name} · R${refinement ?? "?"}` : "⚔ Vũ khí: trống";
+    const freePvp = weaponId !== null && this.pvpView && refinement === undefined && data.pvpConfig.freeWeaponIds.includes(weaponId);
+    const label = weapon
+      ? `⚔ ${weapon.name} · ${this.pvpView ? "R1" : `R${refinement ?? "?"}`}${freePvp ? " (PvP)" : ""}`
+      : "⚔ Vũ khí: trống";
     addButton(this, this.root, x + (COLUMN_W - 20) / 2, y, COLUMN_W - 20, label, () => this.openPicker({ kind: "weapon", heroId }));
   }
 
@@ -135,22 +150,30 @@ export class DeckBuilderScene extends Phaser.Scene {
       this.render();
     };
     const title = picker.kind === "weapon" ? `Vũ khí cho ${data.heroes[picker.heroId]!.name}` : `Nguyệt Bảo ô ${picker.slot + 1}`;
-    addText(this, layer, WIDTH / 2, 40, title, 20, COLORS.gold).setOrigin(0.5);
-    const owned = picker.kind === "weapon"
+    addText(this, layer, WIDTH / 2, 40, `${title}${this.pvpView ? " — luật PvP" : ""}`, 20, COLORS.gold).setOrigin(0.5);
+    // PvP view also lists the free gear (`pvp-config`); it plays at level 1.
+    const ownedIds = picker.kind === "weapon"
       ? Object.keys(session.profile.weapons).filter((id) => data.weapons[id])
       : Object.keys(session.profile.relics).filter((id) => data.relics[id]);
-    if (owned.length === 0) {
+    const freeIds = !this.pvpView
+      ? []
+      : (picker.kind === "weapon" ? data.pvpConfig.freeWeaponIds : data.pvpConfig.freeRelicIds).filter(
+          (id) => !ownedIds.includes(id),
+        );
+    const options = [...ownedIds, ...freeIds];
+    if (options.length === 0) {
       addText(this, layer, WIDTH / 2, 120, picker.kind === "weapon" ? "Chưa có vũ khí — quay ở Binh Khí Các" : "Chưa có Nguyệt Bảo — quay ở Nguyệt Bảo Các", 15, COLORS.dimText).setOrigin(0.5);
     }
-    owned.forEach((id, index) => {
+    options.forEach((id, index) => {
       const y = 90 + index * 44;
+      const free = freeIds.includes(id);
       if (picker.kind === "weapon") {
         const def = data.weapons[id]!;
-        const refinement = session.profile.weapons[id]!.refinement;
+        const refinement = free ? 1 : session.profile.weapons[id]!.refinement;
         const holder = Object.entries(this.deck.weapons ?? {}).find(([heroId, weaponId]) => weaponId === id && heroId !== picker.heroId)?.[0];
         const card = weaponCardDef(data, { heroId: picker.heroId, weaponId: id, refinement });
-        const note = holder ? `  (đang gắn cho ${data.heroes[holder]?.name ?? holder} — sẽ chuyển)` : "";
-        this.pickerRow(layer, y, `${def.name} · R${refinement} — lá ${card.name} (${card.cost})${note}`, RARITY_COLORS[def.rarity], () => {
+        const note = `${free ? "  (PvP — miễn phí)" : ""}${holder ? `  (đang gắn cho ${data.heroes[holder]?.name ?? holder} — sẽ chuyển)` : ""}`;
+        this.pickerRow(layer, y, `${def.name} · ${this.pvpView ? "R1" : `R${refinement}`} — lá ${card.name} (${card.cost})${note}`, RARITY_COLORS[def.rarity], () => {
           const weapons = { ...this.deck.weapons };
           if (holder) weapons[holder] = null;
           weapons[picker.heroId] = id;
@@ -159,10 +182,10 @@ export class DeckBuilderScene extends Phaser.Scene {
         }, card, [`Nội tại R1: ${def.text}`, ...def.refinement.slice(0, refinement - 1).map((level, index) => `R${index + 2}: ${level.text}`)]);
       } else {
         const def = data.relics[id]!;
-        const resonance = session.profile.relics[id]!.resonance;
+        const resonance = free ? 1 : session.profile.relics[id]!.resonance;
         const usedElsewhere = (this.deck.relicIds ?? []).some((relicId, slot) => relicId === id && slot !== picker.slot);
         const text = def.resonance[resonance - 1]?.text ?? "";
-        this.pickerRow(layer, y, `${def.name} · Cộng Minh ${resonance} — ${text}${usedElsewhere ? "  (đã ở ô khác)" : ""}`, RARITY_COLORS[def.rarity], () => {
+        this.pickerRow(layer, y, `${def.name} · Cộng Minh ${this.pvpView ? 1 : resonance} — ${text}${free ? "  (PvP — miễn phí)" : ""}${usedElsewhere ? "  (đã ở ô khác)" : ""}`, RARITY_COLORS[def.rarity], () => {
           if (usedElsewhere) return;
           const relicIds = [...(this.deck.relicIds ?? [])];
           relicIds[picker.slot] = id;

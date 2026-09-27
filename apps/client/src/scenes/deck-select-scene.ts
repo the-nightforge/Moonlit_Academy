@@ -117,6 +117,8 @@ export class DeckSelectScene extends Phaser.Scene {
     addButton(this, this.root, 975, 30, 100, "Kho đồ", () => this.scene.start("armory"), online);
     addButton(this, this.root, 1080, 30, 100, `Nhiệm vụ${canClaim ? " ●" : ""}`, () => this.scene.start("missions"), online);
     addButton(this, this.root, 1195, 30, 120, `Tu Luyện${canUnlock ? " ●" : ""}`, () => this.scene.start("mastery"), online);
+    addButton(this, this.root, 1090, 480, 200, "Đấu Trường", () => this.scene.start("arena"), online);
+    addButton(this, this.root, 1090, 524, 200, "Liên Thủ", () => this.scene.start("coop-lobby"), online);
     if (online) {
       addCurrencyBar(this, this.root, 175, 30, session.profile.currencies);
       addButton(this, this.root, 90, 30, 140, "Đăng xuất", () => {
@@ -161,7 +163,8 @@ export class DeckSelectScene extends Phaser.Scene {
     }
 
     addText(this, this.root, 1090, 84, "Trận lẻ: chọn trận", 13, COLORS.dimText).setOrigin(0.5);
-    Object.values(data.encounters).forEach((encounter, index) => {
+    // Co-op encounters are only reachable through the Liên Thủ lobby.
+    Object.values(data.encounters).filter((encounter) => encounter.tier !== "coop").forEach((encounter, index) => {
       const chosen = encounter.id === session.encounterId;
       addButton(this, this.root, 1090, 116 + index * 42, 200, `${encounter.name}${chosen ? " ✓" : ""}`, () => {
         session.encounterId = encounter.id;
