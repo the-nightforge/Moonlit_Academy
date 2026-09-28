@@ -50,8 +50,8 @@ describe("loadGameData", () => {
   it("loads the real data files into GameData keyed by id", () => {
     const data = loadGameData();
 
-    expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02"]);
-    expect(Object.keys(data.cards)).toHaveLength(68); // 60 hero + 3 bond + 5 constellation-4 plus cards
+    expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02", "m01", "m02", "m03", "m04", "f01"]);
+    expect(Object.keys(data.cards)).toHaveLength(134); // 120 hero + 3 bond + 10 constellation-4 plus cards + 1 token
     expect(Object.keys(data.enemies)).toEqual([
       "puppet_guard", "shadow_fox", "moon_ape", "book_wraith", "black_guard", "fox_king", "eclipse_lord",
     ]);
@@ -432,7 +432,8 @@ describe("weapons, moon relics and second level-up forms", () => {
   it("pvpConfig: arena stats cover every hero and every referenced id exists", () => {
     const data = loadGameData();
     expect(Object.keys(data.pvpConfig.heroStats).sort()).toEqual(Object.keys(data.heroes).sort());
-    expect(data.pvpConfig.trialHeroIds).toHaveLength(Object.keys(data.heroes).length);
+    // Wave-1 heroes are not trial heroes — the trial list stays at the original five.
+    expect(data.pvpConfig.trialHeroIds).toEqual(["m05", "f04", "m06", "f03", "f02"]);
     for (const id of data.pvpConfig.freeWeaponIds) expect(data.weapons[id]).toBeDefined();
     for (const id of data.pvpConfig.freeRelicIds) expect(data.relics[id]).toBeDefined();
     expect(data.pvpConfig.secondPlayerBonus.moonPower).toBeGreaterThan(0);

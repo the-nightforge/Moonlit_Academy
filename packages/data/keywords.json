@@ -10,6 +10,7 @@
   { "id": "chiem_bai", "name": "Chiêm Bài", "text": "Xem các lá trên cùng chồng bài, lấy 1 (lượt này rẻ hơn 1 Nguyệt Lực), các lá còn lại xuống đáy chồng." },
   { "id": "an_than", "name": "Ẩn Thân", "text": "Không bị chọn làm mục tiêu đơn; mất khi đánh lá tấn công." },
   { "id": "khieu_khich", "name": "Khiêu Khích", "text": "Kẻ địch buộc phải nhắm vào Hero này." },
+  { "id": "ho_ve", "name": "Hộ Vệ", "text": "Đòn địch nhắm vào Hero này sẽ trúng người đứng ra Hộ Vệ thay." },
   { "id": "suy_yeu", "name": "Suy Yếu", "text": "Gây ít damage hơn (×0.75)." },
   { "id": "de_vo", "name": "Dễ Vỡ", "text": "Nhận nhiều damage hơn (×1.5)." },
   { "id": "danh_dau", "name": "Đánh Dấu", "text": "Nhận thêm 3 damage từ đòn tấn công của người đánh dấu." },

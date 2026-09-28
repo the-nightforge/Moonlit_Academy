@@ -382,5 +382,390 @@
         "amount": 1
       }
     }
+  },
+  {
+    "id": "m01",
+    "name": "Tạ Vân Chiêu",
+    "faction": "thanhLoan",
+    "archetype": "support",
+    "rarity": "legendary",
+    "maxHp": 30,
+    "cardIds": [
+      "m01_quan_tinh",
+      "m01_thao_luoc",
+      "m01_muu_co",
+      "m01_doi_van_doan",
+      "m01_mat_thu",
+      "m01_toa_nguyet_phu"
+    ],
+    "lockedCardIds": [
+      "m01_lien_hoan_ke",
+      "m01_vo_trung_sinh_huu",
+      "m01_phan_gian_ke",
+      "m01_doat_nguyet_sach",
+      "m01_khong_thanh_ke",
+      "m01_doat_cuc"
+    ],
+    "branches": [
+      {
+        "name": "Thiên Cơ",
+        "cardIds": [
+          "m01_quan_tinh",
+          "m01_thao_luoc",
+          "m01_muu_co",
+          "m01_doi_van_doan",
+          "m01_lien_hoan_ke",
+          "m01_vo_trung_sinh_huu"
+        ]
+      },
+      {
+        "name": "Quyền Mưu",
+        "cardIds": [
+          "m01_mat_thu",
+          "m01_toa_nguyet_phu",
+          "m01_phan_gian_ke",
+          "m01_doat_nguyet_sach",
+          "m01_khong_thanh_ke",
+          "m01_doat_cuc"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Thiên Cơ",
+      "description": "Đầu lượt, lá rẻ nhất trên tay giảm 1 Nguyệt Lực trong lượt đó.",
+      "counter": "schemeCardsPlayed",
+      "threshold": 8,
+      "constellationThreshold": 6,
+      "passive": {
+        "type": "cheapestCardDiscount",
+        "amount": 1
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m01_quan_tinh",
+      "plusCardId": "m01_quan_tinh_plus"
+    },
+    "altLevelUp": {
+      "name": "Định Cục",
+      "description": "Chiêm Bài của người chơi xem thêm 1 lá.",
+      "passive": {
+        "type": "chooseCardExtraLook",
+        "amount": 1
+      }
+    }
+  },
+  {
+    "id": "m02",
+    "name": "Lục Hàn Phong",
+    "faction": "huyenVu",
+    "archetype": "vanguard",
+    "rarity": "epic",
+    "maxHp": 42,
+    "cardIds": [
+      "m02_ho_ve",
+      "m02_xung_tran",
+      "m02_can_ve",
+      "m02_tu_ve",
+      "m02_phan_kich",
+      "m02_khieu_dich"
+    ],
+    "lockedCardIds": [
+      "m02_ve_thanh",
+      "m02_tap_ve",
+      "m02_bat_hoai",
+      "m02_doi_thuong",
+      "m02_ngich_pha",
+      "m02_van_quan"
+    ],
+    "branches": [
+      {
+        "name": "Hộ Vệ",
+        "cardIds": [
+          "m02_ho_ve",
+          "m02_xung_tran",
+          "m02_can_ve",
+          "m02_tu_ve",
+          "m02_ve_thanh",
+          "m02_tap_ve"
+        ]
+      },
+      {
+        "name": "Phản Kích",
+        "cardIds": [
+          "m02_phan_kich",
+          "m02_khieu_dich",
+          "m02_bat_hoai",
+          "m02_doi_thuong",
+          "m02_ngich_pha",
+          "m02_van_quan"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Thiết Bích",
+      "description": "Đầu lượt Lục Hàn Phong nhận 4 giáp.",
+      "counter": "hitsIntercepted",
+      "threshold": 3,
+      "constellationThreshold": 3,
+      "passive": {
+        "type": "armorPerTurn",
+        "amount": 4
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m02_can_ve",
+      "plusCardId": "m02_can_ve_plus"
+    },
+    "altLevelUp": {
+      "name": "Trung Can",
+      "description": "Mỗi đòn Lục Hàn Phong đỡ thay cho đồng đội, nhận 2 giáp trước khi tính damage.",
+      "passive": {
+        "type": "interceptArmor",
+        "amount": 2
+      }
+    }
+  },
+  {
+    "id": "m03",
+    "name": "Mặc Tử Du",
+    "faction": "thanhLoan",
+    "archetype": "specialist",
+    "rarity": "rare",
+    "maxHp": 30,
+    "cardIds": [
+      "m03_tieu_loi",
+      "m03_thong_bao",
+      "m03_mau_dich",
+      "m03_bon_kim",
+      "m03_tham_bao",
+      "m03_tu_tin"
+    ],
+    "lockedCardIds": [
+      "m03_tich_thuy",
+      "m03_kim_dau",
+      "m03_kim_tien",
+      "m03_than_toan",
+      "m03_diem_tin",
+      "m03_tien_tri"
+    ],
+    "branches": [
+      {
+        "name": "Thương Hội",
+        "cardIds": [
+          "m03_tieu_loi",
+          "m03_thong_bao",
+          "m03_mau_dich",
+          "m03_bon_kim",
+          "m03_tich_thuy",
+          "m03_kim_dau"
+        ]
+      },
+      {
+        "name": "Tin Đồn",
+        "cardIds": [
+          "m03_tham_bao",
+          "m03_tu_tin",
+          "m03_kim_tien",
+          "m03_than_toan",
+          "m03_diem_tin",
+          "m03_tien_tri"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Vạn Kim",
+      "description": "Đầu lượt, sau khi rút bù tay, Chiêm Bài 3 miễn phí.",
+      "counter": "cardsChosen",
+      "threshold": 5,
+      "constellationThreshold": 4,
+      "passive": {
+        "type": "freeChooseCardPerTurn",
+        "look": 3
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m03_tham_bao",
+      "plusCardId": "m03_tham_bao_plus"
+    },
+    "altLevelUp": {
+      "name": "Phú Giáp",
+      "description": "Khi thăng cấp Mặc Tử Du nhận Dưỡng Nguyệt 1.",
+      "passive": {
+        "type": "none"
+      },
+      "onLevelUp": [
+        {
+          "type": "gainMoonPowerPerTurn",
+          "amount": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "m04",
+    "name": "Bùi Thanh Minh",
+    "faction": "bachLo",
+    "archetype": "support",
+    "rarity": "epic",
+    "maxHp": 32,
+    "cardIds": [
+      "m04_cham_cu",
+      "m04_cam_lo",
+      "m04_tu_duoc",
+      "m04_ho_mach",
+      "m04_ngoc_bi",
+      "m04_duong_mach"
+    ],
+    "lockedCardIds": [
+      "m04_hoi_xuan",
+      "m04_than_cham",
+      "m04_cuu_chuyen",
+      "m04_dinh_mach",
+      "m04_bao_mach",
+      "m04_hoi_duong"
+    ],
+    "branches": [
+      {
+        "name": "Châm Cứu",
+        "cardIds": [
+          "m04_cham_cu",
+          "m04_cam_lo",
+          "m04_tu_duoc",
+          "m04_hoi_xuan",
+          "m04_than_cham",
+          "m04_cuu_chuyen"
+        ]
+      },
+      {
+        "name": "Hộ Mạch",
+        "cardIds": [
+          "m04_ho_mach",
+          "m04_ngoc_bi",
+          "m04_duong_mach",
+          "m04_dinh_mach",
+          "m04_bao_mach",
+          "m04_hoi_duong"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Thần Y",
+      "description": "Lá hồi của Bùi Thanh Minh giải trừ Hero được hồi.",
+      "counter": "hpHealed",
+      "threshold": 20,
+      "constellationThreshold": 14,
+      "passive": {
+        "type": "healCleanses"
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m04_cham_cu",
+      "plusCardId": "m04_cham_cu_plus"
+    },
+    "altLevelUp": {
+      "name": "Tâm Nhãn",
+      "description": "Lá hồi máu của Bùi Thanh Minh hồi thêm 2.",
+      "passive": {
+        "type": "healBonusOwnCards",
+        "amount": 2
+      }
+    }
+  },
+  {
+    "id": "f01",
+    "name": "Thẩm Nguyệt Hoa",
+    "faction": "thanhLoan",
+    "archetype": "specialist",
+    "rarity": "legendary",
+    "maxHp": 32,
+    "cardIds": [
+      "f01_ho_nguyet",
+      "f01_nguyet_am",
+      "f01_tinh_dich",
+      "f01_nguyet_quang",
+      "f01_tu_nguyet",
+      "f01_hung_nguyet"
+    ],
+    "lockedCardIds": [
+      "f01_nguyet_hon",
+      "f01_nguyet_lenh",
+      "f01_duong_nguyet_quyet",
+      "f01_nguyet_dinh",
+      "f01_thieu_nguyet",
+      "f01_tue_nguyet"
+    ],
+    "branches": [
+      {
+        "name": "Nguyệt Quang",
+        "cardIds": [
+          "f01_ho_nguyet",
+          "f01_nguyet_am",
+          "f01_tinh_dich",
+          "f01_nguyet_quang",
+          "f01_nguyet_hon",
+          "f01_nguyet_lenh"
+        ]
+      },
+      {
+        "name": "Thiên Mệnh",
+        "cardIds": [
+          "f01_tu_nguyet",
+          "f01_hung_nguyet",
+          "f01_duong_nguyet_quyet",
+          "f01_nguyet_dinh",
+          "f01_thieu_nguyet",
+          "f01_tue_nguyet"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Nguyệt Chủ",
+      "description": "Khi thăng cấp Thẩm Nguyệt Hoa nhận Nguyệt Hoa Chiếu Thế vào tay.",
+      "counter": "fullMoonsSeen",
+      "threshold": 1,
+      "constellationThreshold": 1,
+      "passive": {
+        "type": "none"
+      },
+      "onLevelUp": [
+        {
+          "type": "createCard",
+          "cardId": "f01_nguyet_hoa_chieu_the"
+        }
+      ]
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f01_nguyet_quang",
+      "plusCardId": "f01_nguyet_quang_plus"
+    },
+    "altLevelUp": {
+      "name": "Tự Do",
+      "description": "Lá tag moon của Thẩm Nguyệt Hoa giảm 1 Nguyệt Lực.",
+      "passive": {
+        "type": "tagDiscountOwnCards",
+        "tag": "moon",
+        "amount": 1
+      }
+    }
   }
 ]
