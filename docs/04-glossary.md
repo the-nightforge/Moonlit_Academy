@@ -32,6 +32,14 @@
 | Chọn Pha | `chooseMoon` | GĐ7: lựa chọn đầu lượt giữ / +1 / +2 pha trăng (nội tại M08, `01` §5.5) |
 | Lá Tạo Ra | `token`, `createCard` | GĐ7: lá sinh trong trận (`CardDef.token`), không nằm trong pool/deck/thưởng |
 | Người hộ vệ | `guardian`, `guardianOf` | GĐ7: Hero chịu đòn thay đồng đội có `guard` |
+| Linh Thú | `summon`, `SummonState`, `SummonDef` | GĐ7b: đơn vị thật do Hero triệu hồi, tự hành động cuối lượt người chơi (`01` §17) |
+| Triệu hồi | `summon`, `summoned` | GĐ7b: effect tạo Linh Thú hoặc hồi đầy + Sức Mạnh nếu đã có |
+| Thức tỉnh | `awakenSummons`, `awakenedId` | GĐ7b: Linh Thú đổi sang bản mạnh hơn khi Hero chủ thăng cấp |
+| Mê Hoặc | `charm` | GĐ7b: trạng thái khiến kẻ địch đánh kẻ địch khác, hoặc Hero đánh đồng đội (PvP) (`01` §9.3.1, §15.5) |
+| Phong Ấn | `sealIntent` | GĐ7b: hủy chiêu đắt nhất của kẻ địch (PvE); PvP: +1 Nguyệt Lực lá đắt nhất lượt sau (`01` §5.6) |
+| Hồi Hồn | `revive` | GĐ7b: dựng Hero đã ngã sống lại với tỉ lệ HP (`01` §5.6) |
+| Xuyên (mục tiêu) | `pierceOwnAttacks` | GĐ7b: đòn đơn mục tiêu đánh thêm kẻ địch đứng ngay sau mục tiêu (`01` §5.6) |
+| Hàng sau | `isBackRow` | GĐ7b: kẻ địch còn sống không ở vị trí nhỏ nhất trong các kẻ địch còn sống (`01` §5.6) |
 | Cạn Bài | `deckedOut` | Chồng bài và tay đều rỗng đầu lượt → thua |
 | Hiệu ứng | `effect` | |
 | Điều kiện | `condition` | |
@@ -232,6 +240,17 @@
 | `m10` | Chu Quyết | Bác Học — `firstSchemeRepeats` | Trạng Nguyên — `comboAttackBonus` |
 | `f01` | Thẩm Nguyệt Hoa | Nguyệt Chủ — nội tại `none`, `onLevelUp` (`createCard` Nguyệt Hoa Chiếu Thế) | Tự Do — `tagDiscountOwnCards` |
 | `f08` | Phượng Chiêu Dung | Huyết Phượng — `forbiddenNoSelfHpLoss` | Phản Sư — `bloodMoonAttackBonus` |
+
+## Hero GĐ7b
+
+| ID | Tên | Nội tại thăng cấp | Dạng thứ hai |
+|---|---|---|---|
+| `f05` | Hạ Chi | Xuyên Vân Tiễn — `pierceOwnAttacks` | Biên Tái — `firstHitMarks` |
+| `f06` | Lam Khê | Kinh Hồng Vũ — `charmMastery` | Vũ Y — `stealthOnCharm` |
+| `f07` | Cố Uyển | Sử Bút — `sealExtraFirstPerTurn` | Chép Sử — `sealWeakens` |
+| `f09` | Tiểu Mãn | Thỏ Ngọc Thức Tỉnh — `awakenSummons` | Nguyệt Cung — `summonTaunts` |
+| `f10` | Liễu Tịnh Nhan | Nguyệt Hồn — `onLevelUp` (`revive` tới `lastFallen`), nội tại `none` | Vong Xuyên — `armorOnAllyFall` |
+| `m09` | Đoàn Lạc | Vong Quốc Khúc — `debuffDurationBonus` | Nam Chiếu Hồn — `bonusVsDebuffed` |
 
 ## Hệ thống sau này (chưa code)
 

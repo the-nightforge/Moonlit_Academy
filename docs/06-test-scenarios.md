@@ -421,3 +421,32 @@ Bối cảnh: `18-phase7-spec.md` §2; luật `01` §3.1, §4.6, §5.5, §9.3.1,
 | T276 | **[GĐ7]** 9 Hero đợt 1 nạp được với pool đầy đủ, chỉ số PvP, slot banner; mỗi Hero chơi được trận khởi đầu và deck khởi đầu hợp lệ; F01 thăng cấp ở Trăng Tròn nhận lá token; đủ 14 Hero thì mỗi cặp Song Hành thêm lá vào deck |
 | T277 | **[GĐ7]** `drawCards` rút mù; lá thừa `handLimit` vào chồng bỏ (`cardDiscarded`), không quay lại chồng rút |
 | T279 | **[GĐ7]** Chiêm Bài chọn khi tay đã `handLimit` → lá được chọn vào chồng bỏ, các lá còn lại vẫn về đáy chồng |
+
+---
+
+## Giai đoạn 7b
+
+Bối cảnh: `18-phase7-spec.md` §3; luật `01` §5.6, §9.3.1, §17, §15.4, §15.5. Trước khi Hero
+7b có dữ liệu, test đặt nội tại / bộ đếm mới lên Hero có sẵn qua `withLevelUp`, và Linh
+Thú test qua dữ liệu tiêm vào (`packages/rules/test/helpers.ts`).
+
+| Mã | Kịch bản |
+|---|---|
+| T280 | **[GĐ7]** Triệu hồi tạo một Linh Thú cho mỗi Hero; triệu hồi lại khi đã có hồi đầy HP và cộng Sức Mạnh 1; `summonsMade` đếm cả hai lần |
+| T281 | **[GĐ7]** Cuối lượt người chơi, từng Linh Thú còn sống hành động theo `targeting` ngay trước khi sang lượt kẻ địch; Sức Mạnh và Suy Yếu của Linh Thú áp dụng như đòn thường |
+| T282 | **[GĐ7]** Chiêu đơn mục tiêu của kẻ địch bỏ qua Linh Thú trừ khi nó Khiêu Khích (xét Hero trước); chiêu `allEnemies` vẫn trúng Linh Thú; lên chuỗi ý định không bao giờ chọn Linh Thú làm mục tiêu |
+| T283 | **[GĐ7]** Linh Thú ngã hết HP thì rời bàn; Hero chủ ngã làm Linh Thú của Hero đó biến mất ngay; Linh Thú không bao giờ tính vào điều kiện thua; lá nhắm đồng minh chọn được Linh Thú |
+| T284 | **[GĐ7]** `awakenSummons` đổi Linh Thú sang `awakenedId`, giữ tỉ lệ HP, khi Hero chủ thăng cấp; `summonTaunts` cho Linh Thú vừa triệu hồi (mới hoặc lại) Khiêu Khích |
+| T285 | **[GĐ7]** PvP: Linh Thú của đối thủ là mục tiêu đơn hợp lệ như một Hero, Khiêu Khích của nó ép chọn; `viewFor` hiện Linh Thú của cả hai bên |
+| T286 | **[GĐ7]** Co-op: Linh Thú của cả hai người hành động sau khi cả hai đã Xong lượt, người 0 trước |
+| T287 | **[GĐ7]** Kẻ địch bị Mê Hoặc thi hành chiêu đơn mục tiêu đánh vào kẻ địch khác còn sống HP cao nhất, trừ 1 lượt kể cả khi thất bại vì không còn ai; xem trước ý định hiện mục tiêu đã đổi |
+| T288 | **[GĐ7]** `charmsApplied` đếm số lần gây Mê Hoặc; `charmMastery` cộng thêm 1 lượt và nhân damage ×1.5; `stealthOnCharm` cho người gây Ẩn Thân; PvP Mê Hoặc khiến Hero đánh đồng đội HP cao nhất của mình |
+| T289 | **[GĐ7]** `sealIntent` hủy chiêu đắt nhất trong chuỗi kẻ địch, chiêu đó không được dẫn đầu chuỗi vòng sau; `sealExtraFirstPerTurn` hủy thêm một chiêu ở lần Phong Ấn đầu mỗi lượt; `sealWeakens` áp Suy Yếu lên mục tiêu; `intentsSealed` đếm đúng số chiêu hủy được |
+| T290 | **[GĐ7]** PvP `sealIntent` làm lá đắt nhất trên tay đối thủ +1 Nguyệt Lực, chỉ có tác dụng trong lượt kế tiếp của họ |
+| T291 | **[GĐ7]** `revive` dựng một đồng đội đã ngã sống lại đúng một lần với HP theo `ratio × maxHp`, xáo lại các lá đã bị Tán Chiêu của Hero đó vào chồng rút; mục tiêu `fallenAlly` chỉ liệt kê Hero đã ngã và chưa được Hồi Hồn |
+| T292 | **[GĐ7]** `alliesFallen` đếm cho cả người chơi mỗi khi có Hero ngã; `onLevelUp` Hồi Hồn Hero ngã gần nhất (`lastFallen`); `armorOnAllyFall` cho các Hero còn sống nhận giáp khi có đồng đội ngã |
+| T293 | **[GĐ7]** `backRowHits` đếm hit từ lá tấn công trúng kẻ địch hàng sau; `pierceOwnAttacks` đánh thêm kẻ địch còn sống đứng ngay sau mục tiêu, cùng damage gốc; `firstHitMarks` áp Đánh Dấu đúng một lần mỗi lượt |
+| T294 | **[GĐ7]** `debuffsApplied` đếm mỗi debuff Hero gây lên đối thủ; `debuffDurationBonus` kéo dài thời hạn debuff Hero áp; `bonusVsDebuffed` cộng damage khi mục tiêu đủ số debuff; `extendDebuffs` kéo dài mọi debuff có thời hạn đang có trên mục tiêu |
+| T295 | **[GĐ7]** Kiểm chéo dữ liệu: `summons.json` (`awakenedId` trỏ Linh Thú có thật, `action` không dùng effect / mục tiêu bị cấm, `summon` trỏ Linh Thú có thật); lá có `target: "fallenAlly"` phải có effect `revive` với `to: "chosen"` và ngược lại |
+| T296 | **[GĐ7]** 6 Hero đợt 2 nạp đủ pool 12 lá, chỉ số PvP, slot banner đúng độ hiếm; mỗi Hero chơi được trận khởi đầu với deck khởi đầu hợp lệ |
+| T297 | **[GĐ7]** Đủ 20 Hero nạp được; mỗi cặp Song Hành đợt 2 (M09+F06, F09+F10) thêm đúng lá vào deck khi đội có đủ cả hai Hero |

@@ -153,8 +153,9 @@ Hành động `playCard` bị **từ chối** (trả về lỗi, state không đ
 | `target` của lá | Mục tiêu hợp lệ |
 |---|---|
 | `none` | Không truyền `targetId` |
-| `enemy` | 1 kẻ địch còn sống, **không Ẩn Thân** |
+| `enemy` | 1 kẻ địch còn sống, **không Ẩn Thân** (PvP: cũng nhận Linh Thú còn sống của đối thủ, mục 17.3) |
 | `ally` | 1 Hero còn sống (kể cả chính chủ lá) |
+| `fallenAlly` **[GĐ7]** | 1 Hero **đã ngã**, chưa từng được Hồi Hồn, của chính người đánh (mục 5.6) |
 
 ### 5.2 Giải quyết
 1. Trừ `moonPower`.
@@ -178,6 +179,8 @@ Hành động `playCard` bị **từ chối** (trả về lỗi, state không đ
 | `chosen` | Mục tiêu được chọn khi đánh lá (hoặc mục tiêu của chiêu kẻ địch) |
 | `allEnemies` | Mọi đối thủ còn sống của bên hành động (kể cả đang Ẩn Thân), theo vị trí |
 | `allAllies` | Mọi đồng đội còn sống của bên hành động, theo vị trí |
+| `owner` **[GĐ7]** | Hero chủ của Linh Thú đang giải quyết effect — chỉ hợp lệ trong `SummonDef.action` (mục 17) |
+| `summon` **[GĐ7]** | Linh Thú còn sống của Hero đang giải quyết effect — chỉ hợp lệ trên lá Hero / Song Hành, không trong `SummonDef.action` |
 
 Nếu mục tiêu `chosen` đã ngã trước khi tới effect đó: bỏ qua effect đó.
 
@@ -199,6 +202,57 @@ Condition `selfHpBelow`, `selfHasStatus` xét đơn vị hành động của eff
 - Trả lời Chiêm Bài cuối cùng cũng kiểm lại `moonChoicePending` và mở Chọn Pha nếu còn nợ (mục 3.1 bước 11.3).
 - Hết giờ / bot: trả lời mặc định `offset: 0` (`autoChoiceAction`, `02` §3).
 
+### 5.6 Phong Ấn, Hồi Hồn, Kéo Dài Debuff, Xuyên mục tiêu [GĐ7]
+
+**Phong Ấn — effect `sealIntent { to }`** (chỉ trên lá bài).
+- PvE / co-op (`to` là kẻ địch): hủy chiêu **có cost cao nhất** trong `plannedIntents` của
+  mục tiêu (hòa → chiêu đứng trước); phát `intentsCancelled`; id chiêu bị hủy được đẩy vào
+  `EnemyState.sealedIntentIds` (Nguyệt Lực của chiêu không hoàn lại). `plannedIntents`
+  rỗng → không có tác dụng. Nội tại `sealExtraFirstPerTurn`: lần Phong Ấn **đầu tiên mỗi
+  lượt** của Hero có nội tại này hủy thêm 1 chiêu nữa (đắt thứ hai, cùng luật hòa) — dùng
+  cờ `HeroState.firstSealUsedThisTurn`, đặt lại đầu lượt người chơi. Nội tại `sealWeakens
+  { amount }`: mục tiêu nhận Suy Yếu `amount`. Bộ đếm `intentsSealed` +1 mỗi lần hủy được
+  một chiêu.
+- PvP (`to` là Hero đối thủ): lá **đắt nhất trên tay** của người chơi đó (hòa → lá đứng
+  trước) +1 Nguyệt Lực **chỉ trong lượt kế tiếp** của họ (`CardInstance.sealSurcharge`);
+  tay rỗng → không có tác dụng. Xem mục 15.5.
+- Khi thi hành lượt kẻ địch (mục 9.3): `lastIntentIds` = id các chiêu **còn lại trong
+  chuỗi** (`plannedIntents`) **cộng** `sealedIntentIds`, rồi `sealedIntentIds` bị xóa — để
+  chiêu đã bị Phong Ấn cũng không được lên đầu chuỗi vòng sau (mục 9.2 bước 3).
+
+**Hồi Hồn — effect `revive { ratio; to: "chosen" | "lastFallen" }`.**
+- Lá bài dùng `target: "fallenAlly"` (mục 5.1) cùng `to: "chosen"`.
+- Hero được chọn sống lại với `hp = max(1, floor(ratio × maxHp))`, `armor = 0`, không
+  trạng thái; giữ `leveledUp` và bộ đếm thăng cấp; đánh dấu `HeroState.revived = true`
+  (chặn Hồi Hồn lần hai trong cùng trận). Event `heroRevived { heroId, hp }`.
+- Các bản lá của Hero đó đã bị Tán Chiêu (`cardsPurged`, mục 10.4) được **xáo lại vào
+  `drawPile`** bằng RNG của trận (`PlayerState.purged[heroId]` lưu danh sách lúc gỡ, xóa
+  sau khi xáo lại); phát `deckShuffled`.
+- `to: "lastFallen"` (chỉ dùng trong `levelUp.onLevelUp` / `altLevelUp.onLevelUp`, không
+  trên lá bài): chọn Hero **ngã gần nhất của cùng người chơi, chưa từng được Hồi Hồn**,
+  theo `PlayerState.fallenOrder` (id Hero theo thứ tự ngã).
+- Không có Hero hợp lệ (`to: "chosen"` không có mục tiêu, hoặc `to: "lastFallen"` không
+  tìm được ai) → effect không có tác dụng, không phát event.
+
+**Kéo Dài Debuff — effect `extendDebuffs { amount; to }`.**
+- Cộng `amount` vào **mọi debuff có thời hạn** (mục 6.3) hiện có trên mỗi mục tiêu trong
+  `to` (×2 trong PvP, theo luật thời hạn chung mục 15.3). Mục tiêu không có debuff thời
+  hạn nào → không có tác dụng.
+
+**Xuyên mục tiêu.**
+- "Hàng sau": kẻ địch còn sống không đứng ở vị trí nhỏ nhất trong các kẻ địch còn sống
+  (PvP: "vị trí" là vị trí Hero đối thủ). Bộ đếm `backRowHits` +1 mỗi hit từ lá tấn công
+  của Hero có bộ đếm đó trúng một kẻ địch hàng sau.
+- Nội tại `pierceOwnAttacks`: mỗi effect `damage` với `to: "chosen"` từ lá của Hero có nội
+  tại này gọi thêm `dealDamage` với **cùng `amount` gốc** lên kẻ địch còn sống có vị trí
+  **ngay sau** mục tiêu chính (nếu có) — tính đơn vị "phía sau" **trước** khi hit vào mục
+  tiêu chính giải quyết, để mục tiêu chính ngã không làm "người phía sau" đổi. Hệ số của
+  mục tiêu mới (Suy Yếu của nguồn, Dễ Vỡ, Đánh Dấu…) vẫn áp dụng bình thường theo công
+  thức mục 10.1.
+- Nội tại `firstHitMarks { rounds }`: lượt damage **đầu tiên mỗi lượt** từ lá tấn công của
+  Hero có nội tại này, nếu trúng một kẻ địch (còn sống sau đòn), áp Đánh Dấu `rounds` vòng
+  (×2 trong PvP) lên kẻ địch đó.
+
 ---
 
 ## 6. Trạng thái
@@ -219,6 +273,7 @@ Condition `selfHpBelow`, `selfHasStatus` xét đơn vị hành động của eff
 | `freeze` | Đóng Băng | Dùng một lần | Hero: không đánh được lá của mình trong lượt người chơi kế tiếp. Kẻ địch: bỏ qua cả chuỗi chiêu trong lượt kẻ địch kế tiếp và Dự Trữ về 0 (mục 9.3) | Không có tác dụng nếu đang Đóng Băng |
 | `reflect` | Phản Đòn **[GĐ2]** | Theo giáp | Khi nhận damage: nguồn gây damage mất HP = giá trị (mục 10.5). Bị gỡ **cùng lúc với giáp** (mục 6.4), không giảm theo vòng | Cộng giá trị |
 | `guard` | Hộ Vệ **[GĐ7]** | Thời hạn | Đòn đơn mục tiêu nhắm Hero này chuyển sang Hero `sourceId` nếu còn sống (mục 9.3.1 bước 1b); không đặt lên chính mình | Đặt lại thay `sourceId` và thời hạn |
+| `charm` | Mê Hoặc **[GĐ7]** | Số lượt (không giảm theo vòng) | Kẻ địch bị Mê Hoặc thi hành chiêu đơn mục tiêu → đánh kẻ địch khác thay vì Hero, trừ 1 lượt (mục 9.3.1 bước 0); PvP: Hero bị Mê Hoặc đánh đồng đội (mục 15.5). Không có tác dụng trên Hero trong PvE / co-op | Cộng giá trị, giữ `sourceId` (người gây Mê Hoặc) |
 
 Trạng thái bị gỡ khi thời hạn/số tầng/giá trị về 0.
 
@@ -227,7 +282,7 @@ Trạng thái bị gỡ khi thời hạn/số tầng/giá trị về 0.
 - Ví dụ: áp Suy Yếu 1 lên kẻ địch trong lượt người chơi → có tác dụng trong lượt kẻ địch cùng vòng → hết ở cuối vòng.
 
 ### 6.3 Buff và debuff
-- **Debuff** (bị Giải Trừ gỡ): `weak`, `vulnerable`, `burn`, `freeze`, `mark`.
+- **Debuff** (bị Giải Trừ gỡ): `weak`, `vulnerable`, `burn`, `freeze`, `mark`, `charm` **[GĐ7]**.
 - **Buff**: `stealth`, `taunt`, `regen`, `strength`, `empower`, `reflect`, `guard` **[GĐ7]**.
 
 ### 6.4 Giáp
@@ -311,6 +366,12 @@ Ví dụ — `bloodMoon(2)` đánh trong lượt người chơi vòng N:
 | M10 Chu Quyết **[GĐ7]** | `studyPoints` | +1 đầu mỗi lượt người chơi khi còn sống, +1 mỗi lá `scheme` của M10 | 5 | `firstSchemeRepeats` — *Bác Học*: lá `scheme` **đầu tiên** mỗi lượt của M10 giải quyết 2 lần (lượt thứ nhất bỏ mọi effect `chooseCard`, lượt thứ hai đầy đủ) | Ngay lập tức |
 | F01 Thẩm Nguyệt Hoa **[GĐ7]** | `fullMoonsSeen` | +1 đầu lượt người chơi khi pha là `full` | 1 | `none` — *Nguyệt Chủ*: nội tại trống; `levelUp.onLevelUp` = `createCard` lá *Nguyệt Hoa Chiếu Thế* vào tay (mục 4.6) | Ngay lập tức |
 | F08 Phượng Chiêu Dung **[GĐ7]** | `forbiddenHpLost` | Cộng HP F08 thực mất bởi `loseHp` trong lá `forbidden` của chính F08 | 12 | `forbiddenNoSelfHpLoss` — *Huyết Phượng*: `loseHp` nhắm `self` trong lá `forbidden` của F08 bị bỏ qua | Ngay lập tức |
+| F05 Hạ Chi **[GĐ7]** | `backRowHits` | +1 mỗi hit từ lá tấn công của F05 trúng kẻ địch hàng sau (mục 5.6) | 4 | `pierceOwnAttacks` — *Xuyên Vân Tiễn*: đòn đơn mục tiêu của F05 đánh thêm kẻ địch còn sống đứng ngay sau mục tiêu, cùng damage gốc | Ngay lập tức |
+| F06 Lam Khê **[GĐ7]** | `charmsApplied` | +1 mỗi lần một effect có đơn vị hành động là F06 áp `charm` lên một kẻ địch | 2 | `charmMastery { extraCharges: 1, damageMultiplier: 1.5 }` — *Kinh Hồng Vũ*: Mê Hoặc do F06 gây thêm 1 lượt; đòn bị đổi mục tiêu của kẻ địch đó ×1.5 khi F06 còn sống | Ngay lập tức |
+| F07 Cố Uyển **[GĐ7]** | `intentsSealed` | +1 mỗi chiêu bị hủy bởi effect `sealIntent` có đơn vị hành động là F07 | 3 | `sealExtraFirstPerTurn` — *Sử Bút*: lần Phong Ấn đầu tiên mỗi lượt của F07 hủy thêm 1 chiêu (đắt thứ hai) | Đầu lượt người chơi kế tiếp |
+| F09 Tiểu Mãn **[GĐ7]** | `summonsMade` | +1 mỗi effect `summon` có đơn vị hành động là F09 | 5 | `awakenSummons` — *Thỏ Ngọc Thức Tỉnh*: Linh Thú của F09 dùng `awakenedId` (mục 17.1) | Ngay lập tức (Linh Thú đang sống đổi ngay) |
+| F10 Liễu Tịnh Nhan **[GĐ7]** | `alliesFallen` | +1 mỗi Hero của người chơi đó ngã (kể cả chính F10) | 1 | `none` — *Nguyệt Hồn*: nội tại trống; `levelUp.onLevelUp` = `revive { ratio: 0.3, to: "lastFallen" }` (mục 5.6) | Ngay lập tức |
+| M09 Đoàn Lạc **[GĐ7]** | `debuffsApplied` | +1 mỗi lần một effect có đơn vị hành động là M09 áp một debuff (mục 6.3) lên đối thủ | 6 | `debuffDurationBonus(1)` — *Vong Quốc Khúc*: debuff có thời hạn do M09 áp thêm 1 vòng thời hạn | Ngay lập tức |
 
 *Ghi chú: GDD ghi ngưỡng F04 là 4; prototype dùng 3 vì trận ngắn. GDD ghi F02 "Cướp 3 buff"; dùng 2 sau playtest 2.8 (`09` mục 12), trả về 3 và tính thêm Đoạt Nguyệt sau playtest 4b (`playtest-notes.md`, chỉnh sau 4b).*
 
@@ -344,6 +405,12 @@ Ví dụ — `bloodMoon(2)` đánh trong lượt người chơi vòng N:
 | M10 | *Trạng Nguyên* **[GĐ7]** | — | `comboAttackBonus(1)`: lá tấn công của M10 +1 damage mỗi hit cho mỗi lá đã đánh trước nó trong lượt |
 | F01 | *Tự Do* **[GĐ7]** | — | `tagDiscountOwnCards(moon, 1)`: lá tag `moon` của F01 −1 Nguyệt Lực (tối thiểu 0) |
 | F08 | *Phản Sư* **[GĐ7]** | — | `bloodMoonAttackBonus(3)`: khi đang Huyết Nguyệt, mọi hit của lá tấn công F08 +3 damage |
+| F05 | *Biên Tái* **[GĐ7]** | — | `firstHitMarks(1)`: hit đầu mỗi lượt của lá tấn công F05, nếu trúng, áp Đánh Dấu 1 vòng lên kẻ địch đó |
+| F06 | *Vũ Y* **[GĐ7]** | — | `stealthOnCharm(1)`: mỗi khi F06 gây Mê Hoặc, F06 Ẩn Thân 1 vòng |
+| F07 | *Chép Sử* **[GĐ7]** | — | `sealWeakens(1)`: Phong Ấn của F07 còn áp Suy Yếu 1 lên mục tiêu |
+| F09 | *Nguyệt Cung* **[GĐ7]** | — | `summonTaunts(1)`: Linh Thú của F09 vừa triệu hồi (mới hoặc lại) được Khiêu Khích 1 vòng |
+| F10 | *Vong Xuyên* **[GĐ7]** | — | `armorOnAllyFall(6)`: mỗi khi đồng đội của F10 ngã, mọi Hero còn sống của người chơi đó nhận 6 giáp |
+| M09 | *Nam Chiếu Hồn* **[GĐ7]** | — | `bonusVsDebuffed { minDebuffs: 2, amount: 3 }`: hit của lá tấn công M09 +3 damage vào kẻ địch có ít nhất 2 debuff |
 
     "Lá của Hero X" gồm lá Binh Khí X đang mang (§14.2), không gồm lá Song Hành. Bộ đếm
     "mỗi lượt" (Tàn Ảnh, Hàn Kiếm) đặt lại ở đầu lượt người chơi. Hàn Kiếm: lượt damage đầu tiên luôn
@@ -398,7 +465,14 @@ Thứ tự RNG trong một lần lên chuỗi của một kẻ địch: các l�
 
 #### 9.3.1 Xác định lại mục tiêu khi thực hiện
 Với chiêu có mục tiêu đơn:
-1. Nếu có Hero còn sống đang **Khiêu Khích** → mục tiêu là Hero đó (nhiều Hero khiêu khích → vị trí nhỏ hơn).
+0. **[GĐ7]** Nếu kẻ địch đang thực hiện chiêu có `charm` (Mê Hoặc): trừ 1 lượt (về 0 → gỡ);
+   mục tiêu đổi thành **kẻ địch khác còn sống có HP hiện tại cao nhất** (hòa → vị trí
+   nhỏ). Không có kẻ địch khác → chiêu **thất bại**, phát `intentFizzled` (vẫn tính đã trừ
+   Mê Hoặc). Damage tính như kẻ địch đánh thường (nguồn là kẻ địch bị Mê Hoặc, mục 10.1);
+   **bỏ qua các bước 1–4 dưới đây**. Chiêu `to: "allEnemies"` hoặc chỉ buff bản thân không
+   bị ảnh hưởng và không trừ Mê Hoặc.
+1. Nếu có Hero **hoặc Linh Thú** còn sống đang **Khiêu Khích** → mục tiêu là đơn vị đó
+   (nhiều đơn vị Khiêu Khích → **Hero trước, rồi Linh Thú**; hòa → vị trí nhỏ hơn).
 1b. **[GĐ7]** Nếu mục tiêu kết quả có `guard` mà người hộ vệ (`sourceId`) còn sống → mục tiêu là người hộ vệ; `hitsIntercepted` của người hộ vệ +1; nếu người hộ vệ có nội tại `interceptArmor` → nhận giáp trước khi chiêu giải quyết (mục 8).
 2. Nếu mục tiêu đã lên trong chuỗi còn sống và không Ẩn Thân → giữ nguyên.
 3. Ngược lại → chọn lại theo cùng `targeting` (RNG nếu là `random`).
@@ -498,7 +572,8 @@ healed = min(maxHp − hp, floor(amount × hệ số hồi máu của pha))
 
 ## 12. Chưa có trong prototype
 
-Crit, Mê Hoặc, triệu hồi, hàng trước/sau. Không code các phần này ở giai đoạn 1–2. Binh Khí và Nguyệt Bảo: §14 (GĐ 4e).
+Crit. Không code phần này ở giai đoạn 1–2. Binh Khí và Nguyệt Bảo: §14 (GĐ 4e). Mê Hoặc,
+Linh Thú (triệu hồi), hàng trước/sau: §17, §5.6, §6.1 (GĐ 7b).
 
 ---
 
@@ -703,6 +778,9 @@ Hành đủ cặp của đội và lá Binh Khí như §2/§14.2. Thứ tự RNG
   Khiêu Khích → bắt buộc chọn Hero đó.
 - `ally`/`self`/`allAllies`/`allEnemies`: theo seat (`alliesOf`/`opponentsOf`).
 - **[GĐ7]** Lá đơn mục tiêu (`target: "enemy"`) nhắm Hero đối thủ có `guard` → chuyển sang người hộ vệ theo cùng luật §9.3.1 bước 1b (người hộ vệ phải cùng phe bị nhắm và còn sống; `hitsIntercepted` +1, `interceptArmor` áp trước khi giải quyết).
+- **[GĐ7]** `target: "enemy"` cũng nhận Linh Thú còn sống của đối thủ làm mục tiêu hợp lệ,
+  như một Hero (mục 17.3); Linh Thú đối thủ đang Khiêu Khích ép chọn nó theo cùng thứ tự
+  Hero trước / Linh Thú sau của §9.3.1 bước 1.
 - Hiệu ứng pha "cho cả hai phe" (Trăng Tròn hồi ×2, Hạ Huyền giáp ×1.5…) áp cho cả hai.
 
 ### 15.5 Effect có nghĩa riêng trong PvP
@@ -713,6 +791,8 @@ Hành đủ cặp của đội và lá Binh Khí như §2/§14.2. Thứ tự RNG
 | Bộ đếm `enemiesKilled` (M06) | Kẻ địch ngã | Hero đối thủ ngã (vẫn "do lá của M06") |
 | Hook `enemyKilled` / `heroDied` | Kẻ địch / Hero ngã | `enemyKilled` chạy hook của **người kết liễu**; `heroDied` chạy hook của **người mất Hero** |
 | Hook `moonPhaseEntered`, `bloodMoonStarted` | — | Chạy hook của **cả hai**: người đang có lượt trước, rồi người kia |
+| `applyStatus charm` lên Hero **[GĐ7]** | Không có tác dụng trên Hero (chỉ kẻ địch, mục 9.3.1 bước 0) | Hero bị Mê Hoặc: lá tấn công đơn mục tiêu **đầu tiên** của Hero đó trong lượt kế tiếp đánh vào **đồng đội còn sống HP cao nhất** của chính nó (không có đồng đội → đánh chính nó); trừ 1 lượt Mê Hoặc; không chuyển sang người hộ vệ (`guard`) vì đòn đã đánh vào phe mình |
+| `sealIntent` (Phong Ấn) **[GĐ7]** | Hủy chiêu đắt nhất trong chuỗi ý định của kẻ địch (mục 5.6) | Không hủy gì (đối thủ không có chuỗi ý định); thay vào đó lá **đắt nhất trên tay** của đối thủ (hòa → lá đứng trước) +1 Nguyệt Lực **chỉ trong lượt kế tiếp** của đối thủ |
 
 Mọi effect khác giữ nguyên (đơn vị hành động, `to`, công thức damage §10).
 
@@ -857,3 +937,70 @@ reviveAfterRounds? }`:
   người đó **ngã** (event `deckedOut { player }`); đồng đội đánh tiếp.
 - **Bỏ cuộc / mất kết nối quá hạn:** Hero của người đó **ngã**; người còn lại đánh tiếp
   một mình (thắng vẫn thưởng). Cả hai rời → trận `void`.
+
+---
+
+## 17. Linh Thú [GĐ7]
+
+Đơn vị thật do Hero triệu hồi, cùng phe Hero (`side: "hero"`), tự hành động ở cuối lượt
+người chơi. Dữ liệu: `summons.json` (`SummonDef`, `02` §1.15).
+
+### 17.1 Triệu hồi, triệu hồi lại, thức tỉnh — effect `summon { summonId }`
+
+- Mỗi Hero tối đa 1 Linh Thú, id `prefixedId(state, seat, "summon:<ownerDefId>")` (PvE
+  `summon:f09`, nhiều người chơi `p0_summon:f09`). `CombatState.summons?: SummonState[]`
+  — **optional**, chỉ được tạo ở lần triệu hồi đầu tiên (state trận cũ không có trường
+  này vẫn hợp lệ).
+- Hero chủ chưa có Linh Thú → tạo với đủ HP (`SummonDef.maxHp` của `summonId`, hoặc của
+  `awakenedId` nếu Hero chủ **đang có hiệu lực** nội tại `awakenSummons`); event
+  `summoned { unitId, summonId, ownerHeroId }`.
+- Đã có Linh Thú (còn sống) → hồi đầy HP, nhận **Sức Mạnh 1**.
+- Hero chủ nhận nội tại `awakenSummons` khi Linh Thú đang sống (lúc thăng cấp) → Linh Thú
+  đổi sang `awakenedId`, giữ tỉ lệ HP hiện tại (làm tròn xuống, tối thiểu 1); phát lại
+  event `summoned` (báo `summonId` mới).
+- Nội tại `summonTaunts { rounds }`: Linh Thú vừa triệu hồi (tạo mới hoặc triệu hồi lại)
+  nhận Khiêu Khích `rounds` vòng (×2 trong PvP, mục 15.3).
+
+### 17.2 Hành động cuối lượt
+
+Bước mới trong §3.3, **ngay trước khi chuyển sang lượt kẻ địch**: từng Linh Thú còn sống
+chạy `action` của `SummonDef` đang dùng, theo vị trí Hero chủ (Hero chủ đứng trước, Linh
+Thú đó hành động trước). Effect `to: "chosen"` trong `action` chọn kẻ địch còn sống,
+không Ẩn Thân, theo `targeting` (hòa → vị trí nhỏ); không có mục tiêu → bỏ qua effect đó.
+Kiểm tra thắng/thua sau mỗi effect. Event `summonActed { unitId }` trước khi `action`
+giải quyết.
+
+Đòn của Linh Thú (`action`) là **đòn tấn công**: Sức Mạnh và Suy Yếu của Linh Thú áp dụng
+như đòn thường (mục 10.1); **không có** hệ số pha trăng (hệ số đó chỉ dành cho lá bài).
+Linh Thú bị giết (bởi `action` hay bất kỳ nguồn nào) **không** tính vào `enemiesKilled`
+trong PvP.
+
+Co-op: sau khi **cả hai** người đã Xong lượt, Linh Thú của người 0 hành động trước, rồi
+người 1. PvP: Linh Thú của người đang có lượt hành động ở cuối lượt người đó (như PvE).
+
+### 17.3 Bị nhắm
+
+- Chiêu đơn mục tiêu của kẻ địch chỉ nhắm Linh Thú khi Linh Thú đang **Khiêu Khích**
+  (§9.3.1 bước 1: xét cả Hero và Linh Thú, nhiều đơn vị Khiêu Khích → Hero trước, rồi
+  Linh Thú, hòa → vị trí nhỏ hơn).
+- Lên chuỗi ý định (§9.2 bước 4) **không** chọn Linh Thú làm mục tiêu.
+- Effect `to: "allEnemies"` từ phía kẻ địch trúng cả Linh Thú.
+- Lá nhắm đồng minh (`target: "ally"` → `to: "chosen"`, hoặc `to: "allAllies"`) tính cả
+  Linh Thú của người đánh.
+- PvP: lá đơn mục tiêu (`target: "enemy"`) của đối thủ **được chọn** Linh Thú làm mục
+  tiêu như một Hero; Khiêu Khích của Linh Thú ép chọn như của Hero (§15.4).
+
+### 17.4 Vòng đời
+
+- Xóa giáp và tick trạng thái của Linh Thú cùng lúc với Hero chủ (đầu lượt người chơi của
+  người sở hữu).
+- Về 0 HP → event `unitDied`, bị bỏ khỏi `summons`. Linh Thú **không bao giờ** quyết định
+  thắng/thua (không tính vào điều kiện "mọi Hero ngã", mục 11 / 15.6 / 16.6).
+- Hero chủ ngã → Linh Thú của Hero đó biến mất ngay (event `summonDismissed`), không tính
+  là `unitDied`.
+- Linh Thú không có lá, không có Nguyệt Lực, không thăng cấp, không bộ đếm; không thể bị
+  Hồi Hồn (mục 5.6).
+
+### 17.5 Góc nhìn
+
+`viewFor` (§15.7) hiện Linh Thú của **cả hai bên** — thông tin công khai như Hero.

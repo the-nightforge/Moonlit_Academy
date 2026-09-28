@@ -218,22 +218,29 @@ SummonDef {
 ```
 Kiểm chéo khi nạp: `awakenedId` trỏ tới Linh Thú có sẵn; `action` chỉ dùng `to` thuộc
 `chosen` (kẻ địch theo `targeting`), `self`, `allEnemies`, `allAllies`, `owner` (Hero chủ,
-`TargetRef` mới chỉ hợp lệ trong `action`).
+`TargetRef` mới chỉ hợp lệ trong `action`). `TargetRef` còn thêm `"summon"` (Linh Thú còn
+sống của Hero đang giải quyết effect) — chỉ hợp lệ trên lá Hero / Song Hành, **không**
+trong `SummonDef.action`; lá Song Hành *Nguyệt Thố Hộ Mệnh* (§3.4) dùng `"summon"`.
 
-**State:** `CombatState.summons: SummonState[]`:
+**State:** `CombatState.summons?: SummonState[]` — **optional**, chỉ được tạo ở lần triệu
+hồi đầu tiên (state trận cũ không có trường này vẫn hợp lệ):
 ```ts
 SummonState extends UnitState { side: "hero"; player: number; ownerHeroId: string; summonId: string }
 ```
-Id `p<i>_s_<ownerHeroId>` (mỗi Hero tối đa 1 Linh Thú → id ổn định). `heroes[]` giữ
+Id `prefixedId(state, seat, "summon:<ownerDefId>")` (mỗi Hero tối đa 1 Linh Thú → id ổn
+định): PvE là `summon:f09`, nhiều người chơi là `p0_summon:f09`. `heroes[]` giữ
 nguyên nghĩa. Các hàm tra đơn vị (`findUnit`, mục tiêu, `allEnemies` / `allAllies`) mở
 rộng thêm `summons`.
 
 **Effect `summon { summonId }`:**
-- Hero chủ chưa có Linh Thú → tạo với đủ HP (dùng `awakenedId` nếu Hero chủ đã thăng
-  cấp và có). Event `summoned { unitId, summonId, ownerHeroId }`.
+- Hero chủ chưa có Linh Thú → tạo với đủ HP. Dùng `awakenedId` (nếu có) chỉ khi nội tại
+  **đang có hiệu lực** của Hero chủ là `awakenSummons` (nội tại dạng thường của F09) —
+  không áp dụng cho mọi Hero đã thăng cấp nói chung, vì như vậy dạng thứ hai của F09
+  (Nguyệt Cung) sẽ mạnh hơn hẳn dạng thường. Event `summoned { unitId, summonId,
+  ownerHeroId }`.
 - Đã có → hồi đầy HP và nhận **Sức Mạnh 1**.
-- Hero chủ thăng cấp khi Linh Thú đang sống → Linh Thú đổi sang `awakenedId`, giữ tỉ lệ
-  HP (làm tròn xuống, tối thiểu 1).
+- Hero chủ thăng cấp (nhận nội tại `awakenSummons`) khi Linh Thú đang sống → Linh Thú
+  đổi sang `awakenedId`, giữ tỉ lệ HP (làm tròn xuống, tối thiểu 1).
 
 **Hành động:** §3.3 (cuối lượt người chơi) thêm bước ngay trước "chuyển sang lượt kẻ
 địch": từng Linh Thú còn sống (theo vị trí Hero chủ, rồi theo người chơi) chạy `action`.
@@ -251,6 +258,9 @@ sở hữu.
 - Lá nhắm đồng minh (`chosen` ally, `allAllies`) tính cả Linh Thú của người đánh.
 - PvP: lá của đối thủ **được chọn** Linh Thú làm mục tiêu đơn như một Hero; Khiêu Khích
   của Linh Thú ép như của Hero (§15.4).
+- Đòn của Linh Thú (cả effect `action` lẫn hit về phía nó) là **đòn tấn công**: Sức Mạnh
+  và Suy Yếu áp dụng như đòn thường; không có hệ số pha trăng (hệ số đó chỉ dành cho lá
+  bài). Linh Thú bị giết **không** tính `enemiesKilled` trong PvP.
 
 **Vòng đời:** xóa giáp và tick trạng thái cùng lúc với Hero. Về 0 HP → `unitDied`, bị bỏ
 khỏi `summons`. Hero chủ ngã → Linh Thú biến mất (`summonDismissed`). Linh Thú không có
@@ -260,12 +270,19 @@ lá, Nguyệt Lực, thăng cấp, bộ đếm; không tính vào điều kiện
 
 ### 3.2 Các cơ chế khác
 
-**Mê Hoặc — trạng thái `charm`** (debuff, giá trị = số chiêu, không giảm theo vòng).
+**Mê Hoặc — trạng thái `charm`** (debuff, giá trị = số chiêu, không giảm theo vòng,
+`sourceId` = người gây Mê Hoặc).
 - PvE / co-op: khi kẻ địch bị Mê Hoặc thi hành chiêu có mục tiêu đơn, mục tiêu đổi thành
   **kẻ địch khác còn sống** có HP hiện tại cao nhất (hòa → vị trí nhỏ). Damage tính như
   kẻ địch đánh thường (§10.1, nguồn là kẻ địch bị Mê Hoặc). Không có kẻ địch khác → chiêu
-  thất bại (`intentFizzled`). Mỗi chiêu bị đổi trừ 1; về 0 → gỡ. Chiêu `allEnemies` /
-  buff bản thân không bị ảnh hưởng và không trừ.
+  thất bại (`intentFizzled`) — **vẫn trừ 1** lượt Mê Hoặc dù chiêu thất bại. Mỗi chiêu bị
+  đổi trừ 1; về 0 → gỡ. Chiêu `allEnemies` / buff bản thân không bị ảnh hưởng và không
+  trừ. Mê Hoặc trên Hero **không có tác dụng** trong PvE / co-op (chỉ PvP có luật cho
+  Hero, dưới đây).
+- **Kinh Hồng Vũ** (F06): nội tại `charmMastery { extraCharges: 1; damageMultiplier: 1.5 }`
+  — mỗi lần F06 gây Mê Hoặc, cộng thêm `extraCharges` lượt; hệ số `damageMultiplier` áp
+  vào đòn bị đổi mục tiêu khi Hero đã gây Mê Hoặc đó (`sourceId`) còn sống, đã thăng cấp
+  và đang có nội tại này.
 - Xem trước ý định (`preview.ts`) hiện mục tiêu đã đổi.
 - PvP (§15.5 thêm dòng): Hero bị Mê Hoặc → lá tấn công đơn mục tiêu đầu tiên của nó trong
   lượt kế tiếp đánh vào **đồng đội còn sống HP cao nhất** của chính nó (không có đồng
@@ -273,13 +290,20 @@ lá, Nguyệt Lực, thăng cấp, bộ đếm; không tính vào điều kiện
 
 **Phong Ấn — effect `sealIntent { to }`.**
 - PvE / co-op: hủy chiêu **có cost cao nhất** trong chuỗi đã báo của mục tiêu (hòa → chiêu
-  đứng trước), phát `intentsCancelled`; `id` chiêu đó thêm vào `lastIntentIds` (không được
-  làm chiêu dẫn đầu vòng sau theo §9.2 bước 3). Nguyệt Lực của chiêu không hoàn lại.
-  Chuỗi rỗng → không có tác dụng.
-- PvP (§15.5): lá đắt nhất trên tay đối thủ (hòa → lá đứng trước) +1 Nguyệt Lực trong
-  lượt kế tiếp của đối thủ.
+  đứng trước), phát `intentsCancelled`; `id` chiêu đó thêm vào `EnemyState.sealedIntentIds`
+  (không được làm chiêu dẫn đầu vòng sau theo §9.2 bước 3). Nguyệt Lực của chiêu không
+  hoàn lại. Chuỗi rỗng → không có tác dụng. Lúc thi hành lượt kẻ địch, `lastIntentIds`
+  được gán bằng id các chiêu **còn lại trong chuỗi cộng `sealedIntentIds`**, rồi
+  `sealedIntentIds` bị xóa — vì `runEnemyTurn` ghi đè `lastIntentIds` nên phải cộng lại
+  chiêu đã bị Phong Ấn để nó vẫn không dẫn đầu vòng sau.
+- PvP (§15.5): lá đắt nhất trên tay đối thủ (hòa → lá đứng trước) +1 Nguyệt Lực **chỉ
+  trong lượt kế tiếp** của đối thủ. Phụ phí này nằm ở `CardInstance.sealSurcharge` và bị
+  xóa ở cuối lượt của **người sở hữu lá** (không phải cuối lượt của người Phong Ấn) —
+  `endSeatTurn` chỉ xóa `chosenThisTurn` / `turnDiscount` / `sealSurcharge` của lá thuộc
+  người chơi đang kết thúc lượt.
 
-**Hồi Hồn — effect `revive { ratio }`** (`to: "chosen"` Hero **đã ngã** của người đánh).
+**Hồi Hồn — effect `revive { ratio; to: "chosen" | "lastFallen" }`.** Lá bài dùng
+`target: "fallenAlly"` + `to: "chosen"` (Hero **đã ngã** của người đánh).
 - Hero sống lại với `max(1, floor(ratio × maxHp))` HP, không giáp, không trạng thái; giữ
   `leveledUp` và bộ đếm.
 - Các instance bị gỡ khi Hero đó ngã (`cardsPurged`) được **xáo lại vào chồng rút** bằng
@@ -287,12 +311,21 @@ lá, Nguyệt Lực, thăng cấp, bộ đếm; không tính vào điều kiện
 - Mỗi Hero bị Hồi Hồn tối đa 1 lần mỗi trận; lá Hồi Hồn không có mục tiêu hợp lệ thì không
   đánh được (`getValidTargets` mở rộng cho Hero đã ngã).
 - Event `heroRevived` (dùng lại tên của lượt chơi, thêm vào `CombatEvent`).
+- Nội tại dạng thường của F10 là `none`, với `levelUp.onLevelUp:
+  [{ type: "revive", ratio: 0.3, to: "lastFallen" }]`. `to: "lastFallen"` chọn Hero **ngã
+  gần nhất của cùng người chơi mà chưa từng được Hồi Hồn** (lấy từ `PlayerState.
+  fallenOrder`, không phải HP thấp nhất hay vị trí).
 
 **Xuyên mục tiêu.** "Hàng sau" = kẻ địch không có vị trí nhỏ nhất trong các kẻ địch còn
 sống. Bộ đếm `backRowHits` +1 mỗi hit từ lá của F05 trúng kẻ địch hàng sau. Nội tại
-`pierceOwnAttacks`: mỗi hit đơn mục tiêu từ lá của Hero còn đánh thêm kẻ địch còn sống có
-vị trí ngay sau mục tiêu (nếu có), cùng số damage trước giáp. PvP: "vị trí" là vị trí
-Hero đối thủ.
+`pierceOwnAttacks`: mỗi hit đơn mục tiêu từ lá của Hero còn gọi `dealDamage` với **cùng
+base** lên kẻ địch còn sống có vị trí ngay sau mục tiêu (nếu có) — hệ số của mục tiêu mới
+(Suy Yếu, Dễ Vỡ…) vẫn áp dụng bình thường, không phải "cùng số damage trước giáp". PvP:
+"vị trí" là vị trí Hero đối thủ.
+
+**Khúc Vũ Tri Âm** (Song Hành M09+F06, §3.4) dùng effect mới `extendDebuffs { amount;
+to }`: cộng `amount` vào mọi debuff **có thời hạn** đang có trên mục tiêu (×2 trong PvP,
+như mọi trạng thái Thời hạn khác, §15.3).
 
 ### 3.3 Bản tóm tắt Hero
 
@@ -492,21 +525,25 @@ Tiếp nối `06` từ T263. Mỗi dải có thể giãn khi viết `06`; mã tr
 | T270–T271 | 7a | `createCard`: id tất định, tay đầy → bỏ qua, bỏ → không vào lại chồng rút, chủ ngã → Tàn Chiêu; lá `token` bị `validateDeck` từ chối |
 | T272–T275 | 7a | Bộ đếm + nội tại: mỗi Hero 7a ít nhất 1 kiểm thăng cấp và 1 kiểm dạng thứ hai (có thể gộp nhiều Hero một test) |
 | T276 | 7a | 4 Song Hành 7a; nạp dữ liệu 14 Hero; `buildPvpLoadout` với Hero mới |
-| T277–T283 | 7b | Linh Thú: tạo / triệu hồi lại (hồi đầy + Sức Mạnh); hành động cuối lượt, `targeting`; chỉ bị nhắm khi Khiêu Khích, trúng `allEnemies`; chủ ngã → biến mất; không tính thua; thức tỉnh khi chủ thăng cấp; PvP chọn được làm mục tiêu; co-op thứ tự hành động; `viewFor` |
-| T284–T285 | 7b | `charm`: đổi mục tiêu sang kẻ địch khác, không có → thất bại, xem trước hiện mục tiêu mới; PvP đánh đồng đội |
-| T286–T287 | 7b | `sealIntent`: hủy chiêu đắt nhất, không dẫn đầu vòng sau; PvP +1 cost |
-| T288–T289 | 7b | `revive`: HP, lá xáo lại tất định, mỗi Hero 1 lần; không đánh được khi không ai ngã |
-| T290 | 7b | Xuyên mục tiêu + `backRowHits` |
-| T291–T292 | 7b | Bộ đếm / nội tại 6 Hero 7b; 2 Song Hành; nạp dữ liệu 20 Hero |
-| T293 | 7c | Kiểm chéo `story.json` (id sai, speaker không tồn tại, màn thuộc hai arc) |
-| T294–T295 | 7c | `replayStoryCombat` tất định; `start` áp trước khi lên chuỗi vòng 1 |
-| T296–T297 | 7c | `storyStageUnlocked`; `applyStoryResult` thưởng lần đầu đúng 1 lần, màn cuối tặng Hero (trùng → Tinh Hồn) |
-| T298–T299 | 7c | Route: màn khóa → 403; nộp đúng → thưởng; chạy lại sai → 422 `rejected`; hết hạn → 410; lệch `dataVersion` → 409 |
-| T300 | 7c | `parseProfile` hồ sơ không có `story`; `mergeImportedProfile` bỏ qua `story` |
-| T301–T303 | 7d | `upgradeItem`: đủ / thiếu, max, chưa sở hữu, giá theo độ hiếm và cấp |
-| T304 | 7d | Route nâng cấp + `If-Match` |
-| T305 | 7d | Thưởng Huyền Thiết từ lượt chơi |
-| T306 | 7d | Nạp dữ liệu vũ khí / Nguyệt Bảo mới, banner trỏ đúng |
+| T280–T281 | 7b | Linh Thú: tạo / triệu hồi lại (hồi đầy + Sức Mạnh, đếm `summonsMade`); hành động cuối lượt theo `targeting`, Sức Mạnh / Suy Yếu áp dụng như đòn thường |
+| T282–T283 | 7b | Linh Thú: chỉ bị nhắm đơn khi Khiêu Khích (Hero trước), trúng `allEnemies`, không lên chuỗi kế hoạch; ngã và chủ ngã → biến mất, không tính thua, lá đồng minh chọn được nó |
+| T284 | 7b | `awakenSummons` đổi Linh Thú sang `awakenedId` giữ tỉ lệ HP khi thăng cấp; `summonTaunts` cho Khiêu Khích |
+| T285–T286 | 7b | PvP: Linh Thú đối thủ là mục tiêu đơn hợp lệ, Khiêu Khích ép chọn, `viewFor` hiện Linh Thú cả hai bên; co-op: Linh Thú hai người hành động sau khi cả hai Xong, người 0 trước |
+| T287–T288 | 7b | `charm`: đổi mục tiêu sang kẻ địch khác (không có → `intentFizzled`, vẫn trừ 1 lượt), xem trước hiện mục tiêu mới; `charmsApplied`, `charmMastery` (+1 lượt, ×1.5), `stealthOnCharm`; PvP Mê Hoặc đánh đồng đội |
+| T289–T290 | 7b | `sealIntent`: hủy chiêu đắt nhất, không dẫn đầu vòng sau (`sealedIntentIds`), `sealExtraFirstPerTurn` hủy thêm 1, `sealWeakens`, `intentsSealed`; PvP `sealSurcharge` +1 lá đắt nhất chỉ lượt kế |
+| T291–T292 | 7b | `revive`: HP theo `ratio`, xáo lại lá đã gỡ tất định, mỗi Hero tối đa 1 lần, `fallenAlly` chỉ liệt kê Hero ngã chưa hồi; `alliesFallen`, `onLevelUp` hồi `lastFallen`, `armorOnAllyFall` |
+| T293–T294 | 7b | Xuyên mục tiêu: `backRowHits`, `pierceOwnAttacks` gọi `dealDamage` cùng base lên kẻ địch phía sau, `firstHitMarks`; `debuffsApplied`, `debuffDurationBonus`, `bonusVsDebuffed`, `extendDebuffs` |
+| T295 | 7b | Kiểm chéo dữ liệu: `summons.json` (`awakenedId`, phạm vi `owner` / `summon`), lá `fallenAlly` / `revive` |
+| T296–T297 | 7b | 6 Hero đợt 2 nạp đủ pool, chỉ số PvP, slot banner, trận khởi đầu và deck hợp lệ; đủ 20 Hero, 2 Song Hành mới thêm đúng lá vào deck |
+| T298 | 7c | Kiểm chéo `story.json` (id sai, speaker không tồn tại, màn thuộc hai arc) |
+| T299–T300 | 7c | `replayStoryCombat` tất định; `start` áp trước khi lên chuỗi vòng 1 |
+| T301–T302 | 7c | `storyStageUnlocked`; `applyStoryResult` thưởng lần đầu đúng 1 lần, màn cuối tặng Hero (trùng → Tinh Hồn) |
+| T303–T304 | 7c | Route: màn khóa → 403; nộp đúng → thưởng; chạy lại sai → 422 `rejected`; hết hạn → 410; lệch `dataVersion` → 409 |
+| T305 | 7c | `parseProfile` hồ sơ không có `story`; `mergeImportedProfile` bỏ qua `story` |
+| T306–T308 | 7d | `upgradeItem`: đủ / thiếu, max, chưa sở hữu, giá theo độ hiếm và cấp |
+| T309 | 7d | Route nâng cấp + `If-Match` |
+| T310 | 7d | Thưởng Huyền Thiết từ lượt chơi |
+| T311 | 7d | Nạp dữ liệu vũ khí / Nguyệt Bảo mới, banner trỏ đúng |
 
 **Chốt chặn mọi bước:** T213 xanh (hoặc ghi lại có duyệt, §1.2); `pnpm test` và
 `pnpm typecheck` xanh.
@@ -522,7 +559,7 @@ Tiếp nối `06` từ T263. Mỗi dải có thể giãn khi viết `06`; mã tr
 | `02` | `summons.json`, `story.json`, `StatusId` / `Effect` / `LevelUpCounter` / `LevelUpPassive` mới, `CardDef.token`, `TargetRef "owner"`, `upgradeCost`, kiểm chéo |
 | `03` | Kẻ địch / boss / encounter Arc 1–2 |
 | `04` | Hộ Vệ, Chọn Pha, Linh Thú, Mê Hoặc, Phong Ấn, Hồi Hồn, Xuyên, Cốt Truyện, Arc, Màn, Thưởng Lần Đầu, Nâng Cấp |
-| `06` | T263–T306 |
+| `06` | T263–T311 |
 | `07` | Giai đoạn 7 (bước §8) |
 | `14` | Cốt truyện (tiến độ, mở màn, thưởng), nâng cấp vật liệu, Huyền Thiết từ lượt chơi |
 | `16` | Route `story`, route nâng cấp, migration |
@@ -547,17 +584,17 @@ Mỗi phần có kế hoạch riêng trong `docs/superpowers/plans/`. Mỗi bư�
 **7b**
 1. 7b.1 — Tài liệu.
 2. 7b.2 — Linh Thú: state, `summon`, hành động, mục tiêu, PvP / co-op / `viewFor`
-   (T277–T283).
-3. 7b.3 — `charm`, `sealIntent`, `revive`, xuyên mục tiêu (T284–T290).
+   (T280–T286).
+3. 7b.3 — `charm`, `sealIntent`, `revive`, xuyên mục tiêu (T287–T295).
 4. 7b.4 — Nội dung 6 Hero (72 lá) + `summons.json` + 2 Song Hành; banner; `pvp-config`
-   (T291–T292).
+   (T296–T297).
 5. 7b.5 — Client 7b.
 6. 7b.6 — Dạy bot + mô phỏng + chỉnh số (duyệt).
 
 **7c**
 1. 7c.1 — Tài liệu.
-2. 7c.2 — Schema `story.json` + luật thuần + hồ sơ (T293–T297, T300).
-3. 7c.3 — Server: migration, route (T298–T299).
+2. 7c.2 — Schema `story.json` + luật thuần + hồ sơ (T298–T302, T305).
+3. 7c.3 — Server: migration, route (T303–T304).
 4. 7c.4 — Nội dung Arc 1 (kẻ địch, boss, encounter, lời thoại; duyệt).
 5. 7c.5 — Nội dung Arc 2 (duyệt).
 6. 7c.6 — Client Cốt truyện + hội thoại.
@@ -565,14 +602,14 @@ Mỗi phần có kế hoạch riêng trong `docs/superpowers/plans/`. Mỗi bư�
 
 **7d**
 1. 7d.1 — Tài liệu.
-2. 7d.2 — `upgradeItem`, `upgradeCost`, nguồn Huyền Thiết, route (T301–T305).
+2. 7d.2 — `upgradeItem`, `upgradeCost`, nguồn Huyền Thiết, route (T306–T310).
 3. 7d.3 — 15 vũ khí bản mệnh (duyệt).
-4. 7d.4 — 8 Nguyệt Bảo + banner (T306; duyệt).
+4. 7d.4 — 8 Nguyệt Bảo + banner (T311; duyệt).
 5. 7d.5 — Client nâng cấp.
 6. 7d.6 — Mô phỏng trang bị + kinh tế + chỉnh số (duyệt).
 
 **Hoàn thành GĐ 7 khi:** 20 Hero chơi được ở mọi chế độ và đạt mục tiêu §1.3; chơi trọn
-Arc 1–2 trên client qua server; vật liệu có chỗ tiêu và đạt mục tiêu §5.5; T263–T306 xanh.
+Arc 1–2 trên client qua server; vật liệu có chỗ tiêu và đạt mục tiêu §5.5; T263–T311 xanh.
 
 ---
 

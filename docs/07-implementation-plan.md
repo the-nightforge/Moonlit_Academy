@@ -300,7 +300,33 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 > Heuristic bot cho cơ chế mới; `run-playtest` ±10 điểm, PvP bot 40–60% / 8–12 vòng; gói chỉnh số (duyệt).
 
 ### Phần 7b — Linh Thú + 6 Hero đợt 2
-> Theo `18` §3: `summons`, `charm`, `sealIntent`, `revive`, xuyên mục tiêu; F05, F06, F07, F09, F10, M09 + 2 Song Hành. Kế hoạch riêng khi bắt đầu.
+
+Đặc tả: `18-phase7-spec.md` §3. Kế hoạch chi tiết:
+`docs/superpowers/plans/2026-09-28-phase7b-heroes-wave2.md` (10 Task).
+
+### Bước 7b.1 — Tài liệu 7b *(Task 1)*
+> Chốt các điểm làm rõ spec trong `18` §3; cập nhật `00`, `01`, `02`, `04`, `06`, `07`,
+> `CLAUDE.md`. *(Đã xong.)*
+
+### Bước 7b.2 — Linh Thú *(Task 2–3)*
+> Dữ liệu `summons.json`, `CombatState.summons?`, effect `summon`, hành động cuối lượt
+> (§3.3 bước mới); bị nhắm, vòng đời, thức tỉnh, PvP, co-op, `viewFor`. T280–T286.
+
+### Bước 7b.3 — `charm`, `sealIntent`, `revive`, xuyên mục tiêu *(Task 4–7)*
+> Trạng thái `charm` + bộ đếm/nội tại M09; effect `sealIntent` + F07; effect `revive` +
+> `target: "fallenAlly"` + F10; xuyên mục tiêu + F05. T287–T295.
+
+### Bước 7b.4 — Nội dung đợt 2 *(Task 8)*
+> F05, F06, F07, F09, F10, M09 (72 lá) + `summons.json` (Thỏ Ngọc) + 2 lá Song Hành
+> (`18` §3.4, duyệt danh sách lá trước); banner; `pvp-config`. T296–T297.
+
+### Bước 7b.5 — Client 7b *(Task 9)*
+> Ô Linh Thú cạnh Hero chủ; Hero đã ngã chọn được cho lá Hồi Hồn; animation `summoned` /
+> `summonActed` / `summonDismissed` / `heroRevived`; nhãn Mê Hoặc và mũi tên đổi mục tiêu.
+
+### Bước 7b.6 — Bot, mô phỏng, chỉnh số *(Task 10)*
+> Heuristic bot cho Linh Thú / Mê Hoặc / Phong Ấn / Hồi Hồn; `run-playtest` ±10 điểm, PvP
+> bot 40–60% / 8–12 vòng; gói chỉnh số (duyệt).
 
 ### Phần 7c — Cốt truyện Arc 1–2
 > Theo `18` §4: `story.json`, `createStoryCombat`/`replayStoryCombat`/`applyStoryResult`, phiếu + route, ~16 màn + 2 boss arc. Kế hoạch riêng khi bắt đầu.

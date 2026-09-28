@@ -19,7 +19,8 @@ export type MoonPhaseId =
 export type StatusId =
   | "stealth" | "taunt" | "weak" | "vulnerable" | "mark"
   | "burn" | "regen" | "strength" | "empower" | "freeze"
-  | "reflect" | "guard";                                   // GĐ2; GĐ7: Hộ Vệ
+  | "reflect" | "guard"                                    // GĐ2; GĐ7: Hộ Vệ
+  | "charm";                                                // GĐ7: Mê Hoặc
 
 export type CardTag =
   | "attack" | "assassin" | "control" | "moon" | "heal" | "forbidden"
@@ -52,9 +53,13 @@ export type LevelUpCounter =
   | "freezesApplied" | "buffsStolen"                       // GĐ2: F03, F02
   | "hitsIntercepted" | "schemeCardsPlayed" | "cardsChosen" // GĐ7 (M02, M01, M03)
   | "hpHealed" | "turnsSurvived" | "moonShifts"             // GĐ7 (M04, M07, M08)
-  | "studyPoints" | "fullMoonsSeen" | "forbiddenHpLost";    // GĐ7 (M10, F01, F08)
+  | "studyPoints" | "fullMoonsSeen" | "forbiddenHpLost"     // GĐ7 (M10, F01, F08)
+  | "summonsMade" | "charmsApplied" | "intentsSealed"       // GĐ7b (F09, F06, F07)
+  | "alliesFallen" | "debuffsApplied" | "backRowHits";      // GĐ7b (F10, M09, F05)
 // GĐ7: schemeCardsPlayed và cardsChosen là bộ đếm của cả người chơi — mọi Hero còn
 // sống của người đó được nhận +1, chỉ Hero có đúng bộ đếm thật sự tăng.
+// GĐ7b: alliesFallen là bộ đếm của cả người chơi (mọi Hero của người đó ngã, kể cả
+// chính Hero có bộ đếm này), tính cho Hero còn sống — không tăng cho Hero vừa ngã.
 
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
@@ -67,7 +72,7 @@ export type LevelUpPassive =
   | { type: "interceptArmor"; amount: number }             // M02 Trung Can
   | { type: "chooseMoon" }                                 // M08 Quan Tinh — Chọn Pha (01 §5.5)
   | { type: "freeChooseCardPerTurn"; look: number }        // M03 Vạn Kim — Chiêm Bài đầu lượt
-  | { type: "none" }                                       // F01 dạng thường, M03 dạng thứ hai
+  | { type: "none" }                                       // F01 dạng thường, M03 dạng thứ hai, F10 dạng thường (GĐ7b)
   | { type: "cheapestCardDiscount"; amount: number }       // M01 Thiên Cơ
   | { type: "chooseCardExtraLook"; amount: number }        // M01 Định Cục
   | { type: "healBonusOwnCards"; amount: number }          // M04 Tâm Nhãn
@@ -78,7 +83,19 @@ export type LevelUpPassive =
   | { type: "comboAttackBonus"; amount: number }           // M10 Trạng Nguyên
   | { type: "tagDiscountOwnCards"; tag: CardTag; amount: number } // F01 Tự Do
   | { type: "forbiddenNoSelfHpLoss" }                      // F08 Huyết Phượng
-  | { type: "bloodMoonAttackBonus"; amount: number };      // F08 Phản Sư
+  | { type: "bloodMoonAttackBonus"; amount: number }       // F08 Phản Sư
+  // GĐ7b (`18` §3.3) — Linh Thú, Mê Hoặc, Phong Ấn, Hồi Hồn, xuyên:
+  | { type: "pierceOwnAttacks" }                           // F05 Xuyên Vân Tiễn
+  | { type: "firstHitMarks"; rounds: number }               // F05 Biên Tái
+  | { type: "charmMastery"; extraCharges: number; damageMultiplier: number }  // F06 Kinh Hồng Vũ
+  | { type: "stealthOnCharm"; rounds: number }              // F06 Vũ Y
+  | { type: "sealExtraFirstPerTurn" }                       // F07 Sử Bút
+  | { type: "sealWeakens"; amount: number }                 // F07 Chép Sử
+  | { type: "awakenSummons" }                               // F09 Thỏ Ngọc Thức Tỉnh
+  | { type: "summonTaunts"; rounds: number }                // F09 Nguyệt Cung
+  | { type: "armorOnAllyFall"; amount: number }             // F10 Vong Xuyên
+  | { type: "debuffDurationBonus"; amount: number }         // M09 Vong Quốc Khúc
+  | { type: "bonusVsDebuffed"; minDebuffs: number; amount: number };  // M09 Nam Chiếu Hồn
 
 export interface LevelUpDef {
   name: string;             // "Liệt Hỏa"
@@ -93,7 +110,7 @@ export interface LevelUpDef {
 ### 1.3 Lá bài — `cards.json`
 ```ts
 export type CardType = "attack" | "skill";
-export type CardTarget = "none" | "enemy" | "ally";
+export type CardTarget = "none" | "enemy" | "ally" | "fallenAlly";   // GĐ7b: fallenAlly — Hồi Hồn
 
 export interface CardDef {
   id: string;               // "m05_liet_hoa_xung_phong"
@@ -115,7 +132,8 @@ export interface CardDef {
 
 ### 1.4 Hệ thống hiệu ứng
 ```ts
-export type TargetRef = "self" | "chosen" | "allEnemies" | "allAllies";
+export type TargetRef = "self" | "chosen" | "allEnemies" | "allAllies"
+  | "owner" | "summon";   // GĐ7b: owner — chỉ trong SummonDef.action; summon — chỉ trên lá Hero/Song Hành
 
 // GĐ2: mọi effect có thể có `actor?: 0 | 1` (index vào bond.owners, mặc định 0),
 // chỉ hợp lệ trên lá Song Hành. Effect trong then/else không có actor thì kế thừa
@@ -140,6 +158,10 @@ export type Effect = (
   | { type: "bloodMoon"; rounds: number }                                // GĐ2
   | { type: "createCard"; cardId: string }                               // GĐ7: tạo lá token vào tay (01 §4.6); chỉ lá bài / levelUp.onLevelUp
   | { type: "drawCards"; amount: number }                                 // GĐ7: rút mù lá đầu chồng; thừa `handLimit` vào chồng bỏ (01 §4.2)
+  | { type: "summon"; summonId: string }                                  // GĐ7b: triệu hồi/triệu hồi lại Linh Thú (01 §17.1); chỉ lá bài
+  | { type: "sealIntent"; to: TargetRef }                                 // GĐ7b: Phong Ấn (01 §5.6); chỉ lá bài
+  | { type: "revive"; ratio: number; to: "chosen" | "lastFallen" }        // GĐ7b: Hồi Hồn (01 §5.6); to "chosen" chỉ trên lá `target: "fallenAlly"`, "lastFallen" chỉ trong onLevelUp
+  | { type: "extendDebuffs"; amount: number; to: TargetRef }              // GĐ7b: kéo dài debuff có thời hạn (01 §5.6); chỉ lá bài
   | { type: "conditional"; condition: Condition; then: Effect[]; else?: Effect[] }
   | { type: "execute"; threshold: number; to: TargetRef; elseEffects?: Effect[] }
       // GĐ6: chỉ trong effects của Hợp Kích (01 §16.4) — kẻ địch trong `to` có
@@ -454,6 +476,33 @@ Kiểm tra khi nạp: `ownerId` trỏ Hero tồn tại; `appliesStatus`/`effect`
 tham chiếu id có thật; `effects` của Hợp Kích mới được dùng `execute` (§6); `limit` hợp
 lệ.
 
+### 1.15 Linh Thú — `summons.json` [GĐ7b]
+
+Luật: `01` §17.
+
+```ts
+export interface SummonDef {
+  id: string;
+  name: string;
+  maxHp: number;
+  targeting: "lowestHp" | "front" | "random";   // chọn kẻ địch cho effect `to: "chosen"` trong action
+  action: Effect[];                              // chạy mỗi cuối lượt người chơi (01 §17.2)
+  awakenedId?: string;                           // dùng thay khi nội tại đang có hiệu lực của Hero chủ là `awakenSummons`
+}
+```
+
+`GameData.summons: Record<string, SummonDef>` (mục 4).
+
+Kiểm tra khi nạp: `awakenedId` trỏ tới Linh Thú có sẵn; `action` không dùng `summon`,
+`chooseCard`, `createCard` hay `to: "summon"`; `action` chỉ dùng `to` thuộc `chosen`
+(kẻ địch theo `targeting`), `self`, `allEnemies`, `allAllies`, `owner`; effect `summon`
+(trên lá bài hay lồng trong `conditional`) trỏ tới Linh Thú có thật; `to: "owner"` chỉ
+xuất hiện trong `SummonDef.action`; `to: "summon"` chỉ xuất hiện trên lá có `ownerId`
+hoặc `bond` (lá Hero / Song Hành), không trong `SummonDef.action`, ý định kẻ địch,
+`moonOverrides` / `bloodMoonOverride`, hook Kỳ Vật / vũ khí / Nguyệt Bảo, hay `effects`
+của Hợp Kích. `summon`, `sealIntent`, `revive`, `extendDebuffs` bị cấm ở mọi chỗ cấm
+`createCard` (§6).
+
 ---
 
 ## 2. Trạng thái trận đấu (runtime)
@@ -461,8 +510,8 @@ lệ.
 ```ts
 export interface StatusInstance {
   id: StatusId;
-  value: number;            // thời hạn / số tầng / giá trị tùy loại; freeze dùng 1; reflect = HP phản
-  sourceId?: string;        // mark: id Hero đã đánh dấu; guard: id Hero hộ vệ (GĐ7)
+  value: number;            // thời hạn / số tầng / giá trị tùy loại; freeze dùng 1; reflect = HP phản; charm = số lượt còn dùng (GĐ7b)
+  sourceId?: string;        // mark: id Hero đã đánh dấu; guard: id Hero hộ vệ (GĐ7); charm: id người gây Mê Hoặc (GĐ7b)
 }
 
 export interface UnitState {
@@ -484,6 +533,9 @@ export interface HeroState extends UnitState {
   firstCardDiscountUsedThisTurn: boolean;   // GĐ4a: cho nội tại M06 (tên cũ: freeCardUsedThisTurn)
   firstCardDiscountActive: boolean;         // GĐ4a: true từ lượt sau khi M06 thăng cấp
   firstSchemeUsedThisTurn?: boolean;        // GĐ7: Bác Học (M10) — lá scheme đầu tiên lượt này đã giải quyết 2 lần
+  firstSealUsedThisTurn?: boolean;          // GĐ7b: Sử Bút (F07) — Phong Ấn đầu tiên lượt này đã hủy thêm 1 chiêu
+  firstHitUsedThisTurn?: boolean;           // GĐ7b: Biên Tái (F05) — lượt damage đầu tiên lượt này đã áp Đánh Dấu
+  revived?: true;                            // GĐ7b: đã được Hồi Hồn (chặn lần hai, 01 §5.6)
 }
 
 export interface EnemyState extends UnitState {
@@ -493,6 +545,7 @@ export interface EnemyState extends UnitState {
   lastIntentIds: string[];   // chuỗi đã lên vòng trước
   moonPower: number;         // quỹ của vòng đã lên chuỗi
   moonReserve: number;       // Dự Trữ sẽ mang sang vòng sau
+  sealedIntentIds?: string[]; // GĐ7b: id chiêu bị Phong Ấn vòng này — cộng vào lastIntentIds rồi xóa (01 §5.6)
 }
 
 export interface CardInstance {
@@ -501,6 +554,15 @@ export interface CardInstance {
   ownerIds: string[];       // id Hero, ví dụ ["m05"]; lá Song Hành: 2 id theo thứ tự bond.owners
   heldTurns: number;        // GĐ4b: số lượt đã nằm trên tay (Tích Tụ); 0 khi lá vào tay
   turnDiscount?: number;    // GĐ7: Thiên Cơ (M01) — giảm cost chỉ trong lượt này, xóa cuối lượt
+  sealSurcharge?: number;   // GĐ7b: PvP Phong Ấn — +1 cost chỉ tới hết lượt kế của chủ lá (01 §5.6), xóa ở endSeatTurn của người sở hữu lá
+}
+
+// GĐ7b: Linh Thú trên bàn (01 §17). Cùng phe Hero, không bao giờ quyết định thắng/thua.
+export interface SummonState extends UnitState {
+  side: "hero";
+  player: number;            // seat của Hero chủ
+  ownerHeroId: string;       // unit id của Hero triệu hồi
+  summonId: string;          // id SummonDef đang dùng (đổi khi thức tỉnh)
 }
 
 export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost"
@@ -522,6 +584,8 @@ export interface PlayerState {
   pendingChoice: PendingChoice | null;
   moonChoicePending?: true; // GĐ7: nợ Chọn Pha lượt này (Hero `chooseMoon` đã thăng cấp lúc đầu lượt)
   createdCards?: number;    // GĐ7: số lá đã tạo trong trận (`createCard`) — đặt tên instance `t<n>` kế tiếp
+  purged?: Record<string, string[]>;   // GĐ7b: unit id Hero → instanceId lá bị Tán Chiêu lúc ngã, để Hồi Hồn xáo lại (01 §5.6)
+  fallenOrder?: string[];   // GĐ7b: unit id Hero theo thứ tự ngã, dùng cho revive `to: "lastFallen"` (01 §5.6)
   weapons: CombatWeapon[];                       // GĐ4e
   relics: { id: string; resonance: number }[];   // GĐ4e
   runRelicIds: string[];                         // GĐ3 (chỉ PvE: Kỳ Vật, Lõi)
@@ -539,6 +603,7 @@ export interface CombatState {
   players: PlayerState[];   // [GĐ5] PvE: 1; PvP, co-op: 2
   heroes: HeroState[];      // HeroState thêm `player: number` (chỉ số trong players)
   enemies: EnemyState[];    // PvP: rỗng
+  summons?: SummonState[];  // [GĐ7b] Linh Thú; absent tới khi có triệu hồi đầu tiên (01 §17.1)
   cards: Record<string, CardInstance>;  // theo instanceId
   rngState: number;
   winner?: number | "draw"; // PvP (17 §4.6)
@@ -595,6 +660,10 @@ export type CombatEvent =
   | { type: "cardChosen"; instanceId: string; bottomed: string[] } // GĐ4a
   | { type: "moonChoiceOpened"; options: number[]; player?: number } // GĐ7: Chọn Pha (01 §5.5)
   | { type: "cardCreated"; cardId: string; instanceId: string | null; player?: number } // GĐ7: instanceId null khi tay đầy (01 §4.6)
+  | { type: "summoned"; unitId: string; summonId: string; ownerHeroId: string; player?: number }  // GĐ7b: Linh Thú tạo mới / triệu hồi lại / thức tỉnh (01 §17.1)
+  | { type: "summonActed"; unitId: string }              // GĐ7b: Linh Thú hành động cuối lượt (01 §17.2)
+  | { type: "summonDismissed"; unitId: string }          // GĐ7b: Linh Thú biến mất vì Hero chủ ngã (01 §17.4)
+  | { type: "heroRevived"; heroId: string; hp: number; player?: number }  // GĐ7b: Hồi Hồn (01 §5.6; tên dùng lại của lượt chơi, `02` §7)
   | { type: "deckedOut" }                          // GĐ4a: ngay trước combatEnded { result: "lost" }; GĐ6 co-op: mang `player` — chỉ Hero người đó ngã
   | { type: "cardsPurged"; heroId: string; instanceIds: string[] } // GĐ4a: Tán Chiêu
   | { type: "moonReserveChanged"; side: "hero" | "enemy"; enemyId?: string; value: number }  // GĐ4a
@@ -631,7 +700,7 @@ export type CombatEvent =
 `turnStarted`, `cardsDrawn`, `deckShuffled`, `mulliganed`, `choiceOpened`, `cardChosen`,
 `deckedOut`, `cardsPurged`, `moonReserveChanged`, `cardPlayed`, `cardDiscarded`,
 `moonPowerChanged`, `runRelicTriggered`, `relicTriggered`; **[GĐ7]** `moonChoiceOpened`,
-`cardCreated`. PvE giữ event cũ không trường
+`cardCreated`; **[GĐ7b]** `summoned`, `heroRevived`. PvE giữ event cũ không trường
 `player` để nhật ký / bản ghi vàng khớp. Client PvP không nhận state thô — nhận gói
 `{ events, view }` đã qua `viewFor` / `redactEvents` (`01` §15.7).
 
@@ -653,6 +722,7 @@ export interface GameData {
   combatConfig: CombatConfig;              // GĐ4a (mục 1.8)
   keywords: Record<string, KeywordDef>;    // GĐ4b (mục 1.9)
   metaConfig: MetaConfig;                  // GĐ4b (mục 1.10)
+  summons: Record<string, SummonDef>;      // GĐ7b (mục 1.15)
 }
 
 export interface CombatSetup {
@@ -710,7 +780,7 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
 - **[GĐ2]** Mỗi lá có **đúng một** trong `ownerId` / `bond`. `bond.owners` là 2 Hero tồn tại, khác nhau.
 - **[GĐ2]** `actor` chỉ xuất hiện trên effect của lá có `bond` (kể cả effect lồng trong `conditional`).
 - **[GĐ2]** `requiresBloodMoon: true` chỉ hợp lệ khi `tags` có `"forbidden"`.
-- Lá có `target: "enemy" | "ally"` phải có ít nhất một effect `to: "chosen"`; lá `target: "none"` không được có `to: "chosen"`.
+- Lá có `target` khác `"none"` (`"enemy"`, `"ally"`, `"fallenAlly"` **[GĐ7b]**) phải có ít nhất một effect `to: "chosen"`; lá `target: "none"` không được có `to: "chosen"`.
 - Ý định có effect `to: "chosen"` phải có `targeting`.
 - `moonPhases` đủ 8 phần tử, `index` 0–7 không trùng.
 - `enemyIds` của encounter trỏ tới kẻ địch tồn tại, 1–3 phần tử.
@@ -724,6 +794,14 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
 - **[GĐ4b]** `CardDef.keywords`: mỗi id phải có trong `keywords.json`. `metaConfig`: `masteryLevels` tăng dần, độ dài = số lá khóa mỗi Hero (6).
 - **[GĐ6]** `execute` chỉ xuất hiện trong `effects` của `coop-combos.json` (không lá bài, không chiêu địch, không hook). `CardMatcher`: `ownerId` trỏ Hero tồn tại; `appliesStatus`, `effect`, `moonPhaseAfter` tham chiếu id có thật. `BossPhaseDef.phases`: `hpBelow` giai đoạn 1 = 1, các giai đoạn sau giảm dần trong (0, 1]; `reviveAfterRounds` chỉ ở giai đoạn cuối; `bloodMoonWhileActive`, `alwaysPlan` là cờ boolean. Encounter `tier: "coop"` không xuất hiện trên bản đồ lượt chơi; `enemyIds` của nó trỏ địch có `phases` hợp lệ. `coopConfig.encounterId` trỏ encounter có `tier: "coop"`; `reconnectSeconds > turnSeconds`; các `reward`/`rewardedMatchesPerDay` không âm.
 - **[GĐ7]** `createCard` (kể cả lồng trong `conditional` và trong `levelUp.onLevelUp` / `altLevelUp.onLevelUp`) phải trỏ tới lá `token` của **đúng Hero** tạo (`ownerId` = chủ lá / Hero đó); trên lá không có `ownerId` → lỗi. `token` không được nằm trong pool Hero nào (`cardIds` / `lockedCardIds` / `branches`), không được là lá "+" (`plusOf`) hay lá Song Hành (`bond`). `createCard` bị cấm ở mọi chỗ cấm `chooseCard`: chiêu địch, `moonOverrides` / `bloodMoonOverride`, hook Kỳ Vật / vũ khí / Nguyệt Bảo, `effects` của Hợp Kích. `combatConfig.levelUpRandomBuffs` ≥ 1 phần tử, `status` hợp lệ, `amount` nguyên dương.
+- **[GĐ7b]** `summons.json` (`SummonDef`): kiểm chéo ở mục 1.15. `summon`, `sealIntent`,
+  `revive`, `extendDebuffs` bị cấm ở mọi chỗ cấm `createCard` (dòng trên), cộng thêm
+  `SummonDef.action` (mục 1.15) — Linh Thú không tự triệu hồi Linh Thú khác, không Phong
+  Ấn, không Hồi Hồn, không kéo dài debuff. Lá có `target: "fallenAlly"` phải có đúng một
+  effect `revive` với `to: "chosen"`; effect `revive` với `to: "chosen"` chỉ xuất hiện
+  trên lá có `target: "fallenAlly"`; `revive` với `to: "lastFallen"` chỉ xuất hiện trong
+  `levelUp.onLevelUp` / `altLevelUp.onLevelUp`, không trên lá bài. `to: "owner"` chỉ
+  trong `SummonDef.action`; `to: "summon"` chỉ trên lá có `ownerId` hoặc `bond`.
 
 Dữ liệu sai → báo lỗi rõ ràng ngay khi khởi động, không chạy game với dữ liệu lỗi.
 
