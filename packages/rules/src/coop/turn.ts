@@ -1,7 +1,7 @@
 import { refillHand } from "../draw";
 import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "../effects";
 import { runEnemyTurn } from "../enemy-turn";
-import { bumpCounter, checkLevelUps, levelUpPassive } from "../levelup";
+import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "../levelup";
 import { baseMoonPower } from "../moon-power";
 import { heroesOf } from "../players";
 import { fireEventHooks, runRelicHooks } from "../run-relic-hooks";
@@ -116,6 +116,7 @@ export function coopEndTurn(
     // A Chọn Pha queued behind the Chiêm Bài lapses with the turn.
     delete seat.moonChoicePending;
     events.push({ type: "cardChosen", instanceId, bottomed, player: seat.index });
+    bumpSeat(data, state, seat.index, "cardsChosen", 1);
   }
   if (seat.pendingChoice?.kind === "chooseMoon") {
     // The timer path keeps the moon where it is (`offset 0`).

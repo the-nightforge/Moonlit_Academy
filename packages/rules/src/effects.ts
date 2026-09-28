@@ -1,6 +1,6 @@
 import { checkBossPhase } from "./coop/boss";
 import { drainEnemyMoonPower } from "./intent";
-import { bumpCounter, checkLevelUps, levelUpPassive } from "./levelup";
+import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "./levelup";
 import {
   moonArmorMultiplier,
   moonCardDamageMultiplier,
@@ -143,11 +143,12 @@ export function loseHp(
   amount: number,
   cause: "loseHp" | "burn" | "reflect" | "bloodMoon",
   events: CombatEvent[],
-): void {
+): number {
   const lost = Math.min(unit.hp, amount);
   unit.hp -= lost;
   if (unit.side === "hero") bumpCounter(data, unit as HeroState, "damageTaken", lost);
   events.push({ type: "hpLost", targetId: unit.id, amount: lost, cause });
+  return lost;
 }
 
 function dealDamage(
@@ -254,6 +255,7 @@ export function resolveEffect(
         if (healed > 0) {
           target.hp += healed;
           events.push({ type: "healed", targetId: target.id, amount: healed });
+          if (ctx.card !== undefined && ctx.source.side === "hero") bumpCounter(data, ctx.source as HeroState, "hpHealed", healed);
         }
         if (effect.overflow === "armor" && raw > healed) {
           const armor = Math.floor((raw - healed) * moonArmorMultiplier(data, state, modifiersSeat(state, ctx.source)));
@@ -268,7 +270,10 @@ export function resolveEffect(
     }
     case "loseHp": {
       for (const target of resolveTargets(state, effect.to, ctx)) {
-        loseHp(data, target, effect.amount, "loseHp", events);
+        const lost = loseHp(data, target, effect.amount, "loseHp", events);
+        if (target === ctx.source && ctx.source.side === "hero" && ctx.card?.tags.includes("forbidden")) {
+          bumpCounter(data, ctx.source as HeroState, "forbiddenHpLost", lost);
+        }
       }
       return;
     }
@@ -300,6 +305,7 @@ export function resolveEffect(
         state.cards[options[0]!]!.heldTurns = 0;
         state.cards[options[0]!]!.chosenThisTurn = true;
         seat.hand.push(options[0]!);
+        bumpSeat(data, state, seat.index, "cardsChosen", 1);
         events.push({ type: "cardsDrawn", instanceIds: options, ...seatTag(state, seat.index) });
         return;
       }
@@ -361,6 +367,7 @@ export function resolveEffect(
         (((state.moonIndex + effect.amount) % data.moonPhases.length) + data.moonPhases.length) %
         data.moonPhases.length;
       events.push({ type: "moonShifted", from, to: state.moonIndex, cause: "card" });
+      if (ctx.card !== undefined && ctx.source.side === "hero") bumpCounter(data, ctx.source as HeroState, "moonShifts", 1);
       return;
     }
     case "stealBuff": {
@@ -399,6 +406,7 @@ export function resolveEffect(
         if (healed > 0) {
           target.hp += healed;
           events.push({ type: "healed", targetId: target.id, amount: healed });
+          if (ctx.card !== undefined && ctx.source.side === "hero") bumpCounter(data, ctx.source as HeroState, "hpHealed", healed);
         }
         removeStatus(target, "regen", events);
         cleanseIfHealer(data, ctx, target, events);

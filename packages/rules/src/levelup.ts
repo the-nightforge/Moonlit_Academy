@@ -26,6 +26,13 @@ export function bumpCounter(
   }
 }
 
+/** Seat-wide counters (`schemeCardsPlayed`, `cardsChosen`): every living hero of the seat is offered the bump. */
+export function bumpSeat(data: GameData, state: CombatState, seat: number, counter: LevelUpCounter, amount: number): void {
+  for (const hero of state.heroes) {
+    if (hero.player === seat && hero.alive) bumpCounter(data, hero, counter, amount);
+  }
+}
+
 export function checkLevelUps(
   data: GameData,
   state: CombatState,

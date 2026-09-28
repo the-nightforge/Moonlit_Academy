@@ -4,7 +4,7 @@ import { coopEndTurn, startCoopTurn } from "./coop/turn";
 import { checkCombatEnd, processDeaths, resolveEffects } from "./effects";
 import { guardianOf } from "./enemy-turn";
 import { cardDefOf } from "./gear";
-import { levelUpPassive } from "./levelup";
+import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "./levelup";
 import { activePlayerState, heroesOf, seatTag } from "./players";
 import { pvpEndTurn } from "./pvp/turn";
 import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
@@ -83,6 +83,11 @@ function playCard(
     ...seatTag(state, player.index),
   });
   if (discounted) owner.firstCardDiscountUsedThisTurn = true;
+
+  if (card.tags.includes("scheme")) {
+    bumpSeat(data, state, player.index, "schemeCardsPlayed", 1);
+    if (!card.bond) bumpCounter(data, owner, "studyPoints", 1);
+  }
 
   // Tàn Ảnh: the owner's first Liên Hoàn card each turn counts one more card played.
   let comboBonus = 0;
@@ -359,6 +364,8 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
       const events: CombatEvent[] = [];
       const nextSeat = next.players[seat.index]!;
       chooseCard(next, nextSeat, action.instanceId, pending.options, events);
+      bumpSeat(data, next, seat.index, "cardsChosen", 1);
+      checkLevelUps(data, next, events);
       openMoonChoice(next, nextSeat, events);
       return { ok: true, state: next, events };
     }

@@ -20,7 +20,9 @@ export type CardTag =
 export type LevelUpCounter =
   | "damageTaken" | "turnsWithAllyRegen" | "enemiesKilled"
   | "freezesApplied" | "buffsStolen"
-  | "hitsIntercepted";
+  | "hitsIntercepted" | "schemeCardsPlayed" | "cardsChosen"
+  | "hpHealed" | "turnsSurvived" | "moonShifts"
+  | "studyPoints" | "fullMoonsSeen" | "forbiddenHpLost";
 
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }

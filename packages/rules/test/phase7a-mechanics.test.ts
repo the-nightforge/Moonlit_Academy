@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CardDef, CombatState, GameData, IntentDef } from "../src/index";
+import type { CardDef, CombatState, GameData, IntentDef, LevelUpCounter } from "../src/index";
 import { applyAction, autoChoiceAction, chooseCombatAction, createCoopCombat, createPvpCombat, createProfile, previewEnemyIntent, validateDeck } from "../src/index";
 import { chooseThreeCard, idleIntent } from "./fixtures";
 import { injectCard, makeEnemiesIdle, makeTestCombat, ownAllHeroes, p0, setIntent, testData, withLevelUp } from "./helpers";
@@ -299,5 +299,67 @@ describe("phase 7a — lá tạo ra", () => {
     const profile = ownAllHeroes(data, createProfile(data));
     const deck = { heroIds: ["m05", "f04", "m06"] as [string, string, string], cardIds: [...data.heroes.m05!.cardIds, ...data.heroes.f04!.cardIds.slice(0, 5), tokenCard.id, ...data.heroes.m06!.cardIds] };
     expect(validateDeck(data, profile, deck).length).toBeGreaterThan(0);
+  });
+});
+
+describe("phase 7a — bộ đếm", () => {
+  const counterOn = (counter: LevelUpCounter) => withLevelUp("m05", { counter, threshold: 99 });
+  const card = (partial: Partial<CardDef>): CardDef => ({
+    id: "test_c", name: "C", ownerId: "m05", cost: 0, copies: 1, type: "skill", tags: [], target: "none",
+    effects: [{ type: "gainMoonPower", amount: 0 }], text: "", ...partial,
+  });
+  const play = (data: GameData, state: CombatState, def: CardDef, targetId?: string) => {
+    const instanceId = injectCard(state, data, def);
+    const result = applyAction(data, state, { type: "playCard", instanceId, ...(targetId ? { targetId } : {}) });
+    if (!result.ok) throw new Error(result.error);
+    return result;
+  };
+
+  it("T272: every new counter bumps on its trigger", () => {
+    // schemeCardsPlayed: a scheme card by any teammate
+    let t = makeTestCombat({ mutateData: counterOn("schemeCardsPlayed") });
+    expect(play(t.data, t.state, card({ id: "s1", ownerId: "f04", tags: ["scheme"] })).state.heroes[0]!.levelUpCounter).toBe(1);
+
+    // studyPoints: +1 per own scheme card, +1 per turn start alive
+    t = makeTestCombat({ mutateData: (d) => { makeEnemiesIdle(d); counterOn("studyPoints")(d); } });
+    const s = play(t.data, t.state, card({ id: "s2", tags: ["scheme"] }));
+    expect(s.state.heroes[0]!.levelUpCounter).toBe(1);
+    const turn = applyAction(t.data, s.state, { type: "endTurn" });
+    if (!turn.ok) throw new Error(turn.error);
+    expect(turn.state.heroes[0]!.levelUpCounter).toBe(2);
+
+    // turnsSurvived: from round 2 on
+    t = makeTestCombat({ mutateData: (d) => { makeEnemiesIdle(d); counterOn("turnsSurvived")(d); } });
+    expect(t.state.heroes[0]!.levelUpCounter).toBe(0);
+    const r2 = applyAction(t.data, t.state, { type: "endTurn" });
+    if (!r2.ok) throw new Error(r2.error);
+    expect(r2.state.heroes[0]!.levelUpCounter).toBe(1);
+
+    // fullMoonsSeen: turn start on the full moon
+    t = makeTestCombat({ mutateData: (d) => { makeEnemiesIdle(d); counterOn("fullMoonsSeen")(d); }, setup: (st) => { st.moonIndex = 3; } });
+    const full = applyAction(t.data, t.state, { type: "endTurn" });
+    if (!full.ok) throw new Error(full.error);
+    expect(full.state.moonIndex).toBe(4);
+    expect(full.state.heroes[0]!.levelUpCounter).toBe(1);
+
+    // moonShifts: shiftMoon from the hero's card
+    t = makeTestCombat({ mutateData: counterOn("moonShifts") });
+    expect(play(t.data, t.state, card({ id: "s3", effects: [{ type: "shiftMoon", amount: 1 }] })).state.heroes[0]!.levelUpCounter).toBe(1);
+
+    // hpHealed: real HP healed by the hero's card
+    t = makeTestCombat({ mutateData: counterOn("hpHealed"), setup: (st) => { st.heroes[1]!.hp -= 4; } });
+    expect(play(t.data, t.state, card({ id: "s4", target: "ally", effects: [{ type: "heal", amount: 10, to: "chosen" }] }), "hero:f04").state.heroes[0]!.levelUpCounter).toBe(4);
+
+    // forbiddenHpLost: self loseHp from the hero's forbidden card
+    t = makeTestCombat({ mutateData: counterOn("forbiddenHpLost") });
+    expect(play(t.data, t.state, card({ id: "s5", tags: ["forbidden"], effects: [{ type: "loseHp", amount: 3, to: "self" }] })).state.heroes[0]!.levelUpCounter).toBe(3);
+
+    // cardsChosen: a Chiêm Bài pick by the seat
+    t = makeTestCombat({ mutateData: counterOn("cardsChosen") });
+    const opened = play(t.data, t.state, card({ id: "s6", effects: [{ type: "chooseCard", look: 3 }] }));
+    const pending = p0(opened.state).pendingChoice!;
+    const picked = applyAction(t.data, opened.state, { type: "chooseCard", instanceId: pending.options[0] as string });
+    if (!picked.ok) throw new Error(picked.error);
+    expect(picked.state.heroes[0]!.levelUpCounter).toBe(1);
   });
 });

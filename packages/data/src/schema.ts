@@ -76,7 +76,9 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
 const levelUpCounterSchema = z.enum([
   "damageTaken", "turnsWithAllyRegen", "enemiesKilled",
   "freezesApplied", "buffsStolen",
-  "hitsIntercepted",
+  "hitsIntercepted", "schemeCardsPlayed", "cardsChosen",
+  "hpHealed", "turnsSurvived", "moonShifts",
+  "studyPoints", "fullMoonsSeen", "forbiddenHpLost",
 ]);
 
 const levelUpPassiveSchema = z.discriminatedUnion("type", [
