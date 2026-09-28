@@ -113,6 +113,8 @@ export function coopEndTurn(
     seat.hand.push(instanceId);
     seat.drawPile.push(...bottomed);
     seat.pendingChoice = null;
+    // A Chọn Pha queued behind the Chiêm Bài lapses with the turn.
+    delete seat.moonChoicePending;
     events.push({ type: "cardChosen", instanceId, bottomed, player: seat.index });
   }
   if (seat.pendingChoice?.kind === "chooseMoon") {

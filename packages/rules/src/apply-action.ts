@@ -228,7 +228,10 @@ function chooseMoon(data: GameData, state: CombatState, player: PlayerState, off
   delete player.moonChoicePending;
   if (state.mode !== "coop") state.status = "playerTurn";
   if (offset === 0) return;
-  const chooser = heroesOf(state, player.index).find((hero) => passiveOf(data, hero)?.type === "chooseMoon")!;
+  // Co-op keeps the shared turn open while the choice is pending, so the
+  // chooser may have died before the answer — the choice still resolves.
+  const chooser = heroesOf(state, player.index).find((hero) => passiveOf(data, hero)?.type === "chooseMoon");
+  if (chooser === undefined) return;
   resolveEffects(data, state, [{ type: "shiftMoon", amount: offset }], { source: chooser }, events);
 }
 

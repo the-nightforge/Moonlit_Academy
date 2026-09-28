@@ -22,7 +22,7 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
   // Co-op keeps status playerTurn while a seat answers a choice (`01` §16.2).
   if (state.status === "choosing" || player.pendingChoice !== null) {
     if (player.pendingChoice?.kind === "chooseMoon") {
-      return { type: "chooseMoon", offset: bestMoonOffset(data, state, seat) };
+      return { type: "chooseMoon", offset: bestMoonOffset(data, state, seat), player: seat };
     }
     const options = player.pendingChoice?.kind === "chooseCard" ? player.pendingChoice.options : [];
     const curve = data.combatConfig.moonPower;

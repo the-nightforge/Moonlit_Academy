@@ -213,6 +213,38 @@ describe("phase 7a — Chọn Pha", () => {
     expect(state.status).toBe("playerTurn");
   });
 
+  it("T267b: co-op — a dead chooser resolves the choice without a shift or a crash", () => {
+    const data = testData();
+    quanTinh(data);
+    const side = { heroIds: ["m06", "f04", "m05"] as [string, string, string], loadout: { heroes: {} } };
+    let state = createCoopCombat(data, { seed: 7, players: [side, side], encounterId: "enc_coop_01" }).state;
+    for (const seat of [0, 1]) {
+      const r = applyAction(data, state, { type: "mulligan", instanceIds: [], player: seat });
+      if (!r.ok) throw new Error(r.error);
+      state = r.state;
+    }
+    state.heroes.find((hero) => hero.player === 0 && hero.defId === "m06")!.leveledUp = true;
+    for (const seat of [0, 1]) {
+      const r = applyAction(data, state, { type: "endTurn", player: seat });
+      if (!r.ok) throw new Error(r.error);
+      state = r.state;
+    }
+    expect(state.players[0]!.pendingChoice?.kind).toBe("chooseMoon");
+    expect(state.status).toBe("playerTurn");
+
+    // The shared turn stays open, so the chooser can die before answering.
+    const chooser = state.heroes.find((hero) => hero.player === 0 && hero.defId === "m06")!;
+    chooser.alive = false;
+    chooser.hp = 0;
+    const moonIndex = state.moonIndex;
+    const answered = applyAction(data, state, { type: "chooseMoon", offset: 1, player: 0 });
+    if (!answered.ok) throw new Error(answered.error);
+    expect(answered.state.moonIndex).toBe(moonIndex);
+    expect(answered.events.some((event) => event.type === "moonShifted")).toBe(false);
+    expect(answered.state.players[0]!.pendingChoice).toBeNull();
+    expect(answered.state.players[0]!.moonChoicePending).toBeUndefined();
+  });
+
   it("T269: autoChoiceAction and the bot answer both kinds of choice", () => {
     const { data, state } = makeTestCombat({ mutateData: quanTinh, setup: (s) => { s.heroes[2]!.leveledUp = true; } });
     const turn = applyAction(data, state, { type: "endTurn" });
