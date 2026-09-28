@@ -342,6 +342,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     effects.flatMap((effect) =>
       effect.type === "createCard" ? [effect.cardId]
         : effect.type === "conditional" ? [...createdIn(effect.then), ...createdIn(effect.else ?? [])]
+        : effect.type === "execute" ? createdIn(effect.elseEffects ?? [])
         : [],
     );
   const checkCreated = (label: string, effects: Effect[], ownerId: string) => {
@@ -492,6 +493,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(card.effects, (effect) => effect.actor !== undefined)) {
         errors.push(`${levelLabel}: actor is only allowed on bond cards`);
       }
+      if (someEffect(card.effects, (effect) => effect.type === "createCard")) {
+        errors.push(`${levelLabel}: createCard is not allowed`);
+      }
       checkHooks(levelLabel, hooks, true, true);
       checkHooks(`${levelLabel} signature`, signatureHooks ?? [], true, true);
     }
@@ -539,14 +543,19 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   }
 
   for (const hero of heroes) {
-    const effects = hero.altLevelUp.onLevelUp ?? [];
-    const label = `hero "${hero.id}" altLevelUp.onLevelUp`;
-    if (effectsUseChosen(effects)) errors.push(`${label}: effects must not use to "chosen" or stealBuff`);
-    if (someEffect(effects, (effect) => effect.type === "chooseCard" || effect.type === "execute" || effect.actor !== undefined)) {
-      errors.push(`${label}: effects must not use chooseCard, execute or actor`);
-    }
-    if (someEffect(effects, (effect) => effect.type === "conditional" && effect.condition.type.startsWith("target"))) {
-      errors.push(`${label}: conditions must not reference a target`);
+    for (const [form, effects] of [
+      ["levelUp", hero.levelUp.onLevelUp],
+      ["altLevelUp", hero.altLevelUp.onLevelUp],
+    ] as const) {
+      const list = effects ?? [];
+      const label = `hero "${hero.id}" ${form}.onLevelUp`;
+      if (effectsUseChosen(list)) errors.push(`${label}: effects must not use to "chosen" or stealBuff`);
+      if (someEffect(list, (effect) => effect.type === "chooseCard" || effect.type === "execute" || effect.actor !== undefined)) {
+        errors.push(`${label}: effects must not use chooseCard, execute or actor`);
+      }
+      if (someEffect(list, (effect) => effect.type === "conditional" && effect.condition.type.startsWith("target"))) {
+        errors.push(`${label}: conditions must not reference a target`);
+      }
     }
   }
 

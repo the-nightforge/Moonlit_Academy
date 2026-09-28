@@ -248,7 +248,7 @@ const weaponHookSchema = runRelicHookSchema.extend({
 });
 
 const weaponCardSchema = cardDefSchema
-  .omit({ id: true, ownerId: true, bond: true, copies: true, plusOf: true })
+  .omit({ id: true, ownerId: true, bond: true, copies: true, plusOf: true, token: true })
   .extend({ copies: z.union([z.literal(1), z.literal(2)]) });
 
 export const weaponDefSchema = z.object({

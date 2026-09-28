@@ -321,6 +321,18 @@ describe("parseGameData validation", () => {
     notToken.heroes[0].levelUp.onLevelUp = [{ type: "createCard", cardId: notToken.heroes[0].cardIds[0] }];
     expect(() => parseGameData(notToken)).toThrow(/createCard .* must be a token card/);
   });
+
+  it("T271b: rejects createCard hidden inside execute.elseEffects of levelUp.onLevelUp, and banned effects there", () => {
+    const nested = rawData();
+    nested.heroes.find((h: any) => h.id === "f04").levelUp.onLevelUp = [
+      { type: "execute", threshold: 0.5, to: "allEnemies", elseEffects: [{ type: "createCard", cardId: "m05_ho_gam" }] },
+    ];
+    expect(() => parseGameData(nested)).toThrow(/must be a token card/);
+
+    const chosen = rawData();
+    chosen.heroes[0].levelUp.onLevelUp = [{ type: "damage", amount: 3, to: "chosen" }];
+    expect(() => parseGameData(chosen)).toThrow(/levelUp\.onLevelUp: effects must not use to "chosen"/);
+  });
 });
 
 describe("economyConfig", () => {
@@ -409,6 +421,12 @@ describe("weapons, moon relics and second level-up forms", () => {
     const onLevelUp = rawData();
     onLevelUp.heroes[0].altLevelUp.onLevelUp = [{ type: "damage", amount: 3, to: "chosen" }];
     expect(() => parseGameData(onLevelUp)).toThrow(/altLevelUp.onLevelUp: effects must not use to "chosen"/);
+  });
+
+  it("T271c: rejects createCard in a weapon card's effects", () => {
+    const raw = rawData();
+    raw.weapons[0].card.effects.push({ type: "createCard", cardId: "m05_ho_gam" });
+    expect(() => parseGameData(raw)).toThrow(/weapon "w_xich_diem_thuong" R1: createCard is not allowed/);
   });
 
   it("pvpConfig: arena stats cover every hero and every referenced id exists", () => {

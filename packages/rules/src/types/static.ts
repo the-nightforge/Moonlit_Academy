@@ -285,7 +285,7 @@ export interface WeaponHook extends Omit<RunRelicHook, "actor"> {
 }
 
 /** The weapon card; id and owner come from the weapon and its wearer. */
-export type WeaponCardDef = Omit<CardDef, "id" | "ownerId" | "bond" | "copies" | "plusOf"> & { copies: 1 | 2 };
+export type WeaponCardDef = Omit<CardDef, "id" | "ownerId" | "bond" | "copies" | "plusOf" | "token"> & { copies: 1 | 2 };
 
 /** What changes at one refinement level (R2..R5); fields left out stay as before. */
 export interface WeaponRefinement {
