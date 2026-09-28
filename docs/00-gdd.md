@@ -423,6 +423,6 @@ vong-nguyet/
 | **4. Server + Meta** | Có tài khoản | Server lưu kho đồ, gacha 3 banner, Tinh Hồn / Tinh Luyện / Cộng Minh, art thật |
 | **5. PvP** | Đấu Trường Công Bằng | Phòng Colyseus 1v1, bảng chỉ số PvP, xếp hạng đơn giản |
 | **6. Co-op** | Raid 2 người | Lượt đồng thời, Hợp Kích, Boss Nguyệt Thực |
-| **7. Nội dung** | Đủ game | Đủ 20 Hero, Arc 1–2, thêm vũ khí và relic |
+| **7. Nội dung** | Đủ game | Đủ 20 Hero, Cốt truyện Arc 1–2, trang bị bản mệnh + nâng cấp vật liệu (`18`) |
 
 **Nguyên tắc:** mỗi giai đoạn phải có bản chơi được trước khi sang giai đoạn sau. Luôn giữ `rules` có test đầy đủ, vì PvP và co-op đều dựa vào nó.

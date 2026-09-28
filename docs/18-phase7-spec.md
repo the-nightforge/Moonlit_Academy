@@ -138,32 +138,52 @@ ngưỡng 1 giữ nguyên 1 (như M06).
 - Một Hero chỉ có một `guard`; đặt lại thì thay `sourceId` và thời hạn.
 
 **Chọn Pha — `pendingChoice.kind = "chooseMoon"`.**
+- `PlayerState.pendingChoice` là union `PendingChoice =
+  { kind: "chooseCard"; options: string[] } | { kind: "chooseMoon"; options: number[] }`
+  (trước đây chỉ Chiêm Bài). Event **mới** `moonChoiceOpened { options: number[] }` —
+  không dùng lại `choiceOpened`.
 - Đầu lượt người chơi (sau rút bù và Chiêm Bài của Vạn Kim nếu có), nếu có Hero đã
   thăng cấp với nội tại `chooseMoon` → trạng thái `choosing`, `options = [0, 1, 2]` (giữ
-  pha, tiến 1, tiến 2). Event `choiceOpened { kind: "chooseMoon" }`.
+  pha, tiến 1, tiến 2).
+- Thứ tự đầu lượt người chơi, sau hook `playerTurnStart`: (1) Thiên Cơ gắn giảm giá,
+  (2) Vạn Kim mở Chiêm Bài, (3) Chọn Pha mở **sau khi** Chiêm Bài đã được trả lời (nếu
+  có). Chọn Pha chỉ được "nợ" khi Hero đã thăng cấp **lúc đầu lượt**; thăng cấp giữa
+  lượt thì từ lượt sau (`PlayerState.moonChoicePending`).
 - Action mới `chooseMoon { offset: 0 | 1 | 2 }` → `moonShifted { cause: "card" }` nếu
   `offset > 0`; về `playerTurn`.
 - Co-op: người sở hữu M08 chọn; cả hai có M08 → người 0 chọn, người 1 không mở. PvP: mỗi
   người chọn trong lượt của mình.
-- Server: thêm vào `combatActionSchema` và giao thức WebSocket; hết giờ → `offset: 0`.
+- Server: thêm vào `combatActionSchema` và giao thức WebSocket; hết giờ → `offset: 0`
+  (đáp án mặc định `autoChoiceAction`: lá đầu tiên của Chiêm Bài, hoặc `offset: 0` của
+  Chọn Pha).
 
-**Lá tạo ra trong trận — effect `createCard { cardId, to: "hand" }`.**
-- Tạo instance id `p<i>_t<n>` (`n` là bộ đếm tăng dần trong `PlayerState.createdCards`),
-  chủ là Hero đang giải quyết effect.
-- Tay đầy → lá không được tạo, phát `cardCreated { skipped: true }`.
+**Lá tạo ra trong trận — effect `createCard { cardId }`.**
+- Chỉ có `cardId` — luôn vào tay, không có trường `to`. Tạo instance id
+  `prefixedId(state, seat, "t<n>")` (`n` là bộ đếm tăng dần trong
+  `PlayerState.createdCards`): PvE là `t1`, `t2`…; nhiều người chơi là `p<i>_t<n>`.
+  Chủ là Hero đang giải quyết effect.
+- Tay đầy → lá không được tạo, phát `cardCreated { cardId, instanceId: null }`.
 - Lá tạo ra không thuộc deck: bị bỏ → vào chồng bỏ bình thường nhưng không bao giờ vào lại
   chồng rút; chủ ngã → Tàn Chiêu như lá thường. Không tính vào kiểm tra deck.
 - Lá tạo ra có `CardDef.token: true` (không nằm trong pool, không được đặt vào deck, không
   xuất hiện ở thưởng lượt chơi).
 
-**Bộ đếm và nội tại.** 9 `LevelUpCounter` mới (bảng §2.1). Nội tại mới:
+**Bộ đếm và nội tại.** 9 `LevelUpCounter` mới (bảng §2.1). `cardsChosen` và
+`schemeCardsPlayed` là bộ đếm của **cả người chơi**: mọi Hero còn sống của người đó
+được nhận +1, `bumpCounter` chỉ thật sự tính cho Hero có đúng bộ đếm. Nội tại mới:
 `cheapestCardDiscount`, `chooseCardExtraLook`, `armorPerTurn`, `interceptArmor`,
-`freeChooseCardPerTurn`, `healBonusOwnCards`, `randomBuffPerTurn` (bảng buff trong
-`combat-config.json`), `bloodMoonImmune`, `chooseMoon`, `moonShiftWeakensEnemies`,
-`firstSchemeRepeats`, `comboAttackBonus`, `tagDiscountOwnCards { tag }`,
-`forbiddenNoSelfHpLoss`, `bloodMoonAttackBonus`. Dùng lại: `healCleanses`, `onLevelUp`
-(4e) cho Phú Giáp và Nguyệt Chủ. Tên cuối cùng có thể gộp khi viết `02`, nhưng mỗi nội
-tại có test.
+`freeChooseCardPerTurn { look }` (nội tại M03 Vạn Kim), `healBonusOwnCards`,
+`randomBuffPerTurn` (bảng buff `combatConfig.levelUpRandomBuffs { status, amount }[]`
+của Huyết Mạch M07, bốc bằng RNG của trận), `bloodMoonImmune`, `chooseMoon`,
+`moonShiftWeakensEnemies`, `firstSchemeRepeats`, `comboAttackBonus`,
+`tagDiscountOwnCards { tag }`, `forbiddenNoSelfHpLoss`, `bloodMoonAttackBonus`, và
+`none` (F01 dạng thường, M03 dạng thứ hai). Dùng lại: `healCleanses`, `onLevelUp`
+(4e) cho Phú Giáp và Nguyệt Chủ — `LevelUpDef.onLevelUp?: Effect[]` giờ có cả ở dạng
+thường (F01), không chỉ `altLevelUp`. Tên cuối cùng có thể gộp khi viết `02`, nhưng mỗi
+nội tại có test.
+
+**Bác Học (M10):** lá `scheme` đầu tiên mỗi lượt của M10 giải quyết hai lần — lượt giải
+quyết thứ nhất bỏ mọi effect `chooseCard`, lượt thứ hai giải quyết đầy đủ.
 
 ### 2.3 Song Hành 7a (GDD §3.5)
 

@@ -29,6 +29,9 @@
 | Xáo bài | `shuffle` | |
 | Đổi Bài | `mulligan` | Đổi tối đa 2 lá ở tay đầu trận |
 | Chiêm Bài | `chooseCard` | Xem N lá trên cùng chồng bài, lấy 1, các lá còn lại xuống đáy |
+| Chọn Pha | `chooseMoon` | GĐ7: lựa chọn đầu lượt giữ / +1 / +2 pha trăng (nội tại M08, `01` §5.5) |
+| Lá Tạo Ra | `token`, `createCard` | GĐ7: lá sinh trong trận (`CardDef.token`), không nằm trong pool/deck/thưởng |
+| Người hộ vệ | `guardian`, `guardianOf` | GĐ7: Hero chịu đòn thay đồng đội có `guard` |
 | Cạn Bài | `deckedOut` | Chồng bài và tay đều rỗng đầu lượt → thua |
 | Hiệu ứng | `effect` | |
 | Điều kiện | `condition` | |
@@ -81,6 +84,7 @@
 | Tích Lực | `empower` |
 | Đóng Băng | `freeze` |
 | Phản Đòn | `reflect` |
+| Hộ Vệ | `guard` |
 | Giải Trừ | `cleanse` |
 | Cướp buff | `stealBuff` |
 | Buff / Debuff | `buff` / `debuff` |
@@ -214,6 +218,20 @@
 | Boss Nguyệt Thực | `eclipse_lord` | Boss co-op *Nguyệt Thực Ma Quân*, 4 giai đoạn (`01` §16.5) |
 | Giai đoạn boss | `boss.phase` | 1 Trăng Khuyết · 2 Huyết Nguyệt · 3 Nguyệt Ấn · 4 Nguyệt Thực |
 | Đếm ngược hồi sinh | `reviveCountdown` | Giai đoạn 4: về 0 khi boss còn sống → hồi 50% HP một lần |
+
+## Hero GĐ7a
+
+| ID | Tên | Nội tại thăng cấp | Dạng thứ hai |
+|---|---|---|---|
+| `m01` | Tạ Vân Chiêu | Thiên Cơ — `cheapestCardDiscount` | Định Cục — `chooseCardExtraLook` |
+| `m02` | Lục Hàn Phong | Thiết Bích — `armorPerTurn` | Trung Can — `interceptArmor` |
+| `m03` | Mặc Tử Du | Vạn Kim — `freeChooseCardPerTurn` | Phú Giáp — `onLevelUp` (Dưỡng Nguyệt 1), nội tại `none` |
+| `m04` | Bùi Thanh Minh | Thần Y — `healCleanses` (dùng lại GĐ4e) | Tâm Nhãn — `healBonusOwnCards` |
+| `m07` | Ninh An | Huyết Mạch — `randomBuffPerTurn` | Huyết Nguyệt Chi Tử — `bloodMoonImmune` |
+| `m08` | Khương Tịch | Quan Tinh — `chooseMoon` (Chọn Pha) | Tinh Mệnh — `moonShiftWeakensEnemies` |
+| `m10` | Chu Quyết | Bác Học — `firstSchemeRepeats` | Trạng Nguyên — `comboAttackBonus` |
+| `f01` | Thẩm Nguyệt Hoa | Nguyệt Chủ — nội tại `none`, `onLevelUp` (`createCard` Nguyệt Hoa Chiếu Thế) | Tự Do — `tagDiscountOwnCards` |
+| `f08` | Phượng Chiêu Dung | Huyết Phượng — `forbiddenNoSelfHpLoss` | Phản Sư — `bloodMoonAttackBonus` |
 
 ## Hệ thống sau này (chưa code)
 

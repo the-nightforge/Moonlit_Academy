@@ -396,3 +396,26 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T260 | **[GĐ6]** Phòng co-op qua `injectWS`: 2 kết nối, đánh hết trận bằng bot, thưởng mỗi người, trần 3 trận / ngày |
 | T261 | **[GĐ6]** Co-op: một người bỏ cuộc → Hero người đó ngã, người còn lại thắng một mình được thưởng; người bỏ cuộc không thưởng |
 | T262 | **[GĐ6]** Góc nhìn co-op thấy tay đồng đội, không thấy chồng rút / `rngState` |
+
+---
+
+## Giai đoạn 7a
+
+Bối cảnh: `18-phase7-spec.md` §2; luật `01` §3.1, §4.6, §5.5, §9.3.1, §15.4. Trước khi Hero 7a có dữ liệu, test đặt nội tại / bộ đếm mới lên Hero có sẵn qua `withLevelUp` (`packages/rules/test/helpers.ts`).
+
+| Mã | Kịch bản |
+|---|---|
+| T263 | **[GĐ7]** Chiêu địch đơn mục tiêu nhắm Hero có `guard` còn người hộ vệ sống → đánh trúng người hộ vệ (`intentExecuted.targetId` = người hộ vệ) |
+| T264 | **[GĐ7]** Khiêu Khích chọn trước Hộ Vệ; người hộ vệ đã ngã không chuyển mục tiêu; `previewEnemyIntent` hiện người hộ vệ |
+| T265 | **[GĐ7]** `hitsIntercepted` +1 mỗi chiêu bị chuyển và thăng cấp người hộ vệ; PvP: lá đơn mục tiêu nhắm Hero đối thủ có `guard` đánh trúng người hộ vệ |
+| T266 | **[GĐ7]** `armorPerTurn` nhận giáp đầu lượt; `interceptArmor` nhận giáp trước khi chiêu bị chuyển giải quyết |
+| T267 | **[GĐ7]** Hero đã thăng cấp có nội tại `chooseMoon` mở Chọn Pha đầu lượt (`moonChoiceOpened`); `chooseMoon` đổi pha trăng đúng offset |
+| T268 | **[GĐ7]** Chiêm Bài của Vạn Kim mở trước, Chọn Pha sau khi đã trả lời; thăng cấp giữa lượt chờ tới lượt sau; co-op hai người cùng nợ Chọn Pha thì chỉ người có lượt đầu chọn |
+| T269 | **[GĐ7]** `autoChoiceAction` và bot trả lời được cả `chooseCard` lẫn `chooseMoon` |
+| T270 | **[GĐ7]** `onLevelUp` `createCard` đưa lá token vào tay với `instanceId` ổn định (`t1`, `t2`…); tay đầy thì không vào (`cardCreated` `instanceId` null) |
+| T271 | **[GĐ7]** Lá token không xếp deck / không vào pool / không là lá "+" hay Song Hành; `createCard` phải trỏ lá `token` của đúng Hero tạo |
+| T272 | **[GĐ7]** Mỗi bộ đếm mới tăng đúng kích hoạt: `schemeCardsPlayed`, `cardsChosen` (cả người chơi), `hpHealed`, `turnsSurvived` (từ vòng 2), `moonShifts`, `studyPoints`, `fullMoonsSeen`, `forbiddenHpLost` |
+| T273 | **[GĐ7]** Nội tại giá: giảm giá lá rẻ nhất (`cheapestCardDiscount`), giảm theo tag của Hero (`tagDiscountOwnCards`), Chiêm Bài xem thêm lá (`chooseCardExtraLook`) |
+| T274 | **[GĐ7]** Nội tại damage/hồi: cộng theo lá đã đánh trong lượt, cộng khi Huyết Nguyệt, cộng hồi, không tự mất HP của lá `forbidden`, đổi pha làm đòn yếu đi |
+| T275 | **[GĐ7]** Nội tại đầu lượt: buff ngẫu nhiên từ `levelUpRandomBuffs` (tất định theo seed), miễn mất máu Huyết Nguyệt, lá `scheme` đầu tiên trong lượt giải quyết hai lần (lần một bỏ `chooseCard`) |
+| T276 | **[GĐ7]** 9 Hero đợt 1 nạp được với pool đầy đủ, chỉ số PvP, slot banner; mỗi Hero chơi được trận khởi đầu và deck khởi đầu hợp lệ; F01 thăng cấp ở Trăng Tròn nhận lá token; đủ 14 Hero thì mỗi cặp Song Hành thêm lá vào deck |
