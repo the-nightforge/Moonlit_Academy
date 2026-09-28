@@ -341,13 +341,15 @@ describe("phase 7a — bộ đếm", () => {
     let t = makeTestCombat({ mutateData: counterOn("schemeCardsPlayed") });
     expect(play(t.data, t.state, card({ id: "s1", ownerId: "f04", tags: ["scheme"] })).state.heroes[0]!.levelUpCounter).toBe(1);
 
-    // studyPoints: +1 per own scheme card, +1 per turn start alive
+    // studyPoints: +1 per own scheme card, +1 per player turn start alive — no
+    // round gate (`18` §2.1 gives the gate to turnsSurvived only)
     t = makeTestCombat({ mutateData: (d) => { makeEnemiesIdle(d); counterOn("studyPoints")(d); } });
+    expect(t.state.heroes[0]!.levelUpCounter).toBe(1);
     const s = play(t.data, t.state, card({ id: "s2", tags: ["scheme"] }));
-    expect(s.state.heroes[0]!.levelUpCounter).toBe(1);
+    expect(s.state.heroes[0]!.levelUpCounter).toBe(2);
     const turn = applyAction(t.data, s.state, { type: "endTurn" });
     if (!turn.ok) throw new Error(turn.error);
-    expect(turn.state.heroes[0]!.levelUpCounter).toBe(2);
+    expect(turn.state.heroes[0]!.levelUpCounter).toBe(3);
 
     // turnsSurvived: from round 2 on
     t = makeTestCombat({ mutateData: (d) => { makeEnemiesIdle(d); counterOn("turnsSurvived")(d); } });

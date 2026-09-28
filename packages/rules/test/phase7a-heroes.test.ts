@@ -232,7 +232,7 @@ describe("phase 7a heroes — wave 2 and bonds", () => {
     for (const instanceId of p0(current).hand.filter((id) => current.cards[id]!.cardId === "m10_kho_hoc")) {
       current = play(data, current, instanceId);
     }
-    current = play(data, current, p0(current).hand.find((id) => current.cards[id]!.cardId === "m10_han_mon")!, "enemy:0");
+    // Ungated studyPoints: 1 at first turn start + 3 scheme plays = 4.
     expect(current.heroes[0]!.levelUpCounter).toBe(4);
     const turn = applyAction(data, current, { type: "endTurn" });
     if (!turn.ok) throw new Error(turn.error);

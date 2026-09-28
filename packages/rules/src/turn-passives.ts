@@ -32,10 +32,8 @@ export function heroTurnStart(data: GameData, state: CombatState, hero: HeroStat
     hero.armor += passive.amount;
     events.push({ type: "armorGained", targetId: hero.id, amount: passive.amount });
   }
-  if (state.round >= 2) {
-    bumpCounter(data, hero, "turnsSurvived", 1);
-    bumpCounter(data, hero, "studyPoints", 1);
-  }
+  if (state.round >= 2) bumpCounter(data, hero, "turnsSurvived", 1);
+  bumpCounter(data, hero, "studyPoints", 1);
   if (data.moonPhases[state.moonIndex]!.id === "full") bumpCounter(data, hero, "fullMoonsSeen", 1);
   delete hero.firstSchemeUsedThisTurn;
   if (passive?.type === "randomBuffPerTurn") {

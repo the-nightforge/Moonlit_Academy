@@ -218,7 +218,7 @@ Condition `selfHpBelow`, `selfHasStatus` xét đơn vị hành động của eff
 | `empower` | Tích Lực | Dùng một lần | +N damage cho **mỗi lượt damage** của lá tấn công kế tiếp của chủ; gỡ sau khi lá đó giải quyết xong | Cộng giá trị |
 | `freeze` | Đóng Băng | Dùng một lần | Hero: không đánh được lá của mình trong lượt người chơi kế tiếp. Kẻ địch: bỏ qua cả chuỗi chiêu trong lượt kẻ địch kế tiếp và Dự Trữ về 0 (mục 9.3) | Không có tác dụng nếu đang Đóng Băng |
 | `reflect` | Phản Đòn **[GĐ2]** | Theo giáp | Khi nhận damage: nguồn gây damage mất HP = giá trị (mục 10.5). Bị gỡ **cùng lúc với giáp** (mục 6.4), không giảm theo vòng | Cộng giá trị |
-| `guard` | Hộ Vệ **[GĐ7]** | Thời hạn | Đòn đơn mục tiêu nhắm Hero này chuyển sang Hero `sourceId` nếu còn sống (mục 9.3.1 bước 1b); không đặt lên chính mình | Đặt lại thay `sourceId` và cộng thời hạn |
+| `guard` | Hộ Vệ **[GĐ7]** | Thời hạn | Đòn đơn mục tiêu nhắm Hero này chuyển sang Hero `sourceId` nếu còn sống (mục 9.3.1 bước 1b); không đặt lên chính mình | Đặt lại thay `sourceId` và thời hạn |
 
 Trạng thái bị gỡ khi thời hạn/số tầng/giá trị về 0.
 
