@@ -389,7 +389,7 @@ export function resolveEffect(
         if (debuff && ctx.source.side === "hero" && opponentsOf(state, ctx.source).includes(target)) {
           bumpCounter(data, ctx.source as HeroState, "debuffsApplied", 1);
         }
-        if (effect.status === "charm" && ctx.source.side === "hero") {
+        if (effect.status === "charm" && ctx.source.side === "hero" && opponentsOf(state, ctx.source).includes(target)) {
           bumpCounter(data, ctx.source as HeroState, "charmsApplied", 1);
           // Vũ Y: charming an enemy hides the charmer (`18` §3.3).
           if (passive?.type === "stealthOnCharm") applyStatus(ctx.source, "stealth", passive.rounds * durationFactor, ctx.source.id, events);
