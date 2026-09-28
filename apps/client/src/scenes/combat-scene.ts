@@ -29,6 +29,7 @@ import {
   debugDrawCards,
   debugKillEnemy,
   debugSetBloodMoon,
+  debugSetLeveledUp,
   debugSetMoon,
   describeEvent,
 } from "../debug";
@@ -44,7 +45,7 @@ import {
   OWNER_COLORS,
   PHASE_BG,
   STATUS_LABELS,
-  describeModifier,
+  describePhase,
   useDesignCamera,
 } from "../ui/theme";
 
@@ -552,7 +553,7 @@ export class CombatScene extends Phaser.Scene {
     });
     const next =
       this.gameData.moonPhases[(this.state.moonIndex + 1) % this.gameData.moonPhases.length]!;
-    const effect = next.modifiers.map(describeModifier).join(", ") || "—";
+    const effect = describePhase(next);
     this.text(
       WIDTH / 2 + 190,
       y,
@@ -1036,6 +1037,21 @@ export class CombatScene extends Phaser.Scene {
       if (this.targeting && !isValidTarget) c.setAlpha(0.4);
       this.unitPanelHit(panel, panelW, panelH, hero.id);
     });
+    // Hộ Vệ (`18` §2.2): a thin gold link from each guarded hero to its guardian.
+    // Anchors for both rows (opponent row renders before this) already exist.
+    const links = this.add.graphics();
+    let drewLink = false;
+    for (const hero of this.state.heroes) {
+      const guard = hero.statuses.find((status) => status.id === "guard");
+      if (guard?.sourceId === undefined) continue;
+      const from = this.unitAnchors.get(hero.id);
+      const to = this.unitAnchors.get(guard.sourceId);
+      if (from === undefined || to === undefined) continue;
+      links.lineStyle(2, COLORS.goldFill, 0.5).lineBetween(from.x, from.y, to.x, to.y);
+      drewLink = true;
+    }
+    if (drewLink) this.root.add(links);
+    else links.destroy();
   }
 
   private renderCard(instanceId: string, x: number, y: number) {
@@ -1252,7 +1268,10 @@ export class CombatScene extends Phaser.Scene {
 
   private renderChoiceOverlay() {
     const pending = this.state.players[this.mySeat]!.pendingChoice!;
-    // Chọn Pha UI lands in Task 9 — only Chiêm Bài renders here.
+    if (pending.kind === "chooseMoon") {
+      this.renderMoonChoice(pending.options);
+      return;
+    }
     if (pending.kind !== "chooseCard") return;
     const options = pending.options;
     this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.6));
@@ -1266,6 +1285,52 @@ export class CombatScene extends Phaser.Scene {
       view.on("pointerup", (pointer: Phaser.Input.Pointer) => {
         if (pointer.button === 0) this.dispatch({ type: "chooseCard", instanceId });
       });
+    });
+  }
+
+  /**
+   * Chọn Pha (`18` §2.2): three horizontal options — keep the phase or push the
+   * wheel +1/+2. Each button previews the phase it would land on.
+   */
+  private renderMoonChoice(options: number[]) {
+    this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.6));
+    this.text(
+      WIDTH / 2,
+      250,
+      "Chọn Pha — chọn pha trăng cho lượt này",
+      16,
+      COLORS.gold,
+    ).setOrigin(0.5);
+    const spacing = 240;
+    const startX = WIDTH / 2 - ((options.length - 1) * spacing) / 2;
+    options.forEach((raw, index) => {
+      const offset = raw as 0 | 1 | 2;
+      const x = startX + index * spacing;
+      const y = 380;
+      const phase =
+        this.gameData.moonPhases[(this.state.moonIndex + offset) % this.gameData.moonPhases.length]!;
+      const panel = this.add.rectangle(x, y, 212, 116, 0x141b33);
+      panel.setStrokeStyle(1, COLORS.goldFill);
+      panel.setInteractive({ useHandCursor: true });
+      panel.on("pointerover", () => panel.setFillStyle(0x2a3a70));
+      panel.on("pointerout", () => panel.setFillStyle(0x141b33));
+      panel.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0) this.dispatch({ type: "chooseMoon", offset });
+      });
+      this.root.add(panel);
+      this.text(x, y - 42, offset === 0 ? "Giữ pha" : `+${offset}`, 12, COLORS.dimText).setOrigin(0.5);
+      this.text(x, y - 12, `${phase.icon} ${phase.name}`, 16, COLORS.gold).setOrigin(0.5);
+      this.root.add(
+        this.add
+          .text(x, y + 18, describePhase(phase), {
+            ...TEXT_BASE,
+            fontSize: "11px",
+            color: COLORS.dimText,
+            align: "center",
+            wordWrap: { width: 196 },
+          })
+          .setOrigin(0.5, 0),
+      );
     });
   }
 
@@ -1440,13 +1505,17 @@ export class CombatScene extends Phaser.Scene {
     line("HP Hero:");
     this.state.heroes.forEach((hero, index) => {
       const def = this.gameData.heroes[hero.defId]!;
-      this.text(x + 14, y + 8, `${def.name} ${hero.hp}/${hero.maxHp}`, 11);
+      this.text(x + 14, y + 8, `${hero.leveledUp ? "★ " : ""}${def.name} ${hero.hp}/${hero.maxHp}`, 11);
       this.debugButton(x + 200, y + 8, 44, "-5", () => {
         debugAdjustHeroHp(index, -5);
         this.renderAll();
       });
       this.debugButton(x + 250, y + 8, 44, "+5", () => {
         debugAdjustHeroHp(index, 5);
+        this.renderAll();
+      });
+      this.debugButton(x + 300, y + 8, 24, "★", () => {
+        debugSetLeveledUp(index);
         this.renderAll();
       });
       y += 28;

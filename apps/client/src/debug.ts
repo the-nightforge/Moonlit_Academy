@@ -29,7 +29,7 @@ export function debugAddMoonPower(amount = 3): void {
 }
 
 export function debugDrawCards(count = 1): void {
-  drawCards(session.state, activePlayerState(session.state), count, session.events);
+  drawCards(session.data, session.state, activePlayerState(session.state), count, session.events);
 }
 
 export function debugSetMoon(index: number): void {
@@ -54,6 +54,15 @@ export function debugKillEnemy(index: number): void {
   enemy.armor = 0;
   session.events.push({ type: "unitDied", unitId: enemy.id });
   checkEnd();
+}
+
+/** Forces the level-up flag so leveled passives (Chọn Pha, …) engage next turn. */
+export function debugSetLeveledUp(index: number): void {
+  const hero = session.state.heroes[index];
+  if (!hero || hero.leveledUp) return;
+  hero.leveledUp = true;
+  const def = session.data.heroes[hero.defId];
+  session.events.push({ type: "heroLeveledUp", heroId: hero.id, name: def?.levelUp.name ?? hero.defId });
 }
 
 export function debugAdjustHeroHp(index: number, delta: number): void {

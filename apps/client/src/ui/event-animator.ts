@@ -253,6 +253,39 @@ function animateEvent(
     }
     case "cardDiscarded":
       return instant();
+    case "cardCreated": {
+      // `18` §2.2: the token flies from its owner hero's panel into the hand;
+      // a full hand leaves only a "Tay đầy" note over the hero.
+      const card = ctx.gameData.cards[event.cardId];
+      const owner =
+        card?.ownerId === undefined
+          ? undefined
+          : ctx.state.heroes.find(
+              (hero) => hero.defId === card.ownerId && hero.player === (event.player ?? 0),
+            );
+      const anchor = owner === undefined ? undefined : anchorOf(owner.id);
+      if (event.instanceId === null) {
+        if (!anchor) return instant();
+        return floatText(scene, anchor.x, anchor.y - 62, "Tay đầy", "#ff8080", 14, 350);
+      }
+      const from = anchor ?? { x: 1090, y: 560 };
+      return new Promise<void>((resolve) => {
+        const rect = scene.add
+          .rectangle(from.x, from.y, 30, 44, 0x2c3e6e)
+          .setStrokeStyle(1, 0xf4d35e)
+          .setDepth(100);
+        scene.tweens.add({
+          targets: rect,
+          x: WIDTH / 2,
+          y: 610,
+          duration: 180,
+          onComplete: () => {
+            rect.destroy();
+            resolve();
+          },
+        });
+      });
+    }
     case "damageDealt": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
@@ -483,6 +516,8 @@ function animateEvent(
       return floatText(scene, WIDTH / 2, 520, `Đổi ${event.returned.length} lá`, "#cfd6f0", 14, 250);
     case "choiceOpened":
       return floatText(scene, WIDTH / 2, 520, "Chiêm Bài", "#f4d35e", 16, 250);
+    case "moonChoiceOpened":
+      return floatText(scene, WIDTH / 2, 520, "Chọn Pha", "#f4d35e", 16, 250);
     case "cardChosen":
       return instant();
     case "deckedOut":
