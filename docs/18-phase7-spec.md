@@ -32,7 +32,7 @@ chuẩn; tài liệu này giữ bối cảnh và lý do.
 **Điều kiện trước:** GĐ 6 (`17`) đã vào `main`. 5e.2 (triển khai Internet thật) độc lập,
 làm song song khi người dùng sẵn sàng.
 
-**Trạng thái:** chờ người dùng duyệt bản viết.
+**Trạng thái:** 7a xong — 14 Hero; tiếp theo 7b (§3).
 
 **Thư viện mới:** không có.
 
