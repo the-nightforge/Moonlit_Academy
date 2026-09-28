@@ -49,7 +49,7 @@ export function combatProjection(state: CombatState) {
     moonReserve: playerMoonReserve(state),
     moonPowerBonus: playerMoonPowerBonus(state),
     cardsPlayedThisTurn: playerCardsPlayed(state),
-    pendingChoice: playerPendingChoice(state)?.options.map(cardId) ?? null,
+    pendingChoice: (() => { const p = playerPendingChoice(state); return p?.kind === "chooseCard" ? p.options.map(cardId) : null; })(),
     hand: playerHand(state).map(cardId),
     drawPile: playerDrawPile(state).map(cardId),
     discardPile: playerDiscardPile(state).map(cardId),

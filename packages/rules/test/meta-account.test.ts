@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Action, CombatState, GameData, Profile, RunAction, RunSetup, RunState } from "../src/index";
 import {
-  applyRunAction, createProfile, createRun, getValidTargets, isCardPlayable, mergeImportedProfile,
+  applyRunAction, autoChoiceAction, createProfile, createRun, getValidTargets, isCardPlayable, mergeImportedProfile,
   parseProfile, reachableNodeIds, replayRun, starterDeck, unlockCard, validateDeck,
 } from "../src/index";
 import { testData, p0 } from "./helpers";
@@ -29,7 +29,7 @@ function botAction(data: GameData, run: RunState): RunAction {
 
 function combatAction(data: GameData, state: CombatState): Action {
   if (state.status === "mulligan") return { type: "mulligan", instanceIds: [] };
-  if (state.status === "choosing") return { type: "chooseCard", instanceId: p0(state).pendingChoice!.options[0]! };
+  if (state.status === "choosing") return autoChoiceAction(state, 0)!;
   for (const instanceId of p0(state).hand) {
     if (!isCardPlayable(data, state, instanceId)) continue;
     const card = data.cards[state.cards[instanceId]!.cardId]!;

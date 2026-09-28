@@ -4,6 +4,7 @@ export type Action =
   | { type: "playCard"; instanceId: string; targetId?: string; player?: number }
   | { type: "mulligan"; instanceIds: string[]; player?: number }
   | { type: "chooseCard"; instanceId: string; player?: number }
+  | { type: "chooseMoon"; offset: 0 | 1 | 2; player?: number }
   /** `system` marks a server-forced end turn (co-op turn timer, `17` §8.3). */
   | { type: "endTurn"; player?: number; system?: true }
   /**
@@ -33,6 +34,7 @@ export type CombatEvent =
   | { type: "mulliganed"; returned: string[]; drawn: string[]; player?: number }
   | { type: "choiceOpened"; options: string[]; player?: number }
   | { type: "cardChosen"; instanceId: string; bottomed: string[]; player?: number }
+  | { type: "moonChoiceOpened"; options: number[]; player?: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
   | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" | "boss" }
   | {

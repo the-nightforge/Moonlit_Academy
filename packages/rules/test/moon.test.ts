@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, getEffectiveCost } from "../src/index";
 import { armorSixCard, healFiveCard, rewindMoonCard, stealthOneCard } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setHand, p0 } from "./helpers";
+import { injectCard, instanceIdOf, makeTestCombat, pendingCardOptions, setHand, p0 } from "./helpers";
 
 describe("moon phases", () => {
   it("T21: new moon boosts assassin card damage by 1.5x", () => {
@@ -154,7 +154,7 @@ describe("moon phases", () => {
 
     const picked = applyAction(data, shifted.state, {
       type: "chooseCard",
-      instanceId: p0(shifted.state).pendingChoice!.options[0]!,
+      instanceId: pendingCardOptions(shifted.state)[0]!,
     });
     expect(picked.ok).toBe(true);
     if (!picked.ok) return;
@@ -231,7 +231,7 @@ describe("moon phases", () => {
 
     const picked = applyAction(data, shifted.state, {
       type: "chooseCard",
-      instanceId: p0(shifted.state).pendingChoice!.options[0]!,
+      instanceId: pendingCardOptions(shifted.state)[0]!,
     });
     expect(picked.ok).toBe(true);
     if (!picked.ok) return;

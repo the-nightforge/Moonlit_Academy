@@ -68,6 +68,11 @@ export interface CardInstance {
   chosenThisTurn?: boolean;
 }
 
+/** A choice the seat must answer before acting (`01` §3.1, §4). */
+export type PendingChoice =
+  | { kind: "chooseCard"; options: string[] }
+  | { kind: "chooseMoon"; options: number[] };
+
 /** `opponentTurn` only ever appears inside `viewFor` results — a real state is always playerTurn/choosing/etc. */
 export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost" | "opponentTurn";
 
@@ -93,8 +98,10 @@ export interface PlayerState {
   moonPowerBonus: number;
   /** Cards already played this player's turn (Liên Hoàn). */
   cardsPlayedThisTurn: number;
-  /** A pending Chiêm Bài pick; the option instance ids are out of the draw pile until resolved. */
-  pendingChoice: { kind: "chooseCard"; options: string[] } | null;
+  /** A pending Chiêm Bài pick or Chọn Pha; Chiêm Bài option instance ids are out of the draw pile until resolved. */
+  pendingChoice: PendingChoice | null;
+  /** Chọn Pha owed this turn (a hero was leveled with `chooseMoon` at turn start). */
+  moonChoicePending?: true;
   /**
    * Per-combat hook counters, keyed "<relicId>#<hookIndex>" (run relics, augments,
    * moon relics) or "<weaponId>@<heroId>#<hookIndex>" (weapons).

@@ -36,7 +36,9 @@ export type LevelUpPassive =
   | { type: "bloodMoonOwnCardDiscount"; amount: number }
   // Phase 7a (`18` §2.1).
   | { type: "armorPerTurn"; amount: number }
-  | { type: "interceptArmor"; amount: number };
+  | { type: "interceptArmor"; amount: number }
+  | { type: "chooseMoon" }
+  | { type: "freeChooseCardPerTurn"; look: number };
 
 export interface LevelUpDef {
   name: string;

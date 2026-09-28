@@ -12,7 +12,7 @@ import { shuffle } from "./rng";
 import { runRelicHooks } from "./run-relic-hooks";
 import { removeStatus } from "./statuses";
 import { runEndTurn, startPlayerTurn } from "./turn";
-import { interceptHit } from "./turn-passives";
+import { interceptHit, openMoonChoice, passiveOf } from "./turn-passives";
 import type {
   Action,
   ActionResult,
@@ -211,8 +211,7 @@ function mulligan(
   runRelicHooks(data, state, events, { type: "combatStart" }, player.index);
 }
 
-function chooseCard(state: CombatState, player: PlayerState, instanceId: string, events: CombatEvent[]): void {
-  const options = player.pendingChoice!.options;
+function chooseCard(state: CombatState, player: PlayerState, instanceId: string, options: string[], events: CombatEvent[]): void {
   const bottomed = options.filter((id) => id !== instanceId);
   state.cards[instanceId]!.heldTurns = 0;
   state.cards[instanceId]!.chosenThisTurn = true;
@@ -223,6 +222,16 @@ function chooseCard(state: CombatState, player: PlayerState, instanceId: string,
   events.push({ type: "cardChosen", instanceId, bottomed, ...seatTag(state, player.index) });
 }
 
+/** Chọn Pha answer (`01` §5.5): `offset` shifts the moon with the passive's hero as source. */
+function chooseMoon(data: GameData, state: CombatState, player: PlayerState, offset: number, events: CombatEvent[]): void {
+  player.pendingChoice = null;
+  delete player.moonChoicePending;
+  if (state.mode !== "coop") state.status = "playerTurn";
+  if (offset === 0) return;
+  const chooser = heroesOf(state, player.index).find((hero) => passiveOf(data, hero)?.type === "chooseMoon")!;
+  resolveEffects(data, state, [{ type: "shiftMoon", amount: offset }], { source: chooser }, events);
+}
+
 function statusError(state: CombatState, action: Action, player: PlayerState): string | null {
   if (action.type === "mulligan") {
     return state.status === "mulligan" && !player.mulliganDone ? null : "mulligan already done";
@@ -231,7 +240,7 @@ function statusError(state: CombatState, action: Action, player: PlayerState): s
     // `01` §16.2: the turn is shared — a pending Chiêm Bài still answers first
     // (an endTurn auto-picks it), and a seat that pressed Xong is out.
     if (state.status === "mulligan") return "mulligan pending";
-    if (action.type === "chooseCard") {
+    if (action.type === "chooseCard" || action.type === "chooseMoon") {
       return player.pendingChoice === null ? "no pending choice" : null;
     }
     if (player.pendingChoice !== null && action.type !== "endTurn") return "choice pending";
@@ -242,9 +251,9 @@ function statusError(state: CombatState, action: Action, player: PlayerState): s
     case "mulligan":
       return "mulligan pending";
     case "choosing":
-      return action.type === "chooseCard" ? null : "choice pending";
+      return action.type === "chooseCard" || action.type === "chooseMoon" ? null : "choice pending";
     case "playerTurn":
-      return action.type === "chooseCard" ? "no pending choice" : null;
+      return action.type === "chooseCard" || action.type === "chooseMoon" ? "no pending choice" : null;
     case "enemyTurn":
     case "won":
     case "lost":
@@ -280,8 +289,11 @@ function forfeit(data: GameData, state: CombatState, action: Extract<Action, { t
     seat.done = true;
     seat.mulliganDone = true;
     if (seat.pendingChoice !== null) {
-      seat.drawPile.push(...seat.pendingChoice.options);
+      if (seat.pendingChoice.kind === "chooseCard") {
+        seat.drawPile.push(...seat.pendingChoice.options);
+      }
       seat.pendingChoice = null;
+      delete seat.moonChoicePending;
     }
     for (const hero of heroesOf(next, seat.index)) {
       if (hero.alive) hero.hp = 0;
@@ -337,12 +349,23 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
       return { ok: true, state: next, events };
     }
     case "chooseCard": {
-      if (!seat.pendingChoice!.options.includes(action.instanceId)) {
-        return { ok: false, error: "not a choice option" };
-      }
+      const pending = seat.pendingChoice;
+      if (pending?.kind !== "chooseCard") return { ok: false, error: "no pending choice" };
+      if (!pending.options.includes(action.instanceId)) return { ok: false, error: "not a choice option" };
       const next = cloneState(state);
       const events: CombatEvent[] = [];
-      chooseCard(next, next.players[seat.index]!, action.instanceId, events);
+      const nextSeat = next.players[seat.index]!;
+      chooseCard(next, nextSeat, action.instanceId, pending.options, events);
+      openMoonChoice(next, nextSeat, events);
+      return { ok: true, state: next, events };
+    }
+    case "chooseMoon": {
+      const pending = seat.pendingChoice;
+      if (pending?.kind !== "chooseMoon") return { ok: false, error: "no pending choice" };
+      if (!pending.options.includes(action.offset)) return { ok: false, error: "not a choice option" };
+      const next = cloneState(state);
+      const events: CombatEvent[] = [];
+      chooseMoon(data, next, next.players[seat.index]!, action.offset, events);
       return { ok: true, state: next, events };
     }
     case "endTurn": {

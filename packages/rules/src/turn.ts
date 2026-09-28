@@ -9,7 +9,7 @@ import { heroesOf, seatTag } from "./players";
 import { cardOwners } from "./queries";
 import { fireEventHooks, runRelicHooks } from "./run-relic-hooks";
 import { DURATION_STATUSES, hasStatus, removeStatus } from "./statuses";
-import { heroTurnStart } from "./turn-passives";
+import { heroTurnStart, seatTurnStart } from "./turn-passives";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "./types/index";
 
 export function startPlayerTurn(
@@ -85,6 +85,7 @@ export function startPlayerTurn(
     return;
   }
   runRelicHooks(data, state, events, { type: "playerTurnStart" }, player.index);
+  seatTurnStart(data, state, player, events);
 }
 
 /** Duration statuses tick down once per unit at the round's (PvE) or turn's (PvP) end. */

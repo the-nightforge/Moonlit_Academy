@@ -7,7 +7,7 @@ import { heroesOf } from "../players";
 import { fireEventHooks, runRelicHooks } from "../run-relic-hooks";
 import { hasStatus, removeStatus } from "../statuses";
 import { endRound, endSeatTurn } from "../turn";
-import { heroTurnStart } from "../turn-passives";
+import { heroTurnStart, seatTurnStart } from "../turn-passives";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "../types/index";
 
 /**
@@ -83,6 +83,7 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
       if (checkCombatEnd(state, events)) return;
     }
     runRelicHooks(data, state, events, { type: "playerTurnStart" }, seat.index);
+    seatTurnStart(data, state, seat, events);
   }
   // A seat with no living heroes — forfeit, Cạn Bài, a wipe — can never act;
   // the shared turn must not wait on it (`01` §16.6).
@@ -113,6 +114,11 @@ export function coopEndTurn(
     seat.drawPile.push(...bottomed);
     seat.pendingChoice = null;
     events.push({ type: "cardChosen", instanceId, bottomed, player: seat.index });
+  }
+  if (seat.pendingChoice?.kind === "chooseMoon") {
+    // The timer path keeps the moon where it is (`offset 0`).
+    seat.pendingChoice = null;
+    delete seat.moonChoicePending;
   }
   seat.done = true;
   // A seat whose heroes all fell mid-turn counts as done — it cannot act again.

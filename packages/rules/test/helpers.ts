@@ -12,6 +12,13 @@ export function p0(state: CombatState): PlayerState {
   return state.players[0]!;
 }
 
+/** The pending Chiêm Bài options of `seat` (throws unless the choice is a chooseCard). */
+export function pendingCardOptions(state: CombatState, seat = 0): string[] {
+  const pending = state.players[seat]!.pendingChoice;
+  if (pending?.kind !== "chooseCard") throw new Error("expected a pending Chiêm Bài");
+  return pending.options;
+}
+
 /** A new profile that owns every hero (tests of rules that do not care about ownership). */
 export function ownAllHeroes(data: GameData, profile: Profile): Profile {
   const heroes = { ...profile.heroes };

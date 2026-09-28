@@ -1251,7 +1251,10 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderChoiceOverlay() {
-    const options = this.state.players[this.mySeat]!.pendingChoice!.options;
+    const pending = this.state.players[this.mySeat]!.pendingChoice!;
+    // Chọn Pha UI lands in Task 9 — only Chiêm Bài renders here.
+    if (pending.kind !== "chooseCard") return;
+    const options = pending.options;
     this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.6));
     this.text(WIDTH / 2, 250, "Chiêm Bài — chọn 1 lá, các lá còn lại xuống đáy chồng", 16, COLORS.gold).setOrigin(0.5);
     const spacing = CARD_W + 30;

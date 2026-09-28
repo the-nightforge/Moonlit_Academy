@@ -21,7 +21,10 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
   }
   // Co-op keeps status playerTurn while a seat answers a choice (`01` §16.2).
   if (state.status === "choosing" || player.pendingChoice !== null) {
-    const options = player.pendingChoice?.options ?? [];
+    if (player.pendingChoice?.kind === "chooseMoon") {
+      return { type: "chooseMoon", offset: bestMoonOffset(data, state, seat) };
+    }
+    const options = player.pendingChoice?.kind === "chooseCard" ? player.pendingChoice.options : [];
     const curve = data.combatConfig.moonPower;
     const nextFund =
       Math.min(curve.cap, curve.start + state.round * curve.perRound) +
@@ -85,4 +88,17 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
     if (targetId !== undefined) return { type: "playCard", instanceId, targetId };
   }
   return { type: "endTurn" };
+}
+
+/** Chọn Pha: the offset whose phase has the most modifiers matching tags in hand (ties → smaller offset). */
+function bestMoonOffset(data: GameData, state: CombatState, seat: number): 0 | 1 | 2 {
+  const tags = new Set(state.players[seat]!.hand.flatMap((id) => cardDefOf(data, state, state.cards[id]!)?.tags ?? []));
+  let best: 0 | 1 | 2 = 0;
+  let bestScore = -1;
+  for (const offset of [0, 1, 2] as const) {
+    const phase = data.moonPhases[(state.moonIndex + offset) % data.moonPhases.length]!;
+    const score = phase.modifiers.filter((m) => "tag" in m ? tags.has(m.tag) : true).length;
+    if (score > bestScore) { best = offset; bestScore = score; }
+  }
+  return best;
 }

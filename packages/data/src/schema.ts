@@ -91,6 +91,8 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("bloodMoonOwnCardDiscount"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("armorPerTurn"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("interceptArmor"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("chooseMoon") }),
+  z.object({ type: z.literal("freeChooseCardPerTurn"), look: z.number().int().positive() }),
 ]);
 
 const branchSchema = z.object({

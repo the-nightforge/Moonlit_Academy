@@ -89,6 +89,8 @@ export function describeEvent(
       return `Đổi Bài ${event.returned.length} lá`;
     case "choiceOpened":
       return `Chiêm Bài: ${event.options.length} lá`;
+    case "moonChoiceOpened":
+      return "Chọn Pha";
     case "cardChosen":
       return "Chọn 1 lá";
     case "cardPlayed": {

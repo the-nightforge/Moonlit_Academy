@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyAction,
+  autoChoiceAction,
   getValidTargets,
   isCardPlayable,
 } from "../src/index";
@@ -9,8 +10,9 @@ import { makeTestCombat, setIntent, p0 } from "./helpers";
 import { strike9Intent } from "./fixtures";
 
 function pickAction(data: GameData, state: CombatState): Action {
-  if (state.status === "choosing" && p0(state).pendingChoice) {
-    return { type: "chooseCard", instanceId: p0(state).pendingChoice!.options[0]! };
+  if (state.status === "choosing") {
+    const answer = autoChoiceAction(state, 0);
+    if (answer !== null) return answer;
   }
   for (const instanceId of p0(state).hand) {
     if (!isCardPlayable(data, state, instanceId)) continue;

@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { dataVersion, loadGameData } from "data";
-import type { GameData, Loadout, RunAction, RunSetup, RunState } from "rules";
-import { applyRunAction, cardDefOf, createRun, getValidTargets, isCardPlayable, reachableNodeIds, starterDeck } from "rules";
+import type { Action, GameData, Loadout, RunAction, RunSetup, RunState } from "rules";
+import { applyRunAction, autoChoiceAction, cardDefOf, createRun, getValidTargets, isCardPlayable, reachableNodeIds, starterDeck } from "rules";
 import { hashToken } from "../src/auth";
 import { buildApp } from "../src/app";
 import type { ServerConfig } from "../src/config";
@@ -171,7 +171,9 @@ function botAction(data: GameData, run: RunState): RunAction {
       const state = run.combat!;
       if (state.status === "mulligan") return { type: "combat", action: { type: "mulligan", instanceIds: [] } };
       if (state.status === "choosing") {
-        return { type: "combat", action: { type: "chooseCard", instanceId: state.players[0]!.pendingChoice!.options[0]! } };
+        // The run action log stores combat actions without the `player` stamp.
+        const { player: _seat, ...action } = autoChoiceAction(state, 0)! as Exclude<Action, { type: "forfeit" }>;
+        return { type: "combat", action };
       }
       for (const instanceId of state.players[0]!.hand) {
         if (!isCardPlayable(data, state, instanceId)) continue;
