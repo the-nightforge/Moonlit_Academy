@@ -8,7 +8,7 @@ import {
   moonHealMultiplier,
   moonStealthDurationBonus,
 } from "./moon";
-import { alliesOf, heroesOf, opponentsOf, playerOf, prefixedId, seatTag } from "./players";
+import { alliesOf, heroesOf, opponentsOf, playerOf, prefixedId, seatTag, summonsOf } from "./players";
 import { fireEventHooks } from "./run-relic-hooks";
 import {
   applyStatus,
@@ -20,6 +20,7 @@ import {
   removeStatus,
   statusValue,
 } from "./statuses";
+import { isSummon, ownerOf, summonEffect, summonOf } from "./summons";
 import type {
   CardDef,
   CombatEvent,
@@ -51,18 +52,21 @@ export interface EffectContext {
   comboBonus?: number;
   /** Hợp Kích effects: `allAllies` means all six heroes, not the actor's three (`01` §16.4). */
   comboScope?: true;
+  /** A Linh Thú's action: its hits are attacks (`01` §17). */
+  summonAction?: true;
 }
 
 function findUnit(state: CombatState, unitId: string | undefined): UnitState | undefined {
   if (unitId === undefined) return undefined;
-  return [...state.heroes, ...state.enemies].find((unit) => unit.id === unitId);
+  return [...state.heroes, ...summonsOf(state), ...state.enemies].find((unit) => unit.id === unitId);
 }
 
 function isAttackSource(ctx: EffectContext): boolean {
   return (
     ctx.card?.type === "attack" ||
     ctx.intentKind === "attack" ||
-    ctx.intentKind === "attackDefend"
+    ctx.intentKind === "attackDefend" ||
+    ctx.summonAction === true
   );
 }
 
@@ -86,6 +90,14 @@ function resolveTargets(state: CombatState, to: TargetRef, ctx: EffectContext): 
         return state.heroes.filter((unit) => unit.alive);
       }
       return alliesOf(state, ctx.source).filter((unit) => unit.alive);
+    case "owner": {
+      const owner = isSummon(ctx.source) ? ownerOf(state, ctx.source) : undefined;
+      return owner?.alive ? [owner] : [];
+    }
+    case "summon": {
+      const summon = ctx.source.side === "hero" && !isSummon(ctx.source) ? summonOf(state, ctx.source.id) : undefined;
+      return summon ? [summon] : [];
+    }
   }
 }
 
@@ -511,6 +523,11 @@ export function resolveEffect(
       const seat = playerOf(state, ctx.source.id);
       if (!seat) return;
       drawCards(data, state, seat, effect.amount, events);
+      return;
+    }
+    case "summon": {
+      if (ctx.source.side !== "hero" || isSummon(ctx.source)) return;
+      summonEffect(data, state, ctx.source as HeroState, effect.summonId, events);
       return;
     }
     default: {

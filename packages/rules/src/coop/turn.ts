@@ -6,6 +6,7 @@ import { baseMoonPower } from "../moon-power";
 import { heroesOf } from "../players";
 import { fireEventHooks, runRelicHooks } from "../run-relic-hooks";
 import { hasStatus, removeStatus } from "../statuses";
+import { runSummonActions } from "../summons";
 import { endRound, endSeatTurn } from "../turn";
 import { heroTurnStart, passiveOf, seatTurnStart } from "../turn-passives";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "../types/index";
@@ -137,6 +138,8 @@ export function coopEndTurn(
     endSeatTurn(data, state, other, events);
     if (state.status === "won" || state.status === "lost") return;
   }
+  runSummonActions(data, state, state.players.map((seat) => seat.index), events);
+  if (state.status === "won" || state.status === "lost") return;
   runEnemyTurn(data, state, events);
   if (state.status !== "enemyTurn") return;
   endRound(data, state, events);

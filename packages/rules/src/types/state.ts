@@ -40,6 +40,17 @@ export interface HeroState extends UnitState {
   firstSchemeUsedThisTurn?: boolean;
 }
 
+/** Linh Thú on the board (`01` §17). Shares the hero side; never counts for defeat. */
+export interface SummonState extends UnitState {
+  side: "hero";
+  /** Seat owning the summoner. */
+  player: number;
+  /** Unit id of the summoning hero. */
+  ownerHeroId: string;
+  /** `SummonDef` id in use (switches to `awakenedId` when awakened). */
+  summonId: string;
+}
+
 export interface PlannedIntent {
   intent: IntentDef;
   cost: number;
@@ -160,6 +171,8 @@ export interface CombatState {
   playedThisTurn?: { player: number; instanceId: string; cardId: string; comboId?: string; moonAfter: number }[];
   /** [GĐ6] co-op: boss phase progress when the encounter's enemy has `phases`. */
   boss?: CoopBossState;
+  /** [GĐ7] Linh Thú; absent until the first summon. */
+  summons?: SummonState[];
 }
 
 export interface CombatWeapon {

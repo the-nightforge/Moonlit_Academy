@@ -22,7 +22,8 @@ export type LevelUpCounter =
   | "freezesApplied" | "buffsStolen"
   | "hitsIntercepted" | "schemeCardsPlayed" | "cardsChosen"
   | "hpHealed" | "turnsSurvived" | "moonShifts"
-  | "studyPoints" | "fullMoonsSeen" | "forbiddenHpLost";
+  | "studyPoints" | "fullMoonsSeen" | "forbiddenHpLost"
+  | "summonsMade";
 
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
@@ -53,7 +54,10 @@ export type LevelUpPassive =
   | { type: "comboAttackBonus"; amount: number }            // M10 Trạng Nguyên
   | { type: "tagDiscountOwnCards"; tag: CardTag; amount: number } // F01 Tự Do
   | { type: "forbiddenNoSelfHpLoss" }                       // F08 Huyết Phượng
-  | { type: "bloodMoonAttackBonus"; amount: number };       // F08 Phản Sư
+  | { type: "bloodMoonAttackBonus"; amount: number }        // F08 Phản Sư
+  // Phase 7b (`18` §3.3).
+  | { type: "awakenSummons" }                                // F09 Thỏ Ngọc Thức Tỉnh
+  | { type: "summonTaunts"; rounds: number };                  // F09 Nguyệt Cung
 
 export interface LevelUpDef {
   name: string;
@@ -134,7 +138,19 @@ export interface KeywordDef {
   text: string;
 }
 
-export type TargetRef = "self" | "chosen" | "allEnemies" | "allAllies";
+export type TargetRef = "self" | "chosen" | "allEnemies" | "allAllies" | "owner" | "summon";
+
+/** Linh Thú (`01` §17): a summoned ally unit that acts at the end of its player's turn. */
+export interface SummonDef {
+  id: string;
+  name: string;
+  maxHp: number;
+  /** Picks the enemy for `to: "chosen"` effects in `action`. */
+  targeting: "lowestHp" | "front" | "random";
+  action: Effect[];
+  /** Used instead while the owner's passive is `awakenSummons`. */
+  awakenedId?: string;
+}
 
 /** `actor` indexes `bond.owners` (bond cards only); nested effects inherit it. */
 export type Effect = (
@@ -164,6 +180,8 @@ export type Effect = (
   /** Blind draw (`01` §4.2): takes `amount` cards off the draw pile into the
    *  acting seat's hand; cards past `handLimit` land in the discard pile. */
   | { type: "drawCards"; amount: number }
+  /** Linh Thú (`01` §17): creates one, or heals it to full and adds Sức Mạnh 1. */
+  | { type: "summon"; summonId: string }
 ) & { actor?: 0 | 1 };
 
 export type Condition =

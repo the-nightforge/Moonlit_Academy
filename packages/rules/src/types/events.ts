@@ -62,4 +62,7 @@ export type CombatEvent =
   | { type: "playerForfeited"; player: number; reason: "resign" | "timeout" | "disconnect" }
   /** [GĐ5] Server notification inside `match.events`; never produced by `applyAction`. */
   | { type: "playerDisconnected"; player: number }
+  /** [GĐ7] A Linh Thú entered the board (`01` §17). */
+  | { type: "summoned"; unitId: string; summonId: string; ownerHeroId: string; player?: number }
+  | { type: "summonActed"; unitId: string }
   | { type: "combatEnded"; result: "won" | "lost" | "draw"; winner?: number | "draw" };

@@ -8,12 +8,12 @@ import type {
   EnemyIntentDef,
   EnemyState,
   GameData,
-  HeroState,
   PlannedIntent,
   Targeting,
+  UnitState,
 } from "./types/index";
 
-function pickTarget(state: CombatState, candidates: HeroState[], targeting: Targeting): string {
+export function pickTarget(state: CombatState, candidates: UnitState[], targeting: Targeting): string {
   switch (targeting) {
     case "random": {
       const roll = nextRandom(state.rngState);

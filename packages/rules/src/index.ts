@@ -8,7 +8,9 @@ export {
   playerOf,
   playerOfCard,
   prefixedId,
+  summonsOf,
 } from "./players";
+export { isSummon } from "./summons";
 export { cardDefOf, relicAt, weaponAt, weaponCardDef, weaponHooks } from "./gear";
 export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-combat";
 export { createPvpCombat } from "./pvp/create";

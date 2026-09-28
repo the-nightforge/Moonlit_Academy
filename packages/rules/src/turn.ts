@@ -9,6 +9,7 @@ import { heroesOf, seatTag } from "./players";
 import { cardOwners } from "./queries";
 import { fireEventHooks, runRelicHooks } from "./run-relic-hooks";
 import { DURATION_STATUSES, hasStatus, removeStatus } from "./statuses";
+import { runSummonActions } from "./summons";
 import { heroTurnStart, passiveOf, seatTurnStart } from "./turn-passives";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "./types/index";
 
@@ -172,6 +173,8 @@ export function runEndTurn(data: GameData, state: CombatState, events: CombatEve
   const player = state.players[state.activePlayer]!;
   endSeatTurn(data, state, player, events);
   if (state.status === "won" || state.status === "lost") return;
+  runSummonActions(data, state, [player.index], events);
+  if (["won", "lost"].includes(state.status)) return;
   runEnemyTurn(data, state, events);
   if (state.status !== "enemyTurn") return;
   endRound(data, state, events);

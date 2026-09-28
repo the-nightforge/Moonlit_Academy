@@ -160,6 +160,10 @@ export function describeEvent(
       return `${name(event.heroId)} thăng cấp: ${event.name}`;
     case "unitDied":
       return `${name(event.unitId)} ngã`;
+    case "summoned":
+      return "Triệu hồi Linh Thú";
+    case "summonActed":
+      return "Linh Thú hành động";
     case "coopComboTriggered":
       return `Hợp Kích: ${data.coopCombos[event.comboId]?.name ?? event.comboId}`;
     case "bossPhaseChanged":

@@ -19,6 +19,7 @@ import relicsJson from "../relics.json";
 import pvpConfigJson from "../pvp-config.json";
 import coopConfigJson from "../coop-config.json";
 import coopCombosJson from "../coop-combos.json";
+import summonsJson from "../summons.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -43,6 +44,7 @@ function rawData(): any {
     pvpConfig: pvpConfigJson,
     coopConfig: coopConfigJson,
     coopCombos: coopCombosJson,
+    summons: summonsJson,
   }));
 }
 
@@ -531,5 +533,23 @@ describe("co-op data", () => {
     const wrongTier = rawData();
     wrongTier.coopConfig.encounterId = "enc_01";
     expect(() => parseGameData(wrongTier)).toThrow(/is not tier "coop"/);
+  });
+
+  it("T295a: summons cross-check — awakenedId exists, owner only in summon actions, summon target only on hero cards", () => {
+    const bad = rawData();
+    bad.summons = [{ id: "s_a", name: "A", maxHp: 5, targeting: "front", action: [{ type: "damage", amount: 1, to: "chosen" }], awakenedId: "s_missing" }];
+    expect(() => parseGameData(bad)).toThrow(/summon "s_a": awakenedId references missing summon "s_missing"/);
+
+    const ownerOnCard = rawData();
+    ownerOnCard.cards[0].effects = [{ type: "heal", amount: 1, to: "owner" }];
+    expect(() => parseGameData(ownerOnCard)).toThrow(/to "owner" is only allowed in summon actions/);
+
+    const summonInAction = rawData();
+    summonInAction.summons = [{ id: "s_b", name: "B", maxHp: 5, targeting: "front", action: [{ type: "summon", summonId: "s_b" }] }];
+    expect(() => parseGameData(summonInAction)).toThrow(/summon "s_b": action must not use summon, chooseCard, createCard or to "summon"/);
+
+    const unknown = rawData();
+    unknown.cards[0].effects = [{ type: "summon", summonId: "s_nope" }];
+    expect(() => parseGameData(unknown)).toThrow(/summon references missing summon "s_nope"/);
   });
 });

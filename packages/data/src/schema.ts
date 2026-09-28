@@ -19,7 +19,7 @@ const cardTagSchema = z.enum([
   "attack", "assassin", "control", "moon", "heal", "forbidden",
   "scheme", "ward", "harmony",
 ]);
-const targetRefSchema = z.enum(["self", "chosen", "allEnemies", "allAllies"]);
+const targetRefSchema = z.enum(["self", "chosen", "allEnemies", "allAllies", "owner", "summon"]);
 const targetingSchema = z.enum(["random", "lowestHp", "highestHp", "front"]);
 const intentKindSchema = z.enum(["attack", "defend", "buff", "debuff", "attackDefend", "special"]);
 
@@ -71,6 +71,7 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
       elseEffects: z.array(effectSchema).optional(),
     }),
     z.object({ actor, type: z.literal("createCard"), cardId: idSchema }),
+    z.object({ actor, type: z.literal("summon"), summonId: idSchema }),
   ]),
 );
 
@@ -80,6 +81,7 @@ const levelUpCounterSchema = z.enum([
   "hitsIntercepted", "schemeCardsPlayed", "cardsChosen",
   "hpHealed", "turnsSurvived", "moonShifts",
   "studyPoints", "fullMoonsSeen", "forbiddenHpLost",
+  "summonsMade",
 ]);
 
 const levelUpPassiveSchema = z.discriminatedUnion("type", [
@@ -109,6 +111,8 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("tagDiscountOwnCards"), tag: cardTagSchema, amount: z.number().int().positive() }),
   z.object({ type: z.literal("forbiddenNoSelfHpLoss") }),
   z.object({ type: z.literal("bloodMoonAttackBonus"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("awakenSummons") }),
+  z.object({ type: z.literal("summonTaunts"), rounds: z.number().int().positive() }),
 ]);
 
 const branchSchema = z.object({
@@ -465,7 +469,7 @@ const effectTypeSchema = z.enum([
   "damage", "heal", "loseHp", "gainArmor", "removeArmor", "applyStatus", "cleanse",
   "chooseCard", "gainMoonPower", "shiftMoon", "stealBuff", "bloodMoon",
   "drainMoonPower", "gainMoonPowerPerTurn", "missingHpDamage", "burstRegen",
-  "conditional", "execute", "createCard",
+  "conditional", "execute", "createCard", "summon",
 ]);
 
 export const cardMatcherSchema = z.object({
@@ -509,6 +513,15 @@ export const coopConfigSchema = z.object({
   emotes: z.array(z.string().min(1)).optional(),
 });
 
+export const summonDefSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1),
+  maxHp: z.number().int().positive(),
+  targeting: z.enum(["lowestHp", "front", "random"]),
+  action: z.array(effectSchema).min(1),
+  awakenedId: idSchema.optional(),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
@@ -530,4 +543,5 @@ export const rawGameDataSchema = z.object({
   pvpConfig: pvpConfigSchema,
   coopConfig: coopConfigSchema,
   coopCombos: z.array(coopComboDefSchema),
+  summons: z.array(summonDefSchema),
 });

@@ -1,3 +1,4 @@
+import { runSummonActions } from "../summons";
 import { advanceRound, endSeatTurn, startPlayerTurn, tickDurations } from "../turn";
 import type { CombatEvent, CombatState, GameData } from "../types/index";
 
@@ -11,6 +12,8 @@ export function pvpEndTurn(data: GameData, state: CombatState, events: CombatEve
   const player = state.players[state.activePlayer]!;
   endSeatTurn(data, state, player, events);
   if (state.status === "won" || state.status === "lost") return;
+  runSummonActions(data, state, [player.index], events);
+  if (["won", "lost"].includes(state.status)) return;
   tickDurations(state, events);
 
   const next = (player.index === state.firstPlayer ? 1 - player.index : state.firstPlayer!) as 0 | 1;

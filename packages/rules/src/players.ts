@@ -1,4 +1,4 @@
-import type { CombatState, HeroState, PlayerState, UnitState } from "./types/index";
+import type { CombatState, HeroState, PlayerState, SummonState, UnitState } from "./types/index";
 
 /** The seat whose turn is active (PvE and co-op: `players[0]` / the allied side). */
 export function activePlayerState(state: CombatState): PlayerState {
@@ -20,6 +20,11 @@ export function playerOfCard(state: CombatState, instanceId: string): PlayerStat
 /** Living or dead hero units of seat `player`, in state order. */
 export function heroesOf(state: CombatState, player: number): HeroState[] {
   return state.heroes.filter((hero) => hero.player === player);
+}
+
+/** Linh Thú on the board (`01` §17); empty until the first summon. */
+export function summonsOf(state: CombatState): SummonState[] {
+  return state.summons ?? [];
 }
 
 /**
