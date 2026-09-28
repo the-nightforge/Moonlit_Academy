@@ -74,10 +74,14 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
 
   /** Linh Thú (`01` §17): whether any effect (incl. nested) targets `to`. */
   const usesTo = (effects: Effect[], to: string) => someEffect(effects, (e) => "to" in e && e.to === to);
-  /** Linh Thú is out of place outside summon actions and hero cards (`02` §6). */
+  /** Linh Thú is out of place outside summon actions and hero cards (`02` §6).
+   *  Phong Ấn (`01` §5.6) is a card-only effect, banned wherever `summon` is. */
   const checkNoSummon = (label: string, effects: Effect[]) => {
     if (someEffect(effects, (effect) => effect.type === "summon")) {
       errors.push(`${label}: summon is not allowed`);
+    }
+    if (someEffect(effects, (effect) => effect.type === "sealIntent")) {
+      errors.push(`${label}: sealIntent is not allowed`);
     }
     if (usesTo(effects, "owner")) errors.push(`${label}: to "owner" is only allowed in summon actions`);
     if (usesTo(effects, "summon")) errors.push(`${label}: to "summon" is only allowed on hero cards`);
@@ -615,6 +619,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
     if (someEffect(summon.action, (e) => e.type === "summon" || e.type === "chooseCard" || e.type === "createCard") || usesTo(summon.action, "summon")) {
       errors.push(`${label}: action must not use summon, chooseCard, createCard or to "summon"`);
+    }
+    if (someEffect(summon.action, (e) => e.type === "sealIntent")) {
+      errors.push(`${label}: sealIntent is not allowed`);
     }
   }
   const checkSummonRefs = (label: string, effects: Effect[]) => {

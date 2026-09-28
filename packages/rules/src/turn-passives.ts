@@ -36,6 +36,7 @@ export function heroTurnStart(data: GameData, state: CombatState, hero: HeroStat
   bumpCounter(data, hero, "studyPoints", 1);
   if (data.moonPhases[state.moonIndex]!.id === "full") bumpCounter(data, hero, "fullMoonsSeen", 1);
   delete hero.firstSchemeUsedThisTurn;
+  delete hero.firstSealUsedThisTurn;
   if (passive?.type === "randomBuffPerTurn") {
     const table = data.combatConfig.levelUpRandomBuffs;
     const roll = nextRandom(state.rngState);

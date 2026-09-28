@@ -61,7 +61,8 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
   }
   for (const enemy of state.enemies) {
     if (!enemy.alive) continue;
-    enemy.lastIntentIds = enemy.plannedIntents.map((planned) => planned.intent.id);
+    enemy.lastIntentIds = [...enemy.plannedIntents.map((planned) => planned.intent.id), ...(enemy.sealedIntentIds ?? [])];
+    delete enemy.sealedIntentIds;
     if (hasStatus(enemy, "freeze")) {
       events.push({ type: "intentSkipped", enemyId: enemy.id, reason: "freeze" });
       removeStatus(enemy, "freeze", events);

@@ -23,7 +23,7 @@ export type LevelUpCounter =
   | "hitsIntercepted" | "schemeCardsPlayed" | "cardsChosen"
   | "hpHealed" | "turnsSurvived" | "moonShifts"
   | "studyPoints" | "fullMoonsSeen" | "forbiddenHpLost"
-  | "summonsMade" | "charmsApplied" | "debuffsApplied";
+  | "summonsMade" | "charmsApplied" | "debuffsApplied" | "intentsSealed";
 
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
@@ -61,7 +61,9 @@ export type LevelUpPassive =
   | { type: "charmMastery"; extraCharges: number; damageMultiplier: number } // F06 Kinh Hồng Vũ
   | { type: "stealthOnCharm"; rounds: number }               // F06 Vũ Y
   | { type: "debuffDurationBonus"; amount: number }          // M09 Vong Quốc Khúc
-  | { type: "bonusVsDebuffed"; minDebuffs: number; amount: number }; // M09 Nam Chiếu Hồn
+  | { type: "bonusVsDebuffed"; minDebuffs: number; amount: number } // M09 Nam Chiếu Hồn
+  | { type: "sealExtraFirstPerTurn" }                        // F07 Sử Bút
+  | { type: "sealWeakens"; amount: number };                 // F07 Chép Sử
 
 export interface LevelUpDef {
   name: string;
@@ -186,6 +188,9 @@ export type Effect = (
   | { type: "drawCards"; amount: number }
   /** Linh Thú (`01` §17): creates one, or heals it to full and adds Sức Mạnh 1. */
   | { type: "summon"; summonId: string }
+  /** Phong Ấn (`01` §5.6): hero cards only — cancels the priciest planned intent
+   *  (PvE/co-op), or surcharges the opponent's priciest hand card (PvP). */
+  | { type: "sealIntent"; to: TargetRef }
   /** Khúc Vũ Tri Âm (`18` §3.4): lengthens each duration debuff on the targets. */
   | { type: "extendDebuffs"; amount: number; to: TargetRef }
 ) & { actor?: 0 | 1 };

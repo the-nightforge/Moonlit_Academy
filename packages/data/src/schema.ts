@@ -72,6 +72,7 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
     }),
     z.object({ actor, type: z.literal("createCard"), cardId: idSchema }),
     z.object({ actor, type: z.literal("summon"), summonId: idSchema }),
+    z.object({ actor, type: z.literal("sealIntent"), to: targetRefSchema }),
     z.object({ actor, type: z.literal("extendDebuffs"), amount: z.number().int().positive(), to: targetRefSchema }),
   ]),
 );
@@ -82,7 +83,7 @@ const levelUpCounterSchema = z.enum([
   "hitsIntercepted", "schemeCardsPlayed", "cardsChosen",
   "hpHealed", "turnsSurvived", "moonShifts",
   "studyPoints", "fullMoonsSeen", "forbiddenHpLost",
-  "summonsMade", "charmsApplied", "debuffsApplied",
+  "summonsMade", "charmsApplied", "debuffsApplied", "intentsSealed",
 ]);
 
 const levelUpPassiveSchema = z.discriminatedUnion("type", [
@@ -118,6 +119,8 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("stealthOnCharm"), rounds: z.number().int().positive() }),
   z.object({ type: z.literal("debuffDurationBonus"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("bonusVsDebuffed"), minDebuffs: z.number().int().positive(), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("sealExtraFirstPerTurn") }),
+  z.object({ type: z.literal("sealWeakens"), amount: z.number().int().positive() }),
 ]);
 
 const branchSchema = z.object({
@@ -474,7 +477,7 @@ const effectTypeSchema = z.enum([
   "damage", "heal", "loseHp", "gainArmor", "removeArmor", "applyStatus", "cleanse",
   "chooseCard", "gainMoonPower", "shiftMoon", "stealBuff", "bloodMoon",
   "drainMoonPower", "gainMoonPowerPerTurn", "missingHpDamage", "burstRegen",
-  "conditional", "execute", "createCard", "summon", "extendDebuffs",
+  "conditional", "execute", "createCard", "summon", "sealIntent", "extendDebuffs",
 ]);
 
 export const cardMatcherSchema = z.object({

@@ -5,6 +5,7 @@ import {
   coopBot,
   createCoopCombat,
   createPvpCombat,
+  getEffectiveCost,
   getValidTargets,
   previewEnemyIntent,
   summonEffect,
@@ -348,5 +349,87 @@ describe("phase 7b — Mê Hoặc", () => {
     const extend = makeTestCombat({ setup: (s) => { s.enemies[0]!.statuses.push({ id: "weak", value: 1 }, { id: "burn", value: 3 }); } });
     const ext = play(extend.data, extend.state, card({ id: "test_ext", ownerId: "f04", target: "enemy", effects: [{ type: "extendDebuffs", amount: 1, to: "chosen" }] }), "enemy:0");
     expect(ext.state.enemies[0]!.statuses).toEqual([{ id: "weak", value: 2 }, { id: "burn", value: 3 }]);
+  });
+});
+
+describe("phase 7b — Phong Ấn", () => {
+  const sealCard = card({ id: "test_seal", ownerId: "f04", target: "enemy", effects: [{ type: "sealIntent", to: "chosen" }] });
+  const cheap = { id: "t_cheap", name: "Rẻ", kind: "attack" as const, targeting: "front" as const, effects: [{ type: "damage" as const, amount: 1, to: "chosen" as const }] };
+  const dear = { ...cheap, id: "t_dear", name: "Đắt", effects: [{ type: "damage" as const, amount: 9, to: "chosen" as const }] };
+
+  const withPlan = (s: CombatState) => {
+    s.enemies[0]!.plannedIntents = [
+      { intent: cheap, cost: 1, targetId: "hero:m05" },
+      { intent: dear, cost: 3, targetId: "hero:m05" },
+    ];
+    setIntent(s, 1, idleIntent, null);
+  };
+
+  it("T289: sealIntent cancels the priciest planned intent, it cannot lead next round; the first seal each turn cancels one more with sealExtraFirstPerTurn; sealWeakens applies weak; intentsSealed counts", () => {
+    const t = makeTestCombat({ mutateData: withLevelUp("f04", { counter: "intentsSealed", threshold: 99 }), setup: withPlan });
+    const sealed = play(t.data, t.state, sealCard, "enemy:0");
+    expect(sealed.events).toContainEqual({ type: "intentsCancelled", enemyId: "enemy:0", intentIds: ["t_dear"] });
+    expect(sealed.state.enemies[0]!.plannedIntents.map((p) => p.intent.id)).toEqual(["t_cheap"]);
+    expect(sealed.state.heroes[1]!.levelUpCounter).toBe(1);
+    const next = applyAction(t.data, sealed.state, { type: "endTurn" });
+    if (!next.ok) throw new Error(next.error);
+    expect(next.state.enemies[0]!.sealedIntentIds).toBeUndefined();
+    // lastIntentIds after the enemy turn carried the sealed id, so planning could not lead with it.
+    expect(
+      next.events
+        .filter((e) => e.type === "intentExecuted" && e.enemyId === "enemy:0")
+        .map((e) => (e as { intentId: string }).intentId),
+    ).toEqual(["t_cheap"]);
+
+    const extra = makeTestCombat({
+      mutateData: withLevelUp("f04", { passive: { type: "sealExtraFirstPerTurn" } }),
+      setup: (s) => { withPlan(s); s.heroes[1]!.leveledUp = true; },
+    });
+    const twice = play(extra.data, extra.state, sealCard, "enemy:0");
+    expect(twice.state.enemies[0]!.plannedIntents).toEqual([]);
+    expect(twice.state.heroes[1]!.firstSealUsedThisTurn).toBe(true);
+
+    const weakens = makeTestCombat({
+      mutateData: withLevelUp("f04", { passive: { type: "sealWeakens", amount: 1 } }),
+      setup: (s) => { withPlan(s); s.heroes[1]!.leveledUp = true; },
+    });
+    expect(play(weakens.data, weakens.state, sealCard, "enemy:0").state.enemies[0]!.statuses).toContainEqual({ id: "weak", value: 1 });
+  });
+
+  it("T290: PvP sealIntent makes the opponent's priciest hand card cost 1 more during their next turn only", () => {
+    const data = testData();
+    const loadout = { heroes: {}, pvp: true as const };
+    let pvp = createPvpCombat(data, { seed: 7, players: [{ heroIds: ["m05", "f04", "m06"], loadout }, { heroIds: ["m05", "f04", "m06"], loadout }] }).state;
+    for (const seat of [0, 1]) {
+      const r = applyAction(data, pvp, { type: "mulligan", instanceIds: [], player: seat });
+      if (!r.ok) throw new Error(r.error);
+      pvp = r.state;
+    }
+    const me = pvp.activePlayer;
+    const them = 1 - me;
+    const seal = injectCard(pvp, data, sealCard);
+    pvp.players[0]!.hand = pvp.players[0]!.hand.filter((id) => id !== seal);
+    pvp.cards[seal]!.player = me;
+    pvp.players[me]!.hand.push(seal);
+    const foe = pvp.heroes.find((h) => h.player === them && h.alive)!;
+    const sealed = applyAction(data, pvp, { type: "playCard", instanceId: seal, targetId: foe.id, player: me });
+    if (!sealed.ok) throw new Error(sealed.error);
+    const marked = sealed.state.players[them]!.hand.filter((id) => sealed.state.cards[id]!.sealSurcharge === 1);
+    expect(marked).toHaveLength(1);
+    const cost = (s: CombatState, id: string) => getEffectiveCost(data, s, id);
+    // The marked card was the priciest when sealed (its cost now includes the +1).
+    const unsealed = sealed.state.players[them]!.hand.map((id) => cost(sealed.state, id) - (id === marked[0] ? 1 : 0));
+    expect(cost(sealed.state, marked[0]!) - 1).toBe(Math.max(...unsealed));
+
+    // My own turn end must not clear it; it holds through their turn (the moon may have moved — compare with the surcharge removed).
+    const theirTurn = applyAction(data, sealed.state, { type: "endTurn", player: me });
+    if (!theirTurn.ok) throw new Error(theirTurn.error);
+    const plain = structuredClone(theirTurn.state);
+    delete plain.cards[marked[0]!]!.sealSurcharge;
+    expect(cost(theirTurn.state, marked[0]!)).toBe(cost(plain, marked[0]!) + 1);
+
+    const afterTheirs = applyAction(data, theirTurn.state, { type: "endTurn", player: them });
+    if (!afterTheirs.ok) throw new Error(afterTheirs.error);
+    expect(afterTheirs.state.cards[marked[0]!]!.sealSurcharge).toBeUndefined();
   });
 });

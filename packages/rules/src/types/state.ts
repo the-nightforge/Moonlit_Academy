@@ -38,6 +38,8 @@ export interface HeroState extends UnitState {
   firstHitUsedThisTurn: boolean;
   /** Bác Học: the first scheme card this turn already repeated. */
   firstSchemeUsedThisTurn?: boolean;
+  /** Sử Bút: the first Phong Ấn this turn already cancelled an extra intent (`01` §5.6). */
+  firstSealUsedThisTurn?: boolean;
 }
 
 /** Linh Thú on the board (`01` §17). Shares the hero side; never counts for defeat. */
@@ -66,6 +68,8 @@ export interface EnemyState extends UnitState {
   moonPower: number;
   /** Reserve carried into the next plan. */
   moonReserve: number;
+  /** Ids sealed this round — merged into `lastIntentIds` at the enemy turn, then deleted (`01` §5.6). */
+  sealedIntentIds?: string[];
 }
 
 export interface CardInstance {
@@ -81,6 +85,8 @@ export interface CardInstance {
   chosenThisTurn?: boolean;
   /** Thiên Cơ: this turn only (`01` §3.1). */
   turnDiscount?: number;
+  /** PvP Phong Ấn (`01` §5.6): +1 cost until the owner's turn ends, cleared in `endSeatTurn`. */
+  sealSurcharge?: number;
 }
 
 /** A choice the seat must answer before acting (`01` §3.1, §4). */

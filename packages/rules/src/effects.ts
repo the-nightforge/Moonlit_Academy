@@ -9,6 +9,7 @@ import {
   moonStealthDurationBonus,
 } from "./moon";
 import { alliesOf, heroesOf, opponentsOf, playerOf, prefixedId, seatTag, summonsOf } from "./players";
+import { getEffectiveCost } from "./queries";
 import { fireEventHooks } from "./run-relic-hooks";
 import {
   applyStatus,
@@ -250,6 +251,16 @@ function evalCondition(
       return (seat?.cardsPlayedThisTurn ?? 0) + (ctx.comboBonus ?? 0) >= condition.count;
     }
   }
+}
+
+/** Phong Ấn on an enemy: cancel its priciest planned intent (ties → earlier), remember it for next round's plan. */
+function sealPriciest(enemy: EnemyState, events: CombatEvent[]): boolean {
+  if (enemy.plannedIntents.length === 0) return false;
+  const index = enemy.plannedIntents.reduce((best, p, i, all) => (p.cost > all[best]!.cost ? i : best), 0);
+  const [removed] = enemy.plannedIntents.splice(index, 1);
+  enemy.sealedIntentIds = [...(enemy.sealedIntentIds ?? []), removed!.intent.id];
+  events.push({ type: "intentsCancelled", enemyId: enemy.id, intentIds: [removed!.intent.id] });
+  return true;
 }
 
 export function resolveEffect(
@@ -549,6 +560,34 @@ export function resolveEffect(
     case "summon": {
       if (ctx.source.side !== "hero" || isSummon(ctx.source)) return;
       summonEffect(data, state, ctx.source as HeroState, effect.summonId, events);
+      return;
+    }
+    case "sealIntent": {
+      const hero = ctx.source.side === "hero" && !isSummon(ctx.source) ? (ctx.source as HeroState) : undefined;
+      const passive = cardPassive(data, ctx);
+      for (const target of resolveTargets(state, effect.to, ctx)) {
+        if (state.mode === "pvp") {
+          // Fair Arena (`01` §5.6): the opponent's priciest hand card costs 1
+          // more during their next turn only (ties → earlier in the hand).
+          const seat = state.players[(target as HeroState).player]!;
+          const priciest = seat.hand.reduce<string | undefined>((best, id) =>
+            best === undefined || getEffectiveCost(data, state, id) > getEffectiveCost(data, state, best) ? id : best, undefined);
+          if (priciest !== undefined) {
+            const instance = state.cards[priciest]!;
+            instance.sealSurcharge = (instance.sealSurcharge ?? 0) + 1;
+          }
+          if (hero) bumpCounter(data, hero, "intentsSealed", 1);
+          continue;
+        }
+        if (target.side !== "enemy") continue;
+        if (!sealPriciest(target as EnemyState, events)) continue;
+        if (hero) bumpCounter(data, hero, "intentsSealed", 1);
+        if (passive?.type === "sealExtraFirstPerTurn" && hero && !hero.firstSealUsedThisTurn) {
+          hero.firstSealUsedThisTurn = true;
+          if (sealPriciest(target as EnemyState, events) && hero) bumpCounter(data, hero, "intentsSealed", 1);
+        }
+        if (passive?.type === "sealWeakens") applyStatus(target, "weak", passive.amount, ctx.source.id, events);
+      }
       return;
     }
     case "extendDebuffs": {

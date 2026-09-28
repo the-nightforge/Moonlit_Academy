@@ -159,8 +159,10 @@ export function endSeatTurn(
   }
   for (const id of player.hand) state.cards[id]!.heldTurns += 1;
   for (const instance of Object.values(state.cards)) {
+    if (instance.player !== player.index) continue;
     delete instance.chosenThisTurn;
     delete instance.turnDiscount;
+    delete instance.sealSurcharge;
   }
   const reserve = Math.min(data.combatConfig.moonReserveMax, player.moonPower);
   if (reserve !== player.moonReserve) {
