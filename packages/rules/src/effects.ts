@@ -7,7 +7,7 @@ import {
   moonHealMultiplier,
   moonStealthDurationBonus,
 } from "./moon";
-import { alliesOf, heroesOf, opponentsOf, playerOf, seatTag } from "./players";
+import { alliesOf, heroesOf, opponentsOf, playerOf, prefixedId, seatTag } from "./players";
 import { fireEventHooks } from "./run-relic-hooks";
 import {
   applyStatus,
@@ -468,6 +468,21 @@ export function resolveEffect(
       for (const target of executed) {
         killUnit(data, state, target, events, { id: ctx.source.id, cardDamage: ctx.card !== undefined });
       }
+      return;
+    }
+    case "createCard": {
+      const seat = playerOf(state, ctx.source.id);
+      const card = data.cards[effect.cardId];
+      if (!seat || card?.ownerId === undefined) return;
+      if (seat.hand.length >= data.combatConfig.handSize) {
+        events.push({ type: "cardCreated", cardId: card.id, instanceId: null, ...seatTag(state, seat.index) });
+        return;
+      }
+      seat.createdCards = (seat.createdCards ?? 0) + 1;
+      const instanceId = prefixedId(state, seat.index, `t${seat.createdCards}`);
+      state.cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [card.ownerId], player: seat.index, heldTurns: 0 };
+      seat.hand.push(instanceId);
+      events.push({ type: "cardCreated", cardId: card.id, instanceId, ...seatTag(state, seat.index) });
       return;
     }
     default: {

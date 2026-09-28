@@ -98,6 +98,8 @@ export interface PlayerState {
   moonPowerBonus: number;
   /** Cards already played this player's turn (Liên Hoàn). */
   cardsPlayedThisTurn: number;
+  /** Cards created this combat (`createCard`); names the next `t<n>` instance. */
+  createdCards?: number;
   /** A pending Chiêm Bài pick or Chọn Pha; Chiêm Bài option instance ids are out of the draw pile until resolved. */
   pendingChoice: PendingChoice | null;
   /** Chọn Pha owed this turn (a hero was leveled with `chooseMoon` at turn start). */

@@ -39,7 +39,7 @@ export function checkLevelUps(
     if (hero.levelUpCounter >= threshold) {
       hero.leveledUp = true;
       events.push({ type: "heroLeveledUp", heroId: hero.id, name: def.name });
-      const onLevelUp = hero.levelUpForm === "alt" ? def.altLevelUp.onLevelUp : undefined;
+      const onLevelUp = hero.levelUpForm === "alt" ? def.altLevelUp.onLevelUp : def.levelUp.onLevelUp;
       if (onLevelUp) resolveEffects(data, state, onLevelUp, { source: hero, noHooks: true }, events);
     }
   }

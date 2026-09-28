@@ -38,7 +38,8 @@ export type LevelUpPassive =
   | { type: "armorPerTurn"; amount: number }
   | { type: "interceptArmor"; amount: number }
   | { type: "chooseMoon" }
-  | { type: "freeChooseCardPerTurn"; look: number };
+  | { type: "freeChooseCardPerTurn"; look: number }
+  | { type: "none" };
 
 export interface LevelUpDef {
   name: string;
@@ -48,6 +49,8 @@ export interface LevelUpDef {
   /** Threshold at constellation 2 or more (`01` §8). */
   constellationThreshold: number;
   passive: LevelUpPassive;
+  /** Runs once right after the hero levels up in its base form, the hero acting. */
+  onLevelUp?: Effect[];
 }
 
 /** Second level-up form (Tinh Hồn 5): same counter and threshold, new passive (`01` §8). */
@@ -107,6 +110,8 @@ export interface CardDef {
   keywords?: string[];
   /** Constellation 4 version of this card id; never placed in a deck directly. */
   plusOf?: string;
+  /** Created during combat only (`createCard`): never in a pool, deck or reward (`01` §4). */
+  token?: true;
 }
 
 export interface KeywordDef {
@@ -139,6 +144,9 @@ export type Effect = (
   /** Co-op Hợp Kích only (`02` §6): kills targets at or under `threshold` of maxHp,
    *  else runs `elseEffects` once. */
   | { type: "execute"; threshold: number; to: TargetRef; elseEffects?: Effect[] }
+  /** Lá tạo ra (`01` §4.6): puts a `token` card owned by the acting hero into its
+   *  seat's hand; only on hero cards and `levelUp`/`altLevelUp` `onLevelUp`. */
+  | { type: "createCard"; cardId: string }
 ) & { actor?: 0 | 1 };
 
 export type Condition =

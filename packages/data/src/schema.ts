@@ -69,6 +69,7 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
       to: targetRefSchema,
       elseEffects: z.array(effectSchema).optional(),
     }),
+    z.object({ actor, type: z.literal("createCard"), cardId: idSchema }),
   ]),
 );
 
@@ -93,6 +94,7 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("interceptArmor"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("chooseMoon") }),
   z.object({ type: z.literal("freeChooseCardPerTurn"), look: z.number().int().positive() }),
+  z.object({ type: z.literal("none") }),
 ]);
 
 const branchSchema = z.object({
@@ -117,6 +119,7 @@ export const heroDefSchema = z.object({
     threshold: z.number().int().positive(),
     constellationThreshold: z.number().int().positive(),
     passive: levelUpPassiveSchema,
+    onLevelUp: z.array(effectSchema).min(1).optional(),
   }),
   art: z.object({ portrait: z.string(), levelUp: z.string() }),
   signature: z.object({ cardId: idSchema, plusCardId: idSchema }),
@@ -143,6 +146,7 @@ export const cardDefSchema = z.object({
   requiresBloodMoon: z.boolean().optional(),
   keywords: z.array(idSchema).optional(),
   plusOf: idSchema.optional(),
+  token: z.literal(true).optional(),
 });
 
 export const intentDefSchema = z.object({
@@ -445,7 +449,7 @@ const effectTypeSchema = z.enum([
   "damage", "heal", "loseHp", "gainArmor", "removeArmor", "applyStatus", "cleanse",
   "chooseCard", "gainMoonPower", "shiftMoon", "stealBuff", "bloodMoon",
   "drainMoonPower", "gainMoonPowerPerTurn", "missingHpDamage", "burstRegen",
-  "conditional", "execute",
+  "conditional", "execute", "createCard",
 ]);
 
 export const cardMatcherSchema = z.object({

@@ -100,6 +100,8 @@ export function describeEvent(
     }
     case "cardDiscarded":
       return `Bỏ ${event.instanceIds.length} lá`;
+    case "cardCreated":
+      return event.instanceId === null ? "Tay đầy — không tạo lá" : "Tạo lá";
     case "damageDealt":
       return `${name(event.sourceId)} → ${name(event.targetId)}: ${event.amount} (chặn ${event.blocked}, -${event.hpLost})`;
     case "hpLost":

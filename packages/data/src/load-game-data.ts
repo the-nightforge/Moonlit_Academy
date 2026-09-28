@@ -180,6 +180,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(intent.effects, (effect) => effect.type === "chooseCard")) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": chooseCard is not allowed`);
       }
+      if (someEffect(intent.effects, (effect) => effect.type === "createCard")) {
+        errors.push(`enemy "${enemy.id}" intent "${intent.id}": createCard is not allowed`);
+      }
       if (someEffect(intent.effects, (effect) => effect.type === "execute")) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": execute is only allowed in co-op combos`);
       }
@@ -208,6 +211,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       }
       if (someEffect(onEnter, (e) => e.type === "chooseCard" || e.type === "execute" || e.actor !== undefined)) {
         errors.push(`enemy "${enemy.id}" phase ${index + 1}: onEnter must not use chooseCard, execute or actor`);
+      }
+      if (someEffect(onEnter, (e) => e.type === "createCard")) {
+        errors.push(`enemy "${enemy.id}" phase ${index + 1}: createCard is not allowed`);
       }
     }
   }
@@ -331,6 +337,32 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
   }
 
+  // Lá tạo ra (`02` §6): createCard targets a token of the creating hero; tokens stay out of pools.
+  const createdIn = (effects: Effect[]): string[] =>
+    effects.flatMap((effect) =>
+      effect.type === "createCard" ? [effect.cardId]
+        : effect.type === "conditional" ? [...createdIn(effect.then), ...createdIn(effect.else ?? [])]
+        : [],
+    );
+  const checkCreated = (label: string, effects: Effect[], ownerId: string) => {
+    for (const cardId of createdIn(effects)) {
+      const card = cardById.get(cardId);
+      if (!card?.token) errors.push(`${label}: createCard "${cardId}" must be a token card`);
+      else if (card.ownerId !== ownerId) errors.push(`${label}: createCard "${cardId}" must be owned by "${ownerId}"`);
+    }
+  };
+  for (const hero of heroes) {
+    checkCreated(`hero "${hero.id}" levelUp`, hero.levelUp.onLevelUp ?? [], hero.id);
+    checkCreated(`hero "${hero.id}" altLevelUp`, hero.altLevelUp.onLevelUp ?? [], hero.id);
+  }
+  for (const card of cards) {
+    if (card.ownerId !== undefined) checkCreated(`card "${card.id}"`, card.effects, card.ownerId);
+    else if (createdIn(card.effects).length > 0) errors.push(`card "${card.id}": createCard only on hero cards`);
+    if (card.token && (pooled.has(card.id) || card.plusOf !== undefined || card.bond !== undefined)) {
+      errors.push(`cards: token card "${card.id}" must not be in a hero pool, a plus card or a bond card`);
+    }
+  }
+
   const starters = economyConfig.starterHeroIds;
   if (new Set(starters).size !== starters.length) {
     errors.push(`economyConfig: starterHeroIds must be distinct`);
@@ -397,6 +429,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       }
       if (someEffect(hook.effects, (effect) => effect.type === "chooseCard")) {
         errors.push(`${hookLabel}: effects must not use chooseCard`);
+      }
+      if (someEffect(hook.effects, (effect) => effect.type === "createCard")) {
+        errors.push(`${hookLabel}: createCard is not allowed`);
       }
       if (someEffect(hook.effects, (effect) => effect.type === "execute")) {
         errors.push(`${hookLabel}: execute is only allowed in co-op combos`);
@@ -529,6 +564,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
     if (someEffect(combo.effects, (e) => e.type === "chooseCard" || e.actor !== undefined)) {
       errors.push(`${label}: effects must not use chooseCard or actor`);
+    }
+    if (someEffect(combo.effects, (e) => e.type === "createCard")) {
+      errors.push(`${label}: createCard is not allowed`);
     }
   }
   if (coopConfig.reconnectSeconds <= coopConfig.turnSeconds) {

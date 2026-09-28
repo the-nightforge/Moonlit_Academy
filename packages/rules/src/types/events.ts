@@ -20,6 +20,8 @@ export type CombatEvent =
   | { type: "deckShuffled"; player?: number }
   | { type: "cardPlayed"; instanceId: string; targetId?: string; cost: number; player?: number }
   | { type: "cardDiscarded"; instanceIds: string[]; player?: number }
+  /** [GĐ7] `createCard` put a token in hand; `instanceId: null` when the hand was full (`01` §4.6). */
+  | { type: "cardCreated"; cardId: string; instanceId: string | null; player?: number }
   | { type: "damageDealt"; sourceId: string; targetId: string; amount: number; blocked: number; hpLost: number }
   | { type: "hpLost"; targetId: string; amount: number; cause: "loseHp" | "burn" | "reflect" | "bloodMoon" }
   | { type: "healed"; targetId: string; amount: number }

@@ -306,6 +306,21 @@ describe("parseGameData validation", () => {
     keyword.cards[0].keywords = ["no_such_keyword"];
     expect(() => parseGameData(keyword)).toThrowError(/unknown keyword/);
   });
+
+  it("T271: createCard must point at a token card owned by the creating hero; tokens stay out of pools", () => {
+    const raw = rawData();
+    raw.cards.push({ id: "tok_x", name: "X", ownerId: "m05", cost: 0, copies: 1, type: "skill", tags: [], target: "none", effects: [{ type: "gainMoonPower", amount: 1 }], text: "", token: true });
+    raw.heroes.find((h: any) => h.id === "f04").levelUp.onLevelUp = [{ type: "createCard", cardId: "tok_x" }];
+    expect(() => parseGameData(raw)).toThrow(/createCard .*tok_x.* owned by "f04"/);
+
+    const pooled = rawData();
+    pooled.cards.find((c: any) => c.id === pooled.heroes[0].cardIds[0]).token = true;
+    expect(() => parseGameData(pooled)).toThrow(/token card .* must not be in a hero pool/);
+
+    const notToken = rawData();
+    notToken.heroes[0].levelUp.onLevelUp = [{ type: "createCard", cardId: notToken.heroes[0].cardIds[0] }];
+    expect(() => parseGameData(notToken)).toThrow(/createCard .* must be a token card/);
+  });
 });
 
 describe("economyConfig", () => {

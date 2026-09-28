@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { CardDef, CombatState, GameData, IntentDef } from "../src/index";
-import { applyAction, autoChoiceAction, chooseCombatAction, createCoopCombat, createPvpCombat, previewEnemyIntent } from "../src/index";
+import { applyAction, autoChoiceAction, chooseCombatAction, createCoopCombat, createPvpCombat, createProfile, previewEnemyIntent, validateDeck } from "../src/index";
 import { chooseThreeCard, idleIntent } from "./fixtures";
-import { injectCard, makeEnemiesIdle, makeTestCombat, p0, setIntent, testData, withLevelUp } from "./helpers";
+import { injectCard, makeEnemiesIdle, makeTestCombat, ownAllHeroes, p0, setIntent, testData, withLevelUp } from "./helpers";
 
 /** Puts a test card into `seat`'s hand (injectCard only knows seat 0). */
 function giveCard(state: CombatState, data: GameData, seat: number, card: CardDef): string {
@@ -254,5 +254,50 @@ describe("phase 7a — Chọn Pha", () => {
     expect(bot.type).toBe("chooseMoon");
     expect(applyAction(data, turn.state, bot).ok).toBe(true);
     expect(autoChoiceAction(state, 0)).toBeNull();
+  });
+});
+
+const tokenCard: CardDef = {
+  id: "test_token_ult", name: "Tối Thượng", ownerId: "f04", cost: 0, copies: 1, type: "attack",
+  tags: ["attack"], target: "enemy", effects: [{ type: "damage", amount: 9, to: "chosen" }], text: "", token: true,
+};
+
+describe("phase 7a — lá tạo ra", () => {
+  it("T270: onLevelUp createCard puts a token in hand with a stable id; a full hand skips it", () => {
+    const { data, state } = makeTestCombat({
+      mutateData: (d) => {
+        d.cards[tokenCard.id] = tokenCard;
+        withLevelUp("f04", { counter: "damageTaken", threshold: 1, passive: { type: "none" } })(d);
+        d.heroes.f04!.levelUp.onLevelUp = [{ type: "createCard", cardId: tokenCard.id }];
+      },
+    });
+    const hurt = injectCard(state, data, {
+      id: "test_selfcut", name: "Tự Thương", ownerId: "f04", cost: 0, copies: 1, type: "skill", tags: [],
+      target: "none", effects: [{ type: "loseHp", amount: 1, to: "self" }], text: "",
+    });
+
+    const roomy = structuredClone(state);
+    p0(roomy).hand = [hurt];
+    const result = applyAction(data, roomy, { type: "playCard", instanceId: hurt });
+    if (!result.ok) throw new Error(result.error);
+    expect(result.events).toContainEqual({ type: "cardCreated", cardId: tokenCard.id, instanceId: "t1" });
+    expect(p0(result.state).hand).toEqual(["t1"]);
+    expect(result.state.cards.t1).toMatchObject({ cardId: tokenCard.id, ownerIds: ["f04"], player: 0, heldTurns: 0 });
+
+    // 7 cards in hand: after `hurt` leaves, 6 remain = handSize → no room.
+    const full = structuredClone(state);
+    p0(full).hand = [hurt, ...p0(full).drawPile.splice(0, 6)];
+    const skipped = applyAction(data, full, { type: "playCard", instanceId: hurt });
+    if (!skipped.ok) throw new Error(skipped.error);
+    expect(skipped.events).toContainEqual({ type: "cardCreated", cardId: tokenCard.id, instanceId: null });
+    expect(skipped.state.cards.t1).toBeUndefined();
+  });
+
+  it("T271: token cards cannot be deck-built and createCard must point at a token", () => {
+    const data = testData();
+    data.cards[tokenCard.id] = tokenCard;
+    const profile = ownAllHeroes(data, createProfile(data));
+    const deck = { heroIds: ["m05", "f04", "m06"] as [string, string, string], cardIds: [...data.heroes.m05!.cardIds, ...data.heroes.f04!.cardIds.slice(0, 5), tokenCard.id, ...data.heroes.m06!.cardIds] };
+    expect(validateDeck(data, profile, deck).length).toBeGreaterThan(0);
   });
 });
