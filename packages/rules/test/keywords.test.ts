@@ -56,7 +56,7 @@ describe("phase 4b keywords", () => {
 
     const top = p0(next.state).drawPile[0]!;
     next.state.cards[top]!.heldTurns = 5;
-    drawCards(next.state, p0(next.state), 1, []);
+    drawCards(held.data, next.state, p0(next.state), 1, []);
     expect(next.state.cards[top]!.heldTurns).toBe(0);
   });
 

@@ -186,7 +186,7 @@ export function createCoopCombat(
       ? { boss: { enemyId: boss.id, phase: 1, reviveCountdown: null, revived: false } }
       : {}),
   };
-  for (const seat of players) drawCards(state, seat, data.combatConfig.handSize, events);
+  for (const seat of players) drawCards(data, state, seat, data.combatConfig.handSize, events);
   planEnemyIntents(data, state, events);
   return { state, events };
 }

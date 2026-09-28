@@ -192,7 +192,7 @@ quyết thứ nhất bỏ mọi effect `chooseCard`, lượt thứ hai giải qu
 | M01 + F01 | *Nguyệt Sách* |
 | M02 + M01 | *Thân Vệ* (M02 đặt `guard` lên M01 và nhận giáp) |
 | M03 + M10 | *Kim Bút Đồng Tâm* |
-| M08 + F08 | *Sư Đồ Nghịch Mệnh* (gọi Huyết Nguyệt 1 lượt, M08 Chọn Pha ngay) |
+| M08 + F08 | *Sư Đồ Nghịch Mệnh* (F08 gọi Huyết Nguyệt 1 lượt, M08 `shiftMoon` 1) |
 
 Hiệu ứng chính xác viết ở 7a.4 và được duyệt.
 

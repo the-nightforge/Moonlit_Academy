@@ -1,5 +1,5 @@
 import { checkBossPhase } from "./coop/boss";
-import { addToHand } from "./draw";
+import { addToHand, drawCards } from "./draw";
 import { drainEnemyMoonPower } from "./intent";
 import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "./levelup";
 import {
@@ -510,15 +510,7 @@ export function resolveEffect(
     case "drawCards": {
       const seat = playerOf(state, ctx.source.id);
       if (!seat) return;
-      const drawn = seat.drawPile.splice(0, Math.max(0, effect.amount));
-      const room = Math.max(0, data.combatConfig.handLimit - seat.hand.length);
-      const kept = drawn.slice(0, room);
-      const spilled = drawn.slice(room);
-      for (const id of kept) state.cards[id]!.heldTurns = 0;
-      seat.hand.push(...kept);
-      seat.discardPile.push(...spilled);
-      if (kept.length > 0) events.push({ type: "cardsDrawn", instanceIds: kept, ...seatTag(state, seat.index) });
-      if (spilled.length > 0) events.push({ type: "cardDiscarded", instanceIds: spilled, ...seatTag(state, seat.index) });
+      drawCards(data, state, seat, effect.amount, events);
       return;
     }
     default: {

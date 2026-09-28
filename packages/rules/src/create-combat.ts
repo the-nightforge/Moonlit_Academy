@@ -172,6 +172,6 @@ export function createCombat(
   };
 
   planEnemyIntents(data, state, events);
-  drawCards(state, state.players[0]!, data.combatConfig.handSize, events);
+  drawCards(data, state, state.players[0]!, data.combatConfig.handSize, events);
   return { state, events };
 }
