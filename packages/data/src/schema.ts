@@ -97,6 +97,17 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("chooseMoon") }),
   z.object({ type: z.literal("freeChooseCardPerTurn"), look: z.number().int().positive() }),
   z.object({ type: z.literal("none") }),
+  z.object({ type: z.literal("cheapestCardDiscount"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("chooseCardExtraLook"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("healBonusOwnCards"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("randomBuffPerTurn") }),
+  z.object({ type: z.literal("bloodMoonImmune") }),
+  z.object({ type: z.literal("moonShiftWeakensEnemies"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("firstSchemeRepeats") }),
+  z.object({ type: z.literal("comboAttackBonus"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("tagDiscountOwnCards"), tag: cardTagSchema, amount: z.number().int().positive() }),
+  z.object({ type: z.literal("forbiddenNoSelfHpLoss") }),
+  z.object({ type: z.literal("bloodMoonAttackBonus"), amount: z.number().int().positive() }),
 ]);
 
 const branchSchema = z.object({
@@ -329,6 +340,7 @@ export const combatConfigSchema = z.object({
   maxMulligan: z.number().int().nonnegative(),
   maxIntentsPerRound: z.number().int().positive(),
   bloodMoonHpLoss: z.number().int().nonnegative(),
+  levelUpRandomBuffs: z.array(z.object({ status: statusIdSchema, amount: z.number().int().positive() })).min(1),
 });
 
 export const keywordDefSchema = z.object({

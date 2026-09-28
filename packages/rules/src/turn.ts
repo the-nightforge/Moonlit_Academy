@@ -9,7 +9,7 @@ import { heroesOf, seatTag } from "./players";
 import { cardOwners } from "./queries";
 import { fireEventHooks, runRelicHooks } from "./run-relic-hooks";
 import { DURATION_STATUSES, hasStatus, removeStatus } from "./statuses";
-import { heroTurnStart, seatTurnStart } from "./turn-passives";
+import { heroTurnStart, passiveOf, seatTurnStart } from "./turn-passives";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "./types/index";
 
 export function startPlayerTurn(
@@ -52,6 +52,7 @@ export function startPlayerTurn(
   if (state.bloodMoonRounds > 0) {
     for (const hero of heroesOf(state, player.index)) {
       if (!hero.alive) continue;
+      if (passiveOf(data, hero)?.type === "bloodMoonImmune") continue;
       const start = events.length;
       loseHp(data, hero, data.combatConfig.bloodMoonHpLoss, "bloodMoon", events);
       processDeaths(data, state, events, undefined);
@@ -155,7 +156,10 @@ export function endSeatTurn(
     events.push({ type: "cardDiscarded", instanceIds: broken, ...seatTag(state, player.index) });
   }
   for (const id of player.hand) state.cards[id]!.heldTurns += 1;
-  for (const instance of Object.values(state.cards)) delete instance.chosenThisTurn;
+  for (const instance of Object.values(state.cards)) {
+    delete instance.chosenThisTurn;
+    delete instance.turnDiscount;
+  }
   const reserve = Math.min(data.combatConfig.moonReserveMax, player.moonPower);
   if (reserve !== player.moonReserve) {
     player.moonReserve = reserve;

@@ -7,7 +7,7 @@ import { heroesOf } from "../players";
 import { fireEventHooks, runRelicHooks } from "../run-relic-hooks";
 import { hasStatus, removeStatus } from "../statuses";
 import { endRound, endSeatTurn } from "../turn";
-import { heroTurnStart, seatTurnStart } from "../turn-passives";
+import { heroTurnStart, passiveOf, seatTurnStart } from "../turn-passives";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "../types/index";
 
 /**
@@ -57,6 +57,7 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
   if (state.bloodMoonRounds > 0) {
     for (const hero of state.heroes) {
       if (!hero.alive) continue;
+      if (passiveOf(data, hero)?.type === "bloodMoonImmune") continue;
       const start = events.length;
       loseHp(data, hero, data.combatConfig.bloodMoonHpLoss, "bloodMoon", events);
       processDeaths(data, state, events, undefined);

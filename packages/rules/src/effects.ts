@@ -124,6 +124,11 @@ export function computeDamageAmount(
       flat += statusValue(ctx.source, "empower");
       if (markFromSource(target, ctx.source.id)) flat += 3;
       if (passive?.type === "attackDamageBonus") flat += passive.amount;
+      if (passive?.type === "comboAttackBonus") {
+        const played = playerOf(state, ctx.source.id)?.cardsPlayedThisTurn ?? 0;
+        flat += passive.amount * (played + (ctx.comboBonus ?? 0));
+      }
+      if (passive?.type === "bloodMoonAttackBonus" && state.bloodMoonRounds > 0) flat += passive.amount;
     }
   }
   let multiplier = 1;
@@ -249,8 +254,10 @@ export function resolveEffect(
     }
     case "heal": {
       const multiplier = moonHealMultiplier(data, state, modifiersSeat(state, ctx.source));
+      const healPassive = cardPassive(data, ctx);
+      const bonus = healPassive?.type === "healBonusOwnCards" ? healPassive.amount : 0;
       for (const target of resolveTargets(state, effect.to, ctx)) {
-        const raw = Math.floor(effect.amount * multiplier);
+        const raw = Math.floor((effect.amount + bonus) * multiplier);
         const healed = Math.min(target.maxHp - target.hp, raw);
         if (healed > 0) {
           target.hp += healed;
@@ -270,6 +277,7 @@ export function resolveEffect(
     }
     case "loseHp": {
       for (const target of resolveTargets(state, effect.to, ctx)) {
+        if (target === ctx.source && ctx.card?.tags.includes("forbidden") && cardPassive(data, ctx)?.type === "forbiddenNoSelfHpLoss") continue;
         const lost = loseHp(data, target, effect.amount, "loseHp", events);
         if (target === ctx.source && ctx.source.side === "hero" && ctx.card?.tags.includes("forbidden")) {
           bumpCounter(data, ctx.source as HeroState, "forbiddenHpLost", lost);
@@ -299,7 +307,8 @@ export function resolveEffect(
     case "chooseCard": {
       const seat = playerOf(state, ctx.source.id);
       if (!seat) return;
-      const options = seat.drawPile.splice(0, Math.min(effect.look, seat.drawPile.length));
+      const extra = heroesOf(state, seat.index).reduce((sum, hero) => { const p = hero.alive && hero.leveledUp ? levelUpPassive(data, hero) : undefined; return sum + (p?.type === "chooseCardExtraLook" ? p.amount : 0); }, 0);
+      const options = seat.drawPile.splice(0, Math.min(effect.look + extra, seat.drawPile.length));
       if (options.length === 0) return;
       if (options.length === 1) {
         state.cards[options[0]!]!.heldTurns = 0;
@@ -368,6 +377,10 @@ export function resolveEffect(
         data.moonPhases.length;
       events.push({ type: "moonShifted", from, to: state.moonIndex, cause: "card" });
       if (ctx.card !== undefined && ctx.source.side === "hero") bumpCounter(data, ctx.source as HeroState, "moonShifts", 1);
+      const weakens = cardPassive(data, ctx);
+      if (weakens?.type === "moonShiftWeakensEnemies") {
+        resolveEffect(data, state, { type: "applyStatus", status: "weak", amount: weakens.amount, to: "allEnemies" }, ctx, events);
+      }
       return;
     }
     case "stealBuff": {

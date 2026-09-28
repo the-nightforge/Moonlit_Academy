@@ -36,6 +36,8 @@ export interface HeroState extends UnitState {
   comboBonusUsedThisTurn: boolean;
   /** Hàn Kiếm: the first hit this turn already happened. */
   firstHitUsedThisTurn: boolean;
+  /** Bác Học: the first scheme card this turn already repeated. */
+  firstSchemeUsedThisTurn?: boolean;
 }
 
 export interface PlannedIntent {
@@ -66,6 +68,8 @@ export interface CardInstance {
   heldTurns: number;
   /** Taken into hand by Chiêm Bài this turn: costs `chooseCardDiscount` less. */
   chosenThisTurn?: boolean;
+  /** Thiên Cơ: this turn only (`01` §3.1). */
+  turnDiscount?: number;
 }
 
 /** A choice the seat must answer before acting (`01` §3.1, §4). */

@@ -41,7 +41,19 @@ export type LevelUpPassive =
   | { type: "interceptArmor"; amount: number }
   | { type: "chooseMoon" }
   | { type: "freeChooseCardPerTurn"; look: number }
-  | { type: "none" };
+  | { type: "none" }
+  // Phase 7a (`18` §2.2).
+  | { type: "cheapestCardDiscount"; amount: number }        // M01 Thiên Cơ
+  | { type: "chooseCardExtraLook"; amount: number }         // M01 Định Cục
+  | { type: "healBonusOwnCards"; amount: number }           // M04 Tâm Nhãn
+  | { type: "randomBuffPerTurn" }                           // M07 Huyết Mạch
+  | { type: "bloodMoonImmune" }                             // M07 Huyết Nguyệt Chi Tử
+  | { type: "moonShiftWeakensEnemies"; amount: number }     // M08 Tinh Mệnh
+  | { type: "firstSchemeRepeats" }                          // M10 Bác Học
+  | { type: "comboAttackBonus"; amount: number }            // M10 Trạng Nguyên
+  | { type: "tagDiscountOwnCards"; tag: CardTag; amount: number } // F01 Tự Do
+  | { type: "forbiddenNoSelfHpLoss" }                       // F08 Huyết Phượng
+  | { type: "bloodMoonAttackBonus"; amount: number };       // F08 Phản Sư
 
 export interface LevelUpDef {
   name: string;
@@ -340,6 +352,8 @@ export interface CombatConfig {
   maxMulligan: number;
   maxIntentsPerRound: number;
   bloodMoonHpLoss: number;
+  /** Huyết Mạch (M07) buff table, rolled with the combat RNG. */
+  levelUpRandomBuffs: { status: StatusId; amount: number }[];
 }
 
 /** Account economy (`14` §1). Phase 4c: starter heroes only. */

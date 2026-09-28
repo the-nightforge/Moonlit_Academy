@@ -107,13 +107,15 @@ function playCard(
     }
   }
 
-  resolveEffects(
-    data,
-    state,
-    card.effects,
-    { source: owner, actors: owners, card, chosenId, instanceId: instance.instanceId, comboBonus },
-    events,
-  );
+  const ctx = { source: owner, actors: owners, card, chosenId, instanceId: instance.instanceId, comboBonus };
+  // Bác Học: the owner's first scheme card each turn resolves twice; the first pass skips Chiêm Bài.
+  if (passive?.type === "firstSchemeRepeats" && card.tags.includes("scheme") && !owner.firstSchemeUsedThisTurn) {
+    owner.firstSchemeUsedThisTurn = true;
+    resolveEffects(data, state, card.effects.filter((effect) => effect.type !== "chooseCard"), ctx, events);
+  }
+  if (!["won", "lost"].includes(state.status) && owners.every((hero) => hero.alive)) {
+    resolveEffects(data, state, card.effects, ctx, events);
+  }
 
   if (card.type === "attack") {
     for (const attacker of attackCleanupTargets(card, owners)) {
