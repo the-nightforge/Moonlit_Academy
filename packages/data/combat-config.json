@@ -3,6 +3,7 @@
   "moonReserveMax": 3,
   "chooseCardDiscount": 1,
   "handSize": 6,
+  "handLimit": 8,
   "maxMulligan": 2,
   "maxIntentsPerRound": 3,
   "bloodMoonHpLoss": 2,

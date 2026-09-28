@@ -24,3 +24,20 @@ export function refillHand(
 ): void {
   drawCards(state, player, data.combatConfig.handSize - player.hand.length, events);
 }
+
+/** Puts a card in the seat's hand; at `handLimit` it lands in the discard pile
+ *  instead (`01` §4.6 — card effects may exceed `handSize`, never `handLimit`). */
+export function addToHand(
+  data: GameData,
+  state: CombatState,
+  player: PlayerState,
+  instanceId: string,
+  events: CombatEvent[],
+): void {
+  if (player.hand.length >= data.combatConfig.handLimit) {
+    player.discardPile.push(instanceId);
+    events.push({ type: "cardDiscarded", instanceIds: [instanceId], ...seatTag(state, player.index) });
+    return;
+  }
+  player.hand.push(instanceId);
+}

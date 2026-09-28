@@ -162,7 +162,7 @@ ngưỡng 1 giữ nguyên 1 (như M06).
   `prefixedId(state, seat, "t<n>")` (`n` là bộ đếm tăng dần trong
   `PlayerState.createdCards`): PvE là `t1`, `t2`…; nhiều người chơi là `p<i>_t<n>`.
   Chủ là Hero đang giải quyết effect.
-- Tay đầy → lá không được tạo, phát `cardCreated { cardId, instanceId: null }`.
+- Tay đầy (≥ `handLimit` = 8, `01` §4.2 — khác mốc rút bù `handSize`) → lá không được tạo, phát `cardCreated { cardId, instanceId: null }`.
 - Lá tạo ra không thuộc deck: bị bỏ → vào chồng bỏ bình thường nhưng không bao giờ vào lại
   chồng rút; chủ ngã → Tàn Chiêu như lá thường. Không tính vào kiểm tra deck.
 - Lá tạo ra có `CardDef.token: true` (không nằm trong pool, không được đặt vào deck, không

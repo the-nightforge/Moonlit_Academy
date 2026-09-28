@@ -306,17 +306,18 @@ describe("phase 7a — lá tạo ra", () => {
       target: "none", effects: [{ type: "loseHp", amount: 1, to: "self" }], text: "",
     });
 
+    // 8 cards in hand: after `hurt` leaves, 7 remain — above `handSize` but under `handLimit`.
     const roomy = structuredClone(state);
-    p0(roomy).hand = [hurt];
+    p0(roomy).hand = [hurt, ...p0(roomy).drawPile.splice(0, 7)];
     const result = applyAction(data, roomy, { type: "playCard", instanceId: hurt });
     if (!result.ok) throw new Error(result.error);
     expect(result.events).toContainEqual({ type: "cardCreated", cardId: tokenCard.id, instanceId: "t1" });
-    expect(p0(result.state).hand).toEqual(["t1"]);
+    expect(p0(result.state).hand).toHaveLength(8);
     expect(result.state.cards.t1).toMatchObject({ cardId: tokenCard.id, ownerIds: ["f04"], player: 0, heldTurns: 0 });
 
-    // 7 cards in hand: after `hurt` leaves, 6 remain = handSize → no room.
+    // 9 cards in hand: after `hurt` leaves, 8 remain = handLimit → no room.
     const full = structuredClone(state);
-    p0(full).hand = [hurt, ...p0(full).drawPile.splice(0, 6)];
+    p0(full).hand = [hurt, ...p0(full).drawPile.splice(0, 8)];
     const skipped = applyAction(data, full, { type: "playCard", instanceId: hurt });
     if (!skipped.ok) throw new Error(skipped.error);
     expect(skipped.events).toContainEqual({ type: "cardCreated", cardId: tokenCard.id, instanceId: null });
@@ -468,5 +469,61 @@ describe("phase 7a — nội tại", () => {
     const chooser = play(withChoice.data, withChoice.state, card({ id: "sc3", tags: ["scheme"], effects: [{ type: "gainArmor", amount: 1, to: "self" }, { type: "chooseCard", look: 3 }] }));
     expect(chooser.state.heroes[0]!.armor).toBe(2);
     expect(p0(chooser.state).pendingChoice!.options).toHaveLength(3);
+  });
+});
+
+describe("phase 7a — giới hạn tay bài", () => {
+  const drawCard = (amount: number): CardDef => ({
+    id: `test_draw${amount}`, name: `Rút ${amount}`, ownerId: "m05", cost: 0, copies: 1,
+    type: "skill", tags: [], target: "none", effects: [{ type: "drawCards", amount }], text: "",
+  });
+
+  it("T277: drawCards draws blindly; cards past handLimit are discarded", () => {
+    const { data, state } = makeTestCombat({ setup: (s) => { p0(s).moonPower = 99; } });
+    const small = structuredClone(state);
+    const fit = injectCard(small, data, drawCard(3));
+    p0(small).hand = [fit];
+    const fitted = applyAction(data, small, { type: "playCard", instanceId: fit });
+    if (!fitted.ok) throw new Error(fitted.error);
+    expect(fitted.events).toContainEqual(expect.objectContaining({ type: "cardsDrawn" }));
+    expect(fitted.events.find((e) => e.type === "cardsDrawn")).toMatchObject({ instanceIds: expect.arrayContaining([expect.any(String)]) });
+    expect(p0(fitted.state).hand).toHaveLength(3);
+    expect(fitted.events.some((e) => e.type === "cardDiscarded")).toBe(false);
+
+    const crowded = structuredClone(state);
+    const over = injectCard(crowded, data, drawCard(3));
+    p0(crowded).hand = [over, ...p0(crowded).drawPile.splice(0, 7)];
+    const spilled = applyAction(data, crowded, { type: "playCard", instanceId: over });
+    if (!spilled.ok) throw new Error(spilled.error);
+    expect(p0(spilled.state).hand).toHaveLength(data.combatConfig.handLimit);
+    const drawn = spilled.events.find((e) => e.type === "cardsDrawn") as { instanceIds: string[] } | undefined;
+    const dropped = spilled.events.find((e) => e.type === "cardDiscarded") as { instanceIds: string[] } | undefined;
+    expect(drawn?.instanceIds).toHaveLength(1);
+    expect(dropped?.instanceIds).toHaveLength(2);
+    for (const id of dropped!.instanceIds) {
+      expect(p0(spilled.state).discardPile).toContain(id);
+      expect(p0(spilled.state).drawPile).not.toContain(id);
+    }
+  });
+
+  it("T279: a Chiêm Bài pick on a full hand is discarded; unchosen options still bottom", () => {
+    const { data, state } = makeTestCombat({ setup: (s) => { p0(s).moonPower = 99; } });
+    const peek = injectCard(state, data, card({
+      id: "test_peek", effects: [{ type: "chooseCard", look: 3 }],
+    }));
+    p0(state).hand = [peek, ...p0(state).drawPile.splice(0, data.combatConfig.handLimit)];
+    const opened = applyAction(data, state, { type: "playCard", instanceId: peek });
+    if (!opened.ok) throw new Error(opened.error);
+    const pending = p0(opened.state).pendingChoice;
+    if (pending?.kind !== "chooseCard") throw new Error("expected Chiêm Bài");
+    const picked = applyAction(data, opened.state, { type: "chooseCard", instanceId: pending.options[0]! });
+    if (!picked.ok) throw new Error(picked.error);
+    const seat = p0(picked.state);
+    expect(seat.hand).toHaveLength(data.combatConfig.handLimit);
+    expect(seat.hand).not.toContain(pending.options[0]);
+    expect(seat.discardPile).toContain(pending.options[0]);
+    expect(picked.events).toContainEqual(expect.objectContaining({ type: "cardChosen", instanceId: pending.options[0] }));
+    expect(picked.events).toContainEqual(expect.objectContaining({ type: "cardDiscarded", instanceIds: [pending.options[0]] }));
+    for (const other of pending.options.slice(1)) expect(seat.drawPile).toContain(other);
   });
 });

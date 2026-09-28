@@ -139,6 +139,7 @@ export type Effect = (
   | { type: "stealBuff"; count: number }                                 // GĐ2: từ mục tiêu chosen
   | { type: "bloodMoon"; rounds: number }                                // GĐ2
   | { type: "createCard"; cardId: string }                               // GĐ7: tạo lá token vào tay (01 §4.6); chỉ lá bài / levelUp.onLevelUp
+  | { type: "drawCards"; amount: number }                                 // GĐ7: rút mù lá đầu chồng; thừa `handLimit` vào chồng bỏ (01 §4.2)
   | { type: "conditional"; condition: Condition; then: Effect[]; else?: Effect[] }
   | { type: "execute"; threshold: number; to: TargetRef; elseEffects?: Effect[] }
       // GĐ6: chỉ trong effects của Hợp Kích (01 §16.4) — kẻ địch trong `to` có
@@ -238,6 +239,7 @@ export interface MoonPhaseDef {
   "moonReserveMax": 3,
   "chooseCardDiscount": 1,
   "handSize": 6,
+  "handLimit": 8,
   "maxMulligan": 2,
   "maxIntentsPerRound": 3,
   "bloodMoonHpLoss": 2,
@@ -255,7 +257,8 @@ export interface CombatConfig {
   moonPower: { start: number; perRound: number; cap: number };
   moonReserveMax: number; // Nguyệt Lực Dự Trữ tối đa
   chooseCardDiscount: number; // lá lấy qua Chiêm Bài giảm chừng này NL tới hết lượt
-  handSize: number;       // số lá trên tay, ≥ 1
+  handSize: number;       // mốc rút bù đầu lượt, ≥ 1
+  handLimit: number;      // GĐ7: trần cứng của tay — effect vượt quá thì lá mới vào chồng bỏ (01 §4.2)
   maxMulligan: number;    // số lá đổi tối đa khi Đổi Bài
   maxIntentsPerRound: number;  // số chiêu tối đa trong chuỗi của một kẻ địch
   bloodMoonHpLoss: number;     // HP mỗi Hero mất đầu lượt khi Huyết Nguyệt

@@ -1,4 +1,4 @@
-import { refillHand } from "../draw";
+import { addToHand, refillHand } from "../draw";
 import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "../effects";
 import { runEnemyTurn } from "../enemy-turn";
 import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "../levelup";
@@ -111,7 +111,7 @@ export function coopEndTurn(
     const bottomed = options.filter((id) => id !== instanceId);
     state.cards[instanceId]!.heldTurns = 0;
     state.cards[instanceId]!.chosenThisTurn = true;
-    seat.hand.push(instanceId);
+    addToHand(data, state, seat, instanceId, events);
     seat.drawPile.push(...bottomed);
     seat.pendingChoice = null;
     // A Chọn Pha queued behind the Chiêm Bài lapses with the turn.

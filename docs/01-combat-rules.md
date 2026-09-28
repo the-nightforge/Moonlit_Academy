@@ -109,6 +109,8 @@ Người chơi thực hiện bất kỳ số lượng hành động nào:
 - Rút từng lá một từ đỉnh `drawPile` (phần tử đầu).
 - **Không bao giờ xáo chồng bỏ vào chồng bài.** Chồng bỏ là "nghĩa địa".
 - Rút khi chồng rỗng: ngừng rút, không lỗi, không event.
+- **[GĐ7]** Effect `drawCards { amount }`: rút mù `amount` lá đầu chồng vào tay đơn vị hành động (`cardsDrawn`). Không đếm `cardsChosen` (không phải Chiêm Bài).
+- **[GĐ7]** Giới hạn tay: `handSize` (6) chỉ là mốc **rút bù** đầu lượt. Effect lá/nội tại đưa lá vào tay (`drawCards`, Chiêm Bài, `createCard`) được vượt `handSize` nhưng không quá `handLimit` (8) — lá thừa ngưỡng đi thẳng vào chồng bỏ (`cardDiscarded`; `createCard` phát `cardCreated { instanceId: null }`).
 
 ### 4.3 Tàn Chiêu
 - Khi Hero **ngã**: mọi bản lá của Hero đó **trong `drawPile`** bị Tán Chiêu sang `discardPile` (mục 10.4); mọi lá của Hero đó **trên tay** thành **Tàn Chiêu**. Lá Song Hành thành Tàn Chiêu khi **một trong hai** owner ngã.
@@ -132,7 +134,7 @@ Các điều chỉnh (cộng dồn):
 
 ### 4.6 Lá tạo ra [GĐ7]
 - Effect `createCard { cardId }` (chỉ trên lá bài và `levelUp.onLevelUp`; luôn vào tay, không có trường `to`): tạo card instance mới của lá `cardId`, chủ là Hero đang giải quyết effect, `instanceId` = `prefixedId` `t<n>` theo bộ đếm `PlayerState.createdCards` — PvE `t1`, `t2`…; nhiều người chơi `p<i>_t<n>` (`02` §2).
-- Tay đầy (≥ `handSize`) → lá không được tạo, phát `cardCreated { instanceId: null }`.
+- Tay đầy (≥ `handLimit`, mục 4.2) → lá không được tạo, phát `cardCreated { instanceId: null }`.
 - Lá được tạo bắt buộc `CardDef.token: true`: không nằm trong pool Hero, không xếp được vào deck, không xuất hiện ở thưởng lượt chơi, không phải lá "+" hay Song Hành. Trong trận nó là lá thường: chiếm chỗ tay, đánh được, thành Tàn Chiêu khi chủ ngã, vào chồng bỏ khi bị bỏ — và **không bao giờ** quay lại chồng rút.
 
 ---

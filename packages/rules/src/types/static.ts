@@ -161,6 +161,9 @@ export type Effect = (
   /** Lá tạo ra (`01` §4.6): puts a `token` card owned by the acting hero into its
    *  seat's hand; only on hero cards and `levelUp`/`altLevelUp` `onLevelUp`. */
   | { type: "createCard"; cardId: string }
+  /** Blind draw (`01` §4.2): takes `amount` cards off the draw pile into the
+   *  acting seat's hand; cards past `handLimit` land in the discard pile. */
+  | { type: "drawCards"; amount: number }
 ) & { actor?: 0 | 1 };
 
 export type Condition =
@@ -349,6 +352,9 @@ export interface CombatConfig {
   /** Chiêm Bài: the card taken this way costs this much less until end of turn. */
   chooseCardDiscount: number;
   handSize: number;
+  /** Hard hand cap (`01` §4.6): `handSize` only limits the turn-start refill;
+   *  effects may push the hand up to `handLimit`, overflow is discarded. */
+  handLimit: number;
   maxMulligan: number;
   maxIntentsPerRound: number;
   bloodMoonHpLoss: number;

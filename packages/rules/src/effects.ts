@@ -1,4 +1,5 @@
 import { checkBossPhase } from "./coop/boss";
+import { addToHand } from "./draw";
 import { drainEnemyMoonPower } from "./intent";
 import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "./levelup";
 import {
@@ -313,7 +314,7 @@ export function resolveEffect(
       if (options.length === 1) {
         state.cards[options[0]!]!.heldTurns = 0;
         state.cards[options[0]!]!.chosenThisTurn = true;
-        seat.hand.push(options[0]!);
+        addToHand(data, state, seat, options[0]!, events);
         bumpSeat(data, state, seat.index, "cardsChosen", 1);
         events.push({ type: "cardsDrawn", instanceIds: options, ...seatTag(state, seat.index) });
         return;
@@ -495,7 +496,7 @@ export function resolveEffect(
       const seat = playerOf(state, ctx.source.id);
       const card = data.cards[effect.cardId];
       if (!seat || card?.ownerId === undefined) return;
-      if (seat.hand.length >= data.combatConfig.handSize) {
+      if (seat.hand.length >= data.combatConfig.handLimit) {
         events.push({ type: "cardCreated", cardId: card.id, instanceId: null, ...seatTag(state, seat.index) });
         return;
       }
@@ -504,6 +505,20 @@ export function resolveEffect(
       state.cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [card.ownerId], player: seat.index, heldTurns: 0 };
       seat.hand.push(instanceId);
       events.push({ type: "cardCreated", cardId: card.id, instanceId, ...seatTag(state, seat.index) });
+      return;
+    }
+    case "drawCards": {
+      const seat = playerOf(state, ctx.source.id);
+      if (!seat) return;
+      const drawn = seat.drawPile.splice(0, Math.max(0, effect.amount));
+      const room = Math.max(0, data.combatConfig.handLimit - seat.hand.length);
+      const kept = drawn.slice(0, room);
+      const spilled = drawn.slice(room);
+      for (const id of kept) state.cards[id]!.heldTurns = 0;
+      seat.hand.push(...kept);
+      seat.discardPile.push(...spilled);
+      if (kept.length > 0) events.push({ type: "cardsDrawn", instanceIds: kept, ...seatTag(state, seat.index) });
+      if (spilled.length > 0) events.push({ type: "cardDiscarded", instanceIds: spilled, ...seatTag(state, seat.index) });
       return;
     }
     default: {

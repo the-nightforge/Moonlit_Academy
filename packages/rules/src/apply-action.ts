@@ -1,6 +1,7 @@
 import { cloneState } from "./clone";
 import { fireCoopCombos } from "./coop/combos";
 import { coopEndTurn, startCoopTurn } from "./coop/turn";
+import { addToHand } from "./draw";
 import { checkCombatEnd, processDeaths, resolveEffects } from "./effects";
 import { guardianOf } from "./enemy-turn";
 import { cardDefOf } from "./gear";
@@ -218,11 +219,11 @@ function mulligan(
   runRelicHooks(data, state, events, { type: "combatStart" }, player.index);
 }
 
-function chooseCard(state: CombatState, player: PlayerState, instanceId: string, options: string[], events: CombatEvent[]): void {
+function chooseCard(data: GameData, state: CombatState, player: PlayerState, instanceId: string, options: string[], events: CombatEvent[]): void {
   const bottomed = options.filter((id) => id !== instanceId);
   state.cards[instanceId]!.heldTurns = 0;
   state.cards[instanceId]!.chosenThisTurn = true;
-  player.hand.push(instanceId);
+  addToHand(data, state, player, instanceId, events);
   player.drawPile.push(...bottomed);
   player.pendingChoice = null;
   state.status = "playerTurn";
@@ -365,7 +366,7 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
       const next = cloneState(state);
       const events: CombatEvent[] = [];
       const nextSeat = next.players[seat.index]!;
-      chooseCard(next, nextSeat, action.instanceId, pending.options, events);
+      chooseCard(data, next, nextSeat, action.instanceId, pending.options, events);
       bumpSeat(data, next, seat.index, "cardsChosen", 1);
       checkLevelUps(data, next, events);
       openMoonChoice(next, nextSeat, events);

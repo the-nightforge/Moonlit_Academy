@@ -53,6 +53,7 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
     z.object({ actor, type: z.literal("bloodMoon"), rounds: z.number().int().positive() }),
     z.object({ actor, type: z.literal("drainMoonPower"), amount: z.number().int().positive(), to: z.enum(["chosen", "allEnemies"]), steal: z.literal(true).optional() }),
     z.object({ actor, type: z.literal("gainMoonPowerPerTurn"), amount: z.number().int().positive() }),
+    z.object({ actor, type: z.literal("drawCards"), amount: z.number().int().positive() }),
     z.object({ actor, type: z.literal("missingHpDamage"), ratio: z.number().gt(0).lte(2), to: targetRefSchema, hits: z.number().int().positive().optional() }),
     z.object({ actor, type: z.literal("burstRegen"), multiplier: z.number().positive(), to: targetRefSchema }),
     z.object({
@@ -337,6 +338,7 @@ export const combatConfigSchema = z.object({
   moonReserveMax: z.number().int().nonnegative(),
   chooseCardDiscount: z.number().int().nonnegative(),
   handSize: z.number().int().positive(),
+  handLimit: z.number().int().positive(),
   maxMulligan: z.number().int().nonnegative(),
   maxIntentsPerRound: z.number().int().positive(),
   bloodMoonHpLoss: z.number().int().nonnegative(),

@@ -84,8 +84,10 @@ describe("draw", () => {
     const picked = applyAction(data, result.state, { type: "chooseCard", instanceId: top[0]! });
     expect(picked.ok).toBe(true);
     if (!picked.ok) return;
-    expect(p0(picked.state).hand).toHaveLength(10);
-    expect(picked.events.some((event) => event.type === "cardDiscarded")).toBe(false);
+    // Hand holds 9 — over the `handLimit` cap (8): the picked card is discarded (`01` §4.6).
+    expect(p0(picked.state).hand).toHaveLength(9);
+    expect(picked.events).toContainEqual(expect.objectContaining({ type: "cardDiscarded", instanceIds: [top[0]] }));
+    expect(p0(picked.state).discardPile).toContain(top[0]);
     expect(p0(picked.state).discardPile).toContain(instanceId);
   });
 });

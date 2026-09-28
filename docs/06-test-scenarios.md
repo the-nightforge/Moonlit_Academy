@@ -419,3 +419,5 @@ Bối cảnh: `18-phase7-spec.md` §2; luật `01` §3.1, §4.6, §5.5, §9.3.1,
 | T274 | **[GĐ7]** Nội tại damage/hồi: cộng theo lá đã đánh trong lượt, cộng khi Huyết Nguyệt, cộng hồi, không tự mất HP của lá `forbidden`, đổi pha làm đòn yếu đi |
 | T275 | **[GĐ7]** Nội tại đầu lượt: buff ngẫu nhiên từ `levelUpRandomBuffs` (tất định theo seed), miễn mất máu Huyết Nguyệt, lá `scheme` đầu tiên trong lượt giải quyết hai lần (lần một bỏ `chooseCard`) |
 | T276 | **[GĐ7]** 9 Hero đợt 1 nạp được với pool đầy đủ, chỉ số PvP, slot banner; mỗi Hero chơi được trận khởi đầu và deck khởi đầu hợp lệ; F01 thăng cấp ở Trăng Tròn nhận lá token; đủ 14 Hero thì mỗi cặp Song Hành thêm lá vào deck |
+| T277 | **[GĐ7]** `drawCards` rút mù; lá thừa `handLimit` vào chồng bỏ (`cardDiscarded`), không quay lại chồng rút |
+| T279 | **[GĐ7]** Chiêm Bài chọn khi tay đã `handLimit` → lá được chọn vào chồng bỏ, các lá còn lại vẫn về đáy chồng |
