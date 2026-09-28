@@ -16,6 +16,11 @@ const TEAMS: [string, string, string][] = [
   ["m05", "f03", "f02"],
   ["m06", "f02", "f03"],
   ["m05", "f03", "f04"],
+  // Phase 7a wave-1/2 coverage (7a.6): each new Hero appears in one team.
+  ["m01", "m02", "f04"],
+  ["m08", "f08", "m05"],
+  ["m03", "m10", "m04"],
+  ["f01", "m07", "m06"],
 ];
 const SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);
 const MAX_STEPS = 20000;

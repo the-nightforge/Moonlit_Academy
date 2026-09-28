@@ -60,6 +60,25 @@ export interface PvpSimOptions {
   seedsPerPair: number;
   /** Second pass assigns random free PvP gear. */
   geared?: boolean;
+  /**
+   * Sampled mode (7a.6): with 14 heroes C(14,3) = 364 teams, the exhaustive
+   * team×team sweep is too slow. Draw this many random pairings with the file's
+   * fixed mulberry32 seed instead; `seedsPerPair` is ignored.
+   */
+  sampleMatches?: number;
+}
+
+/** Fixed seed for the sampled pairing stream — reproducible runs. */
+const SAMPLE_SEED = 0x7a060001;
+
+/** mulberry32 stream (`02` §5 — same generator as `nextRandom`) for pairing picks. */
+function mulberry32(seed: number): () => number {
+  let state = seed | 0;
+  return () => {
+    const roll = nextRandom(state);
+    state = roll.rngState;
+    return roll.value;
+  };
 }
 
 export interface PvpSimResult {
@@ -78,28 +97,40 @@ export function runPvpSim(data: GameData, options: PvpSimOptions): PvpSimResult 
   const heroWins: PvpSimResult["heroWins"] = {};
   const played = new Set<string>();
   const result: PvpSimResult = { matches: 0, firstPlayerWins: 0, draws: 0, rounds: [], heroWins, unplayedCardIds: [] };
-  for (let a = 0; a < teams.length; a++) {
-    for (let b = 0; b < teams.length; b++) {
-      for (let s = 0; s < options.seedsPerPair; s++) {
-        const seed = a * 1_000_003 + b * 10_007 + s * 97 + (options.geared ? 5_000_009 : 0);
-        const rng = { state: seed ^ 0x9e3779b9 };
-        const sides: [PvpSide, PvpSide] = options.geared
-          ? [gearedSide(data, teams[a]!, rng), gearedSide(data, teams[b]!, rng)]
-          : [bareSide(teams[a]!), bareSide(teams[b]!)];
-        const { state, playedCardIds } = playMatch(data, seed, sides);
-        for (const id of playedCardIds) played.add(id);
-        result.matches += 1;
-        result.rounds.push(state.round);
-        if (state.winner === "draw") {
-          result.draws += 1;
-        } else if (state.winner !== undefined) {
-          if (state.winner === state.firstPlayer) result.firstPlayerWins += 1;
-          for (const heroId of sides[state.winner]!.heroIds) {
-            const entry = (heroWins[heroId] ??= { wins: 0, matches: 0 });
-            entry.wins += 1;
-          }
+  const runMatch = (a: number, b: number, seed: number) => {
+    const rng = { state: seed ^ 0x9e3779b9 };
+    const sides: [PvpSide, PvpSide] = options.geared
+      ? [gearedSide(data, teams[a]!, rng), gearedSide(data, teams[b]!, rng)]
+      : [bareSide(teams[a]!), bareSide(teams[b]!)];
+    const { state, playedCardIds } = playMatch(data, seed, sides);
+    for (const id of playedCardIds) played.add(id);
+    result.matches += 1;
+    result.rounds.push(state.round);
+    if (state.winner === "draw") {
+      result.draws += 1;
+    } else if (state.winner !== undefined) {
+      if (state.winner === state.firstPlayer) result.firstPlayerWins += 1;
+      for (const heroId of sides[state.winner]!.heroIds) {
+        const entry = (heroWins[heroId] ??= { wins: 0, matches: 0 });
+        entry.wins += 1;
+      }
+    }
+    for (const side of sides) for (const heroId of side.heroIds) (heroWins[heroId] ??= { wins: 0, matches: 0 }).matches += 1;
+  };
+  if (options.sampleMatches !== undefined) {
+    const rand = mulberry32(SAMPLE_SEED + (options.geared ? 5_000_009 : 0));
+    for (let i = 0; i < options.sampleMatches; i++) {
+      const a = Math.floor(rand() * teams.length);
+      const b = Math.floor(rand() * teams.length);
+      const seed = Math.floor(rand() * 2_000_000_000);
+      runMatch(a, b, seed);
+    }
+  } else {
+    for (let a = 0; a < teams.length; a++) {
+      for (let b = 0; b < teams.length; b++) {
+        for (let s = 0; s < options.seedsPerPair; s++) {
+          runMatch(a, b, a * 1_000_003 + b * 10_007 + s * 97 + (options.geared ? 5_000_009 : 0));
         }
-        for (const side of sides) for (const heroId of side.heroIds) (heroWins[heroId] ??= { wins: 0, matches: 0 }).matches += 1;
       }
     }
   }
@@ -111,6 +142,7 @@ const median = (xs: number[]) => {
   const sorted = [...xs].sort((a, b) => a - b);
   return sorted[Math.floor(sorted.length / 2)] ?? 0;
 };
+const mean = (xs: number[]) => (xs.length === 0 ? 0 : xs.reduce((sum, x) => sum + x, 0) / xs.length);
 const pct = (part: number, whole: number) => (whole === 0 ? "—" : `${Math.round((part / whole) * 100)}%`);
 
 export function printPvpSim(label: string, result: PvpSimResult): void {
@@ -120,6 +152,7 @@ export function printPvpSim(label: string, result: PvpSimResult): void {
     trận: result.matches,
     "người đi trước thắng": pct(result.firstPlayerWins, decisive),
     "hòa (roundCap)": pct(result.draws, result.matches),
+    "vòng TB": mean(result.rounds).toFixed(1),
     "vòng trung vị": median(result.rounds),
     "vòng min/max": `${Math.min(...result.rounds)}/${Math.max(...result.rounds)}`,
   });

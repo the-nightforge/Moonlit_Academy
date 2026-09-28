@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CombatState, GameData, IntentDef } from "../src/index";
-import { applyAction, buildPvpLoadout, createProfile, starterDeck, validateDeck } from "../src/index";
-import { makeEnemiesIdle, makeTestCombat, ownAllHeroes, p0, setIntent, testData } from "./helpers";
+import { applyAction, buildPvpLoadout, chooseCombatAction, createProfile, starterDeck, validateDeck } from "../src/index";
+import { makeEnemiesIdle, makeTestCombat, ownAllHeroes, p0, setHand, setIntent, testData } from "./helpers";
 
 const WAVE1 = ["m01", "m02", "m03", "m04", "f01"] as const;
 const WAVE2 = ["m07", "m08", "m10", "f08"] as const;
@@ -260,5 +260,100 @@ describe("phase 7a heroes — wave 2 and bonds", () => {
     const buffIds = data.combatConfig.levelUpRandomBuffs.map((buff) => buff.status);
     const buffs = next.state.heroes[0]!.statuses.filter((status) => buffIds.includes(status.id));
     expect(buffs).toHaveLength(1);
+  });
+});
+
+describe("phase 7a — bot heuristics (7a.6)", () => {
+  it("bot: guard targets the weakest other ally", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: ["m02", "f04", "m06"],
+      setup: (s) => {
+        p0(s).moonPower = 9;
+        setHand(s, ["m02_ho_ve"]);
+        // Owner is the weakest — the guard must go to f04, not to m02 itself.
+        s.heroes[0]!.hp = 5;
+        s.heroes[1]!.hp = 10;
+      },
+    });
+    const action = chooseCombatAction(data, state, 0);
+    expect(action).toEqual({
+      type: "playCard",
+      instanceId: p0(state).hand[0]!,
+      targetId: state.heroes[1]!.id,
+    });
+  });
+
+  it("bot: guard is skipped when the owner is the only living ally", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: ["m02", "f04", "m06"],
+      setup: (s) => {
+        p0(s).moonPower = 9;
+        setHand(s, ["m02_ho_ve"]);
+        s.heroes[1]!.alive = false;
+        s.heroes[2]!.alive = false;
+      },
+    });
+    expect(chooseCombatAction(data, state, 0).type).toBe("endTurn");
+  });
+
+  it("bot: shiftMoon cards wait for a useful landing phase unless leveling moonShifts", () => {
+    // Waxing crescent (index 1) has no modifiers — a +1 shift from `new` helps nobody.
+    const dead = makeTestCombat({
+      heroIds: ["m05", "f04", "m06"],
+      setup: (s) => {
+        p0(s).moonPower = 9;
+        setHand(s, ["f04_nguyet_quang_dan"]);
+        s.moonIndex = 0;
+      },
+    });
+    expect(chooseCombatAction(dead.data, dead.state, 0).type).toBe("endTurn");
+
+    // The same card played at waning gibbous lands on last quarter (armor modifier).
+    const live = makeTestCombat({
+      heroIds: ["m05", "f04", "m06"],
+      setup: (s) => {
+        p0(s).moonPower = 9;
+        setHand(s, ["f04_nguyet_quang_dan"]);
+        s.moonIndex = 5;
+      },
+    });
+    expect(chooseCombatAction(live.data, live.state, 0)).toEqual({
+      type: "playCard",
+      instanceId: p0(live.state).hand[0]!,
+    });
+
+    // M08 still wants the shift: its moonShifts counter is not leveled yet.
+    const feed = makeTestCombat({
+      heroIds: ["m08", "f04", "m06"],
+      setup: (s) => {
+        p0(s).moonPower = 9;
+        setHand(s, ["m08_doi_van"]);
+        s.moonIndex = 0;
+      },
+    });
+    expect(chooseCombatAction(feed.data, feed.state, 0)).toEqual({
+      type: "playCard",
+      instanceId: p0(feed.state).hand[0]!,
+    });
+  });
+
+  it("bot: forbidden self-loss respects the +5 HP buffer", () => {
+    const make = (hp: number) =>
+      makeTestCombat({
+        heroIds: ["f08", "f04", "m06"],
+        setup: (s) => {
+          p0(s).moonPower = 9;
+          setHand(s, ["f08_huyet_trieu"]);
+          s.heroes[0]!.hp = hp;
+        },
+      });
+    // f08_huyet_trieu costs 3 own HP: at 8 HP (≤ 3+5) the bot holds it.
+    const low = make(8);
+    expect(chooseCombatAction(low.data, low.state, 0).type).toBe("endTurn");
+    const safe = make(20);
+    expect(chooseCombatAction(safe.data, safe.state, 0)).toEqual({
+      type: "playCard",
+      instanceId: p0(safe.state).hand[0]!,
+    });
   });
 });
