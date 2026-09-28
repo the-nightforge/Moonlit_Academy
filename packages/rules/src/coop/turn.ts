@@ -7,6 +7,7 @@ import { heroesOf } from "../players";
 import { fireEventHooks, runRelicHooks } from "../run-relic-hooks";
 import { hasStatus, removeStatus } from "../statuses";
 import { endRound, endSeatTurn } from "../turn";
+import { heroTurnStart } from "../turn-passives";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "../types/index";
 
 /**
@@ -41,6 +42,7 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
       hero.firstHitUsedThisTurn = false;
       hero.firstCardDiscountActive =
         hero.leveledUp && levelUpPassive(data, hero)?.type === "firstOwnCardDiscount";
+      heroTurnStart(data, state, hero, events);
     }
   }
   checkLevelUps(data, state, events);

@@ -338,6 +338,8 @@ export function resolveEffect(
         targets = [...new Set([...targets, ...alliesOf(state, ctx.source).filter((h) => h.alive)])];
       }
       for (const target of targets) {
+        // Hộ Vệ on the caster itself is meaningless — the guardian must be an ally.
+        if (effect.status === "guard" && target.id === ctx.source.id) continue;
         const newFreeze = effect.status === "freeze" && !hasStatus(target, "freeze");
         applyStatus(target, effect.status, (effect.amount + bonus) * durationFactor, ctx.source.id, events);
         if (newFreeze && ctx.source.side === "hero") {

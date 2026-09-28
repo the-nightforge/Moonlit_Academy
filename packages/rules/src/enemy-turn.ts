@@ -1,8 +1,10 @@
 import { checkCombatEnd, resolveEffects, tickUnitStatuses } from "./effects";
 import { chooseHeroTarget } from "./intent";
+import { checkLevelUps } from "./levelup";
 import { fireEventHooks } from "./run-relic-hooks";
-import { hasStatus, removeStatus } from "./statuses";
-import type { CombatEvent, CombatState, GameData, Targeting } from "./types/index";
+import { getStatus, hasStatus, removeStatus } from "./statuses";
+import { interceptHit } from "./turn-passives";
+import type { CombatEvent, CombatState, GameData, HeroState, Targeting } from "./types/index";
 
 export function reresolveTarget(
   state: CombatState,
@@ -14,6 +16,15 @@ export function reresolveTarget(
   const announced = state.heroes.find((hero) => hero.id === announcedTargetId);
   if (announced?.alive && !hasStatus(announced, "stealth")) return announced.id;
   return chooseHeroTarget(state, targeting);
+}
+
+/** Hộ Vệ: the living guardian standing in for `targetId`, if any (`01` §9.3.1 step 1b). */
+export function guardianOf(state: CombatState, targetId: string): HeroState | undefined {
+  const target = state.heroes.find((hero) => hero.id === targetId);
+  const sourceId = target ? getStatus(target, "guard")?.sourceId : undefined;
+  if (sourceId === undefined || sourceId === targetId) return undefined;
+  const guardian = state.heroes.find((hero) => hero.id === sourceId);
+  return guardian?.alive ? guardian : undefined;
 }
 
 export function runEnemyTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
@@ -55,6 +66,12 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
         if (targetId === null) {
           events.push({ type: "intentFizzled", enemyId: enemy.id, intentId: intent.id });
           continue;
+        }
+        const guardian = guardianOf(state, targetId);
+        if (guardian) {
+          targetId = guardian.id;
+          interceptHit(data, guardian, events);
+          checkLevelUps(data, state, events);
         }
       }
       events.push({ type: "intentExecuted", enemyId: enemy.id, intentId: intent.id, targetId });

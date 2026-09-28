@@ -9,6 +9,7 @@ import { heroesOf, seatTag } from "./players";
 import { cardOwners } from "./queries";
 import { fireEventHooks, runRelicHooks } from "./run-relic-hooks";
 import { DURATION_STATUSES, hasStatus, removeStatus } from "./statuses";
+import { heroTurnStart } from "./turn-passives";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "./types/index";
 
 export function startPlayerTurn(
@@ -37,6 +38,7 @@ export function startPlayerTurn(
     hero.comboBonusUsedThisTurn = false;
     hero.firstHitUsedThisTurn = false;
     hero.firstCardDiscountActive = hero.leveledUp && levelUpPassive(data, hero)?.type === "firstOwnCardDiscount";
+    heroTurnStart(data, state, hero, events);
   }
   checkLevelUps(data, state, events);
   for (const hero of heroesOf(state, player.index)) {

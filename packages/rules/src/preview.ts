@@ -1,5 +1,5 @@
 import { computeDamageAmount, type EffectContext } from "./effects";
-import { reresolveTarget } from "./enemy-turn";
+import { guardianOf, reresolveTarget } from "./enemy-turn";
 import { baseMoonPower } from "./moon-power";
 import { hasStatus } from "./statuses";
 import type {
@@ -42,6 +42,7 @@ function previewIntent(
   let fizzles = false;
   if (intent.targeting !== undefined) {
     targetId = reresolveTarget({ ...state }, planned.targetId, intent.targeting);
+    if (targetId !== null) targetId = guardianOf(state, targetId)?.id ?? targetId;
     fizzles = targetId === null;
   }
   const ctx: EffectContext = {

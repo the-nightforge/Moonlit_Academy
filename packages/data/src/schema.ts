@@ -13,7 +13,7 @@ const moonPhaseIdSchema = z.enum([
 const statusIdSchema = z.enum([
   "stealth", "taunt", "weak", "vulnerable", "mark",
   "burn", "regen", "strength", "empower", "freeze",
-  "reflect",
+  "reflect", "guard",
 ]);
 const cardTagSchema = z.enum([
   "attack", "assassin", "control", "moon", "heal", "forbidden",
@@ -72,6 +72,12 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
   ]),
 );
 
+const levelUpCounterSchema = z.enum([
+  "damageTaken", "turnsWithAllyRegen", "enemiesKilled",
+  "freezesApplied", "buffsStolen",
+  "hitsIntercepted",
+]);
+
 const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("attackDamageBonus"), amount: intAmount }),
   z.object({ type: z.literal("regenSpreadsToAllAllies") }),
@@ -83,6 +89,8 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("firstComboCountsExtra"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("firstHitVulnerable"), rounds: z.number().int().positive() }),
   z.object({ type: z.literal("bloodMoonOwnCardDiscount"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("armorPerTurn"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("interceptArmor"), amount: z.number().int().positive() }),
 ]);
 
 const branchSchema = z.object({
@@ -103,10 +111,7 @@ export const heroDefSchema = z.object({
   levelUp: z.object({
     name: z.string().min(1),
     description: z.string(),
-    counter: z.enum([
-      "damageTaken", "turnsWithAllyRegen", "enemiesKilled",
-      "freezesApplied", "buffsStolen",
-    ]),
+    counter: levelUpCounterSchema,
     threshold: z.number().int().positive(),
     constellationThreshold: z.number().int().positive(),
     passive: levelUpPassiveSchema,

@@ -11,7 +11,7 @@ export type MoonPhaseId =
 export type StatusId =
   | "stealth" | "taunt" | "weak" | "vulnerable" | "mark"
   | "burn" | "regen" | "strength" | "empower" | "freeze"
-  | "reflect";
+  | "reflect" | "guard";
 
 export type CardTag =
   | "attack" | "assassin" | "control" | "moon" | "heal" | "forbidden"
@@ -19,7 +19,8 @@ export type CardTag =
 
 export type LevelUpCounter =
   | "damageTaken" | "turnsWithAllyRegen" | "enemiesKilled"
-  | "freezesApplied" | "buffsStolen";
+  | "freezesApplied" | "buffsStolen"
+  | "hitsIntercepted";
 
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
@@ -32,7 +33,10 @@ export type LevelUpPassive =
   | { type: "healCleanses" }
   | { type: "firstComboCountsExtra"; amount: number }
   | { type: "firstHitVulnerable"; rounds: number }
-  | { type: "bloodMoonOwnCardDiscount"; amount: number };
+  | { type: "bloodMoonOwnCardDiscount"; amount: number }
+  // Phase 7a (`18` §2.1).
+  | { type: "armorPerTurn"; amount: number }
+  | { type: "interceptArmor"; amount: number };
 
 export interface LevelUpDef {
   name: string;

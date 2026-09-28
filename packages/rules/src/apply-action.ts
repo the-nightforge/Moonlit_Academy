@@ -2,6 +2,7 @@ import { cloneState } from "./clone";
 import { fireCoopCombos } from "./coop/combos";
 import { coopEndTurn, startCoopTurn } from "./coop/turn";
 import { checkCombatEnd, processDeaths, resolveEffects } from "./effects";
+import { guardianOf } from "./enemy-turn";
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
 import { activePlayerState, heroesOf, seatTag } from "./players";
@@ -11,6 +12,7 @@ import { shuffle } from "./rng";
 import { runRelicHooks } from "./run-relic-hooks";
 import { removeStatus } from "./statuses";
 import { runEndTurn, startPlayerTurn } from "./turn";
+import { interceptHit } from "./turn-passives";
 import type {
   Action,
   ActionResult,
@@ -90,11 +92,21 @@ function playCard(
     comboBonus = passive.amount;
   }
 
+  // Fair Arena: a single-target card aimed at a guarded hero hits the guardian (`01` §15.4).
+  let chosenId = action.targetId;
+  if (state.mode === "pvp" && card.target === "enemy" && chosenId !== undefined) {
+    const guardian = guardianOf(state, chosenId);
+    if (guardian && guardian.player !== player.index) {
+      chosenId = guardian.id;
+      interceptHit(data, guardian, events);
+    }
+  }
+
   resolveEffects(
     data,
     state,
     card.effects,
-    { source: owner, actors: owners, card, chosenId: action.targetId, instanceId: instance.instanceId, comboBonus },
+    { source: owner, actors: owners, card, chosenId, instanceId: instance.instanceId, comboBonus },
     events,
   );
 

@@ -14,6 +14,7 @@ export const DURATION_STATUSES: ReadonlySet<StatusId> = new Set([
   "weak",
   "vulnerable",
   "mark",
+  "guard",
 ]);
 
 export function hasStatus(unit: UnitState, status: StatusId): boolean {
@@ -49,13 +50,13 @@ export function applyStatus(
   if (existing) {
     if (status === "freeze") return;
     existing.value += amount;
-    if (status === "mark") existing.sourceId = sourceId;
+    if (status === "mark" || status === "guard") existing.sourceId = sourceId;
     events.push({ type: "statusApplied", targetId: unit.id, status, value: existing.value });
     return;
   }
   const value = status === "freeze" ? 1 : amount;
   const instance: StatusInstance =
-    status === "mark" ? { id: status, value, sourceId } : { id: status, value };
+    status === "mark" || status === "guard" ? { id: status, value, sourceId } : { id: status, value };
   unit.statuses.push(instance);
   events.push({ type: "statusApplied", targetId: unit.id, status, value });
 }
