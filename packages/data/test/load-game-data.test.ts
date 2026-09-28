@@ -50,8 +50,8 @@ describe("loadGameData", () => {
   it("loads the real data files into GameData keyed by id", () => {
     const data = loadGameData();
 
-    expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02", "m01", "m02", "m03", "m04", "f01"]);
-    expect(Object.keys(data.cards)).toHaveLength(134); // 120 hero + 3 bond + 10 constellation-4 plus cards + 1 token
+    expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02", "m01", "m02", "m03", "m04", "f01", "m07", "m08", "m10", "f08"]);
+    expect(Object.keys(data.cards)).toHaveLength(190); // 168 hero + 7 bond + 14 constellation-4 plus cards + 1 token
     expect(Object.keys(data.enemies)).toEqual([
       "puppet_guard", "shadow_fox", "moon_ape", "book_wraith", "black_guard", "fox_king", "eclipse_lord",
     ]);

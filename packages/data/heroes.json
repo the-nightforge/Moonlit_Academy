@@ -767,5 +767,300 @@
         "amount": 1
       }
     }
+  },
+  {
+    "id": "m07",
+    "name": "Ninh An",
+    "faction": "bachLo",
+    "archetype": "specialist",
+    "rarity": "rare",
+    "maxHp": 34,
+    "cardIds": [
+      "m07_co_vu",
+      "m07_tam_y",
+      "m07_ho_tong",
+      "m07_trieu_huyet",
+      "m07_huyet_anh",
+      "m07_dong_huyet"
+    ],
+    "lockedCardIds": [
+      "m07_dong_cam",
+      "m07_phu_ho",
+      "m07_thien_chan",
+      "m07_huyet_te",
+      "m07_tinh_huyet",
+      "m07_xich_nguyet"
+    ],
+    "branches": [
+      {
+        "name": "Hồn Nhiên",
+        "cardIds": [
+          "m07_co_vu",
+          "m07_tam_y",
+          "m07_ho_tong",
+          "m07_dong_cam",
+          "m07_phu_ho",
+          "m07_thien_chan"
+        ]
+      },
+      {
+        "name": "Thức Tỉnh",
+        "cardIds": [
+          "m07_trieu_huyet",
+          "m07_huyet_anh",
+          "m07_dong_huyet",
+          "m07_huyet_te",
+          "m07_tinh_huyet",
+          "m07_xich_nguyet"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Huyết Mạch",
+      "description": "Đầu lượt Ninh An nhận 1 buff ngẫu nhiên (Sức Mạnh 1, Cường Hóa 3, Hồi Phục 3 hoặc Phản Đòn 2).",
+      "counter": "turnsSurvived",
+      "threshold": 5,
+      "constellationThreshold": 4,
+      "passive": {
+        "type": "randomBuffPerTurn"
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m07_co_vu",
+      "plusCardId": "m07_co_vu_plus"
+    },
+    "altLevelUp": {
+      "name": "Huyết Nguyệt Chi Tử",
+      "description": "Ninh An không mất HP vì Huyết Nguyệt.",
+      "passive": {
+        "type": "bloodMoonImmune"
+      }
+    }
+  },
+  {
+    "id": "m08",
+    "name": "Khương Tịch",
+    "faction": "xichDien",
+    "archetype": "controller",
+    "rarity": "legendary",
+    "maxHp": 30,
+    "cardIds": [
+      "m08_doi_van",
+      "m08_tinh_tuong",
+      "m08_chuyen_van",
+      "m08_suy_van",
+      "m08_huyet_chiem",
+      "m08_huyet_hoa"
+    ],
+    "lockedCardIds": [
+      "m08_nghich_van",
+      "m08_thien_doi",
+      "m08_huyet_khai",
+      "m08_xich_van",
+      "m08_phan_van",
+      "m08_diet_tinh"
+    ],
+    "branches": [
+      {
+        "name": "Đổi Vận",
+        "cardIds": [
+          "m08_doi_van",
+          "m08_tinh_tuong",
+          "m08_chuyen_van",
+          "m08_suy_van",
+          "m08_nghich_van",
+          "m08_thien_doi"
+        ]
+      },
+      {
+        "name": "Huyết Thiên",
+        "cardIds": [
+          "m08_huyet_chiem",
+          "m08_huyet_hoa",
+          "m08_huyet_khai",
+          "m08_xich_van",
+          "m08_phan_van",
+          "m08_diet_tinh"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Quan Tinh",
+      "description": "Đầu lượt Khương Tịch mở Chọn Pha: giữ pha hoặc cho trăng tiến 1–2 pha.",
+      "counter": "moonShifts",
+      "threshold": 3,
+      "constellationThreshold": 3,
+      "passive": {
+        "type": "chooseMoon"
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m08_doi_van",
+      "plusCardId": "m08_doi_van_plus"
+    },
+    "altLevelUp": {
+      "name": "Tinh Mệnh",
+      "description": "Mỗi lá có Đổi Vận của Khương Tịch áp Suy Yếu 1 lên mọi kẻ địch.",
+      "passive": {
+        "type": "moonShiftWeakensEnemies",
+        "amount": 1
+      }
+    }
+  },
+  {
+    "id": "m10",
+    "name": "Chu Quyết",
+    "faction": "thanhLoan",
+    "archetype": "striker",
+    "rarity": "rare",
+    "maxHp": 30,
+    "cardIds": [
+      "m10_kho_hoc",
+      "m10_tich_doc",
+      "m10_tu_luc",
+      "m10_van_luan",
+      "m10_han_mon",
+      "m10_liet_but"
+    ],
+    "lockedCardIds": [
+      "m10_da_tuc",
+      "m10_thong_huyen",
+      "m10_phan_doc",
+      "m10_bach_chien",
+      "m10_dien_kinh",
+      "m10_lien_nguyen"
+    ],
+    "branches": [
+      {
+        "name": "Khổ Học",
+        "cardIds": [
+          "m10_kho_hoc",
+          "m10_tich_doc",
+          "m10_tu_luc",
+          "m10_van_luan",
+          "m10_da_tuc",
+          "m10_thong_huyen"
+        ]
+      },
+      {
+        "name": "Hàn Môn",
+        "cardIds": [
+          "m10_han_mon",
+          "m10_liet_but",
+          "m10_phan_doc",
+          "m10_bach_chien",
+          "m10_dien_kinh",
+          "m10_lien_nguyen"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Bác Học",
+      "description": "Lá scheme đầu tiên mỗi lượt của Chu Quyết giải quyết hiệu ứng 2 lần.",
+      "counter": "studyPoints",
+      "threshold": 5,
+      "constellationThreshold": 4,
+      "passive": {
+        "type": "firstSchemeRepeats"
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m10_kho_hoc",
+      "plusCardId": "m10_kho_hoc_plus"
+    },
+    "altLevelUp": {
+      "name": "Trạng Nguyên",
+      "description": "Lá tấn công của Chu Quyết gây thêm 1 damage mỗi hit cho mỗi lá đã đánh trước nó trong lượt.",
+      "passive": {
+        "type": "comboAttackBonus",
+        "amount": 1
+      }
+    }
+  },
+  {
+    "id": "f08",
+    "name": "Phượng Chiêu Dung",
+    "faction": "xichDien",
+    "archetype": "striker",
+    "rarity": "legendary",
+    "maxHp": 34,
+    "cardIds": [
+      "f08_huyet_vu",
+      "f08_phe_mac",
+      "f08_phan_huyet",
+      "f08_huyet_trieu",
+      "f08_dinh_menh",
+      "f08_huyet_vuc"
+    ],
+    "lockedCardIds": [
+      "f08_lieu_hoa",
+      "f08_cam_chu",
+      "f08_niet_ban",
+      "f08_nghich_thien",
+      "f08_phan_menh",
+      "f08_phuong_nghich"
+    ],
+    "branches": [
+      {
+        "name": "Huyết Phượng",
+        "cardIds": [
+          "f08_huyet_vu",
+          "f08_phe_mac",
+          "f08_phan_huyet",
+          "f08_lieu_hoa",
+          "f08_cam_chu",
+          "f08_niet_ban"
+        ]
+      },
+      {
+        "name": "Nghịch Mệnh",
+        "cardIds": [
+          "f08_huyet_trieu",
+          "f08_dinh_menh",
+          "f08_huyet_vuc",
+          "f08_nghich_thien",
+          "f08_phan_menh",
+          "f08_phuong_nghich"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Huyết Phượng",
+      "description": "Lá Cấm Thuật của Phượng Chiêu Dung không còn làm nàng mất HP.",
+      "counter": "forbiddenHpLost",
+      "threshold": 15,
+      "constellationThreshold": 11,
+      "passive": {
+        "type": "forbiddenNoSelfHpLoss"
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f08_phe_mac",
+      "plusCardId": "f08_phe_mac_plus"
+    },
+    "altLevelUp": {
+      "name": "Phản Sư",
+      "description": "Khi Huyết Nguyệt, mỗi hit của lá Phượng Chiêu Dung gây thêm 3 damage.",
+      "passive": {
+        "type": "bloodMoonAttackBonus",
+        "amount": 3
+      }
+    }
   }
 ]

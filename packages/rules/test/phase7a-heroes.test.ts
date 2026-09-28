@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CombatState, GameData, IntentDef } from "../src/index";
 import { applyAction, buildPvpLoadout, createProfile, starterDeck, validateDeck } from "../src/index";
-import { makeTestCombat, ownAllHeroes, p0, setIntent, testData } from "./helpers";
+import { makeEnemiesIdle, makeTestCombat, ownAllHeroes, p0, setIntent, testData } from "./helpers";
 
 const WAVE1 = ["m01", "m02", "m03", "m04", "f01"] as const;
+const WAVE2 = ["m07", "m08", "m10", "f08"] as const;
+const BONDS: [string, string][] = [["m01", "f01"], ["m02", "m01"], ["m03", "m10"], ["m08", "f08"]];
 
 const strike6: IntentDef = {
   id: "t_strike6", name: "Đánh", kind: "attack", targeting: "front",
@@ -144,5 +146,119 @@ describe("phase 7a heroes — wave 1", () => {
     current = play(data, current, byCard(current, "m04_duong_mach"));
     expect(current.heroes[0]!.levelUpCounter).toBeGreaterThanOrEqual(20);
     expect(current.heroes[0]!.leveledUp).toBe(true);
+  });
+});
+
+describe("phase 7a heroes — wave 2 and bonds", () => {
+  it("T276h: 14 heroes load; each bond pair adds its bond card to the deck", () => {
+    const data = testData();
+    expect(Object.keys(data.heroes)).toHaveLength(14);
+    for (const id of WAVE2) expect(data.pvpConfig.heroStats[id]).toBeDefined();
+    for (const [a, b] of BONDS) {
+      const third = ["m06", "f04", "m05"].find((id) => id !== a && id !== b)!;
+      const { state } = makeTestCombat({ heroIds: [a, b, third] });
+      const bondIds = Object.values(state.cards).filter((c) => c.ownerIds.length === 2).map((c) => c.ownerIds.slice().sort().join("+"));
+      expect(bondIds).toContain([a, b].sort().join("+"));
+    }
+  });
+
+  it("T276i: M08 levels after three Đổi Vận cards and opens Chọn Pha at turn start", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: ["m08", "f04", "m06"],
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        p0(s).moonPower = 99;
+        takeCards(s, "m08_doi_van", 3);
+      },
+    });
+    let current = state;
+    for (const instanceId of p0(state).hand.filter((id) => state.cards[id]!.cardId === "m08_doi_van")) {
+      current = play(data, current, instanceId);
+    }
+    expect(current.heroes[0]!.levelUpCounter).toBe(3);
+    expect(current.heroes[0]!.leveledUp).toBe(true);
+    const turn = applyAction(data, current, { type: "endTurn" });
+    if (!turn.ok) throw new Error(turn.error);
+    expect(turn.state.status).toBe("choosing");
+    expect(p0(turn.state).pendingChoice).toEqual({ kind: "chooseMoon", options: [0, 1, 2] });
+  });
+
+  it("T276j: F08 levels after losing 15 HP to forbidden cards, then pays no more HP", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: ["f08", "f04", "m06"],
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        p0(s).moonPower = 99;
+        takeCards(s, "f08_huyet_vu", 3);
+        takeCards(s, "f08_huyet_trieu", 3);
+        takeCards(s, "f08_phe_mac", 1);
+      },
+    });
+    let current = state;
+    const playAll = (cardId: string, targetId?: string) => {
+      for (const instanceId of p0(current).hand.filter((id) => current.cards[id]!.cardId === cardId)) {
+        current = play(data, current, instanceId, targetId);
+      }
+    };
+    playAll("f08_huyet_vu");
+    playAll("f08_huyet_trieu");
+    expect(current.heroes[0]!.hp).toBe(current.heroes[0]!.maxHp - 15);
+    expect(current.heroes[0]!.levelUpCounter).toBe(15);
+    expect(current.heroes[0]!.leveledUp).toBe(true);
+    const hpBefore = current.heroes[0]!.hp;
+    current = play(data, current, p0(current).hand.find((id) => current.cards[id]!.cardId === "f08_phe_mac")!, "enemy:0");
+    expect(current.heroes[0]!.hp).toBe(hpBefore);
+    expect(current.heroes[0]!.levelUpCounter).toBe(15);
+  });
+
+  it("T276k: M10 levels at five Khổ Học points; the first scheme card of the next turn resolves twice", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: ["m10", "f04", "m06"],
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        p0(s).moonPower = 99;
+        takeCards(s, "m10_kho_hoc", 3);
+        takeCards(s, "m10_han_mon", 2);
+      },
+    });
+    let current = state;
+    for (const instanceId of p0(current).hand.filter((id) => current.cards[id]!.cardId === "m10_kho_hoc")) {
+      current = play(data, current, instanceId);
+    }
+    current = play(data, current, p0(current).hand.find((id) => current.cards[id]!.cardId === "m10_han_mon")!, "enemy:0");
+    expect(current.heroes[0]!.levelUpCounter).toBe(4);
+    const turn = applyAction(data, current, { type: "endTurn" });
+    if (!turn.ok) throw new Error(turn.error);
+    expect(turn.state.heroes[0]!.levelUpCounter).toBe(5);
+    expect(turn.state.heroes[0]!.leveledUp).toBe(true);
+    const hpBefore = turn.state.enemies[0]!.hp;
+    const next = applyAction(data, turn.state, {
+      type: "playCard",
+      instanceId: p0(turn.state).hand.find((id) => turn.state.cards[id]!.cardId === "m10_han_mon")!,
+      targetId: "enemy:0",
+    });
+    if (!next.ok) throw new Error(next.error);
+    expect(next.events.filter((e) => e.type === "damageDealt")).toHaveLength(2);
+    expect(next.state.enemies[0]!.hp).toBe(hpBefore - 6);
+  });
+
+  it("T276l: M07 levels after five turns survived, then gains a random buff each turn start", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: ["m07", "f04", "m06"],
+      mutateData: makeEnemiesIdle,
+    });
+    let current = state;
+    for (let i = 0; i < 5; i++) {
+      const turn = applyAction(data, current, { type: "endTurn" });
+      if (!turn.ok) throw new Error(turn.error);
+      current = turn.state;
+    }
+    expect(current.heroes[0]!.levelUpCounter).toBe(5);
+    expect(current.heroes[0]!.leveledUp).toBe(true);
+    const next = applyAction(data, current, { type: "endTurn" });
+    if (!next.ok) throw new Error(next.error);
+    const buffIds = data.combatConfig.levelUpRandomBuffs.map((buff) => buff.status);
+    const buffs = next.state.heroes[0]!.statuses.filter((status) => buffIds.includes(status.id));
+    expect(buffs).toHaveLength(1);
   });
 });

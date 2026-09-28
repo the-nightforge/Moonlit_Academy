@@ -4263,5 +4263,1816 @@
     ],
     "text": "Gây 6 damage lên mọi kẻ địch; Trăng Tròn: gây 10. Mọi Hero hồi 4 HP.",
     "token": true
+  },
+  {
+    "id": "m07_co_vu",
+    "name": "Cổ Vũ",
+    "ownerId": "m07",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "heal",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "1 Hero được Cường Hóa 2, hồi 1 HP.",
+    "keywords": [
+      "cuong_hoa"
+    ]
+  },
+  {
+    "id": "m07_tam_y",
+    "name": "Tâm Ý",
+    "ownerId": "m07",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "heal"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "1 Hero hồi 2 HP và nhận 2 Hồi Phục.",
+    "keywords": [
+      "hoi_phuc"
+    ]
+  },
+  {
+    "id": "m07_ho_tong",
+    "name": "Hộ Tống",
+    "ownerId": "m07",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "ward"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "stealth",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "1 Hero nhận 4 giáp và Ẩn Thân 1 vòng.",
+    "keywords": [
+      "an_than"
+    ]
+  },
+  {
+    "id": "m07_dong_cam",
+    "name": "Đồng Cam",
+    "ownerId": "m07",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 1,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Mọi Hero +1 Sức Mạnh.",
+    "keywords": [
+      "suc_manh"
+    ]
+  },
+  {
+    "id": "m07_phu_ho",
+    "name": "Phù Hộ",
+    "ownerId": "m07",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "heal"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 3,
+        "to": "allAllies"
+      },
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Mọi Hero hồi 3 HP và nhận 2 Hồi Phục.",
+    "keywords": [
+      "hoi_phuc"
+    ]
+  },
+  {
+    "id": "m07_thien_chan",
+    "name": "Thiên Chân",
+    "ownerId": "m07",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 3,
+        "to": "allAllies"
+      },
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 3,
+        "to": "allAllies"
+      },
+      {
+        "type": "heal",
+        "amount": 2,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Mọi Hero Cường Hóa 3, nhận 3 Hồi Phục, hồi 2 HP.",
+    "keywords": [
+      "cuong_hoa",
+      "hoi_phuc"
+    ]
+  },
+  {
+    "id": "m07_trieu_huyet",
+    "name": "Triệu Huyết",
+    "ownerId": "m07",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "bloodMoon",
+        "rounds": 1
+      },
+      {
+        "type": "heal",
+        "amount": 2,
+        "to": "self"
+      }
+    ],
+    "text": "Gọi Huyết Nguyệt 1 vòng. Ninh An hồi 2 HP.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "m07_huyet_anh",
+    "name": "Huyết Ảnh",
+    "ownerId": "m07",
+    "cost": 2,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "moon"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "bloodMoonActive"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 8,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 4,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 4 damage. Huyết Nguyệt: gây 8.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "m07_dong_huyet",
+    "name": "Đồng Huyết",
+    "ownerId": "m07",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "heal"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "bloodMoonActive"
+        },
+        "then": [
+          {
+            "type": "heal",
+            "amount": 4,
+            "to": "allAllies"
+          }
+        ],
+        "else": [
+          {
+            "type": "heal",
+            "amount": 2,
+            "to": "allAllies"
+          }
+        ]
+      }
+    ],
+    "text": "Mọi Hero hồi 2 HP. Huyết Nguyệt: hồi 4.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "m07_huyet_te",
+    "name": "Huyết Tế",
+    "ownerId": "m07",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "bloodMoon",
+        "rounds": 2
+      },
+      {
+        "type": "gainMoonPower",
+        "amount": 1
+      }
+    ],
+    "text": "Gọi Huyết Nguyệt 2 vòng. Nhận 1 Nguyệt Lực.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "m07_tinh_huyet",
+    "name": "Tịnh Huyết",
+    "ownerId": "m07",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "ward"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "cleanse",
+        "to": "allAllies"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "bloodMoonActive"
+        },
+        "then": [
+          {
+            "type": "gainArmor",
+            "amount": 4,
+            "to": "allAllies"
+          }
+        ],
+        "else": [
+          {
+            "type": "gainArmor",
+            "amount": 2,
+            "to": "allAllies"
+          }
+        ]
+      }
+    ],
+    "text": "Giải trừ mọi Hero; mọi Hero nhận 2 giáp. Huyết Nguyệt: nhận 4.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "m07_xich_nguyet",
+    "name": "Xích Nguyệt",
+    "ownerId": "m07",
+    "cost": 6,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "bloodMoon",
+        "rounds": 3
+      },
+      {
+        "type": "heal",
+        "amount": 5,
+        "to": "allAllies"
+      },
+      {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 2,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Gọi Huyết Nguyệt 3 vòng. Mọi Hero hồi 5 HP và Cường Hóa 2.",
+    "keywords": [
+      "huyet_nguyet",
+      "cuong_hoa"
+    ]
+  },
+  {
+    "id": "m07_co_vu_plus",
+    "name": "Cổ Vũ+",
+    "ownerId": "m07",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 3,
+        "to": "chosen"
+      },
+      {
+        "type": "heal",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "1 Hero được Cường Hóa 3, hồi 2 HP.",
+    "keywords": [
+      "cuong_hoa"
+    ],
+    "plusOf": "m07_co_vu"
+  },
+  {
+    "id": "m08_doi_van",
+    "name": "Đổi Vận",
+    "ownerId": "m08",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "shiftMoon",
+        "amount": 1
+      }
+    ],
+    "text": "Đổi Vận: trăng tiến 1 pha."
+  },
+  {
+    "id": "m08_tinh_tuong",
+    "name": "Tinh Tượng",
+    "ownerId": "m08",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "chooseCard",
+        "look": 2
+      }
+    ],
+    "text": "Chiêm Bài 2.",
+    "keywords": [
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "m08_chuyen_van",
+    "name": "Chuyển Vận",
+    "ownerId": "m08",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "shiftMoon",
+        "amount": 1
+      },
+      {
+        "type": "gainMoonPower",
+        "amount": 1
+      }
+    ],
+    "text": "Đổi Vận 1 pha. Nhận 1 Nguyệt Lực."
+  },
+  {
+    "id": "m08_suy_van",
+    "name": "Suy Vận",
+    "ownerId": "m08",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "shiftMoon",
+        "amount": 1
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Đổi Vận 1 pha. Suy Yếu 1 kẻ địch 2 vòng.",
+    "keywords": [
+      "suy_yeu"
+    ]
+  },
+  {
+    "id": "m08_nghich_van",
+    "name": "Nghịch Vận",
+    "ownerId": "m08",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "shiftMoon",
+        "amount": -1
+      }
+    ],
+    "text": "Đổi Vận: trăng lùi 1 pha."
+  },
+  {
+    "id": "m08_thien_doi",
+    "name": "Thiên Đổi",
+    "ownerId": "m08",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "shiftMoon",
+        "amount": 2
+      },
+      {
+        "type": "chooseCard",
+        "look": 2
+      }
+    ],
+    "text": "Đổi Vận 2 pha. Chiêm Bài 2.",
+    "keywords": [
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "m08_huyet_chiem",
+    "name": "Huyết Chiêm",
+    "ownerId": "m08",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "bloodMoonActive"
+        },
+        "then": [
+          {
+            "type": "gainMoonPower",
+            "amount": 2
+          }
+        ],
+        "else": [
+          {
+            "type": "gainMoonPower",
+            "amount": 1
+          }
+        ]
+      }
+    ],
+    "text": "Nhận 1 Nguyệt Lực. Huyết Nguyệt: nhận 2.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "m08_huyet_hoa",
+    "name": "Huyết Hỏa",
+    "ownerId": "m08",
+    "cost": 2,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "moon"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "bloodMoonActive"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 9,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 5,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 5 damage. Huyết Nguyệt: gây 9.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "m08_huyet_khai",
+    "name": "Huyết Khai",
+    "ownerId": "m08",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "forbidden",
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 2,
+        "to": "self"
+      },
+      {
+        "type": "bloodMoon",
+        "rounds": 2
+      }
+    ],
+    "text": "Mất 2 HP. Gọi Huyết Nguyệt 2 vòng.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "m08_xich_van",
+    "name": "Xích Vận",
+    "ownerId": "m08",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "control"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "bloodMoonActive"
+        },
+        "then": [
+          {
+            "type": "applyStatus",
+            "status": "weak",
+            "amount": 2,
+            "to": "allEnemies"
+          }
+        ],
+        "else": [
+          {
+            "type": "applyStatus",
+            "status": "weak",
+            "amount": 1,
+            "to": "allEnemies"
+          }
+        ]
+      }
+    ],
+    "text": "Suy Yếu mọi kẻ địch 1 vòng. Huyết Nguyệt: 2 vòng.",
+    "keywords": [
+      "suy_yeu",
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "m08_phan_van",
+    "name": "Phản Vận",
+    "ownerId": "m08",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "drainMoonPower",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "bloodMoonActive"
+        },
+        "then": [
+          {
+            "type": "applyStatus",
+            "status": "vulnerable",
+            "amount": 2,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Tỏa Nguyệt 2. Huyết Nguyệt: mục tiêu Dễ Vỡ 2 vòng.",
+    "keywords": [
+      "toa_nguyet",
+      "de_vo",
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "m08_diet_tinh",
+    "name": "Diệt Tinh",
+    "ownerId": "m08",
+    "cost": 6,
+    "copies": 1,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "bloodMoon",
+        "rounds": 2
+      },
+      {
+        "type": "damage",
+        "amount": 8,
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Gọi Huyết Nguyệt 2 vòng. Gây 8 damage lên mọi kẻ địch.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "m08_doi_van_plus",
+    "name": "Đổi Vận+",
+    "ownerId": "m08",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "shiftMoon",
+        "amount": 2
+      }
+    ],
+    "text": "Đổi Vận: trăng tiến 2 pha.",
+    "plusOf": "m08_doi_van"
+  },
+  {
+    "id": "m10_kho_hoc",
+    "name": "Khổ Học",
+    "ownerId": "m10",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "heldTurnsAtLeast",
+          "turns": 2
+        },
+        "then": [
+          {
+            "type": "gainMoonPower",
+            "amount": 3
+          }
+        ],
+        "else": [
+          {
+            "type": "gainMoonPower",
+            "amount": 1
+          }
+        ]
+      }
+    ],
+    "text": "Nhận 1 Nguyệt Lực. Tích Tụ 2: nhận 3.",
+    "keywords": [
+      "tich_tu"
+    ]
+  },
+  {
+    "id": "m10_tich_doc",
+    "name": "Tích Đọc",
+    "ownerId": "m10",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "heldTurnsAtLeast",
+          "turns": 2
+        },
+        "then": [
+          {
+            "type": "gainMoonPower",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "type": "chooseCard",
+        "look": 2
+      }
+    ],
+    "text": "Tích Tụ 2: nhận 2 Nguyệt Lực. Chiêm Bài 2.",
+    "keywords": [
+      "tich_tu",
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "m10_tu_luc",
+    "name": "Tự Lực",
+    "ownerId": "m10",
+    "cost": 2,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "scheme"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 5,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "heldTurnsAtLeast",
+          "turns": 1
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 3,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 5 damage. Tích Tụ 1: thêm 3.",
+    "keywords": [
+      "tich_tu"
+    ]
+  },
+  {
+    "id": "m10_van_luan",
+    "name": "Văn Luận",
+    "ownerId": "m10",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "heldTurnsAtLeast",
+          "turns": 2
+        },
+        "then": [
+          {
+            "type": "applyStatus",
+            "status": "weak",
+            "amount": 1,
+            "to": "allEnemies"
+          }
+        ]
+      }
+    ],
+    "text": "Suy Yếu mục tiêu 2 vòng. Tích Tụ 2: mọi kẻ địch Suy Yếu 1 vòng.",
+    "keywords": [
+      "suy_yeu",
+      "tich_tu"
+    ]
+  },
+  {
+    "id": "m10_da_tuc",
+    "name": "Dạ Tục",
+    "ownerId": "m10",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "heldTurnsAtLeast",
+          "turns": 2
+        },
+        "then": [
+          {
+            "type": "gainMoonPowerPerTurn",
+            "amount": 1
+          }
+        ],
+        "else": [
+          {
+            "type": "gainMoonPower",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "type": "chooseCard",
+        "look": 1
+      }
+    ],
+    "text": "Nhận 2 Nguyệt Lực. Tích Tụ 2: Dưỡng Nguyệt 1. Chiêm Bài 1.",
+    "keywords": [
+      "tich_tu",
+      "duong_nguyet",
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "m10_thong_huyen",
+    "name": "Thông Huyền",
+    "ownerId": "m10",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "heldTurnsAtLeast",
+          "turns": 3
+        },
+        "then": [
+          {
+            "type": "gainMoonPower",
+            "amount": 5
+          }
+        ],
+        "else": [
+          {
+            "type": "gainMoonPower",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "type": "chooseCard",
+        "look": 2
+      }
+    ],
+    "text": "Nhận 2 Nguyệt Lực. Tích Tụ 3: nhận 5. Chiêm Bài 2.",
+    "keywords": [
+      "tich_tu",
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "m10_han_mon",
+    "name": "Hàn Môn",
+    "ownerId": "m10",
+    "cost": 1,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "scheme"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 1
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 5,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 3,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 3 damage. Liên Hoàn 1: gây 5.",
+    "keywords": [
+      "lien_hoan"
+    ]
+  },
+  {
+    "id": "m10_liet_but",
+    "name": "Liệt Bút",
+    "ownerId": "m10",
+    "cost": 2,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 2
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 4,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 4 damage. Liên Hoàn 2: thêm 4.",
+    "keywords": [
+      "lien_hoan"
+    ]
+  },
+  {
+    "id": "m10_phan_doc",
+    "name": "Phấn Độc",
+    "ownerId": "m10",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 2
+        },
+        "then": [
+          {
+            "type": "gainMoonPower",
+            "amount": 2
+          }
+        ],
+        "else": [
+          {
+            "type": "gainMoonPower",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "type": "chooseCard",
+        "look": 1
+      }
+    ],
+    "text": "Nhận 1 Nguyệt Lực. Liên Hoàn 2: nhận 2. Chiêm Bài 1.",
+    "keywords": [
+      "lien_hoan",
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "m10_bach_chien",
+    "name": "Bách Chiến",
+    "ownerId": "m10",
+    "cost": 3,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 3,
+        "to": "chosen",
+        "hits": 2
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 3
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 3,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 3 damage 2 lần. Liên Hoàn 3: thêm 3.",
+    "keywords": [
+      "lien_hoan"
+    ]
+  },
+  {
+    "id": "m10_dien_kinh",
+    "name": "Điển Kinh",
+    "ownerId": "m10",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 2
+        },
+        "then": [
+          {
+            "type": "gainMoonPower",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "type": "chooseCard",
+        "look": 2
+      }
+    ],
+    "text": "Liên Hoàn 2: nhận 3 Nguyệt Lực. Chiêm Bài 2.",
+    "keywords": [
+      "lien_hoan",
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "m10_lien_nguyen",
+    "name": "Liên Nguyên",
+    "ownerId": "m10",
+    "cost": 6,
+    "copies": 1,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "chosen",
+        "hits": 3
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 4
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 4,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 4 damage 3 lần. Liên Hoàn 4: thêm 4.",
+    "keywords": [
+      "lien_hoan"
+    ]
+  },
+  {
+    "id": "m10_kho_hoc_plus",
+    "name": "Khổ Học+",
+    "ownerId": "m10",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "heldTurnsAtLeast",
+          "turns": 2
+        },
+        "then": [
+          {
+            "type": "gainMoonPower",
+            "amount": 4
+          }
+        ],
+        "else": [
+          {
+            "type": "gainMoonPower",
+            "amount": 2
+          }
+        ]
+      }
+    ],
+    "text": "Nhận 2 Nguyệt Lực. Tích Tụ 2: nhận 4.",
+    "keywords": [
+      "tich_tu"
+    ],
+    "plusOf": "m10_kho_hoc"
+  },
+  {
+    "id": "f08_huyet_vu",
+    "name": "Huyết Vũ",
+    "ownerId": "f08",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "forbidden"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 2,
+        "to": "self"
+      },
+      {
+        "type": "gainMoonPower",
+        "amount": 2
+      }
+    ],
+    "text": "Mất 2 HP. Nhận 2 Nguyệt Lực."
+  },
+  {
+    "id": "f08_phe_mac",
+    "name": "Phệ Mạch",
+    "ownerId": "f08",
+    "cost": 2,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "forbidden"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 2,
+        "to": "self"
+      },
+      {
+        "type": "damage",
+        "amount": 7,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mất 2 HP. Gây 7 damage."
+  },
+  {
+    "id": "f08_phan_huyet",
+    "name": "Phẫn Huyết",
+    "ownerId": "f08",
+    "cost": 3,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "forbidden"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 3,
+        "to": "self"
+      },
+      {
+        "type": "missingHpDamage",
+        "ratio": 0.5,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mất 3 HP. Phẫn Huyết: gây damage bằng 50% số HP Phượng Chiêu Dung đã mất.",
+    "keywords": [
+      "phan_huyet"
+    ]
+  },
+  {
+    "id": "f08_lieu_hoa",
+    "name": "Liệu Hỏa",
+    "ownerId": "f08",
+    "cost": 4,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+        "attack",
+        "forbidden"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 3,
+        "to": "self"
+      },
+      {
+        "type": "damage",
+        "amount": 9,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "burn",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mất 3 HP. Gây 9 damage và Thiêu Đốt 2.",
+    "keywords": [
+      "thieu_dot"
+    ]
+  },
+  {
+    "id": "f08_cam_chu",
+    "name": "Cấm Chú",
+    "ownerId": "f08",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "forbidden",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 3,
+        "to": "self"
+      },
+      {
+        "type": "drainMoonPower",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mất 3 HP. Tỏa Nguyệt 2, mục tiêu Dễ Vỡ 2 vòng.",
+    "keywords": [
+      "toa_nguyet",
+      "de_vo"
+    ]
+  },
+  {
+    "id": "f08_niet_ban",
+    "name": "Niết Bàn",
+    "ownerId": "f08",
+    "cost": 6,
+    "copies": 1,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "forbidden"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 5,
+        "to": "self"
+      },
+      {
+        "type": "missingHpDamage",
+        "ratio": 1,
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Mất 5 HP. Phẫn Huyết lên mọi kẻ địch: gây damage bằng số HP Phượng Chiêu Dung đã mất.",
+    "keywords": [
+      "phan_huyet"
+    ]
+  },
+  {
+    "id": "f08_huyet_trieu",
+    "name": "Huyết Triều",
+    "ownerId": "f08",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "forbidden",
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 3,
+        "to": "self"
+      },
+      {
+        "type": "bloodMoon",
+        "rounds": 1
+      }
+    ],
+    "text": "Mất 3 HP. Huyết Nguyệt 1 vòng.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "f08_dinh_menh",
+    "name": "Định Mệnh",
+    "ownerId": "f08",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "bloodMoon",
+        "rounds": 1
+      },
+      {
+        "type": "shiftMoon",
+        "amount": 1
+      }
+    ],
+    "text": "Huyết Nguyệt 1 vòng. Đổi Vận 1 pha.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "f08_huyet_vuc",
+    "name": "Huyết Vực",
+    "ownerId": "f08",
+    "cost": 3,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "forbidden"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 2,
+        "to": "self"
+      },
+      {
+        "type": "damage",
+        "amount": 6,
+        "to": "chosen",
+        "hits": 2
+      }
+    ],
+    "text": "Mất 2 HP. Gây 6 damage 2 lần."
+  },
+  {
+    "id": "f08_nghich_thien",
+    "name": "Nghịch Thiên",
+    "ownerId": "f08",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "forbidden",
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 4,
+        "to": "self"
+      },
+      {
+        "type": "bloodMoon",
+        "rounds": 2
+      },
+      {
+        "type": "gainMoonPower",
+        "amount": 2
+      }
+    ],
+    "text": "Mất 4 HP. Huyết Nguyệt 2 vòng. Nhận 2 Nguyệt Lực.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "f08_phan_menh",
+    "name": "Phản Mệnh",
+    "ownerId": "f08",
+    "cost": 5,
+    "copies": 1,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "forbidden"
+    ],
+    "target": "enemy",
+    "requiresBloodMoon": true,
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 4,
+        "to": "self"
+      },
+      {
+        "type": "damage",
+        "amount": 18,
+        "to": "chosen"
+      }
+    ],
+    "text": "Chỉ đánh được khi Huyết Nguyệt. Mất 4 HP. Gây 18 damage.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "f08_phuong_nghich",
+    "name": "Phượng Nghịch",
+    "ownerId": "f08",
+    "cost": 6,
+    "copies": 1,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "forbidden"
+    ],
+    "target": "none",
+    "requiresBloodMoon": true,
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 5,
+        "to": "self"
+      },
+      {
+        "type": "damage",
+        "amount": 5,
+        "to": "allEnemies",
+        "hits": 3
+      }
+    ],
+    "text": "Chỉ đánh được khi Huyết Nguyệt. Mất 5 HP, gây 5 damage 3 lần lên mọi kẻ địch.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
+  },
+  {
+    "id": "f08_phe_mac_plus",
+    "name": "Phệ Mạch+",
+    "ownerId": "f08",
+    "cost": 2,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "forbidden"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "loseHp",
+        "amount": 2,
+        "to": "self"
+      },
+      {
+        "type": "damage",
+        "amount": 9,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mất 2 HP. Gây 9 damage.",
+    "plusOf": "f08_phe_mac"
+  },
+  {
+    "id": "bond_nguyet_sach",
+    "name": "Nguyệt Sách",
+    "bond": {
+      "owners": [
+        "m01",
+        "f01"
+      ]
+    },
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "shiftMoon",
+        "amount": 1,
+        "actor": 1
+      },
+      {
+        "type": "gainMoonPower",
+        "amount": 1,
+        "actor": 0
+      },
+      {
+        "type": "chooseCard",
+        "look": 2,
+        "actor": 0
+      }
+    ],
+    "text": "Thẩm Nguyệt Hoa Đổi Vận 1 pha. Tạ Vân Chiêu nhận 1 Nguyệt Lực và Chiêm Bài 2.",
+    "keywords": [
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "bond_than_ve",
+    "name": "Thân Vệ",
+    "bond": {
+      "owners": [
+        "m02",
+        "m01"
+      ]
+    },
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "ward"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "guard",
+        "amount": 1,
+        "to": "chosen",
+        "actor": 0
+      },
+      {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "self",
+        "actor": 0
+      }
+    ],
+    "text": "Lục Hàn Phong Hộ Vệ 1 đồng đội 1 vòng và nhận 4 giáp.",
+    "keywords": [
+      "ho_ve"
+    ]
+  },
+  {
+    "id": "bond_kim_but_dong_tam",
+    "name": "Kim Bút Đồng Tâm",
+    "bond": {
+      "owners": [
+        "m03",
+        "m10"
+      ]
+    },
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "drawCards",
+        "amount": 2,
+        "actor": 0
+      },
+      {
+        "type": "gainMoonPower",
+        "amount": 1,
+        "actor": 1
+      }
+    ],
+    "text": "Mặc Tử Du rút 2 lá. Chu Quyết nhận 1 Nguyệt Lực."
+  },
+  {
+    "id": "bond_su_do_nghich_menh",
+    "name": "Sư Đồ Nghịch Mệnh",
+    "bond": {
+      "owners": [
+        "m08",
+        "f08"
+      ]
+    },
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "forbidden"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "bloodMoon",
+        "rounds": 1,
+        "actor": 1
+      },
+      {
+        "type": "shiftMoon",
+        "amount": 1,
+        "actor": 0
+      }
+    ],
+    "text": "Phượng Chiêu Dung gọi Huyết Nguyệt 1 vòng. Khương Tịch Đổi Vận 1 pha.",
+    "keywords": [
+      "huyet_nguyet"
+    ]
   }
 ]

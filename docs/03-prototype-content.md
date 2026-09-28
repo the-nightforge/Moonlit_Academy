@@ -395,3 +395,144 @@ trăng tới Trăng Tròn sớm để `fullMoonsSeen` bật ngay vòng 2–3.
 | Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Ghi chú |
 |---|---|---|---|---|---|---|
 | `f01_nguyet_hoa_chieu_the` | Nguyệt Hoa Chiếu Thế | 5 | 1 | attack / attack, moon / none | `conditional(moonPhaseIs "full" → damage 10 allEnemies; else damage 6 allEnemies)` + `heal 4 allAllies` | `ownerId: "f01"`, `token: true`; vào tay khi F01 thăng cấp. Trăng Tròn hồi ×2 → 8 HP mỗi Hero. |
+
+---
+
+## 11. GĐ7 — Hero đợt 2 + Song Hành
+
+Bốn Hero đợt 2 của GĐ7 (spec `18` §2): M07 Ninh An (rare · Bạch Lộ · specialist ·
+HP 34), M08 Khương Tịch (legendary · Xích Diên · controller · HP 30), M10 Chu
+Quyết (rare · Thanh Loan · striker · HP 30), F08 Phượng Chiêu Dung (legendary ·
+Xích Diên · striker · HP 34). HP PvP = HP PvE + 12: 46 / 42 / 42 / 46.
+
+### 11.1 M07 — Ninh An
+
+Nhánh A **Hồn Nhiên**: buff đồng đội (`strength`, `empower`, `regen`, `stealth`),
+hồi máu, giáp — buff-bot thuần, không lá nào tự nuôi bộ đếm. Nhánh B **Thức
+Tỉnh**: cỗ máy Huyết Nguyệt tự duy trì (`bloodMoon`, `conditional
+bloodMoonActive`) — không `loseHp`, không tag `forbidden` (đất diễn của F02/F08).
+
+- Thăng cấp: `turnsSurvived` ≥ 5 (Tinh Hồn 2: 4) → **Huyết Mạch** `randomBuffPerTurn`: đầu lượt nhận 1 buff ngẫu nhiên từ `combatConfig.levelUpRandomBuffs` (Sức Mạnh 1 / Cường Hóa 3 / Hồi Phục 3 / Phản Đòn 2).
+- Dạng hai **Huyết Nguyệt Chi Tử**: `bloodMoonImmune` — Ninh An không mất HP vì Huyết Nguyệt.
+
+| Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
+|---|---|---|---|---|---|---|---|
+| `m07_co_vu` | Cổ Vũ | 1 | 3 | skill / harmony / ally | `applyStatus empower 2 chosen` + `heal 1 chosen` | A | Mở sẵn — **signature** |
+| `m07_tam_y` | Tâm Ý | 1 | 3 | skill / heal / ally | `heal 2 chosen` + `applyStatus regen 2 chosen` | A | Mở sẵn |
+| `m07_ho_tong` | Hộ Tống | 2 | 2 | skill / ward / ally | `gainArmor 4 chosen` + `applyStatus stealth 1 chosen` | A | Mở sẵn |
+| `m07_dong_cam` | Đồng Cam | 3 | 2 | skill / harmony / none | `applyStatus strength 1 allAllies` | A | Khóa |
+| `m07_phu_ho` | Phù Hộ | 4 | 2 | skill / heal / none | `heal 3 allAllies` + `applyStatus regen 2 allAllies` | A | Khóa |
+| `m07_thien_chan` | Thiên Chân | 5 | 1 | skill / harmony / none | `applyStatus empower 3 allAllies` + `applyStatus regen 3 allAllies` + `heal 2 allAllies` | A | Khóa |
+| `m07_trieu_huyet` | Triệu Huyết | 1 | 3 | skill / moon / none | `bloodMoon 1` + `heal 2 self` | B | Mở sẵn |
+| `m07_huyet_anh` | Huyết Ảnh | 2 | 2 | attack / attack, moon / enemy | `conditional(bloodMoonActive → damage 8 chosen; else damage 4 chosen)` | B | Mở sẵn |
+| `m07_dong_huyet` | Đồng Huyết | 2 | 2 | skill / moon, heal / none | `conditional(bloodMoonActive → heal 4 allAllies; else heal 2 allAllies)` | B | Mở sẵn |
+| `m07_huyet_te` | Huyết Tế | 3 | 2 | skill / moon / none | `bloodMoon 2` + `gainMoonPower 1` | B | Khóa |
+| `m07_tinh_huyet` | Tịnh Huyết | 4 | 2 | skill / moon, ward / none | `cleanse allAllies` + `conditional(bloodMoonActive → gainArmor 4 allAllies; else gainArmor 2 allAllies)` | B | Khóa |
+| `m07_xich_nguyet` | Xích Nguyệt | 6 | 1 | skill / moon, harmony / none | `bloodMoon 3` + `heal 5 allAllies` + `applyStatus empower 2 allAllies` | B | Khóa |
+| `m07_co_vu_plus` | Cổ Vũ+ | 1 | 3 | skill / harmony / ally | `applyStatus empower 3 chosen` + `heal 2 chosen` | — | (lá +) |
+
+### 11.2 M08 — Khương Tịch
+
+Nhánh A **Đổi Vận**: `shiftMoon` (cả lùi pha), Chiêm Bài, khống chế theo pha.
+Nhánh B **Huyết Thiên**: gọi và tận dụng Huyết Nguyệt — di sản sư phụ của F08.
+5 lá có `shiftMoon` (6 tính lá "+") → ngưỡng `moonShifts` 3 đạt trong 1–2 lượt.
+
+- Thăng cấp: `moonShifts` ≥ 3 (Tinh Hồn 2: 3) → **Quan Tinh** `chooseMoon`: đầu lượt mở Chọn Pha (giữ pha / tiến 1 / tiến 2).
+- Dạng hai **Tinh Mệnh**: `moonShiftWeakensEnemies 1` — mỗi lá có `shiftMoon` của Khương Tịch áp Suy Yếu 1 lên mọi kẻ địch.
+
+| Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
+|---|---|---|---|---|---|---|---|
+| `m08_doi_van` | Đổi Vận | 1 | 3 | skill / moon / none | `shiftMoon 1` | A | Mở sẵn — **signature** |
+| `m08_tinh_tuong` | Tinh Tượng | 1 | 3 | skill / moon / none | `chooseCard 2` | A | Mở sẵn |
+| `m08_chuyen_van` | Chuyển Vận | 2 | 2 | skill / moon / none | `shiftMoon 1` + `gainMoonPower 1` | A | Mở sẵn |
+| `m08_suy_van` | Suy Vận | 2 | 2 | skill / moon, control / enemy | `shiftMoon 1` + `applyStatus weak 2 chosen` | A | Mở sẵn |
+| `m08_nghich_van` | Nghịch Vận | 3 | 2 | skill / moon / none | `shiftMoon -1` | A | Khóa |
+| `m08_thien_doi` | Thiên Đổi | 5 | 1 | skill / moon / none | `shiftMoon 2` + `chooseCard 2` | A | Khóa |
+| `m08_huyet_chiem` | Huyết Chiêm | 1 | 3 | skill / moon / none | `conditional(bloodMoonActive → gainMoonPower 2; else gainMoonPower 1)` | B | Mở sẵn |
+| `m08_huyet_hoa` | Huyết Hỏa | 2 | 2 | attack / attack, moon / enemy | `conditional(bloodMoonActive → damage 9 chosen; else damage 5 chosen)` | B | Mở sẵn |
+| `m08_huyet_khai` | Huyết Khai | 2 | 2 | skill / forbidden, moon / none | `loseHp 2 self` + `bloodMoon 2` | B | Khóa |
+| `m08_xich_van` | Xích Vận | 3 | 2 | skill / moon, control / none | `conditional(bloodMoonActive → applyStatus weak 2 allEnemies; else applyStatus weak 1 allEnemies)` | B | Khóa |
+| `m08_phan_van` | Phản Vận | 4 | 2 | skill / moon, control / enemy | `drainMoonPower 2 chosen` + `conditional(bloodMoonActive → applyStatus vulnerable 2 chosen)` | B | Khóa |
+| `m08_diet_tinh` | Diệt Tinh | 6 | 1 | attack / attack, moon / none | `bloodMoon 2` + `damage 8 allEnemies` | B | Khóa |
+| `m08_doi_van_plus` | Đổi Vận+ | 1 | 3 | skill / moon / none | `shiftMoon 2` | — | (lá +) |
+
+*Ghi chú:* `m08_nghich_van` là lá `shiftMoon` âm đầu tiên (trăng lùi 1 pha).
+`m08_huyet_khai` tag `forbidden` + `loseHp self` chỉ mang ý nghĩa cost/theme —
+đơn vị hành động là M08 nên không nuôi `forbiddenHpLost`.
+
+### 11.3 M10 — Chu Quyết
+
+Nhánh A **Khổ Học**: Tích Tụ (`heldTurnsAtLeast`) trên lá `scheme`. Nhánh B
+**Hàn Môn**: Liên Hoàn (`cardsPlayedThisTurnAtLeast`) và đòn nhiều hit. 9 lá tag
+`scheme` → `studyPoints` = +1/lượt (từ vòng 2) + +1/lá scheme đạt ngưỡng 5 trong
+2–3 lượt. Hai nhánh đối lập nhịp chơi: Tích Tụ muốn giữ lá (chậm) vs Liên Hoàn
+muốn xả lá (nhanh).
+
+- Thăng cấp: `studyPoints` ≥ 5 (Tinh Hồn 2: 4) → **Bác Học** `firstSchemeRepeats`: lá `scheme` đầu tiên mỗi lượt của Chu Quyết giải quyết effect 2 lần (lượt 1 bỏ `chooseCard`).
+- Dạng hai **Trạng Nguyên**: `comboAttackBonus 1` — lá tấn công của Chu Quyết +1 damage mỗi hit cho mỗi lá đã đánh trước nó trong lượt.
+
+| Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
+|---|---|---|---|---|---|---|---|
+| `m10_kho_hoc` | Khổ Học | 1 | 3 | skill / scheme / none | `conditional(heldTurnsAtLeast 2 → gainMoonPower 3; else gainMoonPower 1)` | A | Mở sẵn — **signature** |
+| `m10_tich_doc` | Tích Đọc | 1 | 3 | skill / scheme / none | `conditional(heldTurnsAtLeast 2 → gainMoonPower 2)` + `chooseCard 2` | A | Mở sẵn |
+| `m10_tu_luc` | Tự Lực | 2 | 2 | attack / attack, scheme / enemy | `damage 5 chosen` + `conditional(heldTurnsAtLeast 1 → damage 3 chosen)` | A | Mở sẵn |
+| `m10_van_luan` | Văn Luận | 3 | 2 | skill / scheme, control / enemy | `applyStatus weak 2 chosen` + `conditional(heldTurnsAtLeast 2 → applyStatus weak 1 allEnemies)` | A | Mở sẵn |
+| `m10_da_tuc` | Dạ Tục | 4 | 2 | skill / scheme / none | `conditional(heldTurnsAtLeast 2 → gainMoonPowerPerTurn 1; else gainMoonPower 2)` + `chooseCard 1` | A | Khóa |
+| `m10_thong_huyen` | Thông Huyền | 5 | 1 | skill / scheme / none | `conditional(heldTurnsAtLeast 3 → gainMoonPower 5; else gainMoonPower 2)` + `chooseCard 2` | A | Khóa |
+| `m10_han_mon` | Hàn Môn | 1 | 3 | attack / attack, scheme / enemy | `conditional(cardsPlayedThisTurnAtLeast 1 → damage 5 chosen; else damage 3 chosen)` | B | Mở sẵn |
+| `m10_liet_but` | Liệt Bút | 2 | 2 | attack / attack / enemy | `damage 4 chosen` + `conditional(cardsPlayedThisTurnAtLeast 2 → damage 4 chosen)` | B | Mở sẵn |
+| `m10_phan_doc` | Phấn Độc | 2 | 2 | skill / scheme / none | `conditional(cardsPlayedThisTurnAtLeast 2 → gainMoonPower 2; else gainMoonPower 1)` + `chooseCard 1` | B | Khóa |
+| `m10_bach_chien` | Bách Chiến | 3 | 2 | attack / attack / enemy | `damage 3 chosen hits 2` + `conditional(cardsPlayedThisTurnAtLeast 3 → damage 3 chosen)` | B | Khóa |
+| `m10_dien_kinh` | Điển Kinh | 4 | 2 | skill / scheme / none | `conditional(cardsPlayedThisTurnAtLeast 2 → gainMoonPower 3)` + `chooseCard 2` | B | Khóa |
+| `m10_lien_nguyen` | Liên Nguyên | 6 | 1 | attack / attack / enemy | `damage 4 chosen hits 3` + `conditional(cardsPlayedThisTurnAtLeast 4 → damage 4 chosen)` | B | Khóa |
+| `m10_kho_hoc_plus` | Khổ Học+ | 1 | 3 | skill / scheme / none | `conditional(heldTurnsAtLeast 2 → gainMoonPower 4; else gainMoonPower 2)` | — | (lá +) |
+
+*Ghi chú:* *Bác Học* nhân đôi cả lá `scheme` tấn công (Tự Lực, Hàn Môn) — chuỗi
+"đòn kép của kẻ hàn môn" là payoff chính; đánh dấu theo dõi cân bằng ở 7a.6.
+
+### 11.4 F08 — Phượng Chiêu Dung
+
+Nhánh A **Huyết Phượng**: Cấm Thuật (`forbidden` + `loseHp self`), Phẫn Huyết
+(`missingHpDamage`). Nhánh B **Nghịch Mệnh**: gọi Huyết Nguyệt (`bloodMoon`), lá
+`requiresBloodMoon`. 11 lá `forbidden` tự mất HP (36 HP khả dụng) → ngưỡng
+`forbiddenHpLost` 15 đạt sau ~5 lá, ngay trước khi HP thấp nguy hiểm.
+
+- Thăng cấp: `forbiddenHpLost` ≥ 15 (Tinh Hồn 2: 11) → **Huyết Phượng** `forbiddenNoSelfHpLoss`: `loseHp` nhắm `self` trong lá `forbidden` của Phượng Chiêu Dung bị bỏ qua.
+- Dạng hai **Phản Sư**: `bloodMoonAttackBonus 3` — khi Huyết Nguyệt, mọi hit của lá Phượng Chiêu Dung +3 damage.
+
+| Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
+|---|---|---|---|---|---|---|---|
+| `f08_huyet_vu` | Huyết Vũ | 1 | 3 | skill / forbidden / none | `loseHp 2 self` + `gainMoonPower 2` | A | Mở sẵn |
+| `f08_phe_mac` | Phệ Mạch | 2 | 2 | attack / attack, forbidden / enemy | `loseHp 2 self` + `damage 7 chosen` | A | Mở sẵn — **signature** |
+| `f08_phan_huyet` | Phẫn Huyết | 3 | 2 | attack / attack, forbidden / enemy | `loseHp 3 self` + `missingHpDamage 0.5 chosen` | A | Mở sẵn |
+| `f08_lieu_hoa` | Liệu Hỏa | 4 | 2 | attack / attack, forbidden / enemy | `loseHp 3 self` + `damage 9 chosen` + `applyStatus burn 2 chosen` | A | Khóa |
+| `f08_cam_chu` | Cấm Chú | 4 | 2 | skill / forbidden, control / enemy | `loseHp 3 self` + `drainMoonPower 2 chosen` + `applyStatus vulnerable 2 chosen` | A | Khóa |
+| `f08_niet_ban` | Niết Bàn | 6 | 1 | attack / attack, forbidden / none | `loseHp 5 self` + `missingHpDamage 1 allEnemies` | A | Khóa |
+| `f08_huyet_trieu` | Huyết Triều | 1 | 3 | skill / forbidden, moon / none | `loseHp 3 self` + `bloodMoon 1` | B | Mở sẵn |
+| `f08_dinh_menh` | Định Mệnh | 2 | 2 | skill / moon / none | `bloodMoon 1` + `shiftMoon 1` | B | Mở sẵn |
+| `f08_huyet_vuc` | Huyết Vực | 3 | 2 | attack / attack, forbidden / enemy | `loseHp 2 self` + `damage 6 chosen hits 2` | B | Mở sẵn |
+| `f08_nghich_thien` | Nghịch Thiên | 4 | 2 | skill / forbidden, moon / none | `loseHp 4 self` + `bloodMoon 2` + `gainMoonPower 2` | B | Khóa |
+| `f08_phan_menh` | Phản Mệnh | 5 | 1 | attack / attack, forbidden / enemy | `requiresBloodMoon` + `loseHp 4 self` + `damage 18 chosen` | B | Khóa |
+| `f08_phuong_nghich` | Phượng Nghịch | 6 | 1 | attack / attack, forbidden / none | `requiresBloodMoon` + `loseHp 5 self` + `damage 5 allEnemies hits 3` | B | Khóa |
+| `f08_phe_mac_plus` | Phệ Mạch+ | 2 | 2 | attack / attack, forbidden / enemy | `loseHp 2 self` + `damage 9 chosen` | — | (lá +) |
+
+### 11.5 Lá Song Hành đợt 2
+
+Bốn lá Song Hành mới theo `18` §2.3: `bond: { owners }` thay `ownerId`; `actor`
+trên từng effect chỉ ghế trong `bond.owners` (`0` = chủ thứ nhất, `1` = chủ thứ
+hai — effect giải quyết như Hero đó đánh, nuôi bộ đếm của Hero đó). `copies` = 2
+theo quy tắc cost 2–4.
+
+| Id | Tên | Cost | Copies | Owners | Hiệu ứng | Loại / Tag / Target |
+|---|---|---|---|---|---|---|
+| `bond_nguyet_sach` | Nguyệt Sách | 3 | 2 | m01 + f01 | `shiftMoon 1` (actor 1 — F01) + `gainMoonPower 1` (actor 0 — M01) + `chooseCard 2` (actor 0 — M01) — "Thẩm Nguyệt Hoa Đổi Vận 1 pha. Tạ Vân Chiêu nhận 1 Nguyệt Lực và Chiêm Bài 2." | skill / moon, scheme / none |
+| `bond_than_ve` | Thân Vệ | 2 | 2 | m02 + m01 | `applyStatus guard 1 chosen` (actor 0 — M02) + `gainArmor 4 self` (actor 0 — M02) — "Lục Hàn Phong Hộ Vệ 1 đồng đội 1 vòng và nhận 4 giáp." | skill / ward / ally |
+| `bond_kim_but_dong_tam` | Kim Bút Đồng Tâm | 2 | 2 | m03 + m10 | `drawCards 2` (actor 0 — M03) + `gainMoonPower 1` (actor 1 — M10) — "Mặc Tử Du rút 2 lá. Chu Quyết nhận 1 Nguyệt Lực." | skill / scheme / none |
+| `bond_su_do_nghich_menh` | Sư Đồ Nghịch Mệnh | 3 | 2 | m08 + f08 | `bloodMoon 1` (actor 1 — F08) + `shiftMoon 1` (actor 0 — M08) — "Phượng Chiêu Dung gọi Huyết Nguyệt 1 vòng. Khương Tịch Đổi Vận 1 pha." | skill / moon, forbidden / none |
+
+*Ghi chú:* `bond_than_ve` không ép được mục tiêu = M01 bằng dữ liệu (`target`
+chỉ có none/enemy/ally) — text gợi ý chọn M01; tự đặt `guard` lên M02 là no-op.
+`bond_su_do_nghich_menh` dùng `shiftMoon` cố định, **không** mở Chọn Pha (Chọn
+Pha chỉ là nội tại `chooseMoon` của M08); `shiftMoon` actor 0 nuôi `moonShifts`
+của M08. Tag `scheme` của Nguyệt Sách / Kim Bút Đồng Tâm nuôi `schemeCardsPlayed`
+của cả đội nhưng không nuôi `studyPoints` (lá Song Hành không tính).
