@@ -269,6 +269,7 @@ function animateEvent(
         return floatText(scene, anchor.x, anchor.y - 62, "Tay đầy", "#ff8080", 14, 350);
       }
       const from = anchor ?? { x: 1090, y: 560 };
+      const mine = (event.player ?? 0) === (ctx.mySeat ?? 0);
       return new Promise<void>((resolve) => {
         const rect = scene.add
           .rectangle(from.x, from.y, 30, 44, 0x2c3e6e)
@@ -276,8 +277,9 @@ function animateEvent(
           .setDepth(100);
         scene.tweens.add({
           targets: rect,
-          x: WIDTH / 2,
-          y: 610,
+          x: mine ? WIDTH / 2 : from.x,
+          y: mine ? 610 : from.y,
+          alpha: mine ? 1 : 0,
           duration: 180,
           onComplete: () => {
             rect.destroy();
