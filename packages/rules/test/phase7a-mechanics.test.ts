@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CardDef, CombatState, GameData, IntentDef, LevelUpCounter, LevelUpPassive } from "../src/index";
 import { applyAction, autoChoiceAction, chooseCombatAction, createCoopCombat, createPvpCombat, createProfile, getEffectiveCost, previewEnemyIntent, validateDeck } from "../src/index";
 import { chooseThreeCard, idleIntent } from "./fixtures";
-import { injectCard, makeEnemiesIdle, makeTestCombat, ownAllHeroes, p0, setIntent, testData, withLevelUp } from "./helpers";
+import { injectCard, instanceIdOf, makeEnemiesIdle, makeTestCombat, ownAllHeroes, p0, setHand, setIntent, testData, withLevelUp } from "./helpers";
 
 /** Puts a test card into `seat`'s hand (injectCard only knows seat 0). */
 function giveCard(state: CombatState, data: GameData, seat: number, card: CardDef): string {
@@ -144,6 +144,25 @@ describe("phase 7a — Hộ Vệ", () => {
     if (!played.ok) throw new Error(played.error);
     expect(played.events).toContainEqual(expect.objectContaining({ type: "damageDealt", targetId: guardian.id }));
     expect(played.state.heroes.find((h) => h.id === guarded.id)!.hp).toBe(guarded.hp);
+  });
+
+  it("T266c: re-applying guard replaces its duration and sourceId instead of stacking", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: ["m02", "f04", "m06"],
+      setup: (s) => {
+        setHand(s, ["m02_ho_ve"]);
+        s.heroes[1]!.statuses.push({ id: "guard", value: 5, sourceId: "hero:m05" });
+      },
+    });
+    const played = applyAction(data, state, {
+      type: "playCard",
+      instanceId: instanceIdOf(state, "m02_ho_ve"),
+      targetId: state.heroes[1]!.id,
+    });
+    if (!played.ok) throw new Error(played.error);
+    const guard = played.state.heroes[1]!.statuses.find((s) => s.id === "guard")!;
+    expect(guard.value).toBe(2);
+    expect(guard.sourceId).toBe(played.state.heroes[0]!.id);
   });
 });
 

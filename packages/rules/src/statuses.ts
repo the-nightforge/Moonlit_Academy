@@ -49,8 +49,13 @@ export function applyStatus(
   const existing = getStatus(unit, status);
   if (existing) {
     if (status === "freeze") return;
-    existing.value += amount;
-    if (status === "mark" || status === "guard") existing.sourceId = sourceId;
+    if (status === "guard") {
+      existing.value = amount;
+      existing.sourceId = sourceId;
+    } else {
+      existing.value += amount;
+      if (status === "mark") existing.sourceId = sourceId;
+    }
     events.push({ type: "statusApplied", targetId: unit.id, status, value: existing.value });
     return;
   }
