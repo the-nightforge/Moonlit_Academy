@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CardDef, CombatState, GameData, LevelUpPassive, SummonDef } from "../src/index";
 import {
   applyAction,
+  coopBot,
   createCoopCombat,
   createPvpCombat,
   getValidTargets,
@@ -226,5 +227,35 @@ describe("phase 7b — Linh Thú: bị nhắm và vòng đời", () => {
     if (!second.ok) throw new Error(second.error);
     const acted = second.events.filter((e) => e.type === "summonActed").map((e) => (e as { unitId: string }).unitId);
     expect(acted).toEqual(["p0_summon:f04", "p1_summon:f04"]);
+  });
+
+  it("T286b: coopBot picking an ally target to finish a Hợp Kích does not throw when a Linh Thú is a valid target", () => {
+    const data = testData();
+    withRabbits(data);
+    makeEnemiesIdle(data);
+    // A fake combo whose "mine" half is an ally-target card and whose "theirs"
+    // half the partner (seat 1) already played this turn.
+    data.coopCombos["test_combo"] = {
+      id: "test_combo", name: "T", text: "",
+      parts: [{ effect: "gainMoonPower" }, { effect: "heal" }],
+      limit: { perRound: 1 },
+      effects: [{ type: "heal", amount: 1, to: "allAllies" }],
+    };
+    data.cards["test_partner_heal"] = card({ id: "test_partner_heal", ownerId: "m05", target: "ally", effects: [{ type: "heal", amount: 1, to: "chosen" }] });
+    const side = { heroIds: ["m05", "f04", "m06"] as [string, string, string], loadout: { heroes: {} } };
+    let state = createCoopCombat(data, { seed: 7, players: [side, side], encounterId: "enc_coop_01" }).state;
+    for (const seat of [0, 1]) {
+      const r = applyAction(data, state, { type: "mulligan", instanceIds: [], player: seat });
+      if (!r.ok) throw new Error(r.error);
+      state = r.state;
+    }
+    const f04 = state.heroes.find((h) => h.player === 0 && h.defId === "f04")!;
+    summonEffect(data, state, f04, "test_rabbit", []);
+    const partnerInstanceId = "p1_test_partner_heal";
+    state.cards[partnerInstanceId] = { instanceId: partnerInstanceId, cardId: "test_partner_heal", ownerIds: ["m05"], player: 1, heldTurns: 0 };
+    state.playedThisTurn = [{ player: 1, instanceId: partnerInstanceId, cardId: "test_partner_heal", moonAfter: state.moonIndex }];
+    const myCard = card({ id: "test_combo_card", ownerId: "f04", target: "ally", effects: [{ type: "gainMoonPower", amount: 0 }] });
+    injectCard(state, data, myCard);
+    expect(() => coopBot(data, state, 0)).not.toThrow();
   });
 });

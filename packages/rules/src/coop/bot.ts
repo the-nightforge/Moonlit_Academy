@@ -1,5 +1,6 @@
 import { chooseCombatAction } from "../bot";
 import { cardDefOf } from "../gear";
+import { summonsOf } from "../players";
 import { getValidTargets } from "../queries";
 import type { Action, CardDef, CombatState, GameData } from "../types/index";
 import { comboHintFor } from "./combos";
@@ -19,7 +20,9 @@ function pickTarget(data: GameData, state: CombatState, card: CardDef, instanceI
   const targets = getValidTargets(data, state, instanceId);
   if (card.target === "none" || targets.length === 0) return undefined;
   const unitOf = (id: string) =>
-    state.heroes.find((unit) => unit.id === id) ?? state.enemies.find((unit) => unit.id === id)!;
+    state.heroes.find((unit) => unit.id === id) ??
+    summonsOf(state).find((unit) => unit.id === id) ??
+    state.enemies.find((unit) => unit.id === id)!;
   if (card.target === "enemy") {
     return [...targets].sort((a, b) => unitOf(a).hp - unitOf(b).hp)[0];
   }
