@@ -850,3 +850,72 @@ thì bước tiếp là thay đổi nội dung pool, không tiếp tục phình 
 deck (carry đơn). Đo lại sau khi áp bằng cùng seed/seed mẫu.
 
 **DỪNG Ở ĐÂY — chờ người dùng duyệt gói trên trước khi áp (bước 7a.6 step 5).**
+
+## Kết quả sau chỉnh (gói đã duyệt, áp nguyên vẹn + 2 bổ sung duyệt riêng)
+
+Đã áp toàn bộ bảng trên, cộng thêm: `m01_toa_nguyet_phu` được thêm
+`damage 3` (sau `drainMoonPower`, cùng mục tiêu `chosen`; text "Tỏa Nguyệt 3.
+Gây 3 damage.") và đổi pool m03 `m03_tu_tin` ↔ `m03_kim_tien` (Kim Tiền vào
+bộ miễn phí — đã được đánh trong cả hai lượt mẫu PvP). Text lá và mô tả thăng
+cấp cập nhật theo số mới; bảng §2.1 của `18` chốt theo số đã chỉnh.
+
+### Thắng lượt theo đội (PvE, 20 lượt/ô — số trong ngoặc = trước chỉnh)
+
+| Đội | Bộ cơ bản | nA 6/6/6 | nB 6/6/6 | nA 4/4/10 | nB 8/5/5 | Ngẫu nhiên | TB | Δ so đội cũ |
+|---|---|---|---|---|---|---|---|---|---|
+| m05+f04+m06 | 5% | 65% | 25% | 60% | 25% | 40% | 37% | — |
+| m05+f03+f02 | 55% | 65% | 20% | 80% | 25% | 50% | 49% | — |
+| m06+f02+f03 | 50% | 65% | 15% | 80% | 20% | 55% | 48% | — |
+| m05+f03+f04 | 60% | 60% | 55% | 0% | 55% | 55% | 48% | — |
+| **TB 4 đội cũ** | | | | | | | **45%** | — |
+| m01+m02+f04 | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | **−45** |
+| m08+f08+m05 | 0% (0%) | 20% (20%) | 0% (0%) | 10% (5%) | 0% (0%) | 10% (10%) | 7% (6%) | **−38** |
+| m03+m10+m04 | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | **−45** |
+| f01+m07+m06 | 10% (5%) | 25% (40%) | 5% (5%) | 30% (25%) | 0% (0%) | 25% (10%) | 16% (14%) | **−29** |
+
+Bộ cơ bản theo Tinh Hồn (8 đội): C0 23% / C2 23% / C4 29% / C6 29% (trước
+22/24/28/28). 0/168 lá chưa được đánh (PvE). 3/960 lượt kẹt > 60 vòng (1× Bộ
+cơ bản, 1× nA 4/4/10, 1× nB 8/5/5 — trước đây 0).
+
+### Tỉ lệ thắng PvP theo Hero (mẫu 4000, ~1700 trận/Hero — số trong ngoặc = trước chỉnh)
+
+| Hero | Trần | Trang bị | Đạt 40–60%? |
+|---|---|---|---|
+| m01 | 28% (29%) | 28% (28%) | ✗ dưới |
+| m02 | 41% (40%) | 40% (40%) | sàn |
+| m03 | 27% (28%) | 28% (28%) | ✗ dưới |
+| m04 | 46% (47%) | 42% (42%) | ✓ |
+| m07 | 35% (34%) | 39% (38%) | ✗ sát sàn |
+| m08 | 37% (38%) | 40% (39%) | ✗ sát sàn |
+| m10 | 47% (49%) | 50% (50%) | ✓ |
+| f01 | 40% (41%) | 41% (42%) | sàn |
+| f08 | 43% (44%) | 41% (41%) | ✓ |
+| m05 | 49% (48%) | 46% (47%) | ✓ |
+| m06 | 54% (56%) | 53% (54%) | ✓ |
+| f02 | 46% (46%) | 48% (50%) | ✓ |
+| f03 | 54% (56%) | 53% (54%) | ✓ |
+| f04 | 42% (43%) | 43% (44%) | ✓ |
+
+Đi trước thắng **41%** (trần) / **38%** (trang bị) — không đổi. Hòa ở trần
+vòng **16%** (trước 14–15%). Độ dài trận **TB 15.4 / trung vị 13** (trần) và
+**16.8 / 15** (trang bị) — giữ nguyên so trước chỉnh, vẫn vượt mục tiêu 8–12
+(theo quyết định 5b: artifact của bot, xem lại với người chơi thật). Lá chưa
+đánh 98 = lá `_plus` + lá khóa (đã đổi: `m03_kim_tien` nay được đánh,
+`m03_tu_tin` vào danh sách khóa).
+
+### Đánh giá
+
+**Mức band không cải thiện đo được.** Mọi chênh lệch nằm trong sai số ±3 điểm
+của mẫu: m01 28–29%→28%, m03 28%→27–28%, m07 +1 (34→35 / 38→39), m08 ~0
+(38→37 / 39→40). PvE tương tự: hai đội m01/m03 vẫn 0% mọi deck (chết tầng 1,
+tầng TB 1.0–1.3), m08+f08+m05 6%→7%, f01+m07+m06 14%→16%.
+
+Điều này xác nhận chẩn đoán "Điểm cần cờ": **nút thắt là thành phần deck —
+không có nguồn damage — chứ không phải ngưỡng/HP.** Kim Tiền (5 damage ×2)
+trong bộ miễn phí và +3 damage trên Tỏa Nguyệt Phù vẫn quá ít trước tường
+tầng 1 (Khôi Lỗi 42 HP, giáp tự tăng); +2 HP PvP không đổi tempo khi không có
+đòn kết liễu. Giữ nguyên ý định đã duyệt: **không phình số tiếp** — bước tiếp
+là nội dung (đổi/thêm lá damage cho m01/m03 ở đợt nội dung sau) hoặc chấp nhận
+vai trò support bắt buộc đi kèm carry. Ghi chú mở còn lại của 7a (M10 scheme
+lặp, `m07_ho_tong` stealth-cho-người-khác, độ dài trận PvP, `m03_tieu_loi`
+ramp) vẫn đứng — xem "Điểm cần cờ".

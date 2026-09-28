@@ -61,7 +61,7 @@ describe("phase 7a heroes — wave 1", () => {
     expect(Object.values(result.state.cards).some((c) => c.cardId === "f01_nguyet_hoa_chieu_the")).toBe(true);
   });
 
-  it("T276d: M01 levels after the team plays eight scheme cards", () => {
+  it("T276d: M01 levels after the team plays seven scheme cards", () => {
     const played: string[] = [];
     const { data, state } = makeTestCombat({
       heroIds: ["m01", "f04", "m06"],
@@ -73,13 +73,18 @@ describe("phase 7a heroes — wave 1", () => {
       },
     });
     let current = state;
-    for (const instanceId of played) {
+    for (const instanceId of played.slice(0, 7)) {
       const target = data.cards[state.cards[instanceId]!.cardId]!.target === "enemy" ? "enemy:0" : undefined;
       current = play(data, current, instanceId, target);
     }
     expect(played).toHaveLength(8);
-    expect(current.heroes[0]!.levelUpCounter).toBe(8);
+    expect(current.heroes[0]!.levelUpCounter).toBe(7);
     expect(current.heroes[0]!.leveledUp).toBe(true);
+    // The counter keeps counting past the threshold.
+    const last = played[7]!;
+    const lastTarget = data.cards[state.cards[last]!.cardId]!.target === "enemy" ? "enemy:0" : undefined;
+    current = play(data, current, last, lastTarget);
+    expect(current.heroes[0]!.levelUpCounter).toBe(8);
   });
 
   it("T276e: M02 levels after intercepting three hits for a guarded ally", () => {
@@ -101,7 +106,7 @@ describe("phase 7a heroes — wave 1", () => {
     expect(result.state.heroes[1]!.hp).toBe(result.state.heroes[1]!.maxHp);
   });
 
-  it("T276f: M03 levels after five Chiêm Bài picks", () => {
+  it("T276f: M03 levels after four Chiêm Bài picks", () => {
     const played: string[] = [];
     const { data, state } = makeTestCombat({
       heroIds: ["m03", "f04", "m06"],
@@ -111,7 +116,7 @@ describe("phase 7a heroes — wave 1", () => {
       },
     });
     let current = state;
-    for (const instanceId of played) {
+    for (const [index, instanceId] of played.entries()) {
       current = play(data, current, instanceId);
       const pending = p0(current).pendingChoice;
       if (pending?.kind === "chooseCard") {
@@ -119,6 +124,8 @@ describe("phase 7a heroes — wave 1", () => {
         if (!picked.ok) throw new Error(picked.error);
         current = picked.state;
       }
+      // Threshold 4: already leveled after the fourth pick; the fifth still counts.
+      if (index === 3) expect(current.heroes[0]!.leveledUp).toBe(true);
     }
     expect(current.heroes[0]!.levelUpCounter).toBe(5);
     expect(current.heroes[0]!.leveledUp).toBe(true);
@@ -183,7 +190,7 @@ describe("phase 7a heroes — wave 2 and bonds", () => {
     expect(p0(turn.state).pendingChoice).toEqual({ kind: "chooseMoon", options: [0, 1, 2] });
   });
 
-  it("T276j: F08 levels after losing 15 HP to forbidden cards, then pays no more HP", () => {
+  it("T276j: F08 levels after losing 12 HP to forbidden cards, then pays no more HP", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["f08", "f04", "m06"],
       mutateData: makeEnemiesIdle,
@@ -200,15 +207,15 @@ describe("phase 7a heroes — wave 2 and bonds", () => {
         current = play(data, current, instanceId, targetId);
       }
     };
-    playAll("f08_huyet_vu");
-    playAll("f08_huyet_trieu");
-    expect(current.heroes[0]!.hp).toBe(current.heroes[0]!.maxHp - 15);
-    expect(current.heroes[0]!.levelUpCounter).toBe(15);
+    playAll("f08_huyet_vu"); // 3 × 2 HP = 6
+    playAll("f08_huyet_trieu"); // +3 → 9, +3 → 12 (levels); the third card pays nothing
+    expect(current.heroes[0]!.hp).toBe(current.heroes[0]!.maxHp - 12);
+    expect(current.heroes[0]!.levelUpCounter).toBe(12);
     expect(current.heroes[0]!.leveledUp).toBe(true);
     const hpBefore = current.heroes[0]!.hp;
     current = play(data, current, p0(current).hand.find((id) => current.cards[id]!.cardId === "f08_phe_mac")!, "enemy:0");
     expect(current.heroes[0]!.hp).toBe(hpBefore);
-    expect(current.heroes[0]!.levelUpCounter).toBe(15);
+    expect(current.heroes[0]!.levelUpCounter).toBe(12);
   });
 
   it("T276k: M10 levels at five Khổ Học points; the first scheme card of the next turn resolves twice", () => {
@@ -242,18 +249,18 @@ describe("phase 7a heroes — wave 2 and bonds", () => {
     expect(next.state.enemies[0]!.hp).toBe(hpBefore - 6);
   });
 
-  it("T276l: M07 levels after five turns survived, then gains a random buff each turn start", () => {
+  it("T276l: M07 levels after four turns survived, then gains a random buff each turn start", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m07", "f04", "m06"],
       mutateData: makeEnemiesIdle,
     });
     let current = state;
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 4; i++) {
       const turn = applyAction(data, current, { type: "endTurn" });
       if (!turn.ok) throw new Error(turn.error);
       current = turn.state;
     }
-    expect(current.heroes[0]!.levelUpCounter).toBe(5);
+    expect(current.heroes[0]!.levelUpCounter).toBe(4);
     expect(current.heroes[0]!.leveledUp).toBe(true);
     const next = applyAction(data, current, { type: "endTurn" });
     if (!next.ok) throw new Error(next.error);

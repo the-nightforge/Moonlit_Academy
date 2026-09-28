@@ -2605,7 +2605,7 @@
     "effects": [
       {
         "type": "drainMoonPower",
-        "amount": 1,
+        "amount": 2,
         "to": "chosen"
       },
       {
@@ -2613,7 +2613,7 @@
         "look": 1
       }
     ],
-    "text": "Tỏa Nguyệt 1. Chiêm Bài 1.",
+    "text": "Tỏa Nguyệt 2. Chiêm Bài 1.",
     "keywords": [
       "toa_nguyet",
       "chiem_bai"
@@ -2634,11 +2634,16 @@
     "effects": [
       {
         "type": "drainMoonPower",
-        "amount": 2,
+        "amount": 3,
+        "to": "chosen"
+      },
+      {
+        "type": "damage",
+        "amount": 3,
         "to": "chosen"
       }
     ],
-    "text": "Tỏa Nguyệt 2.",
+    "text": "Tỏa Nguyệt 3. Gây 3 damage.",
     "keywords": [
       "toa_nguyet"
     ]
@@ -4495,13 +4500,13 @@
         "else": [
           {
             "type": "damage",
-            "amount": 4,
+            "amount": 5,
             "to": "chosen"
           }
         ]
       }
     ],
-    "text": "Gây 4 damage. Huyết Nguyệt: gây 8.",
+    "text": "Gây 5 damage. Huyết Nguyệt: gây 8.",
     "keywords": [
       "huyet_nguyet"
     ]
@@ -4881,13 +4886,13 @@
         "else": [
           {
             "type": "damage",
-            "amount": 5,
+            "amount": 6,
             "to": "chosen"
           }
         ]
       }
     ],
-    "text": "Gây 5 damage. Huyết Nguyệt: gây 9.",
+    "text": "Gây 6 damage. Huyết Nguyệt: gây 9.",
     "keywords": [
       "huyet_nguyet"
     ]

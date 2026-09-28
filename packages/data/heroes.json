@@ -432,13 +432,13 @@
     ],
     "levelUp": {
       "name": "Thiên Cơ",
-      "description": "Đầu lượt, lá rẻ nhất trên tay giảm 1 Nguyệt Lực trong lượt đó.",
+      "description": "Đầu lượt, lá rẻ nhất trên tay giảm 2 Nguyệt Lực trong lượt đó.",
       "counter": "schemeCardsPlayed",
-      "threshold": 8,
-      "constellationThreshold": 6,
+      "threshold": 7,
+      "constellationThreshold": 5,
       "passive": {
         "type": "cheapestCardDiscount",
-        "amount": 1
+        "amount": 2
       }
     },
     "art": {
@@ -546,12 +546,12 @@
       "m03_mau_dich",
       "m03_bon_kim",
       "m03_tham_bao",
-      "m03_tu_tin"
+      "m03_kim_tien"
     ],
     "lockedCardIds": [
       "m03_tich_thuy",
       "m03_kim_dau",
-      "m03_kim_tien",
+      "m03_tu_tin",
       "m03_than_toan",
       "m03_diem_tin",
       "m03_tien_tri"
@@ -582,13 +582,13 @@
     ],
     "levelUp": {
       "name": "Vạn Kim",
-      "description": "Đầu lượt, sau khi rút bù tay, Chiêm Bài 3 miễn phí.",
+      "description": "Đầu lượt, sau khi rút bù tay, Chiêm Bài 4 miễn phí.",
       "counter": "cardsChosen",
-      "threshold": 5,
-      "constellationThreshold": 4,
+      "threshold": 4,
+      "constellationThreshold": 3,
       "passive": {
         "type": "freeChooseCardPerTurn",
-        "look": 3
+        "look": 4
       }
     },
     "art": {
@@ -819,8 +819,8 @@
       "name": "Huyết Mạch",
       "description": "Đầu lượt Ninh An nhận 1 buff ngẫu nhiên (Sức Mạnh 1, Cường Hóa 3, Hồi Phục 3 hoặc Phản Đòn 2).",
       "counter": "turnsSurvived",
-      "threshold": 5,
-      "constellationThreshold": 4,
+      "threshold": 4,
+      "constellationThreshold": 3,
       "passive": {
         "type": "randomBuffPerTurn"
       }
@@ -1040,8 +1040,8 @@
       "name": "Huyết Phượng",
       "description": "Lá Cấm Thuật của Phượng Chiêu Dung không còn làm nàng mất HP.",
       "counter": "forbiddenHpLost",
-      "threshold": 15,
-      "constellationThreshold": 11,
+      "threshold": 12,
+      "constellationThreshold": 9,
       "passive": {
         "type": "forbiddenNoSelfHpLoss"
       }
