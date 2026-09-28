@@ -5,7 +5,7 @@ import { runEnemyTurn } from "./enemy-turn";
 import { planEnemyIntents } from "./intent";
 import { bumpCounter, checkLevelUps, levelUpPassive } from "./levelup";
 import { baseMoonPower } from "./moon-power";
-import { heroesOf, seatTag } from "./players";
+import { heroesOf, seatTag, summonsOf } from "./players";
 import { cardOwners } from "./queries";
 import { fireEventHooks, runRelicHooks } from "./run-relic-hooks";
 import { DURATION_STATUSES, hasStatus, removeStatus } from "./statuses";
@@ -22,12 +22,13 @@ export function startPlayerTurn(
   state.status = "playerTurn";
   events.push({ type: "turnStarted", side: "hero", round: state.round, ...seatTag(state, player.index) });
   player.cardsPlayedThisTurn = 0;
-  for (const hero of heroesOf(state, player.index)) {
-    if (hero.armor > 0) {
-      hero.armor = 0;
-      events.push({ type: "armorRemoved", targetId: hero.id });
+  const mySummons = summonsOf(state).filter((summon) => summon.player === player.index);
+  for (const unit of [...heroesOf(state, player.index), ...mySummons]) {
+    if (unit.armor > 0) {
+      unit.armor = 0;
+      events.push({ type: "armorRemoved", targetId: unit.id });
     }
-    removeStatus(hero, "reflect", events);
+    removeStatus(unit, "reflect", events);
   }
   const anyAllyRegen = heroesOf(state, player.index).some(
     (hero) => hero.alive && hasStatus(hero, "regen"),
@@ -42,10 +43,10 @@ export function startPlayerTurn(
     heroTurnStart(data, state, hero, events);
   }
   checkLevelUps(data, state, events);
-  for (const hero of heroesOf(state, player.index)) {
-    if (!hero.alive) continue;
+  for (const unit of [...heroesOf(state, player.index), ...mySummons]) {
+    if (!unit.alive) continue;
     const start = events.length;
-    tickUnitStatuses(data, state, hero, events);
+    tickUnitStatuses(data, state, unit, events);
     if (checkCombatEnd(state, events)) return;
     fireEventHooks(data, state, events, start, state.bloodMoonRounds);
     if (checkCombatEnd(state, events)) return;
@@ -92,7 +93,7 @@ export function startPlayerTurn(
 
 /** Duration statuses tick down once per unit at the round's (PvE) or turn's (PvP) end. */
 export function tickDurations(state: CombatState, events: CombatEvent[]): void {
-  for (const unit of [...state.heroes, ...state.enemies]) {
+  for (const unit of [...state.heroes, ...summonsOf(state), ...state.enemies]) {
     for (const entry of [...unit.statuses]) {
       if (!DURATION_STATUSES.has(entry.id)) continue;
       entry.value -= 1;

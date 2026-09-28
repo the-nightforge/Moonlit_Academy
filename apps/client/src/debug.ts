@@ -164,6 +164,8 @@ export function describeEvent(
       return "Triệu hồi Linh Thú";
     case "summonActed":
       return "Linh Thú hành động";
+    case "summonDismissed":
+      return "Linh Thú biến mất";
     case "coopComboTriggered":
       return `Hợp Kích: ${data.coopCombos[event.comboId]?.name ?? event.comboId}`;
     case "bossPhaseChanged":

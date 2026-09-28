@@ -65,4 +65,6 @@ export type CombatEvent =
   /** [GĐ7] A Linh Thú entered the board (`01` §17). */
   | { type: "summoned"; unitId: string; summonId: string; ownerHeroId: string; player?: number }
   | { type: "summonActed"; unitId: string }
+  /** [GĐ7] The owner Hero fell: its Linh Thú leaves the board with it (`01` §17.4). */
+  | { type: "summonDismissed"; unitId: string }
   | { type: "combatEnded"; result: "won" | "lost" | "draw"; winner?: number | "draw" };

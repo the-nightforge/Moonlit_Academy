@@ -1,6 +1,7 @@
 import { computeDamageAmount, type EffectContext } from "./effects";
 import { guardianOf, reresolveTarget } from "./enemy-turn";
 import { baseMoonPower } from "./moon-power";
+import { summonsOf } from "./players";
 import { hasStatus } from "./statuses";
 import type {
   CombatState,
@@ -59,10 +60,10 @@ function previewIntent(
         : Math.floor((enemy.maxHp - enemy.hp) * effect.ratio);
     let targets: UnitState[] = [];
     if (effect.to === "chosen") {
-      const target = [...state.heroes, ...state.enemies].find((unit) => unit.id === targetId);
+      const target = [...state.heroes, ...summonsOf(state), ...state.enemies].find((unit) => unit.id === targetId);
       targets = target?.alive ? [target] : [];
     } else if (effect.to === "allEnemies") {
-      targets = state.heroes.filter((hero) => hero.alive);
+      targets = [...state.heroes, ...summonsOf(state)].filter((unit) => unit.alive);
     } else if (effect.to === "self") {
       targets = [enemy];
     } else {

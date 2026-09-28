@@ -64,6 +64,30 @@ export function summonEffect(data: GameData, state: CombatState, hero: HeroState
   }
 }
 
+/** Hero `heroId` fell: its Linh Thú leaves with it (`01` §17.4). */
+export function dismissSummonOf(state: CombatState, heroId: string, events: CombatEvent[]): void {
+  const summon = summonOf(state, heroId);
+  if (!summon) return;
+  summon.alive = false;
+  summon.hp = 0;
+  state.summons = summonsOf(state).filter((s) => s !== summon);
+  events.push({ type: "summonDismissed", unitId: summon.id });
+}
+
+/** `awakenSummons`: the owner's living Linh Thú switches to its awakened def, keeping its HP ratio (`01` §17.1). */
+export function awakenSummon(data: GameData, state: CombatState, hero: HeroState, events: CombatEvent[]): void {
+  const summon = summonOf(state, hero.id);
+  const awakened = summon ? data.summons[summon.summonId]?.awakenedId : undefined;
+  if (!summon || awakened === undefined) return;
+  const def = data.summons[awakened]!;
+  const ratio = summon.hp / summon.maxHp;
+  summon.summonId = awakened;
+  summon.defId = awakened;
+  summon.maxHp = def.maxHp;
+  summon.hp = Math.max(1, Math.floor(ratio * def.maxHp));
+  events.push({ type: "summoned", unitId: summon.id, summonId: awakened, ownerHeroId: hero.id, ...seatTag(state, hero.player) });
+}
+
 /** §3.3: each living Linh Thú of `seats` acts, in owner position order (`01` §17). */
 export function runSummonActions(data: GameData, state: CombatState, seats: number[], events: CombatEvent[]): void {
   for (const seat of seats) {

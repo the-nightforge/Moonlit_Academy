@@ -10,7 +10,7 @@ export {
   prefixedId,
   summonsOf,
 } from "./players";
-export { isSummon } from "./summons";
+export { dismissSummonOf, isSummon, summonEffect } from "./summons";
 export { cardDefOf, relicAt, weaponAt, weaponCardDef, weaponHooks } from "./gear";
 export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-combat";
 export { createPvpCombat } from "./pvp/create";

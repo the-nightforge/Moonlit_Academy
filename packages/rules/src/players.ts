@@ -29,21 +29,23 @@ export function summonsOf(state: CombatState): SummonState[] {
 
 /**
  * Ally units of `unit` for `allAllies`/same-side effects (`01` §10, `17` §8.4):
- * a hero's own-seat heroes; an enemy's fellow enemies.
+ * a hero's own-seat heroes and Linh Thú; an enemy's fellow enemies.
  */
 export function alliesOf(state: CombatState, unit: UnitState): UnitState[] {
   if (unit.side === "enemy") return state.enemies;
-  return heroesOf(state, (unit as HeroState).player);
+  const seat = (unit as HeroState).player;
+  return [...heroesOf(state, seat), ...summonsOf(state).filter((summon) => summon.player === seat)];
 }
 
 /**
- * Opposing units of `unit` for `allEnemies`/targeting (`17` §3.4):
- * pve/coop — heroes vs enemies; pvp — the other seat's heroes.
+ * Opposing units of `unit` for `allEnemies`/targeting (`17` §3.4, §17.3):
+ * pve/coop — heroes and Linh Thú vs enemies; pvp — the other seat's heroes and Linh Thú.
  */
 export function opponentsOf(state: CombatState, unit: UnitState): UnitState[] {
-  if (unit.side === "enemy") return state.heroes;
+  if (unit.side === "enemy") return [...state.heroes, ...summonsOf(state)];
   if (state.mode === "pvp") {
-    return state.heroes.filter((hero) => hero.player !== (unit as HeroState).player);
+    const seat = (unit as HeroState).player;
+    return [...state.heroes, ...summonsOf(state)].filter((u) => (u as HeroState).player !== seat);
   }
   return state.enemies;
 }

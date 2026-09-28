@@ -1,7 +1,7 @@
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
 import { activeModifiers } from "./moon";
-import { alliesOf, opponentsOf } from "./players";
+import { alliesOf, opponentsOf, summonsOf } from "./players";
 import { hasStatus } from "./statuses";
 import type { CardInstance, CardTag, CombatState, GameData, HeroState } from "./types/index";
 
@@ -97,8 +97,9 @@ export function getValidTargets(data: GameData, state: CombatState, instanceId: 
       return targets.map((unit) => unit.id);
     }
     case "ally": {
-      // Co-op: a targeted heal/buff may pick any of the six heroes (`01` §16.3).
-      const allies = state.mode === "coop" ? state.heroes : alliesOf(state, source);
+      // Co-op: a targeted heal/buff may pick any of the six heroes plus both
+      // seats' Linh Thú (`01` §16.3, §17.3).
+      const allies = state.mode === "coop" ? [...state.heroes, ...summonsOf(state)] : alliesOf(state, source);
       return allies.filter((unit) => unit.alive).map((unit) => unit.id);
     }
   }

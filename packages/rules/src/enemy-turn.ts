@@ -1,6 +1,7 @@
 import { checkCombatEnd, resolveEffects, tickUnitStatuses } from "./effects";
 import { chooseHeroTarget } from "./intent";
 import { checkLevelUps } from "./levelup";
+import { summonsOf } from "./players";
 import { fireEventHooks } from "./run-relic-hooks";
 import { getStatus, hasStatus, removeStatus } from "./statuses";
 import { interceptHit } from "./turn-passives";
@@ -11,7 +12,13 @@ export function reresolveTarget(
   announcedTargetId: string | null,
   targeting: Targeting,
 ): string | null {
-  const taunter = state.heroes.find((hero) => hero.alive && hasStatus(hero, "taunt"));
+  // §9.3.1 step 1: a taunting Hero or Linh Thú forces the pick — Hero first, then
+  // Linh Thú, ties broken by seat then position (`17` §17.3).
+  const taunter =
+    state.heroes.find((hero) => hero.alive && hasStatus(hero, "taunt")) ??
+    summonsOf(state)
+      .filter((summon) => summon.alive && hasStatus(summon, "taunt"))
+      .sort((a, b) => a.player - b.player || a.position - b.position)[0];
   if (taunter) return taunter.id;
   const announced = state.heroes.find((hero) => hero.id === announcedTargetId);
   if (announced?.alive && !hasStatus(announced, "stealth")) return announced.id;

@@ -20,7 +20,7 @@ import {
   removeStatus,
   statusValue,
 } from "./statuses";
-import { isSummon, ownerOf, summonEffect, summonOf } from "./summons";
+import { dismissSummonOf, isSummon, ownerOf, summonEffect, summonOf } from "./summons";
 import type {
   CardDef,
   CombatEvent,
@@ -543,7 +543,7 @@ export function processDeaths(
   events: CombatEvent[],
   killer: Killer | undefined,
 ): void {
-  for (const unit of [...state.heroes, ...state.enemies]) {
+  for (const unit of [...state.heroes, ...summonsOf(state), ...state.enemies]) {
     if (unit.alive && unit.hp <= 0) killUnit(data, state, unit, events, killer);
   }
 }
@@ -571,6 +571,11 @@ function killUnit(
     unitId: unit.id,
     ...(killer !== undefined ? { killerId: killer.id } : {}),
   });
+  // Linh Thú never count toward enemiesKilled and carry no cards/drawPile (`01` §17.2, §17.4).
+  if (isSummon(unit)) {
+    state.summons = summonsOf(state).filter((summon) => summon !== unit);
+    return;
+  }
   if (killer) {
     const killerHero = state.heroes.find((hero) => hero.id === killer.id);
     // PvE/co-op: kills of enemies count. PvP: kills of the opposing seat's heroes count (`17` §4.5).
@@ -583,6 +588,7 @@ function killUnit(
     }
   }
   if (unit.side === "hero") {
+    dismissSummonOf(state, unit.id, events);
     const defId = (unit as HeroState).defId;
     const seat = playerOf(state, unit.id)!;
     const purged = seat.drawPile.filter(

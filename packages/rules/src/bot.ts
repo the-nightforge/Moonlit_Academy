@@ -1,5 +1,6 @@
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
+import { summonsOf } from "./players";
 import { cardOwners, getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
 import type { Action, CombatState, Effect, GameData, HeroState, UnitState } from "./types/index";
 
@@ -58,7 +59,9 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
     return getEffectiveCost(data, state, b) - getEffectiveCost(data, state, a);
   });
   const unitOf = (id: string) =>
-    state.heroes.find((hero) => hero.id === id) ?? state.enemies.find((enemy) => enemy.id === id);
+    state.heroes.find((hero) => hero.id === id) ??
+    summonsOf(state).find((summon) => summon.id === id) ??
+    state.enemies.find((enemy) => enemy.id === id);
   // `bestMoonOffset`'s idea: a landing phase "matches" when an untagged modifier or
   // one whose tag is somewhere in the hand exists there.
   const tagsInHand = new Set(player.hand.flatMap((id) => defOf(id)?.tags ?? []));

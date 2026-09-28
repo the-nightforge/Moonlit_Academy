@@ -3,7 +3,7 @@ import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "../effe
 import { runEnemyTurn } from "../enemy-turn";
 import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "../levelup";
 import { baseMoonPower } from "../moon-power";
-import { heroesOf } from "../players";
+import { heroesOf, summonsOf } from "../players";
 import { fireEventHooks, runRelicHooks } from "../run-relic-hooks";
 import { hasStatus, removeStatus } from "../statuses";
 import { runSummonActions } from "../summons";
@@ -25,12 +25,12 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
   }
   state.playedThisTurn = [];
 
-  for (const hero of state.heroes) {
-    if (hero.armor > 0) {
-      hero.armor = 0;
-      events.push({ type: "armorRemoved", targetId: hero.id });
+  for (const unit of [...state.heroes, ...summonsOf(state)]) {
+    if (unit.armor > 0) {
+      unit.armor = 0;
+      events.push({ type: "armorRemoved", targetId: unit.id });
     }
-    removeStatus(hero, "reflect", events);
+    removeStatus(unit, "reflect", events);
   }
   for (const seat of state.players) {
     const mine = heroesOf(state, seat.index);
@@ -47,12 +47,12 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
     }
   }
   checkLevelUps(data, state, events);
-  for (const hero of state.heroes) {
-    if (!hero.alive) continue;
+  for (const unit of [...state.heroes, ...summonsOf(state)]) {
+    if (!unit.alive) continue;
     const start = events.length;
-    tickUnitStatuses(data, state, hero, events);
+    tickUnitStatuses(data, state, unit, events);
     if (checkCombatEnd(state, events)) return;
-    fireEventHooks(data, state, events, start, state.bloodMoonRounds, hero.player);
+    fireEventHooks(data, state, events, start, state.bloodMoonRounds, unit.player);
     if (checkCombatEnd(state, events)) return;
   }
   if (state.bloodMoonRounds > 0) {

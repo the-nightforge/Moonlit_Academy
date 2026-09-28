@@ -1,4 +1,5 @@
 import { resolveEffects } from "./effects";
+import { awakenSummon } from "./summons";
 import type {
   CombatEvent,
   CombatState,
@@ -48,6 +49,7 @@ export function checkLevelUps(
       events.push({ type: "heroLeveledUp", heroId: hero.id, name: def.name });
       const onLevelUp = hero.levelUpForm === "alt" ? def.altLevelUp.onLevelUp : def.levelUp.onLevelUp;
       if (onLevelUp) resolveEffects(data, state, onLevelUp, { source: hero, noHooks: true }, events);
+      if (levelUpPassive(data, hero)?.type === "awakenSummons") awakenSummon(data, state, hero, events);
     }
   }
 }
