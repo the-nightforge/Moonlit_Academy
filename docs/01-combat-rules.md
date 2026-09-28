@@ -251,7 +251,8 @@ Condition `selfHpBelow`, `selfHasStatus` xét đơn vị hành động của eff
   thức mục 10.1.
 - Nội tại `firstHitMarks { rounds }`: lượt damage **đầu tiên mỗi lượt** từ lá tấn công của
   Hero có nội tại này, nếu trúng một kẻ địch (còn sống sau đòn), áp Đánh Dấu `rounds` vòng
-  (×2 trong PvP) lên kẻ địch đó.
+  (×2 trong PvP) lên kẻ địch đó. Dùng lại cờ "lượt damage đầu tiên trong lượt" đã có từ
+  Hàn Kiếm (F03, GĐ4e, mục 8) — **không** phải trạng thái mới.
 
 ---
 

@@ -534,7 +534,6 @@ export interface HeroState extends UnitState {
   firstCardDiscountActive: boolean;         // GĐ4a: true từ lượt sau khi M06 thăng cấp
   firstSchemeUsedThisTurn?: boolean;        // GĐ7: Bác Học (M10) — lá scheme đầu tiên lượt này đã giải quyết 2 lần
   firstSealUsedThisTurn?: boolean;          // GĐ7b: Sử Bút (F07) — Phong Ấn đầu tiên lượt này đã hủy thêm 1 chiêu
-  firstHitUsedThisTurn?: boolean;           // GĐ7b: Biên Tái (F05) — lượt damage đầu tiên lượt này đã áp Đánh Dấu
   revived?: true;                            // GĐ7b: đã được Hồi Hồn (chặn lần hai, 01 §5.6)
 }
 
