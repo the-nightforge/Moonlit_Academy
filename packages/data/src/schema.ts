@@ -13,7 +13,7 @@ const moonPhaseIdSchema = z.enum([
 const statusIdSchema = z.enum([
   "stealth", "taunt", "weak", "vulnerable", "mark",
   "burn", "regen", "strength", "empower", "freeze",
-  "reflect", "guard",
+  "reflect", "guard", "charm",
 ]);
 const cardTagSchema = z.enum([
   "attack", "assassin", "control", "moon", "heal", "forbidden",
@@ -72,6 +72,7 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
     }),
     z.object({ actor, type: z.literal("createCard"), cardId: idSchema }),
     z.object({ actor, type: z.literal("summon"), summonId: idSchema }),
+    z.object({ actor, type: z.literal("extendDebuffs"), amount: z.number().int().positive(), to: targetRefSchema }),
   ]),
 );
 
@@ -81,7 +82,7 @@ const levelUpCounterSchema = z.enum([
   "hitsIntercepted", "schemeCardsPlayed", "cardsChosen",
   "hpHealed", "turnsSurvived", "moonShifts",
   "studyPoints", "fullMoonsSeen", "forbiddenHpLost",
-  "summonsMade",
+  "summonsMade", "charmsApplied", "debuffsApplied",
 ]);
 
 const levelUpPassiveSchema = z.discriminatedUnion("type", [
@@ -113,6 +114,10 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("bloodMoonAttackBonus"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("awakenSummons") }),
   z.object({ type: z.literal("summonTaunts"), rounds: z.number().int().positive() }),
+  z.object({ type: z.literal("charmMastery"), extraCharges: z.number().int().positive(), damageMultiplier: z.number().gt(1) }),
+  z.object({ type: z.literal("stealthOnCharm"), rounds: z.number().int().positive() }),
+  z.object({ type: z.literal("debuffDurationBonus"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("bonusVsDebuffed"), minDebuffs: z.number().int().positive(), amount: z.number().int().positive() }),
 ]);
 
 const branchSchema = z.object({
@@ -469,7 +474,7 @@ const effectTypeSchema = z.enum([
   "damage", "heal", "loseHp", "gainArmor", "removeArmor", "applyStatus", "cleanse",
   "chooseCard", "gainMoonPower", "shiftMoon", "stealBuff", "bloodMoon",
   "drainMoonPower", "gainMoonPowerPerTurn", "missingHpDamage", "burstRegen",
-  "conditional", "execute", "createCard", "summon",
+  "conditional", "execute", "createCard", "summon", "extendDebuffs",
 ]);
 
 export const cardMatcherSchema = z.object({

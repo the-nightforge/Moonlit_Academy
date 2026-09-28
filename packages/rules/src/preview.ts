@@ -1,5 +1,5 @@
 import { computeDamageAmount, type EffectContext } from "./effects";
-import { guardianOf, reresolveTarget } from "./enemy-turn";
+import { charmTargetOf, guardianOf, reresolveTarget } from "./enemy-turn";
 import { baseMoonPower } from "./moon-power";
 import { summonsOf } from "./players";
 import { hasStatus } from "./statuses";
@@ -42,8 +42,13 @@ function previewIntent(
   let targetId: string | null = null;
   let fizzles = false;
   if (intent.targeting !== undefined) {
-    targetId = reresolveTarget({ ...state }, planned.targetId, intent.targeting);
-    if (targetId !== null) targetId = guardianOf(state, targetId)?.id ?? targetId;
+    if (hasStatus(enemy, "charm")) {
+      // Mê Hoặc: the intent turns on a fellow enemy (`01` §9.3.1).
+      targetId = charmTargetOf(state, enemy)?.id ?? null;
+    } else {
+      targetId = reresolveTarget({ ...state }, planned.targetId, intent.targeting);
+      if (targetId !== null) targetId = guardianOf(state, targetId)?.id ?? targetId;
+    }
     fizzles = targetId === null;
   }
   const ctx: EffectContext = {

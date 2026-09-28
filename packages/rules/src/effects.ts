@@ -54,6 +54,8 @@ export interface EffectContext {
   comboScope?: true;
   /** A Linh Thú's action: its hits are attacks (`01` §17). */
   summonAction?: true;
+  /** Kinh Hồng Vũ: a charmed intent's damage multiplier (`01` §9.3.1). */
+  damageMultiplier?: number;
 }
 
 function findUnit(state: CombatState, unitId: string | undefined): UnitState | undefined {
@@ -142,9 +144,12 @@ export function computeDamageAmount(
         flat += passive.amount * (played + (ctx.comboBonus ?? 0));
       }
       if (passive?.type === "bloodMoonAttackBonus" && state.bloodMoonRounds > 0) flat += passive.amount;
+      // Nam Chiếu Hồn: the hero's card hits harder on a stacked target (`18` §3.3).
+      if (passive?.type === "bonusVsDebuffed" && target.statuses.filter((st) => DEBUFF_STATUSES.has(st.id)).length >= passive.minDebuffs) flat += passive.amount;
     }
   }
   let multiplier = 1;
+  multiplier *= ctx.damageMultiplier ?? 1;
   if (ctx.card !== undefined) {
     multiplier *= moonCardDamageMultiplier(data, state, modifiersSeat(state, ctx.source), ctx.card.tags);
   }
@@ -358,10 +363,17 @@ export function resolveEffect(
       const bonus = effect.status === "stealth" ? moonStealthDurationBonus(data, state, modifiersSeat(state, ctx.source)) : 0;
       // PvP stores durations in turns (2 × rounds); they tick at each player's turn end (`17` §4.3).
       const durationFactor = state.mode === "pvp" && DURATION_STATUSES.has(effect.status) ? 2 : 1;
+      const passive = cardPassive(data, ctx);
+      const debuff = DEBUFF_STATUSES.has(effect.status);
+      let amount = (effect.amount + bonus) * durationFactor;
+      // Vong Quốc Khúc: the hero's own duration debuffs run longer (`18` §3.3).
+      if (passive?.type === "debuffDurationBonus" && debuff && DURATION_STATUSES.has(effect.status)) amount += passive.amount * durationFactor;
+      // Kinh Hồng Vũ: each charm the hero applies carries extra charges (`18` §3.3).
+      if (passive?.type === "charmMastery" && effect.status === "charm") amount += passive.extraCharges;
       let targets = resolveTargets(state, effect.to, ctx);
       if (
         effect.status === "regen" &&
-        cardPassive(data, ctx)?.type === "regenSpreadsToAllAllies"
+        passive?.type === "regenSpreadsToAllAllies"
       ) {
         targets = [...new Set([...targets, ...alliesOf(state, ctx.source).filter((h) => h.alive)])];
       }
@@ -369,9 +381,18 @@ export function resolveEffect(
         // Hộ Vệ on the caster itself is meaningless — the guardian must be an ally.
         if (effect.status === "guard" && target.id === ctx.source.id) continue;
         const newFreeze = effect.status === "freeze" && !hasStatus(target, "freeze");
-        applyStatus(target, effect.status, (effect.amount + bonus) * durationFactor, ctx.source.id, events);
+        applyStatus(target, effect.status, amount, ctx.source.id, events);
         if (newFreeze && ctx.source.side === "hero") {
           bumpCounter(data, ctx.source as HeroState, "freezesApplied", 1);
+        }
+        // PvP: an opposing hero is still `side === "hero"` — check the side lists (`17` §3.4).
+        if (debuff && ctx.source.side === "hero" && opponentsOf(state, ctx.source).includes(target)) {
+          bumpCounter(data, ctx.source as HeroState, "debuffsApplied", 1);
+        }
+        if (effect.status === "charm" && ctx.source.side === "hero") {
+          bumpCounter(data, ctx.source as HeroState, "charmsApplied", 1);
+          // Vũ Y: charming an enemy hides the charmer (`18` §3.3).
+          if (passive?.type === "stealthOnCharm") applyStatus(ctx.source, "stealth", passive.rounds * durationFactor, ctx.source.id, events);
         }
         if (effect.status === "regen") cleanseIfHealer(data, ctx, target, events);
       }
@@ -528,6 +549,19 @@ export function resolveEffect(
     case "summon": {
       if (ctx.source.side !== "hero" || isSummon(ctx.source)) return;
       summonEffect(data, state, ctx.source as HeroState, effect.summonId, events);
+      return;
+    }
+    case "extendDebuffs": {
+      // PvP durations are stored in turns (2 × rounds), like applyStatus (`17` §4.3).
+      const factor = state.mode === "pvp" ? 2 : 1;
+      for (const target of resolveTargets(state, effect.to, ctx)) {
+        for (const entry of target.statuses) {
+          if (DEBUFF_STATUSES.has(entry.id) && DURATION_STATUSES.has(entry.id)) {
+            entry.value += effect.amount * factor;
+            events.push({ type: "statusApplied", targetId: target.id, status: entry.id, value: entry.value });
+          }
+        }
+      }
       return;
     }
     default: {

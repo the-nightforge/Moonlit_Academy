@@ -11,7 +11,7 @@ export type MoonPhaseId =
 export type StatusId =
   | "stealth" | "taunt" | "weak" | "vulnerable" | "mark"
   | "burn" | "regen" | "strength" | "empower" | "freeze"
-  | "reflect" | "guard";
+  | "reflect" | "guard" | "charm";
 
 export type CardTag =
   | "attack" | "assassin" | "control" | "moon" | "heal" | "forbidden"
@@ -23,7 +23,7 @@ export type LevelUpCounter =
   | "hitsIntercepted" | "schemeCardsPlayed" | "cardsChosen"
   | "hpHealed" | "turnsSurvived" | "moonShifts"
   | "studyPoints" | "fullMoonsSeen" | "forbiddenHpLost"
-  | "summonsMade";
+  | "summonsMade" | "charmsApplied" | "debuffsApplied";
 
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
@@ -57,7 +57,11 @@ export type LevelUpPassive =
   | { type: "bloodMoonAttackBonus"; amount: number }        // F08 Phản Sư
   // Phase 7b (`18` §3.3).
   | { type: "awakenSummons" }                                // F09 Thỏ Ngọc Thức Tỉnh
-  | { type: "summonTaunts"; rounds: number };                  // F09 Nguyệt Cung
+  | { type: "summonTaunts"; rounds: number }                 // F09 Nguyệt Cung
+  | { type: "charmMastery"; extraCharges: number; damageMultiplier: number } // F06 Kinh Hồng Vũ
+  | { type: "stealthOnCharm"; rounds: number }               // F06 Vũ Y
+  | { type: "debuffDurationBonus"; amount: number }          // M09 Vong Quốc Khúc
+  | { type: "bonusVsDebuffed"; minDebuffs: number; amount: number }; // M09 Nam Chiếu Hồn
 
 export interface LevelUpDef {
   name: string;
@@ -182,6 +186,8 @@ export type Effect = (
   | { type: "drawCards"; amount: number }
   /** Linh Thú (`01` §17): creates one, or heals it to full and adds Sức Mạnh 1. */
   | { type: "summon"; summonId: string }
+  /** Khúc Vũ Tri Âm (`18` §3.4): lengthens each duration debuff on the targets. */
+  | { type: "extendDebuffs"; amount: number; to: TargetRef }
 ) & { actor?: 0 | 1 };
 
 export type Condition =

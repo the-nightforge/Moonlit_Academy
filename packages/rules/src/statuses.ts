@@ -6,6 +6,7 @@ export const DEBUFF_STATUSES: ReadonlySet<StatusId> = new Set([
   "burn",
   "freeze",
   "mark",
+  "charm",
 ]);
 
 export const DURATION_STATUSES: ReadonlySet<StatusId> = new Set([
@@ -54,14 +55,16 @@ export function applyStatus(
       existing.sourceId = sourceId;
     } else {
       existing.value += amount;
-      if (status === "mark") existing.sourceId = sourceId;
+      if (status === "mark" || status === "charm") existing.sourceId = sourceId;
     }
     events.push({ type: "statusApplied", targetId: unit.id, status, value: existing.value });
     return;
   }
   const value = status === "freeze" ? 1 : amount;
   const instance: StatusInstance =
-    status === "mark" || status === "guard" ? { id: status, value, sourceId } : { id: status, value };
+    status === "mark" || status === "charm" || status === "guard"
+      ? { id: status, value, sourceId }
+      : { id: status, value };
   unit.statuses.push(instance);
   events.push({ type: "statusApplied", targetId: unit.id, status, value });
 }

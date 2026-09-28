@@ -11,7 +11,7 @@ import { pvpEndTurn } from "./pvp/turn";
 import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
 import { shuffle } from "./rng";
 import { runRelicHooks } from "./run-relic-hooks";
-import { removeStatus } from "./statuses";
+import { getStatus, removeStatus } from "./statuses";
 import { runEndTurn, startPlayerTurn } from "./turn";
 import { interceptHit, openMoonChoice, passiveOf } from "./turn-passives";
 import type {
@@ -98,9 +98,25 @@ function playCard(
     comboBonus = passive.amount;
   }
 
+  // Fair Arena Mê Hoặc: the charmed owner's first single-target attack hits its
+  // own highest-HP ally (`01` §15.5).
+  let chosenIdOverride: string | undefined;
+  if (state.mode === "pvp" && card.type === "attack" && card.target === "enemy" && !card.bond) {
+    const charm = getStatus(owner, "charm");
+    if (charm) {
+      const allies = heroesOf(state, player.index).filter((hero) => hero.alive && hero !== owner);
+      const victim =
+        allies.reduce<HeroState | undefined>((best, hero) => (best === undefined || hero.hp > best.hp ? hero : best), undefined) ?? owner;
+      chosenIdOverride = victim.id;
+      charm.value -= 1;
+      if (charm.value <= 0) removeStatus(owner, "charm", events);
+    }
+  }
+
   // Fair Arena: a single-target card aimed at a guarded hero hits the guardian (`01` §15.4).
-  let chosenId = action.targetId;
-  if (state.mode === "pvp" && card.target === "enemy" && chosenId !== undefined) {
+  // A Mê Hoặc-redirected hit already landed on the attacker's own side — no Hộ Vệ.
+  let chosenId = chosenIdOverride ?? action.targetId;
+  if (state.mode === "pvp" && card.target === "enemy" && chosenId !== undefined && chosenIdOverride === undefined) {
     const guardian = guardianOf(state, chosenId);
     if (guardian && guardian.player !== player.index) {
       chosenId = guardian.id;

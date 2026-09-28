@@ -72,6 +72,7 @@ export const STATUS_LABELS: Record<StatusId, string> = {
   freeze: "Băng",
   reflect: "Phản",
   guard: "Hộ",
+  charm: "Mê",
 };
 
 export const FACTION_LABELS: Record<Faction, string> = {

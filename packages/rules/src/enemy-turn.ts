@@ -4,8 +4,8 @@ import { checkLevelUps } from "./levelup";
 import { summonsOf } from "./players";
 import { fireEventHooks } from "./run-relic-hooks";
 import { getStatus, hasStatus, removeStatus } from "./statuses";
-import { interceptHit } from "./turn-passives";
-import type { CombatEvent, CombatState, GameData, HeroState, Targeting } from "./types/index";
+import { interceptHit, passiveOf } from "./turn-passives";
+import type { CombatEvent, CombatState, EnemyState, GameData, HeroState, Targeting } from "./types/index";
 
 export function reresolveTarget(
   state: CombatState,
@@ -23,6 +23,13 @@ export function reresolveTarget(
   const announced = state.heroes.find((hero) => hero.id === announcedTargetId);
   if (announced?.alive && !hasStatus(announced, "stealth")) return announced.id;
   return chooseHeroTarget(state, targeting);
+}
+
+/** Mê Hoặc: the other living enemy a charmed enemy strikes instead — highest HP, lower position on ties (`01` §9.3.1). */
+export function charmTargetOf(state: CombatState, enemy: EnemyState): EnemyState | undefined {
+  return state.enemies
+    .filter((other) => other !== enemy && other.alive)
+    .reduce<EnemyState | undefined>((best, other) => (best === undefined || other.hp > best.hp ? other : best), undefined);
 }
 
 /** Hộ Vệ: the living guardian standing in for `targetId`, if any (`01` §9.3.1 step 1b). */
@@ -68,17 +75,35 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
       if (!enemy.alive) break;
       const intent = planned.intent;
       let targetId: string | null = null;
+      let damageMultiplier: number | undefined;
       if (intent.targeting !== undefined) {
-        targetId = reresolveTarget(state, planned.targetId, intent.targeting);
-        if (targetId === null) {
-          events.push({ type: "intentFizzled", enemyId: enemy.id, intentId: intent.id });
-          continue;
-        }
-        const guardian = guardianOf(state, targetId);
-        if (guardian) {
-          targetId = guardian.id;
-          interceptHit(data, guardian, events);
-          checkLevelUps(data, state, events);
+        const charm = getStatus(enemy, "charm");
+        if (charm) {
+          // Mê Hoặc: one charge per single-target intent; the hit turns on the
+          // charmed unit's own side, skipping taunt/stealth/Hộ Vệ (`01` §9.3.1).
+          charm.value -= 1;
+          if (charm.value <= 0) removeStatus(enemy, "charm", events);
+          const turned = charmTargetOf(state, enemy);
+          if (!turned) {
+            events.push({ type: "intentFizzled", enemyId: enemy.id, intentId: intent.id });
+            continue;
+          }
+          targetId = turned.id;
+          const charmer = state.heroes.find((hero) => hero.id === charm.sourceId);
+          const mastery = charmer ? passiveOf(data, charmer) : undefined;
+          if (mastery?.type === "charmMastery") damageMultiplier = mastery.damageMultiplier;
+        } else {
+          targetId = reresolveTarget(state, planned.targetId, intent.targeting);
+          if (targetId === null) {
+            events.push({ type: "intentFizzled", enemyId: enemy.id, intentId: intent.id });
+            continue;
+          }
+          const guardian = guardianOf(state, targetId);
+          if (guardian) {
+            targetId = guardian.id;
+            interceptHit(data, guardian, events);
+            checkLevelUps(data, state, events);
+          }
         }
       }
       events.push({ type: "intentExecuted", enemyId: enemy.id, intentId: intent.id, targetId });
@@ -90,6 +115,7 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
           source: enemy,
           intentKind: intent.kind,
           ...(targetId !== null ? { chosenId: targetId } : {}),
+          ...(damageMultiplier !== undefined ? { damageMultiplier } : {}),
         },
         events,
       );
