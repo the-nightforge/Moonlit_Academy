@@ -8,7 +8,7 @@ import { NetSocket } from "../net/socket";
 import type { ServerMessage } from "../net/protocol";
 import { session } from "../session";
 import { COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
-import { addButton, addCurrencyBar, addText } from "../ui/widgets";
+import { addButton, addScreenHeader, addText, promptModal } from "../ui/widgets";
 import { describeDeckError } from "./deck-select-scene";
 
 const WIDTH = 1280;
@@ -184,14 +184,16 @@ export class ArenaScene extends Phaser.Scene {
 
   private render(): void {
     this.root.removeAll(true);
-    addText(this, this.root, WIDTH / 2, 26, "Đấu Trường", 26, COLORS.gold).setOrigin(0.5);
-    addButton(this, this.root, 90, 26, 140, "◂ Chọn deck", () => this.scene.start("deck-select"));
-    addCurrencyBar(this, this.root, 200, 26, session.profile.currencies);
-    addButton(this, this.root, 1185, 26, 140, "Ngắt kết nối", () => {
+    addScreenHeader(this, this.root, {
+      title: "Đấu Trường",
+      back: { label: "Chọn deck", onBack: () => this.back() },
+      currencies: session.profile.currencies,
+    });
+    addButton(this, this.root, 1180, 680, 160, "Ngắt kết nối", () => {
       session.net?.close();
       session.net = null;
       this.scene.start("deck-select");
-    });
+    }, true, { variant: "danger" });
 
     this.renderStats();
     this.renderDecks();
@@ -219,7 +221,8 @@ export class ArenaScene extends Phaser.Scene {
   private renderDecks(): void {
     const decks = this.decks();
     if (decks.length === 0) {
-      addText(this, this.root, WIDTH / 2, 300, "Cần một deck đã lưu — hãy tạo deck ở màn Chọn deck trước.", 15, "#ff8080").setOrigin(0.5);
+      addText(this, this.root, WIDTH / 2, 280, "Cần một deck đã lưu để vào trận.", 15, "#ff8080").setOrigin(0.5);
+      addButton(this, this.root, WIDTH / 2, 324, 220, "Tạo deck ▸", () => this.scene.start("deck-select", { newDeck: true }), true, { variant: "primary" });
       return;
     }
     this.deckIndex = Math.min(this.deckIndex, decks.length - 1);
@@ -248,6 +251,7 @@ export class ArenaScene extends Phaser.Scene {
     const valid = deck !== null && this.pvpErrors(deck.id).length === 0;
     const deckId = deck?.id ?? "";
     const send = (msg: unknown) => session.net?.send(msg);
+    const needDeck = { disabledReason: deck === null ? "Cần một deck đã lưu" : "Deck chưa hợp lệ — xem lỗi bên cạnh deck" };
 
     if (this.queued) {
       const seconds = Math.floor(this.waitingSeconds % 60).toString().padStart(2, "0");
@@ -262,17 +266,19 @@ export class ArenaScene extends Phaser.Scene {
         this.waitingSeconds = 0;
         send({ type: "queue.join", mode: "ranked", deckId });
         this.render();
-      }, valid);
+      }, valid, { ...needDeck, variant: "primary" });
     }
     addButton(this, this.root, 640, 470, 220, "Tạo phòng riêng", () =>
-      send({ type: "room.create", mode: "pvp", deckId }), valid);
+      send({ type: "room.create", mode: "pvp", deckId }), valid, needDeck);
     addButton(this, this.root, 880, 470, 220, "Vào phòng (mã)", () => {
-      const code = window.prompt("Mã phòng 6 ký tự:")?.trim().toUpperCase();
-      if (code) send({ type: "room.join", code, deckId });
-    }, valid);
+      void promptModal(this, "Nhập mã phòng 6 ký tự bạn bè gửi:", { maxLength: 6, placeholder: "VD: K7Q2MX", confirmLabel: "Vào phòng" }).then((code) => {
+        const trimmed = code?.trim().toUpperCase();
+        if (trimmed) send({ type: "room.join", code: trimmed, deckId });
+      });
+    }, valid, needDeck);
 
     addButton(this, this.root, 400, 518, 220, "Đấu Tập (máy)", () =>
-      send({ type: "practice.start", mode: "pvp", deckId }), valid);
+      send({ type: "practice.start", mode: "pvp", deckId }), valid, needDeck);
     addButton(this, this.root, 640, 518, 220, "Lịch sử", () => this.openPanel("history"));
     addButton(this, this.root, 880, 518, 220, "Bảng xếp hạng", () => this.openPanel("leaderboard"));
     addButton(this, this.root, 1110, 518, 200, "Cửa hàng Vinh Dự", () => this.scene.start("shop", { tab: "honor", back: "arena" }));
@@ -309,6 +315,16 @@ export class ArenaScene extends Phaser.Scene {
       );
     }
     this.render();
+  }
+
+  /** Esc / ◂: close an open panel first, then leave. */
+  private back(): void {
+    if (this.panel !== null) {
+      this.panel = null;
+      this.render();
+      return;
+    }
+    this.scene.start("deck-select");
   }
 
   private panelShell(title: string): Phaser.GameObjects.Container {

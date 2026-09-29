@@ -294,8 +294,10 @@ test("phòng riêng Liên Thủ: hai trình duyệt kích Hợp Kích, tải l�
   await clickDesign(pageA, 640, 470); // "Tạo phòng riêng"
   await expect.poll(async () => (await vn(pageA)).roomCode).not.toBeNull();
   const code = (await vn(pageA)).roomCode!;
-  pageB.once("dialog", (dialog) => void dialog.accept(code));
   await clickDesign(pageB, 880, 470); // "Vào phòng (mã)"
+  // The room-code field is an HTML input over the canvas (in-game dialog).
+  await pageB.fill("#vn-modal-input", code);
+  await pageB.press("#vn-modal-input", "Enter");
 
   await expect.poll(() => sceneKey(pageA), { timeout: 30_000 }).toBe("combat");
   await expect.poll(() => sceneKey(pageB)).toBe("combat");

@@ -4,7 +4,7 @@ import type { HonorShopItemDef, Rarity, ShopItemDef } from "rules";
 import { achievementNotices, errorText, mutate, type ProfileReply } from "../account";
 import { session } from "../session";
 import { COLORS, CURRENCY_LABELS, RARITY_LABELS, SHOP_ITEM_LABELS, useDesignCamera } from "../ui/theme";
-import { addButton, addCurrencyBar, addText, showToast } from "../ui/widgets";
+import { addButton, addScreenHeader, addTabs, addText, alertModal, confirmModal, showToast } from "../ui/widgets";
 
 const WIDTH = 1280;
 
@@ -25,7 +25,7 @@ export class ShopScene extends Phaser.Scene {
   private root!: Phaser.GameObjects.Container;
   private busy = false;
   private tab: Tab = "moon";
-  private back = "gacha";
+  private backScene = "gacha";
   private heroPick: HeroPick | null = null;
 
   constructor() {
@@ -36,7 +36,7 @@ export class ShopScene extends Phaser.Scene {
     useDesignCamera(this);
     this.busy = false;
     this.tab = data?.tab === "honor" ? "honor" : "moon";
-    this.back = data?.back ?? "gacha";
+    this.backScene = data?.back ?? "gacha";
     this.heroPick = null;
     this.root = this.add.container(0, 0);
     this.render();
@@ -74,17 +74,15 @@ export class ShopScene extends Phaser.Scene {
     this.root.removeAll(true);
     const data = session.data;
     const profile = session.profile;
-    addText(this, this.root, WIDTH / 2, 28, this.tab === "honor" ? "Cửa hàng Vinh Dự" : "Cửa hàng Nguyệt Tinh", 26, COLORS.gold).setOrigin(0.5);
-    addCurrencyBar(this, this.root, 40, 28, profile.currencies);
-    // Same tab convention as Nhiệm vụ / Kho đồ: the open tab carries a ✓.
-    addButton(this, this.root, WIDTH / 2 - 130, 66, 160, `Nguyệt Tinh${this.tab === "moon" ? " ✓" : ""}`, () => {
-      this.tab = "moon";
-      this.render();
+    addScreenHeader(this, this.root, {
+      title: this.tab === "honor" ? "Cửa hàng Vinh Dự" : "Cửa hàng Nguyệt Tinh",
+      back: { onBack: () => this.back() },
+      currencies: profile.currencies,
     });
-    addButton(this, this.root, WIDTH / 2 + 130, 66, 160, `Vinh Dự${this.tab === "honor" ? " ✓" : ""}`, () => {
-      this.tab = "honor";
-      this.render();
-    });
+    addTabs(this, this.root, WIDTH / 2, 70, 160, [
+      { label: "Nguyệt Tinh", active: this.tab === "moon", onClick: () => this.openTab("moon") },
+      { label: "Vinh Dự", active: this.tab === "honor", onClick: () => this.openTab("honor") },
+    ]);
 
     if (this.tab === "moon") {
       addText(this, this.root, WIDTH / 2, 100, `${CURRENCY_LABELS.moonStar} có từ Hero quay trùng khi Tinh Hồn đã 6 · giới hạn mua làm mới mỗi tuần`, 13, COLORS.dimText).setOrigin(0.5);
@@ -94,12 +92,34 @@ export class ShopScene extends Phaser.Scene {
       this.renderHonorShop();
     }
 
-    addButton(this, this.root, 90, 680, 140, "◂ Quay lại", () => this.scene.start(this.back));
     this.renderHeroPicker();
   }
 
+  private openTab(tab: Tab) {
+    this.tab = tab;
+    this.render();
+  }
+
+  /** Esc / ◂: close the hero picker first, then leave. */
+  private back() {
+    if (this.heroPick) {
+      this.heroPick = null;
+      this.render();
+      return;
+    }
+    this.scene.start(this.backScene);
+  }
+
+  /** Why a buy button is off: limit reached or not enough currency (null while a buy is in flight). */
+  private buyBlock(price: number, have: number, currency: string, limitsLeft: (number | null)[]): string | undefined {
+    if (this.busy) return undefined;
+    if (limitsLeft.some((left) => left !== null && left <= 0)) return "Đã hết lượt mua trong kỳ này";
+    if (have < price) return `Cần ${price} ${currency} (đang có ${have})`;
+    return undefined;
+  }
+
   /** "Chọn Hero ▸" row control: unowned count + the button that opens the picker. */
-  private heroChoiceRow(y: number, rarity: Rarity, affordable: boolean, buy: (heroId: string) => void): void {
+  private heroChoiceRow(y: number, rarity: Rarity, affordable: boolean, block: string | undefined, buy: (heroId: string) => void): void {
     const count = this.unownedHeroes(rarity).length;
     if (count === 0) {
       addText(this, this.root, 160, y + 28, "Đã sở hữu mọi Hero có thể chọn", 13, COLORS.dimText);
@@ -109,7 +129,7 @@ export class ShopScene extends Phaser.Scene {
     addButton(this, this.root, 1020, y, 160, "Chọn Hero ▸", () => {
       this.heroPick = { rarity, buy };
       this.render();
-    }, affordable);
+    }, affordable, { disabledReason: block });
   }
 
   private unownedHeroes(rarity: Rarity) {
@@ -155,11 +175,12 @@ export class ShopScene extends Phaser.Scene {
       addText(this, this.root, 160, y - 30, this.itemLabel(item.item), 18);
       addText(this, this.root, 160, y - 2, `Giá: ✦ ${item.price} ${CURRENCY_LABELS.moonStar}  ·  tuần này còn ${left}/${item.limitPerWeek}`, 13, COLORS.dimText);
       const affordable = profile.currencies.moonStar >= item.price && left > 0 && !this.busy;
+      const block = this.buyBlock(item.price, profile.currencies.moonStar, CURRENCY_LABELS.moonStar, [left]);
       if (item.item.type === "moonJade") {
-        addButton(this, this.root, 1020, y, 160, "Mua", () => this.buyMoon(item), affordable);
+        addButton(this, this.root, 1020, y, 160, "Mua", () => void this.buyMoon(item), affordable, { disabledReason: block });
         return;
       }
-      this.heroChoiceRow(y, item.item.rarity, affordable, (heroId) => this.buyMoon(item, heroId));
+      this.heroChoiceRow(y, item.item.rarity, affordable, block, (heroId) => void this.buyMoon(item, heroId));
     });
   }
 
@@ -184,12 +205,13 @@ export class ShopScene extends Phaser.Scene {
       addText(this, this.root, 160, y - 2, `Giá: ❖ ${item.cost} ${CURRENCY_LABELS.honor}${limits ? `  ·  ${limits}` : ""}`, 13, COLORS.dimText);
       const affordable =
         profile.currencies.honor >= item.cost && (left === null || left > 0) && (leftMonth === null || leftMonth > 0) && !this.busy;
+      const block = this.buyBlock(item.cost, profile.currencies.honor, CURRENCY_LABELS.honor, [left, leftMonth]);
       if (item.item.type === "moonJade") {
-        addButton(this, this.root, 1020, y, 160, "Mua", () => this.buyHonor(item), affordable);
+        addButton(this, this.root, 1020, y, 160, "Mua", () => void this.buyHonor(item), affordable, { disabledReason: block });
         return;
       }
       if (item.item.type === "heroChoice") {
-        this.heroChoiceRow(y, item.item.rarity, affordable, (heroId) => this.buyHonor(item, { heroId }));
+        this.heroChoiceRow(y, item.item.rarity, affordable, block, (heroId) => void this.buyHonor(item, { heroId }));
         return;
       }
       // relicChoice: any relic of the rarity — a duplicate just raises Cộng Minh.
@@ -199,15 +221,16 @@ export class ShopScene extends Phaser.Scene {
         // Below the price line, left-aligned with the item text.
         const x = 255 + (choice % 4) * 200;
         const rowY = y + 34 + Math.floor(choice / 4) * 36;
-        addButton(this, this.root, x, rowY, 190, `${relic.name}`, () => this.buyHonor(item, { relicId: relic.id }), affordable);
+        addButton(this, this.root, x, rowY, 190, `${relic.name}`, () => void this.buyHonor(item, { relicId: relic.id }), affordable, { disabledReason: block });
       });
     });
   }
 
-  private buyMoon(item: ShopItemDef, heroId?: string) {
+  private async buyMoon(item: ShopItemDef, heroId?: string) {
     if (this.busy) return;
     const what = heroId ? session.data.heroes[heroId]!.name : "vật phẩm này";
-    if (!window.confirm(`Dùng ${item.price} ${CURRENCY_LABELS.moonStar} để mua ${what}?`)) return;
+    const ok = await confirmModal(this, `Dùng ${item.price} ${CURRENCY_LABELS.moonStar} để mua ${what}?`, { label: "Mua" });
+    if (!ok || this.busy) return;
     this.busy = true;
     mutate<ProfileReply & { achievements?: string[] }>("POST", `/shop/${item.id}/buy`, heroId ? { heroId } : {}).then(
       (reply) => {
@@ -217,20 +240,21 @@ export class ShopScene extends Phaser.Scene {
       },
       (error: unknown) => {
         this.busy = false;
-        window.alert(errorText(error));
+        void alertModal(this, errorText(error));
         this.render();
       },
     );
   }
 
-  private buyHonor(item: HonorShopItemDef, pick?: { heroId?: string; relicId?: string }) {
+  private async buyHonor(item: HonorShopItemDef, pick?: { heroId?: string; relicId?: string }) {
     if (this.busy) return;
     const what = pick?.heroId
       ? session.data.heroes[pick.heroId]!.name
       : pick?.relicId
         ? session.data.relics[pick.relicId]!.name
         : "vật phẩm này";
-    if (!window.confirm(`Dùng ${item.cost} ${CURRENCY_LABELS.honor} để mua ${what}?`)) return;
+    const ok = await confirmModal(this, `Dùng ${item.cost} ${CURRENCY_LABELS.honor} để mua ${what}?`, { label: "Mua" });
+    if (!ok || this.busy) return;
     this.busy = true;
     mutate<ProfileReply & { achievements?: string[] }>("POST", `/shop/honor/${item.id}/buy`, pick ?? {}).then(
       (reply) => {
@@ -240,7 +264,7 @@ export class ShopScene extends Phaser.Scene {
       },
       (error: unknown) => {
         this.busy = false;
-        window.alert(errorText(error));
+        void alertModal(this, errorText(error));
         this.render();
       },
     );

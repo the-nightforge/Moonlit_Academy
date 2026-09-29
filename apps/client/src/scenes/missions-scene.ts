@@ -3,7 +3,7 @@ import { claimMission, missionProgress } from "rules";
 import { errorText, mutate } from "../account";
 import { session } from "../session";
 import { COLORS, CURRENCY_LABELS, useDesignCamera } from "../ui/theme";
-import { addButton, addCurrencyBar, addText, showToast } from "../ui/widgets";
+import { addButton, addScreenHeader, addTabs, addText, alertModal, showToast } from "../ui/widgets";
 
 const WIDTH = 1280;
 type Tab = "daily" | "weekly" | "achievements";
@@ -30,14 +30,19 @@ export class MissionsScene extends Phaser.Scene {
   private render() {
     this.root.removeAll(true);
     const data = session.data;
-    addText(this, this.root, WIDTH / 2, 28, "Nhiệm vụ", 26, COLORS.gold).setOrigin(0.5);
-    addCurrencyBar(this, this.root, 40, 28, session.profile.currencies);
-    (Object.keys(TAB_LABELS) as Tab[]).forEach((tab, index) => {
-      addButton(this, this.root, WIDTH / 2 - 190 + index * 190, 80, 170, `${TAB_LABELS[tab]}${tab === this.tab ? " ✓" : ""}`, () => {
+    addScreenHeader(this, this.root, {
+      title: "Nhiệm vụ",
+      back: { onBack: () => this.scene.start("deck-select") },
+      currencies: session.profile.currencies,
+    });
+    addTabs(this, this.root, WIDTH / 2, 80, 170, (Object.keys(TAB_LABELS) as Tab[]).map((tab) => ({
+      label: TAB_LABELS[tab],
+      active: tab === this.tab,
+      onClick: () => {
         this.tab = tab;
         this.render();
-      });
-    });
+      },
+    })));
     const resetHour = (data.economyConfig.resetUtcHour + 7) % 24;
     const resetText = this.tab === "daily" ? `Làm mới lúc ${resetHour}:00 mỗi ngày (giờ Việt Nam)`
       : this.tab === "weekly" ? `Làm mới lúc ${resetHour}:00 thứ Hai (giờ Việt Nam)`
@@ -46,7 +51,6 @@ export class MissionsScene extends Phaser.Scene {
 
     if (this.tab === "achievements") this.renderAchievements();
     else this.renderMissions(this.tab);
-    addButton(this, this.root, 90, 680, 140, "◂ Quay lại", () => this.scene.start("deck-select"));
   }
 
   private renderMissions(period: "daily" | "weekly") {
@@ -64,7 +68,10 @@ export class MissionsScene extends Phaser.Scene {
       this.bar(760, y, progress / mission.goal.count, `${progress}/${mission.goal.count}`);
       addText(this, this.root, 900, y, `+${mission.reward.moonJade} ◆`, 14, COLORS.gold).setOrigin(0, 0.5);
       if (claimed) addText(this, this.root, 1060, y, "Đã nhận", 13, COLORS.dimText).setOrigin(0.5);
-      else addButton(this, this.root, 1060, y, 120, "Nhận", () => this.claim(mission.id), claim.ok && !this.busy);
+      else addButton(this, this.root, 1060, y, 120, "Nhận", () => this.claim(mission.id), claim.ok && !this.busy, {
+        variant: "primary",
+        disabledReason: this.busy ? undefined : "Chưa hoàn thành nhiệm vụ",
+      });
     });
   }
 
@@ -103,7 +110,7 @@ export class MissionsScene extends Phaser.Scene {
       },
       (error: unknown) => {
         this.busy = false;
-        window.alert(errorText(error));
+        void alertModal(this, errorText(error));
         this.render();
       },
     );

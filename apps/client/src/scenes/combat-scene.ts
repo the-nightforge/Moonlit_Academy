@@ -36,6 +36,7 @@ import {
 } from "../debug";
 import manifest from "virtual:assets-manifest";
 import { showCardTooltip } from "../ui/card-tooltip";
+import { confirmModal, isModalOpen } from "../ui/widgets";
 import { playEventQueue } from "../ui/event-animator";
 import {
   BLOOD_MOON_BG,
@@ -149,6 +150,7 @@ export class CombatScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-E", () => {
       if (
         !this.inputLocked &&
+        !isModalOpen() &&
         this.state.status === "playerTurn" &&
         !(this.isCoop && this.mySeatState?.done === true)
       ) {
@@ -1676,7 +1678,10 @@ export class CombatScene extends Phaser.Scene {
       btn.setStrokeStyle(1, 0x884455);
       btn.setInteractive({ useHandCursor: true });
       btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        if (pointer.button === 0 && window.confirm("Bỏ cuộc trận này?")) this.netMatch!.resign();
+        if (pointer.button !== 0) return;
+        void confirmModal(this, "Bỏ cuộc trận này? Trận tính là thua.", { label: "Bỏ cuộc", danger: true }).then((ok) => {
+          if (ok && this.netMatch && !this.netMatch.ended) this.netMatch.resign();
+        });
       });
       this.root.add(btn);
       this.text(1150, 590, "Bỏ cuộc", 12, "#ff9090").setOrigin(0.5);

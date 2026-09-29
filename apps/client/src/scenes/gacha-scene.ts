@@ -4,7 +4,7 @@ import { achievementNotices, errorText, mutate, type ProfileReply } from "../acc
 import { api } from "../api";
 import { session } from "../session";
 import { COLORS, CURRENCY_LABELS, RARITY_COLORS, RARITY_LABELS, TEXT_BASE, useDesignCamera } from "../ui/theme";
-import { addButton, addCurrencyBar, addText, showToast } from "../ui/widgets";
+import { addButton, addScreenHeader, addTab, addText, alertModal, showToast } from "../ui/widgets";
 
 const WIDTH = 1280;
 const CARD_W = 130;
@@ -52,12 +52,14 @@ export class GachaScene extends Phaser.Scene {
     const profile = session.profile;
     const pity = profile.pity[this.bannerId] ?? { sinceEpic: 0, sinceLegendary: 0 };
 
-    addText(this, this.root, WIDTH / 2, 28, "Triệu Hồi", 26, COLORS.gold).setOrigin(0.5);
-    addCurrencyBar(this, this.root, 40, 28, profile.currencies);
+    addScreenHeader(this, this.root, {
+      title: "Triệu Hồi",
+      back: { onBack: () => this.back() },
+      currencies: profile.currencies,
+    });
 
     Object.values(data.banners).forEach((entry, index) => {
-      const chosen = entry.id === this.bannerId;
-      addButton(this, this.root, 230, 80 + index * 42, 380, `${entry.name}${chosen ? " ✓" : ""}`, () => {
+      addTab(this, this.root, 230, 80 + index * 42, 380, entry.name, entry.id === this.bannerId, () => {
         this.bannerId = entry.id;
         this.results.removeAll(true);
         this.render();
@@ -100,15 +102,30 @@ export class GachaScene extends Phaser.Scene {
     }
 
     const jade = profile.currencies.moonJade;
-    addButton(this, this.root, 720, 640, 220, `Quay 1  (◆ ${pullCost})`, () => this.pull(1), jade >= pullCost && !this.busy);
-    addButton(this, this.root, 960, 640, 220, `Quay 10  (◆ ${pullCost * 10})`, () => this.pull(10), jade >= pullCost * 10 && !this.busy);
+    const short = (count: number) => `Cần ${pullCost * count} ${CURRENCY_LABELS.moonJade} (đang có ${jade})`;
+    addButton(this, this.root, 720, 640, 220, `Quay 1  (◆ ${pullCost})`, () => this.pull(1), jade >= pullCost && !this.busy, {
+      disabledReason: this.busy ? undefined : short(1),
+    });
+    addButton(this, this.root, 960, 640, 220, `Quay 10  (◆ ${pullCost * 10})`, () => this.pull(10), jade >= pullCost * 10 && !this.busy, {
+      variant: "primary",
+      disabledReason: this.busy ? undefined : short(10),
+    });
     if (this.results.length === 0) {
       addText(this, this.root, 860, 330, `Mỗi lượt quay tốn ${pullCost} ${CURRENCY_LABELS.moonJade}`, 15, COLORS.dimText).setOrigin(0.5);
     }
 
-    addButton(this, this.root, 90, 680, 140, "◂ Quay lại", () => this.scene.start("deck-select"));
-    addButton(this, this.root, 250, 680, 150, "Nhật ký quay", () => void this.showHistory(0));
-    addButton(this, this.root, 430, 680, 180, "Cửa hàng Nguyệt Tinh", () => this.scene.start("shop"));
+    addButton(this, this.root, 115, 680, 150, "Nhật ký quay", () => void this.showHistory(0));
+    addButton(this, this.root, 305, 680, 200, "Cửa hàng Nguyệt Tinh", () => this.scene.start("shop"));
+  }
+
+  /** Esc / ◂: close the pull log first, then leave. */
+  private back() {
+    if (this.history) {
+      this.history.destroy();
+      this.history = null;
+      return;
+    }
+    this.scene.start("deck-select");
   }
 
   private pull(count: 1 | 10) {
@@ -126,7 +143,7 @@ export class GachaScene extends Phaser.Scene {
       },
       (error: unknown) => {
         this.busy = false;
-        window.alert(errorText(error));
+        void alertModal(this, errorText(error));
         this.render();
       },
     );
@@ -206,7 +223,7 @@ export class GachaScene extends Phaser.Scene {
     try {
       entries = (await api<{ entries: HistoryEntry[] }>("GET", `/gacha/history?page=${page}`)).entries;
     } catch (error) {
-      window.alert(errorText(error));
+      void alertModal(this, errorText(error));
       return;
     }
     this.history?.destroy();

@@ -16,6 +16,7 @@ import { ShopScene } from "./scenes/shop-scene";
 import { MasteryScene } from "./scenes/mastery-scene";
 import { RunScene } from "./scenes/run-scene";
 import { DESIGN_HEIGHT, DESIGN_WIDTH, RENDER_SCALE } from "./ui/theme";
+import { isModalOpen } from "./ui/widgets";
 
 initApi(session.data);
 
@@ -44,8 +45,11 @@ auth.onUnauthorized = () => {
 };
 
 // Dev/e2e handle: canvas UI is not DOM-readable, tests inspect session here.
-(window as unknown as { __vn: { session: typeof session; game: Phaser.Game; debug: typeof debug } }).__vn = {
+(window as unknown as {
+  __vn: { session: typeof session; game: Phaser.Game; debug: typeof debug; isModalOpen: typeof isModalOpen };
+}).__vn = {
   session,
   game,
   debug,
+  isModalOpen,
 };

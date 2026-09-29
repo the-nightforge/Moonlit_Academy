@@ -4,7 +4,7 @@ import { achievementNotices, errorText, mutate, type ProfileReply } from "../acc
 import { session } from "../session";
 import { showCardTooltip } from "../ui/card-tooltip";
 import { COLORS, useDesignCamera } from "../ui/theme";
-import { addButton, addText, showToast } from "../ui/widgets";
+import { addButton, addScreenHeader, addText, alertModal, confirmModal, showToast } from "../ui/widgets";
 
 const WIDTH = 1280;
 
@@ -30,7 +30,11 @@ export class MasteryScene extends Phaser.Scene {
     this.tooltip = null;
     const data = session.data;
     const levels = data.metaConfig.masteryLevels;
-    addText(this, this.root, WIDTH / 2, 28, "Tu Luyện", 26, COLORS.gold).setOrigin(0.5);
+    addScreenHeader(this, this.root, {
+      title: "Tu Luyện",
+      back: { onBack: () => this.scene.start("deck-select") },
+      currencies: session.profile.currencies,
+    });
     // Only owned heroes train; others come from the gacha.
     const owned = Object.values(data.heroes).filter((hero) => session.profile.heroes[hero.id]);
     if (!session.profile.heroes[this.heroId]) this.heroId = owned[0]!.id;
@@ -75,20 +79,24 @@ export class MasteryScene extends Phaser.Scene {
       addText(this, this.root, 494, y, `${card.cost} · ${card.name}${done ? "  ✓" : ""}`, 15).setOrigin(0, 0.5);
       if (!done) {
         addButton(this, this.root, 920, y, 140, "Mở khóa", () => {
-          if (!window.confirm(`Mở khóa "${card.name}"?`)) return;
-          mutate<ProfileReply & { achievements?: string[] }>("POST", "/profile/unlock", { heroId: hero.id, cardId }).then(
-            (reply) => {
-              this.render();
-              showToast(this, achievementNotices(reply.achievements));
-            },
-            (error: unknown) => {
-              window.alert(errorText(error));
-              this.render();
-            },
-          );
-        }, pending > 0);
+          void confirmModal(this, `Mở khóa "${card.name}"? Dùng 1 lượt mở của ${hero.name}.`, { label: "Mở khóa" }).then((ok) => {
+            if (!ok) return;
+            mutate<ProfileReply & { achievements?: string[] }>("POST", "/profile/unlock", { heroId: hero.id, cardId }).then(
+              (reply) => {
+                this.render();
+                showToast(this, achievementNotices(reply.achievements));
+              },
+              (error: unknown) => {
+                void alertModal(this, errorText(error));
+                this.render();
+              },
+            );
+          });
+        }, pending > 0, {
+          variant: "primary",
+          disabledReason: "Chưa có lượt mở — lên cấp Tu Luyện bằng XP từ Lượt chơi",
+        });
       }
     });
-    addButton(this, this.root, 90, 680, 140, "◂ Quay lại", () => this.scene.start("deck-select"));
   }
 }

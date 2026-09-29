@@ -5,7 +5,7 @@ import { errorText, mutate } from "../account";
 import { session } from "../session";
 import { showCardTooltip } from "../ui/card-tooltip";
 import { COLORS, OWNER_COLORS, RARITY_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
-import { addButton, addText } from "../ui/widgets";
+import { addButton, addScreenHeader, addText, alertModal, confirmModal, promptModal } from "../ui/widgets";
 import { describeDeckError } from "./deck-select-scene";
 
 const WIDTH = 1280;
@@ -19,6 +19,8 @@ export class DeckBuilderScene extends Phaser.Scene {
   private picker: { kind: "weapon"; heroId: string } | { kind: "relic"; slot: number } | null = null;
   /** "Xem theo luật PvP" (`17` §7.2): trial heroes, free gear, everything at R1/CM1. */
   private pvpView = false;
+  /** The deck as it was on entry: leaving with changes asks first. */
+  private initial = "";
 
   constructor() {
     super("deck-builder");
@@ -29,6 +31,7 @@ export class DeckBuilderScene extends Phaser.Scene {
     this.root = this.add.container(0, 0);
     this.picker = null;
     this.pvpView = false;
+    this.initial = JSON.stringify(this.deck);
     this.render();
   }
 
@@ -54,8 +57,11 @@ export class DeckBuilderScene extends Phaser.Scene {
     this.tooltip?.destroy();
     this.tooltip = null;
     const data = session.data;
-    addText(this, this.root, WIDTH / 2, 24, `Xếp deck — ${this.deck.name}`, 22, COLORS.gold).setOrigin(0.5);
-    addButton(this, this.root, WIDTH - 110, 24, 180, this.pvpView ? "Luật PvP: bật" : "Luật PvP: tắt", () => {
+    addScreenHeader(this, this.root, {
+      title: `Xếp deck — ${this.deck.name}`,
+      back: { label: "Chọn deck", onBack: () => void this.back() },
+    });
+    addButton(this, this.root, WIDTH - 110, 30, 180, this.pvpView ? "Luật PvP: bật" : "Luật PvP: tắt", () => {
       this.pvpView = !this.pvpView;
       this.render();
     });
@@ -100,25 +106,38 @@ export class DeckBuilderScene extends Phaser.Scene {
         : `☾ Nguyệt Bảo ${slot + 1}: trống`;
       addButton(this, this.root, 130 + slot * 230, 660, 220, label, () => this.openPicker({ kind: "relic", slot }));
     }
-    addButton(this, this.root, WIDTH - 470, 660, 140, "Đổi tên", () => {
-      const name = window.prompt("Tên deck (tối đa 24 ký tự)", this.deck.name);
-      if (name !== null) this.deck.name = name;
-      this.render();
+    addButton(this, this.root, WIDTH - 310, 660, 140, "Đổi tên", () => {
+      void promptModal(this, "Tên deck (tối đa 24 ký tự)", { value: this.deck.name, maxLength: 24, confirmLabel: "Đổi tên" }).then((name) => {
+        if (name === null) return;
+        this.deck.name = name;
+        this.render();
+      });
     });
-    addButton(this, this.root, WIDTH - 310, 660, 140, "Lưu", () => {
+    addButton(this, this.root, WIDTH - 150, 660, 140, "Lưu", () => {
       mutate("PUT", "/profile/decks", { draft: this.deck }).then(
         () => {
           session.editingDeck = null;
           this.scene.start("deck-select");
         },
-        (error: unknown) => window.alert(errorText(error)),
+        (error: unknown) => void alertModal(this, errorText(error)),
       );
-    });
-    addButton(this, this.root, WIDTH - 150, 660, 140, "Hủy", () => {
-      session.editingDeck = null;
-      this.scene.start("deck-select");
-    });
+    }, true, { variant: "primary" });
     this.renderPicker();
+  }
+
+  /** Esc / ◂: close the gear picker first; leaving with unsaved changes asks. */
+  private async back() {
+    if (this.picker) {
+      this.picker = null;
+      this.render();
+      return;
+    }
+    if (JSON.stringify(this.deck) !== this.initial) {
+      const leave = await confirmModal(this, "Deck có thay đổi chưa lưu. Bỏ các thay đổi này?", { label: "Bỏ thay đổi", danger: true });
+      if (!leave) return;
+    }
+    session.editingDeck = null;
+    this.scene.start("deck-select");
   }
 
   private openPicker(picker: NonNullable<DeckBuilderScene["picker"]>) {
