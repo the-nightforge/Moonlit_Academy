@@ -8,6 +8,7 @@ import {
   getPlayCardError,
   getValidTargets,
   isCardPlayable,
+  summonsOf,
 } from "rules";
 import type {
   Action,
@@ -16,6 +17,7 @@ import type {
   EnemyState,
   GameData,
   StatusInstance,
+  SummonState,
 } from "rules";
 import { resumeSession } from "../account";
 import { applyRecordedRunAction } from "../run-session";
@@ -51,6 +53,8 @@ const WIDTH = 1280;
 const HEIGHT = 720;
 const CARD_W = 110;
 const CARD_H = 160;
+const SUMMON_W = 112;
+const SUMMON_H = 62;
 
 const ERROR_LABELS: [RegExp, string][] = [
   [/not the player turn/, "Chưa tới lượt người chơi"],
@@ -655,6 +659,54 @@ export class CombatScene extends Phaser.Scene {
     });
   }
 
+  /** The living Linh Thú belonging to hero `heroId` (`01` §17), if any. */
+  private summonOfHero(heroId: string): SummonState | undefined {
+    return summonsOf(this.state).find(
+      (summon) => summon.ownerHeroId === heroId && summon.alive,
+    );
+  }
+
+  /**
+   * Linh Thú (`01` §17): a compact unit panel — name, HP bar, armor, status
+   * chips. Registered in `unitAnchors`/`unitViews` so damage animations and
+   * targeting treat it like any other unit (Linh Thú are valid `ally` picks,
+   * and `enemy` picks for the opposing seat in PvP).
+   */
+  private renderSummonPanel(
+    summon: SummonState,
+    cx: number,
+    cy: number,
+    w = SUMMON_W,
+  ): void {
+    const h = SUMMON_H;
+    const c = this.add.container(cx, cy);
+    this.root.add(c);
+    this.unitAnchors.set(summon.id, { x: cx, y: cy });
+    this.unitViews.set(summon.id, c);
+    const isValidTarget = this.validTargetIds.has(summon.id);
+    const panel = this.add.rectangle(0, 0, w, h, COLORS.panelHero);
+    panel.setStrokeStyle(
+      this.targeting && isValidTarget ? 2 : 1,
+      this.targeting && isValidTarget ? COLORS.goldFill : COLORS.panelBorder,
+    );
+    c.add(panel);
+    const name = this.gameData.summons[summon.summonId]?.name ?? "Linh Thú";
+    this.text(0, -h / 2 + 11, name, 11, COLORS.gold, c).setOrigin(0.5);
+    this.hpBar(-w / 2 + 8, -5, w - 16, summon.hp, summon.maxHp, COLORS.hpFillHero, c);
+    if (summon.armor > 0) {
+      this.text(-w / 2 + 8, h / 2 - 12, `🛡 ${summon.armor}`, 10, COLORS.armor, c);
+    }
+    this.statusChips(
+      summon.armor > 0 ? -w / 2 + 44 : -w / 2 + 8,
+      h / 2 - 12,
+      summon.statuses,
+      w - (summon.armor > 0 ? 52 : 16),
+      c,
+    );
+    if (this.targeting && !isValidTarget) c.setAlpha(0.4);
+    this.unitPanelHit(panel, w, h, summon.id);
+  }
+
   private renderEnemies() {
     const enemies = this.state.enemies;
     const panelW = this.isCoop ? 280 : 220;
@@ -852,6 +904,10 @@ export class CombatScene extends Phaser.Scene {
       }
       if (this.targeting && !isValidTarget) c.setAlpha(0.4);
       this.unitPanelHit(panel, panelW, panelH, hero.id);
+      // Linh Thú (`01` §17): no room under the opponent row — the panel sits in
+      // the gap right of its hero (opposing summons are `enemy` targets, §17.3).
+      const summon = this.summonOfHero(hero.id);
+      if (summon) this.renderSummonPanel(summon, cx + panelW / 2 + 50, cy, 92);
     });
   }
 
@@ -940,11 +996,13 @@ export class CombatScene extends Phaser.Scene {
         : this.state.heroes;
     const panelW = coop ? 190 : 240;
     const panelH = coop ? 150 : 170;
-    const cy = coop ? 428 : 445;
+    // Rows sit a bit higher than the enemy row suggests: a hero's Linh Thú
+    // panel (`01` §17) hangs directly below and must stay clear of the hand.
+    const cy = coop ? 380 : 394;
     if (coop) {
       const partnerName = this.netMatch?.others[0]?.username ?? "Đồng đội";
-      this.text(322, 338, "Bạn", 13, COLORS.gold).setOrigin(0.5);
-      this.text(958, 338, `Đồng đội ${partnerName}`, 13, "#8fb8ff").setOrigin(0.5);
+      this.text(322, 290, "Bạn", 13, COLORS.gold).setOrigin(0.5);
+      this.text(958, 290, `Đồng đội ${partnerName}`, 13, "#8fb8ff").setOrigin(0.5);
       this.root.add(this.add.rectangle(WIDTH / 2, 420, 1, 175, 0x2a3454));
     }
     heroes.forEach((hero, index) => {
@@ -1005,9 +1063,20 @@ export class CombatScene extends Phaser.Scene {
       if (!hero.alive) {
         c.add(this.add.rectangle(0, 0, panelW, panelH, 0x000000, 0.55));
         this.text(0, 0, "Ngã", 20, "#ffffff", c).setOrigin(0.5);
+        // Hồi Hồn (`18` §3.5): a fallen Hero can be a `fallenAlly` pick — keep
+        // the gold frame readable over the dim overlay (the overlay rects are
+        // not interactive, so the panel below still takes the click).
+        if (this.targeting && isValidTarget) {
+          c.add(this.add.rectangle(0, 0, panelW, panelH).setStrokeStyle(2, COLORS.goldFill));
+        }
       }
       if (this.targeting && !isValidTarget) c.setAlpha(0.4);
       this.unitPanelHit(panel, panelW, panelH, hero.id);
+      // Linh Thú (`01` §17): its compact panel hangs directly below the owner's.
+      const summon = this.summonOfHero(hero.id);
+      if (summon) {
+        this.renderSummonPanel(summon, cx, cy + panelH / 2 + 4 + SUMMON_H / 2);
+      }
     });
     // Hộ Vệ (`18` §2.2): a thin gold link from each guarded hero to its guardian.
     // Anchors for both rows (opponent row renders before this) already exist.

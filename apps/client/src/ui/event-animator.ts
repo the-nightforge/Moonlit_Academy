@@ -542,6 +542,73 @@ function animateEvent(
       if (!anchor) return instant();
       return floatText(scene, anchor.x, anchor.y - 95, `Dự Trữ ${event.value}`, "#7fd4ff", 11, 150);
     }
+    case "summoned": {
+      // Linh Thú (`01` §17): its panel only exists after the next render, so
+      // the glow plays at the summon anchor when present (awaken swap) and at
+      // the owner Hero's otherwise.
+      const anchor = anchorOf(event.unitId) ?? anchorOf(event.ownerHeroId);
+      if (!anchor) return instant();
+      const ring = new Promise<void>((resolve) => {
+        const glow = scene.add
+          .circle(anchor.x, anchor.y, 40)
+          .setStrokeStyle(3, 0xf4d35e)
+          .setDepth(95);
+        scene.tweens.add({
+          targets: glow,
+          scale: 1.7,
+          alpha: 0,
+          duration: 500,
+          ease: "Sine.easeOut",
+          onComplete: () => {
+            glow.destroy();
+            resolve();
+          },
+        });
+      });
+      const name = ctx.gameData.summons[event.summonId]?.name ?? "Linh Thú";
+      return Promise.all([
+        ring,
+        floatText(scene, anchor.x, anchor.y - 62, `Triệu hồi — ${name}`, "#f4d35e", 18, 500),
+      ]).then(() => undefined);
+    }
+    case "summonActed": {
+      const anchor = anchorOf(event.unitId);
+      if (!anchor) return instant();
+      const summon = ctx.state.summons?.find((unit) => unit.id === event.unitId);
+      const name = (summon && ctx.gameData.summons[summon.summonId]?.name) ?? "Linh Thú";
+      return floatText(scene, anchor.x, anchor.y - 36, name, "#9fd4ff", 14, 300);
+    }
+    case "summonDismissed": {
+      const anchor = anchorOf(event.unitId);
+      const view = ctx.unitViews.get(event.unitId);
+      if (!anchor && !view) return instant();
+      const jobs: Promise<void>[] = [];
+      if (view) {
+        jobs.push(
+          new Promise<void>((resolve) => {
+            scene.tweens.add({
+              targets: view,
+              alpha: 0,
+              duration: 400,
+              onComplete: () => resolve(),
+            });
+          }),
+        );
+      }
+      if (anchor) {
+        jobs.push(floatText(scene, anchor.x, anchor.y - 30, "Linh Thú biến mất", "#8b93b8", 13, 350));
+      }
+      return Promise.all(jobs).then(() => undefined);
+    }
+    case "heroRevived": {
+      // Hồi Hồn (`18` §3.5): a fallen hero stands back up — gold flash + float.
+      const anchor = anchorOf(event.heroId);
+      const jobs: Promise<void>[] = [
+        floatText(scene, anchor?.x ?? WIDTH / 2, (anchor?.y ?? 440) - 62, "Hồi Hồn", "#f4d35e", 20, 600),
+      ];
+      if (anchor) jobs.push(flash(scene, anchor.x, anchor.y, 240, 170, 0xf4d35e, 500));
+      return Promise.all(jobs).then(() => undefined);
+    }
     default:
       return instant();
   }
