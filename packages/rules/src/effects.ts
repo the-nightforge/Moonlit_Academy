@@ -572,11 +572,11 @@ export function resolveEffect(
           const seat = state.players[(target as HeroState).player]!;
           const priciest = seat.hand.reduce<string | undefined>((best, id) =>
             best === undefined || getEffectiveCost(data, state, id) > getEffectiveCost(data, state, best) ? id : best, undefined);
-          if (priciest !== undefined) {
-            const instance = state.cards[priciest]!;
-            instance.sealSurcharge = (instance.sealSurcharge ?? 0) + 1;
-          }
+          if (priciest === undefined) continue;
+          const instance = state.cards[priciest]!;
+          instance.sealSurcharge = (instance.sealSurcharge ?? 0) + 1;
           if (hero) bumpCounter(data, hero, "intentsSealed", 1);
+          if (passive?.type === "sealWeakens") applyStatus(target, "weak", passive.amount * 2, ctx.source.id, events);
           continue;
         }
         if (target.side !== "enemy") continue;

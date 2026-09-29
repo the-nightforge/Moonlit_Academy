@@ -432,4 +432,44 @@ describe("phase 7b — Phong Ấn", () => {
     if (!afterTheirs.ok) throw new Error(afterTheirs.error);
     expect(afterTheirs.state.cards[marked[0]!]!.sealSurcharge).toBeUndefined();
   });
+
+  it("T290b: PvP seal on an empty hand does nothing; sealWeakens weakens the target hero", () => {
+    const data = testData();
+    withLevelUp("f04", { counter: "intentsSealed", threshold: 99 })(data);
+    const loadout = { heroes: {}, pvp: true as const };
+    let pvp = createPvpCombat(data, { seed: 7, players: [{ heroIds: ["m05", "f04", "m06"], loadout }, { heroIds: ["m05", "f04", "m06"], loadout }] }).state;
+    for (const seat of [0, 1]) {
+      const r = applyAction(data, pvp, { type: "mulligan", instanceIds: [], player: seat });
+      if (!r.ok) throw new Error(r.error);
+      pvp = r.state;
+    }
+    const me = pvp.activePlayer;
+    const them = 1 - me;
+    const seal = injectCard(pvp, data, sealCard);
+    pvp.cards[seal]!.player = me;
+    pvp.players[me]!.hand.push(seal);
+    const foe = pvp.heroes.find((h) => h.player === them && h.alive)!;
+    // Empty hand → no surcharge, no intentsSealed bump (`01` §5.6 "tay rỗng → không có tác dụng").
+    const empty = structuredClone(pvp);
+    empty.players[them]!.hand = [];
+    const noop = applyAction(data, empty, { type: "playCard", instanceId: seal, targetId: foe.id, player: me });
+    if (!noop.ok) throw new Error(noop.error);
+    expect(noop.state.heroes.find((h) => h.player === me && h.defId === "f04")!.levelUpCounter).toBe(0);
+    // Chép Sử: a real surcharge carries the weak rider onto the target hero (×2, `01` §15.3).
+    const data2 = testData();
+    withLevelUp("f04", { passive: { type: "sealWeakens", amount: 1 } })(data2);
+    let pvp2 = createPvpCombat(data2, { seed: 7, players: [{ heroIds: ["m05", "f04", "m06"], loadout }, { heroIds: ["m05", "f04", "m06"], loadout }] }).state;
+    for (const seat of [0, 1]) {
+      const r = applyAction(data2, pvp2, { type: "mulligan", instanceIds: [], player: seat });
+      if (!r.ok) throw new Error(r.error);
+      pvp2 = r.state;
+    }
+    const seal2 = injectCard(pvp2, data2, sealCard);
+    pvp2.cards[seal2]!.player = me;
+    pvp2.players[me]!.hand.push(seal2);
+    pvp2.heroes.find((h) => h.player === me && h.defId === "f04")!.leveledUp = true;
+    const hit = applyAction(data2, pvp2, { type: "playCard", instanceId: seal2, targetId: foe.id, player: me });
+    if (!hit.ok) throw new Error(hit.error);
+    expect(hit.state.heroes.find((h) => h.id === foe.id)!.statuses).toContainEqual({ id: "weak", value: 2 });
+  });
 });
