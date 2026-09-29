@@ -40,6 +40,8 @@ export interface HeroState extends UnitState {
   firstSchemeUsedThisTurn?: boolean;
   /** Sử Bút: the first Phong Ấn this turn already cancelled an extra intent (`01` §5.6). */
   firstSealUsedThisTurn?: boolean;
+  /** Hồi Hồn (`18` §3.5): this hero already came back once — a second fall is final. */
+  revived?: true;
 }
 
 /** Linh Thú on the board (`01` §17). Shares the hero side; never counts for defeat. */
@@ -140,6 +142,10 @@ export interface PlayerState {
   mulliganDone: boolean;
   /** Co-op: this player finished their simultaneous turn (`17` §8.3). */
   done: boolean;
+  /** Hồi Hồn (`18` §3.5): draw-pile cards purged when a hero fell, keyed by hero unit id. */
+  purged?: Record<string, string[]>;
+  /** Hồi Hồn (`18` §3.5): hero unit ids in the order they fell (for `lastFallen`). */
+  fallenOrder?: string[];
 }
 
 /** [GĐ6] Co-op boss progress (`01` §16.5). */

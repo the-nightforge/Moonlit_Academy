@@ -83,6 +83,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     if (someEffect(effects, (effect) => effect.type === "sealIntent")) {
       errors.push(`${label}: sealIntent is not allowed`);
     }
+    if (someEffect(effects, (effect) => effect.type === "revive")) {
+      errors.push(`${label}: revive is not allowed`);
+    }
     if (usesTo(effects, "owner")) errors.push(`${label}: to "owner" is only allowed in summon actions`);
     if (usesTo(effects, "summon")) errors.push(`${label}: to "summon" is only allowed on hero cards`);
   };
@@ -118,6 +121,13 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
     if (card.target !== "none" && !usesChosen) {
       errors.push(`${label}: target "${card.target}" requires at least one effect with to "chosen"`);
+    }
+    const revivesChosen = someEffect(card.effects, (e) => e.type === "revive" && e.to === "chosen");
+    if (card.target === "fallenAlly" && !revivesChosen) {
+      errors.push(`${label}: target "fallenAlly" requires a revive effect with to "chosen"`);
+    }
+    if (card.target !== "fallenAlly" && revivesChosen) {
+      errors.push(`${label}: revive to "chosen" needs target "fallenAlly"`);
     }
     if (someEffect(card.effects, (effect) => effect.type === "execute")) {
       errors.push(`${label}: execute is only allowed in co-op combos`);
@@ -622,6 +632,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
     if (someEffect(summon.action, (e) => e.type === "sealIntent")) {
       errors.push(`${label}: sealIntent is not allowed`);
+    }
+    if (someEffect(summon.action, (e) => e.type === "revive")) {
+      errors.push(`${label}: revive is not allowed`);
     }
   }
   const checkSummonRefs = (label: string, effects: Effect[]) => {

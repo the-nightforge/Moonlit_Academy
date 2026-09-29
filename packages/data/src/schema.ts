@@ -74,6 +74,7 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
     z.object({ actor, type: z.literal("summon"), summonId: idSchema }),
     z.object({ actor, type: z.literal("sealIntent"), to: targetRefSchema }),
     z.object({ actor, type: z.literal("extendDebuffs"), amount: z.number().int().positive(), to: targetRefSchema }),
+    z.object({ actor, type: z.literal("revive"), ratio: z.number().gt(0).lte(1), to: z.enum(["chosen", "lastFallen"]) }),
   ]),
 );
 
@@ -84,6 +85,7 @@ const levelUpCounterSchema = z.enum([
   "hpHealed", "turnsSurvived", "moonShifts",
   "studyPoints", "fullMoonsSeen", "forbiddenHpLost",
   "summonsMade", "charmsApplied", "debuffsApplied", "intentsSealed",
+  "alliesFallen",
 ]);
 
 const levelUpPassiveSchema = z.discriminatedUnion("type", [
@@ -121,6 +123,7 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("bonusVsDebuffed"), minDebuffs: z.number().int().positive(), amount: z.number().int().positive() }),
   z.object({ type: z.literal("sealExtraFirstPerTurn") }),
   z.object({ type: z.literal("sealWeakens"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("armorOnAllyFall"), amount: z.number().int().positive() }),
 ]);
 
 const branchSchema = z.object({
@@ -166,7 +169,7 @@ export const cardDefSchema = z.object({
   copies: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   type: z.enum(["attack", "skill"]),
   tags: z.array(cardTagSchema),
-  target: z.enum(["none", "enemy", "ally"]),
+  target: z.enum(["none", "enemy", "ally", "fallenAlly"]),
   effects: z.array(effectSchema).min(1),
   text: z.string(),
   requiresBloodMoon: z.boolean().optional(),
@@ -478,6 +481,7 @@ const effectTypeSchema = z.enum([
   "chooseCard", "gainMoonPower", "shiftMoon", "stealBuff", "bloodMoon",
   "drainMoonPower", "gainMoonPowerPerTurn", "missingHpDamage", "burstRegen",
   "conditional", "execute", "createCard", "summon", "sealIntent", "extendDebuffs",
+  "revive",
 ]);
 
 export const cardMatcherSchema = z.object({

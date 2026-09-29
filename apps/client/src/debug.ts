@@ -160,6 +160,8 @@ export function describeEvent(
       return `${name(event.heroId)} thăng cấp: ${event.name}`;
     case "unitDied":
       return `${name(event.unitId)} ngã`;
+    case "heroRevived":
+      return "Hồi Hồn";
     case "summoned":
       return "Triệu hồi Linh Thú";
     case "summonActed":

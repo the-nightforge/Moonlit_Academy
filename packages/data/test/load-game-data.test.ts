@@ -552,4 +552,13 @@ describe("co-op data", () => {
     unknown.cards[0].effects = [{ type: "summon", summonId: "s_nope" }];
     expect(() => parseGameData(unknown)).toThrow(/summon references missing summon "s_nope"/);
   });
+
+  it("T295b: fallenAlly cards must revive; revive only on fallenAlly cards or onLevelUp", () => {
+    const a = rawData();
+    a.cards[0].target = "fallenAlly";
+    expect(() => parseGameData(a)).toThrow(/target "fallenAlly" requires a revive effect with to "chosen"/);
+    const b = rawData();
+    b.cards[0].effects = [{ type: "revive", ratio: 0.5, to: "chosen" }];
+    expect(() => parseGameData(b)).toThrow(/revive to "chosen" needs target "fallenAlly"/);
+  });
 });

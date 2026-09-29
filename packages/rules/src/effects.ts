@@ -10,6 +10,7 @@ import {
 } from "./moon";
 import { alliesOf, heroesOf, opponentsOf, playerOf, prefixedId, seatTag, summonsOf } from "./players";
 import { getEffectiveCost } from "./queries";
+import { shuffle } from "./rng";
 import { fireEventHooks } from "./run-relic-hooks";
 import {
   applyStatus,
@@ -603,6 +604,37 @@ export function resolveEffect(
       }
       return;
     }
+    case "revive": {
+      // Hồi Hồn (`18` §3.5): a fallen, unrevived ally stands back up at
+      // ratio × maxHp and its purged draw-pile cards shuffle back in.
+      const seat = playerOf(state, ctx.source.id);
+      if (!seat) return;
+      const targetId =
+        effect.to === "chosen"
+          ? ctx.chosenId
+          : [...(seat.fallenOrder ?? [])].reverse().find((id) => {
+              const hero = state.heroes.find((h) => h.id === id);
+              return hero !== undefined && !hero.alive && !hero.revived;
+            });
+      const hero = state.heroes.find((h) => h.id === targetId && h.player === seat.index);
+      if (!hero || hero.alive || hero.revived) return;
+      hero.alive = true;
+      hero.revived = true;
+      hero.hp = Math.max(1, Math.floor(effect.ratio * hero.maxHp));
+      hero.armor = 0;
+      hero.statuses = [];
+      events.push({ type: "heroRevived", heroId: hero.id, hp: hero.hp, ...seatTag(state, seat.index) });
+      const back = seat.purged?.[hero.id] ?? [];
+      if (back.length > 0) {
+        seat.discardPile = seat.discardPile.filter((id) => !back.includes(id));
+        const shuffled = shuffle([...seat.drawPile, ...back], state.rngState);
+        seat.drawPile = shuffled.items;
+        state.rngState = shuffled.rngState;
+        delete seat.purged![hero.id];
+        events.push({ type: "deckShuffled", ...seatTag(state, seat.index) });
+      }
+      return;
+    }
     default: {
       const exhaustive: never = effect;
       throw new Error(`unknown effect: ${JSON.stringify(exhaustive)}`);
@@ -664,13 +696,27 @@ function killUnit(
     dismissSummonOf(state, unit.id, events);
     const defId = (unit as HeroState).defId;
     const seat = playerOf(state, unit.id)!;
+    // Hồi Hồn (`18` §3.5): remember the fall order and keep the purged
+    // draw-pile cards so a revive can shuffle them back in.
+    seat.fallenOrder = [...(seat.fallenOrder ?? []), unit.id];
     const purged = seat.drawPile.filter(
       (id) => state.cards[id]!.player === seat.index && state.cards[id]!.ownerIds.includes(defId),
     );
     if (purged.length > 0) {
       seat.drawPile = seat.drawPile.filter((id) => !purged.includes(id));
       seat.discardPile.push(...purged);
+      seat.purged = { ...(seat.purged ?? {}), [unit.id]: purged };
       events.push({ type: "cardsPurged", heroId: unit.id, instanceIds: purged, ...seatTag(state, seat.index) });
+    }
+    // F10 Tục Mệnh: the fall counts seat-wide; survivors may shield themselves.
+    bumpSeat(data, state, seat.index, "alliesFallen", 1);
+    for (const ally of heroesOf(state, seat.index)) {
+      const passive = ally.alive && ally.leveledUp ? levelUpPassive(data, ally) : undefined;
+      if (passive?.type !== "armorOnAllyFall") continue;
+      for (const survivor of heroesOf(state, seat.index).filter((hero) => hero.alive)) {
+        survivor.armor += passive.amount;
+        events.push({ type: "armorGained", targetId: survivor.id, amount: passive.amount });
+      }
     }
   }
 }

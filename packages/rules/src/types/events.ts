@@ -54,6 +54,8 @@ export type CombatEvent =
   | { type: "weaponTriggered"; weaponId: string; heroId: string; player?: number }
   | { type: "heroLeveledUp"; heroId: string; name: string }
   | { type: "unitDied"; unitId: string; killerId?: string }
+  /** [GĐ7b] Hồi Hồn (`18` §3.5): a fallen hero stands back up at `hp`. */
+  | { type: "heroRevived"; heroId: string; hp: number; player?: number }
   /** [GĐ6] A Hợp Kích fired — both matched card instances (`01` §16.4). */
   | { type: "coopComboTriggered"; comboId: string; cardIds: [string, string]; player: number }
   /** [GĐ6] The co-op boss entered/leaves a phase, including the phase-3 revive (`01` §16.5). */

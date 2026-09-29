@@ -23,7 +23,8 @@ export type LevelUpCounter =
   | "hitsIntercepted" | "schemeCardsPlayed" | "cardsChosen"
   | "hpHealed" | "turnsSurvived" | "moonShifts"
   | "studyPoints" | "fullMoonsSeen" | "forbiddenHpLost"
-  | "summonsMade" | "charmsApplied" | "debuffsApplied" | "intentsSealed";
+  | "summonsMade" | "charmsApplied" | "debuffsApplied" | "intentsSealed"
+  | "alliesFallen";
 
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
@@ -63,7 +64,8 @@ export type LevelUpPassive =
   | { type: "debuffDurationBonus"; amount: number }          // M09 Vong Quốc Khúc
   | { type: "bonusVsDebuffed"; minDebuffs: number; amount: number } // M09 Nam Chiếu Hồn
   | { type: "sealExtraFirstPerTurn" }                        // F07 Sử Bút
-  | { type: "sealWeakens"; amount: number };                 // F07 Chép Sử
+  | { type: "sealWeakens"; amount: number }                  // F07 Chép Sử
+  | { type: "armorOnAllyFall"; amount: number };             // F10 Tục Mệnh
 
 export interface LevelUpDef {
   name: string;
@@ -111,7 +113,7 @@ export interface HeroDef {
 }
 
 export type CardType = "attack" | "skill";
-export type CardTarget = "none" | "enemy" | "ally";
+export type CardTarget = "none" | "enemy" | "ally" | "fallenAlly";
 
 export interface CardDef {
   id: string;
@@ -193,6 +195,9 @@ export type Effect = (
   | { type: "sealIntent"; to: TargetRef }
   /** Khúc Vũ Tri Âm (`18` §3.4): lengthens each duration debuff on the targets. */
   | { type: "extendDebuffs"; amount: number; to: TargetRef }
+  /** Hồi Hồn (`18` §3.5): raises a fallen, unrevived ally at `ratio` × maxHp —
+   *  `to: "chosen"` on `target: "fallenAlly"` cards, `to: "lastFallen"` on `onLevelUp`. */
+  | { type: "revive"; ratio: number; to: "chosen" | "lastFallen" }
 ) & { actor?: 0 | 1 };
 
 export type Condition =

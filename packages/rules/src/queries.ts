@@ -1,7 +1,7 @@
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
 import { activeModifiers } from "./moon";
-import { alliesOf, opponentsOf, summonsOf } from "./players";
+import { alliesOf, heroesOf, opponentsOf, summonsOf } from "./players";
 import { hasStatus } from "./statuses";
 import type { CardInstance, CardTag, CombatState, GameData, HeroState } from "./types/index";
 
@@ -103,6 +103,14 @@ export function getValidTargets(data: GameData, state: CombatState, instanceId: 
       // seats' Linh Thú (`01` §16.3, §17.3).
       const allies = state.mode === "coop" ? [...state.heroes, ...summonsOf(state)] : alliesOf(state, source);
       return allies.filter((unit) => unit.alive).map((unit) => unit.id);
+    }
+    case "fallenAlly": {
+      // Hồi Hồn (`18` §3.5): only fallen allies that have not been revived yet —
+      // and the owner must still stand (the card-owner rule).
+      if (!source.alive) return [];
+      return heroesOf(state, instance.player)
+        .filter((hero) => !hero.alive && !hero.revived)
+        .map((hero) => hero.id);
     }
   }
 }
