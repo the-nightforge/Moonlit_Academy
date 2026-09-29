@@ -290,18 +290,20 @@ lá, Nguyệt Lực, thăng cấp, bộ đếm; không tính vào điều kiện
 
 **Phong Ấn — effect `sealIntent { to }`.** Kẻ địch không báo chiêu — `plannedIntents`
 là nội bộ, client không hiển thị (event `intentsRevealed` vẫn phát để debug/replay).
-- PvE / co-op: đặt dấu Phong Ấn lên mục tiêu (`EnemyState.sealedBy` = id Hero đánh lá).
-  Dấu tồn tại tới hết lượt kẻ địch kế tiếp của mục tiêu rồi hết, dù có dùng hay không
-  (Đóng Băng bỏ chuỗi vẫn hết dấu). Trong lượt đó, mỗi chiêu mục tiêu thi hành bị tước
-  **mọi effect không phải `damage`**; mỗi chiêu mất ít nhất một effect phát `intentSealed`
-  và +1 `intentsSealed` cho Hero đặt dấu.
-- `sealExtraFirstPerTurn` (Sử Bút): lần Phong Ấn đầu tiên mỗi lượt đặt dấu thêm lên kẻ
-  địch còn sống khác có vị trí nhỏ nhất (cờ `firstSealUsedThisTurn` đặt lại đầu lượt).
-  `sealWeakens { amount }` (Chép Sử): mục tiêu nhận Suy Yếu `amount`.
-- PvP (§15.5): lá đắt nhất trên tay đối thủ (hòa → lá đứng trước) +1 Nguyệt Lực **chỉ
-  trong lượt kế tiếp** của đối thủ (`CardInstance.sealSurcharge`, xóa ở cuối lượt của
-  người sở hữu lá); tay rỗng → không có tác dụng và không cộng `intentsSealed`.
-  `sealWeakens` vẫn áp lên Hero mục tiêu.
+Một cơ chế duy nhất cho mọi chế độ: đặt dấu lên đơn vị địch (`UnitState.sealedBy`
+= id Hero đánh lá); dấu tồn tại tới hết lượt kế của bên mục tiêu rồi hết, dù có dùng
+hay không.
+- PvE / co-op (`to` là kẻ địch): trong lượt kế của kẻ đó, mỗi chiêu nó thi hành bị
+  tước **mọi effect không phải `damage`**; mỗi chiêu mất ít nhất một effect phát
+  `sealStripped { unitId, refId }` (`refId` = intentId) và +1 `intentsSealed` cho
+  Hero đặt dấu. Đóng Băng bỏ chuỗi vẫn hết dấu.
+- PvP (`to` là Hero hoặc Linh Thú đối thủ): cùng cơ chế — trong lượt kế của ghế đó,
+  lá do Hero bị dấu đánh và hành động của Linh Thú bị dấu chỉ còn effect `damage`;
+  `sealStripped` (`refId` = instanceId / summonId) + `intentsSealed` cho người đặt.
+- `sealExtraFirstPerTurn` (Sử Bút): lần Phong Ấn đầu tiên mỗi lượt đặt dấu thêm lên
+  đơn vị địch còn sống khác có vị trí nhỏ nhất (cờ `firstSealUsedThisTurn` đặt lại
+  đầu lượt). `sealWeakens { amount }` (Chép Sử): mục tiêu nhận Suy Yếu `amount`
+  (PvP ×2 theo quy ước `01` §15.3).
 
 **Hồi Hồn — effect `revive { ratio; to: "chosen" | "lastFallen" }`.** Lá bài dùng
 `target: "fallenAlly"` + `to: "chosen"` (Hero **đã ngã** của người đánh).
@@ -355,7 +357,7 @@ hai vòng và đổi thứ tự RNG (hỏng T213), nên thay bằng nội tại 
 Ô Linh Thú cạnh Hero chủ (HP, giáp, trạng thái, chọn làm mục tiêu được); animation
 `summoned` / `summonActed` / `summonDismissed`; nhãn `Mê` trên kẻ địch bị Mê Hoặc và nhãn
 `Phong Ấn` trên kẻ địch mang dấu (`sealedBy`); hiệu ứng chiêu bị Phong Ấn (event
-`intentSealed` — kẻ địch không báo chiêu nên không vẽ `plannedIntents`); Hero đã ngã
+`sealStripped` — kẻ địch không báo chiêu nên không vẽ `plannedIntents`); Hero đã ngã
 chọn được khi đánh lá Hồi Hồn.
 
 ---
@@ -532,7 +534,7 @@ Tiếp nối `06` từ T263. Mỗi dải có thể giãn khi viết `06`; mã tr
 | T284 | 7b | `awakenSummons` đổi Linh Thú sang `awakenedId` giữ tỉ lệ HP khi thăng cấp; `summonTaunts` cho Khiêu Khích |
 | T285–T286 | 7b | PvP: Linh Thú đối thủ là mục tiêu đơn hợp lệ, Khiêu Khích ép chọn, `viewFor` hiện Linh Thú cả hai bên; co-op: Linh Thú hai người hành động sau khi cả hai Xong, người 0 trước |
 | T287–T288 | 7b | `charm`: đổi mục tiêu sang kẻ địch khác (không có → `intentFizzled`, vẫn trừ 1 lượt), xem trước hiện mục tiêu mới; `charmsApplied`, `charmMastery` (+1 lượt, ×1.5), `stealthOnCharm`; PvP Mê Hoặc đánh đồng đội |
-| T289–T290 | 7b | `sealIntent`: đặt dấu 1 lượt địch, chiêu bị tước mọi effect không-damage (`sealedBy`, `intentSealed`), `sealExtraFirstPerTurn` lan sang 1 địch, `sealWeakens`, `intentsSealed`; PvP `sealSurcharge` +1 lá đắt nhất chỉ lượt kế |
+| T289–T290 | 7b | `sealIntent`: đặt dấu 1 lượt địch, chiêu/lá bị tước mọi effect không-damage (`UnitState.sealedBy`, `sealStripped`), `sealExtraFirstPerTurn` lan sang 1 địch, `sealWeakens`, `intentsSealed`; PvP cùng cơ chế trên Hero/Linh Thú đối thủ |
 | T291–T292 | 7b | `revive`: HP theo `ratio`, xáo lại lá đã gỡ tất định, mỗi Hero tối đa 1 lần, `fallenAlly` chỉ liệt kê Hero ngã chưa hồi; `alliesFallen`, `onLevelUp` hồi `lastFallen`, `armorOnAllyFall` |
 | T293–T294 | 7b | Xuyên mục tiêu: `backRowHits`, `pierceOwnAttacks` gọi `dealDamage` cùng base lên kẻ địch phía sau, `firstHitMarks`; `debuffsApplied`, `debuffDurationBonus`, `bonusVsDebuffed`, `extendDebuffs` |
 | T295 | 7b | Kiểm chéo dữ liệu: `summons.json` (`awakenedId`, phạm vi `owner` / `summon`), lá `fallenAlly` / `revive` |

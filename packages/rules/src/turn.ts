@@ -162,14 +162,17 @@ export function endSeatTurn(
     if (instance.player !== player.index) continue;
     delete instance.chosenThisTurn;
     delete instance.turnDiscount;
-    delete instance.sealSurcharge;
   }
   const reserve = Math.min(data.combatConfig.moonReserveMax, player.moonPower);
   if (reserve !== player.moonReserve) {
     player.moonReserve = reserve;
     events.push({ type: "moonReserveChanged", side: "hero", value: reserve, ...seatTag(state, player.index) });
   }
-  for (const hero of heroesOf(state, player.index)) removeStatus(hero, "freeze", events);
+  // Phong Ấn (`01` §5.6): the mark expires with the seat's turn, used or not.
+  for (const hero of heroesOf(state, player.index)) {
+    delete hero.sealedBy;
+    removeStatus(hero, "freeze", events);
+  }
 }
 
 export function runEndTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {

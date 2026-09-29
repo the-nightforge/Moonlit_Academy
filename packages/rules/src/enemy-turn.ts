@@ -1,6 +1,6 @@
 import { checkCombatEnd, resolveEffects, tickUnitStatuses } from "./effects";
 import { chooseHeroTarget } from "./intent";
-import { bumpCounter, checkLevelUps } from "./levelup";
+import { checkLevelUps, sealFilteredEffects } from "./levelup";
 import { summonsOf } from "./players";
 import { fireEventHooks } from "./run-relic-hooks";
 import { getStatus, hasStatus, removeStatus } from "./statuses";
@@ -60,8 +60,8 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
     if (checkCombatEnd(state, events)) return;
   }
   for (const enemy of state.enemies) {
-    // Phong Ấn (`01` §5.6): the mark lasts through this enemy's turn and expires
-    // whether or not it consumed anything — frozen or dead enemies lose it too.
+    // Phong Ấn (`01` §5.6): the mark covers this enemy's whole turn — frozen or
+    // dead enemies lose it unused.
     const sealedBy = enemy.sealedBy;
     delete enemy.sealedBy;
     if (!enemy.alive) continue;
@@ -112,19 +112,7 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
       }
       events.push({ type: "intentExecuted", enemyId: enemy.id, intentId: intent.id, targetId });
       // Phong Ấn: a sealed intent keeps only its damage effects (`01` §5.6).
-      let effects = intent.effects;
-      if (sealedBy !== undefined) {
-        const kept = effects.filter((effect) => effect.type === "damage");
-        if (kept.length < effects.length) {
-          effects = kept;
-          events.push({ type: "intentSealed", enemyId: enemy.id, intentId: intent.id });
-          const sealer = state.heroes.find((hero) => hero.id === sealedBy);
-          if (sealer) {
-            bumpCounter(data, sealer, "intentsSealed", 1);
-            checkLevelUps(data, state, events);
-          }
-        }
-      }
+      const effects = sealFilteredEffects(data, state, enemy.id, sealedBy, intent.effects, intent.id, events);
       resolveEffects(
         data,
         state,

@@ -1,6 +1,6 @@
 import { resolveEffects } from "./effects";
 import { pickTarget } from "./intent";
-import { bumpCounter, levelUpPassive } from "./levelup";
+import { bumpCounter, levelUpPassive, sealFilteredEffects } from "./levelup";
 import { opponentsOf, prefixedId, seatTag, summonsOf } from "./players";
 import { applyStatus, hasStatus } from "./statuses";
 import type { CombatEvent, CombatState, GameData, HeroState, SummonState, UnitState } from "./types/index";
@@ -97,10 +97,14 @@ export function runSummonActions(data: GameData, state: CombatState, seats: numb
     for (const summon of acting) {
       if (!summon.alive) continue;
       const def = data.summons[summon.summonId]!;
+      // Phong Ấn (`01` §5.6): a sealed Linh Thú's action keeps damage only, then the mark expires.
+      const sealedBy = summon.sealedBy;
+      delete summon.sealedBy;
+      const action = sealFilteredEffects(data, state, summon.id, sealedBy, def.action, summon.summonId, events);
       const candidates = opponentsOf(state, summon).filter((unit) => unit.alive && !hasStatus(unit, "stealth"));
       const chosenId = candidates.length > 0 ? pickTarget(state, candidates, def.targeting) : undefined;
       events.push({ type: "summonActed", unitId: summon.id });
-      resolveEffects(data, state, def.action, { source: summon, summonAction: true, ...(chosenId ? { chosenId } : {}) }, events);
+      resolveEffects(data, state, action, { source: summon, summonAction: true, ...(chosenId ? { chosenId } : {}) }, events);
       if (state.status === "won" || state.status === "lost") return;
     }
   }

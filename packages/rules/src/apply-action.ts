@@ -5,7 +5,7 @@ import { addToHand } from "./draw";
 import { checkCombatEnd, processDeaths, resolveEffects } from "./effects";
 import { guardianOf } from "./enemy-turn";
 import { cardDefOf } from "./gear";
-import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "./levelup";
+import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive, sealFilteredEffects } from "./levelup";
 import { activePlayerState, heroesOf, seatTag } from "./players";
 import { pvpEndTurn } from "./pvp/turn";
 import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
@@ -125,13 +125,25 @@ function playCard(
   }
 
   const ctx = { source: owner, actors: owners, card, chosenId, instanceId: instance.instanceId, comboBonus };
+  // Phong Ấn (`01` §5.6): a card owned by a sealed hero keeps damage only —
+  // the mark covers the whole seat turn, like an enemy's intent chain.
+  const sealedOwner = owners.find((hero) => hero.sealedBy !== undefined);
+  const cardEffects = sealFilteredEffects(
+    data,
+    state,
+    sealedOwner?.id ?? owner.id,
+    sealedOwner?.sealedBy,
+    card.effects,
+    instance.instanceId,
+    events,
+  );
   // Bác Học: the owner's first scheme card each turn resolves twice; the first pass skips Chiêm Bài.
   if (passive?.type === "firstSchemeRepeats" && card.tags.includes("scheme") && !owner.firstSchemeUsedThisTurn) {
     owner.firstSchemeUsedThisTurn = true;
-    resolveEffects(data, state, card.effects.filter((effect) => effect.type !== "chooseCard"), ctx, events);
+    resolveEffects(data, state, cardEffects.filter((effect) => effect.type !== "chooseCard"), ctx, events);
   }
   if (!["won", "lost"].includes(state.status) && owners.every((hero) => hero.alive)) {
-    resolveEffects(data, state, card.effects, ctx, events);
+    resolveEffects(data, state, cardEffects, ctx, events);
   }
 
   if (card.type === "attack") {

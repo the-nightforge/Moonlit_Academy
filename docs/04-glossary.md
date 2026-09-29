@@ -36,7 +36,7 @@
 | Triệu hồi | `summon`, `summoned` | GĐ7b: effect tạo Linh Thú hoặc hồi đầy + Sức Mạnh nếu đã có |
 | Thức tỉnh | `awakenSummons`, `awakenedId` | GĐ7b: Linh Thú đổi sang bản mạnh hơn khi Hero chủ thăng cấp |
 | Mê Hoặc | `charm` | GĐ7b: trạng thái khiến kẻ địch đánh kẻ địch khác, hoặc Hero đánh đồng đội (PvP) (`01` §9.3.1, §15.5) |
-| Phong Ấn | `sealIntent` | GĐ7b: đặt dấu lên kẻ địch — chiêu nó thi hành lượt sau chỉ còn damage, mất hiệu ứng khác; PvP: +1 Nguyệt Lực lá đắt nhất lượt sau (`01` §5.6) |
+| Phong Ấn | `sealIntent` | GĐ7b: đặt dấu lên đơn vị địch một lượt — chiêu/lá/hành động nó đánh ra trong lượt sau chỉ còn damage, mất hiệu ứng khác; cùng cơ chế ở PvE và PvP (`01` §5.6) |
 | Hồi Hồn | `revive` | GĐ7b: dựng Hero đã ngã sống lại với tỉ lệ HP (`01` §5.6) |
 | Xuyên (mục tiêu) | `pierceOwnAttacks` | GĐ7b: đòn đơn mục tiêu đánh thêm kẻ địch đứng ngay sau mục tiêu (`01` §5.6) |
 | Hàng sau | `isBackRow` | GĐ7b: kẻ địch còn sống không ở vị trí nhỏ nhất trong các kẻ địch còn sống (`01` §5.6) |

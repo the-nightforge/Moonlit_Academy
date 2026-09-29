@@ -70,10 +70,8 @@ export function getEffectiveCost(
     }
   }
   const chosen = instance!.chosenThisTurn ? data.combatConfig.chooseCardDiscount : 0;
-  // PvP Phong Ấn (`01` §5.6): the sealed card costs more through the owner's next turn.
-  const surcharge = instance!.sealSurcharge ?? 0;
   const passives = firstCardDiscount(data, state, instanceId) + bloodMoonDiscount(data, state, instance!) + ownTagDiscount(data, state, instance!, card.tags) + (instance!.turnDiscount ?? 0);
-  return Math.max(0, Math.max(0, floor, cost) + surcharge - passives - chosen);
+  return Math.max(0, Math.max(0, floor, cost) - passives - chosen);
 }
 
 export function getValidTargets(data: GameData, state: CombatState, instanceId: string): string[] {

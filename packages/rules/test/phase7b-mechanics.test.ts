@@ -5,7 +5,6 @@ import {
   coopBot,
   createCoopCombat,
   createPvpCombat,
-  getEffectiveCost,
   getValidTargets,
   previewEnemyIntent,
   summonEffect,
@@ -380,8 +379,8 @@ describe("phase 7b — Phong Ấn", () => {
     const next = applyAction(t.data, sealed.state, { type: "endTurn" });
     if (!next.ok) throw new Error(next.error);
     // t_dear kept its damage but lost the Sức Mạnh; t_cheap had nothing to strip.
-    expect(next.events).toContainEqual({ type: "intentSealed", enemyId: "enemy:0", intentId: "t_dear" });
-    expect(next.events.some((e) => e.type === "intentSealed" && e.intentId === "t_cheap")).toBe(false);
+    expect(next.events).toContainEqual({ type: "sealStripped", unitId: "enemy:0", refId: "t_dear" });
+    expect(next.events.some((e) => e.type === "sealStripped" && e.refId === "t_cheap")).toBe(false);
     expect(next.events).toContainEqual(expect.objectContaining({ type: "damageDealt", sourceId: "enemy:0", amount: 9 }));
     expect(next.state.enemies[0]!.statuses.some((st) => st.id === "strength")).toBe(false);
     // The seal expired after that enemy's turn, used or not.
@@ -415,8 +414,9 @@ describe("phase 7b — Phong Ấn", () => {
     expect(play(weakens.data, weakens.state, sealCard, "enemy:0").state.enemies[0]!.statuses).toContainEqual({ id: "weak", value: 1 });
   });
 
-  it("T290: PvP sealIntent makes the opponent's priciest hand card cost 1 more during their next turn only", () => {
+  it("T290: PvP sealIntent marks the opposing hero — their cards keep damage but lose other effects during their next turn, then the mark expires", () => {
     const data = testData();
+    withLevelUp("f04", { counter: "intentsSealed", threshold: 99 })(data);
     const loadout = { heroes: {}, pvp: true as const };
     let pvp = createPvpCombat(data, { seed: 7, players: [{ heroIds: ["m05", "f04", "m06"], loadout }, { heroIds: ["m05", "f04", "m06"], loadout }] }).state;
     for (const seat of [0, 1]) {
@@ -430,29 +430,73 @@ describe("phase 7b — Phong Ấn", () => {
     pvp.players[0]!.hand = pvp.players[0]!.hand.filter((id) => id !== seal);
     pvp.cards[seal]!.player = me;
     pvp.players[me]!.hand.push(seal);
-    const foe = pvp.heroes.find((h) => h.player === them && h.alive)!;
+    const mySealer = pvp.heroes.find((h) => h.player === me && h.defId === "f04")!;
+    const foe = pvp.heroes.find((h) => h.player === them && h.defId === "m05" && h.alive)!;
+    const otherFoe = pvp.heroes.find((h) => h.player === them && h.defId === "m06")!;
     const sealed = applyAction(data, pvp, { type: "playCard", instanceId: seal, targetId: foe.id, player: me });
     if (!sealed.ok) throw new Error(sealed.error);
-    const marked = sealed.state.players[them]!.hand.filter((id) => sealed.state.cards[id]!.sealSurcharge === 1);
-    expect(marked).toHaveLength(1);
-    const cost = (s: CombatState, id: string) => getEffectiveCost(data, s, id);
-    // The marked card was the priciest when sealed (its cost now includes the +1).
-    const unsealed = sealed.state.players[them]!.hand.map((id) => cost(sealed.state, id) - (id === marked[0] ? 1 : 0));
-    expect(cost(sealed.state, marked[0]!) - 1).toBe(Math.max(...unsealed));
+    expect(sealed.state.heroes.find((h) => h.id === foe.id)!.sealedBy).toBe(mySealer.id);
 
-    // My own turn end must not clear it; it holds through their turn (the moon may have moved — compare with the surcharge removed).
+    // Their turn: a card of the sealed hero loses its non-damage effects (m05's
+    // m05_liet_hoa_xung_phong would deal damage AND draw a card without the seal).
     const theirTurn = applyAction(data, sealed.state, { type: "endTurn", player: me });
     if (!theirTurn.ok) throw new Error(theirTurn.error);
-    const plain = structuredClone(theirTurn.state);
-    delete plain.cards[marked[0]!]!.sealSurcharge;
-    expect(cost(theirTurn.state, marked[0]!)).toBe(cost(plain, marked[0]!) + 1);
+    const poke = injectCard(theirTurn.state, data, card({
+      id: "test_poke",
+      ownerId: "m05",
+      type: "attack",
+      target: "enemy",
+      effects: [
+        { type: "damage", amount: 2, to: "chosen" },
+        { type: "applyStatus", status: "weak", amount: 1, to: "chosen" },
+      ],
+    }));
+    theirTurn.state.cards[poke]!.player = them;
+    theirTurn.state.players[them]!.hand.push(poke);
+    theirTurn.state.players[0]!.hand = theirTurn.state.players[0]!.hand.filter((id) => id !== poke);
+    const target = theirTurn.state.heroes.find((h) => h.player === me && h.alive)!;
+    const struck = applyAction(data, theirTurn.state, { type: "playCard", instanceId: poke, targetId: target.id, player: them });
+    if (!struck.ok) throw new Error(struck.error);
+    expect(struck.events).toContainEqual({ type: "sealStripped", unitId: foe.id, refId: poke });
+    expect(struck.events).toContainEqual(expect.objectContaining({ type: "damageDealt", amount: 2 }));
+    expect(struck.events.some((e) => e.type === "statusApplied" && (e as { status: string }).status === "weak")).toBe(false);
+    // The sealer's counter bumps at strip time, like PvE.
+    expect(struck.state.heroes.find((h) => h.id === mySealer.id)!.levelUpCounter).toBe(1);
 
-    const afterTheirs = applyAction(data, theirTurn.state, { type: "endTurn", player: them });
+    // The mark covers the whole seat turn — another card of that hero is stripped too.
+    const poke2 = injectCard(struck.state, data, card({
+      id: "test_poke2", ownerId: "m05", type: "attack", target: "enemy",
+      effects: [{ type: "damage", amount: 1, to: "chosen" }, { type: "gainArmor", amount: 5, to: "self" }],
+    }));
+    struck.state.cards[poke2]!.player = them;
+    struck.state.players[them]!.hand.push(poke2);
+    struck.state.players[0]!.hand = struck.state.players[0]!.hand.filter((id) => id !== poke2);
+    const struck2 = applyAction(data, struck.state, { type: "playCard", instanceId: poke2, targetId: target.id, player: them });
+    if (!struck2.ok) throw new Error(struck2.error);
+    expect(struck2.events).toContainEqual({ type: "sealStripped", unitId: foe.id, refId: poke2 });
+    expect(struck2.events.some((e) => e.type === "armorGained" && (e as { targetId: string }).targetId === foe.id)).toBe(false);
+
+    // A different hero's card is unaffected.
+    const stray = injectCard(struck2.state, data, card({
+      id: "test_stray", ownerId: "m06", type: "attack", target: "enemy",
+      effects: [{ type: "damage", amount: 1, to: "chosen" }, { type: "applyStatus", status: "weak", amount: 1, to: "chosen" }],
+    }));
+    struck2.state.cards[stray]!.player = them;
+    struck2.state.players[them]!.hand.push(stray);
+    struck2.state.players[0]!.hand = struck2.state.players[0]!.hand.filter((id) => id !== stray);
+    const strayHit = applyAction(data, struck2.state, { type: "playCard", instanceId: stray, targetId: target.id, player: them });
+    if (!strayHit.ok) throw new Error(strayHit.error);
+    expect(strayHit.events.some((e) => e.type === "sealStripped")).toBe(false);
+    expect(strayHit.events.some((e) => e.type === "statusApplied" && (e as { status: string }).status === "weak")).toBe(true);
+    expect(otherFoe.sealedBy).toBeUndefined();
+
+    // The mark expires at the end of that seat's turn, used or not.
+    const afterTheirs = applyAction(data, strayHit.state, { type: "endTurn", player: them });
     if (!afterTheirs.ok) throw new Error(afterTheirs.error);
-    expect(afterTheirs.state.cards[marked[0]!]!.sealSurcharge).toBeUndefined();
+    expect(afterTheirs.state.heroes.find((h) => h.id === foe.id)!.sealedBy).toBeUndefined();
   });
 
-  it("T290b: PvP seal on an empty hand does nothing; sealWeakens weakens the target hero", () => {
+  it("T290b: PvP seal on a hero that never acts expires without bumping intentsSealed; sealWeakens weakens the target hero", () => {
     const data = testData();
     withLevelUp("f04", { counter: "intentsSealed", threshold: 99 })(data);
     const loadout = { heroes: {}, pvp: true as const };
@@ -468,13 +512,16 @@ describe("phase 7b — Phong Ấn", () => {
     pvp.cards[seal]!.player = me;
     pvp.players[me]!.hand.push(seal);
     const foe = pvp.heroes.find((h) => h.player === them && h.alive)!;
-    // Empty hand → no surcharge, no intentsSealed bump (`01` §5.6 "tay rỗng → không có tác dụng").
-    const empty = structuredClone(pvp);
-    empty.players[them]!.hand = [];
-    const noop = applyAction(data, empty, { type: "playCard", instanceId: seal, targetId: foe.id, player: me });
-    if (!noop.ok) throw new Error(noop.error);
-    expect(noop.state.heroes.find((h) => h.player === me && h.defId === "f04")!.levelUpCounter).toBe(0);
-    // Chép Sử: a real surcharge carries the weak rider onto the target hero (×2, `01` §15.3).
+    // The opponent plays nothing → nothing is stripped and no intentsSealed bump.
+    const cast = applyAction(data, pvp, { type: "playCard", instanceId: seal, targetId: foe.id, player: me });
+    if (!cast.ok) throw new Error(cast.error);
+    const pass = applyAction(data, cast.state, { type: "endTurn", player: me });
+    if (!pass.ok) throw new Error(pass.error);
+    const done = applyAction(data, pass.state, { type: "endTurn", player: them });
+    if (!done.ok) throw new Error(done.error);
+    expect(done.state.heroes.find((h) => h.id === foe.id)!.sealedBy).toBeUndefined();
+    expect(done.state.heroes.find((h) => h.player === me && h.defId === "f04")!.levelUpCounter).toBe(0);
+    // Chép Sử: the seal carries the weak rider onto the target hero (×2, `01` §15.3).
     const data2 = testData();
     withLevelUp("f04", { passive: { type: "sealWeakens", amount: 1 } })(data2);
     let pvp2 = createPvpCombat(data2, { seed: 7, players: [{ heroIds: ["m05", "f04", "m06"], loadout }, { heroIds: ["m05", "f04", "m06"], loadout }] }).state;

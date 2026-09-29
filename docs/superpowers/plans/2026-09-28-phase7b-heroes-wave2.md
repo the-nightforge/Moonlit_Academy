@@ -32,8 +32,8 @@
 |---|---|---|
 | `docs/{00,01,02,04,06,07}.md`, `CLAUDE.md`, `docs/18-phase7-spec.md` | Tài liệu luật 7b | 1 |
 | `packages/rules/src/types/static.ts` | `SummonDef`, `TargetRef` (`owner`, `summon`), `CardTarget` (`fallenAlly`), `StatusId` (`charm`), `Effect` mới, 6 `LevelUpCounter`, 11 `LevelUpPassive` | 2–7 |
-| `packages/rules/src/types/state.ts` | `SummonState`, `CombatState.summons?`, `EnemyState.sealedBy?`, `HeroState.revived?`/`firstSealUsedThisTurn?`, `PlayerState.purged?`/`fallenOrder?`, `CardInstance.sealSurcharge?` | 2, 5, 6 |
-| `packages/rules/src/types/events.ts` | `summoned`, `summonActed`, `summonDismissed`, `heroRevived`, `intentSealed` | 2, 3, 5, 6 |
+| `packages/rules/src/types/state.ts` | `SummonState`, `CombatState.summons?`, `UnitState.sealedBy?`, `HeroState.revived?`/`firstSealUsedThisTurn?`, `PlayerState.purged?`/`fallenOrder?` | 2, 5, 6 |
+| `packages/rules/src/types/events.ts` | `summoned`, `summonActed`, `summonDismissed`, `heroRevived`, `sealStripped` | 2, 3, 5, 6 |
 | `packages/rules/src/types/api.ts` | `GameData.summons` | 2 |
 | `packages/data/summons.json` (mới), `src/schema.ts`, `src/load-game-data.ts` | Dữ liệu Linh Thú, zod, kiểm chéo | 2, 8 |
 | `packages/rules/src/summons.ts` (mới) | `summonsOf`, `isSummon`, `summonEffect`, `runSummonActions`, `dismissSummonOf`, `awakenSummon` | 2, 3 |
@@ -45,7 +45,7 @@
 | `packages/rules/src/turn.ts`, `coop/turn.ts`, `pvp/turn.ts` | Linh Thú: xóa giáp / tick / hành động cuối lượt; chỉ xóa giảm giá của lá thuộc người chơi đó | 3, 5 |
 | `packages/rules/src/turn-passives.ts` | Reset `firstSealUsedThisTurn` | 5 |
 | `packages/rules/src/apply-action.ts` | Mê Hoặc trong PvP (lá tấn công đổi mục tiêu) | 4 |
-| `packages/rules/src/queries.ts` | Mục tiêu `fallenAlly`; cost `sealSurcharge`; Linh Thú trong mục tiêu `ally` co-op | 3, 5, 6 |
+| `packages/rules/src/queries.ts` | Mục tiêu `fallenAlly`; Linh Thú trong mục tiêu `ally` co-op | 3, 6 |
 | `packages/rules/src/statuses.ts` | `charm` là debuff, có `sourceId` | 4 |
 | `packages/rules/src/levelup.ts` | Linh Thú thức tỉnh khi Hero chủ thăng cấp | 3 |
 | `packages/rules/test/phase7b-mechanics.test.ts` (mới) | T280–T295 | 2–7 |
@@ -72,7 +72,7 @@
   - `TargetRef` thêm `"owner"` (Hero chủ, chỉ hợp lệ trong `SummonDef.action`) và `"summon"` (Linh Thú còn sống của Hero đang giải quyết effect, chỉ hợp lệ trên lá Hero / Song Hành). Lá Song Hành *Nguyệt Thố Hộ Mệnh* dùng `"summon"`.
   - Đòn của Linh Thú là đòn tấn công: Sức Mạnh và Suy Yếu áp dụng. Không có hệ số pha trăng (hệ số đó chỉ dành cho lá bài).
   - Linh Thú bị giết **không** tính `enemiesKilled` trong PvP.
-  - **Phong Ấn** (đã sửa thiết kế sau khi làm Task 5 — xem `01` §5.6): kẻ địch **không báo chiêu**, `sealIntent` đặt dấu lên kẻ địch (`EnemyState.sealedBy` = id Hero đánh lá) tới hết lượt kẻ địch kế tiếp — mỗi chiêu nó thi hành chỉ còn `damage`, mất mọi effect khác (`intentSealed`, +1 `intentsSealed` cho người đặt); `sealExtraFirstPerTurn` lan dấu sang kẻ địch khác vị trí nhỏ nhất. Trong PvP, phụ phí +1 nằm ở `CardInstance.sealSurcharge` và bị xóa ở cuối lượt của **người sở hữu lá**. Vì thế `endSeatTurn` chỉ xóa `chosenThisTurn` / `turnDiscount` / `sealSurcharge` của lá thuộc người chơi đó.
+  - **Phong Ấn** (đã sửa thiết kế 2 lần sau khi làm Task 5 — xem `01` §5.6): kẻ địch **không báo chiêu**; `sealIntent` đặt dấu lên đơn vị địch (`UnitState.sealedBy` = id Hero đánh lá) tới hết lượt kế của bên đó — chiêu/lá/hành động Linh Thú của đơn vị bị dấu chỉ còn `damage`, mất mọi effect khác (`sealStripped`, +1 `intentsSealed` cho người đặt); `sealExtraFirstPerTurn` lan dấu sang đơn vị địch khác vị trí nhỏ nhất. **PvP dùng đúng cùng cơ chế PvE** — đánh dấu Hero/Linh Thú đối thủ, hết ở `endSeatTurn` của ghế đó; không còn `sealSurcharge`.
   - **Mê Hoặc**: `sourceId` là người gây. Chiêu bị đổi mục tiêu vẫn trừ 1 lượt Mê Hoặc kể cả khi thất bại vì không còn kẻ địch khác. Trong PvE / co-op, Mê Hoặc trên Hero không có tác dụng (chỉ PvP có luật cho Hero).
   - **Kinh Hồng Vũ** (F06): nội tại `charmMastery { extraCharges: 1, damageMultiplier: 1.5 }`. Hệ số ×1.5 áp khi Hero gây Mê Hoặc (`sourceId`) còn sống, đã thăng cấp và có nội tại này.
   - **Hồi Hồn**: `revive { ratio; to: "chosen" | "lastFallen" }`. Lá bài dùng `target: "fallenAlly"` + `to: "chosen"`. Nội tại dạng thường của F10 là `none` với `levelUp.onLevelUp: [{ type: "revive", ratio: 0.3, to: "lastFallen" }]`, trong đó `lastFallen` là Hero ngã gần nhất của cùng người chơi mà chưa từng được Hồi Hồn (lấy từ `PlayerState.fallenOrder`).
@@ -968,10 +968,11 @@ git commit -m "Step 7b.3: charm, debuff counters and M09 passives"
 
 ### Task 5: Phong Ấn (`sealIntent`) (bước 7b.3, phần 2)
 
-> **Đã sửa thiết kế** (sau khi task này xong): kẻ địch không báo chiêu; Phong Ấn đặt dấu
-> `sealedBy` lên kẻ địch một lượt địch — chiêu chỉ còn `damage`, mất hiệu ứng khác.
-> Các snippet test/code bên dưới là bản cũ (hủy chiêu đắt nhất), chỉ còn giá trị lịch
-> sử — luật hiện hành ở `01` §5.6.
+> **Đã sửa thiết kế** (2 lần sau khi task này xong): kẻ địch không báo chiêu; Phong Ấn
+> đặt dấu `UnitState.sealedBy` lên đơn vị địch một lượt — chiêu/lá của đơn vị đó chỉ
+> còn `damage`, mất hiệu ứng khác (`sealStripped`). PvP dùng đúng cùng cơ chế PvE
+> (không còn `sealSurcharge`). Các snippet test/code bên dưới là bản cũ (hủy chiêu
+> đắt nhất / +1 cost), chỉ còn giá trị lịch sử — luật hiện hành ở `01` §5.6.
 
 **Files:**
 - Modify: `packages/rules/src/types/static.ts`, `types/state.ts`, `packages/data/src/schema.ts`, `packages/rules/src/effects.ts`, `enemy-turn.ts`, `turn.ts`, `turn-passives.ts`, `queries.ts`
@@ -981,7 +982,7 @@ git commit -m "Step 7b.3: charm, debuff counters and M09 passives"
 - Produces:
   - `Effect` thêm `{ type: "sealIntent"; to: TargetRef }`.
   - `LevelUpCounter` thêm `"intentsSealed"`. `LevelUpPassive` thêm `{ type: "sealExtraFirstPerTurn" }`, `{ type: "sealWeakens"; amount: number }`.
-  - `EnemyState.sealedBy?: string`, `HeroState.firstSealUsedThisTurn?: boolean`, `CardInstance.sealSurcharge?: number`; event `intentSealed`.
+  - `UnitState.sealedBy?: string`, `HeroState.firstSealUsedThisTurn?: boolean`; event `sealStripped { unitId, refId }`. (Đã sửa thiết kế: không còn `CardInstance.sealSurcharge`/`intentSealed` — PvP dùng đúng cơ chế PvE, xem `01` §5.6.)
 
 - [ ] **Step 1: Viết test thất bại**
 

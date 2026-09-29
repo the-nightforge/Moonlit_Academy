@@ -819,6 +819,10 @@ export class CombatScene extends Phaser.Scene {
     const panelH = 140;
     opponents.forEach((hero, index) => {
       const cx = (WIDTH / (opponents.length + 1)) * (index + 1);
+      // Phong Ấn (`01` §5.6): the hero is sealed — its cards lose every non-damage effect next turn.
+      if (hero.sealedBy !== undefined) {
+        this.text(cx, 132, "⛨ Phong Ấn", 12, "#b9a8ff").setOrigin(0.5, 1);
+      }
       const cy = 205;
       const c = this.add.container(cx, cy);
       this.root.add(c);

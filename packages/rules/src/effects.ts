@@ -9,7 +9,6 @@ import {
   moonStealthDurationBonus,
 } from "./moon";
 import { alliesOf, heroesOf, opponentsOf, playerOf, prefixedId, seatTag, summonsOf } from "./players";
-import { getEffectiveCost } from "./queries";
 import { shuffle } from "./rng";
 import { fireEventHooks } from "./run-relic-hooks";
 import {
@@ -598,32 +597,22 @@ export function resolveEffect(
       const hero = ctx.source.side === "hero" && !isSummon(ctx.source) ? (ctx.source as HeroState) : undefined;
       const passive = cardPassive(data, ctx);
       for (const target of resolveTargets(state, effect.to, ctx)) {
-        if (state.mode === "pvp") {
-          // Fair Arena (`01` §5.6): the opponent's priciest hand card costs 1
-          // more during their next turn only (ties → earlier in the hand).
-          const seat = state.players[(target as HeroState).player]!;
-          const priciest = seat.hand.reduce<string | undefined>((best, id) =>
-            best === undefined || getEffectiveCost(data, state, id) > getEffectiveCost(data, state, best) ? id : best, undefined);
-          if (priciest === undefined) continue;
-          const instance = state.cards[priciest]!;
-          instance.sealSurcharge = (instance.sealSurcharge ?? 0) + 1;
-          if (hero) bumpCounter(data, hero, "intentsSealed", 1);
-          if (passive?.type === "sealWeakens") applyStatus(target, "weak", passive.amount * 2, ctx.source.id, events);
-          continue;
-        }
-        if (target.side !== "enemy") continue;
-        // Phong Ấn (`01` §5.6): mark the unit — during its next turn each intent
-        // keeps damage but loses every other effect. The counter credits the
-        // sealer when an intent is actually stripped (`enemy-turn.ts`).
-        (target as EnemyState).sealedBy = ctx.source.id;
+        // Phong Ấn (`01` §5.6): mark the opposing unit — during its side's next
+        // turn every intent or card it plays keeps damage but loses every other
+        // effect. The counter credits the sealer at strip time, not at cast.
+        if (!opponentsOf(state, ctx.source).includes(target)) continue;
+        target.sealedBy = ctx.source.id;
         if (passive?.type === "sealExtraFirstPerTurn" && hero && !hero.firstSealUsedThisTurn) {
           hero.firstSealUsedThisTurn = true;
-          const extra = state.enemies
+          const extra = opponentsOf(state, ctx.source)
             .filter((unit) => unit.alive && unit.id !== target.id)
             .sort((a, b) => a.position - b.position)[0];
           if (extra) extra.sealedBy = ctx.source.id;
         }
-        if (passive?.type === "sealWeakens") applyStatus(target, "weak", passive.amount, ctx.source.id, events);
+        if (passive?.type === "sealWeakens") {
+          const factor = state.mode === "pvp" ? 2 : 1;
+          applyStatus(target, "weak", passive.amount * factor, ctx.source.id, events);
+        }
       }
       return;
     }

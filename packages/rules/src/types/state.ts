@@ -16,6 +16,8 @@ export interface UnitState {
   armor: number;
   statuses: StatusInstance[];
   alive: boolean;
+  /** Phong Ấn (`01` §5.6): hero id that sealed this unit; its next-turn intents/cards keep damage but lose every other effect. Cleared after that unit's side next turn, used or not. */
+  sealedBy?: string;
 }
 
 export interface HeroState extends UnitState {
@@ -70,8 +72,6 @@ export interface EnemyState extends UnitState {
   moonPower: number;
   /** Reserve carried into the next plan. */
   moonReserve: number;
-  /** Phong Ấn (`01` §5.6): hero id that sealed this unit; its next-turn intents keep damage but lose every other effect. Cleared when that enemy's turn ends, used or not. */
-  sealedBy?: string;
 }
 
 export interface CardInstance {
@@ -87,8 +87,6 @@ export interface CardInstance {
   chosenThisTurn?: boolean;
   /** Thiên Cơ: this turn only (`01` §3.1). */
   turnDiscount?: number;
-  /** PvP Phong Ấn (`01` §5.6): +1 cost until the owner's turn ends, cleared in `endSeatTurn`. */
-  sealSurcharge?: number;
 }
 
 /** A choice the seat must answer before acting (`01` §3.1, §4). */

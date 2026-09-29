@@ -204,19 +204,24 @@ Condition `selfHpBelow`, `selfHasStatus` xét đơn vị hành động của eff
 
 ### 5.6 Phong Ấn, Hồi Hồn, Kéo Dài Debuff, Xuyên mục tiêu [GĐ7]
 
-**Phong Ấn — effect `sealIntent { to }`** (chỉ trên lá bài).
-- PvE / co-op (`to` là kẻ địch): đặt dấu Phong Ấn lên mục tiêu — `EnemyState.sealedBy`
-  = id Hero đánh lá. Dấu tồn tại tới hết lượt kẻ địch kế tiếp của mục tiêu rồi hết,
-  dù có dùng hay không (kẻ địch bị Đóng Băng bỏ cả chuỗi vẫn hết dấu). Trong lượt đó,
-  mỗi chiêu mục tiêu thi hành bị tước **mọi effect không phải `damage`** — chiêu chỉ
-  còn phần damage. Mỗi chiêu bị tước ít nhất một effect phát `intentSealed` và +1
-  `intentsSealed` cho Hero đã đặt dấu. Nội tại `sealExtraFirstPerTurn`: lần Phong Ấn
-  **đầu tiên mỗi lượt** của Hero có nội tại này còn đặt dấu lên kẻ địch còn sống khác
-  có vị trí nhỏ nhất — dùng cờ `HeroState.firstSealUsedThisTurn`, đặt lại đầu lượt
-  người chơi. Nội tại `sealWeakens { amount }`: mục tiêu nhận Suy Yếu `amount`.
-- PvP (`to` là Hero đối thủ): lá **đắt nhất trên tay** của người chơi đó (hòa → lá đứng
-  trước) +1 Nguyệt Lực **chỉ trong lượt kế tiếp** của họ (`CardInstance.sealSurcharge`);
-  tay rỗng → không có tác dụng. `intentsSealed` +1 khi phụ phí được đặt. Xem mục 15.5.
+**Phong Ấn — effect `sealIntent { to }`** (chỉ trên lá bài). Đặt dấu lên một
+đơn vị địch — `UnitState.sealedBy` = id Hero đánh lá.
+- PvE / co-op (`to` là kẻ địch): dấu tồn tại tới hết lượt kẻ địch kế tiếp của mục
+  tiêu rồi hết, dù có dùng hay không (kẻ địch bị Đóng Băng bỏ cả chuỗi vẫn hết dấu).
+  Trong lượt đó, mỗi chiêu mục tiêu thi hành bị tước **mọi effect không phải
+  `damage`** — chiêu chỉ còn phần damage. Mỗi chiêu bị tước ít nhất một effect phát
+  `sealStripped { unitId, refId }` (`refId` = id chiêu) và +1 `intentsSealed` cho
+  Hero đã đặt dấu.
+- PvP (`to` là đơn vị đối thủ — Hero hoặc Linh Thú): cùng cơ chế — dấu tồn tại tới
+  hết lượt kế của ghế đó; mọi lá mục tiêu (Hero bị dấu) đánh trong lượt đó chỉ còn
+  effect `damage`, và hành động của Linh Thú bị dấu cũng bị tước hiệu ứng còn lại.
+  Mỗi lá/hành động bị tước ít nhất một effect phát `sealStripped` (`refId` =
+  `instanceId` của lá hoặc `summonId`) và +1 `intentsSealed` cho người đặt dấu.
+- Nội tại `sealExtraFirstPerTurn`: lần Phong Ấn **đầu tiên mỗi lượt** của Hero có
+  nội tại này còn đặt dấu lên đơn vị địch còn sống khác có vị trí nhỏ nhất — dùng
+  cờ `HeroState.firstSealUsedThisTurn`, đặt lại đầu lượt người chơi.
+- Nội tại `sealWeakens { amount }`: mục tiêu nhận Suy Yếu `amount` (PvP ×2 theo
+  quy ước vòng/lượt mục 15.3).
 - Khi thi hành lượt kẻ địch (mục 9.3): `lastIntentIds` = id các chiêu trong chuỗi đã
   lên (`plannedIntents`).
 

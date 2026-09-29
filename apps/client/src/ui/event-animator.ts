@@ -411,11 +411,17 @@ function animateEvent(
       if (!anchor) return instant();
       return floatText(scene, anchor.x, anchor.y - 110, `Tỏa Nguyệt hủy ${event.intentIds.length} chiêu`, "#9fd4ff", 13, 450);
     }
-    case "intentSealed": {
-      const anchor = anchorOf(event.enemyId);
+    case "sealStripped": {
+      const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
-      const intent = findIntent(ctx, event.enemyId, event.intentId);
-      return floatText(scene, anchor.x, anchor.y - 110, `Phong Ấn: ${intent?.name ?? ""} mất hiệu ứng`, "#b9a8ff", 13, 450);
+      // refId is an intentId for enemies, a card instanceId for hero cards, a summonId for Linh Thú.
+      const instance = ctx.state.cards[event.refId];
+      const ref = ctx.state.enemies.some((enemy) => enemy.id === event.unitId)
+        ? findIntent(ctx, event.unitId, event.refId)?.name
+        : ctx.state.summons?.some((summon) => summon.id === event.unitId)
+          ? ctx.gameData.summons[event.refId]?.name
+          : instance ? cardDefOf(ctx.gameData, ctx.state, instance)?.name : undefined;
+      return floatText(scene, anchor.x, anchor.y - 110, `Phong Ấn: ${ref ?? ""} mất hiệu ứng`, "#b9a8ff", 13, 450);
     }
     case "intentExecuted": {
       const anchor = anchorOf(event.enemyId);

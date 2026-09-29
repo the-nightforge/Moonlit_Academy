@@ -524,6 +524,7 @@ export interface UnitState {
   armor: number;
   statuses: StatusInstance[];
   alive: boolean;
+  sealedBy?: string;         // GĐ7b: id Hero đặt Phong Ấn — intent/lá/hành động lượt sau của đơn vị chỉ còn effect damage (01 §5.6), hết sau lượt đó
 }
 
 export interface HeroState extends UnitState {
@@ -544,7 +545,6 @@ export interface EnemyState extends UnitState {
   lastIntentIds: string[];   // chuỗi đã lên vòng trước
   moonPower: number;         // quỹ của vòng đã lên chuỗi
   moonReserve: number;       // Dự Trữ sẽ mang sang vòng sau
-  sealedBy?: string;        // GĐ7b: id Hero đặt Phong Ấn — chiêu lượt sau của kẻ địch chỉ còn damage (01 §5.6), xóa hết lượt đó
 }
 
 export interface CardInstance {
@@ -553,7 +553,6 @@ export interface CardInstance {
   ownerIds: string[];       // id Hero, ví dụ ["m05"]; lá Song Hành: 2 id theo thứ tự bond.owners
   heldTurns: number;        // GĐ4b: số lượt đã nằm trên tay (Tích Tụ); 0 khi lá vào tay
   turnDiscount?: number;    // GĐ7: Thiên Cơ (M01) — giảm cost chỉ trong lượt này, xóa cuối lượt
-  sealSurcharge?: number;   // GĐ7b: PvP Phong Ấn — +1 cost chỉ tới hết lượt kế của chủ lá (01 §5.6), xóa ở endSeatTurn của người sở hữu lá
 }
 
 // GĐ7b: Linh Thú trên bàn (01 §17). Cùng phe Hero, không bao giờ quyết định thắng/thua.
@@ -680,7 +679,7 @@ export type CombatEvent =
   | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }   // GĐ2; rounds 0 = hết
   | { type: "intentsRevealed"; enemyId: string; moonPower: number; intents: { intentId: string; cost: number; targetId: string | null }[] }  // GĐ4a: một event cho cả chuỗi mỗi địch (thay intentRevealed); chuỗi rỗng = Tụ Lực
   | { type: "intentsCancelled"; enemyId: string; intentIds: string[] }   // GĐ4b: Tỏa/Đoạt Nguyệt hủy chiêu cuối chuỗi, theo thứ tự bị bỏ (01 §9.5)
-  | { type: "intentSealed"; enemyId: string; intentId: string }                               // GĐ7b: chiêu của kẻ địch mang dấu Phong Ấn bị tước mọi effect không-damage (01 §5.6)
+  | { type: "sealStripped"; unitId: string; refId: string }                                   // GĐ7b: chiêu/lá/hành động của đơn vị mang dấu Phong Ấn bị tước mọi effect không-damage; refId = intentId / instanceId / summonId (01 §5.6)
   | { type: "intentExecuted"; enemyId: string; intentId: string; targetId: string | null }   // một event mỗi chiêu trong chuỗi
   | { type: "intentFizzled"; enemyId: string; intentId: string }                             // một event mỗi chiêu trong chuỗi
   | { type: "intentSkipped"; enemyId: string; reason: "freeze" }                             // một event cho cả chuỗi bị bỏ
