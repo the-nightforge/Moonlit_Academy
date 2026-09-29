@@ -6,13 +6,21 @@ import { startServerRun } from "../run-session";
 import { restartSession, session } from "../session";
 import type { Team } from "../session";
 import { COLORS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
-import { addButton, addCurrencyBar, addText, showToast } from "../ui/widgets";
+import { addButton, addCurrencyBar, addText, RowScroller, showToast } from "../ui/widgets";
 
 const WIDTH = 1280;
 const ROW_H = 38;
 const LIST_TOP = 110;
 const LIST_BOTTOM = 560;
 const VISIBLE = Math.floor((LIST_BOTTOM - LIST_TOP) / ROW_H);
+/** Team picker grid: 5 columns, 4 rows on screen, the rest scroll. */
+const PICK_COLS = 5;
+const PICK_ROWS = 4;
+const PICK_W = 220;
+const PICK_H = 96;
+const PICK_STEP_X = 236;
+const PICK_STEP_Y = 108;
+const PICK_TOP = 110;
 
 export function describeDeckError(data: GameData, error: DeckError): string {
   switch (error.code) {
@@ -57,6 +65,7 @@ export class DeckSelectScene extends Phaser.Scene {
   private scroll = 0;
   private pickingTeam = false;
   private picked: string[] = [];
+  private teamScroll!: RowScroller;
   /** A server request is in flight (starting a run). */
   private busy = false;
 
@@ -72,6 +81,14 @@ export class DeckSelectScene extends Phaser.Scene {
     this.scroll = 0;
     this.pickingTeam = false;
     this.picked = [];
+    const gridW = (PICK_COLS - 1) * PICK_STEP_X + PICK_W;
+    this.teamScroll = new RowScroller(
+      this,
+      { x: (WIDTH - gridW) / 2, y: PICK_TOP, width: gridW, height: PICK_ROWS * PICK_STEP_Y },
+      () => {
+        if (this.pickingTeam) this.render();
+      },
+    );
     this.render();
     showToast(this, session.notices.splice(0));
   }
@@ -213,6 +230,7 @@ export class DeckSelectScene extends Phaser.Scene {
     }, !starter && online);
     addButton(this, this.root, 1090, y, 200, "Deck mới", () => {
       this.pickingTeam = true;
+      this.teamScroll.first = 0;
       this.picked = [...session.heroIds];
       this.render();
     }, online);
@@ -223,17 +241,21 @@ export class DeckSelectScene extends Phaser.Scene {
     const data = session.data;
     addText(this, this.root, WIDTH / 2, 40, "Deck mới — chọn 3 Hero", 24, COLORS.gold).setOrigin(0.5);
     addText(this, this.root, WIDTH / 2, 74, "Thứ tự chọn là vị trí trong đội", 13, COLORS.dimText).setOrigin(0.5);
-    const heroes = Object.values(data.heroes);
-    const spacing = 230;
-    const startX = WIDTH / 2 - ((heroes.length - 1) * spacing) / 2;
-    heroes.forEach((hero, index) => {
-      const x = startX + index * spacing;
-      const y = 280;
+    // Owned heroes first: they are the only ones the player can pick.
+    const heroes = Object.values(data.heroes).sort(
+      (a, b) => Number(session.profile.heroes[b.id] !== undefined) - Number(session.profile.heroes[a.id] !== undefined),
+    );
+    const rows = Math.ceil(heroes.length / PICK_COLS);
+    const [firstRow, endRow] = this.teamScroll.range(rows, PICK_ROWS);
+    const startX = WIDTH / 2 - ((PICK_COLS - 1) * PICK_STEP_X) / 2;
+    heroes.slice(firstRow * PICK_COLS, endRow * PICK_COLS).forEach((hero, index) => {
+      const x = startX + (index % PICK_COLS) * PICK_STEP_X;
+      const y = PICK_TOP + PICK_H / 2 + Math.floor(index / PICK_COLS) * PICK_STEP_Y;
       const slot = this.picked.indexOf(hero.id);
       const owned = session.profile.heroes[hero.id] !== undefined;
-      const panel = this.add.rectangle(x, y, 210, 110, COLORS.panelHero).setAlpha(owned ? 1 : 0.45);
+      const panel = this.add.rectangle(x, y, PICK_W, PICK_H, COLORS.panelHero).setAlpha(owned ? 1 : 0.45);
       panel.setStrokeStyle(slot >= 0 ? 3 : 1, slot >= 0 ? COLORS.goldFill : (OWNER_COLORS[hero.id] ?? COLORS.panelBorder));
-      panel.setInteractive({ useHandCursor: true });
+      panel.setInteractive({ useHandCursor: owned });
       panel.on("pointerup", (pointer: Phaser.Input.Pointer) => {
         if (pointer.button !== 0 || !owned) return;
         if (this.picked.includes(hero.id)) this.picked = this.picked.filter((id) => id !== hero.id);
@@ -241,18 +263,19 @@ export class DeckSelectScene extends Phaser.Scene {
         this.render();
       });
       this.root.add(panel);
-      if (slot >= 0) addText(this, this.root, x + 90, y - 42, `${slot + 1}`, 16, COLORS.gold).setOrigin(0.5);
-      addText(this, this.root, x, y - 24, hero.name, 17).setOrigin(0.5);
-      addText(this, this.root, x, y + 2, owned ? `HP ${hero.maxHp}` : "Chưa sở hữu", 12, COLORS.dimText).setOrigin(0.5);
+      if (slot >= 0) addText(this, this.root, x + PICK_W / 2 - 14, y - PICK_H / 2 + 14, `${slot + 1}`, 16, COLORS.gold).setOrigin(0.5);
+      addText(this, this.root, x, y - 28, hero.name, 17).setOrigin(0.5);
+      addText(this, this.root, x, y - 6, owned ? `HP ${hero.maxHp}` : "Chưa sở hữu", 12, COLORS.dimText).setOrigin(0.5);
       this.root.add(
         this.add
-          .text(x, y + 20, hero.branches.map((b) => b.name).join(" / "), { ...TEXT_BASE, fontSize: "11px", color: COLORS.dimText, align: "center", wordWrap: { width: 190 } })
+          .text(x, y + 8, hero.branches.map((b) => b.name).join(" / "), { ...TEXT_BASE, fontSize: "11px", color: COLORS.dimText, align: "center", wordWrap: { width: PICK_W - 20 }, maxLines: 2 })
           .setOrigin(0.5, 0),
       );
     });
+    this.teamScroll.addArrows(this.root);
     const bonds = bondCardsForTeam(data, this.picked);
     addText(
-      this, this.root, WIDTH / 2, 380,
+      this, this.root, WIDTH / 2, 590,
       bonds.length === 0 ? "Lá Song Hành: — không có —" : `Lá Song Hành: ${bonds.map((c) => c.name).join(" · ")}`,
       13, bonds.length > 0 ? COLORS.gold : COLORS.dimText,
     ).setOrigin(0.5);

@@ -55,6 +55,66 @@ export function addCurrencyBar(
   ).setOrigin(0, 0.5);
 }
 
+/**
+ * Scrolls a list by whole rows: the scene renders only rows `range()` returns,
+ * so a list longer than the screen never spills over other controls. Wheel
+ * over `area` and the ▲▼ bars step one row. Create once in `create()`; the
+ * wheel listener is dropped with the scene.
+ */
+export class RowScroller {
+  first = 0;
+  private total = 0;
+  private visible = 0;
+
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly area: { x: number; y: number; width: number; height: number },
+    private readonly onScroll: () => void,
+  ) {
+    const bounds = new Phaser.Geom.Rectangle(area.x, area.y, area.width, area.height);
+    const onWheel = (pointer: Phaser.Input.Pointer, _over: unknown, _dx: number, dy: number) => {
+      const point = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      if (dy !== 0 && bounds.contains(point.x, point.y)) this.scrollBy(Math.sign(dy));
+    };
+    scene.input.on("wheel", onWheel);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.input.off("wheel", onWheel));
+  }
+
+  /** Clamps the scroll for `total` rows, `visible` at a time; returns [start, end). */
+  range(total: number, visible: number): [number, number] {
+    this.total = total;
+    this.visible = visible;
+    this.first = Phaser.Math.Clamp(this.first, 0, Math.max(0, total - visible));
+    return [this.first, Math.min(total, this.first + visible)];
+  }
+
+  scrollBy(rows: number): void {
+    const next = Phaser.Math.Clamp(this.first + rows, 0, Math.max(0, this.total - this.visible));
+    if (next === this.first) return;
+    this.first = next;
+    this.onScroll();
+  }
+
+  /** ▲ bar just above / ▼ bar just below the area while rows are hidden that way. */
+  addArrows(parent: Phaser.GameObjects.Container): void {
+    const { x, y, width, height } = this.area;
+    const bar = (barY: number, label: string, rows: number) => {
+      const rect = this.scene.add.rectangle(x + width / 2, barY, width, 20, COLORS.button, 0.8);
+      rect.setStrokeStyle(1, COLORS.panelBorder);
+      rect.setInteractive({ useHandCursor: true });
+      rect.on("pointerover", () => rect.setFillStyle(0x3a5090, 1));
+      rect.on("pointerout", () => rect.setFillStyle(COLORS.button, 0.8));
+      rect.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0) this.scrollBy(rows);
+      });
+      parent.add(rect);
+      addText(this.scene, parent, x + width / 2, barY, label, 11, COLORS.text).setOrigin(0.5);
+    };
+    if (this.first > 0) bar(y - 12, "▲", -1);
+    if (this.first + this.visible < this.total) bar(y + height + 12, "▼", 1);
+  }
+}
+
 /** A message that fades out by itself (gifts, achievements). */
 export function showToast(scene: Phaser.Scene, lines: string[], y = 110): void {
   if (lines.length === 0) return;

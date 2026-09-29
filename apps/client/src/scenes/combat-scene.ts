@@ -55,6 +55,9 @@ const CARD_W = 110;
 const CARD_H = 160;
 const SUMMON_W = 112;
 const SUMMON_H = 62;
+/** Hand zone: clear of the Nguyệt Lực block (left) and the pile / end-turn column (right). */
+const HAND_LEFT = 180;
+const HAND_RIGHT = 1045;
 
 const ERROR_LABELS: [RegExp, string][] = [
   [/not the player turn/, "Chưa tới lượt người chơi"],
@@ -1272,6 +1275,8 @@ export class CombatScene extends Phaser.Scene {
         container.setScale(1.15);
         container.y = y - 18;
         container.setDepth(10);
+        // Depth does not reorder a container's children: lift the card over its neighbours.
+        this.root.bringToTop(container);
       }
     });
     container.on("pointerout", () => {
@@ -1596,11 +1601,14 @@ export class CombatScene extends Phaser.Scene {
     ].filter((part) => part.length > 0);
     if (extras.length > 0) this.text(30, 612, extras.join("  ·  "), 12, COLORS.gold);
 
+    // A full hand (up to `handLimit`) squeezes its cards to stay inside the zone;
+    // the hovered card is lifted above its neighbours in renderCard.
     const hand = seat.hand;
-    const spacing = CARD_W + 10;
-    const startX = WIDTH / 2 - ((hand.length - 1) * spacing) / 2;
+    const spacing = hand.length < 2 ? 0 : Math.min(CARD_W + 10, (HAND_RIGHT - HAND_LEFT - CARD_W) / (hand.length - 1));
+    const handWidth = (hand.length - 1) * spacing + CARD_W;
+    const left = Phaser.Math.Clamp(WIDTH / 2 - handWidth / 2, HAND_LEFT, HAND_RIGHT - handWidth);
     hand.forEach((instanceId, index) => {
-      this.renderCard(instanceId, startX + index * spacing, 632);
+      this.renderCard(instanceId, left + CARD_W / 2 + index * spacing, 632);
     });
 
     const pile = seat.drawPile.length;

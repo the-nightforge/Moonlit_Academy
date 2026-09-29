@@ -199,7 +199,7 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
   const before = await api("/api/profile", { token: winner.token });
   const jadeBefore = (before.body.profile as { currencies: { moonJade: number } }).currencies.moonJade;
   pageW.once("dialog", (dialog) => void dialog.accept());
-  await clickDesign(pageW, 1020, 150); // "Mua" — vé kéo 160 Ngọc (150 Vinh Dự)
+  await clickDesign(pageW, 1020, 170); // "Mua" — vé kéo 160 Ngọc (150 Vinh Dự)
   await expect
     .poll(async () => {
       const reply = await api("/api/profile", { token: winner.token });
