@@ -8,7 +8,7 @@ import {
   getPlayCardError,
   getValidTargets,
   isCardPlayable,
-  summonsOf,
+  summonOf,
 } from "rules";
 import type {
   Action,
@@ -661,9 +661,8 @@ export class CombatScene extends Phaser.Scene {
 
   /** The living Linh Thú belonging to hero `heroId` (`01` §17), if any. */
   private summonOfHero(heroId: string): SummonState | undefined {
-    return summonsOf(this.state).find(
-      (summon) => summon.ownerHeroId === heroId && summon.alive,
-    );
+    const summon = summonOf(this.state, heroId);
+    return summon?.alive === true ? summon : undefined;
   }
 
   /**
@@ -691,7 +690,13 @@ export class CombatScene extends Phaser.Scene {
     );
     c.add(panel);
     const name = this.gameData.summons[summon.summonId]?.name ?? "Linh Thú";
-    this.text(0, -h / 2 + 11, name, 11, COLORS.gold, c).setOrigin(0.5);
+    const nameText = this.text(0, -h / 2 + 11, name, 11, COLORS.gold, c).setOrigin(0.5);
+    if (nameText.width > w - 8) nameText.setScale((w - 8) / nameText.width);
+    // Phong Ấn (`01` §5.6): same marker enemies and opposing heroes show —
+    // bottom-right inside the panel (the 4px gap above can't hold a label).
+    if (summon.sealedBy !== undefined) {
+      this.text(w / 2 - 9, h / 2 - 11, "⛨", 11, "#b9a8ff", c).setOrigin(1, 0.5);
+    }
     this.hpBar(-w / 2 + 8, -5, w - 16, summon.hp, summon.maxHp, COLORS.hpFillHero, c);
     if (summon.armor > 0) {
       this.text(-w / 2 + 8, h / 2 - 12, `🛡 ${summon.armor}`, 10, COLORS.armor, c);

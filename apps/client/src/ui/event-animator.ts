@@ -576,7 +576,7 @@ function animateEvent(
       if (!anchor) return instant();
       const summon = ctx.state.summons?.find((unit) => unit.id === event.unitId);
       const name = (summon && ctx.gameData.summons[summon.summonId]?.name) ?? "Linh Thú";
-      return floatText(scene, anchor.x, anchor.y - 36, name, "#9fd4ff", 14, 300);
+      return floatText(scene, anchor.x, anchor.y - 44, name, "#9fd4ff", 14, 300);
     }
     case "summonDismissed": {
       const anchor = anchorOf(event.unitId);
@@ -603,10 +603,11 @@ function animateEvent(
     case "heroRevived": {
       // Hồi Hồn (`18` §3.5): a fallen hero stands back up — gold flash + float.
       const anchor = anchorOf(event.heroId);
+      const coop = ctx.state.mode === "coop";
       const jobs: Promise<void>[] = [
-        floatText(scene, anchor?.x ?? WIDTH / 2, (anchor?.y ?? 440) - 62, "Hồi Hồn", "#f4d35e", 20, 600),
+        floatText(scene, anchor?.x ?? WIDTH / 2, (anchor?.y ?? 396) - 62, "Hồi Hồn", "#f4d35e", 20, 600),
       ];
-      if (anchor) jobs.push(flash(scene, anchor.x, anchor.y, 240, 170, 0xf4d35e, 500));
+      if (anchor) jobs.push(flash(scene, anchor.x, anchor.y, coop ? 190 : 240, coop ? 150 : 170, 0xf4d35e, 500));
       return Promise.all(jobs).then(() => undefined);
     }
     default:
