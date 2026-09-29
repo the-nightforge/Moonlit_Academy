@@ -549,5 +549,14 @@ describe("phase 7b — Xuyên", () => {
     expect(first.state.enemies[0]!.statuses).toContainEqual({ id: "mark", value: 1, sourceId: "hero:f04" });
     const second = play(marks.data, first.state, { ...shot, id: "test_shot2" }, "enemy:1");
     expect(second.state.enemies[1]!.statuses.some((st) => st.id === "mark")).toBe(false);
+
+    // `01` §5.6: counters and marks only fire off attack cards — a skill dealing
+    // damage to a back-row enemy does neither.
+    const count2 = makeTestCombat({ mutateData: withLevelUp("f04", { counter: "backRowHits", threshold: 99 }) });
+    const skill = card({ id: "test_skill_dmg", ownerId: "f04", type: "skill", tags: [], target: "enemy", effects: [{ type: "damage", amount: 5, to: "chosen" }] });
+    const skillHit = play(count2.data, count2.state, skill, "enemy:1");
+    expect(skillHit.state.heroes[1]!.levelUpCounter).toBe(0);
+    const skillMarks = play(marks.data, second.state, { ...skill, id: "test_skill_dmg2" }, "enemy:1");
+    expect(skillMarks.state.enemies[1]!.statuses.some((st) => st.id === "mark")).toBe(false);
   });
 });

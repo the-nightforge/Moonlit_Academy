@@ -317,7 +317,7 @@ lá, Nguyệt Lực, thăng cấp, bộ đếm; không tính vào điều kiện
   fallenOrder`, không phải HP thấp nhất hay vị trí).
 
 **Xuyên mục tiêu.** "Hàng sau" = kẻ địch không có vị trí nhỏ nhất trong các kẻ địch còn
-sống. Bộ đếm `backRowHits` +1 mỗi hit từ lá của F05 trúng kẻ địch hàng sau. Nội tại
+sống. Bộ đếm `backRowHits` +1 mỗi hit từ lá tấn công của F05 trúng kẻ địch hàng sau. Nội tại
 `pierceOwnAttacks`: mỗi hit đơn mục tiêu từ lá của Hero còn gọi `dealDamage` với **cùng
 base** lên kẻ địch còn sống có vị trí ngay sau mục tiêu (nếu có) — hệ số của mục tiêu mới
 (Suy Yếu, Dễ Vỡ…) vẫn áp dụng bình thường, không phải "cùng số damage trước giáp". PvP:

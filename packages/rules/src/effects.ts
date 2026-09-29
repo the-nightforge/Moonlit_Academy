@@ -176,13 +176,13 @@ export function loseHp(
   return lost;
 }
 
-/** Hàng sau: a living unit that is not the front (lowest position) of its side (`01` §5). */
+/** Hàng sau: a living unit that is not the front (lowest position) of its side (`01` §5.6). */
 export function isBackRow(state: CombatState, target: UnitState): boolean {
   const side =
     target.side === "enemy"
       ? state.enemies
       : state.heroes.filter((hero) => hero.player === (target as HeroState).player);
-  const front = side.filter((unit) => unit.alive).reduce((min, unit) => Math.min(min, unit.position), Infinity);
+  const front = side.filter((unit) => unit.alive && unit.hp > 0).reduce((min, unit) => Math.min(min, unit.position), Infinity);
   return target.position > front;
 }
 
@@ -192,7 +192,7 @@ function nextBehind(state: CombatState, target: UnitState): UnitState | undefine
       ? state.enemies
       : state.heroes.filter((hero) => hero.player === (target as HeroState).player);
   return side
-    .filter((unit) => unit.alive && unit.position > target.position)
+    .filter((unit) => unit.alive && unit.hp > 0 && unit.position > target.position)
     .sort((a, b) => a.position - b.position)[0];
 }
 
@@ -204,7 +204,9 @@ function dealDamage(
   base: number,
   events: CombatEvent[],
 ): void {
-  const backRow = ctx.card !== undefined && ctx.source.side === "hero" && isBackRow(state, target);
+  const backRow =
+    ctx.card !== undefined && ctx.card.type === "attack" && ctx.card.bond === undefined &&
+    ctx.source.side === "hero" && isBackRow(state, target);
   const amount = computeDamageAmount(data, state, ctx, target, base);
   const blocked = Math.min(target.armor, amount);
   target.armor -= blocked;
@@ -230,8 +232,8 @@ function dealDamage(
       if (target.alive && target.hp > 0) applyStatus(target, "vulnerable", passive.rounds, hero.id, events);
     }
   }
-  // Biên Tái: the first hit each turn from the hero's cards marks the opposing target.
-  if (passive?.type === "firstHitMarks" && opponentsOf(state, ctx.source).includes(target)) {
+  // Biên Tái: the first hit each turn from the hero's attack cards marks the opposing target.
+  if (passive?.type === "firstHitMarks" && ctx.card?.type === "attack" && opponentsOf(state, ctx.source).includes(target)) {
     const hero = ctx.source as HeroState;
     if (!hero.firstHitUsedThisTurn) {
       hero.firstHitUsedThisTurn = true;
