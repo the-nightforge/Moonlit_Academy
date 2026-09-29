@@ -4,7 +4,7 @@ import type { CardDef } from "rules";
 import { session } from "../session";
 import { showCardTooltip } from "../ui/card-tooltip";
 import { COLORS, RARITY_COLORS, RARITY_LABELS, TEXT_BASE, useDesignCamera } from "../ui/theme";
-import { addButton, addCurrencyBar, addText } from "../ui/widgets";
+import { addButton, addScreenHeader, addTabs, addText } from "../ui/widgets";
 
 const WIDTH = 1280;
 const MAX_LEVEL = 5;
@@ -48,17 +48,21 @@ export class ArmoryScene extends Phaser.Scene {
     this.tooltip = null;
     const data = session.data;
     const currencies = session.profile.currencies;
-    addText(this, this.root, WIDTH / 2, 28, "Kho đồ", 26, COLORS.gold).setOrigin(0.5);
-    addCurrencyBar(this, this.root, 40, 28, currencies);
-    addText(this, this.root, WIDTH - 40, 28, `Huyền Thiết ${currencies.darkIron} · Nguyệt Trần ${currencies.moonDust}`, 13, COLORS.dimText).setOrigin(1, 0.5);
-    (["weapons", "relics"] as const).forEach((tab, index) => {
-      const label = tab === "weapons" ? "Binh Khí" : "Nguyệt Bảo";
-      addButton(this, this.root, 130 + index * 190, 80, 170, `${label}${tab === this.tab ? " ✓" : ""}`, () => {
+    addScreenHeader(this, this.root, {
+      title: "Kho đồ",
+      back: { onBack: () => this.scene.start("deck-select") },
+      currencies,
+      extra: `Huyền Thiết ${currencies.darkIron} · Nguyệt Trần ${currencies.moonDust}`,
+    });
+    addTabs(this, this.root, 230, 80, 182, (["weapons", "relics"] as const).map((tab) => ({
+      label: tab === "weapons" ? "Binh Khí" : "Nguyệt Bảo",
+      active: tab === this.tab,
+      onClick: () => {
         this.tab = tab;
         this.selectFirst();
         this.render();
-      });
-    });
+      },
+    })));
 
     this.ids().forEach((id, index) => {
       const def = this.tab === "weapons" ? data.weapons[id]! : data.relics[id]!;
@@ -82,8 +86,7 @@ export class ArmoryScene extends Phaser.Scene {
       if (this.tab === "weapons") this.renderWeapon(this.selected);
       else this.renderRelic(this.selected);
     }
-    addButton(this, this.root, 90, 680, 140, "◂ Quay lại", () => this.scene.start("deck-select"));
-    addButton(this, this.root, 250, 680, 150, "Triệu Hồi", () => this.scene.start("gacha"));
+    addButton(this, this.root, 115, 680, 150, "Triệu Hồi", () => this.scene.start("gacha"));
   }
 
   private header(name: string, rarity: keyof typeof RARITY_LABELS, subtitle: string, level: number | undefined, tag: string) {

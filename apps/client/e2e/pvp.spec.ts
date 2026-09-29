@@ -155,8 +155,10 @@ test("phòng riêng PvP: hai trình duyệt đấu, tải lại một bên vào 
   await expect.poll(async () => (await vn(pageA)).roomCode as string | null).not.toBeNull();
   const code = (await vn(pageA)).roomCode as string;
 
-  pageB.once("dialog", (dialog) => void dialog.accept(code));
   await clickDesign(pageB, 880, 470); // "Vào phòng (mã)"
+  // The room-code field is an HTML input over the canvas (in-game dialog).
+  await pageB.fill("#vn-modal-input", code);
+  await pageB.press("#vn-modal-input", "Enter");
 
   await expect.poll(() => sceneKey(pageA), { timeout: 30_000 }).toBe("combat");
   await expect.poll(() => sceneKey(pageB)).toBe("combat");

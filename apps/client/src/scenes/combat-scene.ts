@@ -36,6 +36,7 @@ import {
 } from "../debug";
 import manifest from "virtual:assets-manifest";
 import { showCardTooltip } from "../ui/card-tooltip";
+import { confirmModal, isModalOpen } from "../ui/widgets";
 import { playEventQueue } from "../ui/event-animator";
 import {
   BLOOD_MOON_BG,
@@ -55,6 +56,9 @@ const CARD_W = 110;
 const CARD_H = 160;
 const SUMMON_W = 112;
 const SUMMON_H = 62;
+/** Hand zone: clear of the Nguyệt Lực block (left) and the pile / end-turn column (right). */
+const HAND_LEFT = 180;
+const HAND_RIGHT = 1045;
 
 const ERROR_LABELS: [RegExp, string][] = [
   [/not the player turn/, "Chưa tới lượt người chơi"],
@@ -146,6 +150,7 @@ export class CombatScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-E", () => {
       if (
         !this.inputLocked &&
+        !isModalOpen() &&
         this.state.status === "playerTurn" &&
         !(this.isCoop && this.mySeatState?.done === true)
       ) {
@@ -489,6 +494,12 @@ export class CombatScene extends Phaser.Scene {
     return t;
   }
 
+  /** Shrinks a one-line label that would overrun its panel. */
+  private fitWidth(text: Phaser.GameObjects.Text, maxWidth: number): Phaser.GameObjects.Text {
+    if (text.width > maxWidth) text.setScale(maxWidth / text.width);
+    return text;
+  }
+
   private renderTopBar() {
     this.text(24, 14, `Vòng ${this.state.round}`, 16);
     const match = this.netMatch;
@@ -746,15 +757,16 @@ export class CombatScene extends Phaser.Scene {
         c.add(this.add.rectangle(0, 0, panelW - 6, panelH - 6, 0x0a0e20, 0.45));
       }
       const def = this.gameData.enemies[enemy.defId]!;
-      this.text(0, -panelH / 2 + 16, def.name, 15, COLORS.text, c).setOrigin(0.5);
+      this.fitWidth(this.text(0, -panelH / 2 + 16, def.name, 15, COLORS.text, c).setOrigin(0.5), panelW - 20);
+      // Right of the armor line: the title row belongs to the name alone (long boss names).
       this.text(
-        panelW / 2 - 10,
-        -panelH / 2 + 16,
+        panelW / 2 - 14,
+        12,
         `NL ${enemy.moonPower}${enemy.moonReserve > 0 ? ` +${enemy.moonReserve}` : ""}`,
-        11,
+        12,
         COLORS.gold,
         c,
-      ).setOrigin(1, 0.5);
+      ).setOrigin(1, 0);
       this.hpBar(-panelW / 2 + 14, -14, panelW - 28, enemy.hp, enemy.maxHp, COLORS.hpFillEnemy, c);
       this.renderBossExtras(enemy, def, c, panelW, panelH);
       if (enemy.armor > 0) {
@@ -899,7 +911,7 @@ export class CombatScene extends Phaser.Scene {
       );
       if (heroArt) c.add(this.add.rectangle(0, 0, panelW - 6, panelH - 6, 0x0a0e20, 0.45));
       const def = this.gameData.heroes[hero.defId]!;
-      this.text(0, -panelH / 2 + 16, `${def.name}${hero.leveledUp ? " ★" : ""}`, 15, COLORS.text, c).setOrigin(0.5);
+      this.fitWidth(this.text(0, -panelH / 2 + 16, `${def.name}${hero.leveledUp ? " ★" : ""}`, 15, COLORS.text, c).setOrigin(0.5), panelW - 20);
       this.hpBar(-panelW / 2 + 14, -14, panelW - 28, hero.hp, hero.maxHp, COLORS.hpFillEnemy, c);
       if (hero.armor > 0) this.text(-panelW / 2 + 14, 12, `🛡 ${hero.armor}`, 12, COLORS.armor, c);
       this.statusChips(-panelW / 2 + 14, 38, hero.statuses, panelW - 28, c);
@@ -1272,6 +1284,8 @@ export class CombatScene extends Phaser.Scene {
         container.setScale(1.15);
         container.y = y - 18;
         container.setDepth(10);
+        // Depth does not reorder a container's children: lift the card over its neighbours.
+        this.root.bringToTop(container);
       }
     });
     container.on("pointerout", () => {
@@ -1305,7 +1319,8 @@ export class CombatScene extends Phaser.Scene {
     }
     const picks = this.mulliganPicks.size;
     this.text(WIDTH / 2, 520, `Đổi Bài: chọn tối đa ${this.gameData.combatConfig.maxMulligan} lá để đổi`, 14, COLORS.gold).setOrigin(0.5);
-    this.endScreenButton(1150, 600, picks > 0 ? `Đổi (${picks})` : "Giữ nguyên", () => {
+    // Where the end-turn button sits: the phase's main action keeps one place.
+    this.endScreenButton(1150, 660, picks > 0 ? `Đổi (${picks})` : "Giữ nguyên", () => {
       const instanceIds = [...this.mulliganPicks];
       this.mulliganPicks.clear();
       this.dispatch({ type: "mulligan", instanceIds });
@@ -1586,21 +1601,34 @@ export class CombatScene extends Phaser.Scene {
     const seat = this.state.players[this.mySeat] ?? activePlayerState(this.state);
     const power = seat.moonPower;
     const reserve = Math.min(seat.moonReserve, power);
-    this.text(30, 545, "Nguyệt Lực", 13, COLORS.dimText);
-    this.text(30, 566, "◉".repeat(power - reserve), 16, COLORS.gold);
-    if (reserve > 0) this.text(30 + (power - reserve) * 12, 566, "◈".repeat(reserve), 16, COLORS.costCheap);
-    this.text(30, 592, reserve > 0 ? `${power} (Dự Trữ ${reserve})` : `${power}`, 12, COLORS.dimText);
-    const extras = [
-      seat.cardsPlayedThisTurn > 0 ? `Liên Hoàn ${seat.cardsPlayedThisTurn}` : "",
-      seat.moonPowerBonus > 0 ? `+${seat.moonPowerBonus}/lượt` : "",
-    ].filter((part) => part.length > 0);
-    if (extras.length > 0) this.text(30, 612, extras.join("  ·  "), 12, COLORS.gold);
+    // Nothing to spend while Đổi Bài is open.
+    if (this.state.status !== "mulligan") {
+      this.text(30, 545, "Nguyệt Lực", 13, COLORS.dimText);
+      // One dot per point (Dự Trữ last, green), 7 per row: fixed steps, so dots never overlap.
+      const reserveFill = Phaser.Display.Color.HexStringToColor(COLORS.costCheap).color;
+      for (let i = 0; i < power; i++) {
+        const dot = this.add.circle(37 + (i % 7) * 17, 572 + Math.floor(i / 7) * 16, 6, i < power - reserve ? COLORS.goldFill : reserveFill);
+        dot.setStrokeStyle(1, 0x0a0e20);
+        this.root.add(dot);
+      }
+      const dotRows = Math.max(1, Math.ceil(power / 7));
+      const infoY = 584 + dotRows * 16;
+      this.text(30, infoY - 4, reserve > 0 ? `${power} (Dự Trữ ${reserve})` : `${power}`, 12, COLORS.dimText);
+      const extras = [
+        seat.cardsPlayedThisTurn > 0 ? `Liên Hoàn ${seat.cardsPlayedThisTurn}` : "",
+        seat.moonPowerBonus > 0 ? `+${seat.moonPowerBonus}/lượt` : "",
+      ].filter((part) => part.length > 0);
+      if (extras.length > 0) this.text(30, infoY + 16, extras.join("  ·  "), 12, COLORS.gold);
+    }
 
+    // A full hand (up to `handLimit`) squeezes its cards to stay inside the zone;
+    // the hovered card is lifted above its neighbours in renderCard.
     const hand = seat.hand;
-    const spacing = CARD_W + 10;
-    const startX = WIDTH / 2 - ((hand.length - 1) * spacing) / 2;
+    const spacing = hand.length < 2 ? 0 : Math.min(CARD_W + 10, (HAND_RIGHT - HAND_LEFT - CARD_W) / (hand.length - 1));
+    const handWidth = (hand.length - 1) * spacing + CARD_W;
+    const left = Phaser.Math.Clamp(WIDTH / 2 - handWidth / 2, HAND_LEFT, HAND_RIGHT - handWidth);
     hand.forEach((instanceId, index) => {
-      this.renderCard(instanceId, startX + index * spacing, 632);
+      this.renderCard(instanceId, left + CARD_W / 2 + index * spacing, 632);
     });
 
     const pile = seat.drawPile.length;
@@ -1650,7 +1678,10 @@ export class CombatScene extends Phaser.Scene {
       btn.setStrokeStyle(1, 0x884455);
       btn.setInteractive({ useHandCursor: true });
       btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        if (pointer.button === 0 && window.confirm("Bỏ cuộc trận này?")) this.netMatch!.resign();
+        if (pointer.button !== 0) return;
+        void confirmModal(this, "Bỏ cuộc trận này? Trận tính là thua.", { label: "Bỏ cuộc", danger: true }).then((ok) => {
+          if (ok && this.netMatch && !this.netMatch.ended) this.netMatch.resign();
+        });
       });
       this.root.add(btn);
       this.text(1150, 590, "Bỏ cuộc", 12, "#ff9090").setOrigin(0.5);
