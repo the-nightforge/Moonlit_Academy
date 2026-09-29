@@ -6079,5 +6079,2329 @@
     "keywords": [
       "huyet_nguyet"
     ]
+  },
+  {
+    "id": "f05_liet_nham",
+    "name": "Liệp Nhắm",
+    "ownerId": "f05",
+    "cost": 1,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 3,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 3 damage. Đánh Dấu 1 vòng.",
+    "keywords": [
+      "danh_dau"
+    ]
+  },
+  {
+    "id": "f05_truy_anh",
+    "name": "Truy Ảnh",
+    "ownerId": "f05",
+    "cost": 2,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "mark"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 3,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 4 damage. Mục tiêu đang bị Đánh Dấu: gây thêm 3.",
+    "keywords": [
+      "danh_dau"
+    ]
+  },
+  {
+    "id": "f05_diem_menh",
+    "name": "Điểm Mệnh",
+    "ownerId": "f05",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Đánh Dấu 2 vòng và Dễ Vỡ 1 vòng.",
+    "keywords": [
+      "danh_dau",
+      "de_vo"
+    ]
+  },
+  {
+    "id": "f05_ha_uy",
+    "name": "Hạ Uy",
+    "ownerId": "f05",
+    "cost": 4,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 7,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 7 damage. Đánh Dấu 2 vòng.",
+    "keywords": [
+      "danh_dau"
+    ]
+  },
+  {
+    "id": "f05_xa_nhat",
+    "name": "Xạ Nhật",
+    "ownerId": "f05",
+    "cost": 5,
+    "copies": 1,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 9,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "mark"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 5,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 9 damage; mục tiêu bị Đánh Dấu: gây thêm 5.",
+    "keywords": [
+      "danh_dau"
+    ]
+  },
+  {
+    "id": "f05_tuyet_diem",
+    "name": "Tuyệt Điểm",
+    "ownerId": "f05",
+    "cost": 6,
+    "copies": 1,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 10,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHpAtOrBelow",
+          "ratio": 0.5
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 5,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 10 damage; mục tiêu còn ≤50% HP: gây thêm 5."
+  },
+  {
+    "id": "f05_lien_chau",
+    "name": "Liên Châu",
+    "ownerId": "f05",
+    "cost": 1,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 2,
+        "to": "chosen",
+        "hits": 2
+      }
+    ],
+    "text": "Gây 2 damage 2 lần."
+  },
+  {
+    "id": "f05_loan_tien",
+    "name": "Loạn Tiễn",
+    "ownerId": "f05",
+    "cost": 2,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 2,
+        "to": "chosen",
+        "hits": 2
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 2
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 2,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 2 damage 2 lần. Liên Hoàn 2: thêm 1 đòn.",
+    "keywords": [
+      "lien_hoan"
+    ]
+  },
+  {
+    "id": "f05_vu_ten",
+    "name": "Vũ Tiễn",
+    "ownerId": "f05",
+    "cost": 3,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 3,
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Gây 3 damage lên mọi kẻ địch."
+  },
+  {
+    "id": "f05_cuu_lien",
+    "name": "Cửu Liên",
+    "ownerId": "f05",
+    "cost": 4,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 2,
+        "to": "chosen",
+        "hits": 3
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 3
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 2,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 2 damage 3 lần. Liên Hoàn 3: thêm 1 đòn.",
+    "keywords": [
+      "lien_hoan"
+    ]
+  },
+  {
+    "id": "f05_bach_ten",
+    "name": "Bách Tiễn",
+    "ownerId": "f05",
+    "cost": 5,
+    "copies": 1,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 3,
+        "to": "allEnemies",
+        "hits": 2
+      }
+    ],
+    "text": "Gây 3 damage 2 lần lên mọi kẻ địch."
+  },
+  {
+    "id": "f05_van_ten",
+    "name": "Vạn Tiễn",
+    "ownerId": "f05",
+    "cost": 6,
+    "copies": 1,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "chosen",
+        "hits": 3
+      }
+    ],
+    "text": "Gây 4 damage 3 lần."
+  },
+  {
+    "id": "f05_liet_nham_plus",
+    "name": "Liệp Nhắm+",
+    "ownerId": "f05",
+    "cost": 1,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 4 damage. Đánh Dấu 2 vòng.",
+    "keywords": [
+      "danh_dau"
+    ],
+    "plusOf": "f05_liet_nham"
+  },
+  {
+    "id": "f06_me_vu",
+    "name": "Mê Vũ",
+    "ownerId": "f06",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mê Hoặc 1 chiêu đã báo của mục tiêu.",
+    "keywords": [
+      "me_hoac"
+    ]
+  },
+  {
+    "id": "f06_quyen_muc",
+    "name": "Quyến Mục",
+    "ownerId": "f06",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mê Hoặc 1 chiêu. Suy Yếu 1 vòng.",
+    "keywords": [
+      "me_hoac",
+      "suy_yeu"
+    ]
+  },
+  {
+    "id": "f06_hong_vu",
+    "name": "Hồng Vũ",
+    "ownerId": "f06",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mê Hoặc 2 chiêu.",
+    "keywords": [
+      "me_hoac"
+    ]
+  },
+  {
+    "id": "f06_dien_dao",
+    "name": "Điên Đảo",
+    "ownerId": "f06",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mê Hoặc 2 chiêu. Dễ Vỡ 2 vòng.",
+    "keywords": [
+      "me_hoac",
+      "de_vo"
+    ]
+  },
+  {
+    "id": "f06_khuynh_tam",
+    "name": "Khuynh Tâm",
+    "ownerId": "f06",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 3,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mê Hoặc 3 chiêu.",
+    "keywords": [
+      "me_hoac"
+    ]
+  },
+  {
+    "id": "f06_kinh_hong_chieu",
+    "name": "Kinh Hồng Chiếu",
+    "ownerId": "f06",
+    "cost": 6,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Mê Hoặc mọi kẻ địch 1 chiêu.",
+    "keywords": [
+      "me_hoac"
+    ]
+  },
+  {
+    "id": "f06_co_mat",
+    "name": "Cơ Mật",
+    "ownerId": "f06",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "chooseCard",
+        "look": 2
+      }
+    ],
+    "text": "Chiêm Bài 2.",
+    "keywords": [
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "f06_mat_ham",
+    "name": "Mật Hàm",
+    "ownerId": "f06",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "chooseCard",
+        "look": 1
+      }
+    ],
+    "text": "Suy Yếu 2 vòng. Chiêm Bài 1.",
+    "keywords": [
+      "suy_yeu",
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "f06_phong_thu",
+    "name": "Phong Thư",
+    "ownerId": "f06",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "drawCards",
+        "amount": 1
+      },
+      {
+        "type": "gainMoonPower",
+        "amount": 1
+      }
+    ],
+    "text": "Rút 1 lá. Nhận 1 Nguyệt Lực."
+  },
+  {
+    "id": "f06_doan_tin",
+    "name": "Đoạn Tin",
+    "ownerId": "f06",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Suy Yếu 2 vòng. Dễ Vỡ 1 vòng.",
+    "keywords": [
+      "suy_yeu",
+      "de_vo"
+    ]
+  },
+  {
+    "id": "f06_loan_am",
+    "name": "Loạn Âm",
+    "ownerId": "f06",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Suy Yếu mọi kẻ địch 2 vòng.",
+    "keywords": [
+      "suy_yeu"
+    ]
+  },
+  {
+    "id": "f06_cuc_mat",
+    "name": "Cực Mật",
+    "ownerId": "f06",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 3,
+        "to": "chosen"
+      },
+      {
+        "type": "chooseCard",
+        "look": 3
+      }
+    ],
+    "text": "Suy Yếu 3 vòng. Chiêm Bài 3.",
+    "keywords": [
+      "suy_yeu",
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "f06_me_vu_plus",
+    "name": "Mê Vũ+",
+    "ownerId": "f06",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "stealth",
+        "amount": 1,
+        "to": "self"
+      }
+    ],
+    "text": "Mê Hoặc 1 chiêu. Lam Khê Ẩn Thân 1 vòng.",
+    "keywords": [
+      "me_hoac",
+      "an_than"
+    ],
+    "plusOf": "f06_me_vu"
+  },
+  {
+    "id": "f07_phong_an",
+    "name": "Phong Ấn",
+    "ownerId": "f07",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      }
+    ],
+    "text": "Phong Ấn mục tiêu 1 lượt: chiêu của nó chỉ còn damage.",
+    "keywords": [
+      "phong_an"
+    ]
+  },
+  {
+    "id": "f07_doat_but",
+    "name": "Đoạt Bút",
+    "ownerId": "f07",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      },
+      {
+        "type": "damage",
+        "amount": 3,
+        "to": "chosen"
+      }
+    ],
+    "text": "Phong Ấn. Gây 3 damage.",
+    "keywords": [
+      "phong_an"
+    ]
+  },
+  {
+    "id": "f07_phe_but",
+    "name": "Phê Bút",
+    "ownerId": "f07",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Phong Ấn. Suy Yếu 1 vòng.",
+    "keywords": [
+      "phong_an",
+      "suy_yeu"
+    ]
+  },
+  {
+    "id": "f07_thiet_but",
+    "name": "Thiết Bút",
+    "ownerId": "f07",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      },
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      }
+    ],
+    "text": "Phong Ấn 2 lần.",
+    "keywords": [
+      "phong_an"
+    ]
+  },
+  {
+    "id": "f07_cam_su",
+    "name": "Cấm Sử",
+    "ownerId": "f07",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Phong Ấn. Suy Yếu 2 vòng, Dễ Vỡ 1 vòng.",
+    "keywords": [
+      "phong_an",
+      "suy_yeu",
+      "de_vo"
+    ]
+  },
+  {
+    "id": "f07_doan_su",
+    "name": "Đoạn Sử",
+    "ownerId": "f07",
+    "cost": 6,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "sealIntent",
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Phong Ấn mọi kẻ địch.",
+    "keywords": [
+      "phong_an"
+    ]
+  },
+  {
+    "id": "f07_thu_hai",
+    "name": "Thư Hải",
+    "ownerId": "f07",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "chooseCard",
+        "look": 2
+      }
+    ],
+    "text": "Chiêm Bài 2.",
+    "keywords": [
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "f07_dien_co",
+    "name": "Điển Cố",
+    "ownerId": "f07",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "gainMoonPower",
+        "amount": 1
+      },
+      {
+        "type": "chooseCard",
+        "look": 1
+      }
+    ],
+    "text": "Nhận 1 Nguyệt Lực. Chiêm Bài 1.",
+    "keywords": [
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "f07_doc_dien",
+    "name": "Độc Điển",
+    "ownerId": "f07",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 2
+        },
+        "then": [
+          {
+            "type": "gainMoonPower",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "type": "chooseCard",
+        "look": 2
+      }
+    ],
+    "text": "Liên Hoàn 2: nhận 2 Nguyệt Lực. Chiêm Bài 2.",
+    "keywords": [
+      "lien_hoan",
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "f07_tang_kinh",
+    "name": "Tàng Kinh",
+    "ownerId": "f07",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "gainMoonPower",
+        "amount": 1
+      },
+      {
+        "type": "chooseCard",
+        "look": 3
+      }
+    ],
+    "text": "Nhận 1 Nguyệt Lực. Chiêm Bài 3.",
+    "keywords": [
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "f07_phan_dinh",
+    "name": "Phán Định",
+    "ownerId": "f07",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      },
+      {
+        "type": "chooseCard",
+        "look": 1
+      }
+    ],
+    "text": "Phong Ấn. Chiêm Bài 1.",
+    "keywords": [
+      "phong_an",
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "f07_van_quyen",
+    "name": "Vạn Quyển",
+    "ownerId": "f07",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "scheme"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "heldTurnsAtLeast",
+          "turns": 2
+        },
+        "then": [
+          {
+            "type": "drawCards",
+            "amount": 3
+          }
+        ],
+        "else": [
+          {
+            "type": "drawCards",
+            "amount": 1
+          }
+        ]
+      }
+    ],
+    "text": "Tích Tụ 2: rút 3 lá; chưa đủ: rút 1.",
+    "keywords": [
+      "tich_tu"
+    ]
+  },
+  {
+    "id": "f07_phong_an_plus",
+    "name": "Phong Ấn+",
+    "ownerId": "f07",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Phong Ấn. Suy Yếu 1 vòng.",
+    "keywords": [
+      "phong_an",
+      "suy_yeu"
+    ],
+    "plusOf": "f07_phong_an"
+  },
+  {
+    "id": "f09_trieu_hoi",
+    "name": "Triệu Hồi",
+    "ownerId": "f09",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "summon",
+        "summonId": "tho_ngoc"
+      }
+    ],
+    "text": "Triệu hồi Thỏ Ngọc. Đã có: hồi đầy HP và Sức Mạnh +1.",
+    "keywords": [
+      "linh_thu",
+      "suc_manh"
+    ]
+  },
+  {
+    "id": "f09_ngoc_anh",
+    "name": "Ngọc Ảnh",
+    "ownerId": "f09",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "summon",
+        "summonId": "tho_ngoc"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "summon"
+      }
+    ],
+    "text": "Triệu hồi. Thỏ Ngọc nhận 2 giáp.",
+    "keywords": [
+      "linh_thu"
+    ]
+  },
+  {
+    "id": "f09_moi_duong",
+    "name": "Mồi Dưỡng",
+    "ownerId": "f09",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "summon",
+        "summonId": "tho_ngoc"
+      },
+      {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 1,
+        "to": "summon"
+      }
+    ],
+    "text": "Triệu hồi. Thỏ Ngọc nhận Sức Mạnh 1.",
+    "keywords": [
+      "linh_thu",
+      "suc_manh"
+    ]
+  },
+  {
+    "id": "f09_tho_tinh",
+    "name": "Thố Tinh",
+    "ownerId": "f09",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "summon",
+        "summonId": "tho_ngoc"
+      },
+      {
+        "type": "chooseCard",
+        "look": 1
+      }
+    ],
+    "text": "Triệu hồi. Chiêm Bài 1.",
+    "keywords": [
+      "linh_thu",
+      "chiem_bai"
+    ]
+  },
+  {
+    "id": "f09_linh_ke",
+    "name": "Linh Kế",
+    "ownerId": "f09",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "summon",
+        "summonId": "tho_ngoc"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "summon"
+      },
+      {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 1,
+        "to": "summon"
+      }
+    ],
+    "text": "Triệu hồi. Thỏ Ngọc nhận 3 giáp, Sức Mạnh 1.",
+    "keywords": [
+      "linh_thu",
+      "suc_manh"
+    ]
+  },
+  {
+    "id": "f09_nguyet_tho",
+    "name": "Nguyệt Thố",
+    "ownerId": "f09",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "summon",
+        "summonId": "tho_ngoc"
+      },
+      {
+        "type": "applyStatus",
+        "status": "taunt",
+        "amount": 2,
+        "to": "summon"
+      },
+      {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 2,
+        "to": "summon"
+      }
+    ],
+    "text": "Triệu hồi. Thỏ Ngọc nhận Khiêu Khích 2 vòng, Sức Mạnh 2.",
+    "keywords": [
+      "linh_thu",
+      "khieu_khich",
+      "suc_manh"
+    ]
+  },
+  {
+    "id": "f09_ngoc_dao",
+    "name": "Ngọc Đảo",
+    "ownerId": "f09",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "heal",
+      "harmony"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 3,
+        "to": "chosen"
+      }
+    ],
+    "text": "Hồi 3 HP cho 1 đồng đội (tính cả Thỏ Ngọc — `alliesOf` gồm Linh Thú cùng chủ).",
+    "keywords": [
+      "linh_thu"
+    ]
+  },
+  {
+    "id": "f09_tao_duoc",
+    "name": "Tảo Dược",
+    "ownerId": "f09",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "heal",
+      "harmony"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "heal",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Hồi Phục 2. Hồi 2 HP.",
+    "keywords": [
+      "hoi_phuc"
+    ]
+  },
+  {
+    "id": "f09_nguyet_duoc",
+    "name": "Nguyệt Dược",
+    "ownerId": "f09",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "heal"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 2,
+        "to": "allAllies"
+      },
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 1,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Mọi đồng đội hồi 2 HP, Hồi Phục 1.",
+    "keywords": [
+      "hoi_phuc"
+    ]
+  },
+  {
+    "id": "f09_tien_dan",
+    "name": "Tiên Đan",
+    "ownerId": "f09",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "heal",
+      "harmony"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 5,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Hồi 5 HP. Hồi Phục 2.",
+    "keywords": [
+      "hoi_phuc"
+    ]
+  },
+  {
+    "id": "f09_dan_thanh",
+    "name": "Đan Thành",
+    "ownerId": "f09",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "heal"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 4,
+        "to": "allAllies"
+      },
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Mọi đồng đội hồi 4 HP, Hồi Phục 2.",
+    "keywords": [
+      "hoi_phuc"
+    ]
+  },
+  {
+    "id": "f09_linh_duoc",
+    "name": "Linh Dược",
+    "ownerId": "f09",
+    "cost": 6,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "heal"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 7,
+        "to": "chosen"
+      },
+      {
+        "type": "cleanse",
+        "to": "chosen"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "chosen"
+      }
+    ],
+    "text": "Hồi 7 HP, tẩy mọi debuff, nhận 3 giáp."
+  },
+  {
+    "id": "f09_trieu_hoi_plus",
+    "name": "Triệu Hồi+",
+    "ownerId": "f09",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "summon",
+        "summonId": "tho_ngoc"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "summon"
+      }
+    ],
+    "text": "Triệu hồi. Thỏ Ngọc nhận 3 giáp.",
+    "keywords": [
+      "linh_thu"
+    ],
+    "plusOf": "f09_trieu_hoi"
+  },
+  {
+    "id": "f10_dan_hon",
+    "name": "Dẫn Hồn",
+    "ownerId": "f10",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "stealth",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Đồng đội nhận 3 giáp, Ẩn Thân 1 vòng.",
+    "keywords": [
+      "an_than"
+    ]
+  },
+  {
+    "id": "f10_ho_phach",
+    "name": "Hộ Phách",
+    "ownerId": "f10",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 3,
+        "to": "chosen"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "chosen"
+      }
+    ],
+    "text": "Hồi 3 HP, nhận 3 giáp."
+  },
+  {
+    "id": "f10_hoi_hon",
+    "name": "Hồi Hồn",
+    "ownerId": "f10",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "fallenAlly",
+    "effects": [
+      {
+        "type": "revive",
+        "ratio": 0.3,
+        "to": "chosen"
+      }
+    ],
+    "text": "Hồi sinh 1 đồng đội đã ngã với 30% HP tối đa.",
+    "keywords": [
+      "hoi_hon"
+    ]
+  },
+  {
+    "id": "f10_hon_quy",
+    "name": "Hồn Quy",
+    "ownerId": "f10",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "gainArmor",
+        "amount": 5,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Mọi đồng đội nhận 5 giáp."
+  },
+  {
+    "id": "f10_trieu_hon",
+    "name": "Triệu Hồn",
+    "ownerId": "f10",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "fallenAlly",
+    "effects": [
+      {
+        "type": "revive",
+        "ratio": 0.5,
+        "to": "chosen"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "chosen"
+      }
+    ],
+    "text": "Hồi sinh với 50% HP, nhận 4 giáp.",
+    "keywords": [
+      "hoi_hon"
+    ]
+  },
+  {
+    "id": "f10_luan_hoi",
+    "name": "Luân Hồi",
+    "ownerId": "f10",
+    "cost": 6,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "fallenAlly",
+    "effects": [
+      {
+        "type": "revive",
+        "ratio": 0.6,
+        "to": "chosen"
+      },
+      {
+        "type": "heal",
+        "amount": 4,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Hồi sinh với 60% HP; mọi đồng đội hồi 4 HP.",
+    "keywords": [
+      "hoi_hon"
+    ]
+  },
+  {
+    "id": "f10_tinh_tam",
+    "name": "Tịnh Tâm",
+    "ownerId": "f10",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "heal"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "cleanse",
+        "to": "chosen"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Tẩy mọi debuff. Nhận 2 giáp."
+  },
+  {
+    "id": "f10_thanh_tam",
+    "name": "Thanh Tâm",
+    "ownerId": "f10",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "heal"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 4,
+        "to": "chosen"
+      },
+      {
+        "type": "cleanse",
+        "to": "chosen"
+      }
+    ],
+    "text": "Hồi 4 HP, tẩy debuff."
+  },
+  {
+    "id": "f10_tay_tran",
+    "name": "Tẩy Trần",
+    "ownerId": "f10",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "heal"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "cleanse",
+        "to": "allAllies"
+      },
+      {
+        "type": "heal",
+        "amount": 2,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Tẩy debuff mọi đồng đội, hồi 2 HP."
+  },
+  {
+    "id": "f10_khong_tuong",
+    "name": "Không Tướng",
+    "ownerId": "f10",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "stealth",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "heal",
+        "amount": 4,
+        "to": "chosen"
+      }
+    ],
+    "text": "Ẩn Thân 2 vòng. Hồi 4 HP.",
+    "keywords": [
+      "an_than"
+    ]
+  },
+  {
+    "id": "f10_vong_uu",
+    "name": "Vong Ưu",
+    "ownerId": "f10",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "heal"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "allAllies"
+      },
+      {
+        "type": "heal",
+        "amount": 3,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Mọi đồng đội Hồi Phục 2, hồi 3 HP.",
+    "keywords": [
+      "hoi_phuc"
+    ]
+  },
+  {
+    "id": "f10_minh_nguyet",
+    "name": "Minh Nguyệt",
+    "ownerId": "f10",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "heal"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 3,
+        "to": "allAllies"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "moonPhaseIs",
+          "phase": "full"
+        },
+        "then": [
+          {
+            "type": "heal",
+            "amount": 3,
+            "to": "allAllies"
+          }
+        ]
+      }
+    ],
+    "text": "Mọi đồng đội hồi 3 HP. Trăng Rằm: hồi thêm 3."
+  },
+  {
+    "id": "f10_hoi_hon_plus",
+    "name": "Hồi Hồn+",
+    "ownerId": "f10",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "fallenAlly",
+    "effects": [
+      {
+        "type": "revive",
+        "ratio": 0.5,
+        "to": "chosen"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "chosen"
+      }
+    ],
+    "text": "Hồi sinh với 50% HP, nhận 3 giáp.",
+    "keywords": [
+      "hoi_hon"
+    ],
+    "plusOf": "f10_hoi_hon"
+  },
+  {
+    "id": "m09_khuc_sau",
+    "name": "Khúc Sầu",
+    "ownerId": "m09",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Suy Yếu 1 vòng.",
+    "keywords": [
+      "suy_yeu"
+    ]
+  },
+  {
+    "id": "m09_sau_cam",
+    "name": "Sầu Cầm",
+    "ownerId": "m09",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Suy Yếu 1, Dễ Vỡ 1 vòng.",
+    "keywords": [
+      "suy_yeu",
+      "de_vo"
+    ]
+  },
+  {
+    "id": "m09_doan_truong",
+    "name": "Đoạn Trường",
+    "ownerId": "m09",
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Suy Yếu mọi kẻ địch 1 vòng.",
+    "keywords": [
+      "suy_yeu"
+    ]
+  },
+  {
+    "id": "m09_ai_khuc",
+    "name": "Ai Khúc",
+    "ownerId": "m09",
+    "cost": 4,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "harmony"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "chosen",
+        "hits": 2
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 4 damage 2 lần. Suy Yếu 1 vòng.",
+    "keywords": [
+      "suy_yeu"
+    ]
+  },
+  {
+    "id": "m09_ly_biet",
+    "name": "Ly Biệt",
+    "ownerId": "m09",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Suy Yếu 2, Dễ Vỡ 2 vòng.",
+    "keywords": [
+      "suy_yeu",
+      "de_vo"
+    ]
+  },
+  {
+    "id": "m09_quoc_pha",
+    "name": "Quốc Phá",
+    "ownerId": "m09",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "allEnemies"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Suy Yếu mọi kẻ địch 2 vòng, Dễ Vỡ 1 vòng.",
+    "keywords": [
+      "suy_yeu",
+      "de_vo"
+    ]
+  },
+  {
+    "id": "m09_tri_am",
+    "name": "Tri Âm",
+    "ownerId": "m09",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mê Hoặc 1 chiêu đã báo của mục tiêu.",
+    "keywords": [
+      "me_hoac"
+    ]
+  },
+  {
+    "id": "m09_tri_ky",
+    "name": "Tri Kỷ",
+    "ownerId": "m09",
+    "cost": 2,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mê Hoặc 1 chiêu. Suy Yếu 1 vòng.",
+    "keywords": [
+      "me_hoac",
+      "suy_yeu"
+    ]
+  },
+  {
+    "id": "m09_cam_khuc",
+    "name": "Cầm Khúc",
+    "ownerId": "m09",
+    "cost": 3,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "harmony"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 5,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 5 damage. Mê Hoặc 1 chiêu.",
+    "keywords": [
+      "me_hoac"
+    ]
+  },
+  {
+    "id": "m09_nhac_tan",
+    "name": "Nhạc Tận",
+    "ownerId": "m09",
+    "cost": 4,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "extendDebuffs",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mê Hoặc 1 chiêu. Mọi debuff có thời hạn của mục tiêu +1 vòng.",
+    "keywords": [
+      "me_hoac",
+      "keo_dai"
+    ]
+  },
+  {
+    "id": "m09_tuyet_am",
+    "name": "Tuyệt Âm",
+    "ownerId": "m09",
+    "cost": 5,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mê Hoặc 2 chiêu. Suy Yếu 2 vòng.",
+    "keywords": [
+      "me_hoac",
+      "suy_yeu"
+    ]
+  },
+  {
+    "id": "m09_lac_khuc",
+    "name": "Lạc Khúc",
+    "ownerId": "m09",
+    "cost": 6,
+    "copies": 1,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "allEnemies"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Mê Hoặc mọi kẻ địch 1 chiêu, Suy Yếu 1 vòng.",
+    "keywords": [
+      "me_hoac",
+      "suy_yeu"
+    ]
+  },
+  {
+    "id": "m09_khuc_sau_plus",
+    "name": "Khúc Sầu+",
+    "ownerId": "m09",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Suy Yếu 2 vòng, Dễ Vỡ 1 vòng.",
+    "keywords": [
+      "suy_yeu",
+      "de_vo"
+    ],
+    "plusOf": "m09_khuc_sau"
+  },
+  {
+    "id": "bond_khuc_vu_tri_am",
+    "name": "Khúc Vũ Tri Âm",
+    "bond": {
+      "owners": [
+        "m09",
+        "f06"
+      ]
+    },
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "chosen",
+        "actor": 0
+      },
+      {
+        "type": "extendDebuffs",
+        "amount": 1,
+        "to": "chosen",
+        "actor": 1
+      }
+    ],
+    "text": "Mê Hoặc 1 chiêu đã báo (Đoàn Lạc); mọi debuff có thời hạn của mục tiêu +1 vòng (Lam Khê).",
+    "keywords": [
+      "me_hoac",
+      "keo_dai"
+    ]
+  },
+  {
+    "id": "bond_nguyet_tho_ho_menh",
+    "name": "Nguyệt Thố Hộ Mệnh",
+    "bond": {
+      "owners": [
+        "f09",
+        "f10"
+      ]
+    },
+    "cost": 3,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "summon",
+        "summonId": "tho_ngoc",
+        "actor": 0
+      },
+      {
+        "type": "applyStatus",
+        "status": "taunt",
+        "amount": 1,
+        "to": "summon",
+        "actor": 0
+      },
+      {
+        "type": "gainArmor",
+        "amount": 6,
+        "to": "summon",
+        "actor": 0
+      }
+    ],
+    "text": "Triệu hồi / triệu hồi lại Thỏ Ngọc; nó nhận Khiêu Khích 1 vòng và 6 giáp.",
+    "keywords": [
+      "linh_thu",
+      "khieu_khich"
+    ]
   }
 ]

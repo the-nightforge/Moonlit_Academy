@@ -536,3 +536,195 @@ chỉ có none/enemy/ally) — text gợi ý chọn M01; tự đặt `guard` lê
 Pha chỉ là nội tại `chooseMoon` của M08); `shiftMoon` actor 0 nuôi `moonShifts`
 của M08. Tag `scheme` của Nguyệt Sách / Kim Bút Đồng Tâm nuôi `schemeCardsPlayed`
 của cả đội nhưng không nuôi `studyPoints` (lá Song Hành không tính).
+
+## 12. GĐ7b — 6 Hero đợt 2 + Linh Thú + Song Hành
+
+Sáu Hero đợt 2 của GĐ7 (spec `18` §3): F05 Hạ Chi (rare · Huyền Vũ · striker ·
+HP 32), F06 Lam Khê (epic · Bạch Lộ · controller · HP 30), F07 Cố Uyển (rare ·
+Thanh Loan · controller · HP 30), F09 Tiểu Mãn (common · Bạch Lộ · specialist ·
+HP 28), F10 Liễu Tịnh Nhan (legendary · Trung lập · support · HP 30), M09 Đoàn
+Lạc (epic · Bạch Lộ · controller · HP 32). HP PvP = HP PvE + 12: 44 / 42 / 42 /
+40 / 42 / 44.
+
+Cơ chế mới đi kèm (`01` §5.6, §17): trạng thái **Mê Hoặc** (`charm`), effect
+**Phong Ấn** (`sealIntent` — đơn vị bị dấu một lượt, chiêu/lá/hành động nó đánh
+ra chỉ còn `damage`), **Hồi Hồn** (`revive`), **Kéo Dài** debuff
+(`extendDebuffs`), **Xuyên** mục tiêu (hàng sau + `pierceOwnAttacks`) và **Linh
+Thú** (`summon`). `keywords.json` thêm `me_hoac`, `phong_an`, `hoi_hon`,
+`linh_thu`, `keo_dai`.
+
+### 12.1 F05 — Hạ Chi
+
+Nhánh A **Liệp Thủ**: Đánh Dấu (`mark`) và đòn trả thêm khi mục tiêu bị dấu.
+Nhánh B **Tiễn Vũ**: đa đòn (`hits`) và Liên Hoàn (`cardsPlayedThisTurnAtLeast`).
+Chín lá tấn công đơn mục tiêu nuôi `backRowHits` mỗi khi trúng hàng sau.
+
+- Thăng cấp: `backRowHits` ≥ 4 (Tinh Hồn 2: 3) → **Xuyên Vân Tiễn** `pierceOwnAttacks`: mọi đòn đơn mục tiêu từ lá của Hạ Chi đánh thêm kẻ địch đứng ngay sau mục tiêu, cùng damage gốc.
+- Dạng hai **Biên Tái**: `firstHitMarks 1` — đòn đánh đầu tiên mỗi lượt từ lá tấn công của Hạ Chi, nếu trúng, áp Đánh Dấu 1 vòng.
+
+| Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
+|---|---|---|---|---|---|---|---|
+| `f05_liet_nham` | Liệp Nhắm | 1 | 3 | attack / attack, assassin / enemy | `damage 3 chosen` + `applyStatus mark 1 chosen` — "Gây 3 damage. Đánh Dấu 1 vòng." | A | Mở sẵn — **signature** |
+| `f05_truy_anh` | Truy Ảnh | 2 | 2 | attack / attack, assassin / enemy | `damage 4 chosen` + `conditional(targetHasStatus mark → damage 3 chosen)` — "Gây 4 damage. Mục tiêu đang bị Đánh Dấu: gây thêm 3." | A | Mở sẵn |
+| `f05_diem_menh` | Điểm Mệnh | 3 | 2 | skill / control / enemy | `applyStatus mark 2 chosen` + `applyStatus vulnerable 1 chosen` | A | Mở sẵn |
+| `f05_ha_uy` | Hạ Uy | 4 | 2 | attack / attack, assassin / enemy | `damage 7 chosen` + `applyStatus mark 2 chosen` | A | Khóa |
+| `f05_xa_nhat` | Xạ Nhật | 5 | 1 | attack / attack, assassin / enemy | `damage 9 chosen` + `conditional(targetHasStatus mark → damage 5 chosen)` | A | Khóa |
+| `f05_tuyet_diem` | Tuyệt Điểm | 6 | 1 | attack / attack, assassin / enemy | `damage 10 chosen` + `conditional(targetHpAtOrBelow 0.5 → damage 5 chosen)` | A | Khóa |
+| `f05_lien_chau` | Liên Châu | 1 | 3 | attack / attack / enemy | `damage 2 chosen hits 2` | B | Mở sẵn |
+| `f05_loan_tien` | Loạn Tiễn | 2 | 2 | attack / attack / enemy | `damage 2 chosen hits 2` + `conditional(cardsPlayedThisTurnAtLeast 2 → damage 2 chosen)` — "Gây 2 damage 2 lần. Liên Hoàn 2: thêm 1 đòn." | B | Mở sẵn |
+| `f05_vu_ten` | Vũ Tiễn | 3 | 2 | attack / attack / none | `damage 3 allEnemies` | B | Mở sẵn |
+| `f05_cuu_lien` | Cửu Liên | 4 | 2 | attack / attack / enemy | `damage 2 chosen hits 3` + `conditional(cardsPlayedThisTurnAtLeast 3 → damage 2 chosen)` — "Gây 2 damage 3 lần. Liên Hoàn 3: thêm 1 đòn." | B | Khóa |
+| `f05_bach_ten` | Bách Tiễn | 5 | 1 | attack / attack / none | `damage 3 allEnemies hits 2` | B | Khóa |
+| `f05_van_ten` | Vạn Tiễn | 6 | 1 | attack / attack / enemy | `damage 4 chosen hits 3` | B | Khóa |
+| `f05_liet_nham_plus` | Liệp Nhắm+ | 1 | 3 | attack / attack, assassin / enemy | `damage 4 chosen` + `applyStatus mark 2 chosen` | — | (lá +) |
+
+### 12.2 F06 — Lam Khê
+
+Nhánh A **Kinh Hồng**: Mê Hoặc (`charm`) — kẻ địch bị Mê Hoặc đánh kẻ địch khác.
+Nhánh B **Tin Mật**: Suy Yếu, Dễ Vỡ, Chiêm Bài. Sáu lá gây `charm` → `charmsApplied`
+2 đạt trong 1–2 cast.
+
+- Thăng cấp: `charmsApplied` ≥ 2 (Tinh Hồn 2: 2) → **Kinh Hồng Vũ** `charmMastery { extraCharges: 1, damageMultiplier: 1.5 }`: Mê Hoặc do Lam Khê gây thêm 1 lượt; đòn bị đổi mục tiêu của kẻ địch đó ×1.5 khi Lam Khê còn sống.
+- Dạng hai **Vũ Y**: `stealthOnCharm 1` — mỗi khi Lam Khê gây Mê Hoặc, nàng Ẩn Thân 1 vòng.
+
+| Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
+|---|---|---|---|---|---|---|---|
+| `f06_me_vu` | Mê Vũ | 1 | 3 | skill / harmony, control / enemy | `applyStatus charm 1 chosen` — "Mê Hoặc 1 chiêu đã báo của mục tiêu." | A | Mở sẵn — **signature** |
+| `f06_quyen_muc` | Quyến Mục | 2 | 2 | skill / harmony, control / enemy | `applyStatus charm 1 chosen` + `applyStatus weak 1 chosen` | A | Mở sẵn |
+| `f06_hong_vu` | Hồng Vũ | 3 | 2 | skill / harmony, control / enemy | `applyStatus charm 2 chosen` | A | Mở sẵn |
+| `f06_dien_dao` | Điên Đảo | 4 | 2 | skill / harmony, control / enemy | `applyStatus charm 2 chosen` + `applyStatus vulnerable 2 chosen` | A | Khóa |
+| `f06_khuynh_tam` | Khuynh Tâm | 5 | 1 | skill / harmony, control / enemy | `applyStatus charm 3 chosen` | A | Khóa |
+| `f06_kinh_hong_chieu` | Kinh Hồng Chiếu | 6 | 1 | skill / harmony, control / none | `applyStatus charm 1 allEnemies` | A | Khóa |
+| `f06_co_mat` | Cơ Mật | 1 | 3 | skill / harmony / none | `chooseCard 2` — "Chiêm Bài 2." | B | Mở sẵn |
+| `f06_mat_ham` | Mật Hàm | 2 | 2 | skill / harmony, control / enemy | `applyStatus weak 2 chosen` + `chooseCard 1` | B | Mở sẵn |
+| `f06_phong_thu` | Phong Thư | 2 | 2 | skill / harmony / none | `drawCards 1` + `gainMoonPower 1` | B | Mở sẵn |
+| `f06_doan_tin` | Đoạn Tin | 3 | 2 | skill / harmony, control / enemy | `applyStatus weak 2 chosen` + `applyStatus vulnerable 1 chosen` | B | Khóa |
+| `f06_loan_am` | Loạn Âm | 4 | 2 | skill / harmony, control / none | `applyStatus weak 2 allEnemies` | B | Khóa |
+| `f06_cuc_mat` | Cực Mật | 5 | 1 | skill / harmony, control / enemy | `applyStatus weak 3 chosen` + `chooseCard 3` | B | Khóa |
+| `f06_me_vu_plus` | Mê Vũ+ | 1 | 3 | skill / harmony, control / enemy | `applyStatus charm 1 chosen` + `applyStatus stealth 1 self` | — | (lá +) |
+
+### 12.3 F07 — Cố Uyển
+
+Nhánh A **Sử Bút**: Phong Ấn (`sealIntent`) — đặt dấu lên đơn vị địch; trong lượt
+kế của nó mọi chiêu/lá nó đánh ra chỉ còn `damage`, mất hiệu ứng khác. Nhánh B
+**Thư Hải**: `scheme`, Chiêm Bài, Tích Tụ. `intentsSealed` cộng theo số chiêu/lá
+thực sự bị tước hiệu ứng ở lượt kế — bảy lá `sealIntent` nuôi bộ đếm.
+
+- Thăng cấp: `intentsSealed` ≥ 3 (Tinh Hồn 2: 3) → **Sử Bút** `sealExtraFirstPerTurn`: lần Phong Ấn đầu tiên mỗi lượt của Cố Uyển còn đặt dấu lên kẻ địch khác (vị trí nhỏ nhất).
+- Dạng hai **Chép Sử**: `sealWeakens 1` — Phong Ấn của Cố Uyển còn áp Suy Yếu 1 vòng lên mục tiêu.
+
+| Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
+|---|---|---|---|---|---|---|---|
+| `f07_phong_an` | Phong Ấn | 1 | 3 | skill / scheme, control / enemy | `sealIntent chosen` — "Phong Ấn mục tiêu 1 lượt: chiêu của nó chỉ còn damage." | A | Mở sẵn — **signature** |
+| `f07_doat_but` | Đoạt Bút | 2 | 2 | skill / scheme, control / enemy | `sealIntent chosen` + `damage 3 chosen` | A | Mở sẵn |
+| `f07_phe_but` | Phê Bút | 3 | 2 | skill / scheme, control / enemy | `sealIntent chosen` + `applyStatus weak 1 chosen` | A | Mở sẵn |
+| `f07_thiet_but` | Thiết Bút | 4 | 2 | skill / scheme, control / enemy | `sealIntent chosen` × 2 | A | Khóa |
+| `f07_cam_su` | Cấm Sử | 5 | 1 | skill / scheme, control / enemy | `sealIntent chosen` + `applyStatus weak 2 chosen` + `applyStatus vulnerable 1 chosen` | A | Khóa |
+| `f07_doan_su` | Đoạn Sử | 6 | 1 | skill / scheme, control / none | `sealIntent allEnemies` | A | Khóa |
+| `f07_thu_hai` | Thư Hải | 1 | 3 | skill / scheme / none | `chooseCard 2` — "Chiêm Bài 2." | B | Mở sẵn |
+| `f07_dien_co` | Điển Cố | 2 | 2 | skill / scheme / none | `gainMoonPower 1` + `chooseCard 1` | B | Mở sẵn |
+| `f07_doc_dien` | Độc Điển | 3 | 2 | skill / scheme / none | `conditional(cardsPlayedThisTurnAtLeast 2 → gainMoonPower 2)` + `chooseCard 2` | B | Mở sẵn |
+| `f07_tang_kinh` | Tàng Kinh | 4 | 2 | skill / scheme / none | `gainMoonPower 1` + `chooseCard 3` | B | Khóa |
+| `f07_phan_dinh` | Phán Định | 4 | 2 | skill / scheme, control / enemy | `sealIntent chosen` + `chooseCard 1` | B | Khóa |
+| `f07_van_quyen` | Vạn Quyển | 5 | 1 | skill / scheme / none | `conditional(heldTurnsAtLeast 2 → drawCards 3; else drawCards 1)` — "Tích Tụ 2: rút 3 lá; chưa đủ: rút 1." | B | Khóa |
+| `f07_phong_an_plus` | Phong Ấn+ | 1 | 3 | skill / scheme, control / enemy | `sealIntent chosen` + `applyStatus weak 1 chosen` | — | (lá +) |
+
+### 12.4 F09 — Tiểu Mãn
+
+Nhánh A **Linh Thố**: triệu hồi và buff **Thỏ Ngọc** (`summon tho_ngoc`, giáp,
+Sức Mạnh, Khiêu Khích lên `summon`) — cả 6 lá đều nuôi `summonsMade`, cộng thêm lá
+Song Hành `bond_nguyet_tho_ho_menh`. Nhánh B **Nguyệt Dược**: hồi máu, Hồi Phục
+(`regen`), tẩy debuff — lá nhắm `ally` tính cả Linh Thú cùng chủ.
+
+- Thăng cấp: `summonsMade` ≥ 5 (Tinh Hồn 2: 4) → **Thỏ Ngọc Thức Tỉnh** `awakenSummons`: Linh Thú của Tiểu Mãn dùng bản thức tỉnh (HP và damage ×2); Linh Thú đang sống đổi ngay, giữ tỉ lệ HP.
+- Dạng hai **Nguyệt Cung**: `summonTaunts 1` — Linh Thú của Tiểu Mãn khi vừa được triệu hồi nhận Khiêu Khích 1 vòng.
+
+| Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
+|---|---|---|---|---|---|---|---|
+| `f09_trieu_hoi` | Triệu Hồi | 1 | 3 | skill / harmony / none | `summon tho_ngoc` — "Triệu hồi Thỏ Ngọc. Đã có: hồi đầy HP và Sức Mạnh +1." | A | Mở sẵn — **signature** |
+| `f09_ngoc_anh` | Ngọc Ảnh | 2 | 2 | skill / harmony / none | `summon tho_ngoc` + `gainArmor 2 summon` | A | Mở sẵn |
+| `f09_moi_duong` | Mồi Dưỡng | 2 | 2 | skill / harmony / none | `summon tho_ngoc` + `applyStatus strength 1 summon` | A | Mở sẵn |
+| `f09_tho_tinh` | Thố Tinh | 3 | 2 | skill / harmony / none | `summon tho_ngoc` + `chooseCard 1` | A | Khóa |
+| `f09_linh_ke` | Linh Kế | 4 | 2 | skill / harmony / none | `summon tho_ngoc` + `gainArmor 3 summon` + `applyStatus strength 1 summon` | A | Khóa |
+| `f09_nguyet_tho` | Nguyệt Thố | 5 | 1 | skill / harmony / none | `summon tho_ngoc` + `applyStatus taunt 2 summon` + `applyStatus strength 2 summon` | A | Khóa |
+| `f09_ngoc_dao` | Ngọc Đảo | 1 | 3 | skill / heal, harmony / ally | `heal 3 chosen` — "Hồi 3 HP cho 1 đồng đội (tính cả Thỏ Ngọc)." | B | Mở sẵn |
+| `f09_tao_duoc` | Tảo Dược | 2 | 2 | skill / heal, harmony / ally | `applyStatus regen 2 chosen` + `heal 2 chosen` | B | Mở sẵn |
+| `f09_nguyet_duoc` | Nguyệt Dược | 3 | 2 | skill / heal / none | `heal 2 allAllies` + `applyStatus regen 1 allAllies` | B | Mở sẵn |
+| `f09_tien_dan` | Tiên Đan | 4 | 2 | skill / heal, harmony / ally | `heal 5 chosen` + `applyStatus regen 2 chosen` | B | Khóa |
+| `f09_dan_thanh` | Đan Thành | 5 | 1 | skill / heal / none | `heal 4 allAllies` + `applyStatus regen 2 allAllies` | B | Khóa |
+| `f09_linh_duoc` | Linh Dược | 6 | 1 | skill / heal / ally | `heal 7 chosen` + `cleanse chosen` + `gainArmor 3 chosen` | B | Khóa |
+| `f09_trieu_hoi_plus` | Triệu Hồi+ | 1 | 3 | skill / harmony / none | `summon tho_ngoc` + `gainArmor 3 summon` | — | (lá +) |
+
+### 12.5 F10 — Liễu Tịnh Nhan
+
+Nhánh A **Hồn Dẫn**: Hồi Hồn (`revive`, `target: "fallenAlly"` — chỉ đánh được khi
+đã có đồng đội ngã), giáp, Ẩn Thân. Nhánh B **Tịnh Tâm**: hồi máu, tẩy debuff
+(`cleanse`). `alliesFallen` đếm mọi Hero của phe ngã — tự chạy, không cần lá nuôi;
+ba lá `fallenAlly` là payoff.
+
+- Thăng cấp: `alliesFallen` ≥ 1 (Tinh Hồn 2: 1) → **Nguyệt Hồn** `passive: none` + `onLevelUp: [revive 0.3 lastFallen]` — khi thăng cấp, Hồi Hồn đồng đội đã ngã gần nhất với 30% HP tối đa.
+- Dạng hai **Vong Xuyên**: `armorOnAllyFall 6` — mỗi khi đồng đội của Liễu Tịnh Nhan ngã, mọi Hero còn sống cùng phe nhận 6 giáp.
+
+| Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
+|---|---|---|---|---|---|---|---|
+| `f10_dan_hon` | Dẫn Hồn | 1 | 3 | skill / moon / ally | `gainArmor 3 chosen` + `applyStatus stealth 1 chosen` | A | Mở sẵn |
+| `f10_ho_phach` | Hộ Phách | 2 | 2 | skill / moon / ally | `heal 3 chosen` + `gainArmor 3 chosen` | A | Mở sẵn |
+| `f10_hoi_hon` | Hồi Hồn | 3 | 2 | skill / moon / fallenAlly | `revive 0.3 chosen` — "Hồi sinh 1 đồng đội đã ngã với 30% HP tối đa." | A | Mở sẵn — **signature** |
+| `f10_hon_quy` | Hồn Quy | 4 | 2 | skill / moon / none | `gainArmor 5 allAllies` | A | Khóa |
+| `f10_trieu_hon` | Triệu Hồn | 5 | 1 | skill / moon / fallenAlly | `revive 0.5 chosen` + `gainArmor 4 chosen` | A | Khóa |
+| `f10_luan_hoi` | Luân Hồi | 6 | 1 | skill / moon / fallenAlly | `revive 0.6 chosen` + `heal 4 allAllies` | A | Khóa |
+| `f10_tinh_tam` | Tịnh Tâm | 1 | 3 | skill / moon, heal / ally | `cleanse chosen` + `gainArmor 2 chosen` | B | Mở sẵn |
+| `f10_thanh_tam` | Thanh Tâm | 2 | 2 | skill / moon, heal / ally | `heal 4 chosen` + `cleanse chosen` | B | Mở sẵn |
+| `f10_tay_tran` | Tẩy Trần | 3 | 2 | skill / moon, heal / none | `cleanse allAllies` + `heal 2 allAllies` | B | Mở sẵn |
+| `f10_khong_tuong` | Không Tướng | 4 | 2 | skill / moon / ally | `applyStatus stealth 2 chosen` + `heal 4 chosen` | B | Khóa |
+| `f10_vong_uu` | Vong Ưu | 5 | 1 | skill / moon, heal / none | `applyStatus regen 2 allAllies` + `heal 3 allAllies` | B | Khóa |
+| `f10_minh_nguyet` | Minh Nguyệt | 5 | 1 | skill / moon, heal / none | `heal 3 allAllies` + `conditional(moonPhaseIs full → heal 3 allAllies)` | B | Khóa |
+| `f10_hoi_hon_plus` | Hồi Hồn+ | 3 | 2 | skill / moon / fallenAlly | `revive 0.5 chosen` + `gainArmor 3 chosen` | — | (lá +) |
+
+### 12.6 M09 — Đoàn Lạc
+
+Nhánh A **Khúc Sầu**: Suy Yếu / Dễ Vỡ lan (`weak`, `vulnerable`, cả `allEnemies`).
+Nhánh B **Tri Âm**: Mê Hoặc (`charm`) — 6 lá charm. Mọi lá đều áp debuff →
+`debuffsApplied` 6 đạt sau ~2–3 cast (AoE cộng theo số địch); `charm` là debuff
+nhưng không có thời hạn nên không được `debuffDurationBonus` kéo dài.
+
+- Thăng cấp: `debuffsApplied` ≥ 6 (Tinh Hồn 2: 5) → **Vong Quốc Khúc** `debuffDurationBonus 1`: debuff có thời hạn do Đoàn Lạc gây kéo dài thêm 1 vòng.
+- Dạng hai **Nam Chiếu Hồn**: `bonusVsDebuffed { minDebuffs: 2, amount: 3 }` — đòn của lá tấn công Đoàn Lạc gây thêm 3 damage vào kẻ địch có ít nhất 2 debuff.
+
+| Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
+|---|---|---|---|---|---|---|---|
+| `m09_khuc_sau` | Khúc Sầu | 1 | 3 | skill / harmony, control / enemy | `applyStatus weak 1 chosen` — "Suy Yếu 1 vòng." | A | Mở sẵn — **signature** |
+| `m09_sau_cam` | Sầu Cầm | 2 | 2 | skill / harmony, control / enemy | `applyStatus weak 1 chosen` + `applyStatus vulnerable 1 chosen` | A | Mở sẵn |
+| `m09_doan_truong` | Đoạn Trường | 3 | 2 | skill / harmony, control / none | `applyStatus weak 1 allEnemies` | A | Mở sẵn |
+| `m09_ai_khuc` | Ai Khúc | 4 | 2 | attack / attack, harmony / enemy | `damage 4 chosen hits 2` + `applyStatus weak 1 chosen` | A | Khóa |
+| `m09_ly_biet` | Ly Biệt | 4 | 2 | skill / harmony, control / enemy | `applyStatus weak 2 chosen` + `applyStatus vulnerable 2 chosen` | A | Khóa |
+| `m09_quoc_pha` | Quốc Phá | 5 | 1 | skill / harmony, control / none | `applyStatus weak 2 allEnemies` + `applyStatus vulnerable 1 allEnemies` | A | Khóa |
+| `m09_tri_am` | Tri Âm | 1 | 3 | skill / harmony, control / enemy | `applyStatus charm 1 chosen` — "Mê Hoặc 1 chiêu đã báo của mục tiêu." | B | Mở sẵn |
+| `m09_tri_ky` | Tri Kỷ | 2 | 2 | skill / harmony, control / enemy | `applyStatus charm 1 chosen` + `applyStatus weak 1 chosen` | B | Mở sẵn |
+| `m09_cam_khuc` | Cầm Khúc | 3 | 2 | attack / attack, harmony / enemy | `damage 5 chosen` + `applyStatus charm 1 chosen` | B | Mở sẵn |
+| `m09_nhac_tan` | Nhạc Tận | 4 | 2 | skill / harmony, control / enemy | `applyStatus charm 1 chosen` + `extendDebuffs 1 chosen` — "Mê Hoặc 1 chiêu. Mọi debuff có thời hạn của mục tiêu +1 vòng." | B | Khóa |
+| `m09_tuyet_am` | Tuyệt Âm | 5 | 1 | skill / harmony, control / enemy | `applyStatus charm 2 chosen` + `applyStatus weak 2 chosen` | B | Khóa |
+| `m09_lac_khuc` | Lạc Khúc | 6 | 1 | skill / harmony, control / none | `applyStatus charm 1 allEnemies` + `applyStatus weak 1 allEnemies` | B | Khóa |
+| `m09_khuc_sau_plus` | Khúc Sầu+ | 1 | 3 | skill / harmony, control / enemy | `applyStatus weak 2 chosen` + `applyStatus vulnerable 1 chosen` | — | (lá +) |
+
+### 12.7 Linh Thú — `summons.json`
+
+Mỗi Hero chủ có tối đa một Linh Thú (`01` §17): triệu hồi lại hồi đầy HP và cho
+Sức Mạnh 1; cuối lượt người chơi nó tự hành động theo `targeting`; chủ ngã → nó
+biến mất. `awakenedId` dùng khi chủ có nội tại `awakenSummons`.
+
+| Id | Tên | HP | Targeting | Hành động cuối lượt | Thức tỉnh |
+|---|---|---|---|---|---|
+| `tho_ngoc` | Thỏ Ngọc | 12 | lowestHp | `damage 3 chosen` | → `tho_ngoc_thuc_tinh` |
+| `tho_ngoc_thuc_tinh` | Thỏ Ngọc Thức Tỉnh | 24 | lowestHp | `damage 6 chosen` + `heal 2 owner` | — |
+
+### 12.8 Lá Song Hành 7b
+
+| Id | Tên | Cost | Copies | Owners | Hiệu ứng | Loại / Tag / Target |
+|---|---|---|---|---|---|---|
+| `bond_khuc_vu_tri_am` | Khúc Vũ Tri Âm | 3 | 2 | m09 + f06 | `applyStatus charm 1 chosen` (actor 0 — Đoàn Lạc) + `extendDebuffs 1 chosen` (actor 1 — Lam Khê) — "Mê Hoặc 1 chiêu đã báo (Đoàn Lạc); mọi debuff có thời hạn của mục tiêu +1 vòng (Lam Khê)." | skill / harmony, control / enemy |
+| `bond_nguyet_tho_ho_menh` | Nguyệt Thố Hộ Mệnh | 3 | 2 | f09 + f10 | `summon tho_ngoc` (actor 0 — Tiểu Mãn) + `applyStatus taunt 1 summon` (actor 0) + `gainArmor 6 summon` (actor 0) — "Triệu hồi / triệu hồi lại Thỏ Ngọc; nó nhận Khiêu Khích 1 vòng và 6 giáp." | skill / harmony, moon / none |
+
+*Ghi chú:* `to: "summon"` phân giải theo **actor** nên mọi effect của Nguyệt Thố
+Hộ Mệnh buộc actor 0 (chỉ F09 có Linh Thú); charm của Khúc Vũ Tri Âm gắn actor 0
+để nuôi `debuffsApplied` của M09.

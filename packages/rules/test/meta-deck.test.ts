@@ -44,7 +44,7 @@ describe("decks", () => {
       expect(validateDeck(data, profile, { heroIds: team, cardIds: starterDeck(data, team) })).toEqual([]);
       teams += 1;
     }
-    expect(teams).toBe(364); // C(14,3) with the wave-2 heroes added
+    expect(teams).toBe(1140); // C(20,3) with the wave-2 heroes added
   });
 
   it("T166: saveDeck assigns ids, checks names and the deck limit, keeps drafts; deleteDeck removes", () => {

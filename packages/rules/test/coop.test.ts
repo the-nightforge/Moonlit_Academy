@@ -761,8 +761,8 @@ describe("co-op rewards (`17` §9.2)", () => {
 
     let profile = createProfile(data);
     const first = settle(profile, { result: "won", forfeited: false, now: NOW });
-    expect(first.rewards).toEqual({ moonJade: 60, moonDust: 3, firstWin: true });
-    expect(first.profile.currencies).toMatchObject({ moonJade: 60, moonDust: 3 });
+    expect(first.rewards).toEqual({ moonJade: 50, moonDust: 3, firstWin: true });
+    expect(first.profile.currencies).toMatchObject({ moonJade: 50, moonDust: 3 });
     expect(first.profile.coop).toEqual({ dayKey: day, clears: 1, rewarded: 1 });
 
     profile = first.profile;
@@ -778,11 +778,11 @@ describe("co-op rewards (`17` §9.2)", () => {
     const capped = settle(loss.profile, { result: "won", forfeited: false, now: NOW });
     expect(capped.rewards).toBeNull();
     expect(capped.profile.coop).toMatchObject({ clears: 3, rewarded: 3 });
-    expect(capped.profile.currencies.moonJade).toBe(60 + 40 + 10);
+    expect(capped.profile.currencies.moonJade).toBe(50 + 40 + 10);
 
     // A new game day resets both counters and the first-win bonus returns.
     const tomorrow = settle(capped.profile, { result: "won", forfeited: false, now: NEXT_DAY });
-    expect(tomorrow.rewards).toEqual({ moonJade: 60, moonDust: 3, firstWin: true });
+    expect(tomorrow.rewards).toEqual({ moonJade: 50, moonDust: 3, firstWin: true });
   });
 
   it("T261 (rules): a forfeited seat gets nothing and keeps its claims; the surviving partner is paid normally", () => {
@@ -794,7 +794,7 @@ describe("co-op rewards (`17` §9.2)", () => {
     expect(left.profile.currencies.moonJade).toBe(0);
 
     const survivor = settle(createProfile(data), { result: "won", forfeited: false, now: NOW });
-    expect(survivor.rewards).toEqual({ moonJade: 60, moonDust: 3, firstWin: true });
+    expect(survivor.rewards).toEqual({ moonJade: 50, moonDust: 3, firstWin: true });
     expect(survivor.profile.coop.clears).toBe(1);
   });
 

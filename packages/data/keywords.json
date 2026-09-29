@@ -20,5 +20,10 @@
   { "id": "cuong_hoa", "name": "Cường Hóa", "text": "Lá tấn công tiếp theo gây thêm damage." },
   { "id": "dong_bang", "name": "Đóng Băng", "text": "Kẻ địch bỏ lượt; Hero bị Đóng Băng không đánh được lá của mình trong lượt." },
   { "id": "phan_don", "name": "Phản Đòn", "text": "Kẻ đánh trúng mất HP." },
-  { "id": "huyet_nguyet", "name": "Huyết Nguyệt", "text": "Mọi Hero mất HP mỗi lượt; mở khóa các lá Cấm Thuật." }
+  { "id": "huyet_nguyet", "name": "Huyết Nguyệt", "text": "Mọi Hero mất HP mỗi lượt; mở khóa các lá Cấm Thuật." },
+  { "id": "me_hoac", "name": "Mê Hoặc", "text": "Kẻ địch bị Mê Hoặc đánh kẻ địch khác thay vì Hero; ở PvP, Hero bị Mê Hoặc đánh đồng đội." },
+  { "id": "phong_an", "name": "Phong Ấn", "text": "Đơn vị bị Phong Ấn một lượt: chiêu và lá nó đánh ra trong lượt đó chỉ còn damage, mất mọi hiệu ứng khác." },
+  { "id": "hoi_hon", "name": "Hồi Hồn", "text": "Một Hero đã ngã sống lại với một tỉ lệ HP tối đa; mỗi Hero chỉ được Hồi Hồn một lần mỗi trận." },
+  { "id": "linh_thu", "name": "Linh Thú", "text": "Triệu hồi một Linh Thú chiến đấu cạnh chủ; cuối lượt nó tự hành động. Triệu hồi khi đã có: hồi đầy HP và nhận Sức Mạnh 1." },
+  { "id": "keo_dai", "name": "Kéo Dài", "text": "Mọi debuff có thời hạn đang có trên mục tiêu kéo dài thêm số vòng tương ứng." }
 ]

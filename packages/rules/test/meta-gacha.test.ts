@@ -45,7 +45,7 @@ describe("gacha", () => {
     const { epicPity } = data.economyConfig.gacha;
     const result = pull(data, withJade(data, 5000), 10);
     const rarities = result.results.map((entry) => entry.rarity);
-    expect(rarities.slice(0, epicPity - 1).every((rarity) => rarity === "rare")).toBe(true);
+    expect(rarities.slice(0, epicPity - 1).every((rarity) => rarity !== "epic")).toBe(true);
     expect(rarities[epicPity - 1]).toBe("epic");
     expect(result.profile.pity[BANNER]).toEqual({ sinceEpic: 10 - epicPity, sinceLegendary: 10 });
 

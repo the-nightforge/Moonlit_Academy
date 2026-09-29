@@ -1062,5 +1062,460 @@
         "amount": 3
       }
     }
+  },
+  {
+    "id": "f05",
+    "name": "Hạ Chi",
+    "faction": "huyenVu",
+    "archetype": "striker",
+    "rarity": "rare",
+    "maxHp": 32,
+    "cardIds": [
+      "f05_liet_nham",
+      "f05_truy_anh",
+      "f05_diem_menh",
+      "f05_lien_chau",
+      "f05_loan_tien",
+      "f05_vu_ten"
+    ],
+    "lockedCardIds": [
+      "f05_ha_uy",
+      "f05_xa_nhat",
+      "f05_tuyet_diem",
+      "f05_cuu_lien",
+      "f05_bach_ten",
+      "f05_van_ten"
+    ],
+    "branches": [
+      {
+        "name": "Liệp Thủ",
+        "cardIds": [
+          "f05_liet_nham",
+          "f05_truy_anh",
+          "f05_diem_menh",
+          "f05_ha_uy",
+          "f05_xa_nhat",
+          "f05_tuyet_diem"
+        ]
+      },
+      {
+        "name": "Tiễn Vũ",
+        "cardIds": [
+          "f05_lien_chau",
+          "f05_loan_tien",
+          "f05_vu_ten",
+          "f05_cuu_lien",
+          "f05_bach_ten",
+          "f05_van_ten"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Xuyên Vân Tiễn",
+      "description": "Mọi đòn đơn mục tiêu từ lá của Hạ Chi đánh thêm kẻ địch đứng ngay sau mục tiêu, cùng damage gốc.",
+      "counter": "backRowHits",
+      "threshold": 4,
+      "constellationThreshold": 3,
+      "passive": {
+        "type": "pierceOwnAttacks"
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f05_liet_nham",
+      "plusCardId": "f05_liet_nham_plus"
+    },
+    "altLevelUp": {
+      "name": "Biên Tái",
+      "description": "Đòn đánh đầu tiên mỗi lượt từ lá tấn công của Hạ Chi, nếu trúng, áp Đánh Dấu 1 vòng lên mục tiêu.",
+      "passive": {
+        "type": "firstHitMarks",
+        "rounds": 1
+      }
+    }
+  },
+  {
+    "id": "f06",
+    "name": "Lam Khê",
+    "faction": "bachLo",
+    "archetype": "controller",
+    "rarity": "epic",
+    "maxHp": 30,
+    "cardIds": [
+      "f06_me_vu",
+      "f06_quyen_muc",
+      "f06_hong_vu",
+      "f06_co_mat",
+      "f06_mat_ham",
+      "f06_phong_thu"
+    ],
+    "lockedCardIds": [
+      "f06_dien_dao",
+      "f06_khuynh_tam",
+      "f06_kinh_hong_chieu",
+      "f06_doan_tin",
+      "f06_loan_am",
+      "f06_cuc_mat"
+    ],
+    "branches": [
+      {
+        "name": "Kinh Hồng",
+        "cardIds": [
+          "f06_me_vu",
+          "f06_quyen_muc",
+          "f06_hong_vu",
+          "f06_dien_dao",
+          "f06_khuynh_tam",
+          "f06_kinh_hong_chieu"
+        ]
+      },
+      {
+        "name": "Tin Mật",
+        "cardIds": [
+          "f06_co_mat",
+          "f06_mat_ham",
+          "f06_phong_thu",
+          "f06_doan_tin",
+          "f06_loan_am",
+          "f06_cuc_mat"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Kinh Hồng Vũ",
+      "description": "Mê Hoặc do Lam Khê gây thêm 1 lượt; đòn bị đổi mục tiêu của kẻ địch đó gây ×1.5 damage khi Lam Khê còn sống.",
+      "counter": "charmsApplied",
+      "threshold": 2,
+      "constellationThreshold": 2,
+      "passive": {
+        "type": "charmMastery",
+        "extraCharges": 1,
+        "damageMultiplier": 1.5
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f06_me_vu",
+      "plusCardId": "f06_me_vu_plus"
+    },
+    "altLevelUp": {
+      "name": "Vũ Y",
+      "description": "Mỗi khi Lam Khê gây Mê Hoặc, Lam Khê Ẩn Thân 1 vòng.",
+      "passive": {
+        "type": "stealthOnCharm",
+        "rounds": 1
+      }
+    }
+  },
+  {
+    "id": "f07",
+    "name": "Cố Uyển",
+    "faction": "thanhLoan",
+    "archetype": "controller",
+    "rarity": "rare",
+    "maxHp": 30,
+    "cardIds": [
+      "f07_phong_an",
+      "f07_doat_but",
+      "f07_phe_but",
+      "f07_thu_hai",
+      "f07_dien_co",
+      "f07_doc_dien"
+    ],
+    "lockedCardIds": [
+      "f07_thiet_but",
+      "f07_cam_su",
+      "f07_doan_su",
+      "f07_tang_kinh",
+      "f07_phan_dinh",
+      "f07_van_quyen"
+    ],
+    "branches": [
+      {
+        "name": "Sử Bút",
+        "cardIds": [
+          "f07_phong_an",
+          "f07_doat_but",
+          "f07_phe_but",
+          "f07_thiet_but",
+          "f07_cam_su",
+          "f07_doan_su"
+        ]
+      },
+      {
+        "name": "Thư Hải",
+        "cardIds": [
+          "f07_thu_hai",
+          "f07_dien_co",
+          "f07_doc_dien",
+          "f07_tang_kinh",
+          "f07_phan_dinh",
+          "f07_van_quyen"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Sử Bút",
+      "description": "Lần Phong Ấn đầu tiên mỗi lượt của Cố Uyển còn đặt dấu lên kẻ địch khác.",
+      "counter": "intentsSealed",
+      "threshold": 3,
+      "constellationThreshold": 3,
+      "passive": {
+        "type": "sealExtraFirstPerTurn"
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f07_phong_an",
+      "plusCardId": "f07_phong_an_plus"
+    },
+    "altLevelUp": {
+      "name": "Chép Sử",
+      "description": "Phong Ấn của Cố Uyển còn áp Suy Yếu 1 vòng lên mục tiêu.",
+      "passive": {
+        "type": "sealWeakens",
+        "amount": 1
+      }
+    }
+  },
+  {
+    "id": "f09",
+    "name": "Tiểu Mãn",
+    "faction": "bachLo",
+    "archetype": "specialist",
+    "rarity": "common",
+    "maxHp": 28,
+    "cardIds": [
+      "f09_trieu_hoi",
+      "f09_ngoc_anh",
+      "f09_moi_duong",
+      "f09_ngoc_dao",
+      "f09_tao_duoc",
+      "f09_nguyet_duoc"
+    ],
+    "lockedCardIds": [
+      "f09_tho_tinh",
+      "f09_linh_ke",
+      "f09_nguyet_tho",
+      "f09_tien_dan",
+      "f09_dan_thanh",
+      "f09_linh_duoc"
+    ],
+    "branches": [
+      {
+        "name": "Linh Thố",
+        "cardIds": [
+          "f09_trieu_hoi",
+          "f09_ngoc_anh",
+          "f09_moi_duong",
+          "f09_tho_tinh",
+          "f09_linh_ke",
+          "f09_nguyet_tho"
+        ]
+      },
+      {
+        "name": "Nguyệt Dược",
+        "cardIds": [
+          "f09_ngoc_dao",
+          "f09_tao_duoc",
+          "f09_nguyet_duoc",
+          "f09_tien_dan",
+          "f09_dan_thanh",
+          "f09_linh_duoc"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Thỏ Ngọc Thức Tỉnh",
+      "description": "Linh Thú của Tiểu Mãn dùng bản thức tỉnh (HP và damage ×2).",
+      "counter": "summonsMade",
+      "threshold": 5,
+      "constellationThreshold": 4,
+      "passive": {
+        "type": "awakenSummons"
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f09_trieu_hoi",
+      "plusCardId": "f09_trieu_hoi_plus"
+    },
+    "altLevelUp": {
+      "name": "Nguyệt Cung",
+      "description": "Linh Thú của Tiểu Mãn khi vừa được triệu hồi nhận Khiêu Khích 1 vòng.",
+      "passive": {
+        "type": "summonTaunts",
+        "rounds": 1
+      }
+    }
+  },
+  {
+    "id": "f10",
+    "name": "Liễu Tịnh Nhan",
+    "faction": "neutral",
+    "archetype": "support",
+    "rarity": "legendary",
+    "maxHp": 30,
+    "cardIds": [
+      "f10_dan_hon",
+      "f10_ho_phach",
+      "f10_hoi_hon",
+      "f10_tinh_tam",
+      "f10_thanh_tam",
+      "f10_tay_tran"
+    ],
+    "lockedCardIds": [
+      "f10_hon_quy",
+      "f10_trieu_hon",
+      "f10_luan_hoi",
+      "f10_khong_tuong",
+      "f10_vong_uu",
+      "f10_minh_nguyet"
+    ],
+    "branches": [
+      {
+        "name": "Hồn Dẫn",
+        "cardIds": [
+          "f10_dan_hon",
+          "f10_ho_phach",
+          "f10_hoi_hon",
+          "f10_hon_quy",
+          "f10_trieu_hon",
+          "f10_luan_hoi"
+        ]
+      },
+      {
+        "name": "Tịnh Tâm",
+        "cardIds": [
+          "f10_tinh_tam",
+          "f10_thanh_tam",
+          "f10_tay_tran",
+          "f10_khong_tuong",
+          "f10_vong_uu",
+          "f10_minh_nguyet"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Nguyệt Hồn",
+      "description": "Khi thăng cấp: Hồi Hồn đồng đội đã ngã gần nhất với 30% HP tối đa.",
+      "counter": "alliesFallen",
+      "threshold": 1,
+      "constellationThreshold": 1,
+      "passive": {
+        "type": "none"
+      },
+      "onLevelUp": [
+        {
+          "type": "revive",
+          "ratio": 0.3,
+          "to": "lastFallen"
+        }
+      ]
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f10_hoi_hon",
+      "plusCardId": "f10_hoi_hon_plus"
+    },
+    "altLevelUp": {
+      "name": "Vong Xuyên",
+      "description": "Mỗi khi đồng đội của Liễu Tịnh Nhan ngã, mọi Hero còn sống cùng phe nhận 6 giáp.",
+      "passive": {
+        "type": "armorOnAllyFall",
+        "amount": 6
+      }
+    }
+  },
+  {
+    "id": "m09",
+    "name": "Đoàn Lạc",
+    "faction": "bachLo",
+    "archetype": "controller",
+    "rarity": "epic",
+    "maxHp": 32,
+    "cardIds": [
+      "m09_khuc_sau",
+      "m09_sau_cam",
+      "m09_doan_truong",
+      "m09_tri_am",
+      "m09_tri_ky",
+      "m09_cam_khuc"
+    ],
+    "lockedCardIds": [
+      "m09_ai_khuc",
+      "m09_ly_biet",
+      "m09_quoc_pha",
+      "m09_nhac_tan",
+      "m09_tuyet_am",
+      "m09_lac_khuc"
+    ],
+    "branches": [
+      {
+        "name": "Khúc Sầu",
+        "cardIds": [
+          "m09_khuc_sau",
+          "m09_sau_cam",
+          "m09_doan_truong",
+          "m09_ai_khuc",
+          "m09_ly_biet",
+          "m09_quoc_pha"
+        ]
+      },
+      {
+        "name": "Tri Âm",
+        "cardIds": [
+          "m09_tri_am",
+          "m09_tri_ky",
+          "m09_cam_khuc",
+          "m09_nhac_tan",
+          "m09_tuyet_am",
+          "m09_lac_khuc"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Vong Quốc Khúc",
+      "description": "Debuff có thời hạn do Đoàn Lạc gây kéo dài thêm 1 vòng.",
+      "counter": "debuffsApplied",
+      "threshold": 6,
+      "constellationThreshold": 5,
+      "passive": {
+        "type": "debuffDurationBonus",
+        "amount": 1
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m09_khuc_sau",
+      "plusCardId": "m09_khuc_sau_plus"
+    },
+    "altLevelUp": {
+      "name": "Nam Chiếu Hồn",
+      "description": "Đòn của lá tấn công Đoàn Lạc gây thêm 3 damage vào kẻ địch có ít nhất 2 debuff.",
+      "passive": {
+        "type": "bonusVsDebuffed",
+        "minDebuffs": 2,
+        "amount": 3
+      }
+    }
   }
 ]

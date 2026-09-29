@@ -157,9 +157,9 @@ describe("phase 7a heroes — wave 1", () => {
 });
 
 describe("phase 7a heroes — wave 2 and bonds", () => {
-  it("T276h: 14 heroes load; each bond pair adds its bond card to the deck", () => {
+  it("T276h: 20 heroes load; each bond pair adds its bond card to the deck", () => {
     const data = testData();
-    expect(Object.keys(data.heroes)).toHaveLength(14);
+    expect(Object.keys(data.heroes)).toHaveLength(20);
     for (const id of WAVE2) expect(data.pvpConfig.heroStats[id]).toBeDefined();
     for (const [a, b] of BONDS) {
       const third = ["m06", "f04", "m05"].find((id) => id !== a && id !== b)!;
