@@ -193,7 +193,7 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
     return key === "deck-select";
   }, undefined, { timeout: 30_000 });
   await enterArena(pageW);
-  await clickDesign(pageW, 1090, 518); // "Cửa hàng Vinh Dự"
+  await clickDesign(pageW, 1110, 518); // "Cửa hàng Vinh Dự"
   await expect.poll(() => sceneKey(pageW), { timeout: 15_000 }).toBe("shop");
 
   const before = await api("/api/profile", { token: winner.token });

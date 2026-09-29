@@ -69,7 +69,8 @@ export class DeckBuilderScene extends Phaser.Scene {
       let y = 90;
       for (const branch of hero.branches) {
         addText(this, this.root, x0, y, `— ${branch.name} —`, 12, COLORS.dimText);
-        y += 22;
+        // Rows are centered on y: a 30px step keeps the first row clear of the label.
+        y += 30;
         for (const cardId of branch.cardIds) {
           this.renderRow(heroId, cardId, x0, y);
           y += ROW_H;

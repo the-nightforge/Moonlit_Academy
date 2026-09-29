@@ -275,7 +275,7 @@ export class ArenaScene extends Phaser.Scene {
       send({ type: "practice.start", mode: "pvp", deckId }), valid);
     addButton(this, this.root, 640, 518, 220, "Lịch sử", () => this.openPanel("history"));
     addButton(this, this.root, 880, 518, 220, "Bảng xếp hạng", () => this.openPanel("leaderboard"));
-    addButton(this, this.root, 1090, 518, 200, "Cửa hàng Vinh Dự", () => this.scene.start("shop", { tab: "honor", back: "arena" }));
+    addButton(this, this.root, 1110, 518, 200, "Cửa hàng Vinh Dự", () => this.scene.start("shop", { tab: "honor", back: "arena" }));
 
     if (this.roomCode) {
       addText(this, this.root, 640, 560, `Phòng ${this.roomCode} · ${this.roomPlayers}/2 — gửi mã cho bạn bè.`, 14, COLORS.gold).setOrigin(0.5);

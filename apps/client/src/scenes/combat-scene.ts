@@ -492,6 +492,12 @@ export class CombatScene extends Phaser.Scene {
     return t;
   }
 
+  /** Shrinks a one-line label that would overrun its panel. */
+  private fitWidth(text: Phaser.GameObjects.Text, maxWidth: number): Phaser.GameObjects.Text {
+    if (text.width > maxWidth) text.setScale(maxWidth / text.width);
+    return text;
+  }
+
   private renderTopBar() {
     this.text(24, 14, `Vòng ${this.state.round}`, 16);
     const match = this.netMatch;
@@ -749,15 +755,16 @@ export class CombatScene extends Phaser.Scene {
         c.add(this.add.rectangle(0, 0, panelW - 6, panelH - 6, 0x0a0e20, 0.45));
       }
       const def = this.gameData.enemies[enemy.defId]!;
-      this.text(0, -panelH / 2 + 16, def.name, 15, COLORS.text, c).setOrigin(0.5);
+      this.fitWidth(this.text(0, -panelH / 2 + 16, def.name, 15, COLORS.text, c).setOrigin(0.5), panelW - 20);
+      // Right of the armor line: the title row belongs to the name alone (long boss names).
       this.text(
-        panelW / 2 - 10,
-        -panelH / 2 + 16,
+        panelW / 2 - 14,
+        12,
         `NL ${enemy.moonPower}${enemy.moonReserve > 0 ? ` +${enemy.moonReserve}` : ""}`,
-        11,
+        12,
         COLORS.gold,
         c,
-      ).setOrigin(1, 0.5);
+      ).setOrigin(1, 0);
       this.hpBar(-panelW / 2 + 14, -14, panelW - 28, enemy.hp, enemy.maxHp, COLORS.hpFillEnemy, c);
       this.renderBossExtras(enemy, def, c, panelW, panelH);
       if (enemy.armor > 0) {
@@ -902,7 +909,7 @@ export class CombatScene extends Phaser.Scene {
       );
       if (heroArt) c.add(this.add.rectangle(0, 0, panelW - 6, panelH - 6, 0x0a0e20, 0.45));
       const def = this.gameData.heroes[hero.defId]!;
-      this.text(0, -panelH / 2 + 16, `${def.name}${hero.leveledUp ? " ★" : ""}`, 15, COLORS.text, c).setOrigin(0.5);
+      this.fitWidth(this.text(0, -panelH / 2 + 16, `${def.name}${hero.leveledUp ? " ★" : ""}`, 15, COLORS.text, c).setOrigin(0.5), panelW - 20);
       this.hpBar(-panelW / 2 + 14, -14, panelW - 28, hero.hp, hero.maxHp, COLORS.hpFillEnemy, c);
       if (hero.armor > 0) this.text(-panelW / 2 + 14, 12, `🛡 ${hero.armor}`, 12, COLORS.armor, c);
       this.statusChips(-panelW / 2 + 14, 38, hero.statuses, panelW - 28, c);
@@ -1310,7 +1317,8 @@ export class CombatScene extends Phaser.Scene {
     }
     const picks = this.mulliganPicks.size;
     this.text(WIDTH / 2, 520, `Đổi Bài: chọn tối đa ${this.gameData.combatConfig.maxMulligan} lá để đổi`, 14, COLORS.gold).setOrigin(0.5);
-    this.endScreenButton(1150, 600, picks > 0 ? `Đổi (${picks})` : "Giữ nguyên", () => {
+    // Where the end-turn button sits: the phase's main action keeps one place.
+    this.endScreenButton(1150, 660, picks > 0 ? `Đổi (${picks})` : "Giữ nguyên", () => {
       const instanceIds = [...this.mulliganPicks];
       this.mulliganPicks.clear();
       this.dispatch({ type: "mulligan", instanceIds });
@@ -1591,15 +1599,25 @@ export class CombatScene extends Phaser.Scene {
     const seat = this.state.players[this.mySeat] ?? activePlayerState(this.state);
     const power = seat.moonPower;
     const reserve = Math.min(seat.moonReserve, power);
-    this.text(30, 545, "Nguyệt Lực", 13, COLORS.dimText);
-    this.text(30, 566, "◉".repeat(power - reserve), 16, COLORS.gold);
-    if (reserve > 0) this.text(30 + (power - reserve) * 12, 566, "◈".repeat(reserve), 16, COLORS.costCheap);
-    this.text(30, 592, reserve > 0 ? `${power} (Dự Trữ ${reserve})` : `${power}`, 12, COLORS.dimText);
-    const extras = [
-      seat.cardsPlayedThisTurn > 0 ? `Liên Hoàn ${seat.cardsPlayedThisTurn}` : "",
-      seat.moonPowerBonus > 0 ? `+${seat.moonPowerBonus}/lượt` : "",
-    ].filter((part) => part.length > 0);
-    if (extras.length > 0) this.text(30, 612, extras.join("  ·  "), 12, COLORS.gold);
+    // Nothing to spend while Đổi Bài is open.
+    if (this.state.status !== "mulligan") {
+      this.text(30, 545, "Nguyệt Lực", 13, COLORS.dimText);
+      // One dot per point (Dự Trữ last, green), 7 per row: fixed steps, so dots never overlap.
+      const reserveFill = Phaser.Display.Color.HexStringToColor(COLORS.costCheap).color;
+      for (let i = 0; i < power; i++) {
+        const dot = this.add.circle(37 + (i % 7) * 17, 572 + Math.floor(i / 7) * 16, 6, i < power - reserve ? COLORS.goldFill : reserveFill);
+        dot.setStrokeStyle(1, 0x0a0e20);
+        this.root.add(dot);
+      }
+      const dotRows = Math.max(1, Math.ceil(power / 7));
+      const infoY = 584 + dotRows * 16;
+      this.text(30, infoY - 4, reserve > 0 ? `${power} (Dự Trữ ${reserve})` : `${power}`, 12, COLORS.dimText);
+      const extras = [
+        seat.cardsPlayedThisTurn > 0 ? `Liên Hoàn ${seat.cardsPlayedThisTurn}` : "",
+        seat.moonPowerBonus > 0 ? `+${seat.moonPowerBonus}/lượt` : "",
+      ].filter((part) => part.length > 0);
+      if (extras.length > 0) this.text(30, infoY + 16, extras.join("  ·  "), 12, COLORS.gold);
+    }
 
     // A full hand (up to `handLimit`) squeezes its cards to stay inside the zone;
     // the hovered card is lifted above its neighbours in renderCard.

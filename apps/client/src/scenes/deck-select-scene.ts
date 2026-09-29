@@ -90,7 +90,8 @@ export class DeckSelectScene extends Phaser.Scene {
       },
     );
     this.render();
-    showToast(this, session.notices.splice(0));
+    // Below the deck list, so a first-login gift doesn't cover the only deck.
+    showToast(this, session.notices.splice(0), 605);
   }
 
   /** Starter row for every team seen in saved decks + the current team, then all saved decks. */
