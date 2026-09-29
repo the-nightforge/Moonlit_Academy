@@ -141,6 +141,8 @@ export function describeEvent(
       return `${name(event.enemyId)} báo ${event.intents.map((i) => i.intentId).join(", ") || "Tụ Lực"} (NL ${event.moonPower})`;
     case "intentsCancelled":
       return `${name(event.enemyId)} bị hủy ${event.intentIds.join(", ")}`;
+    case "intentSealed":
+      return `${name(event.enemyId)} chiêu ${event.intentId} bị Phong Ấn tước hiệu ứng`;
     case "intentExecuted":
       return `${name(event.enemyId)} thực hiện ${event.intentId} → ${name(event.targetId)}`;
     case "intentSkipped":

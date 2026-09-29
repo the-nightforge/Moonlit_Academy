@@ -403,17 +403,19 @@ function animateEvent(
         });
       });
     }
-    case "intentsRevealed": {
-      const anchor = anchorOf(event.enemyId);
-      if (!anchor) return instant();
-      const label = event.intents.length === 0 ? "Tụ Lực" : "Ý định mới";
-      return floatText(scene, anchor.x, anchor.y - 110, label, "#cfd6f0", 12, 150);
-    }
+    case "intentsRevealed":
+      // Enemies no longer telegraph their chain (`01` §9.2) — nothing to show.
+      return instant();
     case "intentsCancelled": {
       const anchor = anchorOf(event.enemyId);
       if (!anchor) return instant();
-      const names = event.intentIds.map((id) => findIntent(ctx, event.enemyId, id)?.name ?? id);
-      return floatText(scene, anchor.x, anchor.y - 110, `Tỏa Nguyệt hủy: ${names.join(", ")}`, "#9fd4ff", 13, 450);
+      return floatText(scene, anchor.x, anchor.y - 110, `Tỏa Nguyệt hủy ${event.intentIds.length} chiêu`, "#9fd4ff", 13, 450);
+    }
+    case "intentSealed": {
+      const anchor = anchorOf(event.enemyId);
+      if (!anchor) return instant();
+      const intent = findIntent(ctx, event.enemyId, event.intentId);
+      return floatText(scene, anchor.x, anchor.y - 110, `Phong Ấn: ${intent?.name ?? ""} mất hiệu ứng`, "#b9a8ff", 13, 450);
     }
     case "intentExecuted": {
       const anchor = anchorOf(event.enemyId);

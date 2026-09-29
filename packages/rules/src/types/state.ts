@@ -70,8 +70,8 @@ export interface EnemyState extends UnitState {
   moonPower: number;
   /** Reserve carried into the next plan. */
   moonReserve: number;
-  /** Ids sealed this round — merged into `lastIntentIds` at the enemy turn, then deleted (`01` §5.6). */
-  sealedIntentIds?: string[];
+  /** Phong Ấn (`01` §5.6): hero id that sealed this unit; its next-turn intents keep damage but lose every other effect. Cleared when that enemy's turn ends, used or not. */
+  sealedBy?: string;
 }
 
 export interface CardInstance {

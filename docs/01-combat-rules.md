@@ -11,7 +11,7 @@ Phạm vi: giai đoạn 1–4b (PvE offline). Các mục đánh dấu **[GĐ2]**
 | Thành phần | Mô tả |
 |---|---|
 | **Đội** | 3 Hero, vị trí 0, 1, 2 (trái sang phải). Mỗi Hero có `hp`, `maxHp`, `armor`, danh sách trạng thái, bộ đếm thăng cấp |
-| **Kẻ địch** | 1–3 kẻ địch, vị trí 0, 1, 2. Mỗi kẻ địch có `hp`, `maxHp`, `armor`, trạng thái, chuỗi chiêu đã lên (`plannedIntents`), Nguyệt Lực và Dự Trữ riêng |
+| **Kẻ địch** | 1–3 kẻ địch, vị trí 0, 1, 2. Mỗi kẻ địch có `hp`, `maxHp`, `armor`, trạng thái, chuỗi chiêu đã lên (`plannedIntents` — nội bộ, không báo cho người chơi), Nguyệt Lực và Dự Trữ riêng |
 | **Deck** | Các lá độc nhất theo `cardId` (khởi đầu 6 lá/Hero) + 1 lá Song Hành cho mỗi cặp đủ mặt trong đội **[GĐ2]** (mục 4.4). Mỗi lá sinh `copies` bản; mỗi bản trong trận là một **card instance** có `instanceId` riêng |
 | **Chồng bài** | `drawPile` (rút), `hand` (trên tay), `discardPile` (bỏ — không bao giờ xáo lại vào chồng rút) |
 | **Nguyệt Lực** | Tài nguyên để đánh bài: `min(8, 2 + vòng)` mỗi lượt cộng Dự Trữ (tối đa 3) — `12` §3.1 |
@@ -205,20 +205,20 @@ Condition `selfHpBelow`, `selfHasStatus` xét đơn vị hành động của eff
 ### 5.6 Phong Ấn, Hồi Hồn, Kéo Dài Debuff, Xuyên mục tiêu [GĐ7]
 
 **Phong Ấn — effect `sealIntent { to }`** (chỉ trên lá bài).
-- PvE / co-op (`to` là kẻ địch): hủy chiêu **có cost cao nhất** trong `plannedIntents` của
-  mục tiêu (hòa → chiêu đứng trước); phát `intentsCancelled`; id chiêu bị hủy được đẩy vào
-  `EnemyState.sealedIntentIds` (Nguyệt Lực của chiêu không hoàn lại). `plannedIntents`
-  rỗng → không có tác dụng. Nội tại `sealExtraFirstPerTurn`: lần Phong Ấn **đầu tiên mỗi
-  lượt** của Hero có nội tại này hủy thêm 1 chiêu nữa (đắt thứ hai, cùng luật hòa) — dùng
-  cờ `HeroState.firstSealUsedThisTurn`, đặt lại đầu lượt người chơi. Nội tại `sealWeakens
-  { amount }`: mục tiêu nhận Suy Yếu `amount`. Bộ đếm `intentsSealed` +1 mỗi lần hủy được
-  một chiêu.
+- PvE / co-op (`to` là kẻ địch): đặt dấu Phong Ấn lên mục tiêu — `EnemyState.sealedBy`
+  = id Hero đánh lá. Dấu tồn tại tới hết lượt kẻ địch kế tiếp của mục tiêu rồi hết,
+  dù có dùng hay không (kẻ địch bị Đóng Băng bỏ cả chuỗi vẫn hết dấu). Trong lượt đó,
+  mỗi chiêu mục tiêu thi hành bị tước **mọi effect không phải `damage`** — chiêu chỉ
+  còn phần damage. Mỗi chiêu bị tước ít nhất một effect phát `intentSealed` và +1
+  `intentsSealed` cho Hero đã đặt dấu. Nội tại `sealExtraFirstPerTurn`: lần Phong Ấn
+  **đầu tiên mỗi lượt** của Hero có nội tại này còn đặt dấu lên kẻ địch còn sống khác
+  có vị trí nhỏ nhất — dùng cờ `HeroState.firstSealUsedThisTurn`, đặt lại đầu lượt
+  người chơi. Nội tại `sealWeakens { amount }`: mục tiêu nhận Suy Yếu `amount`.
 - PvP (`to` là Hero đối thủ): lá **đắt nhất trên tay** của người chơi đó (hòa → lá đứng
   trước) +1 Nguyệt Lực **chỉ trong lượt kế tiếp** của họ (`CardInstance.sealSurcharge`);
-  tay rỗng → không có tác dụng. Xem mục 15.5.
-- Khi thi hành lượt kẻ địch (mục 9.3): `lastIntentIds` = id các chiêu **còn lại trong
-  chuỗi** (`plannedIntents`) **cộng** `sealedIntentIds`, rồi `sealedIntentIds` bị xóa — để
-  chiêu đã bị Phong Ấn cũng không được lên đầu chuỗi vòng sau (mục 9.2 bước 3).
+  tay rỗng → không có tác dụng. `intentsSealed` +1 khi phụ phí được đặt. Xem mục 15.5.
+- Khi thi hành lượt kẻ địch (mục 9.3): `lastIntentIds` = id các chiêu trong chuỗi đã
+  lên (`plannedIntents`).
 
 **Hồi Hồn — effect `revive { ratio; to: "chosen" | "lastFallen" }`.**
 - Lá bài dùng `target: "fallenAlly"` (mục 5.1) cùng `to: "chosen"`.
@@ -369,7 +369,7 @@ Ví dụ — `bloodMoon(2)` đánh trong lượt người chơi vòng N:
 | F08 Phượng Chiêu Dung **[GĐ7]** | `forbiddenHpLost` | Cộng HP F08 thực mất bởi `loseHp` trong lá `forbidden` của chính F08 | 12 | `forbiddenNoSelfHpLoss` — *Huyết Phượng*: `loseHp` nhắm `self` trong lá `forbidden` của F08 bị bỏ qua | Ngay lập tức |
 | F05 Hạ Chi **[GĐ7]** | `backRowHits` | +1 mỗi hit từ lá tấn công của F05 trúng kẻ địch hàng sau (mục 5.6) | 4 | `pierceOwnAttacks` — *Xuyên Vân Tiễn*: đòn đơn mục tiêu của F05 đánh thêm kẻ địch còn sống đứng ngay sau mục tiêu, cùng damage gốc | Ngay lập tức |
 | F06 Lam Khê **[GĐ7]** | `charmsApplied` | +1 mỗi lần một effect có đơn vị hành động là F06 áp `charm` lên một kẻ địch | 2 | `charmMastery { extraCharges: 1, damageMultiplier: 1.5 }` — *Kinh Hồng Vũ*: Mê Hoặc do F06 gây thêm 1 lượt; đòn bị đổi mục tiêu của kẻ địch đó ×1.5 khi F06 còn sống | Ngay lập tức |
-| F07 Cố Uyển **[GĐ7]** | `intentsSealed` | +1 mỗi chiêu bị hủy bởi effect `sealIntent` có đơn vị hành động là F07 | 3 | `sealExtraFirstPerTurn` — *Sử Bút*: lần Phong Ấn đầu tiên mỗi lượt của F07 hủy thêm 1 chiêu (đắt thứ hai) | Đầu lượt người chơi kế tiếp |
+| F07 Cố Uyển **[GĐ7]** | `intentsSealed` | +1 mỗi chiêu bị tước hiệu ứng bởi dấu Phong Ấn do F07 đặt (mục 5.6) | 3 | `sealExtraFirstPerTurn` — *Sử Bút*: lần Phong Ấn đầu tiên mỗi lượt của F07 đặt dấu thêm lên 1 kẻ địch khác (vị trí nhỏ nhất) | Đầu lượt người chơi kế tiếp |
 | F09 Tiểu Mãn **[GĐ7]** | `summonsMade` | +1 mỗi effect `summon` có đơn vị hành động là F09 | 5 | `awakenSummons` — *Thỏ Ngọc Thức Tỉnh*: Linh Thú của F09 dùng `awakenedId` (mục 17.1) | Ngay lập tức (Linh Thú đang sống đổi ngay) |
 | F10 Liễu Tịnh Nhan **[GĐ7]** | `alliesFallen` | +1 mỗi Hero của người chơi đó ngã (kể cả chính F10) | 1 | `none` — *Nguyệt Hồn*: nội tại trống; `levelUp.onLevelUp` = `revive { ratio: 0.3, to: "lastFallen" }` (mục 5.6) | Ngay lập tức |
 | M09 Đoàn Lạc **[GĐ7]** | `debuffsApplied` | +1 mỗi lần một effect có đơn vị hành động là M09 áp một debuff (mục 6.3) lên đối thủ | 6 | `debuffDurationBonus(1)` — *Vong Quốc Khúc*: debuff có thời hạn do M09 áp thêm 1 vòng thời hạn | Ngay lập tức |
@@ -452,7 +452,7 @@ Chạy lúc tạo trận (vòng 1) và ở cuối mỗi vòng (mục 9.4, sau kh
 | `highestHp` | HP hiện tại cao nhất |
 | `front` | Vị trí nhỏ nhất |
 
-5. `plannedIntents = chain`, `moonPower = quỹ ban đầu`, `moonReserve = min(moonReserveMax, P)`. Phát event `intentsRevealed` (một event cho cả chuỗi; chuỗi rỗng = **Tụ Lực**).
+5. `plannedIntents = chain`, `moonPower = quỹ ban đầu`, `moonReserve = min(moonReserveMax, P)`. Phát event `intentsRevealed` (một event cho cả chuỗi; chuỗi rỗng = **Tụ Lực**). Chuỗi là nội bộ — **[GĐ7b]** kẻ địch không báo chiêu, client không hiển thị.
 
 Thứ tự RNG trong một lần lên chuỗi của một kẻ địch: các lần bốc chiêu, rồi chọn mục tiêu theo thứ tự chuỗi.
 
@@ -793,7 +793,7 @@ Hành đủ cặp của đội và lá Binh Khí như §2/§14.2. Thứ tự RNG
 | Hook `enemyKilled` / `heroDied` | Kẻ địch / Hero ngã | `enemyKilled` chạy hook của **người kết liễu**; `heroDied` chạy hook của **người mất Hero** |
 | Hook `moonPhaseEntered`, `bloodMoonStarted` | — | Chạy hook của **cả hai**: người đang có lượt trước, rồi người kia |
 | `applyStatus charm` lên Hero **[GĐ7]** | Không có tác dụng trên Hero (chỉ kẻ địch, mục 9.3.1 bước 0) | Hero bị Mê Hoặc: lá tấn công đơn mục tiêu **đầu tiên** của Hero đó trong lượt kế tiếp đánh vào **đồng đội còn sống HP cao nhất** của chính nó (không có đồng đội → đánh chính nó); trừ 1 lượt Mê Hoặc; không chuyển sang người hộ vệ (`guard`) vì đòn đã đánh vào phe mình |
-| `sealIntent` (Phong Ấn) **[GĐ7]** | Hủy chiêu đắt nhất trong chuỗi ý định của kẻ địch (mục 5.6) | Không hủy gì (đối thủ không có chuỗi ý định); thay vào đó lá **đắt nhất trên tay** của đối thủ (hòa → lá đứng trước) +1 Nguyệt Lực **chỉ trong lượt kế tiếp** của đối thủ |
+| `sealIntent` (Phong Ấn) **[GĐ7]** | Đặt dấu Phong Ấn lên kẻ địch: mỗi chiêu nó thi hành trong lượt kế tiếp chỉ còn phần damage, mất mọi effect khác (mục 5.6) | Không đặt dấu (Hero không có chuỗi ý định); thay vào đó lá **đắt nhất trên tay** của đối thủ (hòa → lá đứng trước) +1 Nguyệt Lực **chỉ trong lượt kế tiếp** của đối thủ |
 
 Mọi effect khác giữ nguyên (đơn vị hành động, `to`, công thức damage §10).
 

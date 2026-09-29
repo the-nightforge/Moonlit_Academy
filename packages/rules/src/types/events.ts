@@ -46,6 +46,8 @@ export type CombatEvent =
       intents: { intentId: string; cost: number; targetId: string | null }[];
     }
   | { type: "intentsCancelled"; enemyId: string; intentIds: string[] }
+  /** [GĐ7b] Phong Ấn consumed: the intent ran with damage only — every other effect was stripped (`01` §5.6). */
+  | { type: "intentSealed"; enemyId: string; intentId: string }
   | { type: "intentExecuted"; enemyId: string; intentId: string; targetId: string | null }
   | { type: "intentFizzled"; enemyId: string; intentId: string }
   | { type: "intentSkipped"; enemyId: string; reason: "freeze" }

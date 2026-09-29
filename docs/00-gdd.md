@@ -141,7 +141,7 @@ Khi đội có đủ một cặp, deck tự thêm **1 lá Song Hành**. Lá này
 thường) của **F07** là *Sử Bút: xem trước 2 ý định tiếp theo của địch* (ngưỡng "Phong ấn
 3 kỹ năng địch" giữ nguyên, chỉ đổi thành bộ đếm `intentsSealed → 3`). Prototype **giữ
 tên** *Sử Bút* nhưng **đổi hiệu ứng** thành `sealExtraFirstPerTurn` (lần Phong Ấn đầu mỗi
-lượt hủy thêm 1 chiêu) — xem trước ý định vòng sau đòi lên chuỗi trước hai vòng, đổi thứ
+lượt đặt dấu thêm lên 1 kẻ địch khác) — xem trước ý định vòng sau đòi lên chuỗi trước hai vòng, đổi thứ
 tự RNG và làm hỏng T213 (bộ ghi vàng PvE). Dạng thăng cấp thứ hai (Tinh Hồn 5, mục ngoài
 GDD) là *Chép Sử* — `sealWeakens` (Phong Ấn còn áp Suy Yếu 1 lên mục tiêu). Chi tiết: `01`
 §8, `18` §3.3.

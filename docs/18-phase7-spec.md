@@ -288,19 +288,20 @@ lá, Nguyệt Lực, thăng cấp, bộ đếm; không tính vào điều kiện
   lượt kế tiếp đánh vào **đồng đội còn sống HP cao nhất** của chính nó (không có đồng
   đội → đánh chính nó); trừ 1.
 
-**Phong Ấn — effect `sealIntent { to }`.**
-- PvE / co-op: hủy chiêu **có cost cao nhất** trong chuỗi đã báo của mục tiêu (hòa → chiêu
-  đứng trước), phát `intentsCancelled`; `id` chiêu đó thêm vào `EnemyState.sealedIntentIds`
-  (không được làm chiêu dẫn đầu vòng sau theo §9.2 bước 3). Nguyệt Lực của chiêu không
-  hoàn lại. Chuỗi rỗng → không có tác dụng. Lúc thi hành lượt kẻ địch, `lastIntentIds`
-  được gán bằng id các chiêu **còn lại trong chuỗi cộng `sealedIntentIds`**, rồi
-  `sealedIntentIds` bị xóa — vì `runEnemyTurn` ghi đè `lastIntentIds` nên phải cộng lại
-  chiêu đã bị Phong Ấn để nó vẫn không dẫn đầu vòng sau.
+**Phong Ấn — effect `sealIntent { to }`.** Kẻ địch không báo chiêu — `plannedIntents`
+là nội bộ, client không hiển thị (event `intentsRevealed` vẫn phát để debug/replay).
+- PvE / co-op: đặt dấu Phong Ấn lên mục tiêu (`EnemyState.sealedBy` = id Hero đánh lá).
+  Dấu tồn tại tới hết lượt kẻ địch kế tiếp của mục tiêu rồi hết, dù có dùng hay không
+  (Đóng Băng bỏ chuỗi vẫn hết dấu). Trong lượt đó, mỗi chiêu mục tiêu thi hành bị tước
+  **mọi effect không phải `damage`**; mỗi chiêu mất ít nhất một effect phát `intentSealed`
+  và +1 `intentsSealed` cho Hero đặt dấu.
+- `sealExtraFirstPerTurn` (Sử Bút): lần Phong Ấn đầu tiên mỗi lượt đặt dấu thêm lên kẻ
+  địch còn sống khác có vị trí nhỏ nhất (cờ `firstSealUsedThisTurn` đặt lại đầu lượt).
+  `sealWeakens { amount }` (Chép Sử): mục tiêu nhận Suy Yếu `amount`.
 - PvP (§15.5): lá đắt nhất trên tay đối thủ (hòa → lá đứng trước) +1 Nguyệt Lực **chỉ
-  trong lượt kế tiếp** của đối thủ. Phụ phí này nằm ở `CardInstance.sealSurcharge` và bị
-  xóa ở cuối lượt của **người sở hữu lá** (không phải cuối lượt của người Phong Ấn) —
-  `endSeatTurn` chỉ xóa `chosenThisTurn` / `turnDiscount` / `sealSurcharge` của lá thuộc
-  người chơi đang kết thúc lượt.
+  trong lượt kế tiếp** của đối thủ (`CardInstance.sealSurcharge`, xóa ở cuối lượt của
+  người sở hữu lá); tay rỗng → không có tác dụng và không cộng `intentsSealed`.
+  `sealWeakens` vẫn áp lên Hero mục tiêu.
 
 **Hồi Hồn — effect `revive { ratio; to: "chosen" | "lastFallen" }`.** Lá bài dùng
 `target: "fallenAlly"` + `to: "chosen"` (Hero **đã ngã** của người đánh).
@@ -333,7 +334,7 @@ như mọi trạng thái Thời hạn khác, §15.3).
 |---|---|---|---|---|
 | **F05** Hạ Chi | Rare · Huyền Vũ · Striker · 32 | *Liệp Thủ* (Đánh Dấu, bắn hàng sau) · *Tiễn Vũ* (nhiều hit) | `backRowHits` → 4 → **Xuyên Vân Tiễn** (`pierceOwnAttacks`) | **Biên Tái**: hit đầu mỗi lượt của F05 áp Đánh Dấu |
 | **F06** Lam Khê | Epic · Bạch Lộ · Controller · 30 | *Kinh Hồng* (Mê Hoặc) · *Tin Mật* (Suy Yếu, Chiêm Bài) | `charmsApplied` → 2 → **Kinh Hồng Vũ**: Mê Hoặc do F06 gây +1 chiêu; đòn bị đổi mục tiêu ×1.5 | **Vũ Y**: mỗi khi gây Mê Hoặc, F06 Ẩn Thân 1 vòng |
-| **F07** Cố Uyển | Rare · Thanh Loan · Controller · 30 | *Sử Bút* (Phong Ấn) · *Thư Hải* (Mưu Lược, Chiêm Bài) | `intentsSealed` → 3 → **Sử Bút**: lần Phong Ấn đầu tiên mỗi lượt hủy thêm 1 chiêu (chiêu đắt thứ hai) | **Chép Sử**: Phong Ấn còn áp Suy Yếu 1 lên mục tiêu |
+| **F07** Cố Uyển | Rare · Thanh Loan · Controller · 30 | *Sử Bút* (Phong Ấn) · *Thư Hải* (Mưu Lược, Chiêm Bài) | `intentsSealed` → 3 → **Sử Bút**: lần Phong Ấn đầu tiên mỗi lượt lan sang 1 kẻ địch khác (vị trí nhỏ nhất) | **Chép Sử**: Phong Ấn còn áp Suy Yếu 1 lên mục tiêu |
 | **F09** Tiểu Mãn | Common · Bạch Lộ · Specialist · 28 | *Linh Thố* (triệu hồi Thỏ Ngọc, buff Linh Thú) · *Nguyệt Dược* (Hồi Phục) | `summonsMade` → 5 → **Thỏ Ngọc Thức Tỉnh**: Linh Thú dùng `awakenedId` (HP và damage ×2) | **Nguyệt Cung**: Linh Thú của F09 mới triệu hồi được Khiêu Khích 1 vòng |
 | **F10** Liễu Tịnh Nhan | Legendary · Trung lập · Support · 30 | *Hồn Dẫn* (Hồi Hồn, giáp) · *Tịnh Tâm* (hồi máu, giải debuff) | `alliesFallen` → 1 → **Nguyệt Hồn**: khi thăng cấp, Hồi Hồn đồng đội vừa ngã với 30% HP (theo luật `revive`) | **Vong Xuyên**: mỗi khi đồng đội ngã, mọi Hero còn sống của người chơi nhận 6 giáp |
 | **M09** Đoàn Lạc | Epic · Bạch Lộ · Controller · 32 | *Khúc Sầu* (Suy Yếu / Dễ Vỡ lan) · *Tri Âm* (Mê Hoặc) | `debuffsApplied` → 6 → **Vong Quốc Khúc**: debuff có thời hạn do M09 gây kéo dài thêm 1 vòng | **Nam Chiếu Hồn**: hit của M09 +3 vào kẻ địch có ít nhất 2 debuff |
@@ -352,9 +353,10 @@ hai vòng và đổi thứ tự RNG (hỏng T213), nên thay bằng nội tại 
 
 ### 3.5 Client 7b
 Ô Linh Thú cạnh Hero chủ (HP, giáp, trạng thái, chọn làm mục tiêu được); animation
-`summoned` / `summonActed` / `summonDismissed`; nhãn `Mê` trên kẻ địch và mũi tên ý định
-đổi mục tiêu; hiệu ứng chiêu bị Phong Ấn (dùng lại hiển thị `intentsCancelled`); Hero đã
-ngã chọn được khi đánh lá Hồi Hồn.
+`summoned` / `summonActed` / `summonDismissed`; nhãn `Mê` trên kẻ địch bị Mê Hoặc và nhãn
+`Phong Ấn` trên kẻ địch mang dấu (`sealedBy`); hiệu ứng chiêu bị Phong Ấn (event
+`intentSealed` — kẻ địch không báo chiêu nên không vẽ `plannedIntents`); Hero đã ngã
+chọn được khi đánh lá Hồi Hồn.
 
 ---
 
@@ -530,7 +532,7 @@ Tiếp nối `06` từ T263. Mỗi dải có thể giãn khi viết `06`; mã tr
 | T284 | 7b | `awakenSummons` đổi Linh Thú sang `awakenedId` giữ tỉ lệ HP khi thăng cấp; `summonTaunts` cho Khiêu Khích |
 | T285–T286 | 7b | PvP: Linh Thú đối thủ là mục tiêu đơn hợp lệ, Khiêu Khích ép chọn, `viewFor` hiện Linh Thú cả hai bên; co-op: Linh Thú hai người hành động sau khi cả hai Xong, người 0 trước |
 | T287–T288 | 7b | `charm`: đổi mục tiêu sang kẻ địch khác (không có → `intentFizzled`, vẫn trừ 1 lượt), xem trước hiện mục tiêu mới; `charmsApplied`, `charmMastery` (+1 lượt, ×1.5), `stealthOnCharm`; PvP Mê Hoặc đánh đồng đội |
-| T289–T290 | 7b | `sealIntent`: hủy chiêu đắt nhất, không dẫn đầu vòng sau (`sealedIntentIds`), `sealExtraFirstPerTurn` hủy thêm 1, `sealWeakens`, `intentsSealed`; PvP `sealSurcharge` +1 lá đắt nhất chỉ lượt kế |
+| T289–T290 | 7b | `sealIntent`: đặt dấu 1 lượt địch, chiêu bị tước mọi effect không-damage (`sealedBy`, `intentSealed`), `sealExtraFirstPerTurn` lan sang 1 địch, `sealWeakens`, `intentsSealed`; PvP `sealSurcharge` +1 lá đắt nhất chỉ lượt kế |
 | T291–T292 | 7b | `revive`: HP theo `ratio`, xáo lại lá đã gỡ tất định, mỗi Hero tối đa 1 lần, `fallenAlly` chỉ liệt kê Hero ngã chưa hồi; `alliesFallen`, `onLevelUp` hồi `lastFallen`, `armorOnAllyFall` |
 | T293–T294 | 7b | Xuyên mục tiêu: `backRowHits`, `pierceOwnAttacks` gọi `dealDamage` cùng base lên kẻ địch phía sau, `firstHitMarks`; `debuffsApplied`, `debuffDurationBonus`, `bonusVsDebuffed`, `extendDebuffs` |
 | T295 | 7b | Kiểm chéo dữ liệu: `summons.json` (`awakenedId`, phạm vi `owner` / `summon`), lá `fallenAlly` / `revive` |
@@ -637,7 +639,7 @@ Arc 1–2 trên client qua server; vật liệu có chỗ tiêu và đạt mục
 5. Linh Thú là đơn vị thật: tự hành động cuối lượt người chơi; kẻ địch chỉ nhắm đơn khi nó
    Khiêu Khích; `allEnemies` trúng nó; mỗi Hero tối đa 1; chủ ngã → biến mất.
 6. Mê Hoặc, Phong Ấn, Hồi Hồn, xuyên, Hộ Vệ, Chọn Pha làm gọn trong khung sẵn có.
-7. F07 dạng thăng cấp thay "xem trước 2 ý định" bằng Phong Ấn thêm 1 chiêu.
+7. F07 dạng thăng cấp thay "xem trước 2 ý định" bằng Phong Ấn lan sang 1 kẻ địch khác.
 8. Spec chứa bản tóm tắt Hero + dàn ý arc; lá / lời thoại / số trang bị duyệt theo đợt.
 9. Vật liệu đổi lấy +1 Tinh Luyện / Cộng Minh theo `upgradeCost`; Huyền Thiết thêm nguồn từ
    Lượt chơi và Cốt truyện; không có phân giải.

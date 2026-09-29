@@ -533,7 +533,7 @@ export interface HeroState extends UnitState {
   firstCardDiscountUsedThisTurn: boolean;   // GĐ4a: cho nội tại M06 (tên cũ: freeCardUsedThisTurn)
   firstCardDiscountActive: boolean;         // GĐ4a: true từ lượt sau khi M06 thăng cấp
   firstSchemeUsedThisTurn?: boolean;        // GĐ7: Bác Học (M10) — lá scheme đầu tiên lượt này đã giải quyết 2 lần
-  firstSealUsedThisTurn?: boolean;          // GĐ7b: Sử Bút (F07) — Phong Ấn đầu tiên lượt này đã hủy thêm 1 chiêu
+  firstSealUsedThisTurn?: boolean;          // GĐ7b: Sử Bút (F07) — Phong Ấn đầu tiên lượt này đã đặt dấu thêm lên 1 kẻ địch khác
   revived?: true;                            // GĐ7b: đã được Hồi Hồn (chặn lần hai, 01 §5.6)
 }
 
@@ -544,7 +544,7 @@ export interface EnemyState extends UnitState {
   lastIntentIds: string[];   // chuỗi đã lên vòng trước
   moonPower: number;         // quỹ của vòng đã lên chuỗi
   moonReserve: number;       // Dự Trữ sẽ mang sang vòng sau
-  sealedIntentIds?: string[]; // GĐ7b: id chiêu bị Phong Ấn vòng này — cộng vào lastIntentIds rồi xóa (01 §5.6)
+  sealedBy?: string;        // GĐ7b: id Hero đặt Phong Ấn — chiêu lượt sau của kẻ địch chỉ còn damage (01 §5.6), xóa hết lượt đó
 }
 
 export interface CardInstance {
@@ -680,6 +680,7 @@ export type CombatEvent =
   | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }   // GĐ2; rounds 0 = hết
   | { type: "intentsRevealed"; enemyId: string; moonPower: number; intents: { intentId: string; cost: number; targetId: string | null }[] }  // GĐ4a: một event cho cả chuỗi mỗi địch (thay intentRevealed); chuỗi rỗng = Tụ Lực
   | { type: "intentsCancelled"; enemyId: string; intentIds: string[] }   // GĐ4b: Tỏa/Đoạt Nguyệt hủy chiêu cuối chuỗi, theo thứ tự bị bỏ (01 §9.5)
+  | { type: "intentSealed"; enemyId: string; intentId: string }                               // GĐ7b: chiêu của kẻ địch mang dấu Phong Ấn bị tước mọi effect không-damage (01 §5.6)
   | { type: "intentExecuted"; enemyId: string; intentId: string; targetId: string | null }   // một event mỗi chiêu trong chuỗi
   | { type: "intentFizzled"; enemyId: string; intentId: string }                             // một event mỗi chiêu trong chuỗi
   | { type: "intentSkipped"; enemyId: string; reason: "freeze" }                             // một event cho cả chuỗi bị bỏ

@@ -441,7 +441,7 @@ Thú test qua dữ liệu tiêm vào (`packages/rules/test/helpers.ts`).
 | T286 | **[GĐ7]** Co-op: Linh Thú của cả hai người hành động sau khi cả hai đã Xong lượt, người 0 trước |
 | T287 | **[GĐ7]** Kẻ địch bị Mê Hoặc thi hành chiêu đơn mục tiêu đánh vào kẻ địch khác còn sống HP cao nhất, trừ 1 lượt kể cả khi thất bại vì không còn ai; xem trước ý định hiện mục tiêu đã đổi |
 | T288 | **[GĐ7]** `charmsApplied` đếm số lần gây Mê Hoặc; `charmMastery` cộng thêm 1 lượt và nhân damage ×1.5; `stealthOnCharm` cho người gây Ẩn Thân; PvP Mê Hoặc khiến Hero đánh đồng đội HP cao nhất của mình |
-| T289 | **[GĐ7]** `sealIntent` hủy chiêu đắt nhất trong chuỗi kẻ địch, chiêu đó không được dẫn đầu chuỗi vòng sau; `sealExtraFirstPerTurn` hủy thêm một chiêu ở lần Phong Ấn đầu mỗi lượt; `sealWeakens` áp Suy Yếu lên mục tiêu; `intentsSealed` đếm đúng số chiêu hủy được |
+| T289 | **[GĐ7]** `sealIntent` đặt dấu lên kẻ địch một lượt địch — mỗi chiêu nó thi hành chỉ còn effect `damage`, mất hiệu ứng khác (`intentSealed`); `sealExtraFirstPerTurn` lan dấu sang kẻ địch khác vị trí nhỏ nhất ở lần Phong Ấn đầu mỗi lượt; `sealWeakens` áp Suy Yếu; `intentsSealed` đếm đúng số chiêu bị tước hiệu ứng; Đóng Băng cũng làm dấu hết |
 | T290 | **[GĐ7]** PvP `sealIntent` làm lá đắt nhất trên tay đối thủ +1 Nguyệt Lực, chỉ có tác dụng trong lượt kế tiếp của họ |
 | T291 | **[GĐ7]** `revive` dựng một đồng đội đã ngã sống lại đúng một lần với HP theo `ratio × maxHp`, xáo lại các lá đã bị Tán Chiêu của Hero đó vào chồng rút; mục tiêu `fallenAlly` chỉ liệt kê Hero đã ngã và chưa được Hồi Hồn |
 | T292 | **[GĐ7]** `alliesFallen` đếm cho cả người chơi mỗi khi có Hero ngã; `onLevelUp` Hồi Hồn Hero ngã gần nhất (`lastFallen`); `armorOnAllyFall` cho các Hero còn sống nhận giáp khi có đồng đội ngã |

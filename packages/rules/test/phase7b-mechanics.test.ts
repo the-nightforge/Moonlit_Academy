@@ -355,7 +355,13 @@ describe("phase 7b — Mê Hoặc", () => {
 describe("phase 7b — Phong Ấn", () => {
   const sealCard = card({ id: "test_seal", ownerId: "f04", target: "enemy", effects: [{ type: "sealIntent", to: "chosen" }] });
   const cheap = { id: "t_cheap", name: "Rẻ", kind: "attack" as const, targeting: "front" as const, effects: [{ type: "damage" as const, amount: 1, to: "chosen" as const }] };
-  const dear = { ...cheap, id: "t_dear", name: "Đắt", effects: [{ type: "damage" as const, amount: 9, to: "chosen" as const }] };
+  const dear = {
+    id: "t_dear", name: "Đắt", kind: "attack" as const, targeting: "front" as const,
+    effects: [
+      { type: "damage" as const, amount: 9, to: "chosen" as const },
+      { type: "applyStatus" as const, status: "strength" as const, amount: 2, to: "self" as const },
+    ],
+  };
 
   const withPlan = (s: CombatState) => {
     s.enemies[0]!.plannedIntents = [
@@ -365,28 +371,41 @@ describe("phase 7b — Phong Ấn", () => {
     setIntent(s, 1, idleIntent, null);
   };
 
-  it("T289: sealIntent cancels the priciest planned intent, it cannot lead next round; the first seal each turn cancels one more with sealExtraFirstPerTurn; sealWeakens applies weak; intentsSealed counts", () => {
+  it("T289: sealIntent marks an enemy for its next turn — each intent keeps damage but loses its other effects; sealExtraFirstPerTurn seals another enemy; sealWeakens applies weak; intentsSealed counts stripped intents", () => {
     const t = makeTestCombat({ mutateData: withLevelUp("f04", { counter: "intentsSealed", threshold: 99 }), setup: withPlan });
     const sealed = play(t.data, t.state, sealCard, "enemy:0");
-    expect(sealed.events).toContainEqual({ type: "intentsCancelled", enemyId: "enemy:0", intentIds: ["t_dear"] });
-    expect(sealed.state.enemies[0]!.plannedIntents.map((p) => p.intent.id)).toEqual(["t_cheap"]);
-    expect(sealed.state.heroes[1]!.levelUpCounter).toBe(1);
+    expect(sealed.state.enemies[0]!.sealedBy).toBe("hero:f04");
+    // Nothing is stripped at cast time — the counter bumps when the intent executes.
+    expect(sealed.state.heroes[1]!.levelUpCounter).toBe(0);
     const next = applyAction(t.data, sealed.state, { type: "endTurn" });
     if (!next.ok) throw new Error(next.error);
-    expect(next.state.enemies[0]!.sealedIntentIds).toBeUndefined();
-    // lastIntentIds after the enemy turn carried the sealed id, so planning could not lead with it.
-    expect(
-      next.events
-        .filter((e) => e.type === "intentExecuted" && e.enemyId === "enemy:0")
-        .map((e) => (e as { intentId: string }).intentId),
-    ).toEqual(["t_cheap"]);
+    // t_dear kept its damage but lost the Sức Mạnh; t_cheap had nothing to strip.
+    expect(next.events).toContainEqual({ type: "intentSealed", enemyId: "enemy:0", intentId: "t_dear" });
+    expect(next.events.some((e) => e.type === "intentSealed" && e.intentId === "t_cheap")).toBe(false);
+    expect(next.events).toContainEqual(expect.objectContaining({ type: "damageDealt", sourceId: "enemy:0", amount: 9 }));
+    expect(next.state.enemies[0]!.statuses.some((st) => st.id === "strength")).toBe(false);
+    // The seal expired after that enemy's turn, used or not.
+    expect(next.state.enemies[0]!.sealedBy).toBeUndefined();
+    expect(next.state.heroes[1]!.levelUpCounter).toBe(1);
 
+    // A frozen enemy skips its chain — the seal still expires unused.
+    const frozen = makeTestCombat({
+      setup: (s) => { withPlan(s); s.enemies[0]!.statuses.push({ id: "freeze", value: 1 }); },
+    });
+    const frosted = play(frozen.data, frozen.state, sealCard, "enemy:0");
+    const skipped = applyAction(frozen.data, frosted.state, { type: "endTurn" });
+    if (!skipped.ok) throw new Error(skipped.error);
+    expect(skipped.events).toContainEqual({ type: "intentSkipped", enemyId: "enemy:0", reason: "freeze" });
+    expect(skipped.state.enemies[0]!.sealedBy).toBeUndefined();
+
+    // Sử Bút: the first seal each turn also seals the lowest-position other enemy.
     const extra = makeTestCombat({
       mutateData: withLevelUp("f04", { passive: { type: "sealExtraFirstPerTurn" } }),
       setup: (s) => { withPlan(s); s.heroes[1]!.leveledUp = true; },
     });
     const twice = play(extra.data, extra.state, sealCard, "enemy:0");
-    expect(twice.state.enemies[0]!.plannedIntents).toEqual([]);
+    expect(twice.state.enemies[0]!.sealedBy).toBe("hero:f04");
+    expect(twice.state.enemies[1]!.sealedBy).toBe("hero:f04");
     expect(twice.state.heroes[1]!.firstSealUsedThisTurn).toBe(true);
 
     const weakens = makeTestCombat({

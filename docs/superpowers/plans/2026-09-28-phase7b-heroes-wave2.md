@@ -32,15 +32,15 @@
 |---|---|---|
 | `docs/{00,01,02,04,06,07}.md`, `CLAUDE.md`, `docs/18-phase7-spec.md` | Tài liệu luật 7b | 1 |
 | `packages/rules/src/types/static.ts` | `SummonDef`, `TargetRef` (`owner`, `summon`), `CardTarget` (`fallenAlly`), `StatusId` (`charm`), `Effect` mới, 6 `LevelUpCounter`, 11 `LevelUpPassive` | 2–7 |
-| `packages/rules/src/types/state.ts` | `SummonState`, `CombatState.summons?`, `EnemyState.sealedIntentIds?`, `HeroState.revived?`/`firstSealUsedThisTurn?`, `PlayerState.purged?`/`fallenOrder?`, `CardInstance.sealSurcharge?` | 2, 5, 6 |
-| `packages/rules/src/types/events.ts` | `summoned`, `summonActed`, `summonDismissed`, `heroRevived` | 2, 3, 6 |
+| `packages/rules/src/types/state.ts` | `SummonState`, `CombatState.summons?`, `EnemyState.sealedBy?`, `HeroState.revived?`/`firstSealUsedThisTurn?`, `PlayerState.purged?`/`fallenOrder?`, `CardInstance.sealSurcharge?` | 2, 5, 6 |
+| `packages/rules/src/types/events.ts` | `summoned`, `summonActed`, `summonDismissed`, `heroRevived`, `intentSealed` | 2, 3, 5, 6 |
 | `packages/rules/src/types/api.ts` | `GameData.summons` | 2 |
 | `packages/data/summons.json` (mới), `src/schema.ts`, `src/load-game-data.ts` | Dữ liệu Linh Thú, zod, kiểm chéo | 2, 8 |
 | `packages/rules/src/summons.ts` (mới) | `summonsOf`, `isSummon`, `summonEffect`, `runSummonActions`, `dismissSummonOf`, `awakenSummon` | 2, 3 |
 | `packages/rules/src/players.ts` | `alliesOf`/`opponentsOf` gồm Linh Thú | 3 |
 | `packages/rules/src/effects.ts` | `findUnit`, `resolveTargets`, `processDeaths`, `killUnit` với Linh Thú; effect `summon`, `sealIntent`, `revive`, `extendDebuffs`; `charm`, bộ đếm, nội tại | 2–7 |
 | `packages/rules/src/intent.ts` | `pickTarget` nhận `UnitState[]` | 2 |
-| `packages/rules/src/enemy-turn.ts` | Khiêu Khích của Linh Thú; Mê Hoặc đổi mục tiêu; giữ `sealedIntentIds` | 3, 4, 5 |
+| `packages/rules/src/enemy-turn.ts` | Khiêu Khích của Linh Thú; Mê Hoặc đổi mục tiêu; dấu Phong Ấn tước effect không-damage của chiêu | 3, 4, 5 |
 | `packages/rules/src/preview.ts` | Xem trước với Linh Thú và Mê Hoặc | 3, 4 |
 | `packages/rules/src/turn.ts`, `coop/turn.ts`, `pvp/turn.ts` | Linh Thú: xóa giáp / tick / hành động cuối lượt; chỉ xóa giảm giá của lá thuộc người chơi đó | 3, 5 |
 | `packages/rules/src/turn-passives.ts` | Reset `firstSealUsedThisTurn` | 5 |
@@ -72,7 +72,7 @@
   - `TargetRef` thêm `"owner"` (Hero chủ, chỉ hợp lệ trong `SummonDef.action`) và `"summon"` (Linh Thú còn sống của Hero đang giải quyết effect, chỉ hợp lệ trên lá Hero / Song Hành). Lá Song Hành *Nguyệt Thố Hộ Mệnh* dùng `"summon"`.
   - Đòn của Linh Thú là đòn tấn công: Sức Mạnh và Suy Yếu áp dụng. Không có hệ số pha trăng (hệ số đó chỉ dành cho lá bài).
   - Linh Thú bị giết **không** tính `enemiesKilled` trong PvP.
-  - **Phong Ấn**: id các chiêu bị hủy được giữ trong `EnemyState.sealedIntentIds`. Lúc thi hành lượt kẻ địch, `lastIntentIds` bằng id các chiêu còn lại trong chuỗi **cộng** `sealedIntentIds`, sau đó xóa `sealedIntentIds`. Lý do: `runEnemyTurn` ghi đè `lastIntentIds`. Trong PvP, phụ phí +1 nằm ở `CardInstance.sealSurcharge` và bị xóa ở cuối lượt của **người sở hữu lá**. Vì thế `endSeatTurn` chỉ xóa `chosenThisTurn` / `turnDiscount` / `sealSurcharge` của lá thuộc người chơi đó.
+  - **Phong Ấn** (đã sửa thiết kế sau khi làm Task 5 — xem `01` §5.6): kẻ địch **không báo chiêu**, `sealIntent` đặt dấu lên kẻ địch (`EnemyState.sealedBy` = id Hero đánh lá) tới hết lượt kẻ địch kế tiếp — mỗi chiêu nó thi hành chỉ còn `damage`, mất mọi effect khác (`intentSealed`, +1 `intentsSealed` cho người đặt); `sealExtraFirstPerTurn` lan dấu sang kẻ địch khác vị trí nhỏ nhất. Trong PvP, phụ phí +1 nằm ở `CardInstance.sealSurcharge` và bị xóa ở cuối lượt của **người sở hữu lá**. Vì thế `endSeatTurn` chỉ xóa `chosenThisTurn` / `turnDiscount` / `sealSurcharge` của lá thuộc người chơi đó.
   - **Mê Hoặc**: `sourceId` là người gây. Chiêu bị đổi mục tiêu vẫn trừ 1 lượt Mê Hoặc kể cả khi thất bại vì không còn kẻ địch khác. Trong PvE / co-op, Mê Hoặc trên Hero không có tác dụng (chỉ PvP có luật cho Hero).
   - **Kinh Hồng Vũ** (F06): nội tại `charmMastery { extraCharges: 1, damageMultiplier: 1.5 }`. Hệ số ×1.5 áp khi Hero gây Mê Hoặc (`sourceId`) còn sống, đã thăng cấp và có nội tại này.
   - **Hồi Hồn**: `revive { ratio; to: "chosen" | "lastFallen" }`. Lá bài dùng `target: "fallenAlly"` + `to: "chosen"`. Nội tại dạng thường của F10 là `none` với `levelUp.onLevelUp: [{ type: "revive", ratio: 0.3, to: "lastFallen" }]`, trong đó `lastFallen` là Hero ngã gần nhất của cùng người chơi mà chưa từng được Hồi Hồn (lấy từ `PlayerState.fallenOrder`).
@@ -968,6 +968,11 @@ git commit -m "Step 7b.3: charm, debuff counters and M09 passives"
 
 ### Task 5: Phong Ấn (`sealIntent`) (bước 7b.3, phần 2)
 
+> **Đã sửa thiết kế** (sau khi task này xong): kẻ địch không báo chiêu; Phong Ấn đặt dấu
+> `sealedBy` lên kẻ địch một lượt địch — chiêu chỉ còn `damage`, mất hiệu ứng khác.
+> Các snippet test/code bên dưới là bản cũ (hủy chiêu đắt nhất), chỉ còn giá trị lịch
+> sử — luật hiện hành ở `01` §5.6.
+
 **Files:**
 - Modify: `packages/rules/src/types/static.ts`, `types/state.ts`, `packages/data/src/schema.ts`, `packages/rules/src/effects.ts`, `enemy-turn.ts`, `turn.ts`, `turn-passives.ts`, `queries.ts`
 - Test: `packages/rules/test/phase7b-mechanics.test.ts`
@@ -976,7 +981,7 @@ git commit -m "Step 7b.3: charm, debuff counters and M09 passives"
 - Produces:
   - `Effect` thêm `{ type: "sealIntent"; to: TargetRef }`.
   - `LevelUpCounter` thêm `"intentsSealed"`. `LevelUpPassive` thêm `{ type: "sealExtraFirstPerTurn" }`, `{ type: "sealWeakens"; amount: number }`.
-  - `EnemyState.sealedIntentIds?: string[]`, `HeroState.firstSealUsedThisTurn?: boolean`, `CardInstance.sealSurcharge?: number`.
+  - `EnemyState.sealedBy?: string`, `HeroState.firstSealUsedThisTurn?: boolean`, `CardInstance.sealSurcharge?: number`; event `intentSealed`.
 
 - [ ] **Step 1: Viết test thất bại**
 
@@ -1543,8 +1548,8 @@ git commit -m "Step 7b.4: heroes F05, F06, F07, F09, F10, M09, Linh Thú and two
   - `summonActed`: chữ nổi tên Linh Thú.
   - `summonDismissed`: mờ dần tại anchor Linh Thú.
   - `heroRevived`: `flash` vàng tại anchor Hero và chữ nổi `"Hồi Hồn"`.
-  - Case `intentsCancelled` đang ghi cứng `"Tỏa Nguyệt hủy"`: đổi thành `"Hủy: …"`, vì giờ Phong Ấn cũng phát event này.
-- [ ] **Step 4: Nhãn** — `theme.ts`: nhãn trạng thái `charm: "Mê"`. Ý định của kẻ địch bị Mê Hoặc hiện mũi tên tới kẻ địch mục tiêu, lấy từ `previewEnemyIntent` (không tính ở client).
+  - Case `intentSealed` (Phong Ấn tước hiệu ứng chiêu): chữ nổi tại anchor kẻ địch. `intentsRevealed` không vẽ gì (kẻ địch không báo chiêu).
+- [ ] **Step 4: Nhãn** — `theme.ts`: nhãn trạng thái `charm: "Mê"`; nhãn `Phong Ấn` trên kẻ địch mang dấu (`sealedBy`). Kẻ địch không hiển thị ý định — không vẽ `plannedIntents`.
 - [ ] **Step 5: Chạy thử trên trình duyệt** — dùng preview (`preview_start` với cấu hình client trong `.claude/launch.json`). Chọn đội F09 + F10 + F06 ở Trận lẻ:
   - Đánh lá triệu hồi → ô Thỏ Ngọc xuất hiện. Kết thúc lượt → Thỏ Ngọc đánh trước lượt kẻ địch.
   - Đánh lá Mê Hoặc → nhãn `Mê` và mũi tên đổi mục tiêu.

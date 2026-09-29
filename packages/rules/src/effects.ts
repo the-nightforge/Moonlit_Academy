@@ -287,16 +287,6 @@ function evalCondition(
   }
 }
 
-/** Phong Ấn on an enemy: cancel its priciest planned intent (ties → earlier), remember it for next round's plan. */
-function sealPriciest(enemy: EnemyState, events: CombatEvent[]): boolean {
-  if (enemy.plannedIntents.length === 0) return false;
-  const index = enemy.plannedIntents.reduce((best, p, i, all) => (p.cost > all[best]!.cost ? i : best), 0);
-  const [removed] = enemy.plannedIntents.splice(index, 1);
-  enemy.sealedIntentIds = [...(enemy.sealedIntentIds ?? []), removed!.intent.id];
-  events.push({ type: "intentsCancelled", enemyId: enemy.id, intentIds: [removed!.intent.id] });
-  return true;
-}
-
 export function resolveEffect(
   data: GameData,
   state: CombatState,
@@ -622,11 +612,16 @@ export function resolveEffect(
           continue;
         }
         if (target.side !== "enemy") continue;
-        if (!sealPriciest(target as EnemyState, events)) continue;
-        if (hero) bumpCounter(data, hero, "intentsSealed", 1);
+        // Phong Ấn (`01` §5.6): mark the unit — during its next turn each intent
+        // keeps damage but loses every other effect. The counter credits the
+        // sealer when an intent is actually stripped (`enemy-turn.ts`).
+        (target as EnemyState).sealedBy = ctx.source.id;
         if (passive?.type === "sealExtraFirstPerTurn" && hero && !hero.firstSealUsedThisTurn) {
           hero.firstSealUsedThisTurn = true;
-          if (sealPriciest(target as EnemyState, events) && hero) bumpCounter(data, hero, "intentsSealed", 1);
+          const extra = state.enemies
+            .filter((unit) => unit.alive && unit.id !== target.id)
+            .sort((a, b) => a.position - b.position)[0];
+          if (extra) extra.sealedBy = ctx.source.id;
         }
         if (passive?.type === "sealWeakens") applyStatus(target, "weak", passive.amount, ctx.source.id, events);
       }

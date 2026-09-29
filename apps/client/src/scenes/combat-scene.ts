@@ -8,7 +8,6 @@ import {
   getPlayCardError,
   getValidTargets,
   isCardPlayable,
-  previewEnemyIntent,
 } from "rules";
 import type {
   Action,
@@ -41,7 +40,6 @@ import {
   BLOOD_MOON_TEXT,
   COLORS,
   TEXT_BASE,
-  INTENT_ICONS,
   OWNER_COLORS,
   PHASE_BG,
   STATUS_LABELS,
@@ -612,39 +610,6 @@ export class CombatScene extends Phaser.Scene {
     }
   }
 
-  private renderIntent(enemy: EnemyState, x: number, y: number) {
-    if (!enemy.alive) return;
-    const preview = previewEnemyIntent(this.gameData, this.state, enemy);
-    if (!preview) return;
-    const lines = enemy.plannedIntents.map((planned, index) => {
-      const intentPreview = preview.intents[index]!;
-      let label = `${INTENT_ICONS[planned.intent.kind]} ${planned.intent.name} (${planned.cost})`;
-      const damage = intentPreview.damages[0];
-      if (damage) label += ` ${damage.amount}${damage.hits > 1 ? `×${damage.hits}` : ""}`;
-      if (intentPreview.fizzles) {
-        label += " → (hụt)";
-      } else if (intentPreview.targetId) {
-        const target = this.state.heroes.find((hero) => hero.id === intentPreview.targetId);
-        label += ` → ${target ? this.gameData.heroes[target.defId]!.name : "—"}`;
-      } else if (intentPreview.damages.length > 0) {
-        label += " → tất cả";
-      }
-      return label;
-    });
-    let text = lines.join("\n");
-    if (lines.length === 0) {
-      // Tụ Lực warning: how much moon power the enemy brings next round,
-      // flagged when it covers its most expensive intent.
-      const topCost = Math.max(...this.gameData.enemies[enemy.defId]!.intents.map((intent) => intent.cost));
-      const next = preview.nextRoundMoonPower;
-      text = `${next >= topCost ? "⚠ " : "⋯ "}Tụ Lực · vòng sau NL ${next}`;
-    }
-    this.text(x, y, preview.skipped ? `❄ ${text}` : text, 12)
-      .setOrigin(0.5, 1)
-      .setAlign("center")
-      .setAlpha(preview.skipped ? 0.55 : 1);
-  }
-
   // Draws a texture cover-fitted into a w×h box centered at (x, y).
   // Returns null when the texture is missing so callers can fall back.
   private coverImage(
@@ -696,7 +661,10 @@ export class CombatScene extends Phaser.Scene {
     const panelH = 140;
     enemies.forEach((enemy, index) => {
       const cx = (WIDTH / (enemies.length + 1)) * (index + 1);
-      this.renderIntent(enemy, cx, 132);
+      // Phong Ấn: the unit is sealed — its next-turn intents lose every non-damage effect.
+      if (enemy.sealedBy !== undefined) {
+        this.text(cx, 132, "⛨ Phong Ấn", 12, "#b9a8ff").setOrigin(0.5, 1);
+      }
       const cy = 205;
       const c = this.add.container(cx, cy);
       this.root.add(c);
