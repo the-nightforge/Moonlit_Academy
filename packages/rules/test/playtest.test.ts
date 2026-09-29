@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { loadGameData } from "data";
-import { p0 } from "./helpers";
+import { pendingCardOptions, p0 } from "./helpers";
 
 declare const console: {
   log(...args: unknown[]): void;
@@ -62,11 +62,12 @@ function combatAction(gameData: GameData, state: CombatState): Action {
     };
   }
   if (state.status === "choosing") {
+    if (p0(state).pendingChoice?.kind === "chooseMoon") return { type: "chooseMoon", offset: 0 };
     const curve = gameData.combatConfig.moonPower;
     const nextFund =
       Math.min(curve.cap, curve.start + state.round * curve.perRound) +
       gameData.combatConfig.moonReserveMax;
-    const options = [...p0(state).pendingChoice!.options].sort(
+    const options = [...pendingCardOptions(state)].sort(
       (a, b) =>
         gameData.cards[state.cards[b]!.cardId]!.cost -
         gameData.cards[state.cards[a]!.cardId]!.cost,

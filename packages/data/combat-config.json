@@ -3,7 +3,14 @@
   "moonReserveMax": 3,
   "chooseCardDiscount": 1,
   "handSize": 6,
+  "handLimit": 8,
   "maxMulligan": 2,
   "maxIntentsPerRound": 3,
-  "bloodMoonHpLoss": 2
+  "bloodMoonHpLoss": 2,
+  "levelUpRandomBuffs": [
+    { "status": "strength", "amount": 1 },
+    { "status": "empower", "amount": 3 },
+    { "status": "regen", "amount": 3 },
+    { "status": "reflect", "amount": 2 }
+  ]
 }

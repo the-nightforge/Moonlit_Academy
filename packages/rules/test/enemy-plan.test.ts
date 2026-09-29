@@ -3,7 +3,7 @@ import type { CombatState, EnemyIntentDef, GameData } from "../src/index";
 import { applyAction } from "../src/index";
 import { planEnemyIntents } from "../src/intent";
 import { idleIntent, strike9Intent } from "./fixtures";
-import { instanceIdOf, makeTestCombat, setIntent, setPlan, p0 } from "./helpers";
+import { instanceIdOf, makeTestCombat, pendingCardOptions, setIntent, setPlan, p0 } from "./helpers";
 
 function end(data: GameData, state: CombatState) {
   const result = applyAction(data, state, { type: "endTurn" });
@@ -147,7 +147,7 @@ describe("enemy moon power plans", () => {
       p0(current).moonPower = 11;
       current = step(current, { type: "playCard", instanceId: guide });
       expect(current.status).toBe("choosing");
-      current = step(current, { type: "chooseCard", instanceId: p0(current).pendingChoice!.options[0]! });
+      current = step(current, { type: "chooseCard", instanceId: pendingCardOptions(current)[0]! });
       for (let turn = 0; turn < 4 && current.status === "playerTurn"; turn++) {
         current = step(current, { type: "endTurn" });
       }

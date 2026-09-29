@@ -34,7 +34,7 @@ describe("decks", () => {
     expect(validateDeck(data, profile, { heroIds: TEAM, cardIds: fewM06 })).toContainEqual({ code: "tooFewForHero", heroId: "m06", count: 3 });
   });
 
-  it("T165: the starter deck is valid for all ten teams when every hero is owned", () => {
+  it("T165: the starter deck is valid for every team when every hero is owned", () => {
     const data = testData();
     const profile = ownAllHeroes(data, createProfile(data));
     const ids = Object.keys(data.heroes);
@@ -44,7 +44,7 @@ describe("decks", () => {
       expect(validateDeck(data, profile, { heroIds: team, cardIds: starterDeck(data, team) })).toEqual([]);
       teams += 1;
     }
-    expect(teams).toBe(10);
+    expect(teams).toBe(1140); // C(20,3) with the wave-2 heroes added
   });
 
   it("T166: saveDeck assigns ids, checks names and the deck limit, keeps drafts; deleteDeck removes", () => {

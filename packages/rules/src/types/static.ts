@@ -11,7 +11,7 @@ export type MoonPhaseId =
 export type StatusId =
   | "stealth" | "taunt" | "weak" | "vulnerable" | "mark"
   | "burn" | "regen" | "strength" | "empower" | "freeze"
-  | "reflect";
+  | "reflect" | "guard" | "charm";
 
 export type CardTag =
   | "attack" | "assassin" | "control" | "moon" | "heal" | "forbidden"
@@ -19,7 +19,12 @@ export type CardTag =
 
 export type LevelUpCounter =
   | "damageTaken" | "turnsWithAllyRegen" | "enemiesKilled"
-  | "freezesApplied" | "buffsStolen";
+  | "freezesApplied" | "buffsStolen"
+  | "hitsIntercepted" | "schemeCardsPlayed" | "cardsChosen"
+  | "hpHealed" | "turnsSurvived" | "moonShifts"
+  | "studyPoints" | "fullMoonsSeen" | "forbiddenHpLost"
+  | "summonsMade" | "charmsApplied" | "debuffsApplied" | "intentsSealed"
+  | "alliesFallen" | "backRowHits";
 
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
@@ -32,7 +37,37 @@ export type LevelUpPassive =
   | { type: "healCleanses" }
   | { type: "firstComboCountsExtra"; amount: number }
   | { type: "firstHitVulnerable"; rounds: number }
-  | { type: "bloodMoonOwnCardDiscount"; amount: number };
+  | { type: "bloodMoonOwnCardDiscount"; amount: number }
+  // Phase 7a (`18` §2.1).
+  | { type: "armorPerTurn"; amount: number }
+  | { type: "interceptArmor"; amount: number }
+  | { type: "chooseMoon" }
+  | { type: "freeChooseCardPerTurn"; look: number }
+  | { type: "none" }
+  // Phase 7a (`18` §2.2).
+  | { type: "cheapestCardDiscount"; amount: number }        // M01 Thiên Cơ
+  | { type: "chooseCardExtraLook"; amount: number }         // M01 Định Cục
+  | { type: "healBonusOwnCards"; amount: number }           // M04 Tâm Nhãn
+  | { type: "randomBuffPerTurn" }                           // M07 Huyết Mạch
+  | { type: "bloodMoonImmune" }                             // M07 Huyết Nguyệt Chi Tử
+  | { type: "moonShiftWeakensEnemies"; amount: number }     // M08 Tinh Mệnh
+  | { type: "firstSchemeRepeats" }                          // M10 Bác Học
+  | { type: "comboAttackBonus"; amount: number }            // M10 Trạng Nguyên
+  | { type: "tagDiscountOwnCards"; tag: CardTag; amount: number } // F01 Tự Do
+  | { type: "forbiddenNoSelfHpLoss" }                       // F08 Huyết Phượng
+  | { type: "bloodMoonAttackBonus"; amount: number }        // F08 Phản Sư
+  // Phase 7b (`18` §3.3).
+  | { type: "awakenSummons" }                                // F09 Thỏ Ngọc Thức Tỉnh
+  | { type: "summonTaunts"; rounds: number }                 // F09 Nguyệt Cung
+  | { type: "charmMastery"; extraCharges: number; damageMultiplier: number } // F06 Kinh Hồng Vũ
+  | { type: "stealthOnCharm"; rounds: number }               // F06 Vũ Y
+  | { type: "debuffDurationBonus"; amount: number }          // M09 Vong Quốc Khúc
+  | { type: "bonusVsDebuffed"; minDebuffs: number; amount: number } // M09 Nam Chiếu Hồn
+  | { type: "sealExtraFirstPerTurn" }                        // F07 Sử Bút
+  | { type: "sealWeakens"; amount: number }                  // F07 Chép Sử
+  | { type: "armorOnAllyFall"; amount: number }              // F10 Vong Xuyên
+  | { type: "pierceOwnAttacks" }                             // F05 Xuyên Vân Tiễn
+  | { type: "firstHitMarks"; rounds: number };               // F05 Biên Tái
 
 export interface LevelUpDef {
   name: string;
@@ -42,6 +77,8 @@ export interface LevelUpDef {
   /** Threshold at constellation 2 or more (`01` §8). */
   constellationThreshold: number;
   passive: LevelUpPassive;
+  /** Runs once right after the hero levels up in its base form, the hero acting. */
+  onLevelUp?: Effect[];
 }
 
 /** Second level-up form (Tinh Hồn 5): same counter and threshold, new passive (`01` §8). */
@@ -78,7 +115,7 @@ export interface HeroDef {
 }
 
 export type CardType = "attack" | "skill";
-export type CardTarget = "none" | "enemy" | "ally";
+export type CardTarget = "none" | "enemy" | "ally" | "fallenAlly";
 
 export interface CardDef {
   id: string;
@@ -101,6 +138,8 @@ export interface CardDef {
   keywords?: string[];
   /** Constellation 4 version of this card id; never placed in a deck directly. */
   plusOf?: string;
+  /** Created during combat only (`createCard`): never in a pool, deck or reward (`01` §4). */
+  token?: true;
 }
 
 export interface KeywordDef {
@@ -109,7 +148,19 @@ export interface KeywordDef {
   text: string;
 }
 
-export type TargetRef = "self" | "chosen" | "allEnemies" | "allAllies";
+export type TargetRef = "self" | "chosen" | "allEnemies" | "allAllies" | "owner" | "summon";
+
+/** Linh Thú (`01` §17): a summoned ally unit that acts at the end of its player's turn. */
+export interface SummonDef {
+  id: string;
+  name: string;
+  maxHp: number;
+  /** Picks the enemy for `to: "chosen"` effects in `action`. */
+  targeting: "lowestHp" | "front" | "random";
+  action: Effect[];
+  /** Used instead while the owner's passive is `awakenSummons`. */
+  awakenedId?: string;
+}
 
 /** `actor` indexes `bond.owners` (bond cards only); nested effects inherit it. */
 export type Effect = (
@@ -133,6 +184,22 @@ export type Effect = (
   /** Co-op Hợp Kích only (`02` §6): kills targets at or under `threshold` of maxHp,
    *  else runs `elseEffects` once. */
   | { type: "execute"; threshold: number; to: TargetRef; elseEffects?: Effect[] }
+  /** Lá tạo ra (`01` §4.6): puts a `token` card owned by the acting hero into its
+   *  seat's hand; only on hero cards and `levelUp`/`altLevelUp` `onLevelUp`. */
+  | { type: "createCard"; cardId: string }
+  /** Blind draw (`01` §4.2): takes `amount` cards off the draw pile into the
+   *  acting seat's hand; cards past `handLimit` land in the discard pile. */
+  | { type: "drawCards"; amount: number }
+  /** Linh Thú (`01` §17): creates one, or heals it to full and adds Sức Mạnh 1. */
+  | { type: "summon"; summonId: string }
+  /** Phong Ấn (`01` §5.6): hero cards only — cancels the priciest planned intent
+   *  (PvE/co-op), or surcharges the opponent's priciest hand card (PvP). */
+  | { type: "sealIntent"; to: TargetRef }
+  /** Khúc Vũ Tri Âm (`18` §3.4): lengthens each duration debuff on the targets. */
+  | { type: "extendDebuffs"; amount: number; to: TargetRef }
+  /** Hồi Hồn (`18` §3.5): raises a fallen, unrevived ally at `ratio` × maxHp —
+   *  `to: "chosen"` on `target: "fallenAlly"` cards, `to: "lastFallen"` on `onLevelUp`. */
+  | { type: "revive"; ratio: number; to: "chosen" | "lastFallen" }
 ) & { actor?: 0 | 1 };
 
 export type Condition =
@@ -271,7 +338,7 @@ export interface WeaponHook extends Omit<RunRelicHook, "actor"> {
 }
 
 /** The weapon card; id and owner come from the weapon and its wearer. */
-export type WeaponCardDef = Omit<CardDef, "id" | "ownerId" | "bond" | "copies" | "plusOf"> & { copies: 1 | 2 };
+export type WeaponCardDef = Omit<CardDef, "id" | "ownerId" | "bond" | "copies" | "plusOf" | "token"> & { copies: 1 | 2 };
 
 /** What changes at one refinement level (R2..R5); fields left out stay as before. */
 export interface WeaponRefinement {
@@ -321,9 +388,14 @@ export interface CombatConfig {
   /** Chiêm Bài: the card taken this way costs this much less until end of turn. */
   chooseCardDiscount: number;
   handSize: number;
+  /** Hard hand cap (`01` §4.6): `handSize` only limits the turn-start refill;
+   *  effects may push the hand up to `handLimit`, overflow is discarded. */
+  handLimit: number;
   maxMulligan: number;
   maxIntentsPerRound: number;
   bloodMoonHpLoss: number;
+  /** Huyết Mạch (M07) buff table, rolled with the combat RNG. */
+  levelUpRandomBuffs: { status: StatusId; amount: number }[];
 }
 
 /** Account economy (`14` §1). Phase 4c: starter heroes only. */

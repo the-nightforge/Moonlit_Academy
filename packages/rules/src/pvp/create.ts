@@ -148,6 +148,6 @@ export function createPvpCombat(
     cards,
     rngState,
   };
-  for (const seat of players) drawCards(state, seat, data.combatConfig.handSize, events);
+  for (const seat of players) drawCards(data, state, seat, data.combatConfig.handSize, events);
   return { state, events };
 }

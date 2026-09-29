@@ -4,6 +4,7 @@ import {
   applyAction,
   applyCoopResult,
   applyPvpResult,
+  autoChoiceAction,
   coopRedactEvents,
   coopViewFor,
   createCoopCombat,
@@ -279,9 +280,11 @@ export class MatchRoom {
         if (this.state.status !== "playerTurn" || this.state.players[seat.seat]!.done) continue;
         this.timedOut(seat);
         if (this.ended) return;
-        const pending = this.state.players[seat.seat]!.pendingChoice;
-        if (pending && pending.options[0] !== undefined) {
-          if (!this.applyLogged(seat, { type: "chooseCard", instanceId: pending.options[0], player: seat.seat })) return;
+        // Answer pending choices — a Chiêm Bài answer can owe Chọn Pha next (at most two).
+        for (let i = 0; i < 2; i++) {
+          const answer = autoChoiceAction(this.state, seat.seat);
+          if (answer === null) break;
+          if (!this.applyLogged(seat, answer)) return;
         }
         if (this.state.status !== "playerTurn" || this.state.players[seat.seat]!.done) continue;
         if (!this.applyLogged(seat, { type: "endTurn", player: seat.seat, system: true })) return;
@@ -292,9 +295,11 @@ export class MatchRoom {
     if (!seat) return;
     this.timedOut(seat);
     if (this.ended) return;
-    const pending = this.state.players[seat.seat]!.pendingChoice;
-    if (this.state.status === "choosing" && pending && pending.options[0] !== undefined) {
-      if (!this.applyLogged(seat, { type: "chooseCard", instanceId: pending.options[0], player: seat.seat })) return;
+    // Answer pending choices — a Chiêm Bài answer can owe Chọn Pha next (at most two).
+    for (let i = 0; i < 2 && this.state.status === "choosing"; i++) {
+      const answer = autoChoiceAction(this.state, seat.seat);
+      if (answer === null) break;
+      if (!this.applyLogged(seat, answer)) return;
     }
     if (this.state.status === "playerTurn" && this.state.activePlayer === seat.seat) {
       this.applyLogged(seat, { type: "endTurn", player: seat.seat });

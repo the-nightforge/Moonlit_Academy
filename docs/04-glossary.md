@@ -29,6 +29,17 @@
 | Xáo bài | `shuffle` | |
 | Đổi Bài | `mulligan` | Đổi tối đa 2 lá ở tay đầu trận |
 | Chiêm Bài | `chooseCard` | Xem N lá trên cùng chồng bài, lấy 1, các lá còn lại xuống đáy |
+| Chọn Pha | `chooseMoon` | GĐ7: lựa chọn đầu lượt giữ / +1 / +2 pha trăng (nội tại M08, `01` §5.5) |
+| Lá Tạo Ra | `token`, `createCard` | GĐ7: lá sinh trong trận (`CardDef.token`), không nằm trong pool/deck/thưởng |
+| Người hộ vệ | `guardian`, `guardianOf` | GĐ7: Hero chịu đòn thay đồng đội có `guard` |
+| Linh Thú | `summon`, `SummonState`, `SummonDef` | GĐ7b: đơn vị thật do Hero triệu hồi, tự hành động cuối lượt người chơi (`01` §17) |
+| Triệu hồi | `summon`, `summoned` | GĐ7b: effect tạo Linh Thú hoặc hồi đầy + Sức Mạnh nếu đã có |
+| Thức tỉnh | `awakenSummons`, `awakenedId` | GĐ7b: Linh Thú đổi sang bản mạnh hơn khi Hero chủ thăng cấp |
+| Mê Hoặc | `charm` | GĐ7b: trạng thái khiến kẻ địch đánh kẻ địch khác, hoặc Hero đánh đồng đội (PvP) (`01` §9.3.1, §15.5) |
+| Phong Ấn | `sealIntent` | GĐ7b: đặt dấu lên đơn vị địch một lượt — chiêu/lá/hành động nó đánh ra trong lượt sau chỉ còn damage, mất hiệu ứng khác; cùng cơ chế ở PvE và PvP (`01` §5.6) |
+| Hồi Hồn | `revive` | GĐ7b: dựng Hero đã ngã sống lại với tỉ lệ HP (`01` §5.6) |
+| Xuyên (mục tiêu) | `pierceOwnAttacks` | GĐ7b: đòn đơn mục tiêu đánh thêm kẻ địch đứng ngay sau mục tiêu (`01` §5.6) |
+| Hàng sau | `isBackRow` | GĐ7b: kẻ địch còn sống không ở vị trí nhỏ nhất trong các kẻ địch còn sống (`01` §5.6) |
 | Cạn Bài | `deckedOut` | Chồng bài và tay đều rỗng đầu lượt → thua |
 | Hiệu ứng | `effect` | |
 | Điều kiện | `condition` | |
@@ -81,6 +92,7 @@
 | Tích Lực | `empower` |
 | Đóng Băng | `freeze` |
 | Phản Đòn | `reflect` |
+| Hộ Vệ | `guard` |
 | Giải Trừ | `cleanse` |
 | Cướp buff | `stealBuff` |
 | Buff / Debuff | `buff` / `debuff` |
@@ -214,6 +226,31 @@
 | Boss Nguyệt Thực | `eclipse_lord` | Boss co-op *Nguyệt Thực Ma Quân*, 4 giai đoạn (`01` §16.5) |
 | Giai đoạn boss | `boss.phase` | 1 Trăng Khuyết · 2 Huyết Nguyệt · 3 Nguyệt Ấn · 4 Nguyệt Thực |
 | Đếm ngược hồi sinh | `reviveCountdown` | Giai đoạn 4: về 0 khi boss còn sống → hồi 50% HP một lần |
+
+## Hero GĐ7a
+
+| ID | Tên | Nội tại thăng cấp | Dạng thứ hai |
+|---|---|---|---|
+| `m01` | Tạ Vân Chiêu | Thiên Cơ — `cheapestCardDiscount` | Định Cục — `chooseCardExtraLook` |
+| `m02` | Lục Hàn Phong | Thiết Bích — `armorPerTurn` | Trung Can — `interceptArmor` |
+| `m03` | Mặc Tử Du | Vạn Kim — `freeChooseCardPerTurn` | Phú Giáp — `onLevelUp` (Dưỡng Nguyệt 1), nội tại `none` |
+| `m04` | Bùi Thanh Minh | Thần Y — `healCleanses` (dùng lại GĐ4e) | Tâm Nhãn — `healBonusOwnCards` |
+| `m07` | Ninh An | Huyết Mạch — `randomBuffPerTurn` | Huyết Nguyệt Chi Tử — `bloodMoonImmune` |
+| `m08` | Khương Tịch | Quan Tinh — `chooseMoon` (Chọn Pha) | Tinh Mệnh — `moonShiftWeakensEnemies` |
+| `m10` | Chu Quyết | Bác Học — `firstSchemeRepeats` | Trạng Nguyên — `comboAttackBonus` |
+| `f01` | Thẩm Nguyệt Hoa | Nguyệt Chủ — nội tại `none`, `onLevelUp` (`createCard` Nguyệt Hoa Chiếu Thế) | Tự Do — `tagDiscountOwnCards` |
+| `f08` | Phượng Chiêu Dung | Huyết Phượng — `forbiddenNoSelfHpLoss` | Phản Sư — `bloodMoonAttackBonus` |
+
+## Hero GĐ7b
+
+| ID | Tên | Nội tại thăng cấp | Dạng thứ hai |
+|---|---|---|---|
+| `f05` | Hạ Chi | Xuyên Vân Tiễn — `pierceOwnAttacks` | Biên Tái — `firstHitMarks` |
+| `f06` | Lam Khê | Kinh Hồng Vũ — `charmMastery` | Vũ Y — `stealthOnCharm` |
+| `f07` | Cố Uyển | Sử Bút — `sealExtraFirstPerTurn` | Chép Sử — `sealWeakens` |
+| `f09` | Tiểu Mãn | Thỏ Ngọc Thức Tỉnh — `awakenSummons` | Nguyệt Cung — `summonTaunts` |
+| `f10` | Liễu Tịnh Nhan | Nguyệt Hồn — `onLevelUp` (`revive` tới `lastFallen`), nội tại `none` | Vong Xuyên — `armorOnAllyFall` |
+| `m09` | Đoàn Lạc | Vong Quốc Khúc — `debuffDurationBonus` | Nam Chiếu Hồn — `bonusVsDebuffed` |
 
 ## Hệ thống sau này (chưa code)
 

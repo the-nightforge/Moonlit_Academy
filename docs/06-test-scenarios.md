@@ -396,3 +396,57 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T260 | **[GĐ6]** Phòng co-op qua `injectWS`: 2 kết nối, đánh hết trận bằng bot, thưởng mỗi người, trần 3 trận / ngày |
 | T261 | **[GĐ6]** Co-op: một người bỏ cuộc → Hero người đó ngã, người còn lại thắng một mình được thưởng; người bỏ cuộc không thưởng |
 | T262 | **[GĐ6]** Góc nhìn co-op thấy tay đồng đội, không thấy chồng rút / `rngState` |
+
+---
+
+## Giai đoạn 7a
+
+Bối cảnh: `18-phase7-spec.md` §2; luật `01` §3.1, §4.6, §5.5, §9.3.1, §15.4. Trước khi Hero 7a có dữ liệu, test đặt nội tại / bộ đếm mới lên Hero có sẵn qua `withLevelUp` (`packages/rules/test/helpers.ts`).
+
+| Mã | Kịch bản |
+|---|---|
+| T263 | **[GĐ7]** Chiêu địch đơn mục tiêu nhắm Hero có `guard` còn người hộ vệ sống → đánh trúng người hộ vệ (`intentExecuted.targetId` = người hộ vệ) |
+| T264 | **[GĐ7]** Khiêu Khích chọn trước Hộ Vệ; người hộ vệ đã ngã không chuyển mục tiêu; `previewEnemyIntent` hiện người hộ vệ |
+| T265 | **[GĐ7]** `hitsIntercepted` +1 mỗi chiêu bị chuyển và thăng cấp người hộ vệ; PvP: lá đơn mục tiêu nhắm Hero đối thủ có `guard` đánh trúng người hộ vệ |
+| T266 | **[GĐ7]** `armorPerTurn` nhận giáp đầu lượt; `interceptArmor` nhận giáp trước khi chiêu bị chuyển giải quyết |
+| T267 | **[GĐ7]** Hero đã thăng cấp có nội tại `chooseMoon` mở Chọn Pha đầu lượt (`moonChoiceOpened`); `chooseMoon` đổi pha trăng đúng offset |
+| T268 | **[GĐ7]** Chiêm Bài của Vạn Kim mở trước, Chọn Pha sau khi đã trả lời; thăng cấp giữa lượt chờ tới lượt sau; co-op hai người cùng nợ Chọn Pha thì chỉ người có lượt đầu chọn |
+| T269 | **[GĐ7]** `autoChoiceAction` và bot trả lời được cả `chooseCard` lẫn `chooseMoon` |
+| T270 | **[GĐ7]** `onLevelUp` `createCard` đưa lá token vào tay với `instanceId` ổn định (`t1`, `t2`…); tay đầy thì không vào (`cardCreated` `instanceId` null) |
+| T271 | **[GĐ7]** Lá token không xếp deck / không vào pool / không là lá "+" hay Song Hành; `createCard` phải trỏ lá `token` của đúng Hero tạo |
+| T272 | **[GĐ7]** Mỗi bộ đếm mới tăng đúng kích hoạt: `schemeCardsPlayed`, `cardsChosen` (cả người chơi), `hpHealed`, `turnsSurvived` (từ vòng 2), `moonShifts`, `studyPoints`, `fullMoonsSeen`, `forbiddenHpLost` |
+| T273 | **[GĐ7]** Nội tại giá: giảm giá lá rẻ nhất (`cheapestCardDiscount`), giảm theo tag của Hero (`tagDiscountOwnCards`), Chiêm Bài xem thêm lá (`chooseCardExtraLook`) |
+| T274 | **[GĐ7]** Nội tại damage/hồi: cộng theo lá đã đánh trong lượt, cộng khi Huyết Nguyệt, cộng hồi, không tự mất HP của lá `forbidden`, đổi pha làm đòn yếu đi |
+| T275 | **[GĐ7]** Nội tại đầu lượt: buff ngẫu nhiên từ `levelUpRandomBuffs` (tất định theo seed), miễn mất máu Huyết Nguyệt, lá `scheme` đầu tiên trong lượt giải quyết hai lần (lần một bỏ `chooseCard`) |
+| T276 | **[GĐ7]** 9 Hero đợt 1 nạp được với pool đầy đủ, chỉ số PvP, slot banner; mỗi Hero chơi được trận khởi đầu và deck khởi đầu hợp lệ; F01 thăng cấp ở Trăng Tròn nhận lá token; đủ 14 Hero thì mỗi cặp Song Hành thêm lá vào deck |
+| T277 | **[GĐ7]** `drawCards` rút mù; lá thừa `handLimit` vào chồng bỏ (`cardDiscarded`), không quay lại chồng rút |
+| T279 | **[GĐ7]** Chiêm Bài chọn khi tay đã `handLimit` → lá được chọn vào chồng bỏ, các lá còn lại vẫn về đáy chồng |
+
+---
+
+## Giai đoạn 7b
+
+Bối cảnh: `18-phase7-spec.md` §3; luật `01` §5.6, §9.3.1, §17, §15.4, §15.5. Trước khi Hero
+7b có dữ liệu, test đặt nội tại / bộ đếm mới lên Hero có sẵn qua `withLevelUp`, và Linh
+Thú test qua dữ liệu tiêm vào (`packages/rules/test/helpers.ts`).
+
+| Mã | Kịch bản |
+|---|---|
+| T280 | **[GĐ7]** Triệu hồi tạo một Linh Thú cho mỗi Hero; triệu hồi lại khi đã có hồi đầy HP và cộng Sức Mạnh 1; `summonsMade` đếm cả hai lần |
+| T281 | **[GĐ7]** Cuối lượt người chơi, từng Linh Thú còn sống hành động theo `targeting` ngay trước khi sang lượt kẻ địch; Sức Mạnh và Suy Yếu của Linh Thú áp dụng như đòn thường |
+| T282 | **[GĐ7]** Chiêu đơn mục tiêu của kẻ địch bỏ qua Linh Thú trừ khi nó Khiêu Khích (xét Hero trước); chiêu `allEnemies` vẫn trúng Linh Thú; lên chuỗi ý định không bao giờ chọn Linh Thú làm mục tiêu |
+| T283 | **[GĐ7]** Linh Thú ngã hết HP thì rời bàn; Hero chủ ngã làm Linh Thú của Hero đó biến mất ngay; Linh Thú không bao giờ tính vào điều kiện thua; lá nhắm đồng minh chọn được Linh Thú |
+| T284 | **[GĐ7]** `awakenSummons` đổi Linh Thú sang `awakenedId`, giữ tỉ lệ HP, khi Hero chủ thăng cấp; `summonTaunts` cho Linh Thú vừa triệu hồi (mới hoặc lại) Khiêu Khích |
+| T285 | **[GĐ7]** PvP: Linh Thú của đối thủ là mục tiêu đơn hợp lệ như một Hero, Khiêu Khích của nó ép chọn; `viewFor` hiện Linh Thú của cả hai bên |
+| T286 | **[GĐ7]** Co-op: Linh Thú của cả hai người hành động sau khi cả hai đã Xong lượt, người 0 trước |
+| T287 | **[GĐ7]** Kẻ địch bị Mê Hoặc thi hành chiêu đơn mục tiêu đánh vào kẻ địch khác còn sống HP cao nhất, trừ 1 lượt kể cả khi thất bại vì không còn ai; xem trước ý định hiện mục tiêu đã đổi |
+| T288 | **[GĐ7]** `charmsApplied` đếm số lần gây Mê Hoặc; `charmMastery` cộng thêm 1 lượt và nhân damage ×1.5; `stealthOnCharm` cho người gây Ẩn Thân; PvP Mê Hoặc khiến Hero đánh đồng đội HP cao nhất của mình |
+| T289 | **[GĐ7]** `sealIntent` đặt dấu lên kẻ địch một lượt địch — mỗi chiêu nó thi hành chỉ còn effect `damage`, mất hiệu ứng khác (`sealStripped`); `sealExtraFirstPerTurn` lan dấu sang kẻ địch khác vị trí nhỏ nhất ở lần Phong Ấn đầu mỗi lượt; `sealWeakens` áp Suy Yếu; `intentsSealed` đếm đúng số chiêu bị tước hiệu ứng; Đóng Băng cũng làm dấu hết |
+| T290 | **[GĐ7]** PvP `sealIntent` đặt dấu lên Hero đối thủ — lá do Hero đó đánh trong lượt kế chỉ còn effect `damage` (`sealStripped`), `intentsSealed` cộng theo lá bị tước; dấu hết cuối lượt đó |
+| T291 | **[GĐ7]** `revive` dựng một đồng đội đã ngã sống lại đúng một lần với HP theo `ratio × maxHp`, xáo lại các lá đã bị Tán Chiêu của Hero đó vào chồng rút; mục tiêu `fallenAlly` chỉ liệt kê Hero đã ngã và chưa được Hồi Hồn |
+| T292 | **[GĐ7]** `alliesFallen` đếm cho cả người chơi mỗi khi có Hero ngã; `onLevelUp` Hồi Hồn Hero ngã gần nhất (`lastFallen`); `armorOnAllyFall` cho các Hero còn sống nhận giáp khi có đồng đội ngã |
+| T293 | **[GĐ7]** `backRowHits` đếm hit từ lá tấn công trúng kẻ địch hàng sau; `pierceOwnAttacks` đánh thêm kẻ địch còn sống đứng ngay sau mục tiêu, cùng damage gốc; `firstHitMarks` áp Đánh Dấu đúng một lần mỗi lượt |
+| T294 | **[GĐ7]** `debuffsApplied` đếm mỗi debuff Hero gây lên đối thủ; `debuffDurationBonus` kéo dài thời hạn debuff Hero áp; `bonusVsDebuffed` cộng damage khi mục tiêu đủ số debuff; `extendDebuffs` kéo dài mọi debuff có thời hạn đang có trên mục tiêu |
+| T295 | **[GĐ7]** Kiểm chéo dữ liệu: `summons.json` (`awakenedId` trỏ Linh Thú có thật, `action` không dùng effect / mục tiêu bị cấm, `summon` trỏ Linh Thú có thật); lá có `target: "fallenAlly"` phải có effect `revive` với `to: "chosen"` và ngược lại |
+| T296 | **[GĐ7]** 6 Hero đợt 2 nạp đủ pool 12 lá, chỉ số PvP, slot banner đúng độ hiếm; mỗi Hero chơi được trận khởi đầu với deck khởi đầu hợp lệ |
+| T297 | **[GĐ7]** Đủ 20 Hero nạp được; mỗi cặp Song Hành đợt 2 (M09+F06, F09+F10) thêm đúng lá vào deck khi đội có đủ cả hai Hero |

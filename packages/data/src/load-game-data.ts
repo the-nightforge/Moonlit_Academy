@@ -21,6 +21,7 @@ import relicsJson from "../relics.json";
 import pvpConfigJson from "../pvp-config.json";
 import coopConfigJson from "../coop-config.json";
 import coopCombosJson from "../coop-combos.json";
+import summonsJson from "../summons.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -41,7 +42,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig, coopConfig, coopCombos } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig, coopConfig, coopCombos, summons } =
     parsed;
   const errors: string[] = [];
 
@@ -56,6 +57,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     ["weapons", weapons],
     ["relics", relics],
     ["coopCombos", coopCombos],
+    ["summons", summons],
   ] as const;
   for (const [label, defs] of groups) {
     const seen = new Set<string>();
@@ -69,6 +71,24 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   const cardById = new Map(cards.map((card) => [card.id, card]));
   const enemyById = new Map(enemies.map((enemy) => [enemy.id, enemy]));
   const keywordIds = new Set(keywords.map((keyword) => keyword.id));
+
+  /** Linh Thú (`01` §17): whether any effect (incl. nested) targets `to`. */
+  const usesTo = (effects: Effect[], to: string) => someEffect(effects, (e) => "to" in e && e.to === to);
+  /** Linh Thú is out of place outside summon actions and hero cards (`02` §6).
+   *  Phong Ấn (`01` §5.6) is a card-only effect, banned wherever `summon` is. */
+  const checkNoSummon = (label: string, effects: Effect[]) => {
+    if (someEffect(effects, (effect) => effect.type === "summon")) {
+      errors.push(`${label}: summon is not allowed`);
+    }
+    if (someEffect(effects, (effect) => effect.type === "sealIntent")) {
+      errors.push(`${label}: sealIntent is not allowed`);
+    }
+    if (someEffect(effects, (effect) => effect.type === "revive")) {
+      errors.push(`${label}: revive is not allowed`);
+    }
+    if (usesTo(effects, "owner")) errors.push(`${label}: to "owner" is only allowed in summon actions`);
+    if (usesTo(effects, "summon")) errors.push(`${label}: to "summon" is only allowed on hero cards`);
+  };
 
   /** Effects and conditions only usable on player cards (`13` §2.3). */
   const cardOnly = (effect: Effect): boolean =>
@@ -101,6 +121,16 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
     if (card.target !== "none" && !usesChosen) {
       errors.push(`${label}: target "${card.target}" requires at least one effect with to "chosen"`);
+    }
+    const revivesChosen = someEffect(card.effects, (e) => e.type === "revive" && e.to === "chosen");
+    if (card.target === "fallenAlly" && !revivesChosen) {
+      errors.push(`${label}: target "fallenAlly" requires a revive effect with to "chosen"`);
+    }
+    if (card.target !== "fallenAlly" && revivesChosen) {
+      errors.push(`${label}: revive to "chosen" needs target "fallenAlly"`);
+    }
+    if (someEffect(card.effects, (e) => e.type === "revive" && e.to === "lastFallen")) {
+      errors.push(`${label}: revive to "lastFallen" is only allowed on onLevelUp`);
     }
     if (someEffect(card.effects, (effect) => effect.type === "execute")) {
       errors.push(`${label}: execute is only allowed in co-op combos`);
@@ -180,6 +210,10 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(intent.effects, (effect) => effect.type === "chooseCard")) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": chooseCard is not allowed`);
       }
+      if (someEffect(intent.effects, (effect) => effect.type === "createCard")) {
+        errors.push(`enemy "${enemy.id}" intent "${intent.id}": createCard is not allowed`);
+      }
+      checkNoSummon(`enemy "${enemy.id}" intent "${intent.id}"`, intent.effects);
       if (someEffect(intent.effects, (effect) => effect.type === "execute")) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": execute is only allowed in co-op combos`);
       }
@@ -209,6 +243,10 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(onEnter, (e) => e.type === "chooseCard" || e.type === "execute" || e.actor !== undefined)) {
         errors.push(`enemy "${enemy.id}" phase ${index + 1}: onEnter must not use chooseCard, execute or actor`);
       }
+      if (someEffect(onEnter, (e) => e.type === "createCard")) {
+        errors.push(`enemy "${enemy.id}" phase ${index + 1}: createCard is not allowed`);
+      }
+      checkNoSummon(`enemy "${enemy.id}" phase ${index + 1}`, onEnter);
     }
   }
 
@@ -331,6 +369,33 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
   }
 
+  // Lá tạo ra (`02` §6): createCard targets a token of the creating hero; tokens stay out of pools.
+  const createdIn = (effects: Effect[]): string[] =>
+    effects.flatMap((effect) =>
+      effect.type === "createCard" ? [effect.cardId]
+        : effect.type === "conditional" ? [...createdIn(effect.then), ...createdIn(effect.else ?? [])]
+        : effect.type === "execute" ? createdIn(effect.elseEffects ?? [])
+        : [],
+    );
+  const checkCreated = (label: string, effects: Effect[], ownerId: string) => {
+    for (const cardId of createdIn(effects)) {
+      const card = cardById.get(cardId);
+      if (!card?.token) errors.push(`${label}: createCard "${cardId}" must be a token card`);
+      else if (card.ownerId !== ownerId) errors.push(`${label}: createCard "${cardId}" must be owned by "${ownerId}"`);
+    }
+  };
+  for (const hero of heroes) {
+    checkCreated(`hero "${hero.id}" levelUp`, hero.levelUp.onLevelUp ?? [], hero.id);
+    checkCreated(`hero "${hero.id}" altLevelUp`, hero.altLevelUp.onLevelUp ?? [], hero.id);
+  }
+  for (const card of cards) {
+    if (card.ownerId !== undefined) checkCreated(`card "${card.id}"`, card.effects, card.ownerId);
+    else if (createdIn(card.effects).length > 0) errors.push(`card "${card.id}": createCard only on hero cards`);
+    if (card.token && (pooled.has(card.id) || card.plusOf !== undefined || card.bond !== undefined)) {
+      errors.push(`cards: token card "${card.id}" must not be in a hero pool, a plus card or a bond card`);
+    }
+  }
+
   const starters = economyConfig.starterHeroIds;
   if (new Set(starters).size !== starters.length) {
     errors.push(`economyConfig: starterHeroIds must be distinct`);
@@ -398,6 +463,10 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(hook.effects, (effect) => effect.type === "chooseCard")) {
         errors.push(`${hookLabel}: effects must not use chooseCard`);
       }
+      if (someEffect(hook.effects, (effect) => effect.type === "createCard")) {
+        errors.push(`${hookLabel}: createCard is not allowed`);
+      }
+      checkNoSummon(hookLabel, hook.effects);
       if (someEffect(hook.effects, (effect) => effect.type === "execute")) {
         errors.push(`${hookLabel}: execute is only allowed in co-op combos`);
       }
@@ -457,6 +526,10 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(card.effects, (effect) => effect.actor !== undefined)) {
         errors.push(`${levelLabel}: actor is only allowed on bond cards`);
       }
+      if (someEffect(card.effects, (effect) => effect.type === "createCard")) {
+        errors.push(`${levelLabel}: createCard is not allowed`);
+      }
+      checkNoSummon(levelLabel, card.effects);
       checkHooks(levelLabel, hooks, true, true);
       checkHooks(`${levelLabel} signature`, signatureHooks ?? [], true, true);
     }
@@ -504,14 +577,19 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   }
 
   for (const hero of heroes) {
-    const effects = hero.altLevelUp.onLevelUp ?? [];
-    const label = `hero "${hero.id}" altLevelUp.onLevelUp`;
-    if (effectsUseChosen(effects)) errors.push(`${label}: effects must not use to "chosen" or stealBuff`);
-    if (someEffect(effects, (effect) => effect.type === "chooseCard" || effect.type === "execute" || effect.actor !== undefined)) {
-      errors.push(`${label}: effects must not use chooseCard, execute or actor`);
-    }
-    if (someEffect(effects, (effect) => effect.type === "conditional" && effect.condition.type.startsWith("target"))) {
-      errors.push(`${label}: conditions must not reference a target`);
+    for (const [form, effects] of [
+      ["levelUp", hero.levelUp.onLevelUp],
+      ["altLevelUp", hero.altLevelUp.onLevelUp],
+    ] as const) {
+      const list = effects ?? [];
+      const label = `hero "${hero.id}" ${form}.onLevelUp`;
+      if (effectsUseChosen(list)) errors.push(`${label}: effects must not use to "chosen" or stealBuff`);
+      if (someEffect(list, (effect) => effect.type === "chooseCard" || effect.type === "execute" || effect.actor !== undefined)) {
+        errors.push(`${label}: effects must not use chooseCard, execute or actor`);
+      }
+      if (someEffect(list, (effect) => effect.type === "conditional" && effect.condition.type.startsWith("target"))) {
+        errors.push(`${label}: conditions must not reference a target`);
+      }
     }
   }
 
@@ -530,6 +608,10 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     if (someEffect(combo.effects, (e) => e.type === "chooseCard" || e.actor !== undefined)) {
       errors.push(`${label}: effects must not use chooseCard or actor`);
     }
+    if (someEffect(combo.effects, (e) => e.type === "createCard")) {
+      errors.push(`${label}: createCard is not allowed`);
+    }
+    checkNoSummon(label, combo.effects);
   }
   if (coopConfig.reconnectSeconds <= coopConfig.turnSeconds) {
     errors.push("coopConfig: reconnectSeconds must exceed turnSeconds");
@@ -539,6 +621,36 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     errors.push(`coopConfig: encounterId references missing encounter "${coopConfig.encounterId}"`);
   } else if (coopEncounter.tier !== "coop") {
     errors.push(`coopConfig: encounter "${coopConfig.encounterId}" is not tier "coop"`);
+  }
+
+  // Linh Thú (`02` §6): awakened ids exist, actions stay summon-scoped, summon ids resolve.
+  const summonById = new Map(summons.map((summon) => [summon.id, summon]));
+  for (const summon of summons) {
+    const label = `summon "${summon.id}"`;
+    if (summon.awakenedId !== undefined && !summonById.has(summon.awakenedId)) {
+      errors.push(`${label}: awakenedId references missing summon "${summon.awakenedId}"`);
+    }
+    if (someEffect(summon.action, (e) => e.type === "summon" || e.type === "chooseCard" || e.type === "createCard") || usesTo(summon.action, "summon")) {
+      errors.push(`${label}: action must not use summon, chooseCard, createCard or to "summon"`);
+    }
+    if (someEffect(summon.action, (e) => e.type === "sealIntent")) {
+      errors.push(`${label}: sealIntent is not allowed`);
+    }
+    if (someEffect(summon.action, (e) => e.type === "revive")) {
+      errors.push(`${label}: revive is not allowed`);
+    }
+  }
+  const checkSummonRefs = (label: string, effects: Effect[]) => {
+    for (const effect of effects) {
+      if (effect.type === "summon" && !summonById.has(effect.summonId)) {
+        errors.push(`${label}: summon references missing summon "${effect.summonId}"`);
+      }
+      if (effect.type === "conditional") checkSummonRefs(label, [...effect.then, ...(effect.else ?? [])]);
+    }
+  };
+  for (const card of cards) {
+    checkSummonRefs(`card "${card.id}"`, card.effects);
+    if (usesTo(card.effects, "owner")) errors.push(`card "${card.id}": to "owner" is only allowed in summon actions`);
   }
 
   return errors;
@@ -553,7 +665,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig, coopConfig, coopCombos } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig, coopConfig, coopCombos, summons } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -576,6 +688,7 @@ export function parseGameData(raw: unknown): GameData {
     pvpConfig,
     coopConfig,
     coopCombos: Object.fromEntries(coopCombos.map((combo) => [combo.id, combo])),
+    summons: Object.fromEntries(summons.map((summon) => [summon.id, summon])),
   };
 }
 
@@ -601,5 +714,6 @@ export function loadGameData(): GameData {
     pvpConfig: pvpConfigJson,
     coopConfig: coopConfigJson,
     coopCombos: coopCombosJson,
+    summons: summonsJson,
   });
 }

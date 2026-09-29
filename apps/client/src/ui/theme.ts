@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import type { CardTag, Faction, IntentKind, MoonModifier, MoonPhaseId, NodeType, Rarity, StatusId } from "rules";
+import type { CardTag, Faction, IntentKind, MoonModifier, MoonPhaseDef, MoonPhaseId, NodeType, Rarity, StatusId } from "rules";
 
 export const FONT = '"Segoe UI", "Noto Sans", Arial, sans-serif';
 
@@ -71,6 +71,8 @@ export const STATUS_LABELS: Record<StatusId, string> = {
   empower: "Cường",
   freeze: "Băng",
   reflect: "Phản",
+  guard: "Hộ",
+  charm: "Mê",
 };
 
 export const FACTION_LABELS: Record<Faction, string> = {
@@ -146,6 +148,11 @@ export function describeModifier(modifier: MoonModifier): string {
     case "armorMultiplier":
       return `giáp ×${modifier.multiplier}`;
   }
+}
+
+/** One line of phase modifiers — shared by the moon wheel and Chọn Pha (`18` §2.2). */
+export function describePhase(phase: MoonPhaseDef): string {
+  return phase.modifiers.map(describeModifier).join(", ") || "—";
 }
 
 /** Vietnamese text for API error codes (`16`). */

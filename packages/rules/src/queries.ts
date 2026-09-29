@@ -1,9 +1,9 @@
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
 import { activeModifiers } from "./moon";
-import { alliesOf, opponentsOf } from "./players";
+import { alliesOf, heroesOf, opponentsOf, summonsOf } from "./players";
 import { hasStatus } from "./statuses";
-import type { CardInstance, CombatState, GameData, HeroState } from "./types/index";
+import type { CardInstance, CardTag, CombatState, GameData, HeroState } from "./types/index";
 
 /** Heroes owning a card instance: one, or two for a bond card — looked up in the card's seat. */
 export function cardOwners(state: CombatState, instance: CardInstance): (HeroState | undefined)[] {
@@ -42,6 +42,15 @@ function bloodMoonDiscount(data: GameData, state: CombatState, instance: CardIns
   return passive?.type === "bloodMoonOwnCardDiscount" ? passive.amount : 0;
 }
 
+/** Tự Do: the owner's cards with `tag` cost less (`01` §8). */
+function ownTagDiscount(data: GameData, state: CombatState, instance: CardInstance, tags: readonly CardTag[]): number {
+  if (instance.ownerIds.length !== 1) return 0;
+  const [owner] = cardOwners(state, instance);
+  if (!owner?.leveledUp) return 0;
+  const passive = levelUpPassive(data, owner);
+  return passive?.type === "tagDiscountOwnCards" && tags.includes(passive.tag) ? passive.amount : 0;
+}
+
 export function getEffectiveCost(
   data: GameData,
   state: CombatState,
@@ -61,7 +70,7 @@ export function getEffectiveCost(
     }
   }
   const chosen = instance!.chosenThisTurn ? data.combatConfig.chooseCardDiscount : 0;
-  const passives = firstCardDiscount(data, state, instanceId) + bloodMoonDiscount(data, state, instance!);
+  const passives = firstCardDiscount(data, state, instanceId) + bloodMoonDiscount(data, state, instance!) + ownTagDiscount(data, state, instance!, card.tags) + (instance!.turnDiscount ?? 0);
   return Math.max(0, Math.max(0, floor, cost) - passives - chosen);
 }
 
@@ -88,9 +97,18 @@ export function getValidTargets(data: GameData, state: CombatState, instanceId: 
       return targets.map((unit) => unit.id);
     }
     case "ally": {
-      // Co-op: a targeted heal/buff may pick any of the six heroes (`01` §16.3).
-      const allies = state.mode === "coop" ? state.heroes : alliesOf(state, source);
+      // Co-op: a targeted heal/buff may pick any of the six heroes plus both
+      // seats' Linh Thú (`01` §16.3, §17.3).
+      const allies = state.mode === "coop" ? [...state.heroes, ...summonsOf(state)] : alliesOf(state, source);
       return allies.filter((unit) => unit.alive).map((unit) => unit.id);
+    }
+    case "fallenAlly": {
+      // Hồi Hồn (`18` §3.5): only fallen allies that have not been revived yet —
+      // and the owner must still stand (the card-owner rule).
+      if (!source.alive) return [];
+      return heroesOf(state, instance.player)
+        .filter((hero) => !hero.alive && !hero.revived)
+        .map((hero) => hero.id);
     }
   }
 }

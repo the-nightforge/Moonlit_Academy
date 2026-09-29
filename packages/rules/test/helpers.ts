@@ -1,5 +1,5 @@
 import { loadGameData } from "data";
-import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, Loadout, PlayerState, Profile } from "../src/index";
+import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, LevelUpCounter, LevelUpPassive, Loadout, PlayerState, Profile } from "../src/index";
 import { applyAction, createCombat } from "../src/index";
 import { idleIntent } from "./fixtures";
 
@@ -10,6 +10,13 @@ export function testData(): GameData {
 /** Seat 0 — every PvE combat's only player (`17` §2.1). */
 export function p0(state: CombatState): PlayerState {
   return state.players[0]!;
+}
+
+/** The pending Chiêm Bài options of `seat` (throws unless the choice is a chooseCard). */
+export function pendingCardOptions(state: CombatState, seat = 0): string[] {
+  const pending = state.players[seat]!.pendingChoice;
+  if (pending?.kind !== "chooseCard") throw new Error("expected a pending Chiêm Bài");
+  return pending.options;
 }
 
 /** A new profile that owns every hero (tests of rules that do not care about ownership). */
@@ -122,4 +129,21 @@ export function injectCard(state: CombatState, data: GameData, card: CardDef): s
   state.cards[instanceId] = { instanceId, cardId: card.id, ownerIds, player: 0, heldTurns: 0 };
   p0(state).hand.push(instanceId);
   return instanceId;
+}
+
+/** Rewrites an existing hero's level-up so a phase-7 mechanic can be tested before its hero exists. */
+export function withLevelUp(
+  heroId: string,
+  patch: { counter?: LevelUpCounter; threshold?: number; passive?: LevelUpPassive; altPassive?: LevelUpPassive },
+): (data: GameData) => void {
+  return (data) => {
+    const hero = data.heroes[heroId]!;
+    hero.levelUp = {
+      ...hero.levelUp,
+      ...(patch.counter !== undefined ? { counter: patch.counter } : {}),
+      ...(patch.threshold !== undefined ? { threshold: patch.threshold, constellationThreshold: patch.threshold } : {}),
+      ...(patch.passive !== undefined ? { passive: patch.passive } : {}),
+    };
+    if (patch.altPassive !== undefined) hero.altLevelUp = { ...hero.altLevelUp, passive: patch.altPassive };
+  };
 }

@@ -1,12 +1,14 @@
-import { refillHand } from "../draw";
+import { addToHand, refillHand } from "../draw";
 import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "../effects";
 import { runEnemyTurn } from "../enemy-turn";
-import { bumpCounter, checkLevelUps, levelUpPassive } from "../levelup";
+import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "../levelup";
 import { baseMoonPower } from "../moon-power";
-import { heroesOf } from "../players";
+import { heroesOf, summonsOf } from "../players";
 import { fireEventHooks, runRelicHooks } from "../run-relic-hooks";
 import { hasStatus, removeStatus } from "../statuses";
+import { runSummonActions } from "../summons";
 import { endRound, endSeatTurn } from "../turn";
+import { heroTurnStart, passiveOf, seatTurnStart } from "../turn-passives";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "../types/index";
 
 /**
@@ -23,12 +25,12 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
   }
   state.playedThisTurn = [];
 
-  for (const hero of state.heroes) {
-    if (hero.armor > 0) {
-      hero.armor = 0;
-      events.push({ type: "armorRemoved", targetId: hero.id });
+  for (const unit of [...state.heroes, ...summonsOf(state)]) {
+    if (unit.armor > 0) {
+      unit.armor = 0;
+      events.push({ type: "armorRemoved", targetId: unit.id });
     }
-    removeStatus(hero, "reflect", events);
+    removeStatus(unit, "reflect", events);
   }
   for (const seat of state.players) {
     const mine = heroesOf(state, seat.index);
@@ -41,20 +43,22 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
       hero.firstHitUsedThisTurn = false;
       hero.firstCardDiscountActive =
         hero.leveledUp && levelUpPassive(data, hero)?.type === "firstOwnCardDiscount";
+      heroTurnStart(data, state, hero, events);
     }
   }
   checkLevelUps(data, state, events);
-  for (const hero of state.heroes) {
-    if (!hero.alive) continue;
+  for (const unit of [...state.heroes, ...summonsOf(state)]) {
+    if (!unit.alive) continue;
     const start = events.length;
-    tickUnitStatuses(data, state, hero, events);
+    tickUnitStatuses(data, state, unit, events);
     if (checkCombatEnd(state, events)) return;
-    fireEventHooks(data, state, events, start, state.bloodMoonRounds, hero.player);
+    fireEventHooks(data, state, events, start, state.bloodMoonRounds, unit.player);
     if (checkCombatEnd(state, events)) return;
   }
   if (state.bloodMoonRounds > 0) {
     for (const hero of state.heroes) {
       if (!hero.alive) continue;
+      if (passiveOf(data, hero)?.type === "bloodMoonImmune") continue;
       const start = events.length;
       loseHp(data, hero, data.combatConfig.bloodMoonHpLoss, "bloodMoon", events);
       processDeaths(data, state, events, undefined);
@@ -81,6 +85,7 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
       if (checkCombatEnd(state, events)) return;
     }
     runRelicHooks(data, state, events, { type: "playerTurnStart" }, seat.index);
+    seatTurnStart(data, state, seat, events);
   }
   // A seat with no living heroes — forfeit, Cạn Bài, a wipe — can never act;
   // the shared turn must not wait on it (`01` §16.6).
@@ -107,10 +112,18 @@ export function coopEndTurn(
     const bottomed = options.filter((id) => id !== instanceId);
     state.cards[instanceId]!.heldTurns = 0;
     state.cards[instanceId]!.chosenThisTurn = true;
-    seat.hand.push(instanceId);
+    addToHand(data, state, seat, instanceId, events);
     seat.drawPile.push(...bottomed);
     seat.pendingChoice = null;
+    // A Chọn Pha queued behind the Chiêm Bài lapses with the turn.
+    delete seat.moonChoicePending;
     events.push({ type: "cardChosen", instanceId, bottomed, player: seat.index });
+    bumpSeat(data, state, seat.index, "cardsChosen", 1);
+  }
+  if (seat.pendingChoice?.kind === "chooseMoon") {
+    // The timer path keeps the moon where it is (`offset 0`).
+    seat.pendingChoice = null;
+    delete seat.moonChoicePending;
   }
   seat.done = true;
   // A seat whose heroes all fell mid-turn counts as done — it cannot act again.
@@ -125,6 +138,8 @@ export function coopEndTurn(
     endSeatTurn(data, state, other, events);
     if (state.status === "won" || state.status === "lost") return;
   }
+  runSummonActions(data, state, state.players.map((seat) => seat.index), events);
+  if (state.status === "won" || state.status === "lost") return;
   runEnemyTurn(data, state, events);
   if (state.status !== "enemyTurn") return;
   endRound(data, state, events);

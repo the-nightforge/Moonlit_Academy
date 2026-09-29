@@ -722,3 +722,200 @@ nên con số sẽ khác khi có người chơi. Đấu Trường nay đã chạ
 
 (Điểm mở "35 lá bot không đánh" đã đóng: toàn lá nhánh `_plus` + lá điều kiện —
 giới hạn kỳ vọng của heuristic, kiểm chứng bằng chơi tay khi có.)
+
+# Playtest Notes — Phase 7a (bước 7a.6)
+
+## Phương pháp
+
+- Bot heuristic mới (`bot.ts`): Hộ Vệ nhắm đồng đội yếu nhất **khác** chủ lá
+  (bỏ qua lá khi chỉ còn chủ); lá `shiftMoon` chỉ đánh khi pha đáp có modifier
+  khớp tag trong tay (ý tưởng `bestMoonOffset`) hoặc chủ lá còn bộ đếm
+  `moonShifts` chưa thăng cấp; lá `forbidden` tự mất HP không đánh khi chủ lá
+  HP ≤ tổng mất + 5 (miễn khi đã có `forbiddenNoSelfHpLoss`).
+- `run-playtest.test.ts`: 8 đội (4 cũ + 4 mới `m01+m02+f04`, `m08+f08+m05`,
+  `m03+m10+m04`, `f01+m07+m06`) × 6 loại deck × seed 1–20. Mỗi ô = 20 lượt.
+- `pvp-sim.test.ts` (`PLAYTEST_PVP=1`): 14 Hero → C(14,3) = 364 đội, quét toàn
+  bộ quá chậm → **bốc mẫu 4000 cặp** bằng mulberry32 với seed cố định của file
+  (`SAMPLE_SEED`), hai lượt: trần và trang bị PvP cơ bản ngẫu nhiên. Mỗi Hero
+  xuất hiện ~1700 trận → sai số tỉ lệ thắng ~±3 điểm.
+- Mục tiêu: thắng lượt đội mới trong ±10 điểm so trung bình đội cũ; tỉ lệ thắng
+  PvP theo Hero 40–60%; độ dài trận PvP TB 8–12 vòng.
+
+## Thắng lượt theo đội (PvE, 20 lượt/ô)
+
+| Đội | Bộ cơ bản | nA 6/6/6 | nB 6/6/6 | nA 4/4/10 | nB 8/5/5 | Ngẫu nhiên | TB | Δ so đội cũ |
+|---|---|---|---|---|---|---|---|---|
+| m05+f04+m06 | 5% | 65% | 25% | 60% | 25% | 40% | 37% | — |
+| m05+f03+f02 | 55% | 65% | 20% | 80% | 25% | 50% | 49% | — |
+| m06+f02+f03 | 50% | 65% | 15% | 80% | 20% | 55% | 48% | — |
+| m05+f03+f04 | 60% | 60% | 55% | 0% | 55% | 55% | 48% | — |
+| **TB 4 đội cũ** | | | | | | | **45%** | — |
+| m01+m02+f04 | 0% | 0% | 0% | 0% | 0% | 0% | 0% | **−45** |
+| m08+f08+m05 | 0% | 20% | 0% | 5% | 0% | 10% | 6% | **−39** |
+| m03+m10+m04 | 0% | 0% | 0% | 0% | 0% | 0% | 0% | **−45** |
+| f01+m07+m06 | 5% | 40% | 5% | 25% | 0% | 10% | 14% | **−31** |
+
+Tất cả đội mới dưới ngưỡng. Bốn đội cũ giữ nguyên số lịch sử → bot mới không
+làm hỏng meta cũ. Kiểm chứng trận tay: m03+m10+m04 diệt được shadow_fox v4 rồi
+cạn deck trước puppet_guard 42 HP (giáp tự tăng); m01+m02+f04 deck chỉ có 2×5
+damage. **Đây là vấn đề thành phần deck (không có carry), không phải con số** —
+xem "Điểm cần cờ".
+
+Bộ cơ bản theo Tinh Hồn (cả 8 đội): C0 22% / C2 24% / C4 28% / C6 28% — tụt so
+4d (43–48%) vì đội mới kéo trung bình xuống, không phải Tinh Hồn yếu đi.
+"lá chưa từng được đánh: 0/168" (PvE, gồm cả lá Song Hành trên các đội có cặp).
+
+## Tỉ lệ thắng PvP theo Hero (mẫu 4000, ~1700 trận/Hero)
+
+| Hero | Trần | Trang bị | Đạt 40–60%? |
+|---|---|---|---|
+| m01 | 29% | 28% | ✗ dưới |
+| m02 | 40% | 40% | sàn |
+| m03 | 28% | 28% | ✗ dưới |
+| m04 | 47% | 42% | ✓ |
+| m07 | 34% | 38% | ✗ dưới |
+| m08 | 38% | 39% | ✗ dưới |
+| m10 | 49% | 50% | ✓ |
+| f01 | 41% | 42% | ✓ |
+| f08 | 44% | 41% | ✓ |
+| m05 | 48% | 47% | ✓ |
+| m06 | 56% | 54% | ✓ |
+| f02 | 46% | 50% | ✓ |
+| f03 | 56% | 54% | ✓ |
+| f04 | 43% | 44% | ✓ |
+
+Chung: đi trước thắng **41%** (trần) / **38%** (trang bị) trên trận phân định —
+tụt so mức 54–55% khi còn 5 Hero (§4.9 mục tiêu 47–53%): nhiều Hero support/
+phòng thủ làm đi sau có thêm chu kỳ phản. Hòa ở trần vòng **14–15%**
+(roundCap 30). Độ dài trận **TB 15.4** (trần) / **16.8** (trang bị), trung vị
+13/15 — vượt mục tiêu 8–12 (giống kết luận 5b: bot chơi chậm/phòng thủ hơn
+người, giữ nguyên chờ data người chơi). Lá chưa đánh 98 = toàn lá `_plus` + lá
+khóa (PvP deck chỉ dùng 6 lá tự do + trang bị) — giới hạn kỳ vọng, như 5b.
+
+## Điểm cần cờ
+
+- **m01/m03 không có lá damage trong pool** — m01 12 lá toàn scheme/control
+  (drain, weak, Chiêm Bài); m03 chỉ có `m03_kim_tien` (5 dmg) mà nó nằm ở pool
+  khóa. Đội không carry thua sạch ở tầng 1 — không chỉnh bằng con số được; đề
+  xuất nội dung riêng (đổi pool / thêm lá damage ở đợt nội dung sau, hoặc chấp
+  nhận vai trò support bắt buộc đi cùng carry).
+- **`m03_tieu_loi` ramp 0-cost ×3** — +1 NL miễn phí; hiện vô hại vì m03 không
+  có đầu ra damage (NL dư tràn qua trần `cap`), nhưng sẽ phải xem lại ngay khi
+  m03 có payoff (đang ở mức sàn 28% nên không nerf bây giờ).
+- **M10 `firstSchemeRepeats` + scheme rẻ** — m10 đạt 49–50%, trong band; lá
+  scheme c1–c2 lặp hai lần chưa lật meta nhưng đáng theo dõi sau khi chỉnh m01/
+  m03 (cùng tag `scheme`, hưởng chung mọi buff scheme).
+- **F08 forbidden pacing** — trận đơn f08 thăng cấp được (ctr 9–15 ở tầng 1)
+  nhưng lượt chơi cộng dồn HP → đội m08+f08+m05 thua sạch (0–20%). Ngưỡng 15 HP
+  mất tự gây hơi cao cho vòng đời trận: đề xuất hạ ngưỡng (xem gói dưới).
+- **M07 `m07_ho_tong`** — c2 cho đồng đội Giáp 4 + Ẩn Thân 1: Ẩn Thân trên đồng
+  đội đánh lạc ý định đã báo (PvE) và khóa target (PvP). Dữ liệu không cho thấy
+  lạm dụng (m07 34–38%) nhưng lá này là "stealth cho người khác" duy nhất — cần
+  kiểm tay.
+- **Song Hành** — cả 6 lá bond đều được đánh ≥1 lần trong cả hai lượt mẫu PvP
+  (không nằm trong danh sách 98 lá chưa đánh) và trong suite PvE; xác suất một
+  cặp cụ thể xuất hiện trong đội ngẫu nhiên ≈ 12/364 ≈ 3.3%/bên — đúng thiết
+  kế hiếm. Đội mới: 3/4 đội playtest mang một cặp bond → đã được cover.
+- **Độ dài trận / tỉ lệ đi trước** — như mục PvP trên; giữ quyết định 5b (không
+  chỉnh toàn cục trước khi có người chơi thật).
+
+## Gói chỉnh đề xuất (CHƯA áp — chờ duyệt)
+
+Chỉ con số JSON; mục tiêu kéo m01/m03/m07/m08 lên sàn 40% PvP và giảm bleed
+F08 ở PvE. Không đụng m02 (đúng sàn 40%, tăng tank sẽ kéo dài trận thêm).
+
+| File | Mục | Số | Từ → sang | Lý do |
+|---|---|---|---|---|
+| heroes.json | m01 `levelUp` | `threshold` / `constellationThreshold` | 8→7 / 6→5 | thăng cấp sớm hơn ~1 scheme |
+| heroes.json | m01 `levelUp.passive` | `cheapestCardDiscount.amount` | 1→2 | payoff thật cho chuỗi scheme |
+| heroes.json | m03 `levelUp` | `threshold` / `constellationThreshold` | 5→4 / 4→3 | mở Chiêm Bài miễn phí sớm hơn |
+| heroes.json | m03 `levelUp.passive` | `freeChooseCardPerTurn.look` | 3→4 | payoff lọc bài thay damage |
+| heroes.json | m07 `levelUp` | `threshold` / `constellationThreshold` | 5→4 / 4→3 | randomBuffPerTurn tới sớm hơn 1 vòng |
+| heroes.json | f08 `levelUp` | `threshold` / `constellationThreshold` | 15→12 / 11→9 | cắt bleed PvE sớm ~1 lá forbidden |
+| pvp-config.json | `heroStats.m01` | `maxHp` | 42→44 | sống đủ lâu để drain đổi tempo |
+| pvp-config.json | `heroStats.m03` | `maxHp` | 42→44 | tương tự |
+| pvp-config.json | `heroStats.m07` | `maxHp` | 46→48 | support sống lâu = giá trị |
+| pvp-config.json | `heroStats.m08` | `maxHp` | 42→44 | 38–39% cần nhích nhẹ |
+| cards.json | `m01_mat_thu` | `drainMoonPower` | 1→2 | deny nhiều hơn trên lá c1 ×3 |
+| cards.json | `m01_toa_nguyet_phu` | `drainMoonPower` | 2→3 | deny nặng trên lá c2 |
+| cards.json | `m07_huyet_anh` | `damage` (nhánh else) | 4→5 | lá damage duy nhất của m07 |
+| cards.json | `m08_huyet_hoa` | `damage` (nhánh else) | 5→6 | lá damage duy nhất của m08 |
+| heroes.json | `m03.cardIds` | **đổi thành phần pool** (không phải con số — cần duyệt riêng): `m03_tu_tin` ↔ `m03_kim_tien` | — | cho m03 một lá damage trong deck cơ bản |
+| — | `pvpConfig.roundCap`, `heroStats` toàn cục | giữ nguyên | — | độ dài trận là artifact của bot; xem lại với người chơi thật |
+
+Ước lượng tác động: m01/m03 +2 HP PvP + ngưỡng/payoff nới ≈ +5–8 điểm PvP
+(mục tiêu 33–38% — chưa chắc chạm sàn 40% nếu vẫn thiếu damage; nếu không đạt
+thì bước tiếp là thay đổi nội dung pool, không tiếp tục phình số). f08 ngưỡng
+12 kéo đội m08+f08+m05 về vùng 15–25% PvE ước tính; phần còn lại là vấn đề
+deck (carry đơn). Đo lại sau khi áp bằng cùng seed/seed mẫu.
+
+**DỪNG Ở ĐÂY — chờ người dùng duyệt gói trên trước khi áp (bước 7a.6 step 5).**
+
+## Kết quả sau chỉnh (gói đã duyệt, áp nguyên vẹn + 2 bổ sung duyệt riêng)
+
+Đã áp toàn bộ bảng trên, cộng thêm: `m01_toa_nguyet_phu` được thêm
+`damage 3` (sau `drainMoonPower`, cùng mục tiêu `chosen`; text "Tỏa Nguyệt 3.
+Gây 3 damage.") và đổi pool m03 `m03_tu_tin` ↔ `m03_kim_tien` (Kim Tiền vào
+bộ miễn phí — đã được đánh trong cả hai lượt mẫu PvP). Text lá và mô tả thăng
+cấp cập nhật theo số mới; bảng §2.1 của `18` chốt theo số đã chỉnh.
+
+### Thắng lượt theo đội (PvE, 20 lượt/ô — số trong ngoặc = trước chỉnh)
+
+| Đội | Bộ cơ bản | nA 6/6/6 | nB 6/6/6 | nA 4/4/10 | nB 8/5/5 | Ngẫu nhiên | TB | Δ so đội cũ |
+|---|---|---|---|---|---|---|---|---|---|
+| m05+f04+m06 | 5% | 65% | 25% | 60% | 25% | 40% | 37% | — |
+| m05+f03+f02 | 55% | 65% | 20% | 80% | 25% | 50% | 49% | — |
+| m06+f02+f03 | 50% | 65% | 15% | 80% | 20% | 55% | 48% | — |
+| m05+f03+f04 | 60% | 60% | 55% | 0% | 55% | 55% | 48% | — |
+| **TB 4 đội cũ** | | | | | | | **45%** | — |
+| m01+m02+f04 | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | **−45** |
+| m08+f08+m05 | 0% (0%) | 20% (20%) | 0% (0%) | 10% (5%) | 0% (0%) | 10% (10%) | 7% (6%) | **−38** |
+| m03+m10+m04 | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | 0% (0%) | **−45** |
+| f01+m07+m06 | 10% (5%) | 25% (40%) | 5% (5%) | 30% (25%) | 0% (0%) | 25% (10%) | 16% (14%) | **−29** |
+
+Bộ cơ bản theo Tinh Hồn (8 đội): C0 23% / C2 23% / C4 29% / C6 29% (trước
+22/24/28/28). 0/168 lá chưa được đánh (PvE). 3/960 lượt kẹt > 60 vòng (1× Bộ
+cơ bản, 1× nA 4/4/10, 1× nB 8/5/5 — trước đây 0).
+
+### Tỉ lệ thắng PvP theo Hero (mẫu 4000, ~1700 trận/Hero — số trong ngoặc = trước chỉnh)
+
+| Hero | Trần | Trang bị | Đạt 40–60%? |
+|---|---|---|---|
+| m01 | 28% (29%) | 28% (28%) | ✗ dưới |
+| m02 | 41% (40%) | 40% (40%) | sàn |
+| m03 | 27% (28%) | 28% (28%) | ✗ dưới |
+| m04 | 46% (47%) | 42% (42%) | ✓ |
+| m07 | 35% (34%) | 39% (38%) | ✗ sát sàn |
+| m08 | 37% (38%) | 40% (39%) | ✗ sát sàn |
+| m10 | 47% (49%) | 50% (50%) | ✓ |
+| f01 | 40% (41%) | 41% (42%) | sàn |
+| f08 | 43% (44%) | 41% (41%) | ✓ |
+| m05 | 49% (48%) | 46% (47%) | ✓ |
+| m06 | 54% (56%) | 53% (54%) | ✓ |
+| f02 | 46% (46%) | 48% (50%) | ✓ |
+| f03 | 54% (56%) | 53% (54%) | ✓ |
+| f04 | 42% (43%) | 43% (44%) | ✓ |
+
+Đi trước thắng **41%** (trần) / **38%** (trang bị) — không đổi. Hòa ở trần
+vòng **16%** (trước 14–15%). Độ dài trận **TB 15.4 / trung vị 13** (trần) và
+**16.8 / 15** (trang bị) — giữ nguyên so trước chỉnh, vẫn vượt mục tiêu 8–12
+(theo quyết định 5b: artifact của bot, xem lại với người chơi thật). Lá chưa
+đánh 98 = lá `_plus` + lá khóa (đã đổi: `m03_kim_tien` nay được đánh,
+`m03_tu_tin` vào danh sách khóa).
+
+### Đánh giá
+
+**Mức band không cải thiện đo được.** Mọi chênh lệch nằm trong sai số ±3 điểm
+của mẫu: m01 28–29%→28%, m03 28%→27–28%, m07 +1 (34→35 / 38→39), m08 ~0
+(38→37 / 39→40). PvE tương tự: hai đội m01/m03 vẫn 0% mọi deck (chết tầng 1,
+tầng TB 1.0–1.3), m08+f08+m05 6%→7%, f01+m07+m06 14%→16%.
+
+Điều này xác nhận chẩn đoán "Điểm cần cờ": **nút thắt là thành phần deck —
+không có nguồn damage — chứ không phải ngưỡng/HP.** Kim Tiền (5 damage ×2)
+trong bộ miễn phí và +3 damage trên Tỏa Nguyệt Phù vẫn quá ít trước tường
+tầng 1 (Khôi Lỗi 42 HP, giáp tự tăng); +2 HP PvP không đổi tempo khi không có
+đòn kết liễu. Giữ nguyên ý định đã duyệt: **không phình số tiếp** — bước tiếp
+là nội dung (đổi/thêm lá damage cho m01/m03 ở đợt nội dung sau) hoặc chấp nhận
+vai trò support bắt buộc đi kèm carry. Ghi chú mở còn lại của 7a (M10 scheme
+lặp, `m07_ho_tong` stealth-cho-người-khác, độ dài trận PvP, `m03_tieu_loi`
+ramp) vẫn đứng — xem "Điểm cần cờ".

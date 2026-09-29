@@ -16,6 +16,8 @@ export interface UnitState {
   armor: number;
   statuses: StatusInstance[];
   alive: boolean;
+  /** Phong Ấn (`01` §5.6): hero id that sealed this unit; its next-turn intents/cards keep damage but lose every other effect. Cleared after that unit's side next turn, used or not. */
+  sealedBy?: string;
 }
 
 export interface HeroState extends UnitState {
@@ -36,6 +38,23 @@ export interface HeroState extends UnitState {
   comboBonusUsedThisTurn: boolean;
   /** Hàn Kiếm: the first hit this turn already happened. */
   firstHitUsedThisTurn: boolean;
+  /** Bác Học: the first scheme card this turn already repeated. */
+  firstSchemeUsedThisTurn?: boolean;
+  /** Sử Bút: the first Phong Ấn this turn already cancelled an extra intent (`01` §5.6). */
+  firstSealUsedThisTurn?: boolean;
+  /** Hồi Hồn (`18` §3.5): this hero already came back once — a second fall is final. */
+  revived?: true;
+}
+
+/** Linh Thú on the board (`01` §17). Shares the hero side; never counts for defeat. */
+export interface SummonState extends UnitState {
+  side: "hero";
+  /** Seat owning the summoner. */
+  player: number;
+  /** Unit id of the summoning hero. */
+  ownerHeroId: string;
+  /** `SummonDef` id in use (switches to `awakenedId` when awakened). */
+  summonId: string;
 }
 
 export interface PlannedIntent {
@@ -66,7 +85,14 @@ export interface CardInstance {
   heldTurns: number;
   /** Taken into hand by Chiêm Bài this turn: costs `chooseCardDiscount` less. */
   chosenThisTurn?: boolean;
+  /** Thiên Cơ: this turn only (`01` §3.1). */
+  turnDiscount?: number;
 }
+
+/** A choice the seat must answer before acting (`01` §3.1, §4). */
+export type PendingChoice =
+  | { kind: "chooseCard"; options: string[] }
+  | { kind: "chooseMoon"; options: number[] };
 
 /** `opponentTurn` only ever appears inside `viewFor` results — a real state is always playerTurn/choosing/etc. */
 export type CombatStatus = "mulligan" | "playerTurn" | "choosing" | "enemyTurn" | "won" | "lost" | "opponentTurn";
@@ -93,8 +119,12 @@ export interface PlayerState {
   moonPowerBonus: number;
   /** Cards already played this player's turn (Liên Hoàn). */
   cardsPlayedThisTurn: number;
-  /** A pending Chiêm Bài pick; the option instance ids are out of the draw pile until resolved. */
-  pendingChoice: { kind: "chooseCard"; options: string[] } | null;
+  /** Cards created this combat (`createCard`); names the next `t<n>` instance. */
+  createdCards?: number;
+  /** A pending Chiêm Bài pick or Chọn Pha; Chiêm Bài option instance ids are out of the draw pile until resolved. */
+  pendingChoice: PendingChoice | null;
+  /** Chọn Pha owed this turn (a hero was leveled with `chooseMoon` at turn start). */
+  moonChoicePending?: true;
   /**
    * Per-combat hook counters, keyed "<relicId>#<hookIndex>" (run relics, augments,
    * moon relics) or "<weaponId>@<heroId>#<hookIndex>" (weapons).
@@ -110,6 +140,10 @@ export interface PlayerState {
   mulliganDone: boolean;
   /** Co-op: this player finished their simultaneous turn (`17` §8.3). */
   done: boolean;
+  /** Hồi Hồn (`18` §3.5): draw-pile cards purged when a hero fell, keyed by hero unit id. */
+  purged?: Record<string, string[]>;
+  /** Hồi Hồn (`18` §3.5): hero unit ids in the order they fell (for `lastFallen`). */
+  fallenOrder?: string[];
 }
 
 /** [GĐ6] Co-op boss progress (`01` §16.5). */
@@ -147,6 +181,8 @@ export interface CombatState {
   playedThisTurn?: { player: number; instanceId: string; cardId: string; comboId?: string; moonAfter: number }[];
   /** [GĐ6] co-op: boss phase progress when the encounter's enemy has `phases`. */
   boss?: CoopBossState;
+  /** [GĐ7] Linh Thú; absent until the first summon. */
+  summons?: SummonState[];
 }
 
 export interface CombatWeapon {

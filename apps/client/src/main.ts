@@ -4,6 +4,7 @@ import { ArenaScene } from "./scenes/arena-scene";
 import { CoopLobbyScene } from "./scenes/coop-lobby-scene";
 import { LoginScene } from "./scenes/login-scene";
 import { session } from "./session";
+import * as debug from "./debug";
 import { CombatScene } from "./scenes/combat-scene";
 import { DeckBuilderScene } from "./scenes/deck-builder-scene";
 import { ArmoryScene } from "./scenes/armory-scene";
@@ -43,4 +44,8 @@ auth.onUnauthorized = () => {
 };
 
 // Dev/e2e handle: canvas UI is not DOM-readable, tests inspect session here.
-(window as unknown as { __vn: { session: typeof session; game: Phaser.Game } }).__vn = { session, game };
+(window as unknown as { __vn: { session: typeof session; game: Phaser.Game; debug: typeof debug } }).__vn = {
+  session,
+  game,
+  debug,
+};

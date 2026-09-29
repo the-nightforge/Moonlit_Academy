@@ -14,6 +14,7 @@ const combatActionSchema = z.union([
   z.object({ type: z.literal("playCard"), instanceId: id, targetId: id.optional() }),
   z.object({ type: z.literal("mulligan"), instanceIds: z.array(id).max(16) }),
   z.object({ type: z.literal("chooseCard"), instanceId: id }),
+  z.object({ type: z.literal("chooseMoon"), offset: z.union([z.literal(0), z.literal(1), z.literal(2)]) }),
   z.object({ type: z.literal("endTurn") }),
 ]);
 

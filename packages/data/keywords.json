@@ -10,6 +10,7 @@
   { "id": "chiem_bai", "name": "Chiêm Bài", "text": "Xem các lá trên cùng chồng bài, lấy 1 (lượt này rẻ hơn 1 Nguyệt Lực), các lá còn lại xuống đáy chồng." },
   { "id": "an_than", "name": "Ẩn Thân", "text": "Không bị chọn làm mục tiêu đơn; mất khi đánh lá tấn công." },
   { "id": "khieu_khich", "name": "Khiêu Khích", "text": "Kẻ địch buộc phải nhắm vào Hero này." },
+  { "id": "ho_ve", "name": "Hộ Vệ", "text": "Đòn địch nhắm vào Hero này sẽ trúng người đứng ra Hộ Vệ thay." },
   { "id": "suy_yeu", "name": "Suy Yếu", "text": "Gây ít damage hơn (×0.75)." },
   { "id": "de_vo", "name": "Dễ Vỡ", "text": "Nhận nhiều damage hơn (×1.5)." },
   { "id": "danh_dau", "name": "Đánh Dấu", "text": "Nhận thêm 3 damage từ đòn tấn công của người đánh dấu." },
@@ -19,5 +20,10 @@
   { "id": "cuong_hoa", "name": "Cường Hóa", "text": "Lá tấn công tiếp theo gây thêm damage." },
   { "id": "dong_bang", "name": "Đóng Băng", "text": "Kẻ địch bỏ lượt; Hero bị Đóng Băng không đánh được lá của mình trong lượt." },
   { "id": "phan_don", "name": "Phản Đòn", "text": "Kẻ đánh trúng mất HP." },
-  { "id": "huyet_nguyet", "name": "Huyết Nguyệt", "text": "Mọi Hero mất HP mỗi lượt; mở khóa các lá Cấm Thuật." }
+  { "id": "huyet_nguyet", "name": "Huyết Nguyệt", "text": "Mọi Hero mất HP mỗi lượt; mở khóa các lá Cấm Thuật." },
+  { "id": "me_hoac", "name": "Mê Hoặc", "text": "Kẻ địch bị Mê Hoặc đánh kẻ địch khác thay vì Hero; ở PvP, Hero bị Mê Hoặc đánh đồng đội." },
+  { "id": "phong_an", "name": "Phong Ấn", "text": "Đơn vị bị Phong Ấn một lượt: chiêu và lá nó đánh ra trong lượt đó chỉ còn damage, mất mọi hiệu ứng khác." },
+  { "id": "hoi_hon", "name": "Hồi Hồn", "text": "Một Hero đã ngã sống lại với một tỉ lệ HP tối đa; mỗi Hero chỉ được Hồi Hồn một lần mỗi trận." },
+  { "id": "linh_thu", "name": "Linh Thú", "text": "Triệu hồi một Linh Thú chiến đấu cạnh chủ; cuối lượt nó tự hành động. Triệu hồi khi đã có: hồi đầy HP và nhận Sức Mạnh 1." },
+  { "id": "keo_dai", "name": "Kéo Dài", "text": "Mọi debuff có thời hạn đang có trên mục tiêu kéo dài thêm số vòng tương ứng." }
 ]

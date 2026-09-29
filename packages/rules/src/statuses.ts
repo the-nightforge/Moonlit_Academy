@@ -6,6 +6,7 @@ export const DEBUFF_STATUSES: ReadonlySet<StatusId> = new Set([
   "burn",
   "freeze",
   "mark",
+  "charm",
 ]);
 
 export const DURATION_STATUSES: ReadonlySet<StatusId> = new Set([
@@ -14,6 +15,7 @@ export const DURATION_STATUSES: ReadonlySet<StatusId> = new Set([
   "weak",
   "vulnerable",
   "mark",
+  "guard",
 ]);
 
 export function hasStatus(unit: UnitState, status: StatusId): boolean {
@@ -48,14 +50,21 @@ export function applyStatus(
   const existing = getStatus(unit, status);
   if (existing) {
     if (status === "freeze") return;
-    existing.value += amount;
-    if (status === "mark") existing.sourceId = sourceId;
+    if (status === "guard") {
+      existing.value = amount;
+      existing.sourceId = sourceId;
+    } else {
+      existing.value += amount;
+      if (status === "mark" || status === "charm") existing.sourceId = sourceId;
+    }
     events.push({ type: "statusApplied", targetId: unit.id, status, value: existing.value });
     return;
   }
   const value = status === "freeze" ? 1 : amount;
   const instance: StatusInstance =
-    status === "mark" ? { id: status, value, sourceId } : { id: status, value };
+    status === "mark" || status === "charm" || status === "guard"
+      ? { id: status, value, sourceId }
+      : { id: status, value };
   unit.statuses.push(instance);
   events.push({ type: "statusApplied", targetId: unit.id, status, value });
 }

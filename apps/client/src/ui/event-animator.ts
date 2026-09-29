@@ -253,6 +253,41 @@ function animateEvent(
     }
     case "cardDiscarded":
       return instant();
+    case "cardCreated": {
+      // `18` §2.2: the token flies from its owner hero's panel into the hand;
+      // a full hand leaves only a "Tay đầy" note over the hero.
+      const card = ctx.gameData.cards[event.cardId];
+      const owner =
+        card?.ownerId === undefined
+          ? undefined
+          : ctx.state.heroes.find(
+              (hero) => hero.defId === card.ownerId && hero.player === (event.player ?? 0),
+            );
+      const anchor = owner === undefined ? undefined : anchorOf(owner.id);
+      if (event.instanceId === null) {
+        if (!anchor) return instant();
+        return floatText(scene, anchor.x, anchor.y - 62, "Tay đầy", "#ff8080", 14, 350);
+      }
+      const from = anchor ?? { x: 1090, y: 560 };
+      const mine = (event.player ?? 0) === (ctx.mySeat ?? 0);
+      return new Promise<void>((resolve) => {
+        const rect = scene.add
+          .rectangle(from.x, from.y, 30, 44, 0x2c3e6e)
+          .setStrokeStyle(1, 0xf4d35e)
+          .setDepth(100);
+        scene.tweens.add({
+          targets: rect,
+          x: mine ? WIDTH / 2 : from.x,
+          y: mine ? 610 : from.y,
+          alpha: mine ? 1 : 0,
+          duration: 180,
+          onComplete: () => {
+            rect.destroy();
+            resolve();
+          },
+        });
+      });
+    }
     case "damageDealt": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
@@ -368,17 +403,25 @@ function animateEvent(
         });
       });
     }
-    case "intentsRevealed": {
-      const anchor = anchorOf(event.enemyId);
-      if (!anchor) return instant();
-      const label = event.intents.length === 0 ? "Tụ Lực" : "Ý định mới";
-      return floatText(scene, anchor.x, anchor.y - 110, label, "#cfd6f0", 12, 150);
-    }
+    case "intentsRevealed":
+      // Enemies no longer telegraph their chain (`01` §9.2) — nothing to show.
+      return instant();
     case "intentsCancelled": {
       const anchor = anchorOf(event.enemyId);
       if (!anchor) return instant();
-      const names = event.intentIds.map((id) => findIntent(ctx, event.enemyId, id)?.name ?? id);
-      return floatText(scene, anchor.x, anchor.y - 110, `Tỏa Nguyệt hủy: ${names.join(", ")}`, "#9fd4ff", 13, 450);
+      return floatText(scene, anchor.x, anchor.y - 110, `Tỏa Nguyệt hủy ${event.intentIds.length} chiêu`, "#9fd4ff", 13, 450);
+    }
+    case "sealStripped": {
+      const anchor = anchorOf(event.unitId);
+      if (!anchor) return instant();
+      // refId is an intentId for enemies, a card instanceId for hero cards, a summonId for Linh Thú.
+      const instance = ctx.state.cards[event.refId];
+      const ref = ctx.state.enemies.some((enemy) => enemy.id === event.unitId)
+        ? findIntent(ctx, event.unitId, event.refId)?.name
+        : ctx.state.summons?.some((summon) => summon.id === event.unitId)
+          ? ctx.gameData.summons[event.refId]?.name
+          : instance ? cardDefOf(ctx.gameData, ctx.state, instance)?.name : undefined;
+      return floatText(scene, anchor.x, anchor.y - 110, `Phong Ấn: ${ref ?? ""} mất hiệu ứng`, "#b9a8ff", 13, 450);
     }
     case "intentExecuted": {
       const anchor = anchorOf(event.enemyId);
@@ -483,6 +526,8 @@ function animateEvent(
       return floatText(scene, WIDTH / 2, 520, `Đổi ${event.returned.length} lá`, "#cfd6f0", 14, 250);
     case "choiceOpened":
       return floatText(scene, WIDTH / 2, 520, "Chiêm Bài", "#f4d35e", 16, 250);
+    case "moonChoiceOpened":
+      return floatText(scene, WIDTH / 2, 520, "Chọn Pha", "#f4d35e", 16, 250);
     case "cardChosen":
       return instant();
     case "deckedOut":
@@ -496,6 +541,74 @@ function animateEvent(
       const anchor = event.enemyId !== undefined ? anchorOf(event.enemyId) : undefined;
       if (!anchor) return instant();
       return floatText(scene, anchor.x, anchor.y - 95, `Dự Trữ ${event.value}`, "#7fd4ff", 11, 150);
+    }
+    case "summoned": {
+      // Linh Thú (`01` §17): its panel only exists after the next render, so
+      // the glow plays at the summon anchor when present (awaken swap) and at
+      // the owner Hero's otherwise.
+      const anchor = anchorOf(event.unitId) ?? anchorOf(event.ownerHeroId);
+      if (!anchor) return instant();
+      const ring = new Promise<void>((resolve) => {
+        const glow = scene.add
+          .circle(anchor.x, anchor.y, 40)
+          .setStrokeStyle(3, 0xf4d35e)
+          .setDepth(95);
+        scene.tweens.add({
+          targets: glow,
+          scale: 1.7,
+          alpha: 0,
+          duration: 500,
+          ease: "Sine.easeOut",
+          onComplete: () => {
+            glow.destroy();
+            resolve();
+          },
+        });
+      });
+      const name = ctx.gameData.summons[event.summonId]?.name ?? "Linh Thú";
+      return Promise.all([
+        ring,
+        floatText(scene, anchor.x, anchor.y - 62, `Triệu hồi — ${name}`, "#f4d35e", 18, 500),
+      ]).then(() => undefined);
+    }
+    case "summonActed": {
+      const anchor = anchorOf(event.unitId);
+      if (!anchor) return instant();
+      const summon = ctx.state.summons?.find((unit) => unit.id === event.unitId);
+      const name = (summon && ctx.gameData.summons[summon.summonId]?.name) ?? "Linh Thú";
+      return floatText(scene, anchor.x, anchor.y - 44, name, "#9fd4ff", 14, 300);
+    }
+    case "summonDismissed": {
+      const anchor = anchorOf(event.unitId);
+      const view = ctx.unitViews.get(event.unitId);
+      if (!anchor && !view) return instant();
+      const jobs: Promise<void>[] = [];
+      if (view) {
+        jobs.push(
+          new Promise<void>((resolve) => {
+            scene.tweens.add({
+              targets: view,
+              alpha: 0,
+              duration: 400,
+              onComplete: () => resolve(),
+            });
+          }),
+        );
+      }
+      if (anchor) {
+        jobs.push(floatText(scene, anchor.x, anchor.y - 30, "Linh Thú biến mất", "#8b93b8", 13, 350));
+      }
+      return Promise.all(jobs).then(() => undefined);
+    }
+    case "heroRevived": {
+      // Hồi Hồn (`18` §3.5): a fallen hero stands back up — gold flash + float.
+      const anchor = anchorOf(event.heroId);
+      const coop = ctx.state.mode === "coop";
+      const jobs: Promise<void>[] = [
+        floatText(scene, anchor?.x ?? WIDTH / 2, (anchor?.y ?? 396) - 62, "Hồi Hồn", "#f4d35e", 20, 600),
+      ];
+      if (anchor) jobs.push(flash(scene, anchor.x, anchor.y, coop ? 190 : 240, coop ? 150 : 170, 0xf4d35e, 500));
+      return Promise.all(jobs).then(() => undefined);
     }
     default:
       return instant();

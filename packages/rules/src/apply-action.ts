@@ -1,16 +1,19 @@
 import { cloneState } from "./clone";
 import { fireCoopCombos } from "./coop/combos";
 import { coopEndTurn, startCoopTurn } from "./coop/turn";
+import { addToHand } from "./draw";
 import { checkCombatEnd, processDeaths, resolveEffects } from "./effects";
+import { guardianOf } from "./enemy-turn";
 import { cardDefOf } from "./gear";
-import { levelUpPassive } from "./levelup";
+import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive, sealFilteredEffects } from "./levelup";
 import { activePlayerState, heroesOf, seatTag } from "./players";
 import { pvpEndTurn } from "./pvp/turn";
 import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
 import { shuffle } from "./rng";
 import { runRelicHooks } from "./run-relic-hooks";
-import { removeStatus } from "./statuses";
+import { getStatus, removeStatus } from "./statuses";
 import { runEndTurn, startPlayerTurn } from "./turn";
+import { interceptHit, openMoonChoice, passiveOf } from "./turn-passives";
 import type {
   Action,
   ActionResult,
@@ -82,6 +85,11 @@ function playCard(
   });
   if (discounted) owner.firstCardDiscountUsedThisTurn = true;
 
+  if (card.tags.includes("scheme")) {
+    bumpSeat(data, state, player.index, "schemeCardsPlayed", 1);
+    if (!card.bond) bumpCounter(data, owner, "studyPoints", 1);
+  }
+
   // Tàn Ảnh: the owner's first Liên Hoàn card each turn counts one more card played.
   let comboBonus = 0;
   const passive = !card.bond && owner.leveledUp ? levelUpPassive(data, owner) : undefined;
@@ -90,13 +98,53 @@ function playCard(
     comboBonus = passive.amount;
   }
 
-  resolveEffects(
+  // Fair Arena Mê Hoặc: the charmed owner's first single-target attack hits its
+  // own highest-HP ally (`01` §15.5).
+  let chosenIdOverride: string | undefined;
+  if (state.mode === "pvp" && card.type === "attack" && card.target === "enemy" && !card.bond) {
+    const charm = getStatus(owner, "charm");
+    if (charm) {
+      const allies = heroesOf(state, player.index).filter((hero) => hero.alive && hero !== owner);
+      const victim =
+        allies.reduce<HeroState | undefined>((best, hero) => (best === undefined || hero.hp > best.hp ? hero : best), undefined) ?? owner;
+      chosenIdOverride = victim.id;
+      charm.value -= 1;
+      if (charm.value <= 0) removeStatus(owner, "charm", events);
+    }
+  }
+
+  // Fair Arena: a single-target card aimed at a guarded hero hits the guardian (`01` §15.4).
+  // A Mê Hoặc-redirected hit already landed on the attacker's own side — no Hộ Vệ.
+  let chosenId = chosenIdOverride ?? action.targetId;
+  if (state.mode === "pvp" && card.target === "enemy" && chosenId !== undefined && chosenIdOverride === undefined) {
+    const guardian = guardianOf(state, chosenId);
+    if (guardian && guardian.player !== player.index) {
+      chosenId = guardian.id;
+      interceptHit(data, guardian, events);
+    }
+  }
+
+  const ctx = { source: owner, actors: owners, card, chosenId, instanceId: instance.instanceId, comboBonus };
+  // Phong Ấn (`01` §5.6): a card owned by a sealed hero keeps damage only —
+  // the mark covers the whole seat turn, like an enemy's intent chain.
+  const sealedOwner = owners.find((hero) => hero.sealedBy !== undefined);
+  const cardEffects = sealFilteredEffects(
     data,
     state,
+    sealedOwner?.id ?? owner.id,
+    sealedOwner?.sealedBy,
     card.effects,
-    { source: owner, actors: owners, card, chosenId: action.targetId, instanceId: instance.instanceId, comboBonus },
+    instance.instanceId,
     events,
   );
+  // Bác Học: the owner's first scheme card each turn resolves twice; the first pass skips Chiêm Bài.
+  if (passive?.type === "firstSchemeRepeats" && card.tags.includes("scheme") && !owner.firstSchemeUsedThisTurn) {
+    owner.firstSchemeUsedThisTurn = true;
+    resolveEffects(data, state, cardEffects.filter((effect) => effect.type !== "chooseCard"), ctx, events);
+  }
+  if (!["won", "lost"].includes(state.status) && owners.every((hero) => hero.alive)) {
+    resolveEffects(data, state, cardEffects, ctx, events);
+  }
 
   if (card.type === "attack") {
     for (const attacker of attackCleanupTargets(card, owners)) {
@@ -199,16 +247,28 @@ function mulligan(
   runRelicHooks(data, state, events, { type: "combatStart" }, player.index);
 }
 
-function chooseCard(state: CombatState, player: PlayerState, instanceId: string, events: CombatEvent[]): void {
-  const options = player.pendingChoice!.options;
+function chooseCard(data: GameData, state: CombatState, player: PlayerState, instanceId: string, options: string[], events: CombatEvent[]): void {
   const bottomed = options.filter((id) => id !== instanceId);
   state.cards[instanceId]!.heldTurns = 0;
   state.cards[instanceId]!.chosenThisTurn = true;
-  player.hand.push(instanceId);
+  addToHand(data, state, player, instanceId, events);
   player.drawPile.push(...bottomed);
   player.pendingChoice = null;
   state.status = "playerTurn";
   events.push({ type: "cardChosen", instanceId, bottomed, ...seatTag(state, player.index) });
+}
+
+/** Chọn Pha answer (`01` §5.5): `offset` shifts the moon with the passive's hero as source. */
+function chooseMoon(data: GameData, state: CombatState, player: PlayerState, offset: number, events: CombatEvent[]): void {
+  player.pendingChoice = null;
+  delete player.moonChoicePending;
+  if (state.mode !== "coop") state.status = "playerTurn";
+  if (offset === 0) return;
+  // Co-op keeps the shared turn open while the choice is pending, so the
+  // chooser may have died before the answer — the choice still resolves.
+  const chooser = heroesOf(state, player.index).find((hero) => passiveOf(data, hero)?.type === "chooseMoon");
+  if (chooser === undefined) return;
+  resolveEffects(data, state, [{ type: "shiftMoon", amount: offset }], { source: chooser }, events);
 }
 
 function statusError(state: CombatState, action: Action, player: PlayerState): string | null {
@@ -219,7 +279,7 @@ function statusError(state: CombatState, action: Action, player: PlayerState): s
     // `01` §16.2: the turn is shared — a pending Chiêm Bài still answers first
     // (an endTurn auto-picks it), and a seat that pressed Xong is out.
     if (state.status === "mulligan") return "mulligan pending";
-    if (action.type === "chooseCard") {
+    if (action.type === "chooseCard" || action.type === "chooseMoon") {
       return player.pendingChoice === null ? "no pending choice" : null;
     }
     if (player.pendingChoice !== null && action.type !== "endTurn") return "choice pending";
@@ -230,9 +290,9 @@ function statusError(state: CombatState, action: Action, player: PlayerState): s
     case "mulligan":
       return "mulligan pending";
     case "choosing":
-      return action.type === "chooseCard" ? null : "choice pending";
+      return action.type === "chooseCard" || action.type === "chooseMoon" ? null : "choice pending";
     case "playerTurn":
-      return action.type === "chooseCard" ? "no pending choice" : null;
+      return action.type === "chooseCard" || action.type === "chooseMoon" ? "no pending choice" : null;
     case "enemyTurn":
     case "won":
     case "lost":
@@ -268,8 +328,11 @@ function forfeit(data: GameData, state: CombatState, action: Extract<Action, { t
     seat.done = true;
     seat.mulliganDone = true;
     if (seat.pendingChoice !== null) {
-      seat.drawPile.push(...seat.pendingChoice.options);
+      if (seat.pendingChoice.kind === "chooseCard") {
+        seat.drawPile.push(...seat.pendingChoice.options);
+      }
       seat.pendingChoice = null;
+      delete seat.moonChoicePending;
     }
     for (const hero of heroesOf(next, seat.index)) {
       if (hero.alive) hero.hp = 0;
@@ -325,12 +388,25 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
       return { ok: true, state: next, events };
     }
     case "chooseCard": {
-      if (!seat.pendingChoice!.options.includes(action.instanceId)) {
-        return { ok: false, error: "not a choice option" };
-      }
+      const pending = seat.pendingChoice;
+      if (pending?.kind !== "chooseCard") return { ok: false, error: "no pending choice" };
+      if (!pending.options.includes(action.instanceId)) return { ok: false, error: "not a choice option" };
       const next = cloneState(state);
       const events: CombatEvent[] = [];
-      chooseCard(next, next.players[seat.index]!, action.instanceId, events);
+      const nextSeat = next.players[seat.index]!;
+      chooseCard(data, next, nextSeat, action.instanceId, pending.options, events);
+      bumpSeat(data, next, seat.index, "cardsChosen", 1);
+      checkLevelUps(data, next, events);
+      openMoonChoice(next, nextSeat, events);
+      return { ok: true, state: next, events };
+    }
+    case "chooseMoon": {
+      const pending = seat.pendingChoice;
+      if (pending?.kind !== "chooseMoon") return { ok: false, error: "no pending choice" };
+      if (!pending.options.includes(action.offset)) return { ok: false, error: "not a choice option" };
+      const next = cloneState(state);
+      const events: CombatEvent[] = [];
+      chooseMoon(data, next, next.players[seat.index]!, action.offset, events);
       return { ok: true, state: next, events };
     }
     case "endTurn": {

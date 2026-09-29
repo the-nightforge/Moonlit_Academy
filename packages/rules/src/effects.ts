@@ -1,13 +1,15 @@
 import { checkBossPhase } from "./coop/boss";
+import { addToHand, drawCards } from "./draw";
 import { drainEnemyMoonPower } from "./intent";
-import { bumpCounter, checkLevelUps, levelUpPassive } from "./levelup";
+import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "./levelup";
 import {
   moonArmorMultiplier,
   moonCardDamageMultiplier,
   moonHealMultiplier,
   moonStealthDurationBonus,
 } from "./moon";
-import { alliesOf, heroesOf, opponentsOf, playerOf, seatTag } from "./players";
+import { alliesOf, heroesOf, opponentsOf, playerOf, prefixedId, seatTag, summonsOf } from "./players";
+import { shuffle } from "./rng";
 import { fireEventHooks } from "./run-relic-hooks";
 import {
   applyStatus,
@@ -19,6 +21,7 @@ import {
   removeStatus,
   statusValue,
 } from "./statuses";
+import { dismissSummonOf, isSummon, ownerOf, summonEffect, summonOf } from "./summons";
 import type {
   CardDef,
   CombatEvent,
@@ -50,18 +53,23 @@ export interface EffectContext {
   comboBonus?: number;
   /** Hợp Kích effects: `allAllies` means all six heroes, not the actor's three (`01` §16.4). */
   comboScope?: true;
+  /** A Linh Thú's action: its hits are attacks (`01` §17). */
+  summonAction?: true;
+  /** Kinh Hồng Vũ: a charmed intent's damage multiplier (`01` §9.3.1). */
+  damageMultiplier?: number;
 }
 
 function findUnit(state: CombatState, unitId: string | undefined): UnitState | undefined {
   if (unitId === undefined) return undefined;
-  return [...state.heroes, ...state.enemies].find((unit) => unit.id === unitId);
+  return [...state.heroes, ...summonsOf(state), ...state.enemies].find((unit) => unit.id === unitId);
 }
 
 function isAttackSource(ctx: EffectContext): boolean {
   return (
     ctx.card?.type === "attack" ||
     ctx.intentKind === "attack" ||
-    ctx.intentKind === "attackDefend"
+    ctx.intentKind === "attackDefend" ||
+    ctx.summonAction === true
   );
 }
 
@@ -85,6 +93,14 @@ function resolveTargets(state: CombatState, to: TargetRef, ctx: EffectContext): 
         return state.heroes.filter((unit) => unit.alive);
       }
       return alliesOf(state, ctx.source).filter((unit) => unit.alive);
+    case "owner": {
+      const owner = isSummon(ctx.source) ? ownerOf(state, ctx.source) : undefined;
+      return owner?.alive ? [owner] : [];
+    }
+    case "summon": {
+      const summon = ctx.source.side === "hero" && !isSummon(ctx.source) ? summonOf(state, ctx.source.id) : undefined;
+      return summon ? [summon] : [];
+    }
   }
 }
 
@@ -124,9 +140,17 @@ export function computeDamageAmount(
       flat += statusValue(ctx.source, "empower");
       if (markFromSource(target, ctx.source.id)) flat += 3;
       if (passive?.type === "attackDamageBonus") flat += passive.amount;
+      if (passive?.type === "comboAttackBonus") {
+        const played = playerOf(state, ctx.source.id)?.cardsPlayedThisTurn ?? 0;
+        flat += passive.amount * (played + (ctx.comboBonus ?? 0));
+      }
+      if (passive?.type === "bloodMoonAttackBonus" && state.bloodMoonRounds > 0) flat += passive.amount;
+      // Nam Chiếu Hồn: the hero's card hits harder on a stacked target (`18` §3.3).
+      if (passive?.type === "bonusVsDebuffed" && target.statuses.filter((st) => DEBUFF_STATUSES.has(st.id)).length >= passive.minDebuffs) flat += passive.amount;
     }
   }
   let multiplier = 1;
+  multiplier *= ctx.damageMultiplier ?? 1;
   if (ctx.card !== undefined) {
     multiplier *= moonCardDamageMultiplier(data, state, modifiersSeat(state, ctx.source), ctx.card.tags);
   }
@@ -143,11 +167,32 @@ export function loseHp(
   amount: number,
   cause: "loseHp" | "burn" | "reflect" | "bloodMoon",
   events: CombatEvent[],
-): void {
+): number {
   const lost = Math.min(unit.hp, amount);
   unit.hp -= lost;
   if (unit.side === "hero") bumpCounter(data, unit as HeroState, "damageTaken", lost);
   events.push({ type: "hpLost", targetId: unit.id, amount: lost, cause });
+  return lost;
+}
+
+/** Hàng sau: a living unit that is not the front (lowest position) of its side (`01` §5.6). */
+export function isBackRow(state: CombatState, target: UnitState): boolean {
+  const side =
+    target.side === "enemy"
+      ? state.enemies
+      : state.heroes.filter((hero) => hero.player === (target as HeroState).player);
+  const front = side.filter((unit) => unit.alive && unit.hp > 0).reduce((min, unit) => Math.min(min, unit.position), Infinity);
+  return target.position > front;
+}
+
+function nextBehind(state: CombatState, target: UnitState): UnitState | undefined {
+  const side =
+    target.side === "enemy"
+      ? state.enemies
+      : state.heroes.filter((hero) => hero.player === (target as HeroState).player);
+  return side
+    .filter((unit) => unit.alive && unit.hp > 0 && unit.position > target.position)
+    .sort((a, b) => a.position - b.position)[0];
 }
 
 function dealDamage(
@@ -158,6 +203,9 @@ function dealDamage(
   base: number,
   events: CombatEvent[],
 ): void {
+  const backRow =
+    ctx.card !== undefined && ctx.card.type === "attack" && ctx.card.bond === undefined &&
+    ctx.source.side === "hero" && isBackRow(state, target);
   const amount = computeDamageAmount(data, state, ctx, target, base);
   const blocked = Math.min(target.armor, amount);
   target.armor -= blocked;
@@ -172,6 +220,7 @@ function dealDamage(
     blocked,
     hpLost,
   });
+  if (backRow) bumpCounter(data, ctx.source as HeroState, "backRowHits", 1);
 
   // Hàn Kiếm: the first hit each turn from the hero's cards leaves the enemy vulnerable.
   const passive = cardPassive(data, ctx);
@@ -180,6 +229,15 @@ function dealDamage(
     if (!hero.firstHitUsedThisTurn) {
       hero.firstHitUsedThisTurn = true;
       if (target.alive && target.hp > 0) applyStatus(target, "vulnerable", passive.rounds, hero.id, events);
+    }
+  }
+  // Biên Tái: the first hit each turn from the hero's attack cards marks the opposing target.
+  if (passive?.type === "firstHitMarks" && ctx.card?.type === "attack" && opponentsOf(state, ctx.source).includes(target)) {
+    const hero = ctx.source as HeroState;
+    if (!hero.firstHitUsedThisTurn) {
+      hero.firstHitUsedThisTurn = true;
+      const factor = state.mode === "pvp" ? 2 : 1;
+      if (target.alive && target.hp > 0) applyStatus(target, "mark", passive.rounds * factor, hero.id, events);
     }
   }
 
@@ -238,22 +296,33 @@ export function resolveEffect(
   switch (effect.type) {
     case "damage": {
       const hits = effect.hits ?? 1;
+      const pierce = effect.to === "chosen" && cardPassive(data, ctx)?.type === "pierceOwnAttacks";
       for (const target of resolveTargets(state, effect.to, ctx)) {
         for (let hit = 0; hit < hits && target.alive && target.hp > 0; hit++) {
+          // Compute `behind` before the main hit: the main target dying must
+          // not make the unit behind it step forward (`18` §3.2).
+          const behind = pierce ? nextBehind(state, target) : undefined;
           dealDamage(data, state, ctx, target, effect.amount, events);
           if (!ctx.source.alive) return;
+          if (behind?.alive && behind.hp > 0) {
+            dealDamage(data, state, ctx, behind, effect.amount, events);
+            if (!ctx.source.alive) return;
+          }
         }
       }
       return;
     }
     case "heal": {
       const multiplier = moonHealMultiplier(data, state, modifiersSeat(state, ctx.source));
+      const healPassive = cardPassive(data, ctx);
+      const bonus = healPassive?.type === "healBonusOwnCards" ? healPassive.amount : 0;
       for (const target of resolveTargets(state, effect.to, ctx)) {
-        const raw = Math.floor(effect.amount * multiplier);
+        const raw = Math.floor((effect.amount + bonus) * multiplier);
         const healed = Math.min(target.maxHp - target.hp, raw);
         if (healed > 0) {
           target.hp += healed;
           events.push({ type: "healed", targetId: target.id, amount: healed });
+          if (ctx.card !== undefined && ctx.source.side === "hero") bumpCounter(data, ctx.source as HeroState, "hpHealed", healed);
         }
         if (effect.overflow === "armor" && raw > healed) {
           const armor = Math.floor((raw - healed) * moonArmorMultiplier(data, state, modifiersSeat(state, ctx.source)));
@@ -268,7 +337,11 @@ export function resolveEffect(
     }
     case "loseHp": {
       for (const target of resolveTargets(state, effect.to, ctx)) {
-        loseHp(data, target, effect.amount, "loseHp", events);
+        if (target === ctx.source && ctx.card?.tags.includes("forbidden") && cardPassive(data, ctx)?.type === "forbiddenNoSelfHpLoss") continue;
+        const lost = loseHp(data, target, effect.amount, "loseHp", events);
+        if (target === ctx.source && ctx.source.side === "hero" && ctx.card?.tags.includes("forbidden")) {
+          bumpCounter(data, ctx.source as HeroState, "forbiddenHpLost", lost);
+        }
       }
       return;
     }
@@ -294,12 +367,14 @@ export function resolveEffect(
     case "chooseCard": {
       const seat = playerOf(state, ctx.source.id);
       if (!seat) return;
-      const options = seat.drawPile.splice(0, Math.min(effect.look, seat.drawPile.length));
+      const extra = heroesOf(state, seat.index).reduce((sum, hero) => { const p = hero.alive && hero.leveledUp ? levelUpPassive(data, hero) : undefined; return sum + (p?.type === "chooseCardExtraLook" ? p.amount : 0); }, 0);
+      const options = seat.drawPile.splice(0, Math.min(effect.look + extra, seat.drawPile.length));
       if (options.length === 0) return;
       if (options.length === 1) {
         state.cards[options[0]!]!.heldTurns = 0;
         state.cards[options[0]!]!.chosenThisTurn = true;
-        seat.hand.push(options[0]!);
+        addToHand(data, state, seat, options[0]!, events);
+        bumpSeat(data, state, seat.index, "cardsChosen", 1);
         events.push({ type: "cardsDrawn", instanceIds: options, ...seatTag(state, seat.index) });
         return;
       }
@@ -330,18 +405,36 @@ export function resolveEffect(
       const bonus = effect.status === "stealth" ? moonStealthDurationBonus(data, state, modifiersSeat(state, ctx.source)) : 0;
       // PvP stores durations in turns (2 × rounds); they tick at each player's turn end (`17` §4.3).
       const durationFactor = state.mode === "pvp" && DURATION_STATUSES.has(effect.status) ? 2 : 1;
+      const passive = cardPassive(data, ctx);
+      const debuff = DEBUFF_STATUSES.has(effect.status);
+      let amount = (effect.amount + bonus) * durationFactor;
+      // Vong Quốc Khúc: the hero's own duration debuffs run longer (`18` §3.3).
+      if (passive?.type === "debuffDurationBonus" && debuff && DURATION_STATUSES.has(effect.status)) amount += passive.amount * durationFactor;
+      // Kinh Hồng Vũ: each charm the hero applies carries extra charges (`18` §3.3).
+      if (passive?.type === "charmMastery" && effect.status === "charm") amount += passive.extraCharges;
       let targets = resolveTargets(state, effect.to, ctx);
       if (
         effect.status === "regen" &&
-        cardPassive(data, ctx)?.type === "regenSpreadsToAllAllies"
+        passive?.type === "regenSpreadsToAllAllies"
       ) {
         targets = [...new Set([...targets, ...alliesOf(state, ctx.source).filter((h) => h.alive)])];
       }
       for (const target of targets) {
+        // Hộ Vệ on the caster itself is meaningless — the guardian must be an ally.
+        if (effect.status === "guard" && target.id === ctx.source.id) continue;
         const newFreeze = effect.status === "freeze" && !hasStatus(target, "freeze");
-        applyStatus(target, effect.status, (effect.amount + bonus) * durationFactor, ctx.source.id, events);
+        applyStatus(target, effect.status, amount, ctx.source.id, events);
         if (newFreeze && ctx.source.side === "hero") {
           bumpCounter(data, ctx.source as HeroState, "freezesApplied", 1);
+        }
+        // PvP: an opposing hero is still `side === "hero"` — check the side lists (`17` §3.4).
+        if (debuff && ctx.source.side === "hero" && opponentsOf(state, ctx.source).includes(target)) {
+          bumpCounter(data, ctx.source as HeroState, "debuffsApplied", 1);
+        }
+        if (effect.status === "charm" && ctx.source.side === "hero" && opponentsOf(state, ctx.source).includes(target)) {
+          bumpCounter(data, ctx.source as HeroState, "charmsApplied", 1);
+          // Vũ Y: charming an enemy hides the charmer (`18` §3.3).
+          if (passive?.type === "stealthOnCharm") applyStatus(ctx.source, "stealth", passive.rounds * durationFactor, ctx.source.id, events);
         }
         if (effect.status === "regen") cleanseIfHealer(data, ctx, target, events);
       }
@@ -359,6 +452,11 @@ export function resolveEffect(
         (((state.moonIndex + effect.amount) % data.moonPhases.length) + data.moonPhases.length) %
         data.moonPhases.length;
       events.push({ type: "moonShifted", from, to: state.moonIndex, cause: "card" });
+      if (ctx.card !== undefined && ctx.source.side === "hero") bumpCounter(data, ctx.source as HeroState, "moonShifts", 1);
+      const weakens = cardPassive(data, ctx);
+      if (weakens?.type === "moonShiftWeakensEnemies") {
+        resolveEffect(data, state, { type: "applyStatus", status: "weak", amount: weakens.amount, to: "allEnemies" }, ctx, events);
+      }
       return;
     }
     case "stealBuff": {
@@ -397,6 +495,7 @@ export function resolveEffect(
         if (healed > 0) {
           target.hp += healed;
           events.push({ type: "healed", targetId: target.id, amount: healed });
+          if (ctx.card !== undefined && ctx.source.side === "hero") bumpCounter(data, ctx.source as HeroState, "hpHealed", healed);
         }
         removeStatus(target, "regen", events);
         cleanseIfHealer(data, ctx, target, events);
@@ -468,6 +567,99 @@ export function resolveEffect(
       }
       return;
     }
+    case "createCard": {
+      const seat = playerOf(state, ctx.source.id);
+      const card = data.cards[effect.cardId];
+      if (!seat || card?.ownerId === undefined) return;
+      if (seat.hand.length >= data.combatConfig.handLimit) {
+        events.push({ type: "cardCreated", cardId: card.id, instanceId: null, ...seatTag(state, seat.index) });
+        return;
+      }
+      seat.createdCards = (seat.createdCards ?? 0) + 1;
+      const instanceId = prefixedId(state, seat.index, `t${seat.createdCards}`);
+      state.cards[instanceId] = { instanceId, cardId: card.id, ownerIds: [card.ownerId], player: seat.index, heldTurns: 0 };
+      seat.hand.push(instanceId);
+      events.push({ type: "cardCreated", cardId: card.id, instanceId, ...seatTag(state, seat.index) });
+      return;
+    }
+    case "drawCards": {
+      const seat = playerOf(state, ctx.source.id);
+      if (!seat) return;
+      drawCards(data, state, seat, effect.amount, events);
+      return;
+    }
+    case "summon": {
+      if (ctx.source.side !== "hero" || isSummon(ctx.source)) return;
+      summonEffect(data, state, ctx.source as HeroState, effect.summonId, events);
+      return;
+    }
+    case "sealIntent": {
+      const hero = ctx.source.side === "hero" && !isSummon(ctx.source) ? (ctx.source as HeroState) : undefined;
+      const passive = cardPassive(data, ctx);
+      for (const target of resolveTargets(state, effect.to, ctx)) {
+        // Phong Ấn (`01` §5.6): mark the opposing unit — during its side's next
+        // turn every intent or card it plays keeps damage but loses every other
+        // effect. The counter credits the sealer at strip time, not at cast.
+        if (!opponentsOf(state, ctx.source).includes(target)) continue;
+        target.sealedBy = ctx.source.id;
+        if (passive?.type === "sealExtraFirstPerTurn" && hero && !hero.firstSealUsedThisTurn) {
+          hero.firstSealUsedThisTurn = true;
+          const extra = opponentsOf(state, ctx.source)
+            .filter((unit) => unit.alive && unit.id !== target.id)
+            .sort((a, b) => a.position - b.position)[0];
+          if (extra) extra.sealedBy = ctx.source.id;
+        }
+        if (passive?.type === "sealWeakens") {
+          const factor = state.mode === "pvp" ? 2 : 1;
+          applyStatus(target, "weak", passive.amount * factor, ctx.source.id, events);
+        }
+      }
+      return;
+    }
+    case "extendDebuffs": {
+      // PvP durations are stored in turns (2 × rounds), like applyStatus (`17` §4.3).
+      const factor = state.mode === "pvp" ? 2 : 1;
+      for (const target of resolveTargets(state, effect.to, ctx)) {
+        for (const entry of target.statuses) {
+          if (DEBUFF_STATUSES.has(entry.id) && DURATION_STATUSES.has(entry.id)) {
+            entry.value += effect.amount * factor;
+            events.push({ type: "statusApplied", targetId: target.id, status: entry.id, value: entry.value });
+          }
+        }
+      }
+      return;
+    }
+    case "revive": {
+      // Hồi Hồn (`18` §3.5): a fallen, unrevived ally stands back up at
+      // ratio × maxHp and its purged draw-pile cards shuffle back in.
+      const seat = playerOf(state, ctx.source.id);
+      if (!seat) return;
+      const targetId =
+        effect.to === "chosen"
+          ? ctx.chosenId
+          : [...(seat.fallenOrder ?? [])].reverse().find((id) => {
+              const hero = state.heroes.find((h) => h.id === id);
+              return hero !== undefined && !hero.alive && !hero.revived;
+            });
+      const hero = state.heroes.find((h) => h.id === targetId && h.player === seat.index);
+      if (!hero || hero.alive || hero.revived) return;
+      hero.alive = true;
+      hero.revived = true;
+      hero.hp = Math.max(1, Math.floor(effect.ratio * hero.maxHp));
+      hero.armor = 0;
+      hero.statuses = [];
+      events.push({ type: "heroRevived", heroId: hero.id, hp: hero.hp, ...seatTag(state, seat.index) });
+      const back = seat.purged?.[hero.id] ?? [];
+      if (back.length > 0) {
+        seat.discardPile = seat.discardPile.filter((id) => !back.includes(id));
+        const shuffled = shuffle([...seat.drawPile, ...back], state.rngState);
+        seat.drawPile = shuffled.items;
+        state.rngState = shuffled.rngState;
+        delete seat.purged![hero.id];
+        events.push({ type: "deckShuffled", ...seatTag(state, seat.index) });
+      }
+      return;
+    }
     default: {
       const exhaustive: never = effect;
       throw new Error(`unknown effect: ${JSON.stringify(exhaustive)}`);
@@ -481,7 +673,7 @@ export function processDeaths(
   events: CombatEvent[],
   killer: Killer | undefined,
 ): void {
-  for (const unit of [...state.heroes, ...state.enemies]) {
+  for (const unit of [...state.heroes, ...summonsOf(state), ...state.enemies]) {
     if (unit.alive && unit.hp <= 0) killUnit(data, state, unit, events, killer);
   }
 }
@@ -509,6 +701,11 @@ function killUnit(
     unitId: unit.id,
     ...(killer !== undefined ? { killerId: killer.id } : {}),
   });
+  // Linh Thú never count toward enemiesKilled and carry no cards/drawPile (`01` §17.2, §17.4).
+  if (isSummon(unit)) {
+    state.summons = summonsOf(state).filter((summon) => summon !== unit);
+    return;
+  }
   if (killer) {
     const killerHero = state.heroes.find((hero) => hero.id === killer.id);
     // PvE/co-op: kills of enemies count. PvP: kills of the opposing seat's heroes count (`17` §4.5).
@@ -521,15 +718,30 @@ function killUnit(
     }
   }
   if (unit.side === "hero") {
+    dismissSummonOf(state, unit.id, events);
     const defId = (unit as HeroState).defId;
     const seat = playerOf(state, unit.id)!;
+    // Hồi Hồn (`18` §3.5): remember the fall order and keep the purged
+    // draw-pile cards so a revive can shuffle them back in.
+    seat.fallenOrder = [...(seat.fallenOrder ?? []), unit.id];
     const purged = seat.drawPile.filter(
       (id) => state.cards[id]!.player === seat.index && state.cards[id]!.ownerIds.includes(defId),
     );
     if (purged.length > 0) {
       seat.drawPile = seat.drawPile.filter((id) => !purged.includes(id));
       seat.discardPile.push(...purged);
+      seat.purged = { ...(seat.purged ?? {}), [unit.id]: purged };
       events.push({ type: "cardsPurged", heroId: unit.id, instanceIds: purged, ...seatTag(state, seat.index) });
+    }
+    // F10 Vong Xuyên: the fall counts seat-wide; survivors may shield themselves.
+    bumpSeat(data, state, seat.index, "alliesFallen", 1);
+    for (const ally of heroesOf(state, seat.index)) {
+      const passive = ally.alive && ally.leveledUp ? levelUpPassive(data, ally) : undefined;
+      if (passive?.type !== "armorOnAllyFall") continue;
+      for (const survivor of heroesOf(state, seat.index).filter((hero) => hero.alive)) {
+        survivor.armor += passive.amount;
+        events.push({ type: "armorGained", targetId: survivor.id, amount: passive.amount });
+      }
     }
   }
 }

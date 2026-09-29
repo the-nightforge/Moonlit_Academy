@@ -19,6 +19,7 @@ import relicsJson from "../relics.json";
 import pvpConfigJson from "../pvp-config.json";
 import coopConfigJson from "../coop-config.json";
 import coopCombosJson from "../coop-combos.json";
+import summonsJson from "../summons.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -43,6 +44,7 @@ function rawData(): any {
     pvpConfig: pvpConfigJson,
     coopConfig: coopConfigJson,
     coopCombos: coopCombosJson,
+    summons: summonsJson,
   }));
 }
 
@@ -50,8 +52,8 @@ describe("loadGameData", () => {
   it("loads the real data files into GameData keyed by id", () => {
     const data = loadGameData();
 
-    expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02"]);
-    expect(Object.keys(data.cards)).toHaveLength(68); // 60 hero + 3 bond + 5 constellation-4 plus cards
+    expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02", "m01", "m02", "m03", "m04", "f01", "m07", "m08", "m10", "f08", "f05", "f06", "f07", "f09", "f10", "m09"]);
+    expect(Object.keys(data.cards)).toHaveLength(270); // 240 hero + 9 bond + 20 constellation-4 plus cards + 1 token
     expect(Object.keys(data.enemies)).toEqual([
       "puppet_guard", "shadow_fox", "moon_ape", "book_wraith", "black_guard", "fox_king", "eclipse_lord",
     ]);
@@ -306,6 +308,33 @@ describe("parseGameData validation", () => {
     keyword.cards[0].keywords = ["no_such_keyword"];
     expect(() => parseGameData(keyword)).toThrowError(/unknown keyword/);
   });
+
+  it("T271: createCard must point at a token card owned by the creating hero; tokens stay out of pools", () => {
+    const raw = rawData();
+    raw.cards.push({ id: "tok_x", name: "X", ownerId: "m05", cost: 0, copies: 1, type: "skill", tags: [], target: "none", effects: [{ type: "gainMoonPower", amount: 1 }], text: "", token: true });
+    raw.heroes.find((h: any) => h.id === "f04").levelUp.onLevelUp = [{ type: "createCard", cardId: "tok_x" }];
+    expect(() => parseGameData(raw)).toThrow(/createCard .*tok_x.* owned by "f04"/);
+
+    const pooled = rawData();
+    pooled.cards.find((c: any) => c.id === pooled.heroes[0].cardIds[0]).token = true;
+    expect(() => parseGameData(pooled)).toThrow(/token card .* must not be in a hero pool/);
+
+    const notToken = rawData();
+    notToken.heroes[0].levelUp.onLevelUp = [{ type: "createCard", cardId: notToken.heroes[0].cardIds[0] }];
+    expect(() => parseGameData(notToken)).toThrow(/createCard .* must be a token card/);
+  });
+
+  it("T271b: rejects createCard hidden inside execute.elseEffects of levelUp.onLevelUp, and banned effects there", () => {
+    const nested = rawData();
+    nested.heroes.find((h: any) => h.id === "f04").levelUp.onLevelUp = [
+      { type: "execute", threshold: 0.5, to: "allEnemies", elseEffects: [{ type: "createCard", cardId: "m05_ho_gam" }] },
+    ];
+    expect(() => parseGameData(nested)).toThrow(/must be a token card/);
+
+    const chosen = rawData();
+    chosen.heroes[0].levelUp.onLevelUp = [{ type: "damage", amount: 3, to: "chosen" }];
+    expect(() => parseGameData(chosen)).toThrow(/levelUp\.onLevelUp: effects must not use to "chosen"/);
+  });
 });
 
 describe("economyConfig", () => {
@@ -396,10 +425,17 @@ describe("weapons, moon relics and second level-up forms", () => {
     expect(() => parseGameData(onLevelUp)).toThrow(/altLevelUp.onLevelUp: effects must not use to "chosen"/);
   });
 
+  it("T271c: rejects createCard in a weapon card's effects", () => {
+    const raw = rawData();
+    raw.weapons[0].card.effects.push({ type: "createCard", cardId: "m05_ho_gam" });
+    expect(() => parseGameData(raw)).toThrow(/weapon "w_xich_diem_thuong" R1: createCard is not allowed/);
+  });
+
   it("pvpConfig: arena stats cover every hero and every referenced id exists", () => {
     const data = loadGameData();
     expect(Object.keys(data.pvpConfig.heroStats).sort()).toEqual(Object.keys(data.heroes).sort());
-    expect(data.pvpConfig.trialHeroIds).toHaveLength(Object.keys(data.heroes).length);
+    // Wave-1 heroes are not trial heroes — the trial list stays at the original five.
+    expect(data.pvpConfig.trialHeroIds).toEqual(["m05", "f04", "m06", "f03", "f02"]);
     for (const id of data.pvpConfig.freeWeaponIds) expect(data.weapons[id]).toBeDefined();
     for (const id of data.pvpConfig.freeRelicIds) expect(data.relics[id]).toBeDefined();
     expect(data.pvpConfig.secondPlayerBonus.moonPower).toBeGreaterThan(0);
@@ -497,5 +533,36 @@ describe("co-op data", () => {
     const wrongTier = rawData();
     wrongTier.coopConfig.encounterId = "enc_01";
     expect(() => parseGameData(wrongTier)).toThrow(/is not tier "coop"/);
+  });
+
+  it("T295a: summons cross-check — awakenedId exists, owner only in summon actions, summon target only on hero cards", () => {
+    const bad = rawData();
+    bad.summons = [{ id: "s_a", name: "A", maxHp: 5, targeting: "front", action: [{ type: "damage", amount: 1, to: "chosen" }], awakenedId: "s_missing" }];
+    expect(() => parseGameData(bad)).toThrow(/summon "s_a": awakenedId references missing summon "s_missing"/);
+
+    const ownerOnCard = rawData();
+    ownerOnCard.cards[0].effects = [{ type: "heal", amount: 1, to: "owner" }];
+    expect(() => parseGameData(ownerOnCard)).toThrow(/to "owner" is only allowed in summon actions/);
+
+    const summonInAction = rawData();
+    summonInAction.summons = [{ id: "s_b", name: "B", maxHp: 5, targeting: "front", action: [{ type: "summon", summonId: "s_b" }] }];
+    expect(() => parseGameData(summonInAction)).toThrow(/summon "s_b": action must not use summon, chooseCard, createCard or to "summon"/);
+
+    const unknown = rawData();
+    unknown.cards[0].effects = [{ type: "summon", summonId: "s_nope" }];
+    expect(() => parseGameData(unknown)).toThrow(/summon references missing summon "s_nope"/);
+  });
+
+  it("T295b: fallenAlly cards must revive; revive only on fallenAlly cards or onLevelUp", () => {
+    const a = rawData();
+    a.cards[0].target = "fallenAlly";
+    expect(() => parseGameData(a)).toThrow(/target "fallenAlly" requires a revive effect with to "chosen"/);
+    const b = rawData();
+    b.cards[0].effects = [{ type: "revive", ratio: 0.5, to: "chosen" }];
+    expect(() => parseGameData(b)).toThrow(/revive to "chosen" needs target "fallenAlly"/);
+    const c = rawData();
+    c.cards[0].target = "none";
+    c.cards[0].effects = [{ type: "revive", ratio: 0.3, to: "lastFallen" }];
+    expect(() => parseGameData(c)).toThrow(/revive to "lastFallen" is only allowed on onLevelUp/);
   });
 });

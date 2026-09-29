@@ -178,9 +178,9 @@ describe("co-op realtime (`17` §9)", () => {
       ends.push([seatA.ended as unknown as CoopEnd, seatB.ended as unknown as CoopEnd]);
     }
 
-    // Wins pay 40/3; the first win of the day adds 20 more jade (`17` §9.2).
-    expect(ends[0]![0]).toMatchObject({ result: "won", rewards: { moonJade: 60, moonDust: 3, firstWin: true } });
-    expect(ends[0]![1]).toMatchObject({ result: "won", rewards: { moonJade: 60, moonDust: 3, firstWin: true } });
+    // Wins pay 40/3; the first win of the day adds 10 more jade (`17` §9.2).
+    expect(ends[0]![0]).toMatchObject({ result: "won", rewards: { moonJade: 50, moonDust: 3, firstWin: true } });
+    expect(ends[0]![1]).toMatchObject({ result: "won", rewards: { moonJade: 50, moonDust: 3, firstWin: true } });
     expect(ends[1]![0].rewards).toMatchObject({ moonJade: 40, firstWin: false });
     expect(ends[2]![0].rewards).toMatchObject({ moonJade: 40, firstWin: false });
     // Match four exceeds rewardedMatchesPerDay: played normally, pays nothing.
@@ -200,8 +200,8 @@ describe("co-op realtime (`17` §9)", () => {
       currencies: { moonJade: number; moonDust: number };
       coop: { clears: number; rewarded: number };
     };
-    // Starter gift (2400) plus the three paid wins (60 + 40 + 40); match 4 unpaid.
-    expect(profile.currencies.moonJade).toBe(server.data.economyConfig.starterGift.moonJade + 140);
+    // Starter gift (2400) plus the three paid wins (50 + 40 + 40); match 4 unpaid.
+    expect(profile.currencies.moonJade).toBe(server.data.economyConfig.starterGift.moonJade + 130);
     expect(profile.currencies.moonDust).toBe(9);
     expect(profile.coop).toMatchObject({ clears: 4, rewarded: 3 });
   }, 120_000);
@@ -236,7 +236,7 @@ describe("co-op realtime (`17` §9)", () => {
     const endA = seatA.ended as unknown as CoopEnd;
     const endB = seatB.ended as unknown as CoopEnd;
     expect(endA).toMatchObject({ result: "lost", rewards: null });
-    expect(endB).toMatchObject({ result: "won", rewards: { moonJade: 60, moonDust: 3, firstWin: true } });
+    expect(endB).toMatchObject({ result: "won", rewards: { moonJade: 50, moonDust: 3, firstWin: true } });
 
     // The forfeiter's day counters stay untouched; the survivor's advance.
     const meA = await call(server, "GET", "/api/coop/me", { token: a.token });

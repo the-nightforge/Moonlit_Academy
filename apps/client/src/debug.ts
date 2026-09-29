@@ -29,7 +29,7 @@ export function debugAddMoonPower(amount = 3): void {
 }
 
 export function debugDrawCards(count = 1): void {
-  drawCards(session.state, activePlayerState(session.state), count, session.events);
+  drawCards(session.data, session.state, activePlayerState(session.state), count, session.events);
 }
 
 export function debugSetMoon(index: number): void {
@@ -54,6 +54,15 @@ export function debugKillEnemy(index: number): void {
   enemy.armor = 0;
   session.events.push({ type: "unitDied", unitId: enemy.id });
   checkEnd();
+}
+
+/** Forces the level-up flag so leveled passives (Chọn Pha, …) engage next turn. */
+export function debugSetLeveledUp(index: number): void {
+  const hero = session.state.heroes[index];
+  if (!hero || hero.leveledUp) return;
+  hero.leveledUp = true;
+  const def = session.data.heroes[hero.defId];
+  session.events.push({ type: "heroLeveledUp", heroId: hero.id, name: def?.levelUp.name ?? hero.defId });
 }
 
 export function debugAdjustHeroHp(index: number, delta: number): void {
@@ -89,6 +98,8 @@ export function describeEvent(
       return `Đổi Bài ${event.returned.length} lá`;
     case "choiceOpened":
       return `Chiêm Bài: ${event.options.length} lá`;
+    case "moonChoiceOpened":
+      return "Chọn Pha";
     case "cardChosen":
       return "Chọn 1 lá";
     case "cardPlayed": {
@@ -98,6 +109,8 @@ export function describeEvent(
     }
     case "cardDiscarded":
       return `Bỏ ${event.instanceIds.length} lá`;
+    case "cardCreated":
+      return event.instanceId === null ? "Tay đầy — không tạo lá" : "Tạo lá";
     case "damageDealt":
       return `${name(event.sourceId)} → ${name(event.targetId)}: ${event.amount} (chặn ${event.blocked}, -${event.hpLost})`;
     case "hpLost":
@@ -128,6 +141,8 @@ export function describeEvent(
       return `${name(event.enemyId)} báo ${event.intents.map((i) => i.intentId).join(", ") || "Tụ Lực"} (NL ${event.moonPower})`;
     case "intentsCancelled":
       return `${name(event.enemyId)} bị hủy ${event.intentIds.join(", ")}`;
+    case "sealStripped":
+      return `${name(event.unitId)} (${event.refId}) bị Phong Ấn tước hiệu ứng`;
     case "intentExecuted":
       return `${name(event.enemyId)} thực hiện ${event.intentId} → ${name(event.targetId)}`;
     case "intentSkipped":
@@ -147,6 +162,14 @@ export function describeEvent(
       return `${name(event.heroId)} thăng cấp: ${event.name}`;
     case "unitDied":
       return `${name(event.unitId)} ngã`;
+    case "heroRevived":
+      return "Hồi Hồn";
+    case "summoned":
+      return "Triệu hồi Linh Thú";
+    case "summonActed":
+      return "Linh Thú hành động";
+    case "summonDismissed":
+      return "Linh Thú biến mất";
     case "coopComboTriggered":
       return `Hợp Kích: ${data.coopCombos[event.comboId]?.name ?? event.comboId}`;
     case "bossPhaseChanged":

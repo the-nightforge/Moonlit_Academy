@@ -45,7 +45,7 @@ describe("gacha", () => {
     const { epicPity } = data.economyConfig.gacha;
     const result = pull(data, withJade(data, 5000), 10);
     const rarities = result.results.map((entry) => entry.rarity);
-    expect(rarities.slice(0, epicPity - 1).every((rarity) => rarity === "rare")).toBe(true);
+    expect(rarities.slice(0, epicPity - 1).every((rarity) => rarity !== "epic")).toBe(true);
     expect(rarities[epicPity - 1]).toBe("epic");
     expect(result.profile.pity[BANNER]).toEqual({ sinceEpic: 10 - epicPity, sinceLegendary: 10 });
 
@@ -82,9 +82,10 @@ describe("gacha", () => {
 
     const epic = rigged({ legendary: 0, epic: 1 });
     const owned = pull(epic, withJade(epic, 5000), 10).results.map((entry) => entry.itemId);
-    // m06 is a starter; the first two epics must be the two epic heroes not owned.
-    expect(new Set(owned.slice(0, 2))).toEqual(new Set(["f02", "f03"]));
-    expect(owned.slice(0, 2).every((heroId) => heroId !== "m06")).toBe(true);
+    // m06 is a starter; the first two epics must be two distinct epic heroes not owned.
+    const epicPool = epic.banners[BANNER]!.pool.epic;
+    expect(new Set(owned.slice(0, 2)).size).toBe(2);
+    expect(owned.slice(0, 2).every((heroId) => epicPool.includes(heroId) && heroId !== "m06")).toBe(true);
   });
 
   it("T190: not enough moon jade is an error and changes nothing", () => {

@@ -8,7 +8,9 @@ export {
   playerOf,
   playerOfCard,
   prefixedId,
+  summonsOf,
 } from "./players";
+export { dismissSummonOf, isSummon, summonEffect, summonOf } from "./summons";
 export { cardDefOf, relicAt, weaponAt, weaponCardDef, weaponHooks } from "./gear";
 export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-combat";
 export { createPvpCombat } from "./pvp/create";
@@ -22,6 +24,7 @@ export { coopRedactEvents, coopViewFor } from "./coop/view";
 export { chooseCombatAction } from "./bot";
 export { displayDuration, getStatus, hasStatus } from "./statuses";
 export { applyAction } from "./apply-action";
+export { autoChoiceAction } from "./choice";
 export { getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
 export { getMulliganError, getPlayCardError } from "./apply-action";
 export { previewEnemyIntent } from "./preview";

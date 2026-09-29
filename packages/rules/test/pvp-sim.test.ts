@@ -7,10 +7,11 @@ const enabled = Boolean(
 );
 
 describe("pvp simulation", () => {
-  it.skipIf(!enabled)("toàn bộ đội × đội, trần không trang bị + trang bị PvP cơ bản", { timeout: 3_600_000 }, () => {
+  it.skipIf(!enabled)("cặp đội bốc mẫu, trần không trang bị + trang bị PvP cơ bản", { timeout: 3_600_000 }, () => {
     const data = loadGameData();
-    // 10 đội × 10 đội × 12 seed = 1200 trận → sai số ±~2.9 điểm cho tỉ lệ người đi trước.
-    printPvpSim("Bộ cơ bản, không trang bị", runPvpSim(data, { seedsPerPair: 12 }));
-    printPvpSim("Bộ cơ bản, trang bị PvP cơ bản ngẫu nhiên", runPvpSim(data, { seedsPerPair: 12, geared: true }));
+    // 14 Hero → C(14,3) = 364 đội: quét toàn bộ quá chậm, bốc mẫu 4000 cặp mỗi
+    // lượt (seed cố định của file; sai số tỉ lệ thắng Hero ~±3 điểm ở ~570 trận/Hero).
+    printPvpSim("Bộ cơ bản, không trang bị (mẫu 4000)", runPvpSim(data, { seedsPerPair: 12, sampleMatches: 4000 }));
+    printPvpSim("Bộ cơ bản, trang bị PvP cơ bản ngẫu nhiên (mẫu 4000)", runPvpSim(data, { seedsPerPair: 12, sampleMatches: 4000, geared: true }));
   });
 });

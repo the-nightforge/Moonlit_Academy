@@ -1,6 +1,7 @@
 import { computeDamageAmount, type EffectContext } from "./effects";
-import { reresolveTarget } from "./enemy-turn";
+import { charmTargetOf, guardianOf, reresolveTarget } from "./enemy-turn";
 import { baseMoonPower } from "./moon-power";
+import { summonsOf } from "./players";
 import { hasStatus } from "./statuses";
 import type {
   CombatState,
@@ -41,7 +42,13 @@ function previewIntent(
   let targetId: string | null = null;
   let fizzles = false;
   if (intent.targeting !== undefined) {
-    targetId = reresolveTarget({ ...state }, planned.targetId, intent.targeting);
+    if (hasStatus(enemy, "charm")) {
+      // Mê Hoặc: the intent turns on a fellow enemy (`01` §9.3.1).
+      targetId = charmTargetOf(state, enemy)?.id ?? null;
+    } else {
+      targetId = reresolveTarget({ ...state }, planned.targetId, intent.targeting);
+      if (targetId !== null) targetId = guardianOf(state, targetId)?.id ?? targetId;
+    }
     fizzles = targetId === null;
   }
   const ctx: EffectContext = {
@@ -58,10 +65,10 @@ function previewIntent(
         : Math.floor((enemy.maxHp - enemy.hp) * effect.ratio);
     let targets: UnitState[] = [];
     if (effect.to === "chosen") {
-      const target = [...state.heroes, ...state.enemies].find((unit) => unit.id === targetId);
+      const target = [...state.heroes, ...summonsOf(state), ...state.enemies].find((unit) => unit.id === targetId);
       targets = target?.alive ? [target] : [];
     } else if (effect.to === "allEnemies") {
-      targets = state.heroes.filter((hero) => hero.alive);
+      targets = [...state.heroes, ...summonsOf(state)].filter((unit) => unit.alive);
     } else if (effect.to === "self") {
       targets = [enemy];
     } else {

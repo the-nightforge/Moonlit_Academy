@@ -134,7 +134,17 @@ Khi đội có đủ một cặp, deck tự thêm **1 lá Song Hành**. Lá này
 
 **Phân bổ phe hiện tại:** Thanh Loan 5, Huyền Vũ 4, Bạch Lộ 6, Xích Diên 3, Trung lập 2. Nên ưu tiên Xích Diên khi thêm Hero mới.
 
-**F09 Tiểu Mãn** có tiến trình đặc biệt ngoài trận: Common → nhiệm vụ cốt truyện *Nguyệt Thố Tỉnh Giấc* → Epic → nhiệm vụ *Chân Thân* → mở dạng thăng cấp thứ hai.
+**F09 Tiểu Mãn** có tiến trình đặc biệt ngoài trận: Common → nhiệm vụ cốt truyện *Nguyệt Thố Tỉnh Giấc* → Epic → nhiệm vụ *Chân Thân* → mở dạng thăng cấp thứ hai. Tiến trình này
+để sau (`18` §0, không có ở GĐ 7b); giai đoạn 7b dùng F09 độ hiếm Common cố định.
+
+**Lệch GDD đã duyệt (GĐ 7b, `18` §3.3):** GDD ghi dạng thăng cấp (`levelUp.passive`
+thường) của **F07** là *Sử Bút: xem trước 2 ý định tiếp theo của địch* (ngưỡng "Phong ấn
+3 kỹ năng địch" giữ nguyên, chỉ đổi thành bộ đếm `intentsSealed → 3`). Prototype **giữ
+tên** *Sử Bút* nhưng **đổi hiệu ứng** thành `sealExtraFirstPerTurn` (lần Phong Ấn đầu mỗi
+lượt đặt dấu thêm lên 1 kẻ địch khác) — xem trước ý định vòng sau đòi lên chuỗi trước hai vòng, đổi thứ
+tự RNG và làm hỏng T213 (bộ ghi vàng PvE). Dạng thăng cấp thứ hai (Tinh Hồn 5, mục ngoài
+GDD) là *Chép Sử* — `sealWeakens` (Phong Ấn còn áp Suy Yếu 1 lên mục tiêu). Chi tiết: `01`
+§8, `18` §3.3.
 
 ### 4.1 Mẫu bộ 5 lá kỹ năng — M05 Hoắc Liệt
 
@@ -423,6 +433,6 @@ vong-nguyet/
 | **4. Server + Meta** | Có tài khoản | Server lưu kho đồ, gacha 3 banner, Tinh Hồn / Tinh Luyện / Cộng Minh, art thật |
 | **5. PvP** | Đấu Trường Công Bằng | Phòng Colyseus 1v1, bảng chỉ số PvP, xếp hạng đơn giản |
 | **6. Co-op** | Raid 2 người | Lượt đồng thời, Hợp Kích, Boss Nguyệt Thực |
-| **7. Nội dung** | Đủ game | Đủ 20 Hero, Arc 1–2, thêm vũ khí và relic |
+| **7. Nội dung** | Đủ game | Đủ 20 Hero, Cốt truyện Arc 1–2, trang bị bản mệnh + nâng cấp vật liệu (`18`) |
 
 **Nguyên tắc:** mỗi giai đoạn phải có bản chơi được trước khi sang giai đoạn sau. Luôn giữ `rules` có test đầy đủ, vì PvP và co-op đều dựa vào nó.

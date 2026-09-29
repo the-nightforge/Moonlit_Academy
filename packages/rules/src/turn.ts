@@ -5,10 +5,12 @@ import { runEnemyTurn } from "./enemy-turn";
 import { planEnemyIntents } from "./intent";
 import { bumpCounter, checkLevelUps, levelUpPassive } from "./levelup";
 import { baseMoonPower } from "./moon-power";
-import { heroesOf, seatTag } from "./players";
+import { heroesOf, seatTag, summonsOf } from "./players";
 import { cardOwners } from "./queries";
 import { fireEventHooks, runRelicHooks } from "./run-relic-hooks";
 import { DURATION_STATUSES, hasStatus, removeStatus } from "./statuses";
+import { runSummonActions } from "./summons";
+import { heroTurnStart, passiveOf, seatTurnStart } from "./turn-passives";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "./types/index";
 
 export function startPlayerTurn(
@@ -20,12 +22,13 @@ export function startPlayerTurn(
   state.status = "playerTurn";
   events.push({ type: "turnStarted", side: "hero", round: state.round, ...seatTag(state, player.index) });
   player.cardsPlayedThisTurn = 0;
-  for (const hero of heroesOf(state, player.index)) {
-    if (hero.armor > 0) {
-      hero.armor = 0;
-      events.push({ type: "armorRemoved", targetId: hero.id });
+  const mySummons = summonsOf(state).filter((summon) => summon.player === player.index);
+  for (const unit of [...heroesOf(state, player.index), ...mySummons]) {
+    if (unit.armor > 0) {
+      unit.armor = 0;
+      events.push({ type: "armorRemoved", targetId: unit.id });
     }
-    removeStatus(hero, "reflect", events);
+    removeStatus(unit, "reflect", events);
   }
   const anyAllyRegen = heroesOf(state, player.index).some(
     (hero) => hero.alive && hasStatus(hero, "regen"),
@@ -37,12 +40,13 @@ export function startPlayerTurn(
     hero.comboBonusUsedThisTurn = false;
     hero.firstHitUsedThisTurn = false;
     hero.firstCardDiscountActive = hero.leveledUp && levelUpPassive(data, hero)?.type === "firstOwnCardDiscount";
+    heroTurnStart(data, state, hero, events);
   }
   checkLevelUps(data, state, events);
-  for (const hero of heroesOf(state, player.index)) {
-    if (!hero.alive) continue;
+  for (const unit of [...heroesOf(state, player.index), ...mySummons]) {
+    if (!unit.alive) continue;
     const start = events.length;
-    tickUnitStatuses(data, state, hero, events);
+    tickUnitStatuses(data, state, unit, events);
     if (checkCombatEnd(state, events)) return;
     fireEventHooks(data, state, events, start, state.bloodMoonRounds);
     if (checkCombatEnd(state, events)) return;
@@ -50,6 +54,7 @@ export function startPlayerTurn(
   if (state.bloodMoonRounds > 0) {
     for (const hero of heroesOf(state, player.index)) {
       if (!hero.alive) continue;
+      if (passiveOf(data, hero)?.type === "bloodMoonImmune") continue;
       const start = events.length;
       loseHp(data, hero, data.combatConfig.bloodMoonHpLoss, "bloodMoon", events);
       processDeaths(data, state, events, undefined);
@@ -83,11 +88,12 @@ export function startPlayerTurn(
     return;
   }
   runRelicHooks(data, state, events, { type: "playerTurnStart" }, player.index);
+  seatTurnStart(data, state, player, events);
 }
 
 /** Duration statuses tick down once per unit at the round's (PvE) or turn's (PvP) end. */
 export function tickDurations(state: CombatState, events: CombatEvent[]): void {
-  for (const unit of [...state.heroes, ...state.enemies]) {
+  for (const unit of [...state.heroes, ...summonsOf(state), ...state.enemies]) {
     for (const entry of [...unit.statuses]) {
       if (!DURATION_STATUSES.has(entry.id)) continue;
       entry.value -= 1;
@@ -152,19 +158,29 @@ export function endSeatTurn(
     events.push({ type: "cardDiscarded", instanceIds: broken, ...seatTag(state, player.index) });
   }
   for (const id of player.hand) state.cards[id]!.heldTurns += 1;
-  for (const instance of Object.values(state.cards)) delete instance.chosenThisTurn;
+  for (const instance of Object.values(state.cards)) {
+    if (instance.player !== player.index) continue;
+    delete instance.chosenThisTurn;
+    delete instance.turnDiscount;
+  }
   const reserve = Math.min(data.combatConfig.moonReserveMax, player.moonPower);
   if (reserve !== player.moonReserve) {
     player.moonReserve = reserve;
     events.push({ type: "moonReserveChanged", side: "hero", value: reserve, ...seatTag(state, player.index) });
   }
-  for (const hero of heroesOf(state, player.index)) removeStatus(hero, "freeze", events);
+  // Phong Ấn (`01` §5.6): the mark expires with the seat's turn, used or not.
+  for (const hero of heroesOf(state, player.index)) {
+    delete hero.sealedBy;
+    removeStatus(hero, "freeze", events);
+  }
 }
 
 export function runEndTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
   const player = state.players[state.activePlayer]!;
   endSeatTurn(data, state, player, events);
   if (state.status === "won" || state.status === "lost") return;
+  runSummonActions(data, state, [player.index], events);
+  if (["won", "lost"].includes(state.status)) return;
   runEnemyTurn(data, state, events);
   if (state.status !== "enemyTurn") return;
   endRound(data, state, events);
