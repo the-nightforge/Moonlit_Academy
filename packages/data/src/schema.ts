@@ -85,7 +85,7 @@ const levelUpCounterSchema = z.enum([
   "hpHealed", "turnsSurvived", "moonShifts",
   "studyPoints", "fullMoonsSeen", "forbiddenHpLost",
   "summonsMade", "charmsApplied", "debuffsApplied", "intentsSealed",
-  "alliesFallen",
+  "alliesFallen", "backRowHits",
 ]);
 
 const levelUpPassiveSchema = z.discriminatedUnion("type", [
@@ -124,6 +124,8 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("sealExtraFirstPerTurn") }),
   z.object({ type: z.literal("sealWeakens"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("armorOnAllyFall"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("pierceOwnAttacks") }),
+  z.object({ type: z.literal("firstHitMarks"), rounds: z.number().int().positive() }),
 ]);
 
 const branchSchema = z.object({

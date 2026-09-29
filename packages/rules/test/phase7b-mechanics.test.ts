@@ -530,3 +530,24 @@ describe("phase 7b — Hồi Hồn", () => {
     expect(fell.state.heroes[2]!.armor).toBe(6);
   });
 });
+
+describe("phase 7b — Xuyên", () => {
+  const shot = card({ id: "test_shot", ownerId: "f04", type: "attack", tags: ["attack"], target: "enemy", effects: [{ type: "damage", amount: 5, to: "chosen" }] });
+
+  it("T293: backRowHits counts hits on non-front enemies; pierceOwnAttacks also hits the enemy right behind; firstHitMarks marks once per turn", () => {
+    const count = makeTestCombat({ mutateData: withLevelUp("f04", { counter: "backRowHits", threshold: 99 }) });
+    expect(play(count.data, count.state, shot, "enemy:1").state.heroes[1]!.levelUpCounter).toBe(1);
+    expect(play(count.data, count.state, { ...shot, id: "test_shot_front" }, "enemy:0").state.heroes[1]!.levelUpCounter).toBe(0);
+
+    const pierce = makeTestCombat({ mutateData: withLevelUp("f04", { passive: { type: "pierceOwnAttacks" } }), setup: (s) => { s.heroes[1]!.leveledUp = true; } });
+    const through = play(pierce.data, pierce.state, shot, "enemy:0");
+    const hits = through.events.filter((e) => e.type === "damageDealt").map((e) => (e as { targetId: string }).targetId);
+    expect(hits).toEqual(["enemy:0", "enemy:1"]);
+
+    const marks = makeTestCombat({ mutateData: withLevelUp("f04", { passive: { type: "firstHitMarks", rounds: 1 } }), setup: (s) => { s.heroes[1]!.leveledUp = true; } });
+    const first = play(marks.data, marks.state, shot, "enemy:0");
+    expect(first.state.enemies[0]!.statuses).toContainEqual({ id: "mark", value: 1, sourceId: "hero:f04" });
+    const second = play(marks.data, first.state, { ...shot, id: "test_shot2" }, "enemy:1");
+    expect(second.state.enemies[1]!.statuses.some((st) => st.id === "mark")).toBe(false);
+  });
+});

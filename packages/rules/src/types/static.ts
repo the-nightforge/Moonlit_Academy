@@ -24,7 +24,7 @@ export type LevelUpCounter =
   | "hpHealed" | "turnsSurvived" | "moonShifts"
   | "studyPoints" | "fullMoonsSeen" | "forbiddenHpLost"
   | "summonsMade" | "charmsApplied" | "debuffsApplied" | "intentsSealed"
-  | "alliesFallen";
+  | "alliesFallen" | "backRowHits";
 
 export type LevelUpPassive =
   | { type: "attackDamageBonus"; amount: number }
@@ -65,7 +65,9 @@ export type LevelUpPassive =
   | { type: "bonusVsDebuffed"; minDebuffs: number; amount: number } // M09 Nam Chiếu Hồn
   | { type: "sealExtraFirstPerTurn" }                        // F07 Sử Bút
   | { type: "sealWeakens"; amount: number }                  // F07 Chép Sử
-  | { type: "armorOnAllyFall"; amount: number };             // F10 Tục Mệnh
+  | { type: "armorOnAllyFall"; amount: number }              // F10 Vong Xuyên
+  | { type: "pierceOwnAttacks" }                             // F05 Xuyên Vân Tiễn
+  | { type: "firstHitMarks"; rounds: number };               // F05 Biên Tái
 
 export interface LevelUpDef {
   name: string;

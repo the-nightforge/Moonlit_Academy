@@ -176,6 +176,26 @@ export function loseHp(
   return lost;
 }
 
+/** Hàng sau: a living unit that is not the front (lowest position) of its side (`01` §5). */
+export function isBackRow(state: CombatState, target: UnitState): boolean {
+  const side =
+    target.side === "enemy"
+      ? state.enemies
+      : state.heroes.filter((hero) => hero.player === (target as HeroState).player);
+  const front = side.filter((unit) => unit.alive).reduce((min, unit) => Math.min(min, unit.position), Infinity);
+  return target.position > front;
+}
+
+function nextBehind(state: CombatState, target: UnitState): UnitState | undefined {
+  const side =
+    target.side === "enemy"
+      ? state.enemies
+      : state.heroes.filter((hero) => hero.player === (target as HeroState).player);
+  return side
+    .filter((unit) => unit.alive && unit.position > target.position)
+    .sort((a, b) => a.position - b.position)[0];
+}
+
 function dealDamage(
   data: GameData,
   state: CombatState,
@@ -184,6 +204,7 @@ function dealDamage(
   base: number,
   events: CombatEvent[],
 ): void {
+  const backRow = ctx.card !== undefined && ctx.source.side === "hero" && isBackRow(state, target);
   const amount = computeDamageAmount(data, state, ctx, target, base);
   const blocked = Math.min(target.armor, amount);
   target.armor -= blocked;
@@ -198,6 +219,7 @@ function dealDamage(
     blocked,
     hpLost,
   });
+  if (backRow) bumpCounter(data, ctx.source as HeroState, "backRowHits", 1);
 
   // Hàn Kiếm: the first hit each turn from the hero's cards leaves the enemy vulnerable.
   const passive = cardPassive(data, ctx);
@@ -206,6 +228,15 @@ function dealDamage(
     if (!hero.firstHitUsedThisTurn) {
       hero.firstHitUsedThisTurn = true;
       if (target.alive && target.hp > 0) applyStatus(target, "vulnerable", passive.rounds, hero.id, events);
+    }
+  }
+  // Biên Tái: the first hit each turn from the hero's cards marks the opposing target.
+  if (passive?.type === "firstHitMarks" && opponentsOf(state, ctx.source).includes(target)) {
+    const hero = ctx.source as HeroState;
+    if (!hero.firstHitUsedThisTurn) {
+      hero.firstHitUsedThisTurn = true;
+      const factor = state.mode === "pvp" ? 2 : 1;
+      if (target.alive && target.hp > 0) applyStatus(target, "mark", passive.rounds * factor, hero.id, events);
     }
   }
 
@@ -274,10 +305,18 @@ export function resolveEffect(
   switch (effect.type) {
     case "damage": {
       const hits = effect.hits ?? 1;
+      const pierce = effect.to === "chosen" && cardPassive(data, ctx)?.type === "pierceOwnAttacks";
       for (const target of resolveTargets(state, effect.to, ctx)) {
         for (let hit = 0; hit < hits && target.alive && target.hp > 0; hit++) {
+          // Compute `behind` before the main hit: the main target dying must
+          // not make the unit behind it step forward (`18` §3.2).
+          const behind = pierce ? nextBehind(state, target) : undefined;
           dealDamage(data, state, ctx, target, effect.amount, events);
           if (!ctx.source.alive) return;
+          if (behind?.alive && behind.hp > 0) {
+            dealDamage(data, state, ctx, behind, effect.amount, events);
+            if (!ctx.source.alive) return;
+          }
         }
       }
       return;
@@ -708,7 +747,7 @@ function killUnit(
       seat.purged = { ...(seat.purged ?? {}), [unit.id]: purged };
       events.push({ type: "cardsPurged", heroId: unit.id, instanceIds: purged, ...seatTag(state, seat.index) });
     }
-    // F10 Tục Mệnh: the fall counts seat-wide; survivors may shield themselves.
+    // F10 Vong Xuyên: the fall counts seat-wide; survivors may shield themselves.
     bumpSeat(data, state, seat.index, "alliesFallen", 1);
     for (const ally of heroesOf(state, seat.index)) {
       const passive = ally.alive && ally.leveledUp ? levelUpPassive(data, ally) : undefined;
