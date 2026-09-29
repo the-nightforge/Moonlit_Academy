@@ -200,7 +200,7 @@ describe("co-op realtime (`17` §9)", () => {
       currencies: { moonJade: number; moonDust: number };
       coop: { clears: number; rewarded: number };
     };
-    // Starter gift (2400) plus the three paid wins (60 + 40 + 40); match 4 unpaid.
+    // Starter gift (2400) plus the three paid wins (50 + 40 + 40); match 4 unpaid.
     expect(profile.currencies.moonJade).toBe(server.data.economyConfig.starterGift.moonJade + 130);
     expect(profile.currencies.moonDust).toBe(9);
     expect(profile.coop).toMatchObject({ clears: 4, rewarded: 3 });

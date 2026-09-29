@@ -64,6 +64,38 @@ describe("phase 7b heroes", () => {
       expect(pairs).toContain([a, b].sort().join("+"));
     }
   });
+
+  it("T297b: wave-2 bond cards resolve with the right actor attribution", () => {
+    // Khúc Vũ Tri Âm [m09, f06]: charm credits m09 (actor 0), extendDebuffs resolves for f06 (actor 1).
+    const { data, state } = makeTestCombat({
+      heroIds: ["m09", "f06", "m05"],
+      mutateData: makeEnemiesIdle,
+      setup: (s) => { p0(s).moonPower = 99; },
+    });
+    const bondId = p0(state).drawPile.find((id) => state.cards[id]!.cardId === "bond_khuc_vu_tri_am")!;
+    p0(state).drawPile = p0(state).drawPile.filter((id) => id !== bondId);
+    p0(state).hand.push(bondId);
+    state.enemies[0]!.statuses.push({ id: "weak", value: 2 });
+    const struck = play(data, state, bondId, "enemy:0");
+    expect(struck.enemies[0]!.statuses).toContainEqual({ id: "charm", value: 1, sourceId: "hero:m09" });
+    expect(struck.enemies[0]!.statuses).toContainEqual({ id: "weak", value: 3 });
+    expect(struck.heroes[0]!.levelUpCounter).toBe(1);
+
+    // Nguyệt Thố Hộ Mệnh [f09, f10]: summons the rabbit for f09 (actor 0), then taunt + armor land on it.
+    const coop = makeTestCombat({
+      heroIds: ["f09", "f10", "m05"],
+      mutateData: makeEnemiesIdle,
+      setup: (s) => { p0(s).moonPower = 99; },
+    });
+    const bondId2 = p0(coop.state).drawPile.find((id) => coop.state.cards[id]!.cardId === "bond_nguyet_tho_ho_menh")!;
+    p0(coop.state).drawPile = p0(coop.state).drawPile.filter((id) => id !== bondId2);
+    p0(coop.state).hand.push(bondId2);
+    const shielded = play(coop.data, coop.state, bondId2);
+    expect(shielded.summons).toHaveLength(1);
+    expect(shielded.summons![0]).toMatchObject({ summonId: "tho_ngoc", ownerHeroId: "hero:f09", armor: 6 });
+    expect(shielded.summons![0]!.statuses).toContainEqual({ id: "taunt", value: 1 });
+    expect(shielded.heroes[0]!.levelUpCounter).toBe(1);
+  });
 });
 
 describe("phase 7b heroes — level-ups with real cards", () => {

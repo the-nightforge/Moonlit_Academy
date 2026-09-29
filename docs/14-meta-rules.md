@@ -602,8 +602,9 @@ opts: {
 - `rewarded ≥ rewardedMatchesPerDay` (3, `coop-config`) → `rewards: null`; trận vẫn
   chơi và tính `clears` bình thường.
 - Thưởng gốc `rewards.win` (40 Ngọc, 3 Trần) / `rewards.loss` (10, 1); trận thắng
-  **đầu tiên** trong ngày thêm `firstWinOfDay` (+20 Ngọc) — cờ `firstWin` trong kết
+  **đầu tiên** trong ngày thêm `firstWinOfDay` (+10 Ngọc) — cờ `firstWin` trong kết
   quả. Nguyệt Trần hiện chỉ tích trữ (`17` §9.2).
-- `firstWinOfDay` chỉnh 40 → 20 theo `economy-sim`: 1 trận/ngày ở tỉ lệ thắng 40%
-  (giữa band `17` §8.8) cho 30 Ngọc/ngày — dưới trần +20% so với chỉ PvE; ở đỉnh
-  band 50% cho 35/ngày vẫn dưới trần.
+- `firstWinOfDay` chỉnh theo `economy-sim`: 40 → 20 (GĐ5/6: 1 trận/ngày ở tỉ lệ
+  thắng 40% cho 30 Ngọc/ngày — dưới trần +20% so với chỉ PvE); → 10 (GĐ7b: pool 20
+  Hero hạ thu nhập PvE/ngày → trần +20% thấp xuống, 1 trận/ngày ở 40% cho 26
+  Ngọc/ngày).

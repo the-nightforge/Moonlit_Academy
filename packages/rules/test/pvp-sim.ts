@@ -61,7 +61,7 @@ export interface PvpSimOptions {
   /** Second pass assigns random free PvP gear. */
   geared?: boolean;
   /**
-   * Sampled mode (7a.6): with 14 heroes C(14,3) = 364 teams, the exhaustive
+   * Sampled mode (7a.6): with 20 heroes C(20,3) = 1140 teams, the exhaustive
    * team×team sweep is too slow. Draw this many random pairings with the file's
    * fixed mulberry32 seed instead; `seedsPerPair` is ignored.
    */
