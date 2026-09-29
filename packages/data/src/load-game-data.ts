@@ -129,6 +129,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     if (card.target !== "fallenAlly" && revivesChosen) {
       errors.push(`${label}: revive to "chosen" needs target "fallenAlly"`);
     }
+    if (someEffect(card.effects, (e) => e.type === "revive" && e.to === "lastFallen")) {
+      errors.push(`${label}: revive to "lastFallen" is only allowed on onLevelUp`);
+    }
     if (someEffect(card.effects, (effect) => effect.type === "execute")) {
       errors.push(`${label}: execute is only allowed in co-op combos`);
     }

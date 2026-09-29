@@ -560,5 +560,9 @@ describe("co-op data", () => {
     const b = rawData();
     b.cards[0].effects = [{ type: "revive", ratio: 0.5, to: "chosen" }];
     expect(() => parseGameData(b)).toThrow(/revive to "chosen" needs target "fallenAlly"/);
+    const c = rawData();
+    c.cards[0].target = "none";
+    c.cards[0].effects = [{ type: "revive", ratio: 0.3, to: "lastFallen" }];
+    expect(() => parseGameData(c)).toThrow(/revive to "lastFallen" is only allowed on onLevelUp/);
   });
 });
