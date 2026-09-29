@@ -3738,9 +3738,14 @@
         "type": "gainArmor",
         "amount": 3,
         "to": "allAllies"
+      },
+      {
+        "type": "damage",
+        "amount": 2,
+        "to": "allEnemies"
       }
     ],
-    "text": "Mọi Hero hồi 3 HP và nhận 3 giáp."
+    "text": "Mọi Hero hồi 3 HP và nhận 3 giáp. Gây 2 damage lên mọi kẻ địch."
   },
   {
     "id": "m04_dinh_mach",
@@ -6678,11 +6683,16 @@
         "to": "chosen"
       },
       {
+        "type": "damage",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
         "type": "chooseCard",
         "look": 1
       }
     ],
-    "text": "Suy Yếu 2 vòng. Chiêm Bài 1.",
+    "text": "Suy Yếu 2 vòng. Gây 2 damage. Chiêm Bài 1.",
     "keywords": [
       "suy_yeu",
       "chiem_bai"
@@ -7804,9 +7814,14 @@
         "type": "heal",
         "amount": 2,
         "to": "allAllies"
+      },
+      {
+        "type": "damage",
+        "amount": 2,
+        "to": "allEnemies"
       }
     ],
-    "text": "Tẩy debuff mọi đồng đội, hồi 2 HP."
+    "text": "Tẩy debuff mọi đồng đội, hồi 2 HP. Gây 2 damage lên mọi kẻ địch."
   },
   {
     "id": "f10_khong_tuong",

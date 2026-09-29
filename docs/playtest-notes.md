@@ -919,3 +919,235 @@ là nội dung (đổi/thêm lá damage cho m01/m03 ở đợt nội dung sau) h
 vai trò support bắt buộc đi kèm carry. Ghi chú mở còn lại của 7a (M10 scheme
 lặp, `m07_ho_tong` stealth-cho-người-khác, độ dài trận PvP, `m03_tieu_loi`
 ramp) vẫn đứng — xem "Điểm cần cờ".
+
+# Playtest Notes — Phase 7b (bước 7b.6)
+
+## Phương pháp
+
+- Bot heuristic bổ sung (`bot.ts`, dùng chung PvE/PvP/co-op): lá `summon` chỉ
+  đánh khi chủ lá chưa có Linh Thú sống, Linh Thú < 50% HP, hoặc chủ lá còn
+  đang đếm `summonsMade` để thăng cấp (F09); lá `applyStatus → charm` nhắm
+  kẻ địch sống có damage báo trước lớn nhất (`previewEnemyIntent`; ở PvP —
+  nơi ý định đối thủ ẩn — cân theo damage pool của Hero, Linh Thú không nhận
+  Mê Hoặc) và **bỏ qua** khi chỉ còn 1 kẻ địch; lá `sealIntent` nhắm unit có
+  nhiều hiệu ứng không-damage nhất trong chuỗi `plannedIntents` (PvP: cân theo
+  pool Hero/Linh Thú), **bỏ qua** khi mọi mục tiêu đều chỉ định damage; lá
+  `target: "fallenAlly"` chọn đồng đội ngã có `maxHp` cao nhất.
+- `run-playtest.test.ts`: +4 đội wave-2 (`f09+f10+m05`, `f06+m09+f03`,
+  `f05+f07+m06`, `f10+f05+m04`) × 6 loại deck × seed 1–20. Counters mới: số
+  lần triệu hồi/thú đánh, Mê Hoặc đặt + đặt chồng (mê ×2), chiêu địch bị đổi
+  mục tiêu, hiệu ứng bị Phong Ấn tước — tách theo tier trận.
+- `pvp-sim.test.ts` (`PLAYTEST_PVP=1`): 20 Hero → C(20,3) = 1140 đội, bốc mẫu
+  **4000 cặp** seed cố định, hai lượt trần + trang bị PvP cơ bản ngẫu nhiên.
+  Mỗi Hero ~1150–1275 trận → sai số ~±3 điểm. Counters mới: triệu hồi, thú
+  đánh, Mê Hoặc (kể cả đặt chồng), damage tự bắn phe mình (đổi hướng), lá bị
+  Phong Ấn tước (tách trên Linh Thú), Hồi Hồn.
+- Mục tiêu: thắng lượt đội mới trong ±10 điểm so trung bình đội cũ (45%); tỉ
+  lệ thắng PvP theo Hero 40–60%; độ dài trận PvP TB 8–12 vòng.
+
+## Thắng lượt theo đội (PvE, 20 lượt/ô)
+
+| Đội | Bộ cơ bản | nA 6/6/6 | nB 6/6/6 | nA 4/4/10 | nB 8/5/5 | Ngẫu nhiên | TB | Tầng TB | Δ so đội cũ |
+|---|---|---|---|---|---|---|---|---|---|
+| f09+f10+m05 | 15% | 55% | 0% | 60% | 0% | 35% | 27.5% | ~6.6 | **−17.5** |
+| f06+m09+f03 | 0% | 0% | 5% | 0% | 0% | 5% | 1.7% | ~3.3 | **−43.3** |
+| f05+f07+m06 | 45% | 45% | 5% | 35% | 5% | 35% | 27.5% | ~5.0 | **−17.5** |
+| f10+f05+m04 | 0% | 0% | 0% | 0% | 0% | 0% | 0% | ~1.2 | **−45** |
+
+Cả 4 đội mới dưới ngưỡng ±10 điểm. Kẹt 2/120 lượt ở f06+m09+f03 (không giết
+được, không chết — deck không damage). **Chẩn đoán giống 7a: vấn đề thành
+phần pool, không phải con số** — f06/f09/f10 đều có **0 lá damage trong cả 12
+lá** (m04 cũng 0). f09+f10+m05 đạt 55–60% trên nhánh A của m05 (Huyết Chiến
+có damage) nhưng 0% trên nhánh B (Thiết Vệ thuần tank + 2 Hero 0 damage →
+không carry). f10+f05+m04 = hai pool 0-damage + carry đơn f05 → chết sạch
+tầng 1 (tầng TB 1.0–1.4), giống hệt m01+m02+f04 / m03+m10+m04 ở 7a.
+
+## Cơ chế wave-2 (PvE, theo tier)
+
+| Đội | Tier | Trận | Triệu hồi/trận | Thú đánh/trận | Mê Hoặc/trận | Mê ×2 | Chiêu đổi/trận | Tước/trận |
+|---|---|---|---|---|---|---|---|---|
+| f09+f10+m05 | normal | 418 | 1.83 | 6.81 | 0 | 0 | 0 | 0 |
+| f09+f10+m05 | elite | 27 | 2.11 | 7.96 | 0 | 0 | 0 | 0 |
+| f09+f10+m05 | boss | 80 | 2.42 | 8.46 | 0 | 0 | 0 | 0 |
+| f06+m09+f03 | normal | 269 | 0 | 0 | 4.41 | **638** | 2.98 | 0 |
+| f06+m09+f03 | elite | 11 | 0 | 0 | 0.55 | 2 | 0.27 | 0 |
+| f06+m09+f03 | boss | 18 | 0 | 0 | 0 | 0 | 0 | 0 |
+| f05+f07+m06 | normal | 330 | 0 | 0 | 0 | 0 | 0 | 2.31 |
+| f05+f07+m06 | elite | 16 | 0 | 0 | 0 | 0 | 0 | 2.56 |
+| f05+f07+m06 | boss | 52 | 0 | 0 | 0 | 0 | 0 | 3.88 |
+
+Linh Thú uptime cao: ~2 lần triệu hồi và ~7–8.5 đòn thú mỗi trận — Thỏ Ngọc
+(12 HP / 3 dmg → thức tỉnh 24 HP / 6 dmg + hồi 2) là động cơ damage chính của
+đội f09. Phong Ấn tước 2.3–3.9 hiệu ứng/trận và cao nhất ở boss (chuỗi ý định
+boss nhiều hiệu ứng không-damage — `f07_doan_su` Phong Ấn toàn bàn có giá trị
+thật trên boss). Mê Hoặc đổi được ~3 chiêu/trận nhưng đặt chồng lên unit đang
+bị mê rất nhiều (**638 lần ở tier normal**) — xem "Điểm cần cờ".
+
+## Tỉ lệ thắng PvP theo Hero (mẫu 4000, ~1200 trận/Hero)
+
+| Hero | Trần | Trang bị | Đạt 40–60%? |
+|---|---|---|---|
+| **f09** | **81%** | **78%** | ✗ **trên band** |
+| f10 | 54% | 56% | ✓ |
+| m06 | 53% | 53% | ✓ |
+| f03 | 51% | 52% | ✓ |
+| m10 | 51% | 49% | ✓ |
+| f05 | 51% | 48% | ✓ |
+| f02 | 45% | 49% | ✓ |
+| f04 | 46% | 40% | ✓ |
+| m05 | 45% | 43% | ✓ |
+| m04 | 44% | 43% | ✓ |
+| f08 | 42% | 40% | sàn |
+| m09 | 41% | 40% | sàn |
+| m08 | 39% | 38% | ✗ dưới |
+| f01 | 39% | 36% | ✗ dưới |
+| f06 | 38% | 38% | ✗ dưới |
+| m02 | 38% | 37% | ✗ dưới (sát) |
+| m07 | 37% | 40% | ✗ sát sàn |
+| f07 | 33% | 33% | ✗ dưới |
+| m01 | 31% | 29% | ✗ dưới |
+| m03 | 28% | 29% | ✗ dưới |
+
+Chung: đi trước thắng **47%** (trần) / **45%** (trang bị) — lên từ 41%/38%
+của 7a và đã nằm trong mục tiêu §4.9 (47–53% ở trần): các Hero wave-2 chủ
+động hơn (Linh Thú, Phong Ấn) thưởng bên ra đòn. Hòa ở trần vòng **11%**
+(trần) / **13%** (trang bị), giảm từ 14–16%. Độ dài trận **TB 14.3 / trung
+vị 12** (trần) và **16.1 / 14** (trang bị), min/max 5–31 / 6–31 — vẫn vượt
+mục tiêu 8–12 (quyết định 5b/7a đứng: artifact của bot phòng thủ, xem lại
+với người chơi thật). Lá chưa đánh 140 = toàn `_plus` + pool khóa.
+
+Cơ chế wave-2 mỗi trận PvP (trần / trang bị): triệu hồi **0.83/0.85**, thú
+đánh **3.08/3.52**, Mê Hoặc đặt **3.93/3.93** (đặt chồng **10101/9387** lần,
+~2.4–2.5 lần/trận), damage bắn phe mình do đổi hướng **3.05/3.27**, lá bị
+tước **2.44/2.57**, tước trên Linh Thú **5/1** lần tổng, Hồi Hồn **0.11/0.08**.
+
+## Điểm cần cờ
+
+- **F09 outlier PvP (81%/78%)** — Thỏ Ngọc đánh mỗi lượt, đối thủ-bot không
+  ưu tiên giết summon; dạng thức tỉnh (24 HP, 6 dmg + hồi 2 cho chủ) gần như
+  không thể tháo. Tuy nhiên PvE f09 **không** lệch (đội f09+f10+m05 27.5%,
+  tụt do pool) → nerf Linh Thú, không nerf chủ; lưu ý `awakenSummons` chỉ áp
+  khi chủ còn sống + đã thăng cấp (giết f09 hạ Thỏ về dạng thường).
+- **Pool 0-damage (f06, f09, f10 — và m04 cũ)** — damage của f09 đi qua Linh
+  Thú, f10 qua Hồi Hồn/hỗ trợ, f06 qua đổi hướng Mê Hoặc. Đội 2 support
+  0-damage + 1 carry thua sạch (f10+f05+m04 0%, f06+m09+f03 1.7%) — cùng
+  lớp vấn đề m01/m03 ở 7a; **không sửa bằng con số**, cần duyệt đổi pool
+  (thêm/đổi 1 lá damage mỗi Hero) ở đợt nội dung.
+- **Mê ×2 (đặt chồng Mê Hoặc)** — ~2.4–2.5 lần/trận PvP, 638 lần tier normal
+  ở đội f06+m09+f03. Charges stack đúng thiết kế và bot nhắm unit damage cao
+  nhất — thường là cùng một mục tiêu; giá trị không mất hẳn nhưng mật độ lá
+  charm của f06/m09 làm spam đáng kể. Theo dõi thêm, chưa chỉnh.
+- **`f06_kinh_hong_chieu` (Mê Hoặc AoE)** — lá khóa/nhánh, không xuất hiện
+  trong deck PvP (140 lá chưa đánh gồm hết pool khóa); trong PvE chỉ vào deck
+  nhánh → cover mỏng. Số liệu AoE charm chủ yếu qua nhánh f06.
+- **`f07_doan_su` (Phong Ấn toàn bàn) trên boss** — cùng là lá khóa; trong
+  deck nhánh f07 đóng góp vào 3.88 tước/trận ở tier boss. Hoạt động đúng kỳ
+  vọng, chưa thấy lạm dụng.
+- **Phong Ấn lên Linh Thú trong PvP** — xảy ra nhưng hiếm (5 trần / 1 trang
+  bị trên 4000 trận): pool seal của f07 hẹp + bot ưu tiên chuỗi nhiều hiệu
+  ứng (Linh Thú chỉ có action damage → weight 0, đúng thiết kế).
+- **Độ dài trận / đi trước** — như mục PvP; giữ quyết định 5b.
+- **m02 tụt khỏi sàn (38%/37%)** — từ 40%/40% ở 7a; vẫn giữ lập trường 7a
+  (tăng HP tank kéo dài trận), cờ theo dõi.
+
+## Đề xuất gói chỉnh (CHƯA áp — chờ duyệt)
+
+Chỉ con số JSON; mục tiêu kéo f09 về band và nhấc f07/f06 sát sàn. Không
+đụng f10/m09/f05 (đang trong band/sàn) và không phình số cho các pool
+0-damage (vấn đề nội dung, không phải số — như 7a).
+
+| File | Mục | Số | Từ → sang | Lý do |
+|---|---|---|---|---|
+| summons.json | `tho_ngoc.action[0]` | `amount` | 3→2 | nguồn damage chính khiến f09 đứng 78–81%; −1/đòn ≈ −33% output thú |
+| summons.json | `tho_ngoc_thuc_tinh.action[0]` | `amount` | 6→5 | dạng thức tỉnh là đỉnh outlier PvP |
+| summons.json | `tho_ngoc_thuc_tinh` | `maxHp` | 24→18 | 24 HP gần như không tháo được ở PvP |
+| heroes.json | `f09.levelUp` | `threshold` / `constellationThreshold` | 5→6 / 4→5 | trì hoãn dạng thức tỉnh ~1 lượt triệu hồi |
+| pvp-config.json | `heroStats.f09` | `maxHp` | 40→38 | chủ là "kill-switch" của dạng thức tỉnh (awaken cần chủ sống) |
+| pvp-config.json | `heroStats.f07` | `maxHp` | 42→44 | 33% dưới sàn; Phong Ấn là utility, cần sống để trả giá trị |
+| heroes.json | `f07.levelUp` | `constellationThreshold` | 3→2 | `sealExtraFirstPerTurn` tới sớm hơn ~1 lần ấn |
+| pvp-config.json | `heroStats.f06` | `maxHp` | 42→44 | 38% sát sàn; support charm sống lâu = giá trị |
+| heroes.json | pool `f10.cardIds` / `f06.cardIds` / `m04.cardIds` | **đổi thành phần pool** (không phải con số — cần duyệt riêng): 1 lá damage mỗi Hero | — | cứu các đội 2-support-0-damage đang 0–2% PvE |
+| — | `pvpConfig.roundCap`, `heroStats` toàn cục | giữ nguyên | — | độ dài trận là artifact của bot; xem lại với người chơi thật |
+
+Ước lượng tác động: f09 −33% damage thú + thức tỉnh muộn/mỏng hơn ≈ −15–20
+điểm PvP (mục tiêu ~60–65%, có thể cần nhịp nerf thứ hai nếu vẫn trên band).
+f07 +2 HP + constellation sớm ≈ +3–5 điểm (mục tiêu 36–38%, sát sàn); f06 +2
+HP ≈ +2–3 điểm. Rủi ro: nerf Linh Thú kéo PvE f09+f10+m05 tụt thêm — nhưng
+chênh lệch PvE là vấn đề pool, đo lại sau khi áp bằng cùng seed/seed mẫu.
+
+## Kết quả sau chỉnh (gói đã duyệt — đã áp)
+
+Gói được duyệt **nguyên vẹn kèm 3 rider damage** lên `f10_tay_tran`,
+`f06_mat_ham`, `m04_duong_mach` (2 damage AoE/chọn, giải quyết sau cùng; riêng
+`f06_mat_ham` đặt damage trước `chooseCard` vì schema bắt Chiêm Bài đứng cuối).
+Test F09 trong `phase7b-heroes.test.ts` đổi sang 6 lá triệu hồi, thức tỉnh
+18 HP. `pnpm --filter rules test`: 595 test xanh, **không golden nào lệch**
+(fixture golden chỉ dùng đội wave-1 — không động cơ chế/số liệu mới).
+
+### PvP theo Hero (mẫu 4000, cùng seed mẫu — trước → sau)
+
+| Hero | Trần | Trang bị | Band 40–60%? |
+|---|---|---|---|
+| **f09** | 81% → **71%** | 78% → **67%** | ✗ **vẫn trên band** |
+| f10 | 54% → 57% | 56% → 58% | ✓ (sát trần trên) |
+| m06 | 53% → 55% | 53% → 56% | ✓ |
+| f03 | 51% → 54% | 52% → 54% | ✓ |
+| m10 | 51% → 53% | 49% → 51% | ✓ |
+| f05 | 51% → 53% | 48% → 49% | ✓ |
+| f02 | 45% → 46% | 49% → 49% | ✓ |
+| m04 | 44% → 46% | 43% → 45% | ✓ (+rider) |
+| f04 | 46% → 46% | 40% → 41% | ✓ |
+| m05 | 45% → 46% | 43% → 44% | ✓ |
+| f08 | 42% → 43% | 40% → 41% | sàn |
+| m09 | 41% → 42% | 40% → 40% | sàn |
+| m02 | 38% → 40% | 37% → 37% | sàn trần / ✗ dưới trang bị |
+| m08 | 39% → 39% | 38% → 38% | ✗ dưới |
+| f01 | 39% → 39% | 36% → 36% | ✗ dưới |
+| **f06** | 38% → 39% | 38% → 38% | ✗ **vẫn dưới sàn (sát)** |
+| m07 | 37% → 37% | 40% → 40% | ✗ sát sàn |
+| **f07** | 33% → **31%** | 33% → **32%** | ✗ **vẫn dưới, không hồi** |
+| m01 | 31% → 30% | 29% → 28% | ✗ dưới |
+| m03 | 28% → 27% | 29% → 27% | ✗ dưới |
+
+Chung: đi trước thắng 46%/45% (từ 47%/45%), hòa 11%/13% (như cũ), độ dài TB
+14.1 / trung vị 12 (trần) và 16.0 / 14 (trang bị) — ngắn hơn chút, vẫn ngoài
+mục tiêu 8–12 (artifact bot, giữ quyết định 5b). Lá chưa đánh 140 = toàn
+`_plus` + pool khóa (giống trước). Cơ chế 7b/trận (trần/trang bị): triệu hồi
+0.84/0.86, thú đánh 2.92/3.31 (từ 3.08/3.52 — thú yếu hơn đánh ít trận hơn),
+Mê Hoặc 3.95/3.93, mê ×2 10161/9418, đổi hướng 3.03/3.29, tước 2.51/2.66,
+tước trên Linh Thú 1/0, Hồi Hồn 0.10/0.08.
+
+### Thắng lượt theo đội (PvE, 20 lượt/ô — trước → sau)
+
+| Đội | Bộ cơ bản | nA 6/6/6 | nB 6/6/6 | nA 4/4/10 | nB 8/5/5 | Ngẫu nhiên | TB | Δ so đội cũ |
+|---|---|---|---|---|---|---|---|---|
+| f09+f10+m05 | 15→5% | 55→30% | 0→0% | 60→50% | 0→0% | 35→25% | 27.5→**18.3%** | −26.7 |
+| f06+m09+f03 | 0→0% | 0→0% | 5→5% | 0→0% | 0→0% | 5→5% | 1.7→**1.7%** | −43.3 |
+| f05+f07+m06 | 45→45% | 45→45% | 5→5% | 35→35% | 5→5% | 35→35% | 27.5→**28.3%** | −16.7 |
+| f10+f05+m04 | 0→0% | 0→0% | 0→0% | 0→0% | 0→0% | 0→0% | 0→**0%** | −45 |
+
+Kẹt: 2/120 ở f06+m09+f03 (như trước). Cơ chế theo tier gần như giữ nguyên:
+f09+f10+m05 triệu hồi 1.77/1.91/2.50, thú đánh 6.78/8.23/8.32 (normal/elite/
+boss — thú yếu hơn nhưng uptime giữ); f06+m09+f03 Mê Hoặc 4.35, mê ×2 641
+normal; f05+f07+m06 tước 2.31/2.56/3.88; f10+f05+m04 vẫn chết tầng 1.
+
+### Đọc kết quả
+
+- **Nerf Thỏ Ngọc đúng hướng nhưng chưa đủ**: f09 −10/−11 điểm nhưng 71%/67%
+  vẫn trên band — dự báo "có thể cần nhịp nerf thứ hai" thành hiện thực.
+  **Cờ: cần beat nerf thứ hai** (gợi ý chưa áp: `tho_ngoc` damage 2→1, hoặc
+  `thuc_tinh` 18→14 HP / bỏ `heal 2 owner`, hoặc `summonsMade` 6→7).
+- **f07 không hồi (33→31/32)**: +2 HP và constellation 2 không cứu nổi —
+  trong sai số ±3 nhưng xu hướng âm. Phong Ấn là utility mỏng trong meta
+  damage; có thể cần buff thực chất hơn (cost `f07_phe_but` 3→2 hoặc
+  `f07_doat_but` damage 3→4) ở beat sau — cùng nhịp với f09.
+- **f06 vẫn sát sàn (39/38)**: rider 2 damage trên `f06_mat_ham` + 2 HP không
+  nhúc nhích đáng kể — PvP damage 2 từ lá 2-cost không lật kèo; giữ quan sát,
+  xem xét cùng đợt f07.
+- **Rider 0-damage không cứu PvE**: f10+f05+m04 vẫn 0% tầng ~1.2, f06+m09+f03
+  vẫn 1.7% — xác nhận chẩn đoán "vấn đề pool, không phải số": 2 damage AoE
+  trên 2 lá/deck không đủ khi cả đội thiếu động cơ damage. Vẫn cần đổi thành
+  phần pool thật ở đợt nội dung (đề xuất cũ đứng).
+- PvP cho thấy rider có giá trị nhỏ nhưng đo được ở chủ nhân: m04 +2/+2,
+  f10 +3/+2 (f10 giờ sát trần trên band — theo dõi).
+- Nerf f09 kéo PvE f09+f10+m05 tụt 27.5→18.3% như dự báo; chênh vẫn là pool.

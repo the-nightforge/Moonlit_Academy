@@ -1265,7 +1265,7 @@
       "description": "Lần Phong Ấn đầu tiên mỗi lượt của Cố Uyển còn đặt dấu lên kẻ địch khác.",
       "counter": "intentsSealed",
       "threshold": 3,
-      "constellationThreshold": 3,
+      "constellationThreshold": 2,
       "passive": {
         "type": "sealExtraFirstPerTurn"
       }
@@ -1336,10 +1336,10 @@
     ],
     "levelUp": {
       "name": "Thỏ Ngọc Thức Tỉnh",
-      "description": "Linh Thú của Tiểu Mãn dùng bản thức tỉnh (HP và damage ×2).",
+      "description": "Linh Thú của Tiểu Mãn dùng bản thức tỉnh (18 HP, đòn 5 damage và hồi chủ 2 HP).",
       "counter": "summonsMade",
-      "threshold": 5,
-      "constellationThreshold": 4,
+      "threshold": 6,
+      "constellationThreshold": 5,
       "passive": {
         "type": "awakenSummons"
       }

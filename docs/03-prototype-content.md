@@ -358,7 +358,7 @@ lan `allAllies` đếm từng Hero nên ngưỡng 20 đạt được trong 1–2
 | `m04_cuu_chuyen` | Cửu Chuyển | 6 | 1 | skill / heal, harmony / none | `heal 6 allAllies` + `applyStatus regen 2 allAllies` | A | Khóa |
 | `m04_ho_mach` | Hộ Mạch | 1 | 3 | skill / heal, ward / ally | `heal 3 chosen overflow:"armor"` | B | Mở sẵn |
 | `m04_ngoc_bi` | Ngọc Bích | 2 | 2 | skill / ward / ally | `gainArmor 6 chosen` | B | Mở sẵn |
-| `m04_duong_mach` | Dưỡng Mạch | 3 | 2 | skill / heal, harmony / none | `heal 3 allAllies` + `gainArmor 3 allAllies` | B | Mở sẵn |
+| `m04_duong_mach` | Dưỡng Mạch | 3 | 2 | skill / heal, harmony / none | `heal 3 allAllies` + `gainArmor 3 allAllies` + `damage 2 allEnemies` | B | Mở sẵn |
 | `m04_dinh_mach` | Định Mạch | 3 | 2 | skill / ward / ally | `gainArmor 5 chosen` + `conditional(selfHpBelow 0.5 → heal 4 chosen)` | B | Khóa |
 | `m04_bao_mach` | Bảo Mạch | 4 | 2 | skill / heal, ward / ally | `heal 6 chosen overflow:"armor"` + `gainArmor 4 chosen` | B | Khóa |
 | `m04_hoi_duong` | Hồi Dương | 6 | 1 | skill / heal, harmony / none | `heal 8 allAllies overflow:"armor"` | B | Khóa |
@@ -543,8 +543,9 @@ Sáu Hero đợt 2 của GĐ7 (spec `18` §3): F05 Hạ Chi (rare · Huyền Vũ
 HP 32), F06 Lam Khê (epic · Bạch Lộ · controller · HP 30), F07 Cố Uyển (rare ·
 Thanh Loan · controller · HP 30), F09 Tiểu Mãn (common · Bạch Lộ · specialist ·
 HP 28), F10 Liễu Tịnh Nhan (legendary · Trung lập · support · HP 30), M09 Đoàn
-Lạc (epic · Bạch Lộ · controller · HP 32). HP PvP = HP PvE + 12: 44 / 42 / 42 /
-40 / 42 / 44.
+Lạc (epic · Bạch Lộ · controller · HP 32). HP PvP = HP PvE + 12, đã chỉnh sau
+playtest 7b.6 (`playtest-notes.md` — F06/F07 +2, F09 −2): 44 / 44 / 44 / 38 /
+42 / 44.
 
 Cơ chế mới đi kèm (`01` §5.6, §17): trạng thái **Mê Hoặc** (`charm`), effect
 **Phong Ấn** (`sealIntent` — đơn vị bị dấu một lượt, chiêu/lá/hành động nó đánh
@@ -596,7 +597,7 @@ Nhánh B **Tin Mật**: Suy Yếu, Dễ Vỡ, Chiêm Bài. Sáu lá gây `charm`
 | `f06_khuynh_tam` | Khuynh Tâm | 5 | 1 | skill / harmony, control / enemy | `applyStatus charm 3 chosen` | A | Khóa |
 | `f06_kinh_hong_chieu` | Kinh Hồng Chiếu | 6 | 1 | skill / harmony, control / none | `applyStatus charm 1 allEnemies` | A | Khóa |
 | `f06_co_mat` | Cơ Mật | 1 | 3 | skill / harmony / none | `chooseCard 2` — "Chiêm Bài 2." | B | Mở sẵn |
-| `f06_mat_ham` | Mật Hàm | 2 | 2 | skill / harmony, control / enemy | `applyStatus weak 2 chosen` + `chooseCard 1` | B | Mở sẵn |
+| `f06_mat_ham` | Mật Hàm | 2 | 2 | skill / harmony, control / enemy | `applyStatus weak 2 chosen` + `damage 2 chosen` + `chooseCard 1` | B | Mở sẵn |
 | `f06_phong_thu` | Phong Thư | 2 | 2 | skill / harmony / none | `drawCards 1` + `gainMoonPower 1` | B | Mở sẵn |
 | `f06_doan_tin` | Đoạn Tin | 3 | 2 | skill / harmony, control / enemy | `applyStatus weak 2 chosen` + `applyStatus vulnerable 1 chosen` | B | Khóa |
 | `f06_loan_am` | Loạn Âm | 4 | 2 | skill / harmony, control / none | `applyStatus weak 2 allEnemies` | B | Khóa |
@@ -610,7 +611,7 @@ kế của nó mọi chiêu/lá nó đánh ra chỉ còn `damage`, mất hiệu 
 **Thư Hải**: `scheme`, Chiêm Bài, Tích Tụ. `intentsSealed` cộng theo số chiêu/lá
 thực sự bị tước hiệu ứng ở lượt kế — bảy lá `sealIntent` nuôi bộ đếm.
 
-- Thăng cấp: `intentsSealed` ≥ 3 (Tinh Hồn 2: 3) → **Sử Bút** `sealExtraFirstPerTurn`: lần Phong Ấn đầu tiên mỗi lượt của Cố Uyển còn đặt dấu lên kẻ địch khác (vị trí nhỏ nhất).
+- Thăng cấp: `intentsSealed` ≥ 3 (Tinh Hồn 2: 2) → **Sử Bút** `sealExtraFirstPerTurn`: lần Phong Ấn đầu tiên mỗi lượt của Cố Uyển còn đặt dấu lên kẻ địch khác (vị trí nhỏ nhất).
 - Dạng hai **Chép Sử**: `sealWeakens 1` — Phong Ấn của Cố Uyển còn áp Suy Yếu 1 vòng lên mục tiêu.
 
 | Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
@@ -636,7 +637,7 @@ Sức Mạnh, Khiêu Khích lên `summon`) — cả 6 lá đều nuôi `summonsM
 Song Hành `bond_nguyet_tho_ho_menh`. Nhánh B **Nguyệt Dược**: hồi máu, Hồi Phục
 (`regen`), tẩy debuff — lá nhắm `ally` tính cả Linh Thú cùng chủ.
 
-- Thăng cấp: `summonsMade` ≥ 5 (Tinh Hồn 2: 4) → **Thỏ Ngọc Thức Tỉnh** `awakenSummons`: Linh Thú của Tiểu Mãn dùng bản thức tỉnh (HP và damage ×2); Linh Thú đang sống đổi ngay, giữ tỉ lệ HP.
+- Thăng cấp: `summonsMade` ≥ 6 (Tinh Hồn 2: 5) → **Thỏ Ngọc Thức Tỉnh** `awakenSummons`: Linh Thú của Tiểu Mãn dùng bản thức tỉnh (18 HP, đòn 5 damage và hồi chủ 2 HP); Linh Thú đang sống đổi ngay, giữ tỉ lệ HP.
 - Dạng hai **Nguyệt Cung**: `summonTaunts 1` — Linh Thú của Tiểu Mãn khi vừa được triệu hồi nhận Khiêu Khích 1 vòng.
 
 | Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Nhánh | Mở sẵn / Khóa |
@@ -675,7 +676,7 @@ ba lá `fallenAlly` là payoff.
 | `f10_luan_hoi` | Luân Hồi | 6 | 1 | skill / moon / fallenAlly | `revive 0.6 chosen` + `heal 4 allAllies` | A | Khóa |
 | `f10_tinh_tam` | Tịnh Tâm | 1 | 3 | skill / moon, heal / ally | `cleanse chosen` + `gainArmor 2 chosen` | B | Mở sẵn |
 | `f10_thanh_tam` | Thanh Tâm | 2 | 2 | skill / moon, heal / ally | `heal 4 chosen` + `cleanse chosen` | B | Mở sẵn |
-| `f10_tay_tran` | Tẩy Trần | 3 | 2 | skill / moon, heal / none | `cleanse allAllies` + `heal 2 allAllies` | B | Mở sẵn |
+| `f10_tay_tran` | Tẩy Trần | 3 | 2 | skill / moon, heal / none | `cleanse allAllies` + `heal 2 allAllies` + `damage 2 allEnemies` | B | Mở sẵn |
 | `f10_khong_tuong` | Không Tướng | 4 | 2 | skill / moon / ally | `applyStatus stealth 2 chosen` + `heal 4 chosen` | B | Khóa |
 | `f10_vong_uu` | Vong Ưu | 5 | 1 | skill / moon, heal / none | `applyStatus regen 2 allAllies` + `heal 3 allAllies` | B | Khóa |
 | `f10_minh_nguyet` | Minh Nguyệt | 5 | 1 | skill / moon, heal / none | `heal 3 allAllies` + `conditional(moonPhaseIs full → heal 3 allAllies)` | B | Khóa |
@@ -715,8 +716,8 @@ biến mất. `awakenedId` dùng khi chủ có nội tại `awakenSummons`.
 
 | Id | Tên | HP | Targeting | Hành động cuối lượt | Thức tỉnh |
 |---|---|---|---|---|---|
-| `tho_ngoc` | Thỏ Ngọc | 12 | lowestHp | `damage 3 chosen` | → `tho_ngoc_thuc_tinh` |
-| `tho_ngoc_thuc_tinh` | Thỏ Ngọc Thức Tỉnh | 24 | lowestHp | `damage 6 chosen` + `heal 2 owner` | — |
+| `tho_ngoc` | Thỏ Ngọc | 12 | lowestHp | `damage 2 chosen` | → `tho_ngoc_thuc_tinh` |
+| `tho_ngoc_thuc_tinh` | Thỏ Ngọc Thức Tỉnh | 18 | lowestHp | `damage 5 chosen` + `heal 2 owner` | — |
 
 ### 12.8 Lá Song Hành 7b
 

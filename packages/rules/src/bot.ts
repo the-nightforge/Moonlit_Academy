@@ -1,8 +1,20 @@
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
-import { summonsOf } from "./players";
+import { opponentsOf, summonsOf } from "./players";
+import { previewEnemyIntent } from "./preview";
 import { cardOwners, getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
-import type { Action, CombatState, Effect, GameData, HeroState, UnitState } from "./types/index";
+import { hasStatus } from "./statuses";
+import { isSummon, summonOf } from "./summons";
+import type {
+  Action,
+  CardDef,
+  CombatState,
+  Effect,
+  EnemyState,
+  GameData,
+  HeroState,
+  UnitState,
+} from "./types/index";
 
 /**
  * The heuristic bot shared by the playtest sims and `pvpBot`: mulligan cards
@@ -100,6 +112,29 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
       );
       if (!leveling && !shiftTotals(card.effects).some((shift) => landingScore(shift) > 0)) continue;
     }
+    // Living units opposing the card's owner — enemies in PvE/co-op, the other
+    // seat's heroes and Linh Thú in PvP (`17` §3.4, §17.3).
+    const opponents = owners[0] !== undefined ? opponentsOf(state, owners[0]).filter((unit) => unit.alive) : [];
+    // Linh Thú (`01` §17): recasting while a healthy summon stands only heals and
+    // buffs it — hold the card, unless its summoner still levels `summonsMade` (F09).
+    const summoners = summonActors(card.effects, owners);
+    if (summoners.length > 0 && summoners.every((hero) => !wantsSummon(data, state, hero))) continue;
+    // Mê Hoặc (`01` §9.3.1): the turned hit needs a second living unit on the
+    // opposing side — a lone enemy makes a charm card dead. PvP counts heroes
+    // only: a Linh Thú never follows the mark.
+    if (appliesCharm(card)) {
+      const charmables = opponents.filter((unit) => unit.side === "enemy" || !isSummon(unit));
+      if (charmables.length < 2) continue;
+    }
+    // Phong Ấn (`01` §5.6): the mark strips non-damage effects from the unit's
+    // next turn — when everything it could reach plans pure damage, skip the card.
+    if (hasSealIntent(card.effects)) {
+      const sealable =
+        card.target === "enemy"
+          ? getValidTargets(data, state, instanceId).map((id) => unitOf(id)!)
+          : opponents;
+      if (sealable.every((unit) => sealWeight(data, unit) === 0)) continue;
+    }
     if (card.target === "none") return { type: "playCard", instanceId };
     const targets = getValidTargets(data, state, instanceId);
     let targetId: string | undefined;
@@ -114,7 +149,27 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
           : (state.players.find((p) => p.index === (unit as { player: number }).player)?.moonReserve ?? 0);
       };
       const hp = (id: string) => unitOf(id)!.hp;
-      targetId = [...targets].sort((a, b) => (drains ? threat(b) - threat(a) : hp(a) - hp(b)))[0];
+      let pool = targets;
+      let score: (id: string) => number = (id) => -hp(id);
+      if (drains) {
+        score = threat;
+      } else if (appliesCharm(card)) {
+        // Mê Hoặc aims at the heaviest announced turn; in PvP a Linh Thú ignores
+        // the mark, so only heroes stay in the pool.
+        pool = targets.filter((id) => {
+          const unit = unitOf(id)!;
+          return unit.side === "enemy" || !isSummon(unit);
+        });
+        score = (id) => incomingDamage(data, state, unitOf(id)!);
+      } else if (hasSealIntent(card.effects)) {
+        // Phong Ấn marks the unit whose next turn would lose the most
+        // non-damage effects; the all-pure-damage case was gated above.
+        score = (id) => sealWeight(data, unitOf(id)!);
+      }
+      targetId = [...pool].sort((a, b) => score(b) - score(a))[0];
+    } else if (card.target === "fallenAlly") {
+      // Hồi Hồn (`18` §3.5): raise the sturdiest fallen ally.
+      targetId = [...targets].sort((a, b) => unitOf(b)!.maxHp - unitOf(a)!.maxHp)[0];
     } else {
       const burst = keywordsOf(instanceId).includes("tu_duoc");
       const regen = (id: string) => unitOf(id)!.statuses.find((s) => s.id === "regen")?.value ?? 0;
@@ -187,6 +242,109 @@ function selfLosses(effects: Effect[]): number[] {
   };
   walk(effects, 0);
   return totals;
+}
+
+/**
+ * Linh Thú (`01` §17): recasting while a healthy summon stands only heals and
+ * buffs it — want the card when the hero has no living Linh Thú, when that
+ * summon is under half HP, or while the hero still levels via `summonsMade` (F09).
+ */
+function wantsSummon(data: GameData, state: CombatState, hero: HeroState): boolean {
+  if (!hero.leveledUp && data.heroes[hero.defId]?.levelUp.counter === "summonsMade") return true;
+  const summon = summonOf(state, hero.id);
+  return summon === undefined || summon.hp * 2 < summon.maxHp;
+}
+
+/** Heroes a card's `summon` effects would raise a Linh Thú for (`effect.actor` on bond cards; nested branches count). */
+function summonActors(effects: Effect[], owners: (HeroState | undefined)[]): HeroState[] {
+  const found = new Set<HeroState>();
+  const walk = (list: Effect[], actor: number): void => {
+    for (const effect of list) {
+      const at = effect.actor ?? actor;
+      if (effect.type === "summon") {
+        const hero = owners[at];
+        if (hero !== undefined) found.add(hero);
+      } else if (effect.type === "conditional") {
+        walk(effect.then, at);
+        walk(effect.else ?? [], at);
+      }
+    }
+  };
+  walk(effects, 0);
+  return [...found];
+}
+
+/** Any `applyStatus → charm` that can land on an opposing unit (`allEnemies`, or `chosen` on enemy-target cards). */
+function appliesCharm(card: CardDef): boolean {
+  const walk = (effects: Effect[]): boolean =>
+    effects.some((effect) => {
+      if (effect.type === "applyStatus" && effect.status === "charm") {
+        return effect.to === "allEnemies" || (card.target === "enemy" && effect.to === "chosen");
+      }
+      return effect.type === "conditional" && (walk(effect.then) || walk(effect.else ?? []));
+    });
+  return walk(card.effects);
+}
+
+/** Any `sealIntent` anywhere in the effect tree (nested `conditional` branches count). */
+function hasSealIntent(effects: Effect[]): boolean {
+  return effects.some(
+    (effect) =>
+      effect.type === "sealIntent" ||
+      (effect.type === "conditional" && (hasSealIntent(effect.then) || hasSealIntent(effect.else ?? []))),
+  );
+}
+
+/** Non-damage effects a Phong Ấn mark would strip from `unit`'s next turn — the same top-level filter `sealFilteredEffects` runs (`01` §5.6). */
+function sealWeight(data: GameData, unit: UnitState): number {
+  // A frozen enemy skips its chain and a frozen hero cannot play — the mark
+  // expires unused either way. A Linh Thú ignores freeze.
+  if (!isSummon(unit) && hasStatus(unit, "freeze")) return 0;
+  const strippable = (effects: Effect[]) =>
+    effects.filter((effect) => effect.type !== "damage" && effect.type !== "missingHpDamage").length;
+  if (unit.side === "enemy") {
+    return (unit as EnemyState).plannedIntents.reduce((sum, planned) => sum + strippable(planned.intent.effects), 0);
+  }
+  if (isSummon(unit)) return strippable(data.summons[unit.summonId]?.action ?? []);
+  // PvP hero: hands stay hidden (`17` §4.8) — weigh the non-damage effects the
+  // hero's pool could lose on its cards next turn.
+  const def = data.heroes[unit.defId];
+  if (!def) return 0;
+  return [...def.cardIds, ...def.lockedCardIds].reduce(
+    (sum, cardId) => sum + strippable(data.cards[cardId]?.effects ?? []),
+    0,
+  );
+}
+
+/** Damage an effect list can put out — both `conditional` branches count (heuristic weight). */
+function effectDamage(effects: Effect[], unit: UnitState): number {
+  let total = 0;
+  for (const effect of effects) {
+    if (effect.type === "damage") total += effect.amount * (effect.hits ?? 1);
+    else if (effect.type === "missingHpDamage") total += Math.floor(unit.maxHp * effect.ratio) * (effect.hits ?? 1);
+    else if (effect.type === "conditional") total += effectDamage(effect.then, unit) + effectDamage(effect.else ?? [], unit);
+  }
+  return total;
+}
+
+/** Damage `unit` is expected to deal next turn: previewed intents for enemies; card-pool attack power for PvP heroes/summons whose plans stay hidden (`17` §4.8). */
+function incomingDamage(data: GameData, state: CombatState, unit: UnitState): number {
+  if (!isSummon(unit) && hasStatus(unit, "freeze")) return 0;
+  if (unit.side === "enemy") {
+    const preview = previewEnemyIntent(data, state, unit as EnemyState);
+    if (preview === null || preview.skipped) return 0;
+    return preview.intents.reduce(
+      (sum, intent) => sum + intent.damages.reduce((inner, hit) => inner + hit.amount * hit.hits, 0),
+      0,
+    );
+  }
+  if (isSummon(unit)) return effectDamage(data.summons[unit.summonId]?.action ?? [], unit);
+  const def = data.heroes[unit.defId];
+  if (!def) return 0;
+  return [...def.cardIds, ...def.lockedCardIds].reduce(
+    (sum, cardId) => sum + effectDamage(data.cards[cardId]?.effects ?? [], unit),
+    0,
+  );
 }
 
 /** Hero ids a `guard → chosen` effect would source from — self-guard fizzles, so they are out of the pool. */
