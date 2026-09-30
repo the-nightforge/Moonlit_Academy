@@ -171,7 +171,8 @@ Theo `18` §5.3; nâng cấp bằng vật liệu ở `14` §13.3, giá trong `ec
   `signatureHooks`, `refinement` đúng 4 mục). Độ hiếm = độ hiếm Hero; F09 (Common) dùng
   Rare. *Ngọc Bút* của M01 theo GDD §5.1 (Legendary). Đề xuất chi tiết ở §7.3.1.
 - **8 Nguyệt Bảo mới** (tổng 16) — ưu tiên lối chơi mới (Linh Thú, Mê Hoặc, Phong Ấn,
-  Hộ Vệ, Chọn Pha / Đổi Vận); mỗi Viện ít nhất một món trong tổng số. Đề xuất ở 7d.4.
+  Hộ Vệ, Chọn Pha / Đổi Vận); mỗi Viện ít nhất một món trong tổng số. Đề xuất chi
+  tiết ở §7.3.2 (**bản nháp, chờ duyệt**).
 - `banner_weapons` / `banner_relics` liệt kê mọi món (25 vũ khí / 16 Nguyệt Bảo);
   `pvp-config.freeWeaponIds` / `freeRelicIds` giữ nguyên, xem lại ở 7d.6.
 
@@ -292,6 +293,164 @@ Nguyên tắc đề xuất:
    ngã).
 10. Trần R5 bản mệnh duyệt nguyên văn: Ngọc Bút (Dưỡng Nguyệt 1), Huyết Phượng
     Đao (+3 Sức Mạnh, Thiêu Đốt 3 AoE), Ngọc Thố Bội (Thỏ đầu trận đủ buff).
+
+#### 7.3.2 Đề xuất 8 Nguyệt Bảo mới (7d.4 — **bản nháp, chờ duyệt**)
+
+Chờ duyệt trước khi viết JSON — số liệu là khởi điểm cân bằng, đo lại bằng mô
+phỏng ở 7d.6. Ký hiệu như §7.2: mỗi cấp Cộng Minh (CM) là **bản đầy đủ**; ô ghi
+"CMx, thêm: …" giữ nguyên phần của cấp trước. NL = Nguyệt Lực. Khuôn `02`
+§1.12: `RelicDef` gồm `resonance` đúng 5 cấp, mỗi cấp là `text` + `modifiers?` +
+`hooks?`. Nguyệt Bảo **không** có trường Viện trong schema — cột "Viện" là nhãn
+thiết kế: Viện mà từ khóa / lối chơi của món phục vụ (`04`: `scheme` = Thanh
+Loan, `ward` = Huyền Vũ, `harmony` = Bạch Lộ, `forbidden` = Xích Diên).
+
+Nguyên tắc đề xuất:
+
+- Chỉ dùng `MoonModifier` (5 loại: `damageMultiplierForTag`,
+  `stealthDurationBonus`, `costModifierForTag`, `healMultiplier`,
+  `armorMultiplier`), `HookTrigger` và `Effect` đã có (`static.ts`). Kế hoạch
+  Nguyệt Luân mới (`2026-09-30-nguyet-luan-redesign.md`) **chưa được cài** —
+  `DECREE_ONLY_MODIFIERS` không tồn tại trong code; 5 loại modifier hiện có đều
+  nằm ngoài danh sách chỉ-dành-cho-lệnh dự kiến nên không cần đổi khi bản
+  Nguyệt Luân mới vào.
+- Ràng buộc hook Nguyệt Bảo (`01` §13.4 / §14.4; kiểm chéo `checkHooks` với
+  `allowCardOnly` trong `load-game-data.ts`): **cấm** `to: "chosen"`,
+  `stealBuff`, `actor` trên effect, `chooseCard`, `createCard`, `execute`,
+  `summon`, `sealIntent`, `revive`, `to: "summon"`, `to: "owner"`, condition
+  `target…`, `heroDied` với `actor: "trigger"`. **Được** dùng effect "chỉ lá"
+  (`drawCards`, `drainMoonPower` với `allEnemies`, `gainMoonPowerPerTurn`,
+  `burstRegen`, `heal.overflow`, `missingHpDamage`) như Lõi.
+- Vì `summon` / `sealIntent` / `to: "summon"` bị cấm, hai ưu tiên Linh Thú /
+  Phong Ấn được phục vụ gián tiếp: `to: "allAllies"` chạm tới Linh Thú của seat
+  (`alliesOf` gồm `summonsOf`), và Tỏa Nguyệt (`drainMoonPower`) hủy chiêu địch
+  thay cho Phong Ấn đúng nghĩa.
+- Nhịp CM bám 8 món cũ: CM1–CM4 tăng số / thêm điều kiện pha, CM5 là trần (thêm
+  trigger hoặc thêm hiệu ứng). Sức mạnh cấp 1 bám chuẩn 4e.7 (không tăng thắng
+  lượt > 10 điểm); đo lại ở 7d.6.
+- Đơn vị hành động như §7.2: "+NL" / hiệu ứng lên kẻ địch dùng `front`;
+  "mọi Hero" dùng `each` + `to: "self"`; "mọi đồng đội (gồm Linh Thú)" dùng
+  `front`/`each` + `to: "allAllies"`; "Hero máu thấp nhất" dùng `lowestHp`;
+  "Hero đánh lá / kết liễu" dùng `trigger`.
+
+| Nguyệt Bảo | Độ hiếm | Viện | CM1 | CM2 | CM3 | CM4 | CM5 |
+|---|---|---|---|---|---|---|---|
+| Càn Khôn Bàn `r_can_khon_ban` (Đổi Vận / Chọn Pha) | Legendary | Xích Diên | Mỗi 3 lượt, đầu lượt người chơi: Đổi Vận tiến 1 pha | mỗi 2 lượt | CM2, thêm: đầu trận Đổi Vận 1 pha | CM3, thêm: đầu trận +2 NL | mỗi 2 lượt; đầu trận Đổi Vận 2 pha và +2 NL |
+| Ngự Linh Chuông `r_ngu_linh_chuong` (Linh Thú) | Legendary | Bạch Lộ | Cuối mỗi lượt người chơi: mọi đồng đội (gồm Linh Thú) +1 giáp | +2 giáp | +2 giáp và Hồi Phục 1 | +3 giáp và Hồi Phục 1 | CM4, thêm: đầu trận mọi đồng đội +3 giáp |
+| Hồ Tâm Châu `r_ho_tam_chau` (Mê Hoặc) | Epic | Bạch Lộ | Khi vào Trăng Non: mọi kẻ địch Mê Hoặc 1 | CM1, thêm: đầu trận mọi kẻ địch Mê Hoặc 1 | CM2 với Mê Hoặc 2 | CM3, thêm: khi vào Lưỡi Liềm Cuối mọi kẻ địch Mê Hoặc 1 | CM4, thêm: Huyết Nguyệt bắt đầu mọi kẻ địch Mê Hoặc 1 |
+| Bất Động Ấn `r_bat_dong_an` (Hộ Vệ) | Epic | Huyền Vũ | Đầu trận: Hero đầu hàng +3 giáp và Hộ Vệ mọi đồng đội 1 vòng | Hộ Vệ 2 vòng | +5 giáp | CM3, thêm: mỗi 3 lượt, đầu lượt: Hero đầu hàng +2 giáp và Hộ Vệ 1 vòng | đầu trận +6 giáp, Hộ Vệ 2 vòng; mỗi 2 lượt: +2 giáp, Hộ Vệ 1 vòng |
+| Phong Tỏa Ấn `r_phong_toa_an` (Phong Ấn) | Epic | Thanh Loan | Mỗi lá `control` thứ 4 trong trận: Tỏa Nguyệt 1 lên mọi kẻ địch | mỗi lá thứ 3 | CM2, thêm: mọi kẻ địch Suy Yếu 1 vòng | Tỏa Nguyệt 2 | mỗi lá thứ 2: Tỏa Nguyệt 2, Suy Yếu 1 vòng |
+| Kim Cang Phù `r_kim_cang_phu` (từ khóa `ward`) | Rare | Huyền Vũ | Mỗi lá Hộ Thể (`ward`) thứ 3 trong trận: mọi Hero +2 giáp | +3 giáp | CM2, thêm: đầu trận mọi Hero +2 giáp | mỗi lá thứ 2: mọi Hero +3 giáp; đầu trận +2 | mỗi lá thứ 2: mọi Hero +4 giáp; đầu trận +3 |
+| Cam Lộ Bình `r_cam_lo_binh` (từ khóa `harmony`) | Rare | Bạch Lộ | Hiệu quả hồi máu +10% | +15% | +20%; mỗi lá `harmony` thứ 4: Hero máu thấp nhất hồi 2 | +25%, hồi 3 | +30%; mỗi lá thứ 3: hồi 3 |
+| Hàn Lâm Ấn `r_han_lam_an` (từ khóa `scheme`) | Rare | Thanh Loan | Mỗi lá `scheme` thứ 4 trong trận: +1 NL | +2 NL | mỗi lá thứ 3: +2 NL | mỗi lá thứ 3: +2 NL và rút 1 lá | mỗi lá thứ 2: +2 NL và rút 1 lá |
+
+**Ghi chú cơ chế:**
+
+- **Càn Khôn Bàn:** "Chọn Pha" đúng nghĩa (`chooseMoon`) chỉ là nội tại thăng
+  cấp của M08 — không có cơ chế mở lựa chọn cho Nguyệt Bảo, nên món này là xấp
+  xỉ bằng Đổi Vận định kỳ (`shiftMoon` trong hook `playerTurnStart` `every` /
+  `combatStart`). Hai lưu ý kỹ thuật: `shiftMoon` chạy **bên trong** hook phát
+  `moonShifted` nhưng **không** kích hoạt hook `moonPhaseEntered` của Nguyệt
+  Bảo khác (không đệ quy, `01` §13.4) và không nuôi `moonShifts` (bộ đếm chỉ
+  tính lá) — đội mang Càn Khôn Bàn + Vọng Nguyệt Kính không tạo vòng nhân đôi.
+  Gắn Viện Xích Diên theo chủ đề thiên văn/đổi mệnh của M08; phục vụ `forbidden`
+  theo tag vẫn do `r_huyet_ngoc_boi` đảm nhiệm (câu hỏi 3).
+- **Ngự Linh Chuông:** `to: "allAllies"` bao gồm Linh Thú còn sống của seat —
+  cách duy nhất để Nguyệt Bảo buff Linh Thú vì `summon` / `to: "summon"` bị
+  cấm. Hook `playerTurnEnd` chạy **trước** khi Linh Thú hành động
+  (`endSeatTurn` → `runSummonActions`), nên giáp/Hồi Phục kịp che Linh Thú qua
+  lượt địch. Hook `combatStart` ở CM5 chỉ lên Hero — hook Nguyệt Bảo chạy trước
+  hook vũ khí (§14.5) nên Thỏ Ngọc của Ngọc Thố Bội chưa tồn tại lúc đó.
+- **Hồ Tâm Châu:** `applyStatus charm` `to: "allEnemies"`, actor `front` —
+  `sourceId` ghi vào Hero đầu hàng, nuôi `charmsApplied` của Hero đó (thăng cấp
+  F06). Mê Hoặc chỉ chuyển **chiêu đơn mục tiêu**; chiêu AoE không bị trừ lượt
+  (`01` §9.3.1 bước 0). PvP: `allEnemies` = Hero/Linh Thú đối thủ; Hero bị Mê
+  Hoặc đánh lá tấn công đơn đầu tiên vào đồng đội nó (§15.5) — mạnh, giữ số
+  lượt và tần suất thấp, đo lại ở 7d.6.
+- **Bất Động Ấn:** actor `front` + `applyStatus guard` `to: "allAllies"` —
+  engine bỏ qua guard lên chính người hộ vệ (`effects.ts`: Hộ Vệ lên chính mình
+  vô nghĩa), nên Hero đầu hàng trở thành `sourceId` hộ vệ cho mọi đồng đội;
+  đòn đơn nhắm đồng đội chuyển sang người hộ vệ (`01` §9.3.1 bước 1b), nuôi
+  `hitsIntercepted` (thăng cấp M02) và cộng `interceptArmor` nếu người hộ vệ là
+  M02 dạng Trung Can. `gainArmor self` trên cùng hook cho người hộ vệ trụ đòn.
+  CM4–5 thêm `playerTurnStart` `every` 3→2 để gia hạn dấu.
+- **Phong Tỏa Ấn:** `sealIntent` bị cấm trong hook Nguyệt Bảo (kiểm chéo `02`
+  §6) → xấp xỉ bằng Tỏa Nguyệt: `cardPlayed{tag:"control"}` `every` →
+  `drainMoonPower` `allEnemies` (rút quỹ NL địch → hủy chiêu cuối chuỗi, `01`
+  §9.3.2). Khác bản chất: Phong Ấn tước *hiệu ứng* còn giữ damage, Tỏa Nguyệt
+  hủy *cả chiêu* khi hết quỹ (câu hỏi 2). PvP: `drainMoonPower` chỉ rút
+  `moonReserve` đối thủ đúng một lần bất kể số mục tiêu — hiệu quả mềm hơn.
+  `control` là tag của mọi lá Phong Ấn (F07) và lá Mê Hoặc (F06, M09).
+- **Kim Cang Phù:** `cardPlayed{tag:"ward"}` `every` → `each` + `gainArmor
+  self`. Mọi lá Hộ Vệ của M02 đều tag `ward` → món này và Bất Động Ấn cùng nuôi
+  nhịp ward/Hộ Vệ của Huyền Vũ (một là cadence, một là trạng thái).
+- **Cam Lộ Bình:** `healMultiplier` là modifier luôn-bật của Nguyệt Bảo — nhân
+  mọi hồi máu của seat (lá, tick Hồi Phục, hook Nguyệt Bảo khác); cộng thêm
+  `cardPlayed{tag:"harmony"}` `every` → `lowestHp` `heal self` để phục vụ đúng
+  từ khóa. Mọi lá Linh Thú (F09) và Mê Hoặc (F06, M09) đều tag `harmony` → một
+  món phủ cả ba nhánh Bạch Lộ. Trần +30% ở CM5 ngang Lõi *Tinh Anh Chi Luật* —
+  chấp nhận vì CM5 tốn 5 bản (câu hỏi 5).
+- **Hàn Lâm Ấn:** `cardPlayed{tag:"scheme"}` `every` → `trigger` +
+  `gainMoonPower` / `drawCards`. "Rút" là `drawCards` (rút mù) — `chooseCard`
+  (Chiêm Bài) bị cấm trong hook. Lá Phong Ấn của F07 mang `scheme`+`control` →
+  nuôi cả Hàn Lâm Ấn lẫn Phong Tỏa Ấn.
+
+**Độ phủ Viện trong tổng 16 món** (từ khóa của Viện = `04`):
+
+| Viện | Từ khóa | Phục vụ bởi món cũ | Phục vụ bởi món mới |
+|---|---|---|---|
+| Thanh Loan | `scheme` | `r_huyet_ngoc_boi` (cost `scheme` −khi Huyết Nguyệt); `r_loan_linh_an` (đếm lá kỹ năng — lá `scheme` đều là kỹ năng) | `r_han_lam_an` (cadence `scheme`); `r_phong_toa_an` (cadence `control` — tag phụ của lá `scheme` Phong Ấn) |
+| Huyền Vũ | `ward` | `r_huyen_vu_giap_phu`, `r_vong_nguyet_kinh` (giáp — chủ đề, không chạm tag) | `r_kim_cang_phu` (cadence `ward`); `r_bat_dong_an` (Hộ Vệ — mọi lá `guard` đều tag `ward`) |
+| Bạch Lộ | `harmony` | `r_bach_lo_huong_nang` (hồi máu — chủ đề) | `r_cam_lo_binh` (healMultiplier + cadence `harmony`); `r_ngu_linh_chuong` (buff `allAllies` chạm Linh Thú); `r_ho_tam_chau` (Mê Hoặc — lá charm đều tag `harmony`) |
+| Xích Diên | `forbidden` | `r_huyet_ngoc_boi` (cost `forbidden` −khi Huyết Nguyệt — đúng cửa sổ `requiresBloodMoon`); `r_xich_diem_chau` (Thiêu Đốt — chủ đề) | `r_can_khon_ban` (Đổi Vận — chủ đề thiên văn của M08, không chạm tag `forbidden`) |
+
+Mỗi Viện có ít nhất 1 món phục vụ từ khóa của nó theo tag hoặc trạng thái đặc
+trưng: `scheme` (r_han_lam_an + r_huyet_ngoc_boi), `ward` (r_kim_cang_phu +
+r_bat_dong_an), `harmony` (r_cam_lo_binh + r_ngu_linh_chuong), `forbidden`
+(r_huyet_ngoc_boi). Trung lập không cần phủ; `r_thien_sach`, `r_tran_hon_linh`
+không thuộc Viện nào.
+
+**Đề xuất chèn banner** (`banners.json`, theo khuôn `pool` — thêm cuối mỗi
+hàng, món cũ giữ nguyên thứ tự):
+
+- `banner_weapons`:
+  - `legendary` (7): `w_xich_diem_thuong`, `w_tinh_ban` + `w_ngoc_but`,
+    `w_quan_tinh_truong`, `w_thien_nguyet_truong`, `w_huyet_phuong_dao`,
+    `w_dan_hon_dang`.
+  - `epic` (8): `w_anh_nguyet_chuy`, `w_han_tuyet_song_kiem`,
+    `w_thien_dien_phien`, `w_huyen_linh_kinh` + `w_cam_ve_kich`,
+    `w_bach_ngan_cham`, `w_vong_quoc_cam`, `w_kinh_hong_phien`.
+  - `rare` (10): `w_bach_hoa_tram`, `w_thiet_thuan`, `w_liet_cung`,
+    `w_thanh_tam_binh` + `w_van_kim_dau`, `w_huyet_tran_co`, `w_han_mon_kiem`,
+    `w_xuyen_van_cung`, `w_phan_quan_but`, `w_ngoc_tho_boi`.
+  - `common`: [] (không đổi). Tổng 25 — khớp T313.
+- `banner_relics`:
+  - `legendary` (4): `r_thien_sach`, `r_vong_nguyet_kinh` + `r_can_khon_ban`,
+    `r_ngu_linh_chuong`.
+  - `epic` (6): `r_huyet_ngoc_boi`, `r_loan_linh_an`, `r_xich_diem_chau` +
+    `r_ho_tam_chau`, `r_bat_dong_an`, `r_phong_toa_an`.
+  - `rare` (6): `r_bach_lo_huong_nang`, `r_huyen_vu_giap_phu`, `r_tran_hon_linh`
+    + `r_kim_cang_phu`, `r_cam_lo_binh`, `r_han_lam_an`.
+  - `common`: [] (không đổi). Tổng 16 — khớp T313.
+- `pvp-config.freeWeaponIds` / `freeRelicIds` giữ nguyên (`18` §5.3; xem lại ở
+  7d.6).
+
+**Câu hỏi mở / quyết định cần duyệt:**
+
+1. Tên và id 8 món duyệt nguyên văn?
+2. **Chọn Pha**: giữ xấp xỉ Đổi Vận định kỳ (`shiftMoon` trong hook) cho Càn
+   Khôn Bàn? Muốn "chọn pha" thật (mở `choosing` đầu lượt) cần luật mới — ngoài
+   phạm vi 7d.4 chỉ-JSON.
+3. **Xích Diên**: món mới duy nhất mang tên Viện là Càn Khôn Bàn nhưng không
+   chạm tag `forbidden` (tag đó vẫn chỉ có `r_huyet_ngoc_boi` cũ phục vụ — vừa
+   đủ vì lá `requiresBloodMoon` chỉ chơi được khi Huyết Nguyệt). Giữ nguyên, hay
+   cộng `costModifierForTag forbidden` vào một cấp của Càn Khôn Bàn / đổi một món
+   Rare sang phục vụ `forbidden`?
+4. **Phong Ấn**: chấp nhận xấp xỉ Tỏa Nguyệt (`drainMoonPower` hủy chiêu) cho
+   Phong Tỏa Ấn? `sealIntent` đúng nghĩa bị cấm trong hook Nguyệt Bảo.
+5. Số mạo hiểm cần ý kiến: `healMultiplier` +30% ở CM5 Cam Lộ Bình (ngang Lõi);
+   `drawCards` trong hook của Hàn Lâm Ấn CM4–5 (nguồn rút bài mới trên trang bị);
+   Mê Hoặc AoE của Hồ Tâm Châu trong PvP. Đều sẽ đo lại bằng mô phỏng ở 7d.6 —
+   giữ đề xuất hay giảm ngay từ bản nháp?
 
 ## 8. Đấu Trường — chỉ số PvP [GĐ5b]
 
