@@ -330,8 +330,6 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ### Phần 7c — Cốt truyện Arc 1–2
 
-**Giai đoạn hiện tại: 7c đang làm — `docs/18-phase7-spec.md` §4**
-
 Đặc tả: `18-phase7-spec.md` §4. Kế hoạch chi tiết:
 `docs/superpowers/plans/2026-09-30-phase7c-story.md` (9 Task).
 
@@ -364,7 +362,11 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ### Bước 7c.7 — Chơi thử và chỉnh độ khó *(Task 9)*
 > Bot + tay theo mục tiêu `18` §4.5 (Arc 1 ≥ 80% / boss ≥ 60%; Arc 2 55–75% / boss
-> 40–60%; mỗi màn Arc 2 ≥ 60% với đội tốt nhất trong 3 đội mẫu).
+> 40–60%; mỗi màn Arc 2 ≥ 60% với đội tốt nhất trong 3 đội mẫu). *(Đã xong —
+> phần chơi tay treo, xem `docs/playtest-notes.md` Phase 7c.)*
 
 ### Phần 7d — Trang bị bản mệnh + nâng cấp vật liệu
+
+**Giai đoạn hiện tại: 7d đang làm — `docs/18-phase7-spec.md` §5**
+
 > Theo `18` §5: 15 vũ khí bản mệnh + 8 Nguyệt Bảo, `upgradeItem`/`upgradeCost`, nguồn Huyền Thiết. Kế hoạch riêng khi bắt đầu.

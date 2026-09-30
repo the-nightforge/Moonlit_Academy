@@ -1315,3 +1315,83 @@ cho người đi sau không đổi được, còn mở).
 m05+f04+m06 50%, m05+f03+f02 69%, m06+f02+f03 66%, m05+f03+f04 80%, m01+m02+f04 41%,
 m08+f08+m05 **20%** (từ 1%), m03+m10+m04 18%, f01+m07+m06 34%, f09+f10+m05 13%,
 f06+m09+f03 3%, f05+f07+m06 66%, f10+f05+m04 3%. Tổng **38%**.
+
+# Playtest Notes — Phase 7c (bước 7c.7)
+
+## Phương pháp
+
+- File tạm `packages/rules/test/zz-story.tmp.test.ts` (đã xóa sau khi đo, không
+  commit): 16 màn Cốt Truyện (`story.json`: 8 Arc 1 + 8 Arc 2) × 3 đội mẫu
+  (`m05+f04+m06`, `m05+f03+f02`, `m01+m02+f04`) × 80 seed (1–80), qua
+  `createStoryCombat` — tức là encounter của màn + `start` pha trăng của màn.
+- Deck: **Bộ cơ bản** = `starterDeck` (6 lá miễn phí của mỗi Hero → 18 ô, không
+  trang bị, Tinh Hồn 0). Bot: `chooseCombatAction` trung thực (chỉ thông tin
+  công khai). Đo: thắng %, vòng TB, tỉ lệ Cạn Bài (event `deckedOut`), kẹt
+  (> 60 vòng — 0 trận toàn bảng).
+- Mục tiêu (đã duyệt ở 7c.1, đội chuẩn `m05+f04+m06`): Arc 1 thường ≥ 80%,
+  boss ≥ 60%; Arc 2 thường 55–75%, boss 40–60%; và **mọi màn ≥ 60% với đội
+  tốt nhất trong 3 đội mẫu**.
+
+## Bảng 16 màn × 3 đội (thắng % / vòng TB / Cạn Bài %)
+
+| Màn | m05+f04+m06 | m05+f03+f02 | m01+m02+f04 | Đội tốt nhất | Band (đội chuẩn) |
+|---|---|---|---|---|---|
+| arc1_s01 Nhập Học | 100.0 / 7.3 / 0 | 100.0 / 5.9 / 0 | 100.0 / 6.5 / 0 | 100.0 | ≥80 ✓ |
+| arc1_s02 Thanh Loan | 100.0 / 6.5 / 0 | 100.0 / 5.6 / 0 | 100.0 / 6.2 / 0 | 100.0 | ≥80 ✓ |
+| arc1_s03 Huyền Vũ | 96.3 / 11.2 / 3.8 | 100.0 / 7.5 / 0 | 93.8 / 8.8 / 6.3 | 100.0 | ≥80 ✓ |
+| arc1_s04 Bạch Lộ | 85.0 / 10.3 / 15.0 | 100.0 / 8.3 / 0 | 100.0 / 7.6 / 0 | 100.0 | ≥80 ✓ |
+| arc1_s05 Xích Diên | 98.8 / 7.7 / 1.3 | 100.0 / 6.8 / 0 | 100.0 / 6.6 / 0 | 100.0 | ≥80 ✓ |
+| arc1_s06 Tàng Thư | 98.8 / 9.1 / 0 | 100.0 / 7.5 / 0 | 96.3 / 8.7 / 1.3 | 100.0 | ≥80 ✓ |
+| arc1_s07 Dạ Tập | 92.5 / 7.7 / 3.8 | 95.0 / 8.2 / 5.0 | 98.8 / 6.1 / 1.3 | 98.8 | ≥80 ✓ |
+| arc1_s08 **boss** | 75.0 / 11.5 / 22.5 | 97.5 / 9.5 / 2.5 | 88.8 / 9.7 / 11.3 | 97.5 | ≥60 ✓ |
+| arc2_s01 Thư Tín | 97.5 / 7.0 / 2.5 | 100.0 / 7.1 / 0 | 100.0 / 5.8 / 0 | 100.0 | 55–75 **vượt trần**† |
+| arc2_s02 Mật Thám | 100.0 / 6.0 / 0 | 100.0 / 6.1 / 0 | 100.0 / 5.3 / 0 | 100.0 | 55–75 **vượt trần**† |
+| arc2_s03 Ám Sát | 75.0 / 10.0 / 0 | 60.0 / 12.5 / 0 | 98.8 / 5.9 / 0 | 98.8 | 55–75 ✓ |
+| arc2_s04 Tô Dạ | 78.8 / 11.3 / 0 | 68.8 / 12.3 / 0 | 100.0 / 6.0 / 0 | 100.0 | 55–75 **+3.8**† |
+| arc2_s05 Chợ Đêm | 57.5 / 11.2 / 16.3 | 75.0 / 10.6 / 3.8 | 72.5 / 10.5 / 18.8 | 75.0 | 55–75 ✓ |
+| arc2_s06 Quan Tinh Đài | 60.0 / 11.7 / 0 | 15.0 / 13.2 / 0 | 97.5 / 7.0 / 0 | 97.5 | 55–75 ✓ |
+| arc2_s07 Hắc Vệ | 67.5 / 11.2 / 31.3 | 95.0 / 10.1 / 2.5 | 85.0 / 9.6 / 15.0 | 95.0 | 55–75 ✓ |
+| arc2_s08 **boss** | 43.8 / 15.2 / 20.0 | 85.0 / 10.2 / 1.3 | 70.0 / 12.3 / 17.5 | 85.0 | 40–60 ✓ |
+
+† Lệch band đã được duyệt khi chốt số ở 7c.5 (`hac_y_mat_tham` HP 10 kéo s05 qua
+sàn, hệ quả s01/s02 nhẹ; s04/s06 cùng đội hình nên giữ s06 trong band đổi lấy
+s04 vượt 3.8 điểm). Ghi nhận, không chỉnh lại.
+
+**Kết luận:** mọi mục tiêu đạt hoặc thuộc lệch đã duyệt — không chỉnh số thêm
+ở bước này (`enemies.json` giữ nguyên). Mọi màn đều có đội mẫu ≥ 60% (đội tốt
+nhất thấp nhất: arc2_s05 75.0%).
+
+## Gói chỉnh đã áp trong 7c (nhắc lại, xem `03` §13.3–13.4)
+
+- **Arc 1 (7c.4):** `bach_lo_thi_quan` HP 36→30, các hồi giảm ~45% (cam_lo 4→3,
+  duong_sinh 2→1, hoi_xuan 8→5, nguyet_duoc 6→4); `khao_hach_chi_linh` HP 90→80,
+  Lạc Ấn / Vô Nguyệt Trảm 12→10, hồi 6→5. Fix `drainMoonPower` trong chiêu địch
+  rút Dự Trữ người chơi (`01` §9.3.2) — trước fix là no-op.
+- **Arc 2 (7c.5):** `vo_nguyet_am_sat` HP 30→18, damage 5/4→4/3, Đoạt Mệnh 8→7,
+  Tản Ảnh cost 2→4, override Trăng Non 8→3 + stealth 2→1; `vo_nguyet_nghi_si` HP
+  38→22, Tế Tinh 4→1, Tàn Nguyệt 6→2, Vô Vọng cost 3→4; `hac_y_mat_tham` HP
+  34→10, Ám Châm 4→2; `vo_nguyet_anh_chu` HP 105→75, damage 5/7→4/5, Đoạt
+  Nguyệt drain 3→2, Vô Nguyệt Trảm 12→9, Vô Nguyệt Thiểm 14→10.
+
+## Điểm mở / ghi chú
+
+- **arc2_s06 (Quan Tinh Đài, ghim Trăng Non):** đội `m05+f03+f02` chỉ 15% — tường
+  Ẩn Thân của 3 kẻ địch override `new` + Bộ cơ bản của đội đó thiếu đòn lan đúng
+  lúc; đạt chuẩn "đội tốt nhất ≥ 60%" nhờ m01+m02+f04 (97.5). Đúng thiết kế
+  "đội đòn lan", theo dõi khi người chơi thật thử.
+- **Cạn Bài** tập trung ở màn kéo dài: arc1_s08 22.5% (đội chuẩn), arc2_s07
+  31.3%, arc2_s08 20.0%, arc2_s05 16–19% — deck 18 lá cố định, cùng lớp rủi ro
+  "lối chơi kéo dài trận" đã chấp nhận ở 4b/Lõi; story không có mục tiêu Cạn Bài
+  riêng.
+- Khi redesign Nguyệt Luân cài (pha đầu ngẫu nhiên + Nguyệt Lệnh bốc theo trận):
+  đo lại toàn bảng — `start.moonIndex` của arc2_s06 sẽ đè lên pha ngẫu nhiên,
+  kẻ địch cũ nhận Nguyệt tính đổi độ khó arc1_s05–s07.
+- **Chơi tay còn treo** (bot không thay được cảm nhận) — cần kiểm trên client:
+  - Arc 1: màn 1 (Nhập Học — màn mở đầu, thoại có đủ ngắn), màn 5 (Cấm Địa Xích
+    Diên — `bloodMoonRounds: 3` đọc được không), màn 8 (boss Khảo Hạch Chi Linh —
+    độ khó + 4 Nguyệt tính của boss).
+  - Arc 2: màn 3 (Vô Nguyệt Ám Sát — bức tường Ẩn Thân), màn 6 (Quan Tinh Đài —
+    mở trận Trăng Non cố định, đọc pha đầu), màn 8 (boss Vô Nguyệt Ảnh Chủ —
+    steal/drain, trận dài ~15 vòng).
+  - Quan sát: thoại before/after có dài quá không (5–8 câu/màn), cảm giác độ khó
+    so với số liệu, pha trăng đầu trận có đọc được trên UI không.

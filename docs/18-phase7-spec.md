@@ -32,7 +32,7 @@ chuẩn; tài liệu này giữ bối cảnh và lý do.
 **Điều kiện trước:** GĐ 6 (`17`) đã vào `main`. 5e.2 (triển khai Internet thật) độc lập,
 làm song song khi người dùng sẵn sàng.
 
-**Trạng thái:** 7b xong — 20 Hero; tiếp theo 7c (§4).
+**Trạng thái:** 7c xong — Cốt truyện Arc 1–2; tiếp theo 7d (§5).
 
 **Thư viện mới:** không có.
 
