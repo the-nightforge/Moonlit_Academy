@@ -32,7 +32,7 @@ chuẩn; tài liệu này giữ bối cảnh và lý do.
 **Điều kiện trước:** GĐ 6 (`17`) đã vào `main`. 5e.2 (triển khai Internet thật) độc lập,
 làm song song khi người dùng sẵn sàng.
 
-**Trạng thái:** 7a xong — 14 Hero; tiếp theo 7b (§3).
+**Trạng thái:** 7b xong — 20 Hero; tiếp theo 7c (§4).
 
 **Thư viện mới:** không có.
 
@@ -376,43 +376,69 @@ StoryStage {
 }
 DialogueLine { speaker: string; text: string }   // heroId | enemyId | "narrator"
 ```
-Id: `arc1`, `arc1_s01`… Kiểm chéo khi nạp: `stageIds` khớp `arcId`; `encounterId`,
-`rewardHeroId`, `speaker` trỏ tới dữ liệu có sẵn; `moonIndex` 0–7; mỗi màn thuộc đúng một
-arc.
+Id: `arc1`, `arc1_s01`… Thứ tự arc là thứ tự trong file (`arcs[0]` là Arc 1). Kiểm chéo
+khi nạp: `stageIds` khớp `arcId`; `encounterId`, `rewardHeroId`, `speaker` trỏ tới dữ
+liệu có sẵn; `moonIndex` 0–7; mỗi màn thuộc đúng một arc.
 
-**Mở màn:** màn thứ *n* của arc cần đã qua màn *n−1*; màn đầu Arc 2 cần đã qua hết Arc 1.
+**Encounter của màn** có `tier: "story"` (tier mới của `EncounterDef`, `02` §1.6).
+Encounter `story` không vào bản đồ lượt chơi (`run/map.ts` chỉ bốc `normal` / `elite` /
+`boss`) và bị Trận lẻ lọc bỏ như `coop`. Kiểm chéo: `stage.encounterId` phải trỏ tới
+encounter có `tier: "story"`.
+
+**Mở màn:** màn thứ *n* của arc cần đã qua màn *n−1*; màn đầu của arc cần đã qua hết màn
+của arc trước (màn 1 Arc 2 cần hết Arc 1).
 
 ### 4.2 Luật thuần — `rules/src/meta/story.ts`
 
-- `StorySetup = { stageId, seed, heroIds, deckCardIds }`.
-- `createStoryCombat(data, setup, loadout?)` → `createCombat` với encounter của màn, áp
-  `start` (pha trăng, Huyết Nguyệt đầu trận; ý định vòng 1 lên chuỗi **sau** khi áp).
+- `StorySetup = { stageId, seed, heroIds: [string, string, string], deckCardIds }`.
+- `createStoryCombat(data, setup, loadout?)` → `createCombat` với encounter của màn và
+  `start` của màn chuyển thành `CombatSetup.start`.
+- **`CombatSetup.start?: { moonIndex?: number; bloodMoonRounds?: number }`** là trường
+  chung của `createCombat` (`01` §2): áp **trước** khi lên chuỗi ý định vòng 1, nên chiêu
+  `moonOverrides` / `bloodMoonOverride` của vòng 1 theo pha đã đặt. Huyết Nguyệt đầu trận
+  phát `bloodMoonChanged { rounds, cause: "start" }`; hook Kỳ Vật `bloodMoonStarted`
+  **không** chạy (Cốt truyện không có Kỳ Vật). Vắng `start` thì `createCombat` giữ y hệt
+  hành vi cũ (T213).
 - `replayStoryCombat(data, setup, actions: Action[], loadout?)` →
   `{ ok: true; state } | { ok: false; step; reason }` (cùng quy ước `replayRun`; action sau
-  khi trận kết thúc → lỗi).
-- `storyStageUnlocked(data, profile, stageId): boolean`.
-- `applyStoryResult(data, profile, stageId, won)`:
+  khi trận kết thúc → lỗi `"actions after end"`).
+- `storyStageUnlocked(data, profile, stageId): boolean`, `unlockedStageIds(data,
+  profile): string[]`.
+- `applyStoryResult(data, profile, setup: StorySetup, won)` — nhận cả `StorySetup` (không
+  chỉ `stageId`) vì XP Tu Luyện cộng cho **từng Hero trong đội** mà tài khoản sở hữu,
+  giống `applyRunResult` (`14`). Trả `{ ok: true; profile; rewards }` với
+  `rewards = { firstClear: boolean; moonJade: number; darkIron: number; gains:
+  MasteryGain[]; hero: PullResult | null }`:
   - Thắng và màn chưa có trong `profile.story.cleared` → thêm vào; trao `firstClear`
-    (`masteryXp` cộng cho từng Hero trong đội, theo luật XP Tu Luyện `14`); nếu là màn cuối
-    arc → `grantHeroItem(rewardHeroId)` (trùng → Tinh Hồn như gacha). Trả `rewards`.
-  - Thắng lại hoặc thua → không thưởng.
+    (`moonJade`, `darkIron` vào `currencies`; `masteryXp` cộng cho từng Hero sở hữu trong
+    đội → `gains`); nếu là màn cuối arc → `grantHeroItem(rewardHeroId)` (trùng → Tinh Hồn
+    như gacha), kết quả trả trong `hero`.
+  - Thắng lại hoặc thua → không thưởng: `rewards` về `{ firstClear: false, moonJade: 0,
+    darkIron: 0, gains: [], hero: null }`. Màn Cốt truyện **không** cộng tiến độ nhiệm vụ
+    hay thống kê Lượt chơi (`runsFinished`, `floorsReached`…) trong mọi trường hợp.
 - Hồ sơ thêm `story: { cleared: string[] }`; `parseProfile` điền `{ cleared: [] }` cho hồ
-  sơ cũ; `mergeImportedProfile` không nhập `story` (Cốt truyện chỉ có trên server).
+  sơ cũ và lọc id màn không tồn tại; `mergeImportedProfile` không nhập `story` (Cốt
+  truyện chỉ có trên server).
 
 ### 4.3 Server
 
-- Migration mới: bảng `story_tickets` (`id`, `account_id`, `stage_id`, `status`,
+- **Migration 4**: bảng `story_tickets` (`id`, `account_id`, `stage_id`, `status`,
   `setup_json`, `loadout_json`, `data_version`, `created_at`, `finished_at`,
-  `result_json`), cùng quy ước bảng `runs`. Mỗi tài khoản tối đa một phiếu mở; cấp phiếu
-  mới bỏ phiếu cũ.
-- `GET /api/story` → `{ cleared, unlocked }`.
+  `result_json`), cùng quy ước bảng `runs` (`16` §9). Mỗi tài khoản tối đa một phiếu
+  `open`; cấp phiếu mới đóng phiếu cũ (`abandoned`).
+- `GET /api/story` → `{ cleared: string[]; unlocked: string[] }`; `unlocked` gồm mọi màn
+  đang mở, **kể cả màn đã qua**.
 - `POST /api/story/:stageId/tickets { deckId }` (hoặc `{ deckId: "starter", heroIds }`
   như `runs`): kiểm màn đã mở, deck hợp lệ, chụp loadout → `{ ticketId, setup, loadout }`.
   Màn chưa mở → 403 `"stage locked"`.
-- `POST /api/story/tickets/:id/finish { actions }`: hạn 7 ngày, `dataVersion` khớp, chạy
-  lại; lỗi → 422 và phiếu `rejected`; trận chưa kết thúc → 422; thành công →
-  `applyStoryResult` trong transaction, trả hồ sơ + `rewards`.
+- `POST /api/story/tickets/:id/finish { actions }` (tối đa `MAX_STORY_ACTIONS = 2000`
+  action): hạn phiếu như `runs` (7 ngày), `dataVersion` khớp, chạy lại bằng
+  `replayStoryCombat`; lỗi → 422 và phiếu `rejected`; trận chưa kết thúc → 422, phiếu vẫn
+  `open`; thành công → `applyStoryResult` trong transaction, trả hồ sơ + `rewards`.
 - `POST /api/story/tickets/:id/abandon`.
+- Mã lỗi chính xác: `404 "unknown stage"`, `403 "stage locked"`, `404 "unknown ticket"`,
+  `409 "ticket closed"`, `410 "ticket expired"`, `409 "outdated client"`,
+  `422 "replay failed"` (phiếu bị sửa → `rejected`), `422 "combat not finished"`.
 - Cốt truyện cần đăng nhập; client ẩn chế độ khi mất kết nối.
 
 ### 4.4 Client
@@ -463,6 +489,18 @@ hiện có.
 
 **Thưởng (khởi điểm, chốt ở 7d.6):** mỗi arc tổng ~400 Nguyệt Ngọc; Huyền Thiết 1–2 mỗi
 màn, 5 ở boss arc; XP Tu Luyện theo màn; 1 Hero.
+
+**Quyết định đã duyệt (7c.1):**
+
+- **Tỏa Nguyệt trong chiêu địch:** `drainMoonPower` được phép trong `IntentDef` của kẻ
+  địch (ngoài lá bài) với đúng nghĩa PvP của `01` §15.5: rút **Dự Trữ của người chơi** một
+  lần, `min(amount, player.moonReserve)`; `steal` cộng quỹ cho kẻ địch thi hành. Không có
+  phần hủy ý định — người chơi không có chuỗi ý định (luật `01` §9.3.2; kiểm chéo nới ở
+  `02` §6).
+- **Mục tiêu độ khó** (đo bằng bot, Bộ cơ bản của đội khởi đầu `m05 + f04 + m06`, 80
+  seed): màn thường Arc 1 thắng **≥ 80%**; boss Arc 1 **≥ 60%**; màn thường Arc 2
+  **55–75%**; boss Arc 2 **40–60%**. Ngoài ra mỗi màn Arc 2 phải có **≥ 60%** với đội tốt
+  nhất trong 3 đội mẫu.
 
 ---
 
@@ -539,15 +577,16 @@ Tiếp nối `06` từ T263. Mỗi dải có thể giãn khi viết `06`; mã tr
 | T293–T294 | 7b | Xuyên mục tiêu: `backRowHits`, `pierceOwnAttacks` gọi `dealDamage` cùng base lên kẻ địch phía sau, `firstHitMarks`; `debuffsApplied`, `debuffDurationBonus`, `bonusVsDebuffed`, `extendDebuffs` |
 | T295 | 7b | Kiểm chéo dữ liệu: `summons.json` (`awakenedId`, phạm vi `owner` / `summon`), lá `fallenAlly` / `revive` |
 | T296–T297 | 7b | 6 Hero đợt 2 nạp đủ pool, chỉ số PvP, slot banner, trận khởi đầu và deck hợp lệ; đủ 20 Hero, 2 Song Hành mới thêm đúng lá vào deck |
-| T298 | 7c | Kiểm chéo `story.json` (id sai, speaker không tồn tại, màn thuộc hai arc) |
-| T299–T300 | 7c | `replayStoryCombat` tất định; `start` áp trước khi lên chuỗi vòng 1 |
-| T301–T302 | 7c | `storyStageUnlocked`; `applyStoryResult` thưởng lần đầu đúng 1 lần, màn cuối tặng Hero (trùng → Tinh Hồn) |
-| T303–T304 | 7c | Route: màn khóa → 403; nộp đúng → thưởng; chạy lại sai → 422 `rejected`; hết hạn → 410; lệch `dataVersion` → 409 |
-| T305 | 7c | `parseProfile` hồ sơ không có `story`; `mergeImportedProfile` bỏ qua `story` |
-| T306–T308 | 7d | `upgradeItem`: đủ / thiếu, max, chưa sở hữu, giá theo độ hiếm và cấp |
-| T309 | 7d | Route nâng cấp + `If-Match` |
-| T310 | 7d | Thưởng Huyền Thiết từ lượt chơi |
-| T311 | 7d | Nạp dữ liệu vũ khí / Nguyệt Bảo mới, banner trỏ đúng |
+| T298–T299 | 7b | `scaledDamage` đọc từng chỉ số theo `base + floor(stat × amount / divisor)` chặn `max`; `targetSealed` |
+| T300 | 7c | Kiểm chéo `story.json` (id sai, speaker không tồn tại, màn thuộc hai arc, encounter không phải `story`, `moonIndex` ngoài 0–7) |
+| T301–T302 | 7c | `replayStoryCombat` tất định; `start` áp trước khi lên chuỗi vòng 1 |
+| T303–T304 | 7c | `storyStageUnlocked` / `unlockedStageIds`; `applyStoryResult` thưởng lần đầu đúng 1 lần, màn cuối tặng Hero (trùng → Tinh Hồn) |
+| T305–T306 | 7c | Route: màn khóa → 403; nộp đúng → thưởng; chạy lại sai → 422 `rejected`; trận chưa xong → 422; một phiếu mở mỗi tài khoản, hết hạn → 410; lệch `dataVersion` → 409; `GET /api/story` |
+| T307 | 7c | `parseProfile` hồ sơ không có `story` + lọc id màn lạ; `mergeImportedProfile` bỏ qua `story` |
+| T308–T310 | 7d | `upgradeItem`: đủ / thiếu, max, chưa sở hữu, giá theo độ hiếm và cấp |
+| T311 | 7d | Route nâng cấp + `If-Match` |
+| T312 | 7d | Thưởng Huyền Thiết từ lượt chơi |
+| T313 | 7d | Nạp dữ liệu vũ khí / Nguyệt Bảo mới, banner trỏ đúng |
 
 **Chốt chặn mọi bước:** T213 xanh (hoặc ghi lại có duyệt, §1.2); `pnpm test` và
 `pnpm typecheck` xanh.
@@ -563,7 +602,7 @@ Tiếp nối `06` từ T263. Mỗi dải có thể giãn khi viết `06`; mã tr
 | `02` | `summons.json`, `story.json`, `StatusId` / `Effect` / `LevelUpCounter` / `LevelUpPassive` mới, `CardDef.token`, `TargetRef "owner"`, `upgradeCost`, kiểm chéo |
 | `03` | Kẻ địch / boss / encounter Arc 1–2 |
 | `04` | Hộ Vệ, Chọn Pha, Linh Thú, Mê Hoặc, Phong Ấn, Hồi Hồn, Xuyên, Cốt Truyện, Arc, Màn, Thưởng Lần Đầu, Nâng Cấp |
-| `06` | T263–T311 |
+| `06` | T263–T313 |
 | `07` | Giai đoạn 7 (bước §8) |
 | `14` | Cốt truyện (tiến độ, mở màn, thưởng), nâng cấp vật liệu, Huyền Thiết từ lượt chơi |
 | `16` | Route `story`, route nâng cấp, migration |
@@ -597,23 +636,23 @@ Mỗi phần có kế hoạch riêng trong `docs/superpowers/plans/`. Mỗi bư�
 
 **7c**
 1. 7c.1 — Tài liệu.
-2. 7c.2 — Schema `story.json` + luật thuần + hồ sơ (T298–T302, T305).
-3. 7c.3 — Server: migration, route (T303–T304).
+2. 7c.2 — Schema `story.json` + luật thuần + hồ sơ (T300–T304, T307).
+3. 7c.3 — Server: migration, route (T305–T306).
 4. 7c.4 — Nội dung Arc 1 (kẻ địch, boss, encounter, lời thoại; duyệt).
 5. 7c.5 — Nội dung Arc 2 (duyệt).
 6. 7c.6 — Client Cốt truyện + hội thoại.
-7. 7c.7 — Chơi thử (bot + tay) và chỉnh độ khó.
+7. 7c.7 — Chơi thử (bot + tay) và chỉnh độ khó (mục tiêu §4.5).
 
 **7d**
 1. 7d.1 — Tài liệu.
-2. 7d.2 — `upgradeItem`, `upgradeCost`, nguồn Huyền Thiết, route (T306–T310).
+2. 7d.2 — `upgradeItem`, `upgradeCost`, nguồn Huyền Thiết, route (T308–T312).
 3. 7d.3 — 15 vũ khí bản mệnh (duyệt).
-4. 7d.4 — 8 Nguyệt Bảo + banner (T311; duyệt).
+4. 7d.4 — 8 Nguyệt Bảo + banner (T313; duyệt).
 5. 7d.5 — Client nâng cấp.
 6. 7d.6 — Mô phỏng trang bị + kinh tế + chỉnh số (duyệt).
 
 **Hoàn thành GĐ 7 khi:** 20 Hero chơi được ở mọi chế độ và đạt mục tiêu §1.3; chơi trọn
-Arc 1–2 trên client qua server; vật liệu có chỗ tiêu và đạt mục tiêu §5.5; T263–T311 xanh.
+Arc 1–2 trên client qua server; vật liệu có chỗ tiêu và đạt mục tiêu §5.5; T263–T313 xanh.
 
 ---
 

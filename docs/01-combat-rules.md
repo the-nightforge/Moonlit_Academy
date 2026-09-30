@@ -31,7 +31,7 @@ tài liệu này không đổi. Luật PvP ở §15, co-op ở §16; đặc tả
 
 1. Tạo chồng bài: mỗi lá trong deck (kể cả lá Song Hành tự thêm, mục 4.4) sinh `copies` bản, mỗi bản một card instance có `instanceId` riêng, theo thứ tự deck; xếp vào `drawPile`, **xáo bằng RNG** (`deckShuffled`). **[GĐ3]** Nếu `CombatSetup.deckCardIds` có: dùng danh sách đó thay cho `cardIds` của 3 Hero (chủ lá = `ownerId`, phải thuộc đội).
 2. Mọi Hero và kẻ địch: `hp = maxHp`, `armor = 0`, không trạng thái. **[GĐ3]** Nếu `CombatSetup.heroes` có: `hp`/`maxHp` của Hero lấy từ đó.
-3. Nguyệt Luân bắt đầu ở **pha 1 (Lưỡi Liềm Đầu)**; `round = 1`.
+3. Nguyệt Luân bắt đầu ở **pha 1 (Lưỡi Liềm Đầu)**; `round = 1`. **[GĐ7c]** `CombatSetup.start?: { moonIndex?: number; bloodMoonRounds?: number }` (Cốt truyện, `18` §4): nếu có, đặt `moonIndex` (0–7) và/hoặc `bloodMoonRounds` **ngay sau bước này** — trước khi lên chuỗi vòng 1, nên `moonOverrides` / `bloodMoonOverride` của vòng 1 theo pha đã đặt. `start.bloodMoonRounds > 0` phát `bloodMoonChanged { rounds, cause: "start" }` ngay khi tạo trận; hook Kỳ Vật `bloodMoonStarted` **không** chạy (trận Cốt truyện không có Kỳ Vật). Vắng `start` thì `createCombat` giữ nguyên y hệt hành vi cũ (T213).
 4. **Kẻ địch lên chuỗi vòng 1** (mục 9.2), theo vị trí 0 → n.
 5. Rút tay đầu `handSize` lá (`cardsDrawn`).
 6. `status = "mulligan"`.
@@ -508,6 +508,16 @@ Với chiêu có mục tiêu đơn:
 
 Effect có `to: "allEnemies"` từ phía kẻ địch đánh trúng mọi Hero còn sống, kể cả Ẩn Thân.
 
+#### 9.3.2 `drainMoonPower` trong chiêu địch [GĐ7c]
+
+Chiêu địch (màn Cốt truyện, `18` §4.5) được dùng `drainMoonPower { amount, to, steal? }`
+với đúng nghĩa nhánh PvP của mục 15.5: rút **Dự Trữ của người chơi** một lần —
+`drained = min(amount, player.moonReserve)`, phát `moonReserveChanged { side: "hero" }`
+nếu đổi; `to` chỉ quyết định Hero bị nhắm như thường (quỹ Dự Trữ là của cả người chơi).
+`steal` → quỹ của **kẻ địch** đang thi hành `+= drained` (nhánh `moonPowerChanged` của
+người chơi không áp). Không có phần "hủy ý định" của §9.5 — người chơi không có chuỗi ý
+định. Trên lá bài và trong PvP nghĩa giữ nguyên (§9.5, §15.5).
+
 ### 9.4 Cuối vòng (theo thứ tự)
 1. Giảm 1 thời hạn mọi trạng thái loại "Thời hạn" của cả hai phe; gỡ trạng thái về 0.
 2. Tiến Nguyệt Luân 1 pha (mục 7.2). Sau đó, nếu `bloodMoonRounds > 0`: giảm 1, phát `bloodMoonChanged` **[GĐ2]** (mục 7.4).
@@ -822,7 +832,9 @@ Hành đủ cặp của đội và lá Binh Khí như §2/§14.2. Thứ tự RNG
 | `applyStatus charm` lên Hero **[GĐ7]** | Không có tác dụng trên Hero (chỉ kẻ địch, mục 9.3.1 bước 0) | Hero bị Mê Hoặc: lá tấn công đơn mục tiêu **đầu tiên** của Hero đó trong lượt kế tiếp đánh vào **đồng đội còn sống HP cao nhất** của chính nó (không có đồng đội → đánh chính nó); trừ 1 lượt Mê Hoặc; không chuyển sang người hộ vệ (`guard`) vì đòn đã đánh vào phe mình |
 | `sealIntent` (Phong Ấn) **[GĐ7]** | Đặt dấu Phong Ấn lên kẻ địch: mỗi chiêu nó thi hành trong lượt kế tiếp chỉ còn phần damage, mất mọi effect khác (mục 5.6) | Không đặt dấu (Hero không có chuỗi ý định); thay vào đó lá **đắt nhất trên tay** của đối thủ (hòa → lá đứng trước) +1 Nguyệt Lực **chỉ trong lượt kế tiếp** của đối thủ |
 
-Mọi effect khác giữ nguyên (đơn vị hành động, `to`, công thức damage §10).
+Mọi effect khác giữ nguyên (đơn vị hành động, `to`, công thức damage §10). **[GĐ7c]**
+Chiêu địch của màn Cốt truyện dùng `drainMoonPower` với nghĩa PvP của bảng này (rút Dự
+Trữ của người chơi) — mục 9.3.2.
 
 ### 15.6 Thắng / thua / hòa
 

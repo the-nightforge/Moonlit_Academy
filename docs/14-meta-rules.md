@@ -608,3 +608,61 @@ opts: {
   thắng 40% cho 30 Ngọc/ngày — dưới trần +20% so với chỉ PvE); → 10 (GĐ7b: pool 20
   Hero hạ thu nhập PvE/ngày → trần +20% thấp xuống, 1 trận/ngày ở 40% cho 26
   Ngọc/ngày).
+
+## 16. Cốt truyện [GĐ7c]
+
+Chế độ màn tuyến tính theo arc (đặc tả `18` §4; dữ liệu `story.json` ở `02` §1.16; route
+và phiếu ở `16` §9). Cốt truyện **chỉ có trên server**: trận chạy trên client nhưng kết
+quả chỉ có giá trị sau khi server cấp phiếu và `replayStoryCombat` xác nhận — hồ sơ
+offline không giữ tiến độ Cốt truyện.
+
+### 16.1 Tiến độ trong hồ sơ
+
+```ts
+story: { cleared: string[] }   // id các màn đã qua
+```
+
+`parseProfile` điền `{ cleared: [] }` cho hồ sơ cũ không có `story`, và lọc bỏ id màn
+không tồn tại trong `story.json`. `mergeImportedProfile` **không** nhập `story` — nhập
+hồ sơ từ máy khác giữ tiến độ Cốt truyện của hồ sơ server.
+
+### 16.2 Mở màn
+
+```ts
+storyStageUnlocked(data, profile, stageId): boolean
+unlockedStageIds(data, profile): string[]   // mọi màn đang mở, kể cả màn đã qua
+```
+
+Màn thứ *n* trong `stageIds` của arc mở khi màn *n−1* đã có trong `cleared`; màn đầu của
+arc mở khi **mọi màn** của arc liền trước (theo thứ tự `arcs` trong `story.json`) đã qua.
+Màn 1 của `arcs[0]` luôn mở. Id màn lạ → `false`.
+
+### 16.3 Thưởng lần đầu
+
+```ts
+applyStoryResult(data, profile, setup: StorySetup, won: boolean):
+  { ok: true; profile: Profile; rewards: StoryRewards }
+
+StorySetup   { stageId: string; seed: number;
+               heroIds: [string, string, string]; deckCardIds: string[] }
+StoryRewards { firstClear: boolean; moonJade: number; darkIron: number;
+               gains: MasteryGain[]; hero: PullResult | null }
+```
+
+- `won = false`, màn đã có trong `cleared`, hoặc `stageId` lạ → trả hồ sơ nguyên vẹn và
+  `rewards = { firstClear: false, moonJade: 0, darkIron: 0, gains: [], hero: null }`.
+- Thắng **lần đầu**: thêm `stageId` vào `cleared`; cộng `firstClear.moonJade` /
+  `darkIron` vào `currencies`; `firstClear.masteryXp` cộng cho **từng Hero trong
+  `setup.heroIds` mà tài khoản sở hữu** (Hero chưa sở hữu không nhận — như
+  `applyRunResult`, mục 2.2), mỗi Hero một `MasteryGain`.
+- **Tặng Hero arc:** màn được qua là màn **cuối** của arc (đứng cuối `stageIds` — vì mở
+  màn tuyến tính, qua được nó nghĩa là cả arc đã qua) → `grantHeroItem(rewardHeroId)` và
+  kết quả nằm trong `rewards.hero`; Hero đã sở hữu được xử lý trùng như gacha
+  (`outcome: "constellation" | "moonStar"`, §10).
+- Trận Cốt truyện **không** cộng tiến độ nhiệm vụ (`recordProgress` §7) hay thống kê
+  Lượt chơi (`stats.runsFinished`, `floorsReached`… — §7, §8) trong mọi trường hợp — kể
+  cả khi thắng.
+
+Trận Cốt truyện tạo bằng `createStoryCombat` và chạy lại bằng `replayStoryCombat` (cùng
+quy ước `replayRun`, §4.2): `setup` → `createCombat` của encounter `tier: "story"` kèm
+`CombatSetup.start` của màn (`01` §2).

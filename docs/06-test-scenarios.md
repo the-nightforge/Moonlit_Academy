@@ -452,3 +452,23 @@ Thú test qua dữ liệu tiêm vào (`packages/rules/test/helpers.ts`).
 | T297 | **[GĐ7]** Đủ 20 Hero nạp được; mỗi cặp Song Hành đợt 2 (M09+F06, F09+F10) thêm đúng lá vào deck khi đội có đủ cả hai Hero |
 | T298 | **[GĐ7]** `scaledDamage` đọc đúng từng chỉ số (`cardsPlayedThisTurn`, `selfArmor`, `moonPower`, `alliesAtFullHp`, `targetDebuffs`, `alliesArmor`, `alliesRegen`) theo `base + floor(stat × amount / divisor)`, chặn ở `max` |
 | T299 | **[GĐ7]** Condition `targetSealed` chỉ đúng khi mục tiêu đang mang dấu Phong Ấn |
+
+---
+
+## Giai đoạn 7c
+
+Bối cảnh: `18-phase7-spec.md` §4; luật `01` §2, §9.3.2; dữ liệu `02` §1.16; hồ sơ `14`
+§16; route `16` §9. Test dùng dữ liệu Cốt truyện tiêm vào (`withTestStory`: 2 arc × 2
+màn trên encounter `story` có sẵn) — không phụ thuộc nội dung Arc 1–2 thật. Test server
+dùng `buildApp` với DB trong bộ nhớ, đồng hồ và nguồn ngẫu nhiên giả như GĐ 4c.
+
+| Mã | Kịch bản |
+|---|---|
+| T300 | **[GĐ7c]** Kiểm chéo `story.json` khi nạp: arc trỏ màn không tồn tại; màn thuộc hai arc; `arcId` của màn lệch arc liệt kê nó; `encounterId` trỏ encounter không phải `tier: "story"`; `rewardHeroId` không tồn tại; `speaker` không phải `narrator` / Hero / kẻ địch có sẵn; `start.moonIndex` ngoài 0–7 — mỗi trường hợp báo lỗi |
+| T301 | **[GĐ7c]** `replayStoryCombat` tất định: cùng `StorySetup` + cùng chuỗi Action → cùng state; Action bị từ chối → `{ ok: false, step, reason }`; Action sau khi trận `won`/`lost` → `{ ok: false, step, reason: "actions after end" }` |
+| T302 | **[GĐ7c]** `CombatSetup.start`: `start.moonIndex` và `start.bloodMoonRounds` áp **trước** khi lên chuỗi vòng 1 — chiêu `moonOverrides` của pha được đặt xuất hiện ngay ở vòng 1, `bloodMoonChanged` phát với `cause: "start"`; vắng `start` → state giống hệt `createCombat` cũ (T213) |
+| T303 | **[GĐ7c]** `storyStageUnlocked` / `unlockedStageIds`: màn 1 Arc 1 luôn mở; màn *n* cần đã qua màn *n−1* của cùng arc; màn 1 của arc sau cần qua hết màn arc trước; id màn lạ → `false` |
+| T304 | **[GĐ7c]** `applyStoryResult`: thắng lần đầu trao `firstClear` (Ngọc, Huyền Thiết vào `currencies`) + đúng một `MasteryGain` cho mỗi Hero **sở hữu** trong đội; thắng lại màn đã qua hoặc thua → `rewards` rỗng, không cộng nhiệm vụ / `stats` Lượt chơi; màn cuối arc gọi `grantHeroItem` — Hero chưa có → sở hữu, đã có → +1 Tinh Hồn như gacha |
+| T305 | **[GĐ7c]** Route: màn khóa → `403 "stage locked"`; màn lạ → `404 "unknown stage"`; nộp chuỗi action đúng → hồ sơ + `rewards`, phiếu `finished`; action bị sửa → `422 "replay failed"` và phiếu `rejected`; nộp khi trận chưa kết thúc → `422 "combat not finished"`, phiếu vẫn `open` |
+| T306 | **[GĐ7c]** Vòng đời phiếu: tối đa một phiếu `open` mỗi tài khoản (cấp mới đóng phiếu cũ `abandoned`); phiếu lạ / của người khác → `404 "unknown ticket"`; phiếu không `open` → `409 "ticket closed"`; quá hạn → `410 "ticket expired"`; `dataVersion` lệch → `409 "outdated client"`; `GET /api/story` trả `{ cleared, unlocked }` với `unlocked` gồm cả màn đã qua |
+| T307 | **[GĐ7c]** `parseProfile`: hồ sơ thiếu `story` → `{ cleared: [] }`; id màn lạ trong `cleared` bị lọc; `mergeImportedProfile` không nhập `story` (giữ tiến độ của hồ sơ server) |

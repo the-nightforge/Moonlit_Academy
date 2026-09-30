@@ -170,7 +170,7 @@ khoá lạc quan của hồ sơ vẫn là `rev` + `If-Match` như cũ.
   bản trong lỗi. Nộp lượt chơi gặp `stale profile` tự gửi lại một lần; phiếu đã bị đóng
   (`replay failed`, `run closed`, `ticket expired`, `unknown run`) thì xóa bản lưu tạm.
 - Không kết nối được server (lúc mở game hoặc khi đăng nhập): chế độ offline, hồ sơ
-  trống, chỉ **Trận lẻ**; Lượt chơi, xếp/xóa deck, Tu Luyện bị khóa.
+  trống, chỉ **Trận lẻ**; Lượt chơi, Cốt truyện, xếp/xóa deck, Tu Luyện bị khóa.
 - Công cụ debug sửa hồ sơ (+XP, mở hết lá, xóa hồ sơ) đã bỏ (hồ sơ chỉ đổi trên
   server); sửa trận bằng debug trong lượt chơi làm server từ chối kết quả (có cảnh báo).
 
@@ -399,3 +399,48 @@ gửi `match.end` không có `rating`/`rewards`.
 | Route | Kết quả |
 |---|---|
 | `GET /api/coop/me` | `{ clearsToday, rewardClaimsLeft }` của tài khoản trong kỳ ngày hiện tại |
+
+---
+
+## 9. Cốt truyện (GĐ 7c)
+
+Luật: `14` §16; dữ liệu `story.json`: `02` §1.16; đặc tả: `18` §4. Trận Cốt truyện chạy
+trên client nhưng chỉ có giá trị sau khi server **chạy lại** (`replayStoryCombat`)
+xác nhận — cùng mô hình phiếu của Lượt chơi (§4), trên bảng riêng. Cốt truyện cần đăng
+nhập; client ẩn chế độ khi mất kết nối (§6).
+
+### 9.1 Phiếu Cốt Truyện — Migration 4
+
+| Bảng | Cột |
+|---|---|
+| `story_tickets` | `id TEXT PK` (16 byte base64url), `account_id BIGINT NOT NULL → accounts`, `stage_id TEXT NOT NULL`, `status TEXT NOT NULL` (`open`/`finished`/`abandoned`/`rejected`), `setup_json TEXT NOT NULL` (`StorySetup`), `loadout_json TEXT NOT NULL`, `data_version TEXT NOT NULL`, `created_at BIGINT NOT NULL`, `finished_at BIGINT`, `result_json TEXT`; chỉ mục `(account_id, status)` |
+
+- Mỗi tài khoản tối đa **một** phiếu `open`: cấp phiếu mới → phiếu `open` cũ →
+  `abandoned` (trong cùng transaction).
+- Hạn phiếu = `TICKET_TTL_MS` của `runs` (7 ngày): phiếu `open` quá hạn →
+  `410 "ticket expired"`.
+- `data_version` của phiếu khác `dataVersion` hiện tại → `409 "outdated client"`.
+- Phiếu không `open` → `409 "ticket closed"`; phiếu lạ / của tài khoản khác →
+  `404 "unknown ticket"`.
+
+### 9.2 Route
+
+| Route | Kết quả |
+|---|---|
+| `GET /api/story` | `{ cleared: string[]; unlocked: string[] }` — `unlocked` từ `unlockedStageIds`, gồm mọi màn đang mở kể cả màn đã qua |
+| `POST /api/story/:stageId/tickets` | `201 { ticketId, setup, loadout }` — body `{ deckId }` hoặc `{ deckId: "starter", heroIds }` như `POST /api/runs`; `setup` (StorySetup: `stageId`, `seed` do server sinh, `heroIds`, `deckCardIds`) và `loadout` là ảnh chụp lúc cấp |
+| `POST /api/story/tickets/:id/finish` | `{ profile, rev, won, rewards }` — body `{ actions }` (tối đa `MAX_STORY_ACTIONS = 2000`) |
+| `POST /api/story/tickets/:id/abandon` | `204` — đóng phiếu `open` thành `abandoned` |
+
+`POST /api/story/:stageId/tickets` theo thứ tự: `stageId` lạ → `404 "unknown stage"`;
+body hỏng → `400`; màn chưa mở (`storyStageUnlocked` = false) → `403 "stage locked"`;
+deck không hợp lệ (`validateDeck`) → `400 "invalid deck" { errors }`; `buildLoadout` lỗi
+→ `400 <error>`; hợp lệ → chụp `setup` + `loadout`, đóng phiếu cũ, ghi phiếu `open`.
+
+`POST /api/story/tickets/:id/finish` theo thứ tự: phiếu → `openTicket` (404/409/410
+trên); `actions` quá `MAX_STORY_ACTIONS` → `400`; `replayStoryCombat` trả `{ ok: false }`
+→ phiếu `rejected` (ghi `result_json { step, reason }`) và `422 "replay failed"`;
+`state.status` chưa `won`/`lost` → `422 "combat not finished"`, phiếu **vẫn `open`**;
+hợp lệ → trong một transaction: `applyStoryResult` (`14` §16.3, cần `If-Match` như mọi
+route đổi hồ sơ), phiếu `finished` (ghi `result_json { won }`), trả hồ sơ mới + `won` +
+`rewards`.

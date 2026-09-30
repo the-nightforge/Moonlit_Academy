@@ -149,7 +149,7 @@ export type Effect = (
   | { type: "cleanse"; to: TargetRef }                                   // gỡ mọi debuff
   | { type: "chooseCard"; look: number }                                 // GĐ4a: Chiêm Bài, look ≥ 1; thay "draw"
   | { type: "gainMoonPower"; amount: number }                            // cộng thẳng vào quỹ lượt
-  | { type: "drainMoonPower"; amount: number; to: TargetRef; steal?: true }   // GĐ4b: Tỏa / Đoạt Nguyệt; to chỉ "chosen" | "allEnemies"; chỉ lá bài
+  | { type: "drainMoonPower"; amount: number; to: TargetRef; steal?: true }   // GĐ4b: Tỏa / Đoạt Nguyệt; to chỉ "chosen" | "allEnemies"; lá bài; GĐ7c: cả chiêu địch (01 §9.3.2)
   | { type: "gainMoonPowerPerTurn"; amount: number }                     // GĐ4b: Dưỡng Nguyệt; chỉ lá bài
   | { type: "missingHpDamage"; ratio: number; to: TargetRef; hits?: number }  // GĐ4b: Phẫn Huyết; lá bài và chiêu địch
   | { type: "scaledDamage"; per: "cardsPlayedThisTurn" | "selfArmor" | "moonPower" | "alliesAtFullHp" | "targetDebuffs" | "alliesArmor" | "alliesRegen";
@@ -234,7 +234,7 @@ export interface EncounterDef {
   id: string;
   name: string;
   enemyIds: string[];       // 1–3, theo vị trí
-  tier: "normal" | "elite" | "boss" | "coop";  // GĐ3; GĐ6: "coop" không vào bản đồ lượt chơi
+  tier: "normal" | "elite" | "boss" | "coop" | "story";  // GĐ3; GĐ6: "coop" không vào bản đồ lượt chơi; GĐ7c: "story" chỉ cho màn Cốt truyện (§1.16) — không vào bản đồ, bị Trận lẻ lọc bỏ như "coop"
   minFloor?: number;                  // GĐ3, mặc định 1
 }
 ```
@@ -506,6 +506,48 @@ hoặc `bond` (lá Hero / Song Hành), không trong `SummonDef.action`, ý đị
 của Hợp Kích. `summon`, `sealIntent`, `revive`, `extendDebuffs` bị cấm ở mọi chỗ cấm
 `createCard` (§6).
 
+### 1.16 Cốt truyện — `story.json` [GĐ7c]
+
+Luật: `14` §16; đặc tả: `18` §4. `story.json` là object `{ arcs, stages }`; **thứ tự arc
+theo thứ tự trong file** (`arcs[0]` là Arc 1).
+
+```ts
+export interface StoryArcDef {
+  id: string;                    // "arc1"
+  name: string;                  // tên hiển thị, ví dụ "Vọng Nguyệt"
+  stageIds: string[];            // ≥ 1, theo thứ tự màn trong arc
+  rewardHeroId: string;          // Hero tặng khi qua màn cuối của arc (`14` §16)
+}
+
+export interface StoryStageDef {
+  id: string;                    // "arc1_s01"
+  arcId: string;                 // arc chứa màn — khớp `stageIds` của arc đó
+  name: string;
+  encounterId: string;           // encounter `tier: "story"` của màn
+  start?: CombatStart;           // pha trăng / Huyết Nguyệt đầu trận (mục 4, `01` §2)
+  before: DialogueLine[];        // lời thoại trước trận (rỗng được phép)
+  after: DialogueLine[];         // lời thoại sau khi thắng (rỗng được phép)
+  firstClear: {                  // Thưởng Lần Đầu của màn (`14` §16)
+    moonJade?: number;
+    darkIron?: number;
+    masteryXp?: number;          // XP Tu Luyện cho từng Hero sở hữu trong đội
+  };
+}
+
+export interface DialogueLine {
+  speaker: string;               // heroId | enemyId | "narrator"
+  text: string;
+}
+
+export interface CombatStart {   // cũng là CombatSetup.start (mục 4)
+  moonIndex?: number;            // 0–7
+  bloodMoonRounds?: number;      // số nguyên ≥ 1
+}
+```
+
+`GameData.storyArcs: Record<string, StoryArcDef>` và `GameData.storyStages:
+Record<string, StoryStageDef>` (mục 4). Kiểm tra khi nạp ở mục 6.
+
 ---
 
 ## 2. Trạng thái trận đấu (runtime)
@@ -679,7 +721,7 @@ export type CombatEvent =
   | { type: "statusRemoved"; targetId: string; status: StatusId }
   | { type: "moonPowerChanged"; value: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
-  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }   // GĐ2; rounds 0 = hết
+  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" | "start" }   // GĐ2; rounds 0 = hết; GĐ7c: "start" = Huyết Nguyệt đầu trận (CombatSetup.start)
   | { type: "intentsRevealed"; enemyId: string; moonPower: number; intents: { intentId: string; cost: number; targetId: string | null }[] }  // GĐ4a: một event cho cả chuỗi mỗi địch (thay intentRevealed); chuỗi rỗng = Tụ Lực
   | { type: "intentsCancelled"; enemyId: string; intentIds: string[] }   // GĐ4b: Tỏa/Đoạt Nguyệt hủy chiêu cuối chuỗi, theo thứ tự bị bỏ (01 §9.5)
   | { type: "sealStripped"; unitId: string; refId: string }                                   // GĐ7b: chiêu/lá/hành động của đơn vị mang dấu Phong Ấn bị tước mọi effect không-damage; refId = intentId / instanceId / summonId (01 §5.6)
@@ -725,6 +767,8 @@ export interface GameData {
   keywords: Record<string, KeywordDef>;    // GĐ4b (mục 1.9)
   metaConfig: MetaConfig;                  // GĐ4b (mục 1.10)
   summons: Record<string, SummonDef>;      // GĐ7b (mục 1.15)
+  storyArcs: Record<string, StoryArcDef>;    // GĐ7c (mục 1.16)
+  storyStages: Record<string, StoryStageDef>; // GĐ7c (mục 1.16)
 }
 
 export interface CombatSetup {
@@ -734,6 +778,7 @@ export interface CombatSetup {
   deckCardIds?: string[];                    // mặc định: cardIds của 3 Hero
   heroes?: { hp: number; maxHp: number }[];  // mặc định: hp = maxHp của HeroDef
   runRelicIds?: string[];                    // mặc định: []
+  start?: CombatStart;                       // GĐ7c: pha trăng / Huyết Nguyệt đầu trận (01 §2; màn Cốt truyện)
 }
 
 export type ActionResult =
@@ -804,6 +849,15 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
   trên lá có `target: "fallenAlly"`; `revive` với `to: "lastFallen"` chỉ xuất hiện trong
   `levelUp.onLevelUp` / `altLevelUp.onLevelUp`, không trên lá bài. `to: "owner"` chỉ
   trong `SummonDef.action`; `to: "summon"` chỉ trên lá có `ownerId` hoặc `bond`.
+- **[GĐ7c]** `story.json` (mục 1.16): `arcs` và `stages` không rỗng, id duy nhất; mọi
+  `arc.stageIds` trỏ tới màn có sẵn; mỗi màn thuộc đúng **một** arc và `stage.arcId`
+  khớp arc liệt kê nó (arc liệt kê màn ↔ màn trỏ arc); `stage.encounterId` trỏ encounter
+  có `tier: "story"`; `arc.rewardHeroId` trỏ Hero có sẵn; `speaker` của `DialogueLine`
+  là `"narrator"` hoặc id Hero / kẻ địch có sẵn; `start.moonIndex` nguyên 0–7,
+  `start.bloodMoonRounds` nguyên ≥ 1; `firstClear` các số nguyên ≥ 0. `drainMoonPower` nới luật
+  "chỉ lá bài" của dòng [GĐ4b]: được phép cả trong chiêu địch của kẻ địch (`intents`,
+  `moonOverrides`, `bloodMoonOverride`) — nghĩa `01` §9.3.2; vẫn cấm trong hook Kỳ Vật /
+  Nguyệt Bảo và `SummonDef.action` (hook vũ khí đã cho phép sẵn, `01` §14.3).
 
 Dữ liệu sai → báo lỗi rõ ràng ngay khi khởi động, không chạy game với dữ liệu lỗi.
 

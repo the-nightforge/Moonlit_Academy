@@ -227,6 +227,17 @@
 | Giai đoạn boss | `boss.phase` | 1 Trăng Khuyết · 2 Huyết Nguyệt · 3 Nguyệt Ấn · 4 Nguyệt Thực |
 | Đếm ngược hồi sinh | `reviveCountdown` | Giai đoạn 4: về 0 khi boss còn sống → hồi 50% HP một lần |
 
+## Cốt Truyện [GĐ7c]
+
+| Tiếng Việt | Code | Ghi chú |
+|---|---|---|
+| Cốt Truyện | `story` | Chế độ màn tuyến tính theo arc (`18` §4); tiến độ `profile.story.cleared` |
+| Arc | `arc`, `StoryArcDef` | Chương Cốt Truyện gồm các màn theo thứ tự; `arcs[0]` của `story.json` là Arc 1 |
+| Màn | `stage`, `StoryStageDef` | Một trận trong arc; `encounterId` trỏ encounter `tier: "story"`; màn *n* mở khi *n−1* đã qua (`14` §16) |
+| Thưởng Lần Đầu | `firstClear` | Thưởng của màn chỉ trao ở lần qua đầu tiên; thắng lại / thua không thưởng |
+| Phiếu Cốt Truyện | `story_tickets`, `ticketId` | Phiếu server cấp cho một màn, chạy lại bằng `replayStoryCombat` để xác nhận (`16` §9) |
+| Lời thoại | `DialogueLine`, `before` / `after` | `{ speaker, text }`; `speaker` là id Hero, id kẻ địch hoặc `narrator` |
+
 ## Hero GĐ7a
 
 | ID | Tên | Nội tại thăng cấp | Dạng thứ hai |

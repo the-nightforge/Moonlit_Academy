@@ -729,3 +729,58 @@ biến mất. `awakenedId` dùng khi chủ có nội tại `awakenSummons`.
 *Ghi chú:* `to: "summon"` phân giải theo **actor** nên mọi effect của Nguyệt Thố
 Hộ Mệnh buộc actor 0 (chỉ F09 có Linh Thú); charm của Khúc Vũ Tri Âm gắn actor 0
 để nuôi `debuffsApplied` của M09.
+
+---
+
+## 13. Cốt Truyện — Arc 1–2 [GĐ7c]
+
+Dàn ý theo `18` §4.5; schema `story.json` ở `02` §1.16, luật ở `14` §16, route ở `16`
+§9. Dữ liệu chi tiết (kẻ địch, encounter, lời thoại, số thưởng) viết và duyệt ở bước
+7c.4 / 7c.5.
+
+Mỗi **Màn** (`stage`) là một trận cố định: `encounterId` trỏ encounter `tier: "story"`
+(không vào bản đồ Lượt chơi, Trận lẻ lọc bỏ như `coop`), lời thoại `before` / `after`
+(dòng `{ speaker, text }` — `speaker` là id Hero, id kẻ địch hoặc `narrator`), thưởng
+`firstClear` (Nguyệt Ngọc, Huyền Thiết, XP Tu Luyện) chỉ trao ở lần qua đầu, và có thể
+đặt `start` (pha trăng `moonIndex` / `bloodMoonRounds` đầu trận, `01` §2). Người chơi
+tự chọn đội và deck; kết quả được server chạy lại xác nhận (`18` §4.3).
+
+### 13.1 Arc 1 — Vọng Nguyệt (dễ, dạy dần luật)
+
+| Màn | Tên | Ghi chú |
+|---|---|---|
+| 1 | Nhập Học | Khôi lỗi; trận hướng dẫn |
+| 2 | Thanh Loan Thí Luận | Kẻ địch dùng Tỏa Nguyệt (`drainMoonPower` trong chiêu — `01` §9.3.2) |
+| 3 | Huyền Vũ Thí Võ | Kẻ địch nhiều giáp / Phản Đòn |
+| 4 | Bạch Lộ Thí Y | Kẻ địch hồi máu |
+| 5 | Cấm Địa Xích Diên | Bắt đầu trong Huyết Nguyệt (`start.bloodMoonRounds`) |
+| 6 | Tàng Thư Các Có Ma | `book_wraith` |
+| 7 | Dạ Tập | `shadow_fox` |
+| 8 | **Boss: Khảo Hạch Chi Linh** (mới) | Đổi hành vi theo pha trăng |
+
+Qua Arc 1 tặng **M10 Chu Quyết** (Rare); đã có → +1 Tinh Hồn như gacha.
+
+### 13.2 Arc 2 — Bóng Tối (ngang tầng 2–3 của Lượt chơi)
+
+| Màn | Tên | Ghi chú |
+|---|---|---|
+| 1 | Thư Tín Mất Tích | |
+| 2 | Mật Thám | F02 trong truyện |
+| 3 | Vô Nguyệt Ám Sát | Kẻ địch Ẩn Thân / sát thủ |
+| 4 | Tô Dạ Dao Động | M06 trong truyện |
+| 5 | Chợ Đêm Tin Tức | |
+| 6 | Quan Tinh Đài | M08 trong truyện; bắt đầu Trăng Non (`start.moonIndex`) |
+| 7 | Hắc Vệ | `black_guard` |
+| 8 | **Boss: Vô Nguyệt Ảnh Chủ** (mới) | Cướp buff, Ẩn Thân |
+
+Qua Arc 2 tặng **F02 Diệp Linh Lung** (Epic); đã có → +1 Tinh Hồn.
+
+**Kẻ địch mới:** ~3 thường mỗi arc + 1 boss mỗi arc; các màn còn lại dùng lại 7 kẻ địch
+hiện có.
+
+**Thưởng (khởi điểm, chốt ở 7d.6):** mỗi arc tổng ~400 Nguyệt Ngọc; Huyền Thiết 1–2 mỗi
+màn, 5 ở boss arc; XP Tu Luyện theo màn; 1 Hero.
+
+**Mục tiêu độ khó đã duyệt** (`18` §4.5): đo bằng bot, Bộ cơ bản `m05 + f04 + m06`, 80
+seed — màn thường Arc 1 ≥ 80% thắng; boss Arc 1 ≥ 60%; màn thường Arc 2 55–75%; boss
+Arc 2 40–60%; mỗi màn Arc 2 ≥ 60% với đội tốt nhất trong 3 đội mẫu.

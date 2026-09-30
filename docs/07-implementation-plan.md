@@ -329,7 +329,42 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 > bot 40–60% / 8–12 vòng; gói chỉnh số (duyệt).
 
 ### Phần 7c — Cốt truyện Arc 1–2
-> Theo `18` §4: `story.json`, `createStoryCombat`/`replayStoryCombat`/`applyStoryResult`, phiếu + route, ~16 màn + 2 boss arc. Kế hoạch riêng khi bắt đầu.
+
+**Giai đoạn hiện tại: 7c đang làm — `docs/18-phase7-spec.md` §4**
+
+Đặc tả: `18-phase7-spec.md` §4. Kế hoạch chi tiết:
+`docs/superpowers/plans/2026-09-30-phase7c-story.md` (9 Task).
+
+### Bước 7c.1 — Tài liệu 7c *(Task 1)*
+> Chốt các điểm làm rõ spec trong `18` §4 (tier `story`, `CombatSetup.start`,
+> `applyStoryResult(setup)`, lỗi route, thưởng lần đầu, `drainMoonPower` trong chiêu
+> địch, mục tiêu độ khó); cập nhật `01`, `02`, `03`, `04`, `06`, `07`, `14`, `16`,
+> `CLAUDE.md`. *(Đã xong.)*
+
+### Bước 7c.2 — Schema + luật thuần + hồ sơ *(Task 2–4)*
+> `story.json` (`StoryArcDef` / `StoryStageDef` / `DialogueLine`, kiểm chéo T300);
+> `CombatSetup.start` + `createStoryCombat` / `replayStoryCombat` (T301–T302);
+> `profile.story`, `storyStageUnlocked` / `unlockedStageIds`, `applyStoryResult` +
+> `StoryRewards` (T303–T304, T307).
+
+### Bước 7c.3 — Server *(Task 5)*
+> Migration 4 (`story_tickets`); 4 route `/api/story` (xem `16` §9), `MAX_STORY_ACTIONS
+> = 2000`. T305–T306.
+
+### Bước 7c.4 — Nội dung Arc 1 *(Task 6)*
+> Kẻ địch mới + boss *Khảo Hạch Chi Linh*, 8 encounter `tier: "story"`, lời thoại
+> `before` / `after`, `firstClear` — duyệt bảng trước khi viết JSON.
+
+### Bước 7c.5 — Nội dung Arc 2 *(Task 7)*
+> Tương tự Arc 1 + boss *Vô Nguyệt Ảnh Chủ* (duyệt).
+
+### Bước 7c.6 — Client Cốt truyện *(Task 8)*
+> Màn Cốt Truyện (arc → màn → thưởng lần đầu), màn Hội Thoại, phiếu + ghi action trên
+> client, nối `CombatScene`.
+
+### Bước 7c.7 — Chơi thử và chỉnh độ khó *(Task 9)*
+> Bot + tay theo mục tiêu `18` §4.5 (Arc 1 ≥ 80% / boss ≥ 60%; Arc 2 55–75% / boss
+> 40–60%; mỗi màn Arc 2 ≥ 60% với đội tốt nhất trong 3 đội mẫu).
 
 ### Phần 7d — Trang bị bản mệnh + nâng cấp vật liệu
 > Theo `18` §5: 15 vũ khí bản mệnh + 8 Nguyệt Bảo, `upgradeItem`/`upgradeCost`, nguồn Huyền Thiết. Kế hoạch riêng khi bắt đầu.
