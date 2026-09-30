@@ -58,10 +58,13 @@ describe("loadGameData", () => {
     expect(Object.keys(data.cards)).toHaveLength(270); // 240 hero + 9 bond + 20 constellation-4 plus cards + 1 token
     expect(Object.keys(data.enemies)).toEqual([
       "puppet_guard", "shadow_fox", "moon_ape", "book_wraith", "black_guard", "fox_king", "eclipse_lord",
+      "thanh_loan_thi_quan", "huyen_vu_thi_quan", "bach_lo_thi_quan", "khao_hach_chi_linh",
     ]);
     expect(Object.keys(data.encounters)).toEqual([
       "enc_01", "enc_02", "enc_03", "enc_04", "enc_05", "enc_06", "enc_elite_01", "enc_elite_02",
       "enc_coop_01",
+      "story_arc1_s01", "story_arc1_s02", "story_arc1_s03", "story_arc1_s04",
+      "story_arc1_s05", "story_arc1_s06", "story_arc1_s07", "story_arc1_s08",
     ]);
     expect(Object.keys(data.runRelics)).toHaveLength(10);
     expect(Object.keys(data.augments)).toHaveLength(16);
@@ -299,8 +302,13 @@ describe("parseGameData validation", () => {
 
   it("T157: rejects card-only keywords in enemy intents and relic hooks, and unknown card keywords", () => {
     const intent = rawData();
-    intent.enemies[0].intents[0].effects.push({ type: "drainMoonPower", amount: 1, to: "chosen" });
+    intent.enemies[0].intents[0].effects.push({ type: "gainMoonPowerPerTurn", amount: 1 });
     expect(() => parseGameData(intent)).toThrowError(/card-only keyword/);
+
+    // GĐ7c: drainMoonPower is allowed in enemy intents (`01` §9.3.2).
+    const drained = rawData();
+    drained.enemies[0].intents[0].effects.push({ type: "drainMoonPower", amount: 1, to: "allEnemies" });
+    expect(() => parseGameData(drained)).not.toThrowError();
 
     const hook = rawData();
     hook.runRelics[0].hooks[0].effects.push({ type: "missingHpDamage", ratio: 1, to: "allEnemies" });

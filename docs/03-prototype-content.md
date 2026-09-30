@@ -787,11 +787,11 @@ Arc 2 40–60%; mỗi màn Arc 2 ≥ 60% với đội tốt nhất trong 3 độ
 
 ---
 
-### 13.3 Arc 1 — Vọng Nguyệt: nội dung chi tiết (bản đề xuất 7c.4)
+### 13.3 Arc 1 — Vọng Nguyệt: nội dung chi tiết [GĐ7c.4]
 
-**Bản đề xuất chờ duyệt — chưa viết JSON.** Mọi số liệu là khởi điểm; chỉnh sau mô
-phỏng 80 seed (bot, Bộ cơ bản `m05 + f04 + m06`) ở Step 4 theo mục tiêu độ khó trên.
-Chỉ dùng effect / trạng thái / điều kiện đã có trong `01`, `02`, `static.ts`.
+**Đã duyệt (7c.4).** Số liệu là khởi điểm đã chốt bằng mô phỏng 80 seed (bot, Bộ cơ
+bản `m05 + f04 + m06`) theo mục tiêu độ khó trên. Chỉ dùng effect / trạng thái /
+điều kiện đã có trong `01`, `02`, `static.ts`.
 
 Bối cảnh arc: năm nhất tại Vọng Nguyệt Thư Viện — người chơi qua các bài thí của bốn
 Viện (**Thanh Loan** văn → **Huyền Vũ** võ → **Bạch Lộ** y → **Cấm Địa Xích Diên**
@@ -809,11 +809,11 @@ không vào pool Lượt chơi / Trận lẻ).
 | 1 | `arc1_s01` | Nhập Học | `puppet_guard` (42) | — | 40 / 1 / 20 |
 | 2 | `arc1_s02` | Thanh Loan Thí Luận | `thanh_loan_thi_quan` **mới** (38) | — | 45 / 1 / 25 |
 | 3 | `arc1_s03` | Huyền Vũ Thí Võ | `huyen_vu_thi_quan` **mới** (48) | — | 50 / 1 / 25 |
-| 4 | `arc1_s04` | Bạch Lộ Thí Y | `shadow_fox` + `bach_lo_thi_quan` **mới** (23+36 = 59) | — | 50 / 1 / 25 |
+| 4 | `arc1_s04` | Bạch Lộ Thí Y | `shadow_fox` + `bach_lo_thi_quan` **mới** (23+30 = 53) | — | 50 / 1 / 25 |
 | 5 | `arc1_s05` | Cấm Địa Xích Diên | `book_wraith` + `shadow_fox` (55) | `bloodMoonRounds: 3` | 50 / 2 / 30 |
 | 6 | `arc1_s06` | Tàng Thư Các Có Ma | `book_wraith` ×2 (64) | — | 55 / 2 / 30 |
 | 7 | `arc1_s07` | Dạ Tập | `shadow_fox` ×3 (69) | — | 55 / 2 / 35 |
-| 8 | `arc1_s08` | Khảo Hạch Chi Linh | `khao_hach_chi_linh` **boss mới** (90) | — | 55 / 5 / 40 |
+| 8 | `arc1_s08` | Khảo Hạch Chi Linh | `khao_hach_chi_linh` **boss mới** (80) | — | 55 / 5 / 40 |
 
 **Tổng:** 400 Nguyệt Ngọc, 15 Huyền Thiết, XP Tu Luyện 20 → 40 theo màn (trả cho từng
 Hero trong `setup.heroIds`, `14` §16.3). Qua màn 8 tặng `m10` Chu Quyết.
@@ -864,20 +864,20 @@ random): `drainMoonPower 3 chosen`.
 `moonOverrides`: `lastQuarter` → `hvq_nguyet_bich` "Nguyệt Bích" (defend):
 `gainArmor 8 self` + `applyStatus reflect 2 self`.
 
-**`bach_lo_thi_quan` — Bạch Lộ Thí Quan** — `maxHp: 36`, `moonPower { start: 1, cap: 4 }`
+**`bach_lo_thi_quan` — Bạch Lộ Thí Quan** — `maxHp: 30`, `moonPower { start: 1, cap: 4 }`
 
 | intent | Tên | kind | cost | targeting | effects |
 |---|---|---|---|---|---|
 | `blq_cham_kich` | Châm Kích | attack | 1 | lowestHp | `damage 4 chosen` |
-| `blq_duong_sinh` | Dưỡng Sinh | buff | 1 | — | `applyStatus regen 2 allAllies` |
-| `blq_cam_lo` | Cam Lộ | buff | 1 | — | `heal 4 allAllies` |
+| `blq_duong_sinh` | Dưỡng Sinh | buff | 1 | — | `applyStatus regen 1 allAllies` |
+| `blq_cam_lo` | Cam Lộ | buff | 1 | — | `heal 3 allAllies` |
 | `blq_kim_cham` | Kim Châm | attack | 2 | lowestHp | `damage 6 chosen` + `applyStatus vulnerable 1 chosen` |
-| `blq_hoi_xuan` | Hồi Xuân | buff | 3 | — | `heal 8 allAllies` + `cleanse self` |
+| `blq_hoi_xuan` | Hồi Xuân | buff | 3 | — | `heal 5 allAllies` + `cleanse self` |
 
-`moonOverrides`: `full` → `blq_nguyet_duoc` "Nguyệt Dược" (buff): `heal 6 allAllies` +
+`moonOverrides`: `full` → `blq_nguyet_duoc` "Nguyệt Dược" (buff): `heal 4 allAllies` +
 `cleanse self`.
 
-**`khao_hach_chi_linh` — Khảo Hạch Chi Linh (boss)** — `maxHp: 90`,
+**`khao_hach_chi_linh` — Khảo Hạch Chi Linh (boss)** — `maxHp: 80`,
 `moonPower { start: 2, cap: 7 }`. Linh thú gác cổng thi từ thời lập viện — đổi "đề
 thi" theo pha trăng. Chiêu gốc chỉ đánh ở 4 pha không có override.
 
@@ -887,19 +887,19 @@ thi" theo pha trăng. Chiêu gốc chỉ đánh ở 4 pha không có override.
 | `khl_khao_an` | Khảo Ấn | debuff | 2 | random | `applyStatus vulnerable 2 chosen` + `applyStatus weak 1 chosen` |
 | `khl_tran_ap` | Trấn Áp | attack | 3 | — | `damage 4 allEnemies` |
 | `khl_ngoc_bich` | Ngọc Bích | defend | 3 | — | `gainArmor 10 self` |
-| `khl_lac_an` | Lạc Ấn | attack | 4 | lowestHp | `damage 12 chosen` |
+| `khl_lac_an` | Lạc Ấn | attack | 4 | lowestHp | `damage 10 chosen` |
 
 `moonOverrides` (đứng đầu chuỗi, cost 0 — `01` §9.2):
 
 | phase | intent | Tên | kind | targeting | effects |
 |---|---|---|---|---|---|
-| `new` | `khl_vo_nguyet_tram` | Vô Nguyệt Trảm | attack | lowestHp | `damage 12 chosen` |
+| `new` | `khl_vo_nguyet_tram` | Vô Nguyệt Trảm | attack | lowestHp | `damage 10 chosen` |
 | `firstQuarter` | `khl_toa_nguyet_phap` | Tỏa Nguyệt Pháp | debuff | random | `drainMoonPower 2 chosen` |
-| `full` | `khl_vong_nguyet_nghi` | Vọng Nguyệt Nghi | buff | — | `heal 6 self` + `applyStatus regen 2 self` |
+| `full` | `khl_vong_nguyet_nghi` | Vọng Nguyệt Nghi | buff | — | `heal 5 self` + `applyStatus regen 2 self` |
 | `lastQuarter` | `khl_huyen_vu_giap` | Huyền Vũ Giáp | defend | — | `gainArmor 10 self` + `applyStatus reflect 2 self` |
 
 Không `bloodMoonOverride`, không `phases` (đó là cơ chế boss co-op). So sánh sức
-mạnh: `moon_ape` 94 HP / đòn tới 18 — boss này 90 HP / đòn tới 12, đúng tầng dưới
+mạnh: `moon_ape` 94 HP / đòn tới 18 — boss này 80 HP / đòn tới 10, đúng tầng dưới
 cho một arc dạy luật.
 
 #### 13.3.3 Lời thoại
@@ -1033,24 +1033,28 @@ giả định** Hero nào có trong đội ra trận.
 
 - **Mốc sức mạnh:** số liệu bám tầng 1–2 hiện có (`puppet_guard` 42 HP, đòn 6–10;
   `shadow_fox` 23 HP; `book_wraith` 32 HP; boss `moon_ape` 94 HP). Tổng HP màn tăng
-  dần 42 → 90; damage tối đa mỗi chiêu giữ ≤ 12 (một bậc dưới `moon_ape`).
-- **Nguyệt Luân mới:** spec `superpowers/specs/2026-09-30-nguyet-luan-redesign` (đã
-  duyệt, làm trước 7c.4) đổi pha khởi đầu thành ngẫu nhiên, mỗi pha một Ưu Đãi tag −1
-  cộng một Nguyệt Lệnh bốc theo trận, và quy ước mỗi kẻ địch có 1–2 Nguyệt tính công
-  khai. Bản này viết theo luật đó: 3 Thí Quan mỗi con đúng 1 `moonOverride` ở pha hợp
-  viện; boss giữ 4 (vì mục tiêu "đổi hành vi theo pha" của `18` §4.5). Chiêu trăng
-  không phụ thuộc lệnh được bốc — nhưng nếu lệnh `healMultiplier`/`armorMultiplier`
-  tương ứng không ra, hiệu ứng nhân đôi / ×1.5 của `full`/`lastQuarter` không xảy ra
-  (chấp nhận — chiêu vẫn kích). Sau khi `CombatStart.decrees` có trong schema có thể
-  ghim lệnh cho một số màn nếu muốn.
+  dần 42 → 80; damage tối đa mỗi chiêu giữ ≤ 10 (một bậc dưới `moon_ape`).
+- **Đã chỉnh theo mô phỏng** (80 seed, bot Bộ cơ bản `m05+f04+m06`): bản khởi điểm
+  đo s04 50%, s08 45% → giảm `bach_lo_thi_quan` (HP 36→30, `cam_lo` 4→3,
+  `duong_sinh` regen 2→1, `hoi_xuan` 8→5, `nguyet_duoc` 6→4) và `khao_hach_chi_linh`
+  (HP 90→80, `lac_an`/`vo_nguyet_tram` 12→10, `vong_nguyet_nghi` hồi 6→5) → s04 85%,
+  s08 72.5%; màn còn lại ≥ 92.5%.
+- **Nguyệt Luân mới (đã duyệt, chưa cài):** spec
+  `superpowers/specs/2026-09-30-nguyet-luan-redesign` sẽ đổi pha khởi đầu thành ngẫu
+  nhiên, mỗi pha một Ưu Đãi tag −1 cộng một Nguyệt Lệnh bốc theo trận, và quy ước
+  1–2 Nguyệt tính công khai mỗi kẻ địch. **Nội dung Arc 1 ở đây viết theo luật hiện
+  tại** — `moon-phases.json` cũ, pha đầu luôn là index 1 trừ khi `start` ghi đè —
+  nên 4 override của boss đặt đúng 4 pha có hiệu ứng hiện nay. Thiết kế cũng đi trước
+  tương thích: 3 Thí Quan mỗi con 1 `moonOverride` đúng pha hợp viện, sẵn làm Nguyệt
+  tính khi redesign chạy. Khi đó nếu lệnh `healMultiplier`/`armorMultiplier` không
+  được bốc thì hiệu ứng nhân của `full`/`lastQuarter` mất (chấp nhận — chiêu trăng
+  vẫn kích); có thể ghim `CombatStart.decrees` khi schema có sẵn nếu cần.
 - **Huyết Nguyệt màn 5:** `bloodMoonRounds: 3` → mỗi Hero mất ~6 HP trải 3 vòng đầu;
   gặp kẻ địch `start: 0` nên vòng 1 tương đối nhẹ.
-- **Kẻ địch cũ không đổi số liệu** trong bản này; khi Nguyệt tính của chúng được thêm
-  (kế hoạch redesign, Task 6), các màn 5–7 sẽ nhận thêm chiêu trăng — tính vào mô
-  phỏng Step 4.
-- **Câu hỏi chờ duyệt:**
-  1. Màn 4 ghép `shadow_fox` làm "con thú bị thương" đi cùng Thí Quan Y — giữ hay để
-     Thí Quan Y đứng một mình (dễ hơn)?
-  2. Màn 8 để pha khởi đầu ngẫu nhiên (khuyến khích đọc Nguyệt tính) hay ghim
-     `start.moonIndex` cho ổn định lần đầu gặp boss?
-  3. `bloodMoonRounds` màn 5: 3 vòng (đề xuất) hay 2 vòng nhẹ hơn?
+- **Kẻ địch cũ không đổi số liệu** trong bản này (giữ golden T213); khi redesign thêm
+  Nguyệt tính cho kẻ địch cũ, các màn 5–7 sẽ nhận thêm chiêu trăng — đo lại lúc đó.
+- **Quyết định đã chốt (duyệt 7c.4):**
+  1. Màn 4 **giữ** cặp `shadow_fox` + Thí Quan Y (bài học "hạ bên hồi trước").
+  2. Màn 8 **không** ghim `start.moonIndex` — pha đầu theo luật hiện hành (index 1;
+     khi redesign chạy sẽ là ngẫu nhiên), khuyến khích đọc Nguyệt tính.
+  3. Màn 5 giữ `bloodMoonRounds: 3` như đề xuất.

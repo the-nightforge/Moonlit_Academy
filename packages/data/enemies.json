@@ -311,5 +311,168 @@
     "art": {
       "portrait": ""
     }
+  },
+  {
+    "id": "thanh_loan_thi_quan",
+    "name": "Thanh Loan Thí Quan",
+    "maxHp": 38,
+    "moonPower": { "start": 1, "cap": 4 },
+    "intents": [
+      { "id": "tlq_but_phong", "name": "Bút Phong", "kind": "attack", "targeting": "lowestHp", "cost": 1,
+        "effects": [{ "type": "damage", "amount": 5, "to": "chosen" }] },
+      { "id": "tlq_toa_nguyet", "name": "Tỏa Nguyệt", "kind": "debuff", "targeting": "random", "cost": 1,
+        "effects": [{ "type": "drainMoonPower", "amount": 2, "to": "chosen" }] },
+      { "id": "tlq_muc_an", "name": "Mực Ấn", "kind": "defend", "cost": 1,
+        "effects": [{ "type": "gainArmor", "amount": 6, "to": "self" }] },
+      { "id": "tlq_luan_kiem", "name": "Luận Kiếm", "kind": "attack", "targeting": "random", "cost": 2,
+        "effects": [{ "type": "damage", "amount": 4, "hits": 2, "to": "chosen" }] },
+      { "id": "tlq_nguyet_chu", "name": "Nguyệt Chú", "kind": "debuff", "targeting": "random", "cost": 3,
+        "effects": [
+          { "type": "drainMoonPower", "amount": 2, "to": "chosen" },
+          { "type": "applyStatus", "status": "weak", "amount": 1, "to": "chosen" }
+        ] }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "firstQuarter",
+        "intent": {
+          "id": "tlq_ban_nguyet_luan", "name": "Bán Nguyệt Luận", "kind": "debuff", "targeting": "random",
+          "effects": [{ "type": "drainMoonPower", "amount": 3, "to": "chosen" }]
+        }
+      }
+    ],
+    "art": { "portrait": "" }
+  },
+  {
+    "id": "huyen_vu_thi_quan",
+    "name": "Huyền Vũ Thí Quan",
+    "maxHp": 48,
+    "moonPower": { "start": 1, "cap": 4 },
+    "intents": [
+      { "id": "hvq_thiet_chuong", "name": "Thiết Chưởng", "kind": "attack", "targeting": "front", "cost": 1,
+        "effects": [{ "type": "damage", "amount": 5, "to": "chosen" }] },
+      { "id": "hvq_quy_giap", "name": "Quy Giáp", "kind": "defend", "cost": 1,
+        "effects": [{ "type": "gainArmor", "amount": 7, "to": "self" }] },
+      { "id": "hvq_phan_kich", "name": "Phản Kích", "kind": "defend", "cost": 1,
+        "effects": [
+          { "type": "gainArmor", "amount": 3, "to": "self" },
+          { "type": "applyStatus", "status": "reflect", "amount": 3, "to": "self" }
+        ] },
+      { "id": "hvq_truy_phong", "name": "Truy Phong", "kind": "attack", "targeting": "lowestHp", "cost": 2,
+        "effects": [{ "type": "damage", "amount": 8, "to": "chosen" }] },
+      { "id": "hvq_huyen_vu_bich", "name": "Huyền Vũ Bích", "kind": "defend", "cost": 3,
+        "effects": [
+          { "type": "gainArmor", "amount": 10, "to": "self" },
+          { "type": "applyStatus", "status": "reflect", "amount": 2, "to": "self" }
+        ] }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "lastQuarter",
+        "intent": {
+          "id": "hvq_nguyet_bich", "name": "Nguyệt Bích", "kind": "defend",
+          "effects": [
+            { "type": "gainArmor", "amount": 8, "to": "self" },
+            { "type": "applyStatus", "status": "reflect", "amount": 2, "to": "self" }
+          ]
+        }
+      }
+    ],
+    "art": { "portrait": "" }
+  },
+  {
+    "id": "bach_lo_thi_quan",
+    "name": "Bạch Lộ Thí Quan",
+    "maxHp": 30,
+    "moonPower": { "start": 1, "cap": 4 },
+    "intents": [
+      { "id": "blq_cham_kich", "name": "Châm Kích", "kind": "attack", "targeting": "lowestHp", "cost": 1,
+        "effects": [{ "type": "damage", "amount": 4, "to": "chosen" }] },
+      { "id": "blq_duong_sinh", "name": "Dưỡng Sinh", "kind": "buff", "cost": 1,
+        "effects": [{ "type": "applyStatus", "status": "regen", "amount": 1, "to": "allAllies" }] },
+      { "id": "blq_cam_lo", "name": "Cam Lộ", "kind": "buff", "cost": 1,
+        "effects": [{ "type": "heal", "amount": 3, "to": "allAllies" }] },
+      { "id": "blq_kim_cham", "name": "Kim Châm", "kind": "attack", "targeting": "lowestHp", "cost": 2,
+        "effects": [
+          { "type": "damage", "amount": 6, "to": "chosen" },
+          { "type": "applyStatus", "status": "vulnerable", "amount": 1, "to": "chosen" }
+        ] },
+      { "id": "blq_hoi_xuan", "name": "Hồi Xuân", "kind": "buff", "cost": 3,
+        "effects": [
+          { "type": "heal", "amount": 5, "to": "allAllies" },
+          { "type": "cleanse", "to": "self" }
+        ] }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "full",
+        "intent": {
+          "id": "blq_nguyet_duoc", "name": "Nguyệt Dược", "kind": "buff",
+          "effects": [
+            { "type": "heal", "amount": 4, "to": "allAllies" },
+            { "type": "cleanse", "to": "self" }
+          ]
+        }
+      }
+    ],
+    "art": { "portrait": "" }
+  },
+  {
+    "id": "khao_hach_chi_linh",
+    "name": "Khảo Hạch Chi Linh",
+    "maxHp": 80,
+    "moonPower": { "start": 2, "cap": 7 },
+    "intents": [
+      { "id": "khl_thach_trao", "name": "Thạch Trảo", "kind": "attack", "targeting": "random", "cost": 2,
+        "effects": [{ "type": "damage", "amount": 8, "to": "chosen" }] },
+      { "id": "khl_khao_an", "name": "Khảo Ấn", "kind": "debuff", "targeting": "random", "cost": 2,
+        "effects": [
+          { "type": "applyStatus", "status": "vulnerable", "amount": 2, "to": "chosen" },
+          { "type": "applyStatus", "status": "weak", "amount": 1, "to": "chosen" }
+        ] },
+      { "id": "khl_tran_ap", "name": "Trấn Áp", "kind": "attack", "cost": 3,
+        "effects": [{ "type": "damage", "amount": 4, "to": "allEnemies" }] },
+      { "id": "khl_ngoc_bich", "name": "Ngọc Bích", "kind": "defend", "cost": 3,
+        "effects": [{ "type": "gainArmor", "amount": 10, "to": "self" }] },
+      { "id": "khl_lac_an", "name": "Lạc Ấn", "kind": "attack", "targeting": "lowestHp", "cost": 4,
+        "effects": [{ "type": "damage", "amount": 10, "to": "chosen" }] }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "new",
+        "intent": {
+          "id": "khl_vo_nguyet_tram", "name": "Vô Nguyệt Trảm", "kind": "attack", "targeting": "lowestHp",
+          "effects": [{ "type": "damage", "amount": 10, "to": "chosen" }]
+        }
+      },
+      {
+        "phase": "firstQuarter",
+        "intent": {
+          "id": "khl_toa_nguyet_phap", "name": "Tỏa Nguyệt Pháp", "kind": "debuff", "targeting": "random",
+          "effects": [{ "type": "drainMoonPower", "amount": 2, "to": "chosen" }]
+        }
+      },
+      {
+        "phase": "full",
+        "intent": {
+          "id": "khl_vong_nguyet_nghi", "name": "Vọng Nguyệt Nghi", "kind": "buff",
+          "effects": [
+            { "type": "heal", "amount": 5, "to": "self" },
+            { "type": "applyStatus", "status": "regen", "amount": 2, "to": "self" }
+          ]
+        }
+      },
+      {
+        "phase": "lastQuarter",
+        "intent": {
+          "id": "khl_huyen_vu_giap", "name": "Huyền Vũ Giáp", "kind": "defend",
+          "effects": [
+            { "type": "gainArmor", "amount": 10, "to": "self" },
+            { "type": "applyStatus", "status": "reflect", "amount": 2, "to": "self" }
+          ]
+        }
+      }
+    ],
+    "art": { "portrait": "" }
   }
 ]

@@ -1,1 +1,143 @@
-{ "arcs": [], "stages": [] }
+{
+  "arcs": [
+    { "id": "arc1", "name": "Vọng Nguyệt", "stageIds": ["arc1_s01", "arc1_s02", "arc1_s03", "arc1_s04", "arc1_s05", "arc1_s06", "arc1_s07", "arc1_s08"], "rewardHeroId": "m10" }
+  ],
+  "stages": [
+    {
+      "id": "arc1_s01", "arcId": "arc1", "name": "Nhập Học", "encounterId": "story_arc1_s01",
+      "before": [
+        { "speaker": "narrator", "text": "Đêm khai giảng, cổng đá Vọng Nguyệt Thư Viện hé mở. Tấm biển ngang cổng chỉ viết một dòng: ứng viên vượt qua người gác cổng thì được nhập học." },
+        { "speaker": "m05", "text": "Con rối gỗ mà cũng dám cản đường? Để ta đốn nó!" },
+        { "speaker": "f04", "text": "Nghe nói khôi lỗi của học viện đánh chậm nhưng rất nặng... mọi người cẩn thận nhé." },
+        { "speaker": "m06", "text": "(ngáp) Vòng đầu nó chưa tụ đủ Nguyệt Lực đâu. Thừa cơ đánh trước — đừng kéo dài." }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Pho khôi lỗi rạn nứt, chậm rãi quỵ gối. Tấm biển 'Nhập Học' tự lật mặt — hiện chữ 'ĐẬU'." },
+        { "speaker": "m05", "text": "Chỉ thế thôi á? Bài thi của học viện tối cao có vẻ nhàn rỗi đấy." },
+        { "speaker": "f04", "text": "Đừng chủ quan... bốn Viện còn bốn bài thí riêng, nghe nói một bài khó hơn một bài." },
+        { "speaker": "narrator", "text": "Những cái tên mới được ghi vào sổ Vọng Nguyệt — trang đầu của một năm đầy sóng gió." }
+      ],
+      "firstClear": { "moonJade": 40, "darkIron": 1, "masteryXp": 20 }
+    },
+    {
+      "id": "arc1_s02", "arcId": "arc1", "name": "Thanh Loan Thí Luận", "encounterId": "story_arc1_s02",
+      "before": [
+        { "speaker": "narrator", "text": "Sảnh Thanh Loan Viện — nơi văn chương và mưu lược được trọng nhất. Bài thí luận: đấu pháp với Thí Quan do viện dựng lên." },
+        { "speaker": "thanh_loan_thi_quan", "text": "Tân sinh thường ôm khư khư Nguyệt Lực chờ đòn lớn. Thanh Loan có một chiêu khiến thói quen đó đổ sông đổ bể — gọi là Tỏa Nguyệt." },
+        { "speaker": "m10", "text": "Tỏa Nguyệt... rút cạn Nguyệt Lực Dự Trữ của đối thủ. Đọc trong sách đã lâu, đây là lần đầu thấy người ta dùng thật." },
+        { "speaker": "m05", "text": "Lời nhiều quá! Muốn lấy thì lấy — ta đánh nhanh hơn ngươi lấy!" },
+        { "speaker": "thanh_loan_thi_quan", "text": "Khí phách tốt. Vào bài." }
+      ],
+      "after": [
+        { "speaker": "thanh_loan_thi_quan", "text": "Tốt. Kẻ thắng không phải kẻ có nhiều Nguyệt Lực nhất — mà là kẻ tiêu nó đúng lúc nhất." },
+        { "speaker": "m10", "text": "Ghi nhớ: Tỏa Nguyệt chỉ lấy được phần Dự Trữ đã tích — quỹ của vòng mới vẫn về đủ." },
+        { "speaker": "f04", "text": "May quá... chỉ nhìn Nguyệt Lực bị hút đi thôi mà đã thấy hãi rồi." },
+        { "speaker": "narrator", "text": "Dấu ấn Thanh Loan đầu tiên đóng vào sổ thi — bài thí luận đậu." }
+      ],
+      "firstClear": { "moonJade": 45, "darkIron": 1, "masteryXp": 25 }
+    },
+    {
+      "id": "arc1_s03", "arcId": "arc1", "name": "Huyền Vũ Thí Võ", "encounterId": "story_arc1_s03",
+      "before": [
+        { "speaker": "narrator", "text": "Thao trường Huyền Vũ Viện — cát vàng, giáp đen, tiếng gió qua hàng thương giá. Bài thí võ không đòi đánh đẹp, chỉ đòi hạ một Thí Quan biết chắn đòn và trả đòn." },
+        { "speaker": "huyen_vu_thi_quan", "text": "Đánh đi. Mỗi đòn các ngươi trút lên giáp của ta, một phần sẽ bật ngược về tay các ngươi." },
+        { "speaker": "f04", "text": "Phản Đòn... đánh nhiều nhịp nhỏ thì mỗi nhịp đều bị phản. Phải gom thành đòn lớn, hoặc phá giáp trước!" },
+        { "speaker": "m05", "text": "Đúng sở trường của ta — một nhát xuyên giáp cho xong!" },
+        { "speaker": "m06", "text": "Võ sĩ đứng nghiêm thế kia thì đòn đâu khó đoán." }
+      ],
+      "after": [
+        { "speaker": "huyen_vu_thi_quan", "text": "Được. Giáp chỉ là vỏ — thứ các ngươi vừa đánh vỡ là sự kiên trì, và nó đáng khâm phục." },
+        { "speaker": "m05", "text": "Ha! Cuối cùng cũng có một bài thi ra hồn!" },
+        { "speaker": "narrator", "text": "Dấu ấn Huyền Vũ — bài thí võ đậu." }
+      ],
+      "firstClear": { "moonJade": 50, "darkIron": 1, "masteryXp": 25 }
+    },
+    {
+      "id": "arc1_s04", "arcId": "arc1", "name": "Bạch Lộ Thí Y", "encounterId": "story_arc1_s04",
+      "before": [
+        { "speaker": "narrator", "text": "Viện Bạch Lộ, sân thuốc ngập mùi thảo mộc. Bài thí y: vượt qua một Thí Quan chuyên chữa lành — đi cùng một con thú bị thương nó cứu hộ." },
+        { "speaker": "bach_lo_thi_quan", "text": "Ta không đánh mạnh — nhưng ta chữa nhanh. Muốn thắng ta, các ngươi phải đánh nhanh hơn ta chữa." },
+        { "speaker": "f04", "text": "Thầy là tiền bối của em... trận kéo dài là lợi thế của bên có hồi máu — mình phải dồn sát thương thật nhanh!" },
+        { "speaker": "m10", "text": "Hoặc hạ người chữa trước — chặn nguồn hồi phục thì phần còn lại tự gãy." },
+        { "speaker": "bach_lo_thi_quan", "text": "Vào bài đi. Cho ta xem các ngươi chữa được bệnh 'chần chừ' thế nào." }
+      ],
+      "after": [
+        { "speaker": "bach_lo_thi_quan", "text": "Tốt lắm. Y thuật cứu được người — nhưng không cứu được một trận đấu đã quyết." },
+        { "speaker": "f04", "text": "Cảm ơn thầy chỉ dạy ạ! Em ghi nhớ rồi." },
+        { "speaker": "narrator", "text": "Dấu ấn Bạch Lộ — ba trong bốn bài thí đã xong." }
+      ],
+      "firstClear": { "moonJade": 50, "darkIron": 1, "masteryXp": 25 }
+    },
+    {
+      "id": "arc1_s05", "arcId": "arc1", "name": "Cấm Địa Xích Diên", "encounterId": "story_arc1_s05",
+      "start": { "bloodMoonRounds": 3 },
+      "before": [
+        { "speaker": "narrator", "text": "Xích Diên Viện không đặt bài thí — họ niêm phong bí thuật trong một cấm địa. Đêm nay, cánh cửa ấy hé ra một khe." },
+        { "speaker": "narrator", "text": "Gió tràn qua khe cửa mang theo mùi tàn khét. Và trên trời — trăng đang nhuộm màu máu. Huyết Nguyệt." },
+        { "speaker": "m05", "text": "Trăng... đỏ? Cái quái gì thế này?!" },
+        { "speaker": "m06", "text": "(vẻ ngái ngủ tan hẳn) Cấm Thuật. Ta đọc về nó — trong những cuốn sách không được phép đọc." },
+        { "speaker": "f04", "text": "Trong Huyết Nguyệt, cơ thể sẽ không ngừng mất máu mỗi vòng... phải kết thúc trận này thật nhanh!" },
+        { "speaker": "book_wraith", "text": "...kẻ lạ... đọc nhầm... dòng cấm..." }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Khe cấm địa khép lại trong im lặng. Nhưng thứ ánh sáng đỏ kia vẫn đọng lại nơi đáy mắt các ngươi." },
+        { "speaker": "m06", "text": "Thứ đó học trò không dựng nổi. Có kẻ mở cánh cửa ấy — từ phía trong." },
+        { "speaker": "m10", "text": "Sách ghi: Huyết Nguyệt là dấu hiệu của Cấm Thuật thức tỉnh. Nếu đúng... chuyện này mới chỉ bắt đầu." },
+        { "speaker": "m05", "text": "Kẻ nào mở cửa thì đi tìm kẻ đó. Đơn giản!" }
+      ],
+      "firstClear": { "moonJade": 50, "darkIron": 2, "masteryXp": 30 }
+    },
+    {
+      "id": "arc1_s06", "arcId": "arc1", "name": "Tàng Thư Các Có Ma", "encounterId": "story_arc1_s06",
+      "before": [
+        { "speaker": "narrator", "text": "Tàng Thư Các — nơi Tô Dạ làm thủ thư mỗi đêm. Gần đây sách tự xé trang, và từ kệ cũ vọng ra tiếng thì thầm không rõ từ đâu." },
+        { "speaker": "m06", "text": "Phòng sách của ta có khách. Thư Hồn — những trang sách bị bỏ quên quá lâu, oán khí đọng thành hình." },
+        { "speaker": "f04", "text": "Nghe tiếng xào xạc đó mà rùng hết cả mình..." },
+        { "speaker": "book_wraith", "text": "...trang nào... cũng là ngục... cuốn nào... cũng thiếu... trang cuối..." },
+        { "speaker": "m06", "text": "Đừng lắng tai nghe nó. Giọng của Thư Hồn làm người nghe mỏi mệt — nó sống bằng sự chú ý của ngươi." }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Thư Hồn tan thành những trang giấy rời, rơi xuống im ắng như một trận tuyết nhỏ." },
+        { "speaker": "book_wraith", "text": "...trả lại... trang... cuối..." },
+        { "speaker": "m06", "text": "(nhặt một trang rời) 'Nguyệt Thực Ký' — trang cuối của nó bị xé mất từ lâu. Ai đó đã đọc cuốn này trước cả ta." },
+        { "speaker": "f04", "text": "Thắng rồi... nhưng chuyện Tô Dạ vừa nói còn đáng sợ hơn con ma lúc nãy." }
+      ],
+      "firstClear": { "moonJade": 55, "darkIron": 2, "masteryXp": 30 }
+    },
+    {
+      "id": "arc1_s07", "arcId": "arc1", "name": "Dạ Tập", "encounterId": "story_arc1_s07",
+      "before": [
+        { "speaker": "narrator", "text": "Đường về ký túc xá cắt qua rừng trúc. Đêm nay gió lạnh — và trong bóng cây, có thứ đang lộ răng." },
+        { "speaker": "m05", "text": "Ảnh Hồ! Cả bầy săn đêm — chúng luôn nhắm con mồi yếu nhất trước!" },
+        { "speaker": "f04", "text": "B-ba con... giữ đội hình, đừng ai lạc hàng nhé!" },
+        { "speaker": "m06", "text": "Chúng vào được học viện nghĩa là có người mở cửa. Trận này không phải tai nạn." },
+        { "speaker": "narrator", "text": "Ba cái bóng lùa qua kẽ trúc, xếp thành hình răng nanh." }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Bầy Ảnh Hồ tan vào bóng tối như chưa từng hiện hữu, chỉ để lại vài sợi lông đen trên lá trúc." },
+        { "speaker": "m05", "text": "Tập kích ban đêm ngay trong sân học viện?! Vọng Nguyệt rốt cuộc đang giấu cái gì?" },
+        { "speaker": "m06", "text": "Ai đó muốn thử xem tân sinh năm nay có những gì. Câu trả lời — vừa được viết xong." },
+        { "speaker": "narrator", "text": "Gió đêm lùa qua kẽ trúc — nghe như lời nhắn cuối trước ngày khảo hạch." }
+      ],
+      "firstClear": { "moonJade": 55, "darkIron": 2, "masteryXp": 35 }
+    },
+    {
+      "id": "arc1_s08", "arcId": "arc1", "name": "Khảo Hạch Chi Linh", "encounterId": "story_arc1_s08",
+      "before": [
+        { "speaker": "narrator", "text": "Bài khảo hạch cuối cùng của năm nhất. Trên đài cao nhất của thư viện, linh thú gác cổng thi từ thời lập viện thức dậy." },
+        { "speaker": "khao_hach_chi_linh", "text": "KẺ BƯỚC VÀO ĐIỆN KHẢO. TRĂNG ĐỔI PHA — TA ĐỔI ĐỀ. TIẾN LÊN, ỨNG VIÊN." },
+        { "speaker": "m10", "text": "Nó đổi chiêu theo pha trăng — tra Nguyệt tính của nó trước khi ra tay, đừng đánh mù!" },
+        { "speaker": "f04", "text": "Lớn quá... nhưng mình đã đi được đến tận đây — không lùi nữa!" },
+        { "speaker": "m05", "text": "Trăng đổi thì ta đổi theo. Đơn giản!" }
+      ],
+      "after": [
+        { "speaker": "khao_hach_chi_linh", "text": "ĐẬU. TÂN SINH CỦA VỌNG NGUYỆT — TỪ ĐÊM NAY, TRĂNG SẼ THEO DÕI CÁC NGƯƠI." },
+        { "speaker": "narrator", "text": "Linh thú tan thành bụi ánh sáng, quyện lên quanh đỉnh thư viện. Trên bảng vàng, những cái tên mới được khắc ngang hàng các thế hệ trước." },
+        { "speaker": "m10", "text": "(thở hắt) Cuối cùng mình cũng qua được... và mình sẽ còn học được nhiều hơn nữa." },
+        { "speaker": "m05", "text": "Năm nhất mới mở màn thôi. Xem học viện này còn giấu bao nhiêu chuyện." },
+        { "speaker": "narrator", "text": "Phần thưởng nhập môn: Chu Quyết — học sinh thường dân xuất sắc nhất khóa — chính thức gia nhập đội." }
+      ],
+      "firstClear": { "moonJade": 55, "darkIron": 5, "masteryXp": 40 }
+    }
+  ]
+}

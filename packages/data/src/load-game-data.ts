@@ -103,6 +103,10 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       (effect.condition.type === "heldTurnsAtLeast" ||
         effect.condition.type === "cardsPlayedThisTurnAtLeast"));
 
+  /** Enemy intents may drain the player's moon reserve (`01` §9.3.2, `02` §6 [GĐ7c]). */
+  const cardOnlyForIntent = (effect: Effect): boolean =>
+    effect.type !== "drainMoonPower" && cardOnly(effect);
+
   const nestedChoose = (effects: Effect[]) =>
     effects.some(
       (effect) =>
@@ -220,7 +224,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(intent.effects, (effect) => effect.type === "execute")) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": execute is only allowed in co-op combos`);
       }
-      if (someEffect(intent.effects, cardOnly)) {
+      if (someEffect(intent.effects, cardOnlyForIntent)) {
         errors.push(`enemy "${enemy.id}" intent "${intent.id}": card-only keyword`);
       }
     }
