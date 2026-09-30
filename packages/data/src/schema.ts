@@ -410,11 +410,21 @@ export const shopItemDefSchema = z.object({
   item: shopItemSchema,
 });
 
+const upgradeRow = z.array(z.number().int().positive()).length(4);
+const upgradeTable = z.object({ rare: upgradeRow, epic: upgradeRow, legendary: upgradeRow });
+
 export const economyConfigSchema = z.object({
   starterHeroIds: z.array(idSchema).length(3),
   starterGift: z.object({ moonJade: nonNegativeInt }),
   pullCost: z.number().int().positive(),
-  runRewards: z.object({ moonJadePerFloor: nonNegativeInt, moonJadeWin: nonNegativeInt, firstWinOfDay: nonNegativeInt }),
+  runRewards: z.object({
+    moonJadePerFloor: nonNegativeInt,
+    moonJadeWin: nonNegativeInt,
+    firstWinOfDay: nonNegativeInt,
+    darkIronWin: nonNegativeInt,
+    darkIronLoss: nonNegativeInt,
+    darkIronLossMinFloor: z.number().int().positive(),
+  }),
   resetUtcHour: z.number().int().min(0).max(23),
   gacha: z.object({
     rates: z.object({ legendary: probability, epic: probability }),
@@ -427,6 +437,7 @@ export const economyConfigSchema = z.object({
   dupeMoonStar: z.object({ common: nonNegativeInt, rare: nonNegativeInt, epic: nonNegativeInt, legendary: nonNegativeInt }),
   gearDupeMoonStar: z.object({ common: nonNegativeInt, rare: nonNegativeInt, epic: nonNegativeInt, legendary: nonNegativeInt }),
   moonStarShop: z.array(shopItemDefSchema),
+  upgradeCost: z.object({ weapon: upgradeTable, relic: upgradeTable }),
 });
 
 export const missionDefSchema = z.object({

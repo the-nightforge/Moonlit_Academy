@@ -32,7 +32,7 @@ describe("economy: gift, run rewards, periods, missions, achievements", () => {
     expect(again).toEqual({ ok: true, profile: gifted.profile, granted: false });
 
     const lost = rewards(data, fresh, result());
-    expect(lost.rewards).toEqual({ moonJade: moonJadePerFloor * 3, firstWinOfDay: false, achievements: [] });
+    expect(lost.rewards).toEqual({ moonJade: moonJadePerFloor * 3, darkIron: 1, firstWinOfDay: false, achievements: [] });
     expect(lost.profile.missions.daily).toMatchObject({ runsFinished: 1, floorsReached: 3, runsWon: 0, heroesUsed: TEAM });
     expect(lost.profile.stats).toMatchObject({ runsFinished: 1, floorsTotal: 3 });
 

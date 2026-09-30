@@ -419,7 +419,15 @@ export interface EconomyConfig {
   starterHeroIds: string[];
   starterGift: { moonJade: number };
   pullCost: number;
-  runRewards: { moonJadePerFloor: number; moonJadeWin: number; firstWinOfDay: number };
+  runRewards: {
+    moonJadePerFloor: number;
+    moonJadeWin: number;
+    firstWinOfDay: number;
+    /** Dark iron per run: on a win, or on a loss at floor >= darkIronLossMinFloor (`14` §5). */
+    darkIronWin: number;
+    darkIronLoss: number;
+    darkIronLossMinFloor: number;
+  };
   /** Day and week start at this UTC hour (21 = 04:00 in Vietnam). */
   resetUtcHour: number;
   gacha: {
@@ -434,6 +442,8 @@ export interface EconomyConfig {
   /** Moon stars for a weapon or relic duplicate already at level 5 (`14` §13.1). */
   gearDupeMoonStar: Record<Rarity, number>;
   moonStarShop: ShopItemDef[];
+  /** Material cost to go from level n to n + 1 (index n − 1), by rarity (`14` §13.3). */
+  upgradeCost: Record<"weapon" | "relic", Record<"rare" | "epic" | "legendary", number[]>>;
 }
 
 /** What a shop sells (`14` §11, §14.4); `relicChoice` is honor-shop only. */

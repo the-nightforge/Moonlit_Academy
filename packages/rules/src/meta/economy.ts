@@ -83,6 +83,8 @@ export function grantStarterGift(data: GameData, profile: Profile): { ok: true; 
 export interface RunRewards {
   /** Moon jade from the run itself (floors, win, first win of the day); achievements not included. */
   moonJade: number;
+  /** Dark iron from the run (`14` §5). */
+  darkIron: number;
   firstWinOfDay: boolean;
   /** Achievements reached by this run. */
   achievements: string[];
@@ -102,6 +104,10 @@ export function applyRunRewards(
   const moonJade = moonJadePerFloor * result.floorReached + (result.won ? moonJadeWin : 0) + (firstWin ? firstWinOfDay : 0);
   next.currencies.moonJade += moonJade;
 
+  const { darkIronWin, darkIronLoss, darkIronLossMinFloor } = data.economyConfig.runRewards;
+  const darkIron = result.won ? darkIronWin : result.floorReached >= darkIronLossMinFloor ? darkIronLoss : 0;
+  next.currencies.darkIron += darkIron;
+
   const wins = result.won ? 1 : 0;
   addCounts(next, { runsFinished: 1, floorsReached: result.floorReached, runsWon: wins, bossKills: wins }, result.heroIds);
   const stats = next.stats;
@@ -115,7 +121,7 @@ export function applyRunRewards(
   if (context.starterDeck) stats.starterBestFloor = Math.max(stats.starterBestFloor ?? 0, result.floorReached);
 
   const achievements = grantAchievements(data, next);
-  return { ok: true, profile: next, rewards: { moonJade, firstWinOfDay: firstWin, achievements } };
+  return { ok: true, profile: next, rewards: { moonJade, darkIron, firstWinOfDay: firstWin, achievements } };
 }
 
 /** Adds to this day's and week's counters, e.g. `{ gachaPulls: 10 }` (`14` §7). */
