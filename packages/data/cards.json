@@ -1891,9 +1891,14 @@
         "amount": 1,
         "to": "chosen",
         "steal": true
+      },
+      {
+        "type": "damage",
+        "amount": 5,
+        "to": "chosen"
       }
     ],
-    "text": "Cướp 1 buff của kẻ địch. Đoạt Nguyệt 1.",
+    "text": "Cướp 1 buff của kẻ địch. Đoạt Nguyệt 1. Gây 5 damage.",
     "keywords": [
       "doat_nguyet"
     ]
@@ -2000,11 +2005,16 @@
         "steal": true
       },
       {
+        "type": "damage",
+        "amount": 4,
+        "to": "chosen"
+      },
+      {
         "type": "chooseCard",
         "look": 2
       }
     ],
-    "text": "Đoạt Nguyệt 2. Chiêm Bài 2.",
+    "text": "Đoạt Nguyệt 2. Gây 4 damage. Chiêm Bài 2.",
     "keywords": [
       "doat_nguyet",
       "chiem_bai"
@@ -2073,9 +2083,14 @@
       {
         "type": "shiftMoon",
         "amount": 1
+      },
+      {
+        "type": "damage",
+        "amount": 3,
+        "to": "allEnemies"
       }
     ],
-    "text": "Kích hoạt Huyết Nguyệt 2 vòng. Đổi Vận: trăng tiến 1 pha.",
+    "text": "Kích hoạt Huyết Nguyệt 2 vòng. Đổi Vận: trăng tiến 1 pha. Gây 3 damage lên mọi kẻ địch.",
     "keywords": [
       "huyet_nguyet"
     ]
@@ -4616,9 +4631,14 @@
         "type": "heal",
         "amount": 2,
         "to": "self"
+      },
+      {
+        "type": "damage",
+        "amount": 2,
+        "to": "allEnemies"
       }
     ],
-    "text": "Gọi Huyết Nguyệt 1 vòng. Ninh An hồi 2 HP.",
+    "text": "Gọi Huyết Nguyệt 1 vòng. Ninh An hồi 2 HP. Gây 2 damage lên mọi kẻ địch.",
     "keywords": [
       "huyet_nguyet"
     ]
@@ -4850,9 +4870,14 @@
       {
         "type": "shiftMoon",
         "amount": 1
+      },
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "allEnemies"
       }
     ],
-    "text": "Đổi Vận: trăng tiến 1 pha."
+    "text": "Đổi Vận: trăng tiến 1 pha. Gây 4 damage lên mọi kẻ địch."
   },
   {
     "id": "m08_tinh_tuong",
@@ -4895,9 +4920,14 @@
       {
         "type": "gainMoonPower",
         "amount": 1
+      },
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "allEnemies"
       }
     ],
-    "text": "Đổi Vận 1 pha. Nhận 1 Nguyệt Lực."
+    "text": "Đổi Vận 1 pha. Nhận 1 Nguyệt Lực. Gây 4 damage lên mọi kẻ địch."
   },
   {
     "id": "m08_suy_van",
@@ -4921,9 +4951,14 @@
         "status": "weak",
         "amount": 2,
         "to": "chosen"
+      },
+      {
+        "type": "damage",
+        "amount": 5,
+        "to": "chosen"
       }
     ],
-    "text": "Đổi Vận 1 pha. Suy Yếu 1 kẻ địch 2 vòng.",
+    "text": "Đổi Vận 1 pha. Suy Yếu 1 kẻ địch 2 vòng. Gây 5 damage.",
     "keywords": [
       "suy_yeu"
     ]
@@ -5912,9 +5947,14 @@
       {
         "type": "bloodMoon",
         "rounds": 1
+      },
+      {
+        "type": "damage",
+        "amount": 3,
+        "to": "allEnemies"
       }
     ],
-    "text": "Mất 3 HP. Huyết Nguyệt 1 vòng.",
+    "text": "Mất 3 HP. Huyết Nguyệt 1 vòng. Gây 3 damage lên mọi kẻ địch.",
     "keywords": [
       "huyet_nguyet"
     ]
@@ -5938,9 +5978,14 @@
       {
         "type": "shiftMoon",
         "amount": 1
+      },
+      {
+        "type": "damage",
+        "amount": 3,
+        "to": "allEnemies"
       }
     ],
-    "text": "Huyết Nguyệt 1 vòng. Đổi Vận 1 pha.",
+    "text": "Huyết Nguyệt 1 vòng. Đổi Vận 1 pha. Gây 3 damage lên mọi kẻ địch.",
     "keywords": [
       "huyet_nguyet"
     ]
@@ -8286,11 +8331,11 @@
       {
         "type": "scaledDamage",
         "per": "targetDebuffs",
-        "amount": 3,
+        "amount": 2,
         "to": "allEnemies"
       }
     ],
-    "text": "Suy Yếu mọi kẻ địch 1 vòng, rồi gây 3 damage lên mỗi kẻ địch cho mỗi debuff trên nó.",
+    "text": "Suy Yếu mọi kẻ địch 1 vòng, rồi gây 2 damage lên mỗi kẻ địch cho mỗi debuff trên nó.",
     "keywords": [
       "suy_yeu"
     ]

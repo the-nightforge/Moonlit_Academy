@@ -106,9 +106,13 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
       );
       if (fatal) continue;
     }
-    // Đổi Vận: only land on a phase that helps the hand — unless the card still
-    // feeds an unleveled `moonShifts` counter.
-    if (hasShiftMoon(card.effects)) {
+    // Đổi Vận: a card that only shifts the moon (and digs) lands on a phase that
+    // helps the hand — unless it still feeds an unleveled `moonShifts` counter.
+    // Cards with other effects (damage, Nguyệt Lực, debuffs) are worth playing anyway.
+    if (
+      card.effects.some((effect) => effect.type === "shiftMoon") &&
+      card.effects.every((effect) => effect.type === "shiftMoon" || effect.type === "chooseCard" || effect.type === "drawCards")
+    ) {
       const leveling = owners.some(
         (hero) =>
           hero?.alive === true &&
@@ -205,16 +209,6 @@ function bestMoonOffset(data: GameData, state: CombatState, seat: number): 0 | 1
     if (score > bestScore) { best = offset; bestScore = score; }
   }
   return best;
-}
-
-/** Any `shiftMoon` anywhere in the effect tree (nested `conditional` branches count). */
-function hasShiftMoon(effects: Effect[]): boolean {
-  return effects.some(
-    (effect) =>
-      effect.type === "shiftMoon" ||
-      (effect.type === "conditional" &&
-        (hasShiftMoon(effect.then) || hasShiftMoon(effect.else ?? []))),
-  );
 }
 
 /** Every `shiftMoon` total a card could leave — one entry per conditional branch path. */

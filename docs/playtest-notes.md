@@ -1275,3 +1275,43 @@ trong đội; F08 tự mất HP). m05+f03+f04 80% cao (Song Hành Tuyết Trung 
 m10 48, f01 46, m01 46, f03 43, m03 41, f07 40, m05 39, f08 35, f02 34, m07 34, m08 30.
 Support vào band (m01 34 → 46, m03 27 → 41, f07 28 → 40); nay lệch ngược: m09 trên trần
 nhẹ, m08 / m07 / f02 / f08 dưới sàn.
+
+## Cân PvP: m08, m07, f02, f08, m09
+
+Xuất phát (sau gói 3 lá đặc trưng): m08 30, m07 34, f02 34, f08 35 dưới sàn; m09 61 trên trần.
+Mẫu 4000, bot trung thực.
+
+| Thử | Kết quả |
+|---|---|
+| `heroStats.maxHp` +4 / +8 / +12 cho 4 Hero yếu | +1–3 điểm — HP không phải đòn bẩy (như 7a) |
+| Lá tấn công sẵn có +2 / +3 / +4 damage | +1–3 điểm |
+| Bỏ phạt HP Huyết Nguyệt (`bloodMoonHpLoss` 0) | ±1 — không phải nguyên nhân |
+| `secondPlayerBonus` NL 1 → 2 | đi trước 55 → 54% — không đáng |
+| **Lá dựng thế (Đổi Vận / gọi Huyết Nguyệt) gây damage** | m07 +8, f08 +8 — đòn bẩy thật |
+
+**Lỗi bot:** lá có `shiftMoon` bị bỏ qua trừ khi pha đích khớp tag trên tay, kể cả khi lá còn
+Suy Yếu / Nguyệt Lực — sau khi M08 thăng cấp, gần như cả bộ lá M08 nằm chết trên tay. Nay chỉ
+lá **chỉ đổi pha + rút/Chiêm Bài** mới chờ pha tốt (Nguyệt Quang Dẫn vẫn được giữ — đánh
+nó bừa làm đội F04 tụt 41 → 20% PvE); lá có tác dụng khác được đánh.
+
+Đã áp (PvP và PvE đều đổi):
+
+- M08: *Đổi Vận* +4 damage lan, *Chuyển Vận* +4 lan, *Suy Vận* +5.
+- M07: *Triệu Huyết* +2 lan. F08: *Huyết Triều* +3 lan, *Định Mệnh* +3 lan.
+- F02: *Đổi Vận Chú* +3 lan, *Diện Đoạt* +5, *Diện Cụ* +4.
+- M09: *Đoạn Trường* 3 → 2 mỗi debuff; `heroStats` PvP m09 44 → 40, f10 42 → 38, m04 44 → 40.
+
+(m08 rất nhạy: lan 2–3 → 32–35%, lan 4 → 42%, lan 7 → 79%.)
+
+### PvP sau chỉnh
+
+Mọi Hero **40–61%**: m09 61, f04 59, m04 59, m02 57, f06 56, f10 56, f09 54, m01 52, m10 51,
+f05 50, f08 46, m05 45, f01 44, m06 44, f07 42, m08 42, m03 41, m07 40, f02 40, f03 40.
+Vòng TB 9.7, hòa 2%. **Đi trước thắng 56%** — trên mục tiêu 47–53% (trận ngắn lại; bù NL
+cho người đi sau không đổi được, còn mở).
+
+### PvE sau chỉnh (Bộ cơ bản, 80 seed)
+
+m05+f04+m06 50%, m05+f03+f02 69%, m06+f02+f03 66%, m05+f03+f04 80%, m01+m02+f04 41%,
+m08+f08+m05 **20%** (từ 1%), m03+m10+m04 18%, f01+m07+m06 34%, f09+f10+m05 13%,
+f06+m09+f03 3%, f05+f07+m06 66%, f10+f05+m04 3%. Tổng **38%**.

@@ -305,8 +305,9 @@ describe("phase 7a — bot heuristics (7a.6)", () => {
     expect(chooseCombatAction(data, state, 0).type).toBe("endTurn");
   });
 
-  it("bot: shiftMoon cards wait for a useful landing phase unless leveling moonShifts", () => {
+  it("bot: pure shiftMoon cards wait for a useful landing phase unless leveling moonShifts", () => {
     // Waxing crescent (index 1) has no modifiers — a +1 shift from `new` helps nobody.
+    // Nguyệt Quang Dẫn only shifts and digs (Chiêm Bài 3), so it is held.
     const dead = makeTestCombat({
       heroIds: ["m05", "f04", "m06"],
       setup: (s) => {
@@ -329,6 +330,21 @@ describe("phase 7a — bot heuristics (7a.6)", () => {
     expect(chooseCombatAction(live.data, live.state, 0)).toEqual({
       type: "playCard",
       instanceId: p0(live.state).hand[0]!,
+    });
+
+    // A shift card with another real effect (Suy Vận: Suy Yếu) is played anyway.
+    const mixed = makeTestCombat({
+      heroIds: ["m08", "f04", "m06"],
+      setup: (s) => {
+        p0(s).moonPower = 9;
+        setHand(s, ["m08_suy_van"]);
+        s.heroes[0]!.leveledUp = true;
+        s.moonIndex = 0;
+      },
+    });
+    expect(chooseCombatAction(mixed.data, mixed.state, 0)).toMatchObject({
+      type: "playCard",
+      instanceId: p0(mixed.state).hand[0]!,
     });
 
     // M08 still wants the shift: its moonShifts counter is not leveled yet.
