@@ -384,10 +384,10 @@ describe("economyConfig", () => {
 
 
 describe("weapons, moon relics and second level-up forms", () => {
-  it("loads 25 weapons with 4 refinements and 8 relics with 5 resonance levels; every hero has a second form", () => {
+  it("loads 25 weapons with 4 refinements and 16 relics with 5 resonance levels; every hero has a second form", () => {
     const data = loadGameData();
     expect(Object.keys(data.weapons)).toHaveLength(25);
-    expect(Object.keys(data.relics)).toHaveLength(8);
+    expect(Object.keys(data.relics)).toHaveLength(16);
     expect(Object.values(data.weapons).every((weapon) => weapon.refinement.length === 4)).toBe(true);
     expect(Object.values(data.relics).every((relic) => relic.resonance.length === 5)).toBe(true);
     expect(Object.values(data.heroes).every((hero) => hero.altLevelUp.name.length > 0)).toBe(true);
@@ -395,6 +395,27 @@ describe("weapons, moon relics and second level-up forms", () => {
     expect(data.economyConfig.gearDupeMoonStar).toEqual({ legendary: 10, epic: 4, rare: 1, common: 1 });
     const count = (rarity: string) => Object.values(data.weapons).filter((weapon) => weapon.rarity === rarity).length;
     expect([count("legendary"), count("epic"), count("rare")]).toEqual([7, 8, 10]);
+  });
+
+  it("T313: 25 weapons with one signature weapon per hero at the hero's rarity; 16 relics; banners list every item", () => {
+    const data = loadGameData();
+    expect(Object.keys(data.weapons)).toHaveLength(25);
+    expect(Object.keys(data.relics)).toHaveLength(16);
+    for (const hero of Object.values(data.heroes)) {
+      const signature = Object.values(data.weapons).filter((weapon) => weapon.signatureHeroId === hero.id);
+      expect(signature, hero.id).toHaveLength(1);
+      expect(signature[0]!.rarity, hero.id).toBe(hero.rarity === "common" ? "rare" : hero.rarity);
+    }
+    const pooled = (bannerId: string) => new Set(Object.values(data.banners[bannerId]!.pool).flat());
+    expect(pooled("banner_weapons")).toEqual(new Set(Object.keys(data.weapons)));
+    expect(pooled("banner_relics")).toEqual(new Set(Object.keys(data.relics)));
+    // Every item sits in the pool row of its own rarity.
+    for (const [rarity, ids] of Object.entries(data.banners["banner_weapons"]!.pool)) {
+      for (const id of ids) expect(data.weapons[id]!.rarity, id).toBe(rarity);
+    }
+    for (const [rarity, ids] of Object.entries(data.banners["banner_relics"]!.pool)) {
+      for (const id of ids) expect(data.relics[id]!.rarity, id).toBe(rarity);
+    }
   });
 
   it("T212: rejects wearer outside weapon hooks, forbidden hook effects, wrong level counts and colliding ids", () => {
