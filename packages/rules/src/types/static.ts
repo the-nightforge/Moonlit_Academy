@@ -271,7 +271,7 @@ export interface BossPhaseDef {
   reviveAfterRounds?: number;
 }
 
-export type EncounterTier = "normal" | "elite" | "boss" | "coop";
+export type EncounterTier = "normal" | "elite" | "boss" | "coop" | "story";
 
 export interface EncounterDef {
   id: string;
@@ -591,4 +591,34 @@ export interface CoopSide {
   heroIds: [string, string, string];
   deckCardIds?: string[];
   loadout: Loadout;
+}
+
+/** Moon state a combat starts in (`01` §2); story stages only. */
+export interface CombatStart {
+  moonIndex?: number;
+  bloodMoonRounds?: number;
+}
+
+/** One line of story dialogue (`18` §4.1). `speaker`: hero id, enemy id or "narrator". */
+export interface DialogueLine {
+  speaker: string;
+  text: string;
+}
+
+export interface StoryArcDef {
+  id: string;
+  name: string;
+  stageIds: string[];
+  rewardHeroId: string;
+}
+
+export interface StoryStageDef {
+  id: string;
+  arcId: string;
+  name: string;
+  encounterId: string;
+  start?: CombatStart;
+  before: DialogueLine[];
+  after: DialogueLine[];
+  firstClear: { moonJade?: number; darkIron?: number; masteryXp?: number };
 }

@@ -1,10 +1,32 @@
-import { loadGameData } from "data";
-import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, LevelUpCounter, LevelUpPassive, Loadout, PlayerState, Profile } from "../src/index";
+import { loadGameData, rawGameInput } from "data";
+import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, LevelUpCounter, LevelUpPassive, Loadout, PlayerState, Profile, StoryStageDef } from "../src/index";
 import { applyAction, createCombat } from "../src/index";
 import { idleIntent } from "./fixtures";
 
 export function testData(): GameData {
   return loadGameData();
+}
+
+/** A deep copy of the raw JSON input `loadGameData` parses, for parse-level tests. */
+export function rawTestInput(): any {
+  return structuredClone(rawGameInput());
+}
+
+/** Two arcs × two stages on existing encounters, for story rule tests. */
+export function withTestStory(data: GameData): void {
+  data.storyArcs = {
+    t_arc1: { id: "t_arc1", name: "Arc 1", stageIds: ["t_a1s1", "t_a1s2"], rewardHeroId: "m10" },
+    t_arc2: { id: "t_arc2", name: "Arc 2", stageIds: ["t_a2s1", "t_a2s2"], rewardHeroId: "f02" },
+  };
+  const stage = (id: string, arcId: string, encounterId: string, extra: Partial<StoryStageDef> = {}): StoryStageDef => ({
+    id, arcId, name: id, encounterId, before: [], after: [], firstClear: { moonJade: 40, darkIron: 1, masteryXp: 30 }, ...extra,
+  });
+  data.storyStages = {
+    t_a1s1: stage("t_a1s1", "t_arc1", "enc_01"),
+    t_a1s2: stage("t_a1s2", "t_arc1", "enc_02", { start: { moonIndex: 4 } }),
+    t_a2s1: stage("t_a2s1", "t_arc2", "enc_03", { start: { bloodMoonRounds: 2 } }),
+    t_a2s2: stage("t_a2s2", "t_arc2", "enc_01"),
+  };
 }
 
 /** Seat 0 — every PvE combat's only player (`17` §2.1). */

@@ -20,6 +20,7 @@ import pvpConfigJson from "../pvp-config.json";
 import coopConfigJson from "../coop-config.json";
 import coopCombosJson from "../coop-combos.json";
 import summonsJson from "../summons.json";
+import storyJson from "../story.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -45,6 +46,7 @@ function rawData(): any {
     coopConfig: coopConfigJson,
     coopCombos: coopCombosJson,
     summons: summonsJson,
+    story: storyJson,
   }));
 }
 

@@ -22,6 +22,7 @@ import pvpConfigJson from "../pvp-config.json";
 import coopConfigJson from "../coop-config.json";
 import coopCombosJson from "../coop-combos.json";
 import summonsJson from "../summons.json";
+import storyJson from "../story.json";
 
 function someEffect(effects: Effect[], test: (effect: Effect) => boolean): boolean {
   return effects.some(
@@ -42,7 +43,7 @@ function effectsUseChosen(effects: Effect[]): boolean {
 }
 
 function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): string[] {
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig, coopConfig, coopCombos, summons } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig, coopConfig, coopCombos, summons, story } =
     parsed;
   const errors: string[] = [];
 
@@ -58,6 +59,8 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     ["relics", relics],
     ["coopCombos", coopCombos],
     ["summons", summons],
+    ["storyArcs", story.arcs],
+    ["storyStages", story.stages],
   ] as const;
   for (const [label, defs] of groups) {
     const seen = new Set<string>();
@@ -653,6 +656,29 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     if (usesTo(card.effects, "owner")) errors.push(`card "${card.id}": to "owner" is only allowed in summon actions`);
   }
 
+  // Cốt truyện (`02` §1.16): arcs list their stages, stages point back at their arc,
+  // their encounter is tier "story" and every speaker is a hero, an enemy or "narrator".
+  const stageById = new Map(story.stages.map((s) => [s.id, s]));
+  const encounterById = new Map(encounters.map((e) => [e.id, e]));
+  const heroIds = new Set(heroes.map((h) => h.id));
+  const speakers = new Set(["narrator", ...heroIds, ...enemies.map((e) => e.id)]);
+  const arcOfStage = new Map<string, string>();
+  for (const arc of story.arcs) {
+    if (!heroIds.has(arc.rewardHeroId)) errors.push(`story arc "${arc.id}": rewardHeroId "${arc.rewardHeroId}" does not exist`);
+    for (const stageId of arc.stageIds) {
+      if (!stageById.has(stageId)) errors.push(`story arc "${arc.id}": stage "${stageId}" does not exist`);
+      else if (arcOfStage.has(stageId)) errors.push(`story stage "${stageId}" is in more than one arc`);
+      arcOfStage.set(stageId, arc.id);
+    }
+  }
+  for (const s of story.stages) {
+    if (arcOfStage.get(s.id) !== s.arcId) errors.push(`story stage "${s.id}": arcId "${s.arcId}" does not list it`);
+    if (encounterById.get(s.encounterId)?.tier !== "story") errors.push(`story stage "${s.id}": encounter "${s.encounterId}" must have tier "story"`);
+    for (const line of [...s.before, ...s.after]) {
+      if (!speakers.has(line.speaker)) errors.push(`story stage "${s.id}": speaker "${line.speaker}" does not exist`);
+    }
+  }
+
   return errors;
 }
 
@@ -665,7 +691,7 @@ export function parseGameData(raw: unknown): GameData {
   if (errors.length > 0) {
     throw new Error(`Invalid game data:\n- ${errors.join("\n- ")}`);
   }
-  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig, coopConfig, coopCombos, summons } =
+  const { heroes, cards, enemies, encounters, moonPhases, runRelics, runAugments, runConfig, combatConfig, keywords, metaConfig, economyConfig, missions, achievements, banners, weapons, relics, pvpConfig, coopConfig, coopCombos, summons, story } =
     parsed.data;
   return {
     heroes: Object.fromEntries(heroes.map((hero) => [hero.id, hero])),
@@ -689,11 +715,14 @@ export function parseGameData(raw: unknown): GameData {
     coopConfig,
     coopCombos: Object.fromEntries(coopCombos.map((combo) => [combo.id, combo])),
     summons: Object.fromEntries(summons.map((summon) => [summon.id, summon])),
+    storyArcs: Object.fromEntries(story.arcs.map((arc) => [arc.id, arc])),
+    storyStages: Object.fromEntries(story.stages.map((stage) => [stage.id, stage])),
   };
 }
 
-export function loadGameData(): GameData {
-  return parseGameData({
+/** The raw JSON files `parseGameData` validates; test helpers clone this to build bad inputs. */
+export function rawGameInput() {
+  return {
     heroes: heroesJson,
     cards: cardsJson,
     enemies: enemiesJson,
@@ -715,5 +744,10 @@ export function loadGameData(): GameData {
     coopConfig: coopConfigJson,
     coopCombos: coopCombosJson,
     summons: summonsJson,
-  });
+    story: storyJson,
+  };
+}
+
+export function loadGameData(): GameData {
+  return parseGameData(rawGameInput());
 }

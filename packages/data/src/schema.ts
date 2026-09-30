@@ -233,7 +233,7 @@ export const encounterDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
   enemyIds: z.array(idSchema).min(1).max(3),
-  tier: z.enum(["normal", "elite", "boss", "coop"]),
+  tier: z.enum(["normal", "elite", "boss", "coop", "story"]),
   minFloor: z.number().int().positive().optional(),
 });
 
@@ -548,6 +548,27 @@ export const summonDefSchema = z.object({
   awakenedId: idSchema.optional(),
 });
 
+const dialogueLineSchema = z.object({ speaker: idSchema, text: z.string().min(1) });
+export const storySchema = z.object({
+  arcs: z.array(z.object({
+    id: idSchema, name: z.string().min(1), stageIds: z.array(idSchema).min(1), rewardHeroId: idSchema,
+  })),
+  stages: z.array(z.object({
+    id: idSchema, arcId: idSchema, name: z.string().min(1), encounterId: idSchema,
+    start: z.object({
+      moonIndex: z.number().int().min(0).max(7).optional(),
+      bloodMoonRounds: z.number().int().positive().optional(),
+    }).optional(),
+    before: z.array(dialogueLineSchema),
+    after: z.array(dialogueLineSchema),
+    firstClear: z.object({
+      moonJade: z.number().int().nonnegative().optional(),
+      darkIron: z.number().int().nonnegative().optional(),
+      masteryXp: z.number().int().nonnegative().optional(),
+    }),
+  })),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
@@ -570,4 +591,5 @@ export const rawGameDataSchema = z.object({
   coopConfig: coopConfigSchema,
   coopCombos: z.array(coopComboDefSchema),
   summons: z.array(summonDefSchema),
+  story: storySchema,
 });
