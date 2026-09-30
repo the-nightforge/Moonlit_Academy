@@ -38,7 +38,7 @@ export type CombatEvent =
   | { type: "cardChosen"; instanceId: string; bottomed: string[]; player?: number }
   | { type: "moonChoiceOpened"; options: number[]; player?: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
-  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" | "boss" }
+  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" | "boss" | "start" }
   | {
       type: "intentsRevealed";
       enemyId: string;

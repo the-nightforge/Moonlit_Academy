@@ -1,5 +1,5 @@
 import type {
-  AchievementDef, BannerDef, CardDef, CombatConfig, CoopComboDef, CoopConfig, EconomyConfig, EnemyDef, MissionDef, EncounterDef, HeroDef, KeywordDef, MetaConfig, MoonPhaseDef, PvpConfig, RunAugmentDef, RunConfig, RunRelicDef, StoryArcDef, StoryStageDef, WeaponDef, RelicDef, SummonDef,
+  AchievementDef, BannerDef, CardDef, CombatConfig, CombatStart, CoopComboDef, CoopConfig, EconomyConfig, EnemyDef, MissionDef, EncounterDef, HeroDef, KeywordDef, MetaConfig, MoonPhaseDef, PvpConfig, RunAugmentDef, RunConfig, RunRelicDef, StoryArcDef, StoryStageDef, WeaponDef, RelicDef, SummonDef,
 } from "./static";
 import type { CombatState } from "./state";
 import type { CombatEvent } from "./events";
@@ -41,6 +41,8 @@ export interface CombatSetup {
   /** Default: every hero at full HP. */
   heroes?: { hp: number; maxHp: number }[];
   runRelicIds?: string[];
+  /** Moon state at the start (`01` §2); story stages. */
+  start?: CombatStart;
 }
 
 export type ActionResult =
