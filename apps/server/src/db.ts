@@ -128,8 +128,15 @@ export function toPgPlaceholders(query: string): string {
   return out;
 }
 
-/** int8 columns arrive as BigInt; every id/timestamp fits a JS number. */
-function normalizeRow(row: unknown): unknown {
+/**
+ * postgres.js returns int8 (BIGINT) as a string unless told otherwise; parse it
+ * as BigInt so `normalizeRow` can turn it into a number. `prepare: false` keeps
+ * queries working through the transaction-mode pooler.
+ */
+export const PG_OPTIONS = { prepare: false, max: 8, types: { bigint: postgres.BigInt } } as const;
+
+/** int8 columns arrive as BigInt (`PG_OPTIONS`); every id/timestamp fits a JS number. */
+export function normalizeRow(row: unknown): unknown {
   if (row === null || typeof row !== "object") return row;
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(row)) out[key] = typeof value === "bigint" ? Number(value) : value;
@@ -176,13 +183,9 @@ class PgDb implements Db {
   }
 }
 
-/**
- * Opens a Postgres `databaseUrl` (Supabase Supavisor string or a local server)
- * and migrates it. `prepare: false` keeps queries working through the
- * transaction-mode pooler.
- */
+/** Opens a Postgres `databaseUrl` (Supabase Supavisor string or a local server) and migrates it. */
 export async function openDb(databaseUrl: string): Promise<Db> {
-  const sql = postgres(databaseUrl, { prepare: false, max: 8 });
+  const sql = postgres(databaseUrl, PG_OPTIONS);
   const db = new PgDb(sql as unknown as SqlRunner);
   await migrate(db);
   return db;

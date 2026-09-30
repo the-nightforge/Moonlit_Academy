@@ -36,10 +36,48 @@ function gearedSide(data: GameData, heroIds: [string, string, string], rng: { st
   return { heroIds, loadout: { heroes, relics: relicList, pvp: true } };
 }
 
-/** Plays one bot-vs-bot match to its end; returns the final state and played card ids. */
-function playMatch(data: GameData, seed: number, sides: [PvpSide, PvpSide]): { state: CombatState; playedCardIds: string[] } {
+/** Phase-7b counters collected per match (7b.6): Linh Thú uptime, Mê Hoặc, Phong Ấn. */
+export interface PvpMatchStats {
+  summonsCreated: number;
+  summonActs: number;
+  charmsApplied: number;
+  /** A charm applied on a unit still carrying the mark (charges stack — worth tracking). */
+  doubleCharms: number;
+  /** A hero's damage landing on its own seat — the Mê Hoặc redirect (`01` §15.5). */
+  friendlyFire: number;
+  /** Hero cards stripped to damage-only by a seal mark. */
+  sealStripped: number;
+  /** Linh Thú marks consumed — their actions keep damage only. */
+  sealStrippedOnSummons: number;
+  revives: number;
+}
+
+function emptyMatchStats(): PvpMatchStats {
+  return {
+    summonsCreated: 0,
+    summonActs: 0,
+    charmsApplied: 0,
+    doubleCharms: 0,
+    friendlyFire: 0,
+    sealStripped: 0,
+    sealStrippedOnSummons: 0,
+    revives: 0,
+  };
+}
+
+/** Plays one bot-vs-bot match to its end; returns the final state, played card ids and counters. */
+function playMatch(
+  data: GameData,
+  seed: number,
+  sides: [PvpSide, PvpSide],
+): { state: CombatState; playedCardIds: string[]; stats: PvpMatchStats } {
   let { state } = createPvpCombat(data, { seed, players: sides });
   const playedCardIds: string[] = [];
+  const stats = emptyMatchStats();
+  const charmMarks = new Map<string, number>();
+  const seatOf = (post: CombatState, unitId: string) =>
+    post.heroes.find((hero) => hero.id === unitId)?.player ??
+    (post.summons ?? []).find((summon) => summon.id === unitId)?.player;
   for (let step = 0; step < 2000 && state.status !== "won" && state.status !== "lost"; step++) {
     const seat =
       state.status === "mulligan"
@@ -50,10 +88,29 @@ function playMatch(data: GameData, seed: number, sides: [PvpSide, PvpSide]): { s
     if (!result.ok) throw new Error(`sim: action ${action.type} rejected: ${result.error}`);
     for (const event of result.events) {
       if (event.type === "cardPlayed") playedCardIds.push(state.cards[event.instanceId]?.cardId ?? event.instanceId);
+      else if (event.type === "summoned") stats.summonsCreated += 1;
+      else if (event.type === "summonActed") stats.summonActs += 1;
+      else if (event.type === "heroRevived") stats.revives += 1;
+      else if (event.type === "sealStripped") {
+        stats.sealStripped += 1;
+        if (event.unitId.includes("summon:")) stats.sealStrippedOnSummons += 1;
+      } else if (event.type === "statusApplied" && event.status === "charm") {
+        stats.charmsApplied += 1;
+        if ((charmMarks.get(event.targetId) ?? 0) > 0) stats.doubleCharms += 1;
+        charmMarks.set(event.targetId, event.value);
+      } else if (event.type === "statusRemoved" && event.status === "charm") {
+        charmMarks.delete(event.targetId);
+      } else if (event.type === "unitDied") {
+        charmMarks.delete(event.unitId);
+      } else if (event.type === "damageDealt") {
+        const source = seatOf(result.state, event.sourceId);
+        const target = seatOf(result.state, event.targetId);
+        if (source !== undefined && source === target) stats.friendlyFire += 1;
+      }
     }
     state = result.state;
   }
-  return { state, playedCardIds };
+  return { state, playedCardIds, stats };
 }
 
 export interface PvpSimOptions {
@@ -90,19 +147,24 @@ export interface PvpSimResult {
   heroWins: Record<string, { wins: number; matches: number }>;
   /** Card ids never played in any match. */
   unplayedCardIds: string[];
+  /** Phase-7b counters summed over all matches (7b.6). */
+  mechanics: PvpMatchStats;
 }
 
 export function runPvpSim(data: GameData, options: PvpSimOptions): PvpSimResult {
   const teams = allTeams(data);
   const heroWins: PvpSimResult["heroWins"] = {};
   const played = new Set<string>();
-  const result: PvpSimResult = { matches: 0, firstPlayerWins: 0, draws: 0, rounds: [], heroWins, unplayedCardIds: [] };
+  const result: PvpSimResult = { matches: 0, firstPlayerWins: 0, draws: 0, rounds: [], heroWins, unplayedCardIds: [], mechanics: emptyMatchStats() };
   const runMatch = (a: number, b: number, seed: number) => {
     const rng = { state: seed ^ 0x9e3779b9 };
     const sides: [PvpSide, PvpSide] = options.geared
       ? [gearedSide(data, teams[a]!, rng), gearedSide(data, teams[b]!, rng)]
       : [bareSide(teams[a]!), bareSide(teams[b]!)];
-    const { state, playedCardIds } = playMatch(data, seed, sides);
+    const { state, playedCardIds, stats } = playMatch(data, seed, sides);
+    for (const key of Object.keys(stats) as (keyof PvpMatchStats)[]) {
+      result.mechanics[key] += stats[key];
+    }
     for (const id of playedCardIds) played.add(id);
     result.matches += 1;
     result.rounds.push(state.round);
@@ -155,6 +217,19 @@ export function printPvpSim(label: string, result: PvpSimResult): void {
     "vòng TB": mean(result.rounds).toFixed(1),
     "vòng trung vị": median(result.rounds),
     "vòng min/max": `${Math.min(...result.rounds)}/${Math.max(...result.rounds)}`,
+  });
+  const m = result.mechanics;
+  const per = (n: number) => (result.matches > 0 ? (n / result.matches).toFixed(2) : "—");
+  console.log("=== cơ chế 7b mỗi trận ===");
+  console.table({
+    "triệu hồi": per(m.summonsCreated),
+    "thú đánh": per(m.summonActs),
+    "Mê Hoặc": per(m.charmsApplied),
+    "mê ×2 (tổng)": m.doubleCharms,
+    "đánh nhầm đồng đội": per(m.friendlyFire),
+    "tước lá/chiêu": per(m.sealStripped),
+    "tước trên Linh Thú": m.sealStrippedOnSummons,
+    "Hồi Hồn": per(m.revives),
   });
   console.log("=== tỉ lệ thắng theo Hero ===");
   console.table(

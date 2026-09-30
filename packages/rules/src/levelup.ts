@@ -59,7 +59,7 @@ export function sealFilteredEffects(
   events: CombatEvent[],
 ): Effect[] {
   if (sealedBy === undefined) return effects;
-  const kept = effects.filter((effect) => effect.type === "damage" || effect.type === "missingHpDamage");
+  const kept = effects.filter((effect) => effect.type === "damage" || effect.type === "missingHpDamage" || effect.type === "scaledDamage");
   if (kept.length === effects.length) return effects;
   events.push({ type: "sealStripped", unitId, refId });
   bumpIntentsSealed(data, state, sealedBy, events);

@@ -21,8 +21,16 @@ const TEAMS: [string, string, string][] = [
   ["m08", "f08", "m05"],
   ["m03", "m10", "m04"],
   ["f01", "m07", "m06"],
+  // Phase 7b wave-2 coverage (7b.6): each new Hero appears in one team.
+  ["f09", "f10", "m05"],
+  ["f06", "m09", "f03"],
+  ["f05", "f07", "m06"],
+  ["f10", "f05", "m04"],
 ];
-const SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);
+// 20 seeds keep `pnpm test` fast (±22 points per 20-run cell); tuning decisions
+// measure with PLAYTEST_SEEDS=80 or more.
+const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
+const SEEDS = Array.from({ length: Number(env.PLAYTEST_SEEDS ?? 20) }, (_, i) => i + 1);
 const MAX_STEPS = 20000;
 const MAX_COMBAT_ROUNDS = 60;
 
@@ -38,6 +46,13 @@ interface TierStats {
   enemyIntentSum: number;
   enemyIntentSamples: number;
   deckedOut: number;
+  // Phase-7b monitoring counters (7b.6): Linh Thú uptime, Mê Hoặc value, Phong Ấn strips.
+  summonsMade: number;
+  summonActs: number;
+  charmsApplied: number;
+  doubleCharms: number;
+  sealStripped: number;
+  redirected: number;
 }
 
 function emptyTierStats(): TierStats {
@@ -53,6 +68,12 @@ function emptyTierStats(): TierStats {
     enemyIntentSum: 0,
     enemyIntentSamples: 0,
     deckedOut: 0,
+    summonsMade: 0,
+    summonActs: 0,
+    charmsApplied: 0,
+    doubleCharms: 0,
+    sealStripped: 0,
+    redirected: 0,
   };
 }
 
@@ -103,6 +124,9 @@ function simulateRun(heroIds: [string, string, string], seed: number, deckCardId
   const tiers = new Map<string, TierStats>();
   let currentTier: string | null = null;
   let lastCombat: CombatState | null = null;
+  // Units currently carrying Mê Hoặc — a second application while marked counts
+  // as a double-charm (charges stack, so it is rarely wrong, just worth tracking).
+  const charmMarks = new Map<string, number>();
   const record = (events: CombatEvent[], state: CombatState | null) => {
     for (const event of events) {
       if (state === null || currentTier === null) continue;
@@ -126,6 +150,23 @@ function simulateRun(heroIds: [string, string, string], seed: number, deckCardId
         }
       } else if (event.type === "deckedOut") {
         tier.deckedOut += 1;
+      } else if (event.type === "summoned") {
+        tier.summonsMade += 1;
+      } else if (event.type === "summonActed") {
+        tier.summonActs += 1;
+      } else if (event.type === "sealStripped") {
+        tier.sealStripped += 1;
+      } else if (event.type === "intentExecuted" && event.targetId !== null && event.targetId.startsWith("enemy:")) {
+        // Mê Hoặc: the intent landed on a fellow enemy (`01` §9.3.1).
+        tier.redirected += 1;
+      } else if (event.type === "statusApplied" && event.status === "charm") {
+        tier.charmsApplied += 1;
+        if ((charmMarks.get(event.targetId) ?? 0) > 0) tier.doubleCharms += 1;
+        charmMarks.set(event.targetId, event.value);
+      } else if (event.type === "statusRemoved" && event.status === "charm") {
+        charmMarks.delete(event.targetId);
+      } else if (event.type === "unitDied") {
+        charmMarks.delete(event.unitId);
       } else if (event.type === "cardPlayed") {
         const cardId = state.cards[event.instanceId]?.cardId;
         if (cardId !== undefined) played.add(cardId);
@@ -154,6 +195,7 @@ function simulateRun(heroIds: [string, string, string], seed: number, deckCardId
           tier.fights += 1;
           tiers.set(currentTier, tier);
           fights += 1;
+          charmMarks.clear();
         }
       }
     }
@@ -195,12 +237,16 @@ interface DeckAgg {
 const allDeckStats = new Map<string, DeckAgg>();
 const playedCardIds = new Set<string>();
 
+function addTierStats(target: TierStats, source: TierStats): void {
+  for (const key of Object.keys(target) as (keyof TierStats)[]) {
+    target[key] += source[key];
+  }
+}
+
 function mergeTiers(target: Map<string, TierStats>, source: Map<string, TierStats>) {
   for (const [tier, stats] of source) {
     const m = target.get(tier) ?? emptyTierStats();
-    for (const key of Object.keys(m) as (keyof TierStats)[]) {
-      m[key] += stats[key];
-    }
+    addTierStats(m, stats);
     target.set(tier, m);
   }
 }
@@ -216,12 +262,33 @@ function tierRow(deckLabel: string, tier: string, s: TierStats) {
     "kẹt_tay%": `${((s.clogTurns / Math.max(1, s.turns)) * 100).toFixed(0)}%`,
     DT_TB: s.reserveSamples > 0 ? (s.reserveSum / s.reserveSamples).toFixed(1) : "—",
     chiêu_địch_TB: s.enemyIntentSamples > 0 ? (s.enemyIntentSum / s.enemyIntentSamples).toFixed(1) : "—",
+    thú: s.summonActs,
+    "Mê Hoặc": s.charmsApplied,
+    "chiêu đổi": s.redirected,
+    tước: s.sealStripped,
+  };
+}
+
+/** Per-tier phase-7b counters for one team — Linh Thú uptime, Mê Hoặc, Phong Ấn. */
+function mechRow(team: string, tier: string, s: TierStats) {
+  const per = (n: number) => (s.fights > 0 ? (n / s.fights).toFixed(2) : "—");
+  return {
+    đội: team,
+    tier,
+    trận: s.fights,
+    "triệu hồi/trận": per(s.summonsMade),
+    "thú đánh/trận": per(s.summonActs),
+    "Mê Hoặc/trận": per(s.charmsApplied),
+    "mê ×2": s.doubleCharms,
+    "chiêu đổi/trận": per(s.redirected),
+    "tước/trận": per(s.sealStripped),
   };
 }
 
 describe("run playtest", () => {
   for (const team of TEAMS) {
     it(`${team.join("+")} chạy trọn lượt chơi theo loại deck`, { timeout: 600_000 }, () => {
+      const teamTiers = new Map<string, TierStats>();
       const rows = DECK_VARIANTS.map((variant) => {
         const agg = allDeckStats.get(variant.label) ?? { runs: 0, won: 0, stalled: 0, floorSum: 0, xpSum: 0, tiers: new Map<string, TierStats>() };
         allDeckStats.set(variant.label, agg);
@@ -233,6 +300,7 @@ describe("run playtest", () => {
           const { tiers, played, xpAvg, ...row } = simulateRun(team, seed, variant.build(team, seed));
           for (const cardId of played) playedCardIds.add(cardId);
           mergeTiers(agg.tiers, tiers);
+          mergeTiers(teamTiers, tiers);
           agg.runs += 1;
           agg.floorSum += row.floor;
           agg.xpSum += xpAvg;
@@ -258,6 +326,7 @@ describe("run playtest", () => {
       });
       console.log(`\n=== run · ${team.join("+")} ===`);
       console.table(rows);
+      console.table([...teamTiers.entries()].map(([tier, s]) => mechRow(team.join("+"), tier, s)));
     });
   }
 
@@ -286,7 +355,7 @@ describe("run playtest", () => {
 
   // Phase 4e (`15` §8): each weapon / moon relic at R1 and R5 on the starter deck;
   // at R1 no piece may raise the win rate by more than 10 points. Slow: opt in with PLAYTEST_GEAR=1.
-  const gearEnabled = Boolean((globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.PLAYTEST_GEAR);
+  const gearEnabled = Boolean(env.PLAYTEST_GEAR);
   it.skipIf(!gearEnabled)("thắng lượt theo từng vũ khí / Nguyệt Bảo (R1, R5)", { timeout: 3_600_000 }, () => {
     const gearPlayed = new Set<string>();
     const measure = (build: (team: [string, string, string]) => { deck: string[]; loadout?: Loadout }) => {
@@ -335,7 +404,7 @@ describe("run playtest", () => {
         rows.push({ món: relic.name, R: level, "thắng%": result.winRate.toFixed(0), "chênh": Number(delta.toFixed(0)), tầng_TB: result.floor.toFixed(1) });
       }
     }
-    console.log("\n=== Trang bị trên Bộ cơ bản (4 đội × 20 seed mỗi dòng) ===");
+    console.log(`\n=== Trang bị trên Bộ cơ bản (4 đội × ${SEEDS.length} seed mỗi dòng) ===`);
     console.table(rows);
     const unplayed = Object.values(data.weapons).filter((weapon) => !gearPlayed.has(weapon.id)).map((weapon) => weapon.name);
     console.log(`\n=== lá Binh Khí chưa từng được đánh: ${unplayed.join(", ") || "— không có —"} ===`);
@@ -351,7 +420,7 @@ describe("run playtest", () => {
       tầng_TB: (agg.floorSum / Math.max(1, agg.runs)).toFixed(1),
       XP_TB: (agg.xpSum / Math.max(1, agg.runs)).toFixed(1),
     }));
-    console.log("\n=== theo loại deck (toàn bộ đội × seed 1–20) ===");
+    console.log(`\n=== theo loại deck (toàn bộ đội × seed 1–${SEEDS.length}) ===`);
     console.table(rows);
     const tierRows = [...allDeckStats.entries()].flatMap(([label, agg]) =>
       [...agg.tiers.entries()].map(([tier, s]) => tierRow(label, tier, s)),

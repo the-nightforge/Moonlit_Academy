@@ -1,12 +1,12 @@
 [
   { "id": "tho_ngoc", "name": "Thỏ Ngọc", "maxHp": 12, "targeting": "lowestHp",
     "action": [
-      { "type": "damage", "amount": 3, "to": "chosen" }
+      { "type": "damage", "amount": 2, "to": "chosen" }
     ],
     "awakenedId": "tho_ngoc_thuc_tinh" },
-  { "id": "tho_ngoc_thuc_tinh", "name": "Thỏ Ngọc Thức Tỉnh", "maxHp": 24, "targeting": "lowestHp",
+  { "id": "tho_ngoc_thuc_tinh", "name": "Thỏ Ngọc Thức Tỉnh", "maxHp": 18, "targeting": "lowestHp",
     "action": [
-      { "type": "damage", "amount": 6, "to": "chosen" },
+      { "type": "damage", "amount": 5, "to": "chosen" },
       { "type": "heal", "amount": 2, "to": "owner" }
     ] }
 ]

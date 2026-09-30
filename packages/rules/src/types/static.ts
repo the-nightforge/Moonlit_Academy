@@ -179,6 +179,8 @@ export type Effect = (
   | { type: "drainMoonPower"; amount: number; to: TargetRef; steal?: true }
   | { type: "gainMoonPowerPerTurn"; amount: number }
   | { type: "missingHpDamage"; ratio: number; to: TargetRef; hits?: number }
+  /** Signature damage (`01` §5.7): `base + floor(stat × amount / divisor)`, capped at `max`, per target. */
+  | { type: "scaledDamage"; per: DamageScale; amount: number; base?: number; divisor?: number; max?: number; to: TargetRef }
   | { type: "burstRegen"; multiplier: number; to: TargetRef }
   | { type: "conditional"; condition: Condition; then: Effect[]; else?: Effect[] }
   /** Co-op Hợp Kích only (`02` §6): kills targets at or under `threshold` of maxHp,
@@ -210,7 +212,19 @@ export type Condition =
   | { type: "moonPhaseIs"; phase: MoonPhaseId }
   | { type: "bloodMoonActive" }
   | { type: "heldTurnsAtLeast"; turns: number }
-  | { type: "cardsPlayedThisTurnAtLeast"; count: number };
+  | { type: "cardsPlayedThisTurnAtLeast"; count: number }
+  /** The chosen target carries a Phong Ấn mark (`sealedBy`, `01` §5.6). */
+  | { type: "targetSealed" };
+
+/** Stats `scaledDamage` reads (`01` §5.7). */
+export type DamageScale =
+  | "cardsPlayedThisTurn"
+  | "selfArmor"
+  | "moonPower"
+  | "alliesAtFullHp"
+  | "targetDebuffs"
+  | "alliesArmor"
+  | "alliesRegen";
 
 export type Targeting = "random" | "lowestHp" | "highestHp" | "front";
 export type IntentKind = "attack" | "defend" | "buff" | "debuff" | "attackDefend" | "special";

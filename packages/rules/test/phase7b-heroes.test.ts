@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CardDef, CombatState, GameData, IntentDef } from "../src/index";
-import { applyAction, buildPvpLoadout, createProfile, starterDeck, validateDeck } from "../src/index";
-import { injectCard, makeEnemiesIdle, makeTestCombat, ownAllHeroes, p0, setPlan, testData } from "./helpers";
+import { applyAction, buildPvpLoadout, chooseCombatAction, createProfile, starterDeck, validateDeck } from "../src/index";
+import { injectCard, makeEnemiesIdle, makeTestCombat, ownAllHeroes, p0, setHand, setPlan, testData } from "./helpers";
 
 const WAVE = ["f05", "f06", "f07", "f09", "f10", "m09"] as const;
 
@@ -176,7 +176,7 @@ describe("phase 7b heroes — level-ups with real cards", () => {
     expect(next.state.heroes[0]!.leveledUp).toBe(true);
   });
 
-  it("F09 Tiểu Mãn levels after five summon cards; Thỏ Ngọc awakens", () => {
+  it("F09 Tiểu Mãn levels after seven summon cards; Thỏ Ngọc awakens", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["f09", "f04", "m06"],
       mutateData: makeEnemiesIdle,
@@ -184,17 +184,18 @@ describe("phase 7b heroes — level-ups with real cards", () => {
         p0(s).moonPower = 99;
         takeCards(s, "f09_trieu_hoi", 3);
         takeCards(s, "f09_ngoc_anh", 2);
+        takeCards(s, "f09_moi_duong", 2);
       },
     });
     let current = state;
-    const summons = p0(current).hand.filter((id) => ["f09_trieu_hoi", "f09_ngoc_anh"].includes(current.cards[id]!.cardId));
+    const summons = p0(current).hand.filter((id) => ["f09_trieu_hoi", "f09_ngoc_anh", "f09_moi_duong"].includes(current.cards[id]!.cardId));
     for (const instanceId of summons) {
       current = play(data, current, instanceId);
     }
-    expect(current.heroes[0]!.levelUpCounter).toBe(5);
+    expect(current.heroes[0]!.levelUpCounter).toBe(7);
     expect(current.heroes[0]!.leveledUp).toBe(true);
     expect(current.summons).toHaveLength(1);
-    expect(current.summons![0]).toMatchObject({ summonId: "tho_ngoc_thuc_tinh", maxHp: 24, hp: 24 });
+    expect(current.summons![0]).toMatchObject({ summonId: "tho_ngoc_thuc_tinh", maxHp: 18, hp: 18 });
   });
 
   it("F10 Liễu Tịnh Nhan levels when an ally falls and Nguyệt Hồn revives it at 30%", () => {
@@ -243,5 +244,186 @@ describe("phase 7b heroes — level-ups with real cards", () => {
     current = play(data, current, hand(current, "m09_tri_ky")[0]!, "enemy:1");
     expect(current.enemies[1]!.statuses).toContainEqual({ id: "weak", value: 2 });
     expect(current.enemies[1]!.statuses).toContainEqual({ id: "charm", value: 1, sourceId: "hero:m09" });
+  });
+});
+
+describe("phase 7b bot heuristics", () => {
+  const pureStrike: IntentDef = {
+    id: "t_cut",
+    name: "Chém",
+    kind: "attack",
+    targeting: "front",
+    effects: [{ type: "damage", amount: 4, to: "chosen" }],
+  };
+
+  it("bot: summon cards hold while a healthy Linh Thú stands, unless still leveling summonsMade", () => {
+    const board = (summonHp: number | null, leveledUp: boolean) =>
+      makeTestCombat({
+        heroIds: ["f09", "f04", "m06"],
+        mutateData: makeEnemiesIdle,
+        setup: (s) => {
+          p0(s).moonPower = 99;
+          setHand(s, ["f09_trieu_hoi"]);
+          s.heroes[0]!.leveledUp = leveledUp;
+          if (summonHp !== null) {
+            s.summons = [
+              {
+                id: "summon:f09",
+                defId: "tho_ngoc",
+                summonId: "tho_ngoc",
+                side: "hero",
+                player: 0,
+                ownerHeroId: "hero:f09",
+                position: 0,
+                hp: summonHp,
+                maxHp: 12,
+                armor: 0,
+                statuses: [],
+                alive: true,
+              },
+            ];
+          }
+        },
+      });
+    // Leveled + healthy summon — a recast would only heal/buff: hold the card.
+    const healthy = board(12, true);
+    expect(chooseCombatAction(healthy.data, healthy.state, 0).type).toBe("endTurn");
+    // Leveled + summon under half HP — recast heals it to full.
+    const hurt = board(5, true);
+    expect(chooseCombatAction(hurt.data, hurt.state, 0)).toEqual({
+      type: "playCard",
+      instanceId: p0(hurt.state).hand[0]!,
+    });
+    // Leveled + no summon at all — always cast.
+    const empty = board(null, true);
+    expect(chooseCombatAction(empty.data, empty.state, 0)).toEqual({
+      type: "playCard",
+      instanceId: p0(empty.state).hand[0]!,
+    });
+    // Still leveling via summonsMade — cast even with a healthy summon up.
+    const leveling = board(12, false);
+    expect(chooseCombatAction(leveling.data, leveling.state, 0)).toEqual({
+      type: "playCard",
+      instanceId: p0(leveling.state).hand[0]!,
+    });
+  });
+
+  it("bot: charm aims at the heaviest-hitting known kit, not the hidden chain, and is skipped with a lone enemy", () => {
+    const heavy: IntentDef = {
+      id: "t_heavy",
+      name: "Trọng Kích",
+      kind: "attack",
+      targeting: "front",
+      effects: [{ type: "damage", amount: 9, to: "chosen" }],
+    };
+    const light: IntentDef = {
+      id: "t_light",
+      name: "Chạm",
+      kind: "attack",
+      targeting: "front",
+      effects: [{ type: "damage", amount: 1, to: "chosen" }],
+    };
+    // Kits are public, chains are not (`01` §9.2): the misleading hidden plans
+    // (heavy on enemy 0) must not steer the bot.
+    const { data, state } = makeTestCombat({
+      heroIds: ["f06", "f04", "m06"],
+      mutateData: (d) => {
+        d.enemies["puppet_guard"]!.intents = [{ ...light, cost: 0 }];
+        d.enemies["shadow_fox"]!.intents = [{ ...heavy, cost: 0 }];
+      },
+      setup: (s) => {
+        p0(s).moonPower = 99;
+        setHand(s, ["f06_me_vu"]);
+        setPlan(s, 0, [{ intent: heavy, targetId: "hero:f04" }]);
+        setPlan(s, 1, [{ intent: light, targetId: "hero:f04" }]);
+      },
+    });
+    expect(chooseCombatAction(data, state, 0)).toEqual({
+      type: "playCard",
+      instanceId: p0(state).hand[0]!,
+      targetId: "enemy:1",
+    });
+
+    // A lone enemy leaves no other unit for the turned hit — the card is held,
+    // and so is an allEnemies charm (Kinh Hồng Chiêu, injected: it is a locked card).
+    const alone = makeTestCombat({
+      heroIds: ["f06", "f04", "m06"],
+      setup: (s) => {
+        p0(s).moonPower = 99;
+        setHand(s, ["f06_me_vu"]);
+        s.enemies[1]!.alive = false;
+      },
+    });
+    injectCard(alone.state, alone.data, { ...alone.data.cards["f06_kinh_hong_chieu"]!, id: "test_kinh_hong_chieu" });
+    expect(chooseCombatAction(alone.data, alone.state, 0).type).toBe("endTurn");
+  });
+
+  it("bot: seal marks the most effect-heavy known kit, not the hidden chain, and skips pure-damage boards", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: ["f07", "f04", "m06"],
+      mutateData: (d) => {
+        d.enemies["puppet_guard"]!.intents = [{ ...pureStrike, cost: 0 }];
+        d.enemies["shadow_fox"]!.intents = [{ ...buffedStrike, cost: 0 }];
+      },
+      setup: (s) => {
+        p0(s).moonPower = 99;
+        setHand(s, ["f07_phong_an"]);
+        setPlan(s, 0, [{ intent: buffedStrike, targetId: "hero:f04" }]);
+        setPlan(s, 1, [{ intent: pureStrike, targetId: "hero:f04" }]);
+      },
+    });
+    expect(chooseCombatAction(data, state, 0)).toEqual({
+      type: "playCard",
+      instanceId: p0(state).hand[0]!,
+      targetId: "enemy:1",
+    });
+
+    // Pure damage on every living enemy — nothing to strip, even for the
+    // allEnemies Đoán Sử (locked card, injected).
+    const dry = makeTestCombat({
+      heroIds: ["f07", "f04", "m06"],
+      mutateData: (d) => {
+        d.enemies["puppet_guard"]!.intents = [{ ...pureStrike, cost: 0 }];
+        d.enemies["shadow_fox"]!.intents = [{ ...pureStrike, cost: 0 }];
+      },
+      setup: (s) => {
+        p0(s).moonPower = 99;
+        setHand(s, ["f07_phong_an"]);
+      },
+    });
+    injectCard(dry.state, dry.data, { ...dry.data.cards["f07_doan_su"]!, id: "test_doan_su" });
+    expect(chooseCombatAction(dry.data, dry.state, 0).type).toBe("endTurn");
+  });
+
+  it("bot: fallenAlly picks the fallen hero with the highest maxHp", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: ["f10", "m05", "m06"],
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        p0(s).moonPower = 99;
+        setHand(s, ["f10_hoi_hon"]);
+        s.heroes[1]!.alive = false;
+        s.heroes[1]!.hp = 0;
+        s.heroes[2]!.alive = false;
+        s.heroes[2]!.hp = 0;
+      },
+    });
+    // m05 (40 maxHp) over m06 (28).
+    expect(chooseCombatAction(data, state, 0)).toEqual({
+      type: "playCard",
+      instanceId: p0(state).hand[0]!,
+      targetId: "hero:m05",
+    });
+
+    // Nobody has fallen — Hồi Hồn is unplayable and the bot passes.
+    const standing = makeTestCombat({
+      heroIds: ["f10", "m05", "m06"],
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        p0(s).moonPower = 99;
+        setHand(s, ["f10_hoi_hon"]);
+      },
+    });
+    expect(chooseCombatAction(standing.data, standing.state, 0).type).toBe("endTurn");
   });
 });
