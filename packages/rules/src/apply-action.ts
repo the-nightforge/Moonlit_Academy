@@ -176,7 +176,7 @@ function attackCleanupTargets(card: CardDef, owners: HeroState[]): HeroState[] {
   const walk = (effects: Effect[], inherited: number): void => {
     for (const effect of effects) {
       const actor = effect.actor ?? inherited;
-      if (effect.type === "damage" || effect.type === "missingHpDamage") damageActors.add(actor);
+      if (effect.type === "damage" || effect.type === "missingHpDamage" || effect.type === "scaledDamage") damageActors.add(actor);
       if (effect.type === "conditional") {
         walk(effect.then, actor);
         walk(effect.else ?? [], actor);

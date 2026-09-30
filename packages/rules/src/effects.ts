@@ -27,6 +27,7 @@ import type {
   CombatEvent,
   CombatState,
   Condition,
+  DamageScale,
   Effect,
   EnemyState,
   GameData,
@@ -283,6 +284,32 @@ function evalCondition(
       const seat = playerOf(state, ctx.source.id);
       return (seat?.cardsPlayedThisTurn ?? 0) + (ctx.comboBonus ?? 0) >= condition.count;
     }
+    case "targetSealed": {
+      const target = findUnit(state, ctx.chosenId);
+      return target !== undefined && target.alive && target.sealedBy !== undefined;
+    }
+  }
+}
+
+/** The stat a `scaledDamage` effect reads for one target (`01` §5.7). */
+function damageScale(state: CombatState, per: DamageScale, ctx: EffectContext, target: UnitState): number {
+  const seat = playerOf(state, ctx.source.id);
+  const heroes = seat ? heroesOf(state, seat.index).filter((hero) => hero.alive) : [];
+  switch (per) {
+    case "cardsPlayedThisTurn":
+      return (seat?.cardsPlayedThisTurn ?? 0) + (ctx.comboBonus ?? 0);
+    case "selfArmor":
+      return ctx.source.armor;
+    case "moonPower":
+      return seat?.moonPower ?? 0;
+    case "alliesAtFullHp":
+      return heroes.filter((hero) => hero.hp >= hero.maxHp).length;
+    case "targetDebuffs":
+      return target.statuses.filter((status) => DEBUFF_STATUSES.has(status.id)).length;
+    case "alliesArmor":
+      return heroes.reduce((sum, hero) => sum + hero.armor, 0);
+    case "alliesRegen":
+      return heroes.reduce((sum, hero) => sum + statusValue(hero, "regen"), 0);
   }
 }
 
@@ -510,6 +537,15 @@ export function resolveEffect(
           dealDamage(data, state, ctx, target, base, events);
           if (!ctx.source.alive) return;
         }
+      }
+      return;
+    }
+    case "scaledDamage": {
+      for (const target of resolveTargets(state, effect.to, ctx)) {
+        if (!target.alive || target.hp <= 0) continue;
+        const scaled = (effect.base ?? 0) + Math.floor((damageScale(state, effect.per, ctx, target) * effect.amount) / (effect.divisor ?? 1));
+        dealDamage(data, state, ctx, target, Math.min(effect.max ?? scaled, scaled), events);
+        if (!ctx.source.alive) return;
       }
       return;
     }
@@ -791,7 +827,7 @@ export function resolveEffects(
     processDeaths(data, state, events, {
       id: effectCtx.source.id,
       cardDamage:
-        ctx.card !== undefined && (effect.type === "damage" || effect.type === "missingHpDamage"),
+        ctx.card !== undefined && (effect.type === "damage" || effect.type === "missingHpDamage" || effect.type === "scaledDamage"),
     });
     checkLevelUps(data, state, events);
     checkBossPhase(data, state, events);

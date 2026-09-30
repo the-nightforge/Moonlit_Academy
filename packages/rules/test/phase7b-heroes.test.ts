@@ -176,7 +176,7 @@ describe("phase 7b heroes — level-ups with real cards", () => {
     expect(next.state.heroes[0]!.leveledUp).toBe(true);
   });
 
-  it("F09 Tiểu Mãn levels after six summon cards; Thỏ Ngọc awakens", () => {
+  it("F09 Tiểu Mãn levels after seven summon cards; Thỏ Ngọc awakens", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["f09", "f04", "m06"],
       mutateData: makeEnemiesIdle,
@@ -184,7 +184,7 @@ describe("phase 7b heroes — level-ups with real cards", () => {
         p0(s).moonPower = 99;
         takeCards(s, "f09_trieu_hoi", 3);
         takeCards(s, "f09_ngoc_anh", 2);
-        takeCards(s, "f09_moi_duong", 1);
+        takeCards(s, "f09_moi_duong", 2);
       },
     });
     let current = state;
@@ -192,7 +192,7 @@ describe("phase 7b heroes — level-ups with real cards", () => {
     for (const instanceId of summons) {
       current = play(data, current, instanceId);
     }
-    expect(current.heroes[0]!.levelUpCounter).toBe(6);
+    expect(current.heroes[0]!.levelUpCounter).toBe(7);
     expect(current.heroes[0]!.leveledUp).toBe(true);
     expect(current.summons).toHaveLength(1);
     expect(current.summons![0]).toMatchObject({ summonId: "tho_ngoc_thuc_tinh", maxHp: 18, hp: 18 });
@@ -308,7 +308,7 @@ describe("phase 7b bot heuristics", () => {
     });
   });
 
-  it("bot: charm aims at the heaviest announced turn and is skipped with a lone enemy", () => {
+  it("bot: charm aims at the heaviest-hitting known kit, not the hidden chain, and is skipped with a lone enemy", () => {
     const heavy: IntentDef = {
       id: "t_heavy",
       name: "Trọng Kích",
@@ -323,13 +323,19 @@ describe("phase 7b bot heuristics", () => {
       targeting: "front",
       effects: [{ type: "damage", amount: 1, to: "chosen" }],
     };
+    // Kits are public, chains are not (`01` §9.2): the misleading hidden plans
+    // (heavy on enemy 0) must not steer the bot.
     const { data, state } = makeTestCombat({
       heroIds: ["f06", "f04", "m06"],
+      mutateData: (d) => {
+        d.enemies["puppet_guard"]!.intents = [{ ...light, cost: 0 }];
+        d.enemies["shadow_fox"]!.intents = [{ ...heavy, cost: 0 }];
+      },
       setup: (s) => {
         p0(s).moonPower = 99;
         setHand(s, ["f06_me_vu"]);
-        setPlan(s, 0, [{ intent: light, targetId: "hero:f04" }]);
-        setPlan(s, 1, [{ intent: heavy, targetId: "hero:f04" }]);
+        setPlan(s, 0, [{ intent: heavy, targetId: "hero:f04" }]);
+        setPlan(s, 1, [{ intent: light, targetId: "hero:f04" }]);
       },
     });
     expect(chooseCombatAction(data, state, 0)).toEqual({
@@ -352,20 +358,18 @@ describe("phase 7b bot heuristics", () => {
     expect(chooseCombatAction(alone.data, alone.state, 0).type).toBe("endTurn");
   });
 
-  it("bot: seal marks the most effect-heavy intent chain and skips pure-damage boards", () => {
+  it("bot: seal marks the most effect-heavy known kit, not the hidden chain, and skips pure-damage boards", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["f07", "f04", "m06"],
+      mutateData: (d) => {
+        d.enemies["puppet_guard"]!.intents = [{ ...pureStrike, cost: 0 }];
+        d.enemies["shadow_fox"]!.intents = [{ ...buffedStrike, cost: 0 }];
+      },
       setup: (s) => {
         p0(s).moonPower = 99;
         setHand(s, ["f07_phong_an"]);
-        setPlan(s, 0, [
-          { intent: pureStrike, targetId: "hero:f04" },
-          { intent: pureStrike, targetId: "hero:f04" },
-        ]);
-        setPlan(s, 1, [
-          { intent: buffedStrike, targetId: "hero:f04" },
-          { intent: buffedStrike, targetId: "hero:f07" },
-        ]);
+        setPlan(s, 0, [{ intent: buffedStrike, targetId: "hero:f04" }]);
+        setPlan(s, 1, [{ intent: pureStrike, targetId: "hero:f04" }]);
       },
     });
     expect(chooseCombatAction(data, state, 0)).toEqual({
@@ -378,11 +382,13 @@ describe("phase 7b bot heuristics", () => {
     // allEnemies Đoán Sử (locked card, injected).
     const dry = makeTestCombat({
       heroIds: ["f07", "f04", "m06"],
+      mutateData: (d) => {
+        d.enemies["puppet_guard"]!.intents = [{ ...pureStrike, cost: 0 }];
+        d.enemies["shadow_fox"]!.intents = [{ ...pureStrike, cost: 0 }];
+      },
       setup: (s) => {
         p0(s).moonPower = 99;
         setHand(s, ["f07_phong_an"]);
-        setPlan(s, 0, [{ intent: pureStrike, targetId: "hero:f04" }]);
-        setPlan(s, 1, [{ intent: pureStrike, targetId: "hero:f07" }]);
       },
     });
     injectCard(dry.state, dry.data, { ...dry.data.cards["f07_doan_su"]!, id: "test_doan_su" });

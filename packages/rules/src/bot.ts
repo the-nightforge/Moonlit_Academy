@@ -1,7 +1,7 @@
+import { bossPhaseOf } from "./coop/boss";
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
 import { opponentsOf, summonsOf } from "./players";
-import { previewEnemyIntent } from "./preview";
 import { cardOwners, getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
 import { hasStatus } from "./statuses";
 import { isSummon, summonOf } from "./summons";
@@ -13,6 +13,7 @@ import type {
   EnemyState,
   GameData,
   HeroState,
+  IntentDef,
   UnitState,
 } from "./types/index";
 
@@ -64,9 +65,13 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
   const playable = player.hand.filter((id) => isCardPlayable(data, state, id, seat));
   const ready = playable.filter((id) => state.cards[id]!.heldTurns >= heldThreshold(id));
   const candidates = ready.length > 0 || player.hand.length < data.combatConfig.handSize ? ready : playable;
+  // Liên Hoàn and damage scaling on cards played this turn both want to go last.
+  const isCombo = (id: string) =>
+    keywordsOf(id).includes("lien_hoan") ||
+    defOf(id)!.effects.some((effect) => effect.type === "scaledDamage" && effect.per === "cardsPlayedThisTurn");
   const ordered = [...candidates].sort((a, b) => {
-    const comboA = keywordsOf(a).includes("lien_hoan") ? 1 : 0;
-    const comboB = keywordsOf(b).includes("lien_hoan") ? 1 : 0;
+    const comboA = isCombo(a) ? 1 : 0;
+    const comboB = isCombo(b) ? 1 : 0;
     if (comboA !== comboB) return comboA - comboB; // non-combo cards first
     return getEffectiveCost(data, state, b) - getEffectiveCost(data, state, a);
   });
@@ -133,19 +138,19 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
         card.target === "enemy"
           ? getValidTargets(data, state, instanceId).map((id) => unitOf(id)!)
           : opponents;
-      if (sealable.every((unit) => sealWeight(data, unit) === 0)) continue;
+      if (sealable.every((unit) => sealWeight(data, state, unit) === 0)) continue;
     }
     if (card.target === "none") return { type: "playCard", instanceId };
     const targets = getValidTargets(data, state, instanceId);
     let targetId: string | undefined;
     if (card.target === "enemy") {
       const drains = keywordsOf(instanceId).some((k) => k === "toa_nguyet" || k === "doat_nguyet");
-      // PvE drains hit the enemy planning the priciest chain; PvP drains hit the
-      // seat holding the bigger reserve (`17` §4.5).
+      // PvE drains hit the enemy showing the biggest fund (chains stay hidden,
+      // `01` §9.2); PvP drains hit the seat holding the bigger reserve (`17` §4.5).
       const threat = (id: string) => {
         const unit = unitOf(id)!;
         return unit.side === "enemy"
-          ? state.enemies.find((e) => e.id === id)!.plannedIntents.reduce((s, p) => s + p.cost, 0)
+          ? (unit as EnemyState).moonPower
           : (state.players.find((p) => p.index === (unit as { player: number }).player)?.moonReserve ?? 0);
       };
       const hp = (id: string) => unitOf(id)!.hp;
@@ -154,7 +159,7 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
       if (drains) {
         score = threat;
       } else if (appliesCharm(card)) {
-        // Mê Hoặc aims at the heaviest announced turn; in PvP a Linh Thú ignores
+        // Mê Hoặc aims at the heaviest-hitting kit; in PvP a Linh Thú ignores
         // the mark, so only heroes stay in the pool.
         pool = targets.filter((id) => {
           const unit = unitOf(id)!;
@@ -164,7 +169,7 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
       } else if (hasSealIntent(card.effects)) {
         // Phong Ấn marks the unit whose next turn would lose the most
         // non-damage effects; the all-pure-damage case was gated above.
-        score = (id) => sealWeight(data, unitOf(id)!);
+        score = (id) => sealWeight(data, state, unitOf(id)!);
       }
       targetId = [...pool].sort((a, b) => score(b) - score(a))[0];
     } else if (card.target === "fallenAlly") {
@@ -296,14 +301,14 @@ function hasSealIntent(effects: Effect[]): boolean {
 }
 
 /** Non-damage effects a Phong Ấn mark would strip from `unit`'s next turn — the same top-level filter `sealFilteredEffects` runs (`01` §5.6). */
-function sealWeight(data: GameData, unit: UnitState): number {
+function sealWeight(data: GameData, state: CombatState, unit: UnitState): number {
   // A frozen enemy skips its chain and a frozen hero cannot play — the mark
   // expires unused either way. A Linh Thú ignores freeze.
   if (!isSummon(unit) && hasStatus(unit, "freeze")) return 0;
   const strippable = (effects: Effect[]) =>
-    effects.filter((effect) => effect.type !== "damage" && effect.type !== "missingHpDamage").length;
+    effects.filter((effect) => effect.type !== "damage" && effect.type !== "missingHpDamage" && effect.type !== "scaledDamage").length;
   if (unit.side === "enemy") {
-    return (unit as EnemyState).plannedIntents.reduce((sum, planned) => sum + strippable(planned.intent.effects), 0);
+    return knownIntents(data, state, unit as EnemyState).reduce((sum, intent) => sum + strippable(intent.effects), 0);
   }
   if (isSummon(unit)) return strippable(data.summons[unit.summonId]?.action ?? []);
   // PvP hero: hands stay hidden (`17` §4.8) — weigh the non-damage effects the
@@ -322,21 +327,30 @@ function effectDamage(effects: Effect[], unit: UnitState): number {
   for (const effect of effects) {
     if (effect.type === "damage") total += effect.amount * (effect.hits ?? 1);
     else if (effect.type === "missingHpDamage") total += Math.floor(unit.maxHp * effect.ratio) * (effect.hits ?? 1);
+    // Rough weight: the stat taken as `divisor` (one scaling step).
+    else if (effect.type === "scaledDamage") total += (effect.base ?? 0) + effect.amount;
     else if (effect.type === "conditional") total += effectDamage(effect.then, unit) + effectDamage(effect.else ?? [], unit);
   }
   return total;
 }
 
-/** Damage `unit` is expected to deal next turn: previewed intents for enemies; card-pool attack power for PvP heroes/summons whose plans stay hidden (`17` §4.8). */
+/**
+ * Intents a player can know `enemy` might use next: its kit (the active co-op
+ * boss phase's pool) within the fund shown on its portrait. Chains stay hidden
+ * (`01` §9.2), so the bot never reads `plannedIntents`.
+ */
+function knownIntents(data: GameData, state: CombatState, enemy: EnemyState): IntentDef[] {
+  const def = data.enemies[enemy.defId];
+  if (!def) return [];
+  const pool = bossPhaseOf(data, state, enemy, def)?.intents ?? def.intents;
+  return pool.filter((intent) => intent.cost <= enemy.moonPower);
+}
+
+/** Damage `unit` could deal next turn, from public info only: an enemy's affordable kit; card-pool attack power for PvP heroes/summons (`17` §4.8). */
 function incomingDamage(data: GameData, state: CombatState, unit: UnitState): number {
   if (!isSummon(unit) && hasStatus(unit, "freeze")) return 0;
   if (unit.side === "enemy") {
-    const preview = previewEnemyIntent(data, state, unit as EnemyState);
-    if (preview === null || preview.skipped) return 0;
-    return preview.intents.reduce(
-      (sum, intent) => sum + intent.damages.reduce((inner, hit) => inner + hit.amount * hit.hits, 0),
-      0,
-    );
+    return effectDamage(knownIntents(data, state, unit as EnemyState).flatMap((intent) => intent.effects), unit);
   }
   if (isSummon(unit)) return effectDamage(data.summons[unit.summonId]?.action ?? [], unit);
   const def = data.heroes[unit.defId];

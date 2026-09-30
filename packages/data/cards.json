@@ -487,9 +487,17 @@
             "to": "chosen"
           }
         ]
+      },
+      {
+        "type": "scaledDamage",
+        "per": "alliesRegen",
+        "amount": 1,
+        "divisor": 3,
+        "max": 4,
+        "to": "allEnemies"
       }
     ],
-    "text": "Áp 3 Hồi Phục cho 1 Hero. Nếu Hero đó đã có Hồi Phục: áp 5.",
+    "text": "Áp 3 Hồi Phục cho 1 Hero. Nếu Hero đó đã có Hồi Phục: áp 5. Rồi gây 1 damage lên mọi kẻ địch cho mỗi 3 Hồi Phục trên cả đội (tối đa 4).",
     "keywords": [
       "hoi_phuc"
     ]
@@ -600,9 +608,17 @@
             "to": "allAllies"
           }
         ]
+      },
+      {
+        "type": "scaledDamage",
+        "per": "alliesRegen",
+        "amount": 1,
+        "max": 6,
+        "divisor": 2,
+        "to": "allEnemies"
       }
     ],
-    "text": "Mọi Hero nhận 2 Hồi Phục. Tích Tụ 1: 4.",
+    "text": "Mọi Hero nhận 2 Hồi Phục. Tích Tụ 1: 4. Rồi gây 1 damage lên mọi kẻ địch cho mỗi 2 Hồi Phục trên cả đội (tối đa 6).",
     "keywords": [
       "hoi_phuc",
       "tich_tu"
@@ -816,9 +832,14 @@
         "type": "drainMoonPower",
         "amount": 1,
         "to": "chosen"
+      },
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "chosen"
       }
     ],
-    "text": "Suy Yếu 1 kẻ địch 2 vòng. Tỏa Nguyệt 1.",
+    "text": "Suy Yếu 1 kẻ địch 2 vòng. Tỏa Nguyệt 1. Gây 4 damage.",
     "keywords": [
       "suy_yeu",
       "toa_nguyet"
@@ -2485,11 +2506,18 @@
         "to": "chosen"
       },
       {
+        "type": "scaledDamage",
+        "per": "cardsPlayedThisTurn",
+        "amount": 2,
+        "base": 2,
+        "to": "chosen"
+      },
+      {
         "type": "chooseCard",
         "look": 1
       }
     ],
-    "text": "Suy Yếu 1 kẻ địch 2 vòng. Chiêm Bài 1.",
+    "text": "Suy Yếu 1 kẻ địch 2 vòng. Gây 2 damage, thêm 2 cho mỗi lá đã đánh trước đó trong lượt. Chiêm Bài 1.",
     "keywords": [
       "suy_yeu",
       "chiem_bai"
@@ -2609,11 +2637,18 @@
         "to": "chosen"
       },
       {
+        "type": "scaledDamage",
+        "per": "cardsPlayedThisTurn",
+        "amount": 1,
+        "base": 1,
+        "to": "chosen"
+      },
+      {
         "type": "chooseCard",
         "look": 1
       }
     ],
-    "text": "Tỏa Nguyệt 2. Chiêm Bài 1.",
+    "text": "Tỏa Nguyệt 2. Gây 1 damage, thêm 1 cho mỗi lá đã đánh trước đó trong lượt. Chiêm Bài 1.",
     "keywords": [
       "toa_nguyet",
       "chiem_bai"
@@ -2634,16 +2669,18 @@
     "effects": [
       {
         "type": "drainMoonPower",
-        "amount": 3,
+        "amount": 2,
         "to": "chosen"
       },
       {
-        "type": "damage",
-        "amount": 3,
+        "type": "scaledDamage",
+        "per": "cardsPlayedThisTurn",
+        "amount": 2,
+        "base": 2,
         "to": "chosen"
       }
     ],
-    "text": "Tỏa Nguyệt 3. Gây 3 damage.",
+    "text": "Tỏa Nguyệt 2. Gây 2 damage, thêm 2 cho mỗi lá đã đánh trước đó trong lượt.",
     "keywords": [
       "toa_nguyet"
     ]
@@ -2830,17 +2867,19 @@
     "target": "enemy",
     "effects": [
       {
-        "type": "damage",
-        "amount": 5,
-        "to": "chosen"
-      },
-      {
         "type": "gainArmor",
         "amount": 3,
         "to": "self"
+      },
+      {
+        "type": "scaledDamage",
+        "per": "selfArmor",
+        "amount": 1,
+        "max": 20,
+        "to": "chosen"
       }
     ],
-    "text": "Gây 5 damage. Nhận 3 giáp."
+    "text": "Nhận 3 giáp, rồi gây damage bằng giáp của Lục Hàn Phong (tối đa 20)."
   },
   {
     "id": "m02_can_ve",
@@ -2887,9 +2926,16 @@
         "type": "gainArmor",
         "amount": 4,
         "to": "allAllies"
+      },
+      {
+        "type": "scaledDamage",
+        "per": "alliesArmor",
+        "amount": 1,
+        "divisor": 3,
+        "to": "allEnemies"
       }
     ],
-    "text": "Mọi Hero nhận 4 giáp."
+    "text": "Mọi Hero nhận 4 giáp, rồi gây 1 damage lên mọi kẻ địch cho mỗi 3 giáp của cả đội."
   },
   {
     "id": "m02_ve_thanh",
@@ -2996,9 +3042,17 @@
         "type": "gainArmor",
         "amount": 3,
         "to": "self"
+      },
+      {
+        "type": "scaledDamage",
+        "per": "selfArmor",
+        "amount": 1,
+        "divisor": 2,
+        "max": 6,
+        "to": "allEnemies"
       }
     ],
-    "text": "Khiêu Khích 1 vòng. Nhận 3 giáp.",
+    "text": "Khiêu Khích 1 vòng. Nhận 3 giáp, rồi gây damage lên mọi kẻ địch bằng nửa giáp của Lục Hàn Phong (tối đa 6).",
     "keywords": [
       "khieu_khich"
     ]
@@ -3216,11 +3270,18 @@
         "amount": 2
       },
       {
+        "type": "scaledDamage",
+        "per": "moonPower",
+        "amount": 1,
+        "max": 6,
+        "to": "allEnemies"
+      },
+      {
         "type": "chooseCard",
         "look": 1
       }
     ],
-    "text": "Nhận 2 Nguyệt Lực. Chiêm Bài 1.",
+    "text": "Nhận 2 Nguyệt Lực, rồi gây 1 damage lên mọi kẻ địch cho mỗi Nguyệt Lực đang có (tối đa 6). Chiêm Bài 1.",
     "keywords": [
       "chiem_bai"
     ]
@@ -3306,14 +3367,21 @@
     "tags": [
       "scheme"
     ],
-    "target": "none",
+    "target": "enemy",
     "effects": [
+      {
+        "type": "scaledDamage",
+        "per": "moonPower",
+        "amount": 1,
+        "max": 6,
+        "to": "chosen"
+      },
       {
         "type": "chooseCard",
         "look": 2
       }
     ],
-    "text": "Chiêm Bài 2.",
+    "text": "Gây 1 damage cho mỗi Nguyệt Lực đang có (tối đa 6). Chiêm Bài 2.",
     "keywords": [
       "chiem_bai"
     ]
@@ -3368,16 +3436,18 @@
     "target": "enemy",
     "effects": [
       {
-        "type": "damage",
-        "amount": 5,
-        "to": "chosen"
-      },
-      {
         "type": "gainMoonPower",
         "amount": 1
+      },
+      {
+        "type": "scaledDamage",
+        "per": "moonPower",
+        "amount": 2,
+        "max": 12,
+        "to": "chosen"
       }
     ],
-    "text": "Gây 5 damage. Nhận 1 Nguyệt Lực."
+    "text": "Nhận 1 Nguyệt Lực, rồi gây 2 damage cho mỗi Nguyệt Lực đang có (tối đa 12)."
   },
   {
     "id": "m03_than_toan",
@@ -3549,9 +3619,15 @@
         "type": "heal",
         "amount": 2,
         "to": "chosen"
+      },
+      {
+        "type": "scaledDamage",
+        "per": "alliesAtFullHp",
+        "amount": 3,
+        "to": "allEnemies"
       }
     ],
-    "text": "1 Hero nhận 3 Hồi Phục và hồi 2 HP.",
+    "text": "1 Hero nhận 3 Hồi Phục và hồi 2 HP. Gây 3 damage lên mọi kẻ địch cho mỗi Hero đầy HP.",
     "keywords": [
       "hoi_phuc"
     ]
@@ -3689,9 +3765,15 @@
         "amount": 3,
         "to": "chosen",
         "overflow": "armor"
+      },
+      {
+        "type": "scaledDamage",
+        "per": "alliesAtFullHp",
+        "amount": 2,
+        "to": "allEnemies"
       }
     ],
-    "text": "Hồi 3 HP cho 1 Hero (Dư Sinh).",
+    "text": "Hồi 3 HP cho 1 Hero (Dư Sinh). Gây 2 damage lên mọi kẻ địch cho mỗi Hero đầy HP.",
     "keywords": [
       "du_sinh"
     ]
@@ -3740,12 +3822,13 @@
         "to": "allAllies"
       },
       {
-        "type": "damage",
-        "amount": 2,
+        "type": "scaledDamage",
+        "per": "alliesAtFullHp",
+        "amount": 3,
         "to": "allEnemies"
       }
     ],
-    "text": "Mọi Hero hồi 3 HP và nhận 3 giáp. Gây 2 damage lên mọi kẻ địch."
+    "text": "Mọi Hero hồi 3 HP và nhận 3 giáp. Gây 3 damage lên mọi kẻ địch cho mỗi Hero đầy HP."
   },
   {
     "id": "m04_dinh_mach",
@@ -3879,12 +3962,33 @@
         "amount": 1
       },
       {
+        "type": "conditional",
+        "condition": {
+          "type": "moonPhaseIs",
+          "phase": "full"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 5,
+            "to": "allEnemies"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 2,
+            "to": "allEnemies"
+          }
+        ]
+      },
+      {
         "type": "heal",
         "amount": 2,
         "to": "self"
       }
     ],
-    "text": "Đổi Vận 1 pha. Hồi 2 HP."
+    "text": "Đổi Vận 1 pha, rồi gây 2 damage lên mọi kẻ địch; Trăng Tròn: gây 5. Hồi 2 HP."
   },
   {
     "id": "f01_nguyet_am",
@@ -3935,9 +4039,30 @@
       {
         "type": "shiftMoon",
         "amount": 2
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "moonPhaseIs",
+          "phase": "full"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 8,
+            "to": "allEnemies"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 3,
+            "to": "allEnemies"
+          }
+        ]
       }
     ],
-    "text": "Đổi Vận: trăng tiến 2 pha."
+    "text": "Đổi Vận: trăng tiến 2 pha, rồi gây 3 damage lên mọi kẻ địch; Trăng Tròn: gây 8."
   },
   {
     "id": "f01_nguyet_quang",
@@ -3949,18 +4074,39 @@
     "tags": [
       "moon"
     ],
-    "target": "none",
+    "target": "enemy",
     "effects": [
       {
         "type": "shiftMoon",
         "amount": 1
       },
       {
+        "type": "conditional",
+        "condition": {
+          "type": "moonPhaseIs",
+          "phase": "full"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 10,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 5,
+            "to": "chosen"
+          }
+        ]
+      },
+      {
         "type": "chooseCard",
-        "look": 2
+        "look": 1
       }
     ],
-    "text": "Đổi Vận 1 pha. Chiêm Bài 2.",
+    "text": "Đổi Vận 1 pha, rồi gây 5 damage; Trăng Tròn: gây 10. Chiêm Bài 1.",
     "keywords": [
       "chiem_bai"
     ]
@@ -5653,8 +5799,8 @@
     "copies": 2,
     "type": "attack",
     "tags": [
-        "attack",
-        "forbidden"
+      "attack",
+      "forbidden"
     ],
     "target": "enemy",
     "effects": [
@@ -6497,7 +6643,7 @@
         "to": "chosen"
       }
     ],
-    "text": "Mê Hoặc 1 chiêu đã báo của mục tiêu.",
+    "text": "Mê Hoặc 1 chiêu của mục tiêu.",
     "keywords": [
       "me_hoac"
     ]
@@ -6516,6 +6662,27 @@
     "target": "enemy",
     "effects": [
       {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "charm"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 7,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 2,
+            "to": "chosen"
+          }
+        ]
+      },
+      {
         "type": "applyStatus",
         "status": "charm",
         "amount": 1,
@@ -6528,7 +6695,7 @@
         "to": "chosen"
       }
     ],
-    "text": "Mê Hoặc 1 chiêu. Suy Yếu 1 vòng.",
+    "text": "Gây 2 damage; mục tiêu đang bị Mê Hoặc: gây 7. Rồi Mê Hoặc 1 chiêu, Suy Yếu 1 vòng.",
     "keywords": [
       "me_hoac",
       "suy_yeu"
@@ -6548,13 +6715,34 @@
     "target": "enemy",
     "effects": [
       {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "charm"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 9,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 3,
+            "to": "chosen"
+          }
+        ]
+      },
+      {
         "type": "applyStatus",
         "status": "charm",
         "amount": 2,
         "to": "chosen"
       }
     ],
-    "text": "Mê Hoặc 2 chiêu.",
+    "text": "Gây 3 damage; mục tiêu đang bị Mê Hoặc: gây 9. Rồi Mê Hoặc 2 chiêu.",
     "keywords": [
       "me_hoac"
     ]
@@ -6683,8 +6871,10 @@
         "to": "chosen"
       },
       {
-        "type": "damage",
-        "amount": 2,
+        "type": "scaledDamage",
+        "per": "targetDebuffs",
+        "amount": 3,
+        "base": 2,
         "to": "chosen"
       },
       {
@@ -6692,7 +6882,7 @@
         "look": 1
       }
     ],
-    "text": "Suy Yếu 2 vòng. Gây 2 damage. Chiêm Bài 1.",
+    "text": "Suy Yếu 2 vòng, rồi gây 2 damage, thêm 3 cho mỗi debuff trên mục tiêu. Chiêm Bài 1.",
     "keywords": [
       "suy_yeu",
       "chiem_bai"
@@ -6855,11 +7045,31 @@
     "target": "enemy",
     "effects": [
       {
+        "type": "conditional",
+        "condition": {
+          "type": "targetSealed"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 4,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 2,
+            "to": "chosen"
+          }
+        ]
+      },
+      {
         "type": "sealIntent",
         "to": "chosen"
       }
     ],
-    "text": "Phong Ấn mục tiêu 1 lượt: chiêu của nó chỉ còn damage.",
+    "text": "Gây 2 damage; mục tiêu đang mang dấu Phong Ấn: gây 4. Rồi Phong Ấn mục tiêu 1 lượt: chiêu của nó chỉ còn damage.",
     "keywords": [
       "phong_an"
     ]
@@ -6878,16 +7088,31 @@
     "target": "enemy",
     "effects": [
       {
-        "type": "sealIntent",
-        "to": "chosen"
+        "type": "conditional",
+        "condition": {
+          "type": "targetSealed"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 8,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 4,
+            "to": "chosen"
+          }
+        ]
       },
       {
-        "type": "damage",
-        "amount": 3,
+        "type": "sealIntent",
         "to": "chosen"
       }
     ],
-    "text": "Phong Ấn. Gây 3 damage.",
+    "text": "Gây 4 damage; mục tiêu đang mang dấu Phong Ấn: gây 8. Rồi Phong Ấn.",
     "keywords": [
       "phong_an"
     ]
@@ -6906,6 +7131,26 @@
     "target": "enemy",
     "effects": [
       {
+        "type": "conditional",
+        "condition": {
+          "type": "targetSealed"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 10,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 5,
+            "to": "chosen"
+          }
+        ]
+      },
+      {
         "type": "sealIntent",
         "to": "chosen"
       },
@@ -6916,7 +7161,7 @@
         "to": "chosen"
       }
     ],
-    "text": "Phong Ấn. Suy Yếu 1 vòng.",
+    "text": "Gây 5 damage; mục tiêu đang mang dấu Phong Ấn: gây 10. Rồi Phong Ấn, Suy Yếu 1 vòng.",
     "keywords": [
       "phong_an",
       "suy_yeu"
@@ -7612,9 +7857,16 @@
         "status": "stealth",
         "amount": 1,
         "to": "chosen"
+      },
+      {
+        "type": "scaledDamage",
+        "per": "alliesArmor",
+        "amount": 1,
+        "divisor": 2,
+        "to": "allEnemies"
       }
     ],
-    "text": "Đồng đội nhận 3 giáp, Ẩn Thân 1 vòng.",
+    "text": "Đồng đội nhận 3 giáp, Ẩn Thân 1 vòng. Gây 1 damage lên mọi kẻ địch cho mỗi 2 giáp của cả đội.",
     "keywords": [
       "an_than"
     ]
@@ -7640,9 +7892,15 @@
         "type": "gainArmor",
         "amount": 3,
         "to": "chosen"
+      },
+      {
+        "type": "scaledDamage",
+        "per": "alliesArmor",
+        "amount": 1,
+        "to": "allEnemies"
       }
     ],
-    "text": "Hồi 3 HP, nhận 3 giáp."
+    "text": "Hồi 3 HP, nhận 3 giáp. Gây 1 damage lên mọi kẻ địch cho mỗi giáp của cả đội."
   },
   {
     "id": "f10_hoi_hon",
@@ -7811,17 +8069,13 @@
         "to": "allAllies"
       },
       {
-        "type": "heal",
-        "amount": 2,
-        "to": "allAllies"
-      },
-      {
-        "type": "damage",
-        "amount": 2,
+        "type": "scaledDamage",
+        "per": "alliesArmor",
+        "amount": 1,
         "to": "allEnemies"
       }
     ],
-    "text": "Tẩy debuff mọi đồng đội, hồi 2 HP. Gây 2 damage lên mọi kẻ địch."
+    "text": "Tẩy debuff mọi đồng đội. Gây 1 damage lên mọi kẻ địch cho mỗi giáp của cả đội."
   },
   {
     "id": "f10_khong_tuong",
@@ -7995,9 +8249,16 @@
         "status": "vulnerable",
         "amount": 1,
         "to": "chosen"
+      },
+      {
+        "type": "scaledDamage",
+        "per": "targetDebuffs",
+        "amount": 3,
+        "base": 2,
+        "to": "chosen"
       }
     ],
-    "text": "Suy Yếu 1, Dễ Vỡ 1 vòng.",
+    "text": "Suy Yếu 1, Dễ Vỡ 1 vòng, rồi gây 2 damage, thêm 3 cho mỗi debuff trên mục tiêu.",
     "keywords": [
       "suy_yeu",
       "de_vo"
@@ -8021,9 +8282,15 @@
         "status": "weak",
         "amount": 1,
         "to": "allEnemies"
+      },
+      {
+        "type": "scaledDamage",
+        "per": "targetDebuffs",
+        "amount": 3,
+        "to": "allEnemies"
       }
     ],
-    "text": "Suy Yếu mọi kẻ địch 1 vòng.",
+    "text": "Suy Yếu mọi kẻ địch 1 vòng, rồi gây 3 damage lên mỗi kẻ địch cho mỗi debuff trên nó.",
     "keywords": [
       "suy_yeu"
     ]
@@ -8143,7 +8410,7 @@
         "to": "chosen"
       }
     ],
-    "text": "Mê Hoặc 1 chiêu đã báo của mục tiêu.",
+    "text": "Mê Hoặc 1 chiêu của mục tiêu.",
     "keywords": [
       "me_hoac"
     ]
@@ -8194,8 +8461,10 @@
     "target": "enemy",
     "effects": [
       {
-        "type": "damage",
-        "amount": 5,
+        "type": "scaledDamage",
+        "per": "targetDebuffs",
+        "amount": 3,
+        "base": 3,
         "to": "chosen"
       },
       {
@@ -8205,7 +8474,7 @@
         "to": "chosen"
       }
     ],
-    "text": "Gây 5 damage. Mê Hoặc 1 chiêu.",
+    "text": "Gây 3 damage, thêm 3 cho mỗi debuff trên mục tiêu. Mê Hoặc 1 chiêu.",
     "keywords": [
       "me_hoac"
     ]
@@ -8370,7 +8639,7 @@
         "actor": 1
       }
     ],
-    "text": "Mê Hoặc 1 chiêu đã báo (Đoàn Lạc); mọi debuff có thời hạn của mục tiêu +1 vòng (Lam Khê).",
+    "text": "Mê Hoặc 1 chiêu (Đoàn Lạc); mọi debuff có thời hạn của mục tiêu +1 vòng (Lam Khê).",
     "keywords": [
       "me_hoac",
       "keo_dai"

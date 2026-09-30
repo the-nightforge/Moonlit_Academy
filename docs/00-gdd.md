@@ -18,7 +18,7 @@ Một game thẻ bài cổ phong nơi **quan hệ nhân vật, 4 Viện và chu 
 2. **Lore thành cơ chế:** Hero thăng cấp theo tính cách, cặp đôi có lá bài riêng.
 3. **Chơi cùng nhau:** co-op đánh boss, PvP công bằng.
 
-**Nguồn cảm hứng gameplay:** Slay the Spire (khung chiến đấu PvE, ý định của địch), Genius Invokation TCG (3 nhân vật + deck), Legends of Runeterra (Hero thăng cấp trong trận), Marvel Snap (luật thay đổi theo bối cảnh), Yu-Gi-Oh (archetype theo phe).
+**Nguồn cảm hứng gameplay:** Slay the Spire (khung chiến đấu PvE), Genius Invokation TCG (3 nhân vật + deck), Legends of Runeterra (Hero thăng cấp trong trận), Marvel Snap (luật thay đổi theo bối cảnh), Yu-Gi-Oh (archetype theo phe).
 
 ---
 
@@ -62,7 +62,7 @@ Vương quốc **Hằng Châu** thờ mặt trăng như thần linh. Mỗi 100 n
 
 **Lá bài thuộc về Hero:** Hero nào ngã thì các lá của Hero đó thành **Tàn Chiêu** (không đánh được, chiếm chỗ trên tay). Người chơi phải cân nhắc bảo vệ ai.
 
-**Ý định của địch:** biểu tượng trên đầu kẻ địch cho biết lượt sau nó đánh ai, bao nhiêu damage, hay buff/debuff.
+**Kẻ địch không báo chiêu (GĐ 7b):** chuỗi chiêu lượt sau của kẻ địch là ẩn. Người chơi chỉ thấy Nguyệt Lực của kẻ địch và bộ chiêu của loại địch đó (học dần qua các trận), nên phải đoán nó sẽ làm gì.
 
 ### 3.3 Nguyệt Luân
 

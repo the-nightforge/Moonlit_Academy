@@ -1338,7 +1338,7 @@
       "name": "Thỏ Ngọc Thức Tỉnh",
       "description": "Linh Thú của Tiểu Mãn dùng bản thức tỉnh (18 HP, đòn 5 damage và hồi chủ 2 HP).",
       "counter": "summonsMade",
-      "threshold": 6,
+      "threshold": 7,
       "constellationThreshold": 5,
       "passive": {
         "type": "awakenSummons"

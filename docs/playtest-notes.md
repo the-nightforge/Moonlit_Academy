@@ -1151,3 +1151,127 @@ normal; f05+f07+m06 tước 2.31/2.56/3.88; f10+f05+m04 vẫn chết tầng 1.
 - PvP cho thấy rider có giá trị nhỏ nhưng đo được ở chủ nhân: m04 +2/+2,
   f10 +3/+2 (f10 giờ sát trần trên band — theo dõi).
 - Nerf f09 kéo PvE f09+f10+m05 tụt 27.5→18.3% như dự báo; chênh vẫn là pool.
+
+# Playtest Notes — Sau 7b: bot trung thực, damage đặc trưng, F09
+
+## Thay đổi phương pháp
+
+- **Bot không đọc chuỗi chiêu ẩn** (quyết định: giữ ẩn ý định). Từ 7b.3 client không hiện
+  `plannedIntents` nhưng bot vẫn đọc — mọi số 7b trước đây đo một người chơi biết trước.
+  Nay bot chỉ dùng thông tin công khai: bộ chiêu của loại địch (lọc theo Nguyệt Lực đang
+  hiện) cho Mê Hoặc / Phong Ấn, Nguyệt Lực hiện có cho Tỏa Nguyệt; bot co-op bỏ "bảo vệ
+  Hero bị nhắm".
+- **80 seed** khi đo để ra quyết định (`PLAYTEST_SEEDS=80`): 20 lượt/ô có sai số ±22 điểm
+  (95%). `pnpm test` giữ 20 seed.
+
+## Kết quả (Bộ cơ bản, 80 seed/đội — trước → sau)
+
+| Đội | Trước | Sau | Tầng TB |
+|---|---|---|---|
+| m05+f04+m06 (đội khởi đầu) | 13% | **29%** | 4.7 → 5.7 |
+| m05+f03+f02 | 56% | 56% | 6.1 |
+| m06+f02+f03 | 61% | 61% | 6.5 |
+| m05+f03+f04 | 61% | 66% | 7.2 |
+| f05+f07+m06 | 44% | 46% | 5.7 |
+| f01+m07+m06 | 9% | 14% | 4.7 |
+| f09+f10+m05 | 8% | 4% | 5.9 (F09 thức tỉnh muộn hơn) |
+| m01+m02+f04 | 0% | 0% | 1.0 |
+| m03+m10+m04 | 0% | 0% | 1.7 |
+| f10+f05+m04 | 0% | 0% | 1.8 |
+| f06+m09+f03 | 0% | 1% | 3.0 |
+| m08+f08+m05 | 1% | 1% | 2.4 |
+| **Tổng** | 21% | 23% | |
+
+Đã áp (đã duyệt): *Băng Tâm Quyết* +4 damage (đội khởi đầu 13 → 29%); effect mới
+`scaledDamage` + condition `targetSealed` (`01` §5.7) và 9 lá damage theo lối chơi đặc
+trưng (Tỏa Nguyệt Phù, Xung Trận, Kim Tiền, Dưỡng Mạch, Nguyệt Quang, Hồng Vũ, Đoạt Bút,
+Tẩy Trần, Cầm Khúc).
+
+## Đội 2 support vẫn thua — nguyên nhân là Cạn Bài
+
+Đội 2 support chết ở trận đầu vì **Cạn Bài**, không phải vì bị đánh: bộ bài ~48–54 bản,
+~5 lá/vòng, cạn ở vòng 9–12; nhiều seed cả 3 Hero còn đầy máu. Độ nhạy (80 seed):
+
+| Biến thể | m01+m02+f04 | m03+m10+m04 | f10+f05+m04 | f06+m09+f03 | Tổng 10 đội |
+|---|---|---|---|---|---|
+| Lá đặc trưng (đã áp) | 0% | 0% | 0% | 1% | 15% |
+| Lá đặc trưng damage ×2 | 0% | 1% | 0% | 1% | 17% |
+| ×2 + mỗi lá 3 bản | 9% | 18% | 3% | 0% | 23% |
+| `copies` mọi lá ×2 | 0% | 0% | 9% | 4% | 23% |
+| **Hết chồng thì xáo chồng bỏ (không phạt)** | **54%** | 13% | 10% | 1% | **29%** |
+| **Xáo chồng bỏ, mỗi Hero mất 5 HP/lần** | **45%** | 3% | 3% | 1% | **25%** |
+
+(Hai dòng xáo chồng bỏ đo bằng file tạm, không phải luật.) Thêm damage vào lá support
+không đủ ở mức số hợp lý; nới Cạn Bài cứu đội thủ (m01+m02+f04) nhưng không cứu đội mong
+manh (f06+m09+f03 chết tầng 3 vì bị đánh, m08+f08+m05 chết tầng 2 vì tự mất HP).
+**Quyết định: không đổi luật Cạn Bài** — thay vào đó mỗi Hero hỗ trợ thêm 2 lá damage đặc trưng (dưới).
+
+## F09 PvP (mẫu 4000, bot trung thực, data sau khi áp lá đặc trưng)
+
+| Biến thể | F09 |
+|---|---|
+| Hiện tại (ngưỡng 6) | 71% |
+| PvP HP 38 → 32 / bỏ "hồi chủ 2" / cả hai | 69–71% |
+| Thỏ Ngọc damage 2 → 1 / HP 12 → 8 | 68–69% |
+| Thức tỉnh 14 HP · 4 damage / 12 HP · 3 damage không hồi | 66–68% |
+| **Ngưỡng `summonsMade` 7** (Tinh Hồn 2 giữ 5) | **56%** |
+| Ngưỡng 8 | 54% — loại: bộ miễn phí chỉ có 7 bản lá triệu hồi, không thể thức tỉnh |
+| Bot ưu tiên đánh Hero thay vì Linh Thú | 76% — không phải artifact "bia đỡ", đã bỏ |
+
+Đã áp **ngưỡng 7**: thức tỉnh cần đánh đủ cả 7 bản lá triệu hồi miễn phí — muộn, cần
+theo dõi tỉ lệ F09 thăng cấp. Band PvP còn dưới sàn: f07 28%, m03 27%, m01 34%, m07 37%,
+m02 38% (không đổi đo được so với trước). Đi trước thắng 47%, hòa 10%, vòng TB 13.6.
+
+## Hero hỗ trợ: 3 lá damage đặc trưng mỗi Hero (đã duyệt hướng, số khởi điểm)
+
+Mỗi Hero hỗ trợ (M01, M02, M03, M04, F01, F04, F06, F07, F10, M09) sửa thêm **2 lá miễn phí có
+sẵn** (giữ id, giữ khuôn 6 lá) thành lá có damage theo cơ chế riêng; thêm chỉ số
+`alliesRegen` cho F04. F09 không đổi (damage đi qua Thỏ Ngọc).
+
+| Hero | Lá sửa thêm | Cơ chế |
+|---|---|---|
+| M01 | Mưu Cơ, Mật Thư | +damage theo số lá đã đánh trong lượt |
+| M02 | Tứ Vệ, Khiêu Địch | damage theo giáp cả đội / giáp bản thân |
+| M03 | Mậu Dịch, Thám Báo (nay nhắm kẻ địch) | damage theo Nguyệt Lực đang có |
+| M04 | Hộ Mạch, Cam Lộ | damage lan theo số Hero đầy HP |
+| F01 | Tinh Dịch, Hô Nguyệt | damage lan, gấp đôi+ ở Trăng Tròn |
+| F04 | Hồi Xuân Tán, Bách Thảo Hương | damage lan theo tổng Hồi Phục của đội |
+| F06 | Quyến Mục, Mật Hàm | Mê Hoặc / số debuff trên mục tiêu |
+| F07 | Phê Bút, Phong Ấn | mạnh hơn lên mục tiêu mang dấu Phong Ấn |
+| F10 | Hộ Phách, Dẫn Hồn | damage lan theo giáp cả đội |
+| M09 | Sầu Cầm, Đoạn Trường | damage theo số debuff trên mục tiêu |
+
+Lượt đo đầu (chưa chỉnh): tổng 23% → 39%, nhưng F04 quá mạnh (đội có F04 61–89%) và M04 /
+F10 còn yếu. Ablation 80 seed: nerf F04 (Hồi Xuân Tán ÷2 tối đa 6, Bách Thảo Hương ÷3 tối đa
+4), buff M04 (Hộ Mạch 2, Cam Lộ 3, Dưỡng Mạch 3 mỗi Hero đầy HP), F10 (Tẩy Trần / Hộ Phách
+÷1, Dẫn Hồn ÷2), F06/M09 (mỗi debuff +3). Đã áp cả gói.
+
+### PvE (Bộ cơ bản, 80 seed)
+
+| Đội | Trước (1 lá) | Sau (3 lá, đã chỉnh) | Tầng TB |
+|---|---|---|---|
+| m05+f04+m06 | 29% | 50% | 6.8 |
+| m05+f03+f02 | 56% | 56% | 6.1 |
+| m06+f02+f03 | 61% | 61% | 6.5 |
+| m05+f03+f04 | 66% | 80% | 7.5 |
+| m01+m02+f04 | 0% | **41%** | 7.3 |
+| m03+m10+m04 | 0% | 18% | 6.3 |
+| f01+m07+m06 | 14% | 33% | 6.0 |
+| f05+f07+m06 | 46% | 66% | 6.7 |
+| f09+f10+m05 | 4% | 13% | 7.0 |
+| f06+m09+f03 | 1% | 4% | 4.5 |
+| f10+f05+m04 | 0% | 3% | 4.0 |
+| m08+f08+m05 | 1% | 1% | 2.4 |
+| **Tổng** | 23% | **35%** | |
+
+Còn yếu: f06+m09+f03 (F06 30 HP ngã gần như mỗi trận — thiếu sống sót, không phải damage),
+f10+f05+m04 (Cạn Bài trước cặp Khôi Lỗi giáp 8/lượt), m08+f08+m05 (không có Hero hỗ trợ
+trong đội; F08 tự mất HP). m05+f03+f04 80% cao (Song Hành Tuyết Trung + damage F04).
+
+### PvP (mẫu 4000)
+
+Đi trước thắng 51%, hòa 7% (từ 10%), vòng TB **11.7** (từ 13.6 — lần đầu vào mục tiêu
+8–12). Theo Hero: m09 61, m04 59, f04 58, f10 58, m02 54, f09 54, f06 49, f05 48, m06 48,
+m10 48, f01 46, m01 46, f03 43, m03 41, f07 40, m05 39, f08 35, f02 34, m07 34, m08 30.
+Support vào band (m01 34 → 46, m03 27 → 41, f07 28 → 40); nay lệch ngược: m09 trên trần
+nhẹ, m08 / m07 / f02 / f08 dưới sàn.

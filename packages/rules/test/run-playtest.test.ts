@@ -27,7 +27,10 @@ const TEAMS: [string, string, string][] = [
   ["f05", "f07", "m06"],
   ["f10", "f05", "m04"],
 ];
-const SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);
+// 20 seeds keep `pnpm test` fast (±22 points per 20-run cell); tuning decisions
+// measure with PLAYTEST_SEEDS=80 or more.
+const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
+const SEEDS = Array.from({ length: Number(env.PLAYTEST_SEEDS ?? 20) }, (_, i) => i + 1);
 const MAX_STEPS = 20000;
 const MAX_COMBAT_ROUNDS = 60;
 
@@ -352,7 +355,7 @@ describe("run playtest", () => {
 
   // Phase 4e (`15` §8): each weapon / moon relic at R1 and R5 on the starter deck;
   // at R1 no piece may raise the win rate by more than 10 points. Slow: opt in with PLAYTEST_GEAR=1.
-  const gearEnabled = Boolean((globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.PLAYTEST_GEAR);
+  const gearEnabled = Boolean(env.PLAYTEST_GEAR);
   it.skipIf(!gearEnabled)("thắng lượt theo từng vũ khí / Nguyệt Bảo (R1, R5)", { timeout: 3_600_000 }, () => {
     const gearPlayed = new Set<string>();
     const measure = (build: (team: [string, string, string]) => { deck: string[]; loadout?: Loadout }) => {
@@ -401,7 +404,7 @@ describe("run playtest", () => {
         rows.push({ món: relic.name, R: level, "thắng%": result.winRate.toFixed(0), "chênh": Number(delta.toFixed(0)), tầng_TB: result.floor.toFixed(1) });
       }
     }
-    console.log("\n=== Trang bị trên Bộ cơ bản (4 đội × 20 seed mỗi dòng) ===");
+    console.log(`\n=== Trang bị trên Bộ cơ bản (4 đội × ${SEEDS.length} seed mỗi dòng) ===`);
     console.table(rows);
     const unplayed = Object.values(data.weapons).filter((weapon) => !gearPlayed.has(weapon.id)).map((weapon) => weapon.name);
     console.log(`\n=== lá Binh Khí chưa từng được đánh: ${unplayed.join(", ") || "— không có —"} ===`);
@@ -417,7 +420,7 @@ describe("run playtest", () => {
       tầng_TB: (agg.floorSum / Math.max(1, agg.runs)).toFixed(1),
       XP_TB: (agg.xpSum / Math.max(1, agg.runs)).toFixed(1),
     }));
-    console.log("\n=== theo loại deck (toàn bộ đội × seed 1–20) ===");
+    console.log(`\n=== theo loại deck (toàn bộ đội × seed 1–${SEEDS.length}) ===`);
     console.table(rows);
     const tierRows = [...allDeckStats.entries()].flatMap(([label, agg]) =>
       [...agg.tiers.entries()].map(([tier, s]) => tierRow(label, tier, s)),

@@ -152,6 +152,8 @@ export type Effect = (
   | { type: "drainMoonPower"; amount: number; to: TargetRef; steal?: true }   // GĐ4b: Tỏa / Đoạt Nguyệt; to chỉ "chosen" | "allEnemies"; chỉ lá bài
   | { type: "gainMoonPowerPerTurn"; amount: number }                     // GĐ4b: Dưỡng Nguyệt; chỉ lá bài
   | { type: "missingHpDamage"; ratio: number; to: TargetRef; hits?: number }  // GĐ4b: Phẫn Huyết; lá bài và chiêu địch
+  | { type: "scaledDamage"; per: "cardsPlayedThisTurn" | "selfArmor" | "moonPower" | "alliesAtFullHp" | "targetDebuffs" | "alliesArmor" | "alliesRegen";
+      amount: number; base?: number; divisor?: number; max?: number; to: TargetRef }  // GĐ7: damage đặc trưng (`01` §5.7); chỉ lá bài
   | { type: "burstRegen"; multiplier: number; to: TargetRef }            // GĐ4b: Tụ Dược; chỉ lá bài
   | { type: "shiftMoon"; amount: number }                                // âm = lùi pha
   | { type: "stealBuff"; count: number }                                 // GĐ2: từ mục tiêu chosen
@@ -178,6 +180,7 @@ export type Condition =
   | { type: "bloodMoonActive" };                    // GĐ2: bloodMoonRounds > 0
   | { type: "heldTurnsAtLeast"; turns: number }           // GĐ4b: Tích Tụ; chỉ lá bài
   | { type: "cardsPlayedThisTurnAtLeast"; count: number } // GĐ4b: Liên Hoàn; chỉ lá bài
+  | { type: "targetSealed" }                            // GĐ7: mục tiêu mang dấu Phong Ấn; chỉ lá bài
 ```
 
 **Quy tắc mở rộng:** thêm loại effect mới = thêm vào union + thêm `case` trong hàm `resolveEffect` + thêm test. Không viết logic riêng cho từng lá bài.

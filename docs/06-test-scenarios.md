@@ -450,3 +450,5 @@ Thú test qua dữ liệu tiêm vào (`packages/rules/test/helpers.ts`).
 | T295 | **[GĐ7]** Kiểm chéo dữ liệu: `summons.json` (`awakenedId` trỏ Linh Thú có thật, `action` không dùng effect / mục tiêu bị cấm, `summon` trỏ Linh Thú có thật); lá có `target: "fallenAlly"` phải có effect `revive` với `to: "chosen"` và ngược lại |
 | T296 | **[GĐ7]** 6 Hero đợt 2 nạp đủ pool 12 lá, chỉ số PvP, slot banner đúng độ hiếm; mỗi Hero chơi được trận khởi đầu với deck khởi đầu hợp lệ |
 | T297 | **[GĐ7]** Đủ 20 Hero nạp được; mỗi cặp Song Hành đợt 2 (M09+F06, F09+F10) thêm đúng lá vào deck khi đội có đủ cả hai Hero |
+| T298 | **[GĐ7]** `scaledDamage` đọc đúng từng chỉ số (`cardsPlayedThisTurn`, `selfArmor`, `moonPower`, `alliesAtFullHp`, `targetDebuffs`, `alliesArmor`, `alliesRegen`) theo `base + floor(stat × amount / divisor)`, chặn ở `max` |
+| T299 | **[GĐ7]** Condition `targetSealed` chỉ đúng khi mục tiêu đang mang dấu Phong Ấn |

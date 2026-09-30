@@ -32,7 +32,9 @@ const conditionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("bloodMoonActive") }),
   z.object({ type: z.literal("heldTurnsAtLeast"), turns: z.number().int().positive() }),
   z.object({ type: z.literal("cardsPlayedThisTurnAtLeast"), count: z.number().int().positive() }),
+  z.object({ type: z.literal("targetSealed") }),
 ]);
+const damageScaleSchema = z.enum(["cardsPlayedThisTurn", "selfArmor", "moonPower", "alliesAtFullHp", "targetDebuffs", "alliesArmor", "alliesRegen"]);
 
 const intAmount = z.number().int();
 const actor = z.union([z.literal(0), z.literal(1)]).optional();
@@ -55,6 +57,16 @@ export const effectSchema: z.ZodType<Effect> = z.lazy(() =>
     z.object({ actor, type: z.literal("gainMoonPowerPerTurn"), amount: z.number().int().positive() }),
     z.object({ actor, type: z.literal("drawCards"), amount: z.number().int().positive() }),
     z.object({ actor, type: z.literal("missingHpDamage"), ratio: z.number().gt(0).lte(2), to: targetRefSchema, hits: z.number().int().positive().optional() }),
+    z.object({
+      actor,
+      type: z.literal("scaledDamage"),
+      per: damageScaleSchema,
+      amount: z.number().int().positive(),
+      base: z.number().int().nonnegative().optional(),
+      divisor: z.number().int().positive().optional(),
+      max: z.number().int().positive().optional(),
+      to: targetRefSchema,
+    }),
     z.object({ actor, type: z.literal("burstRegen"), multiplier: z.number().positive(), to: targetRefSchema }),
     z.object({
       actor,
@@ -481,7 +493,7 @@ export const pvpConfigSchema = z.object({
 const effectTypeSchema = z.enum([
   "damage", "heal", "loseHp", "gainArmor", "removeArmor", "applyStatus", "cleanse",
   "chooseCard", "gainMoonPower", "shiftMoon", "stealBuff", "bloodMoon",
-  "drainMoonPower", "gainMoonPowerPerTurn", "missingHpDamage", "burstRegen",
+  "drainMoonPower", "gainMoonPowerPerTurn", "missingHpDamage", "scaledDamage", "burstRegen",
   "conditional", "execute", "createCard", "summon", "sealIntent", "extendDebuffs",
   "revive",
 ]);

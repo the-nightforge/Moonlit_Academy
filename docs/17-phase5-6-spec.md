@@ -712,7 +712,8 @@ interface BossPhaseDef {
 ### 8.8 Bot co-op và mô phỏng
 
 - `coopBot(data, view, player)`: bot playtest + ưu tiên hoàn thành Hợp Kích khi đồng
-  đội đã đánh lá khớp; ưu tiên bảo vệ Hero bị *Thực Nguyệt Trảm* nhắm.
+  đội đã đánh lá khớp. (Trước GĐ 7b còn ưu tiên bảo vệ Hero bị *Thực Nguyệt Trảm* nhắm; từ
+  7b kẻ địch không báo chiêu nên bot — như mọi bot — chỉ đọc thông tin công khai.)
 - `packages/rules/test/coop-sim.ts` (cờ `PLAYTEST_COOP=1`): 2 bot, mọi cặp đội, Bộ cơ
   bản, không trang bị và có trang bị R1.
 - **Mục tiêu:** tỉ lệ thắng Bộ cơ bản không trang bị **35–50%**; có trang bị R5 + Tinh Hồn

@@ -188,6 +188,7 @@ Condition `selfHpBelow`, `selfHasStatus` xét đơn vị hành động của eff
 
 - **[GĐ4b]** Condition `heldTurnsAtLeast { turns }` (Tích Tụ): đúng khi `heldTurns` của bản lá đang đánh ≥ `turns`; ngoài lá bài (chiêu địch, hook Kỳ Vật) luôn sai.
 - **[GĐ4b]** Condition `cardsPlayedThisTurnAtLeast { count }` (Liên Hoàn): đúng khi `cardsPlayedThisTurn ≥ count`.
+- **[GĐ7]** Condition `targetSealed`: mục 5.7.
 
 ### 5.4 Giải quyết lá Song Hành [GĐ2]
 - Mỗi effect có field tùy chọn `actor: 0 | 1` (mặc định 0). Đơn vị hành động của effect = `owners[actor]`. Nó quyết định: `sourceId`, `to: "self"`, phe của `allAllies`/`allEnemies`, condition `self…`, người nhận `stealBuff`, bộ đếm thăng cấp.
@@ -260,6 +261,27 @@ Condition `selfHpBelow`, `selfHasStatus` xét đơn vị hành động của eff
   Hàn Kiếm (F03, GĐ4e, mục 8) — **không** phải trạng thái mới.
 
 ---
+
+### 5.7 Damage theo lối chơi đặc trưng [GĐ7]
+
+Lá của Hero hỗ trợ gây damage theo cơ chế riêng của Hero đó (playtest 7b: đội 2 support
+thiếu damage).
+
+- Effect `scaledDamage { per, amount, base?, divisor?, max?, to }`: với **mỗi** mục tiêu,
+  damage gốc = `base + floor(stat × amount / divisor)` (`base` mặc định 0, `divisor` 1),
+  tối đa `max` nếu có; `stat` tính **lúc hit**, rồi qua công thức damage bình thường
+  (mục 10.1). Mục tiêu đã ngã bị bỏ qua. Tính là damage như `damage` (kết liễu bằng lá, Phong
+  Ấn giữ lại, dọn Cường Hóa / Ẩn Thân của lá tấn công).
+- `per` — chỉ số của **người chơi sở hữu đơn vị hành động**:
+  - `cardsPlayedThisTurn`: số lá đã đánh **trước** lá này trong lượt (cộng `comboBonus` như Liên Hoàn).
+  - `selfArmor`: giáp hiện có của đơn vị hành động.
+  - `moonPower`: Nguyệt Lực hiện có của người chơi (sau khi trả cost lá này).
+  - `alliesAtFullHp`: số Hero còn sống đầy HP của người chơi.
+  - `targetDebuffs`: số debuff (mục 6.3) đang có trên mục tiêu.
+  - `alliesArmor`: tổng giáp các Hero còn sống của người chơi.
+  - `alliesRegen`: tổng Hồi Phục các Hero còn sống của người chơi.
+- Condition `targetSealed`: đúng khi mục tiêu đã chọn còn sống và đang mang dấu Phong Ấn
+  (`sealedBy`, mục 5.6).
 
 ## 6. Trạng thái
 
@@ -375,7 +397,7 @@ Ví dụ — `bloodMoon(2)` đánh trong lượt người chơi vòng N:
 | F05 Hạ Chi **[GĐ7]** | `backRowHits` | +1 mỗi hit từ lá tấn công của F05 trúng kẻ địch hàng sau (mục 5.6) | 4 | `pierceOwnAttacks` — *Xuyên Vân Tiễn*: đòn đơn mục tiêu của F05 đánh thêm kẻ địch còn sống đứng ngay sau mục tiêu, cùng damage gốc | Ngay lập tức |
 | F06 Lam Khê **[GĐ7]** | `charmsApplied` | +1 mỗi lần một effect có đơn vị hành động là F06 áp `charm` lên một kẻ địch | 2 | `charmMastery { extraCharges: 1, damageMultiplier: 1.5 }` — *Kinh Hồng Vũ*: Mê Hoặc do F06 gây thêm 1 lượt; đòn bị đổi mục tiêu của kẻ địch đó ×1.5 khi F06 còn sống | Ngay lập tức |
 | F07 Cố Uyển **[GĐ7]** | `intentsSealed` | +1 mỗi chiêu bị tước hiệu ứng bởi dấu Phong Ấn do F07 đặt (mục 5.6) | 3 | `sealExtraFirstPerTurn` — *Sử Bút*: lần Phong Ấn đầu tiên mỗi lượt của F07 đặt dấu thêm lên 1 kẻ địch khác (vị trí nhỏ nhất) | Đầu lượt người chơi kế tiếp |
-| F09 Tiểu Mãn **[GĐ7]** | `summonsMade` | +1 mỗi effect `summon` có đơn vị hành động là F09 | 6 | `awakenSummons` — *Thỏ Ngọc Thức Tỉnh*: Linh Thú của F09 dùng `awakenedId` (mục 17.1) | Ngay lập tức (Linh Thú đang sống đổi ngay) |
+| F09 Tiểu Mãn **[GĐ7]** | `summonsMade` | +1 mỗi effect `summon` có đơn vị hành động là F09 | 7 | `awakenSummons` — *Thỏ Ngọc Thức Tỉnh*: Linh Thú của F09 dùng `awakenedId` (mục 17.1) | Ngay lập tức (Linh Thú đang sống đổi ngay) |
 | F10 Liễu Tịnh Nhan **[GĐ7]** | `alliesFallen` | +1 mỗi Hero của người chơi đó ngã (kể cả chính F10) | 1 | `none` — *Nguyệt Hồn*: nội tại trống; `levelUp.onLevelUp` = `revive { ratio: 0.3, to: "lastFallen" }` (mục 5.6) | Ngay lập tức |
 | M09 Đoàn Lạc **[GĐ7]** | `debuffsApplied` | +1 mỗi lần một effect có đơn vị hành động là M09 áp một debuff (mục 6.3) lên đối thủ | 6 | `debuffDurationBonus(1)` — *Vong Quốc Khúc*: debuff có thời hạn do M09 áp thêm 1 vòng thời hạn | Ngay lập tức |
 

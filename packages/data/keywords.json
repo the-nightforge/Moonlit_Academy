@@ -1,7 +1,7 @@
 [
   { "id": "tich_tu", "name": "Tích Tụ", "text": "Lá mạnh hơn nếu đã nằm trên tay đủ số lượt (mỗi cuối lượt lá còn trên tay được tính 1)." },
   { "id": "lien_hoan", "name": "Liên Hoàn", "text": "Lá mạnh hơn nếu trong lượt này đã đánh đủ số lá trước nó." },
-  { "id": "toa_nguyet", "name": "Tỏa Nguyệt", "text": "Kẻ địch mất Nguyệt Lực; chiêu cuối chuỗi đã báo bị hủy cho tới khi đủ tiền." },
+  { "id": "toa_nguyet", "name": "Tỏa Nguyệt", "text": "Kẻ địch mất Nguyệt Lực; chiêu cuối chuỗi (ẩn) bị hủy cho tới khi đủ tiền." },
   { "id": "doat_nguyet", "name": "Đoạt Nguyệt", "text": "Như Tỏa Nguyệt, và bạn nhận đúng số Nguyệt Lực đã lấy." },
   { "id": "duong_nguyet", "name": "Dưỡng Nguyệt", "text": "Từ lượt sau, mỗi lượt nhận thêm Nguyệt Lực đến hết trận (vượt được trần)." },
   { "id": "phan_huyet", "name": "Phẫn Huyết", "text": "Gây damage theo số HP người đánh đã mất." },

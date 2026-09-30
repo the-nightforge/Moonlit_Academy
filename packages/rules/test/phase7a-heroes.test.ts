@@ -117,7 +117,9 @@ describe("phase 7a heroes — wave 1", () => {
     });
     let current = state;
     for (const [index, instanceId] of played.entries()) {
-      current = play(data, current, instanceId);
+      // Thám Báo targets an enemy (signature damage); Mậu Dịch has no target.
+      const target = current.cards[instanceId]!.cardId === "m03_tham_bao" ? current.enemies.find((e) => e.alive)!.id : undefined;
+      current = play(data, current, instanceId, target);
       const pending = p0(current).pendingChoice;
       if (pending?.kind === "chooseCard") {
         const picked = applyAction(data, current, { type: "chooseCard", instanceId: pending.options[0] as string });
