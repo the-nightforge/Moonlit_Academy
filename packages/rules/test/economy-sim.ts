@@ -1,9 +1,9 @@
 import { loadGameData } from "data";
 import type { GameData, Profile, RunResult } from "../src/index";
 import {
-  applyCoopResult, applyPvpResult, applyRunAction, applyRunResult, applyRunRewards, buyHonorItem, buyShopItem,
-  claimMission, createProfile, createRun, grantStarterGift, nextRandom, pendingUnlocks, pullMany, starterDeck,
-  summarizeRun, unlockCard,
+  applyCoopResult, applyPvpResult, applyRunAction, applyRunResult, applyRunRewards, applyStoryResult, buyHonorItem,
+  buyShopItem, claimMission, createProfile, createRun, grantStarterGift, nextRandom, pendingUnlocks, pullMany,
+  starterDeck, summarizeRun, unlockCard, unlockedStageIds, upgradeItem,
 } from "../src/index";
 import { runAction } from "./playtest-bot";
 
@@ -51,16 +51,33 @@ export interface EconomyStats {
   jadePerDay: number;
   pullsPerDay: number;
   constellationAt: Map<number, Record<string, number[]>>;
+  // Phase 7d (`18` §5.5): material-only weapon progression + story income.
+  /** Day index each player's dedicated Epic track reached R5 (DAYS if never). */
+  epicR5Day: number[];
+  /** Day index each player's dedicated Legendary track reached R5 (DAYS if never). */
+  legendaryR5Day: number[];
+  /** Per-player totals from story `firstClear` over the 16 stages. */
+  storyMoonJade: number;
+  storyDarkIron: number;
+  darkIronPerDay: number;
 }
+
+/** `14` rarity ladder — highest first for the "highest-rarity owned weapon" upgrade pick. */
+const RARITY_RANK: Record<string, number> = { legendary: 3, epic: 2, rare: 1, common: 0 };
 
 /** Runs the virtual players on `data` (economy numbers may differ from the shipped data). */
 export function simulateEconomy(data: GameData, outcomes: Map<string, RunResult[]>): EconomyStats {
   const allHeroesDay: number[] = [];
   const firstLegendaryDay: number[] = [];
+  const epicR5Day: number[] = [];
+  const legendaryR5Day: number[] = [];
   const constellationAt = new Map<number, Record<string, number[]>>([[7, {}], [30, {}], [60, {}]]);
   let jadeEarned = 0;
   let pulls = 0;
   let neverLegendary = 0;
+  let storyJadeEarned = 0;
+  let storyIronEarned = 0;
+  let ironEarned = 0;
 
   for (let player = 0; player < PLAYERS; player++) {
     let rng = 1000 + player;
@@ -70,17 +87,46 @@ export function simulateEconomy(data: GameData, outcomes: Map<string, RunResult[
       return next.value;
     };
     let profile: Profile = grantStarterGift(data, createProfile(data)).profile;
+    // Phase 7d (`18` §5.5): two dedicated upgrade tracks — one Epic, one Legendary
+    // weapon received at R1 on day 0. The weapon banner is never pulled in this
+    // variant, so progress is material-only (no duplicate-gacha refinement). Each
+    // track gets the same dark iron the player earns that day, then `upgradeItem`
+    // pours it into the highest-rarity owned weapon until materials run out.
+    const tracks = (["epic", "legendary"] as const).map((rarity) => {
+      const weaponId = Object.values(data.weapons).find((weapon) => weapon.rarity === rarity)!.id;
+      const trackProfile = createProfile(data);
+      trackProfile.weapons[weaponId] = { refinement: 1 };
+      return { rarity, weaponId, profile: trackProfile, r5Day: null as number | null };
+    });
     let allDay: number | null = null;
     let legendaryDay: number | null = null;
 
     for (let day = 0; day < DAYS; day++) {
       const now = START + day * DAY_MS + 2 * 60 * 60 * 1000;
+      let ironToday = 0;
+      const team = TEAMS.find((candidate) => candidate.every((id) => profile.heroes[id]))!;
+      const pool = outcomes.get(team.join("+"))!;
       for (let run = 0; run < RUNS_PER_DAY; run++) {
-        const team = TEAMS.find((candidate) => candidate.every((id) => profile.heroes[id]))!;
-        const pool = outcomes.get(team.join("+"))!;
         const result = pool[Math.floor(draw() * pool.length)]!;
         const mastery = applyRunResult(data, profile, result).profile;
-        profile = applyRunRewards(data, mastery, result, { now: now + run * 60_000, starterDeck: true }).profile;
+        const applied = applyRunRewards(data, mastery, result, { now: now + run * 60_000, starterDeck: true });
+        ironToday += applied.rewards.darkIron;
+        profile = applied.profile;
+      }
+      // Phase 7d: clear one not-yet-cleared story stage per day until all 16 are
+      // done (`firstClear` via `applyStoryResult` — stage order = unlock order).
+      const stageId = unlockedStageIds(data, profile).find((id) => !profile.story.cleared.includes(id));
+      if (stageId !== undefined) {
+        const cleared = applyStoryResult(
+          data,
+          profile,
+          { stageId, seed: player * 97 + day, heroIds: team, deckCardIds: starterDeck(data, team) },
+          true,
+        );
+        profile = cleared.profile;
+        storyJadeEarned += cleared.rewards.moonJade;
+        storyIronEarned += cleared.rewards.darkIron;
+        ironToday += cleared.rewards.darkIron;
       }
       for (const heroId of Object.keys(profile.heroes)) {
         while (pendingUnlocks(data, profile, heroId) > 0) {
@@ -112,6 +158,22 @@ export function simulateEconomy(data: GameData, outcomes: Map<string, RunResult[
         profile = pulled.profile;
         if (legendaryDay === null && pulled.results.some((entry) => entry.rarity === "legendary")) legendaryDay = day;
       }
+      // Phase 7d: pour the day's dark iron into each dedicated track — repeatedly
+      // `upgradeItem` the highest-rarity owned weapon until out of materials.
+      for (const track of tracks) {
+        track.profile.currencies.darkIron += ironToday;
+        for (;;) {
+          const top = Object.keys(track.profile.weapons)
+            .filter((id) => track.profile.weapons[id]!.refinement < 5)
+            .sort((a, b) => RARITY_RANK[data.weapons[b]!.rarity]! - RARITY_RANK[data.weapons[a]!.rarity]!)[0];
+          if (top === undefined) break;
+          const upgraded = upgradeItem(data, track.profile, "weapon", top);
+          if (!upgraded.ok) break;
+          track.profile = upgraded.profile;
+        }
+        if (track.r5Day === null && track.profile.weapons[track.weaponId]!.refinement >= 5) track.r5Day = day;
+      }
+      ironEarned += ironToday;
       if (allDay === null && Object.keys(data.heroes).every((id) => profile.heroes[id])) allDay = day;
       const snapshot = constellationAt.get(day + 1);
       if (snapshot) {
@@ -125,11 +187,17 @@ export function simulateEconomy(data: GameData, outcomes: Map<string, RunResult[
       allHeroesDay.push(allDay ?? DAYS);
     if (legendaryDay === null) neverLegendary += 1;
     firstLegendaryDay.push(legendaryDay ?? DAYS);
+    epicR5Day.push(tracks.find((track) => track.rarity === "epic")!.r5Day ?? DAYS);
+    legendaryR5Day.push(tracks.find((track) => track.rarity === "legendary")!.r5Day ?? DAYS);
   }
 
   return {
     allHeroesDay, firstLegendaryDay, neverLegendary,
     jadePerDay: jadeEarned / PLAYERS / DAYS, pullsPerDay: pulls / PLAYERS / DAYS, constellationAt,
+    epicR5Day, legendaryR5Day,
+    storyMoonJade: storyJadeEarned / PLAYERS,
+    storyDarkIron: storyIronEarned / PLAYERS,
+    darkIronPerDay: ironEarned / PLAYERS / DAYS,
   };
 }
 
@@ -278,5 +346,31 @@ export function printEconomy(title: string, stats: EconomyStats): void {
       (values.reduce((sum, value) => sum + Math.max(0, value), 0) / values.length).toFixed(1),
     ])),
   })));
+}
+
+/**
+ * Phase 7d (`18` §5.5): material-only upgrade pace and story income.
+ * Targets — Epic R1→R5 in ~3–4 weeks (day 21–28), Legendary ~6–8 weeks
+ * (day 42–56), story moon jade shifts the 4d pull cadence by ≤15%.
+ */
+export function printGearEconomy(stats: EconomyStats): void {
+  const pullCost = data.economyConfig.pullCost;
+  const jadeNoStory = stats.jadePerDay - stats.storyMoonJade / DAYS;
+  const cadence = pullCost / stats.jadePerDay;
+  const cadenceNoStory = pullCost / jadeNoStory;
+  const cadenceShift = (cadenceNoStory - cadence) / cadenceNoStory;
+  console.log(`\n=== Vật liệu & Cốt truyện (7d.6 — chỉ tiến độ từ vật liệu, không quay Binh Khí Các) ===`);
+  console.table([{
+    "Epic R1→R5, ngày (trung vị / p90)": `${percentile(stats.epicR5Day, 0.5)} / ${percentile(stats.epicR5Day, 0.9)}`,
+    "Legendary R1→R5, ngày (trung vị / p90)": `${percentile(stats.legendaryR5Day, 0.5)} / ${percentile(stats.legendaryR5Day, 0.9)}`,
+    "chưa R5 sau 60 ngày (Epic / Leg)": `${stats.epicR5Day.filter((day) => day >= DAYS).length} / ${stats.legendaryR5Day.filter((day) => day >= DAYS).length}`,
+    "Huyền Thiết/ngày": stats.darkIronPerDay.toFixed(1),
+    "Nguyệt Ngọc Cốt truyện (tổng, 16 màn)": stats.storyMoonJade,
+    "Huyền Thiết Cốt truyện (tổng)": stats.storyDarkIron,
+    "Ngọc/ngày (có → không Cốt truyện)": `${stats.jadePerDay.toFixed(0)} → ${jadeNoStory.toFixed(0)}`,
+    "tỉ trọng Cốt truyện trong thu 60 ngày": `${((stats.storyMoonJade / (stats.jadePerDay * DAYS)) * 100).toFixed(1)}%`,
+    "nhịp quay (không → có Cốt truyện)": `${cadenceNoStory.toFixed(2)}d → ${cadence.toFixed(2)}d (lệch ${(cadenceShift * 100).toFixed(1)}%)`,
+    "lượt quay/ngày": stats.pullsPerDay.toFixed(2),
+  }]);
 }
 

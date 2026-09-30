@@ -114,7 +114,7 @@ const DECK_VARIANTS: { label: string; build: (team: [string, string, string], se
   { label: "ngẫu nhiên", build: (team, seed) => randomDeck(data, team, seed * 7919) },
 ];
 
-function simulateRun(heroIds: [string, string, string], seed: number, deckCardIds: string[], loadout?: Loadout) {
+function simulateRun(heroIds: [string, string, string], seed: number, deckCardIds: string[], loadout?: Loadout, verify = true) {
   const setup: RunSetup = { heroIds, seed, deckCardIds };
   let run = createRun(data, setup, loadout).run;
   const actions: RunAction[] = [];
@@ -204,7 +204,9 @@ function simulateRun(heroIds: [string, string, string], seed: number, deckCardId
     run = result.run;
   }
   // Server replay (`14` §4.2): the recorded actions rebuild exactly this run.
-  if (!stalled) expect(replayRun(data, setup, actions, loadout)).toEqual({ ok: true, run });
+  // Gear measurement cells skip it (`verify === false`): ~40% of cell cost for no
+  // measurement value — loadout replay determinism is covered by the meta tests.
+  if (!stalled && verify) expect(replayRun(data, setup, actions, loadout)).toEqual({ ok: true, run });
   const { perFloor, win, heroLevelUp } = data.metaConfig.masteryXp;
   const floor = run.position ? findNode(run, run.position)!.floor : 0;
   const xpAvg =
@@ -356,16 +358,27 @@ describe("run playtest", () => {
   // Phase 4e (`15` §8): each weapon / moon relic at R1 and R5 on the starter deck;
   // at R1 no piece may raise the win rate by more than 10 points. Slow: opt in with PLAYTEST_GEAR=1.
   const gearEnabled = Boolean(env.PLAYTEST_GEAR);
-  it.skipIf(!gearEnabled)("thắng lượt theo từng vũ khí / Nguyệt Bảo (R1, R5)", { timeout: 3_600_000 }, () => {
+  // Phase 7d (`18` §5.5): the fifteen 7d.3 signature weapons are measured on the
+  // first TEAMS entry containing their signature hero — the hero always carries
+  // its own weapon. Every signature hero is covered by TEAMS; a missing one
+  // would fall back to a composed team (logged below). Moon relics keep the
+  // existing convention: measured over every team.
+  const NEW_SIGNATURE_WEAPONS = new Set([
+    "w_ngoc_but", "w_cam_ve_kich", "w_van_kim_dau", "w_bach_ngan_cham", "w_huyet_tran_co",
+    "w_quan_tinh_truong", "w_vong_quoc_cam", "w_han_mon_kiem", "w_thien_nguyet_truong",
+    "w_xuyen_van_cung", "w_kinh_hong_phien", "w_phan_quan_but", "w_huyet_phuong_dao",
+    "w_ngoc_tho_boi", "w_dan_hon_dang",
+  ]);
+  it.skipIf(!gearEnabled)("thắng lượt theo từng vũ khí / Nguyệt Bảo (R1, R5)", { timeout: 10_800_000 }, () => {
     const gearPlayed = new Set<string>();
-    const measure = (build: (team: [string, string, string]) => { deck: string[]; loadout?: Loadout }) => {
+    const measure = (build: (team: [string, string, string]) => { deck: string[]; loadout?: Loadout }, teams: [string, string, string][] = TEAMS) => {
       let won = 0;
       let floorSum = 0;
       let runs = 0;
-      for (const team of TEAMS) {
+      for (const team of teams) {
         const { deck, loadout } = build(team);
         for (const seed of SEEDS) {
-          const row = simulateRun(team, seed, deck, loadout);
+          const row = simulateRun(team, seed, deck, loadout, false);
           for (const cardId of row.played) gearPlayed.add(cardId);
           runs += 1;
           floorSum += row.floor;
@@ -377,11 +390,41 @@ describe("run playtest", () => {
     const bare = (team: [string, string, string]): Loadout => ({
       heroes: Object.fromEntries(team.map((id) => [id, { constellation: 0, levelUpForm: "base" as const }])),
     });
-    const baseline = measure((team) => ({ deck: starterDeck(data, team) }));
-    const rows: Record<string, string | number>[] = [{ món: "— Bộ cơ bản —", R: "-", "thắng%": baseline.winRate.toFixed(0), "chênh": 0, tầng_TB: baseline.floor.toFixed(1) }];
+    // Baseline = same team(s), no item — cached per team set.
+    const baselines = new Map<string, { winRate: number; floor: number }>();
+    const baselineFor = (teams: [string, string, string][]) => {
+      const key = teams.map((team) => team.join("+")).join(" | ");
+      let base = baselines.get(key);
+      if (!base) {
+        base = measure((team) => ({ deck: starterDeck(data, team) }), teams);
+        baselines.set(key, base);
+      }
+      return base;
+    };
+    const teamLabel = (teams: [string, string, string][]) => (teams === TEAMS ? "mọi đội" : teams.map((team) => team.join("+")).join(" / "));
+    const rows: Record<string, string | number>[] = [];
     const flagged: string[] = [];
+    const composedTeams: string[] = [];
+    const pushRow = (name: string, level: 1 | 5 | "-", result: { winRate: number; floor: number }, base: { winRate: number }, label: string) => {
+      const delta = level === "-" ? 0 : result.winRate - base.winRate;
+      if (level === 1 && delta > 10) flagged.push(name);
+      rows.push({ món: name, R: level, "thắng%": result.winRate.toFixed(0), "chênh": Number(delta.toFixed(0)), tầng_TB: result.floor.toFixed(1), đội: label });
+    };
+    pushRow("— Bộ cơ bản —", "-", baselineFor(TEAMS), baselineFor(TEAMS), teamLabel(TEAMS));
     for (const weapon of Object.values(data.weapons)) {
-      for (const level of [1, 5]) {
+      let teams = TEAMS;
+      if (NEW_SIGNATURE_WEAPONS.has(weapon.id)) {
+        const signature = weapon.signatureHeroId!;
+        const hit = TEAMS.find((team) => team.includes(signature));
+        if (hit) teams = [hit];
+        else {
+          const composed: [string, string, string] = [signature, "m05", "f04"];
+          teams = [composed];
+          composedTeams.push(`${weapon.name}: ${composed.join("+")}`);
+        }
+      }
+      const baseline = baselineFor(teams);
+      for (const level of [1, 5] as const) {
         const result = measure((team) => {
           // The signature hero carries its weapon when in the team; otherwise the first hero.
           const wearer = weapon.signatureHeroId && team.includes(weapon.signatureHeroId) ? weapon.signatureHeroId : team[0];
@@ -390,25 +433,23 @@ describe("run playtest", () => {
           const loadout = bare(team);
           loadout.heroes[wearer] = { ...loadout.heroes[wearer]!, weaponId: weapon.id, refinement: level };
           return { deck: deck.filter((_, index) => index !== drop), loadout };
-        });
-        const delta = result.winRate - baseline.winRate;
-        if (level === 1 && delta > 10) flagged.push(weapon.name);
-        rows.push({ món: weapon.name, R: level, "thắng%": result.winRate.toFixed(0), "chênh": Number(delta.toFixed(0)), tầng_TB: result.floor.toFixed(1) });
+        }, teams);
+        pushRow(weapon.name, level, result, baseline, teamLabel(teams));
       }
     }
     for (const relic of Object.values(data.relics)) {
-      for (const level of [1, 5]) {
+      const baseline = baselineFor(TEAMS);
+      for (const level of [1, 5] as const) {
         const result = measure((team) => ({ deck: starterDeck(data, team), loadout: { ...bare(team), relics: [{ id: relic.id, resonance: level }] } }));
-        const delta = result.winRate - baseline.winRate;
-        if (level === 1 && delta > 10) flagged.push(relic.name);
-        rows.push({ món: relic.name, R: level, "thắng%": result.winRate.toFixed(0), "chênh": Number(delta.toFixed(0)), tầng_TB: result.floor.toFixed(1) });
+        pushRow(relic.name, level, result, baseline, teamLabel(TEAMS));
       }
     }
-    console.log(`\n=== Trang bị trên Bộ cơ bản (4 đội × ${SEEDS.length} seed mỗi dòng) ===`);
+    console.log(`\n=== Trang bị trên Bộ cơ bản (${TEAMS.length} đội × ${SEEDS.length} seed; vũ khí bản mệnh 7d trên đội có Hero) ===`);
     console.table(rows);
     const unplayed = Object.values(data.weapons).filter((weapon) => !gearPlayed.has(weapon.id)).map((weapon) => weapon.name);
     console.log(`\n=== lá Binh Khí chưa từng được đánh: ${unplayed.join(", ") || "— không có —"} ===`);
     console.log(`=== vượt +10 điểm ở R1: ${flagged.join(", ") || "— không có —"} ===`);
+    console.log(`=== đội bổ sung cho Hero bản mệnh chưa có đội: ${composedTeams.join("; ") || "— không có —"} ===`);
   });
 
   it("tổng hợp theo loại deck", () => {
