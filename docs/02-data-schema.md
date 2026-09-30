@@ -333,7 +333,7 @@ Luật đầy đủ ở `14-meta-rules.md` §1, §5–§11.
 
 | File | Kiểu | `GameData` |
 |---|---|---|
-| `economy-config.json` | `EconomyConfig` (`14` §1): `starterHeroIds` (4c); `starterGift`, `pullCost`, `runRewards`, `resetUtcHour`, `gacha`, `dupeMoonStar`, `moonStarShop` (4d) | `economyConfig` |
+| `economy-config.json` | `EconomyConfig` (`14` §1): `starterHeroIds` (4c); `starterGift`, `pullCost`, `runRewards`, `resetUtcHour`, `gacha`, `dupeMoonStar`, `moonStarShop` (4d); `runRewards.darkIronWin` / `darkIronLoss` / `darkIronLossMinFloor`, `upgradeCost` (7d) | `economyConfig` |
 | `missions.json` | `MissionDef[]` (`14` §7) | `missions: Record<id, MissionDef>` |
 | `achievements.json` | `AchievementDef[]` (`14` §8) | `achievements: Record<id, AchievementDef>` |
 | `banners.json` | `BannerDef[]` (`14` §9) | `banners: Record<id, BannerDef>` |
@@ -388,7 +388,8 @@ altLevelUp: { name: string; description: string; passive: LevelUpPassive; onLeve
 //                      | firstHitVulnerable(rounds) | bloodMoonOwnCardDiscount(amount)
 // MoonModifier costModifierForTag thêm: while?: "bloodMoon"
 // HookTrigger: cardPlayed thêm owner?: "wearer"; enemyKilled thêm killer?: "wearer" (chỉ trong WeaponHook)
-// banners.json: kind "weapon" | "relic"; economy-config: gearDupeMoonStar; meta-config: maxRelics
+// banners.json: kind "weapon" | "relic"; economy-config: gearDupeMoonStar,
+//                                            upgradeCost (GĐ7d); meta-config: maxRelics
 ```
 
 Kiểm tra khi nạp thêm: id vũ khí / Nguyệt Bảo duy nhất và không trùng id lá, Kỳ Vật, Lõi,
@@ -397,6 +398,11 @@ Hero; `signatureHeroId` là Hero có thật; `signatureHooks` chỉ khi có `sig
 `refinement` đúng 4 mục, `resonance` đúng 5 cấp; hook vũ khí / Nguyệt Bảo theo ràng buộc
 của Lõi (`11` §3.3); `actor` / `owner` / `killer` `"wearer"` chỉ trong hook vũ khí;
 `onLevelUp` theo ràng buộc effect của lá không có mục tiêu chọn (`to` ≠ `"chosen"`).
+
+**[GĐ7d]** Bất biến nội dung (kiểm bởi test T313, không phải schema): mỗi Hero có đúng
+một vũ khí bản mệnh (`signatureHeroId` = Hero đó) và `weapon.rarity` = `hero.rarity`,
+riêng Hero `common` → vũ khí `rare`; `banner_weapons` / `banner_relics` liệt kê mọi vũ
+khí / Nguyệt Bảo có trong data, mỗi món đúng hàng độ hiếm của nó.
 
 ### 1.13 Cấu hình PvP — `pvp-config.json` [GĐ5]
 
@@ -859,6 +865,11 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
   trong chiêu địch của kẻ địch (`intents`, `moonOverrides`, `bloodMoonOverride`) — nghĩa
   `01` §9.3.2; vẫn cấm trong hook Kỳ Vật / Nguyệt Bảo và `SummonDef.action` (hook vũ khí
   đã cho phép sẵn, `01` §14.3).
+- **[GĐ7d]** `economyConfig.upgradeCost`: cả `weapon` và `relic` có đủ `rare` / `epic` /
+  `legendary`, mỗi hàng đúng 4 số nguyên dương; `runRewards.darkIronWin`, `darkIronLoss`
+  nguyên ≥ 0, `darkIronLossMinFloor` nguyên ≥ 1. Bất biến nội dung trang bị (mỗi Hero
+  đúng một vũ khí bản mệnh đúng độ hiếm, banner liệt kê mọi món) kiểm bởi test T313,
+  không phải schema — mục 1.12.
 
 Dữ liệu sai → báo lỗi rõ ràng ngay khi khởi động, không chạy game với dữ liệu lỗi.
 

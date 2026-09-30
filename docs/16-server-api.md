@@ -122,6 +122,18 @@ Mọi route đổi hồ sơ ở trên cần `If-Match`.
 |---|---|---|
 | `PUT /api/profile/heroes/:id/level-up-form` | `{ form: "base" \| "alt" }` | `setLevelUpForm` (`14` §10.1) → `{ profile, rev }`; `400 "hero not owned"`, `400 "constellation too low"` |
 
+### 4.3 Route nâng cấp trang bị (GĐ 7d)
+
+| Route | Body | Kết quả / lỗi |
+|---|---|---|
+| `POST /api/profile/weapons/:id/upgrade` | — | `upgradeItem(data, profile, "weapon", id)` (`14` §13.3) → `{ profile, rev, level, spent }` |
+| `POST /api/profile/relics/:id/upgrade` | — | `upgradeItem(data, profile, "relic", id)` → `{ profile, rev, level, spent }` |
+
+`If-Match` bắt buộc như mọi route đổi hồ sơ (§2): thiếu → `428 "if-match required"`,
+`rev` cũ → `409 "stale profile"` kèm hồ sơ; lỗi luật của `upgradeItem` → `400
+{ error: "not owned" | "maxed" | "not enough" }` (id lạ cũng là `"not owned"`), hồ sơ
+không đổi.
+
 ---
 
 ## 5. Lưu trữ (Postgres)
@@ -170,7 +182,8 @@ khoá lạc quan của hồ sơ vẫn là `rev` + `If-Match` như cũ.
   bản trong lỗi. Nộp lượt chơi gặp `stale profile` tự gửi lại một lần; phiếu đã bị đóng
   (`replay failed`, `run closed`, `ticket expired`, `unknown run`) thì xóa bản lưu tạm.
 - Không kết nối được server (lúc mở game hoặc khi đăng nhập): chế độ offline, hồ sơ
-  trống, chỉ **Trận lẻ**; Lượt chơi, Cốt truyện, xếp/xóa deck, Tu Luyện bị khóa.
+  trống, chỉ **Trận lẻ**; Lượt chơi, Cốt truyện, xếp/xóa deck, Tu Luyện, nâng cấp trang
+  bị bị khóa.
 - Công cụ debug sửa hồ sơ (+XP, mở hết lá, xóa hồ sơ) đã bỏ (hồ sơ chỉ đổi trên
   server); sửa trận bằng debug trong lượt chơi làm server từ chối kết quả (có cảnh báo).
 

@@ -472,3 +472,21 @@ dùng `buildApp` với DB trong bộ nhớ, đồng hồ và nguồn ngẫu nhi�
 | T305 | **[GĐ7c]** Route: màn khóa → `403 "stage locked"`; màn lạ → `404 "unknown stage"`; nộp chuỗi action đúng → hồ sơ + `rewards`, phiếu `finished`; action bị sửa → `422 "replay failed"` và phiếu `rejected`; nộp khi trận chưa kết thúc → `422 "combat not finished"`, phiếu vẫn `open` |
 | T306 | **[GĐ7c]** Vòng đời phiếu: tối đa một phiếu `open` mỗi tài khoản (cấp mới đóng phiếu cũ `abandoned`); phiếu lạ / của người khác → `404 "unknown ticket"`; phiếu không `open` → `409 "ticket closed"`; quá hạn → `410 "ticket expired"`; `dataVersion` lệch → `409 "outdated client"`; `GET /api/story` trả `{ cleared, unlocked }` với `unlocked` gồm cả màn đã qua |
 | T307 | **[GĐ7c]** `parseProfile`: hồ sơ thiếu `story` → `{ cleared: [] }`; id màn lạ trong `cleared` bị lọc; `mergeImportedProfile` không nhập `story` (giữ tiến độ của hồ sơ server) |
+
+---
+
+## Giai đoạn 7d
+
+Bối cảnh: `18-phase7-spec.md` §5; luật `14` §5 (thưởng Lượt chơi), §13.3 (Nâng Cấp);
+dữ liệu `02` §1.11–§1.12; route `16` §4.3. Test luật dùng hồ sơ dựng trực tiếp
+(`createProfile` rồi gán `weapons` / `relics` / `currencies`), không phụ thuộc số cân
+bằng. Test route dùng `buildApp` với DB trong bộ nhớ như GĐ 4c.
+
+| Mã | Kịch bản |
+|---|---|
+| T308 | **[GĐ7d]** `upgradeItem` vũ khí: đủ Huyền Thiết → trừ đúng giá `upgradeCost`, `refinement + 1`, trả `{ ok: true, level, spent }`; hồ sơ đầu vào không đổi |
+| T309 | **[GĐ7d]** `upgradeItem` lỗi: chưa sở hữu và id lạ → `"not owned"`; đã cấp 5 → `"maxed"`; thiếu vật liệu → `"not enough"` — hồ sơ không đổi |
+| T310 | **[GĐ7d]** `upgradeCost` theo độ hiếm và cấp cho cả vũ khí (Huyền Thiết) và Nguyệt Bảo (Nguyệt Trần); độ hiếm `common` dùng giá `rare`; `level` ngoài 1…4 hoặc id lạ → `null` |
+| T311 | **[GĐ7d]** Route nâng cấp: thành công trả `{ profile, rev + 1, level, spent }`; thiếu `If-Match` → `428`; `rev` cũ → `409 stale profile`; lỗi luật → `400` mã lỗi của `upgradeItem` |
+| T312 | **[GĐ7d]** `applyRunRewards`: thắng +3 Huyền Thiết (`darkIronWin`); thua ở tầng ≥ `darkIronLossMinFloor` (2) +1 (`darkIronLoss`); thua tầng 1 +0; Bộ cơ bản cũng nhận; `rewards.darkIron` khớp số đã cộng |
+| T313 | **[GĐ7d]** Nạp dữ liệu: 25 vũ khí; mỗi Hero có đúng 1 vũ khí bản mệnh (`signatureHeroId`) đúng độ hiếm (`weapon.rarity === hero.rarity`, Hero `common` → `rare`); 16 Nguyệt Bảo; `banner_weapons` / `banner_relics` liệt kê mọi món, mỗi món đúng hàng độ hiếm |

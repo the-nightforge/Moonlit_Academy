@@ -188,10 +188,11 @@
 | Vũ khí chung | `archetype` | Không có bản mệnh |
 | Nội tại vũ khí | `WeaponHook` | Chạy trên máy hook Kỳ Vật |
 | Nguyệt Bảo | `relic`, `RelicDef` | Tối đa 2 mỗi deck; nằm cả đời tài khoản (khác Kỳ Vật của lượt chơi) |
-| Tinh Luyện | `refinement` | R1–R5, tăng khi quay trùng vũ khí |
-| Cộng Minh | `resonance` | 1–5, tăng khi quay trùng Nguyệt Bảo |
-| Huyền Thiết | `darkIron` | Từ vũ khí trùng khi R5; GĐ 4 chỉ tích trữ |
-| Nguyệt Trần | `moonDust` | Từ Nguyệt Bảo trùng khi Cộng Minh 5; GĐ 4 chỉ tích trữ |
+| Tinh Luyện | `refinement` | R1–R5, tăng khi quay trùng vũ khí hoặc Nâng Cấp |
+| Cộng Minh | `resonance` | 1–5, tăng khi quay trùng Nguyệt Bảo hoặc Nâng Cấp |
+| Nâng Cấp | `upgrade`, `upgradeItem`, `upgradeCost` | GĐ7d: tiêu vật liệu đổi +1 cấp trang bị (`14` §13.3) |
+| Huyền Thiết | `darkIron` | Từ vũ khí trùng khi R5 và thưởng Lượt chơi (GĐ7d); tiêu ở Nâng Cấp vũ khí |
+| Nguyệt Trần | `moonDust` | Từ Nguyệt Bảo trùng khi Cộng Minh 5; tiêu ở Nâng Cấp Nguyệt Bảo (GĐ7d) |
 | Binh Khí Các / Nguyệt Bảo Các | `banner_weapons`, `banner_relics` | Banner trang bị |
 
 ## Đấu Trường — PvP [GĐ5]

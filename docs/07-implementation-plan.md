@@ -369,4 +369,34 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 **Giai đoạn hiện tại: 7d đang làm — `docs/18-phase7-spec.md` §5**
 
-> Theo `18` §5: 15 vũ khí bản mệnh + 8 Nguyệt Bảo, `upgradeItem`/`upgradeCost`, nguồn Huyền Thiết. Kế hoạch riêng khi bắt đầu.
+Đặc tả: `18-phase7-spec.md` §5. Kế hoạch chi tiết:
+`docs/superpowers/plans/2026-09-30-phase7d-gear-materials.md` (7 Task).
+
+### Bước 7d.1 — Tài liệu 7d *(Task 1)*
+> Chốt các điểm làm rõ spec trong `18` §5 (`upgradeCost[kind][rarity][level − 1]`,
+> `upgradeItem` trả `{ ok, profile, level, spent }` / mã lỗi, `runRewards.darkIron*`,
+> route trả `{ profile, rev, level, spent }`, vũ khí F09 Rare); cập nhật `02`, `03`,
+> `04`, `06`, `07`, `14`, `16`, `18`, `CLAUDE.md`. *(Đã xong.)*
+
+### Bước 7d.2 — `upgradeItem`, giá nâng cấp, Huyền Thiết từ Lượt chơi, route *(Task 2–3)*
+> `rules/src/meta/upgrade.ts` (`upgradeCost`, `upgradeItem`, `UpgradeKind`);
+> `economy-config.json` (`upgradeCost`, `runRewards.darkIron*`); `RunRewards.darkIron`;
+> `POST /api/profile/weapons/:id/upgrade` và `POST /api/profile/relics/:id/upgrade` qua
+> `mutateProfile` (`If-Match` / 428 / 409 / 400). T308–T312.
+
+### Bước 7d.3 — 15 vũ khí bản mệnh *(Task 4)*
+> Đề xuất trong `03` §7 trước (duyệt), rồi `weapons.json`: một vũ khí bản mệnh cho mỗi
+> Hero 7a/7b, độ hiếm = Hero (F09 → Rare); có *Ngọc Bút* của M01.
+
+### Bước 7d.4 — 8 Nguyệt Bảo + banner *(Task 5)*
+> Đề xuất trước (duyệt), rồi `relics.json` + `banners.json` (pool đủ 25 vũ khí / 16
+> Nguyệt Bảo). T313.
+
+### Bước 7d.5 — Client nâng cấp *(Task 6)*
+> Nút Nâng Cấp trong Kho đồ (`ArmoryScene`): hiện giá, vật liệu đang có, cấp sau nâng;
+> chữ lỗi trong `theme.ts`; hiện Huyền Thiết thưởng Lượt chơi.
+
+### Bước 7d.6 — Mô phỏng, chỉnh số, đóng GĐ 7 *(Task 7)*
+> `run-playtest` có trang bị (R1 ≤ +10 điểm thắng); `economy-sim` vật liệu + Cốt truyện
+> (Epic R1→R5 ~3–4 tuần, Legendary ~6–8 tuần — `18` §5.5); gói chỉnh (duyệt);
+> `playtest-notes.md` mục Phase 7d; đóng GĐ 7.

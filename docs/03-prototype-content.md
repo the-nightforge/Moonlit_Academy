@@ -160,6 +160,21 @@ dùng `lowestHp`; "kẻ địch" dùng `front` với `to: "allEnemies"`; "Hero k
 `trigger`. Banner Binh Khí Các: legendary 2, epic 4, rare 4; Nguyệt Bảo Các: legendary
 2, epic 3, rare 3 (theo cột độ hiếm ở trên).
 
+### 7.3 Đợt GĐ7d — vũ khí bản mệnh mới và 8 Nguyệt Bảo [GĐ7d]
+
+Theo `18` §5.3; nâng cấp bằng vật liệu ở `14` §13.3, giá trong `economy-config.json
+→ upgradeCost`. Danh sách và số R1–R5 / Cộng Minh 1–5 viết và duyệt ở bước 7d.3 /
+7d.4 trước khi viết JSON:
+
+- **15 vũ khí bản mệnh** — một cho mỗi Hero 7a/7b (M01, M02, M03, M04, M07, M08, M09,
+  M10, F01, F05, F06, F07, F08, F09, F10), khuôn `02` §1.12 (`signatureHeroId`,
+  `signatureHooks`, `refinement` đúng 4 mục). Độ hiếm = độ hiếm Hero; F09 (Common) dùng
+  Rare. *Ngọc Bút* của M01 theo GDD §5.1 (Legendary).
+- **8 Nguyệt Bảo mới** (tổng 16) — ưu tiên lối chơi mới (Linh Thú, Mê Hoặc, Phong Ấn,
+  Hộ Vệ, Chọn Pha / Đổi Vận); mỗi Viện ít nhất một món trong tổng số.
+- `banner_weapons` / `banner_relics` liệt kê mọi món (25 vũ khí / 16 Nguyệt Bảo);
+  `pvp-config.freeWeaponIds` / `freeRelicIds` giữ nguyên, xem lại ở 7d.6.
+
 ## 8. Đấu Trường — chỉ số PvP [GĐ5b]
 
 Chỉ số PvP đặt riêng trong `pvp-config.json` (`heroStats`, `secondPlayerBonus`,

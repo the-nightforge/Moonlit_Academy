@@ -206,7 +206,7 @@ const upgradeTable = z.object({ rare: upgradeRow, epic: upgradeRow, legendary: u
 // trong economyConfigSchema:
   upgradeCost: z.object({ weapon: upgradeTable, relic: upgradeTable }),
 ```
-  - `types/static.ts` → `EconomyConfig`: `runRewards` thêm ba trường; thêm `/** Material cost to go from level n to n + 1 (index n − 1), by rarity (`14` §13.2). */ upgradeCost: Record<"weapon" | "relic", Record<"rare" | "epic" | "legendary", number[]>>;`.
+  - `types/static.ts` → `EconomyConfig`: `runRewards` thêm ba trường; thêm `/** Material cost to go from level n to n + 1 (index n − 1), by rarity (`14` §13.3). */ upgradeCost: Record<"weapon" | "relic", Record<"rare" | "epic" | "legendary", number[]>>;`.
 - [ ] **Step 4: `meta/upgrade.ts`**
 
 ```ts
@@ -215,7 +215,7 @@ import type { GameData, Profile } from "../types/index";
 export type UpgradeKind = "weapon" | "relic";
 const MAX_GEAR_LEVEL = 5;
 
-/** Material cost to take `id` from `level` to `level + 1`; null for unknown items or levels (`14` §13.2). */
+/** Material cost to take `id` from `level` to `level + 1`; null for unknown items or levels (`14` §13.3). */
 export function upgradeCost(data: GameData, kind: UpgradeKind, id: string, level: number): number | null {
   const rarity = (kind === "weapon" ? data.weapons[id] : data.relics[id])?.rarity;
   if (rarity === undefined) return null;

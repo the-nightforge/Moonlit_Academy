@@ -38,7 +38,8 @@ Hồ sơ là dữ liệu JSON thuần; mọi hàm dưới đây là hàm thuần
   "starterHeroIds": ["m05", "f04", "m06"],
   "starterGift": { "moonJade": 2400 },
   "pullCost": 160,
-  "runRewards": { "moonJadePerFloor": 3, "moonJadeWin": 20, "firstWinOfDay": 30 },
+  "runRewards": { "moonJadePerFloor": 3, "moonJadeWin": 20, "firstWinOfDay": 30,
+    "darkIronWin": 3, "darkIronLoss": 1, "darkIronLossMinFloor": 2 },
   "resetUtcHour": 21,
   "gacha": {
     "rates": { "legendary": 0.02, "epic": 0.13 },
@@ -53,12 +54,22 @@ Hồ sơ là dữ liệu JSON thuần; mọi hàm dưới đây là hàm thuần
   "moonStarShop": [
     { "id": "shop_pull", "item": { "type": "moonJade", "amount": 160 }, "price": 10, "limitPerWeek": 2 },
     { "id": "shop_epic_hero", "item": { "type": "heroChoice", "rarity": "epic" }, "price": 120, "limitPerWeek": 1 }
-  ]
+  ],
+  "upgradeCost": {
+    "weapon": { "rare": [2, 3, 4, 5], "epic": [3, 5, 7, 9], "legendary": [5, 8, 11, 14] },
+    "relic":  { "rare": [2, 3, 4, 5], "epic": [3, 5, 7, 9], "legendary": [5, 8, 11, 14] }
+  }
 }
 ```
 
+`runRewards.darkIronWin` / `darkIronLoss` / `darkIronLossMinFloor` **[GĐ7d]**: Huyền
+Thiết thưởng Lượt chơi (§5). `upgradeCost` **[GĐ7d]**: giá Nâng Cấp trang bị bằng vật
+liệu, theo độ hiếm (§13.3).
+
 Kiểm tra khi nạp: `rates.legendary + rates.epic < 1`; `epicPity ≥ 1`;
-`legendarySoftPityStart < legendaryPity`; id cửa hàng duy nhất.
+`legendarySoftPityStart < legendaryPity`; id cửa hàng duy nhất. **[GĐ7d]**
+`upgradeCost[kind]` có đủ `rare` / `epic` / `legendary`, mỗi hàng đúng 4 số nguyên
+dương; `runRewards.darkIron*` nguyên ≥ 0 (`darkIronLossMinFloor` ≥ 1).
 
 ---
 
@@ -235,7 +246,8 @@ Hàm trong `rules/src/meta/economy.ts`. Mọi hàm nhận `now` (ms UTC) từ se
 `{ ok: true; profile; ... } | { ok: false; error }`, không sửa input.
 
 - `currencies.moonJade` (Nguyệt Ngọc): quay gacha. `currencies.moonStar` (Nguyệt Tinh):
-  cửa hàng Nguyệt Tinh. `darkIron`, `moonDust`: GĐ 4e.
+  cửa hàng Nguyệt Tinh. `darkIron`, `moonDust`: GĐ 4e — **[GĐ7d]** `darkIron` thêm
+  nguồn từ thưởng Lượt chơi (bước 2 dưới); cả hai tiêu ở Nâng Cấp (§13.3).
 - `grantStarterGift(data, profile)`: `flags.starterGiftClaimed` đã `true` → trả hồ sơ
   nguyên (không lỗi). Ngược lại `moonJade += starterGift.moonJade`, đặt cờ `true`.
   Server gọi khi đăng ký và khi đăng nhập.
@@ -244,13 +256,16 @@ Hàm trong `rules/src/meta/economy.ts`. Mọi hàm nhận `now` (ms UTC) từ se
   cơ bản). Theo thứ tự:
   1. Sang kỳ mới nếu cần (§6).
   2. `moonJade += moonJadePerFloor × floorReached + (won ? moonJadeWin : 0)`.
+     **[GĐ7d]** `darkIron += won ? darkIronWin : (floorReached ≥ darkIronLossMinFloor ?
+     darkIronLoss : 0)` — Bộ cơ bản cũng nhận, như mọi thưởng Lượt chơi.
   3. `won` và `missions.daily.runsWon` = 0 trước lượt này → thêm `firstWinOfDay`.
   4. Bộ đếm kỳ (§7) và `stats` (§8): `runsFinished += 1`; `floorsReached +=
      floorReached`; `won` → `runsWon += 1`, `bossKills += 1` (thắng lượt = hạ boss tầng
      cuối); `heroesUsed` thêm 3 Hero của đội.
   5. `checkAchievements` (§8).
-  Trả thêm `rewards = { moonJade: số đã cộng ở bước 2–3 (không gồm thành tựu),
-  firstWinOfDay: boolean, achievements: string[] (id vừa đạt) }`.
+  Trả thêm `rewards = { moonJade: số đã cộng ở bước 2–3 (không gồm thành tựu), darkIron:
+  số Huyền Thiết đã cộng **[GĐ7d]**, firstWinOfDay: boolean, achievements: string[]
+  (id vừa đạt) }`.
 
 ## 6. Kỳ ngày và tuần **[GĐ4d]**
 
@@ -475,7 +490,7 @@ Tài khoản mới không có vũ khí / Nguyệt Bảo. `grantItem` cho vũ kh�
 Nguyệt Bảo như trên với `relics[id].resonance`, `outcome: "newRelic" | "resonance" |
 "maxed"`, và `moonDust += 1` thay `darkIron`. `economy-config.json` thêm
 `gearDupeMoonStar: { legendary: 10, epic: 4, rare: 1, common: 1 }` (GDD §7.4). Huyền
-Thiết / Nguyệt Trần GĐ 4 chỉ tích trữ.
+Thiết / Nguyệt Trần GĐ 4 chỉ tích trữ; từ GĐ 7d tiêu ở Nâng Cấp (§13.3).
 
 ### 13.2 Trang bị trong deck
 
@@ -486,6 +501,42 @@ Thiết / Nguyệt Trần GĐ 4 chỉ tích trữ.
   `signatureHeroId` (`01` §14.3).
 - Phiếu lượt chơi (§4.1) chụp loadout có trang bị lúc cấp; đổi trang bị / Tinh Luyện sau
   đó không ảnh hưởng lượt đang chơi.
+
+### 13.3 Nâng cấp bằng vật liệu [GĐ7d]
+
+`rules/src/meta/upgrade.ts`. Vũ khí tiêu Huyền Thiết (`darkIron`), Nguyệt Bảo tiêu
+Nguyệt Trần (`moonDust`); mỗi lần nâng +1 Tinh Luyện / Cộng Minh, tối đa cấp 5. Bản
+trùng từ gacha vẫn +1 như §13.1 — hai cách lên cấp cùng tồn tại.
+
+```ts
+type UpgradeKind = "weapon" | "relic";
+
+upgradeCost(data, kind, id, level): number | null;
+//   giá đi từ `level` lên `level + 1` (level 1…4); null khi id lạ hoặc level ngoài 1…4
+upgradeItem(data, profile, kind, id):
+  | { ok: true; profile: Profile; level: number; spent: number }
+  | { ok: false; error: "not owned" | "maxed" | "not enough" };
+```
+
+Giá nằm trong `economy-config.json → upgradeCost`, theo độ hiếm của **vật phẩm**
+(`upgradeCost[kind][rarity][level − 1]` = giá từ `level` lên `level + 1`; vật phẩm độ
+hiếm `common` dùng hàng `rare`):
+
+| Độ hiếm | R1→R2 | R2→R3 | R3→R4 | R4→R5 |
+|---|---|---|---|---|
+| `rare` | 2 | 3 | 4 | 5 |
+| `epic` | 3 | 5 | 7 | 9 |
+| `legendary` | 5 | 8 | 11 | 14 |
+
+`upgradeItem` theo thứ tự:
+
+1. Chưa sở hữu (`profile.weapons[id]` / `profile.relics[id]` thiếu) hoặc id không có
+   trong dữ liệu → `"not owned"`.
+2. Đã cấp 5 → `"maxed"`.
+3. Vật liệu không đủ giá → `"not enough"`.
+4. Hợp lệ → trừ vật liệu, +1 cấp; trả `{ profile, level: cấp mới, spent: giá đã trừ }`.
+
+Hồ sơ đầu vào không đổi trong mọi trường hợp. Route nâng cấp: `16` §4.3.
 
 ## 14. Đấu Trường — Điểm xếp hạng và Vinh Dự **[GĐ5]**
 

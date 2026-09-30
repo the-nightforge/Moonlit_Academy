@@ -508,9 +508,11 @@ màn, 5 ở boss arc; XP Tu Luyện theo màn; 1 Hero.
 
 ### 5.1 Nâng cấp bằng vật liệu
 
-- `upgradeItem(data, profile, kind: "weapon" | "relic", id)` trong `rules/src/meta/`:
-  phải sở hữu, cấp < 5, đủ vật liệu → trừ vật liệu, +1 `refinement` / `resonance`. Lỗi:
-  `"not owned" | "maxed" | "not enough"`.
+- `upgradeItem(data, profile, kind, id)` trong `rules/src/meta/` với `UpgradeKind =
+  "weapon" | "relic"`: phải sở hữu, cấp < 5, đủ vật liệu → trừ vật liệu, +1
+  `refinement` / `resonance`. Trả `{ ok: true; profile; level; spent }` (cấp mới và
+  số vật liệu đã trừ) hoặc `{ ok: false; error: "not owned" | "maxed" | "not
+  enough" }`. Id không có trong dữ liệu cũng là `"not owned"`.
 - `economy-config.json` → `upgradeCost`:
   ```json
   "upgradeCost": {
@@ -518,16 +520,22 @@ màn, 5 ở boss arc; XP Tu Luyện theo màn; 1 Hero.
     "relic":  { "rare": [2,3,4,5], "epic": [3,5,7,9], "legendary": [5,8,11,14] }
   }
   ```
-  Chỉ số mảng = cấp đích − 2 (R2…R5). Vũ khí tiêu `darkIron`, Nguyệt Bảo tiêu `moonDust`.
-  Có độ hiếm `common` (nếu có vật phẩm Common) dùng giá `rare`.
-- Bản trùng từ gacha vẫn +1 như `14` §13.1.
+  `upgradeCost[kind][rarity][level − 1]` là giá đi từ `level` lên `level + 1`
+  (level 1…4 — cùng nghĩa "chỉ số = cấp đích − 2", R2…R5). Hàm `upgradeCost(data,
+  kind, id, level)` đọc giá đó, trả `null` khi id lạ hoặc `level` ngoài 1…4. Vũ khí
+  tiêu `darkIron`, Nguyệt Bảo tiêu `moonDust`. Vật phẩm độ hiếm `common` dùng hàng
+  `rare`.
+- Bản trùng từ gacha vẫn +1 như `14` §13.1 — hai cách lên cấp cùng tồn tại.
 - Route `POST /api/profile/weapons/:id/upgrade`, `POST /api/profile/relics/:id/upgrade`
-  (có `If-Match` như route hồ sơ khác).
+  → `{ profile, rev, level, spent }` (có `If-Match` như route hồ sơ khác; lỗi luật →
+  `400` với mã lỗi của `upgradeItem`, theo `mutateProfile` ở `16` §2).
 
 ### 5.2 Nguồn vật liệu mới
 
-- `runRewards.darkIron`: thắng lượt chơi 3; thua ở tầng ≥ 2 được 1 (bộ khởi đầu cũng
-  nhận, theo cùng luật thưởng lượt chơi).
+- `runRewards` thêm `darkIronWin: 3`, `darkIronLoss: 1`, `darkIronLossMinFloor: 2`;
+  `RunRewards` thêm `darkIron: number`. Thắng → `darkIronWin`; thua với `floorReached
+  ≥ darkIronLossMinFloor` → `darkIronLoss`; thua sớm hơn → 0. Bộ khởi đầu cũng nhận,
+  theo cùng luật thưởng lượt chơi.
 - Cốt truyện: `firstClear.darkIron` (§4.5).
 - Nguyệt Trần giữ nguồn cũ (co-op, trùng khi max), đúng GDD §9.
 
@@ -535,7 +543,8 @@ màn, 5 ở boss arc; XP Tu Luyện theo màn; 1 Hero.
 
 - **15 vũ khí bản mệnh** (một cho mỗi Hero mới). Độ hiếm = độ hiếm Hero; F09 (Common) dùng
   vũ khí Rare. Mỗi vũ khí đủ R1–R5, 1 lá Binh Khí, nội tại thường + nội tại bản mệnh theo
-  khuôn `02` §1.12. Có *Ngọc Bút* (M01) theo GDD §5.1.
+  khuôn `02` §1.12. Có *Ngọc Bút* (M01) theo GDD §5.1. Kiểm dữ liệu (T313): mỗi Hero có
+  đúng một vũ khí bản mệnh, `weapon.rarity === hero.rarity` — riêng Hero `common` → `rare`.
 - **8 Nguyệt Bảo mới** (tổng 16): ưu tiên phục vụ lối chơi mới (Linh Thú, Mê Hoặc, Phong
   Ấn, Hộ Vệ, Chọn Pha); mỗi Viện có ít nhất 1 Nguyệt Bảo trong tổng số.
 - Cập nhật `banner_weapons`, `banner_relics`. `pvp-config.freeWeaponIds` / `freeRelicIds`
