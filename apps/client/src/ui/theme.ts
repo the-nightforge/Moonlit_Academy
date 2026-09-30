@@ -209,6 +209,10 @@ export const API_ERROR_TEXT: Record<string, string> = {
   "weapon not owned": "Chưa sở hữu vũ khí này",
   "relic not owned": "Chưa sở hữu Nguyệt Bảo này",
   "constellation too low": "Cần Tinh Hồn 5 để chọn dạng thăng cấp thứ hai",
+  // upgradeItem errors (`16` §4.3)
+  "not owned": "Chưa sở hữu vật phẩm này",
+  "maxed": "Đã đạt cấp tối đa",
+  "not enough": "Không đủ vật liệu",
 };
 
 export const CURRENCY_LABELS = { moonJade: "Nguyệt Ngọc", moonStar: "Nguyệt Tinh", honor: "Vinh Dự" } as const;

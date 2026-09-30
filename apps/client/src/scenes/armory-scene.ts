@@ -1,10 +1,11 @@
 import Phaser from "phaser";
-import { weaponAt } from "rules";
-import type { CardDef } from "rules";
+import { upgradeCost, weaponAt } from "rules";
+import type { CardDef, UpgradeKind } from "rules";
+import { errorText, mutate } from "../account";
 import { session } from "../session";
 import { showCardTooltip } from "../ui/card-tooltip";
 import { COLORS, RARITY_COLORS, RARITY_LABELS, TEXT_BASE, useDesignCamera } from "../ui/theme";
-import { addButton, addCurrencyBar, addText } from "../ui/widgets";
+import { addButton, addCurrencyBar, addText, showToast } from "../ui/widgets";
 
 const WIDTH = 1280;
 const MAX_LEVEL = 5;
@@ -18,6 +19,8 @@ export class ArmoryScene extends Phaser.Scene {
   private tab: Tab = "weapons";
   private selected = "";
   private tooltip: Phaser.GameObjects.Container | null = null;
+  /** An upgrade request is in flight (the button stays disabled). */
+  private busy = false;
 
   constructor() {
     super("armory");
@@ -25,6 +28,7 @@ export class ArmoryScene extends Phaser.Scene {
 
   create() {
     useDesignCamera(this);
+    this.busy = false;
     this.root = this.add.container(0, 0);
     this.selectFirst();
     this.render();
@@ -127,6 +131,7 @@ export class ArmoryScene extends Phaser.Scene {
       });
       this.root.add(line);
     });
+    this.renderUpgrade(id, "weapon", 284 + levels.length * 48 + 12);
   }
 
   private renderRelic(id: string) {
@@ -143,5 +148,50 @@ export class ArmoryScene extends Phaser.Scene {
       });
       this.root.add(line);
     });
+    this.renderUpgrade(id, "relic", 244 + def.resonance.length * 52 + 12);
+  }
+
+  /**
+   * Cost line and the Nâng Cấp button under the level list (`18` §5.4). The
+   * shown cost is a client-side preview via `upgradeCost`; the server decides.
+   * Nothing is drawn while the item is unowned.
+   */
+  private renderUpgrade(id: string, kind: UpgradeKind, y: number) {
+    const level = this.level(id);
+    if (level === undefined) return;
+    const x = 470;
+    const cost = upgradeCost(session.data, kind, id, level);
+    if (cost === null) {
+      addText(this, this.root, x, y, "Đã đạt cấp tối đa", 15, COLORS.gold);
+      return;
+    }
+    const material = kind === "weapon" ? "Huyền Thiết" : "Nguyệt Trần";
+    const have = session.profile.currencies[kind === "weapon" ? "darkIron" : "moonDust"];
+    const nextTag = kind === "weapon" ? `R${level + 1}` : `Cộng Minh ${level + 1}`;
+    const enough = have >= cost;
+    addText(
+      this, this.root, x, y,
+      `Nâng Cấp → ${nextTag} · giá ${cost} ${material} · đang có ${have}`,
+      14, enough ? COLORS.text : "#ff8080",
+    );
+    addButton(this, this.root, x + 90, y + 34, 180, "Nâng Cấp", () => this.upgrade(kind, id), session.online && enough && !this.busy);
+  }
+
+  /** `POST /api/profile/{weapons|relics}/:id/upgrade` (`16` §4.3); `mutate` swaps in the server profile + rev. */
+  private upgrade(kind: UpgradeKind, id: string) {
+    if (this.busy) return;
+    this.busy = true;
+    this.render();
+    mutate("POST", `/profile/${kind === "weapon" ? "weapons" : "relics"}/${id}/upgrade`).then(
+      () => {
+        this.busy = false;
+        this.render();
+      },
+      (error: unknown) => {
+        this.busy = false;
+        this.render();
+        showToast(this, [errorText(error)]);
+      },
+    );
   }
 }
