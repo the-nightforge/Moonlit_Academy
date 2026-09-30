@@ -4,7 +4,7 @@ import type { CombatEvent, CombatState, GameData, Loadout, MasteryGain, Profile,
 import type { NetMatch } from "./net/match";
 import type { NetSocket } from "./net/socket";
 import type { RunTicket } from "./run-session";
-import type { StoryTicket } from "./story-session";
+import { abandonStory, type StoryTicket } from "./story-session";
 
 export type Team = [string, string, string];
 
@@ -89,8 +89,8 @@ export function restartSession(
   session.deckCardIds = fresh.deckCardIds;
   session.state = fresh.state;
   session.run = null;
-  // A rebuilt single combat is never part of a story ticket.
-  session.story = null;
+  // A rebuilt single combat drops any story ticket; close it on the server (fire-and-forget).
+  void abandonStory();
   session.events.push(...fresh.events);
 }
 

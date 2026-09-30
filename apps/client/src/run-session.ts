@@ -3,6 +3,7 @@ import type { Loadout, MasteryGain, RunAction, RunActionResult, RunRewards, RunS
 import { mutate, type ProfileReply } from "./account";
 import { ApiError, api } from "./api";
 import { session, type Team } from "./session";
+import { abandonStory } from "./story-session";
 
 const CURRENT_RUN_KEY = "vong-nguyet.run";
 const CLOSED_TICKET_ERRORS = new Set(["replay failed", "run closed", "ticket expired", "unknown run"]);
@@ -31,7 +32,8 @@ export async function startServerRun(deck: { id: string; heroIds: Team }): Promi
   const { runId, setup, loadout } = await api<{ runId: string; setup: RunSetup; loadout: Loadout }>("POST", "/runs", { body });
   const ticket: RunTicket = { runId, setup, loadout, actions: [] };
   session.ticket = ticket;
-  session.story = null;
+  // A run drops any open story ticket; close it on the server (fire-and-forget).
+  void abandonStory();
   persist(ticket);
   session.heroIds = setup.heroIds;
   session.seed = setup.seed;
@@ -97,6 +99,8 @@ export function resumeRun(ticket: RunTicket): boolean {
   const replay = replayRun(session.data, ticket.setup, ticket.actions, ticket.loadout);
   if (!replay.ok) return false;
   session.ticket = ticket;
+  // A resumed run replaces the combat context; close any open story ticket.
+  void abandonStory();
   session.heroIds = ticket.setup.heroIds;
   session.seed = ticket.setup.seed;
   session.deckCardIds = ticket.setup.deckCardIds;

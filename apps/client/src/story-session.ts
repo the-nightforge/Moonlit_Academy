@@ -1,10 +1,8 @@
 import { createStoryCombat } from "rules";
 import type { Action, Loadout, StoryRewards, StorySetup } from "rules";
 import { mutate, type ProfileReply } from "./account";
-import { ApiError, api } from "./api";
+import { ApiError, api, auth } from "./api";
 import { session, type Team } from "./session";
-
-const CLOSED_TICKET_ERRORS = new Set(["replay failed", "ticket closed", "ticket expired", "unknown ticket"]);
 
 /**
  * A story stage ticket the server issued, with every action applied so far
@@ -53,8 +51,8 @@ export async function submitStory(): Promise<{ won: boolean; rewards: StoryRewar
       reply = await send();
     }
   } catch (error) {
-    // The server closed this ticket for good; keeping it would only fail again.
-    if (error instanceof ApiError && CLOSED_TICKET_ERRORS.has(error.code)) session.story = null;
+    // No retry UI exists past this point: a failed submit would leak an open ticket.
+    await abandonStory();
     throw error;
   }
   session.story = null;
@@ -62,10 +60,11 @@ export async function submitStory(): Promise<{ won: boolean; rewards: StoryRewar
   return session.lastStory;
 }
 
+/** Drops the local ticket and closes it on the server; offline/no-token just drops it. */
 export async function abandonStory(): Promise<void> {
   const ticket = session.story;
   session.story = null;
-  if (!ticket) return;
+  if (ticket === null || !session.online || !auth.token) return;
   try {
     await api("POST", `/story/tickets/${ticket.ticketId}/abandon`);
   } catch {
