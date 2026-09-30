@@ -784,3 +784,273 @@ màn, 5 ở boss arc; XP Tu Luyện theo màn; 1 Hero.
 **Mục tiêu độ khó đã duyệt** (`18` §4.5): đo bằng bot, Bộ cơ bản `m05 + f04 + m06`, 80
 seed — màn thường Arc 1 ≥ 80% thắng; boss Arc 1 ≥ 60%; màn thường Arc 2 55–75%; boss
 Arc 2 40–60%; mỗi màn Arc 2 ≥ 60% với đội tốt nhất trong 3 đội mẫu.
+
+---
+
+### 13.3 Arc 1 — Vọng Nguyệt: nội dung chi tiết (bản đề xuất 7c.4)
+
+**Bản đề xuất chờ duyệt — chưa viết JSON.** Mọi số liệu là khởi điểm; chỉnh sau mô
+phỏng 80 seed (bot, Bộ cơ bản `m05 + f04 + m06`) ở Step 4 theo mục tiêu độ khó trên.
+Chỉ dùng effect / trạng thái / điều kiện đã có trong `01`, `02`, `static.ts`.
+
+Bối cảnh arc: năm nhất tại Vọng Nguyệt Thư Viện — người chơi qua các bài thí của bốn
+Viện (**Thanh Loan** văn → **Huyền Vũ** võ → **Bạch Lộ** y → **Cấm Địa Xích Diên**
+mở khe bất thường), gặp sự cố tại Tàng Thư Các và một vụ tập kích ban đêm, trước kỳ
+khảo hạch tổng do linh thú gác cổng thi chủ trì. Định nghĩa arc (Phase B ghi vào
+`story.json`): `arcs[0] = { id: "arc1", name: "Vọng Nguyệt", stageIds: [arc1_s01…arc1_s08], rewardHeroId: "m10" }`.
+
+#### 13.3.1 Bảng màn
+
+Mỗi màn `arc1_sNN` trỏ encounter `story_arc1_sNN` (`tier: "story"`, `name` = tên màn,
+không vào pool Lượt chơi / Trận lẻ).
+
+| # | Id màn | Tên | Kẻ địch (tổng HP) | `start` | `firstClear` Ngọc / Thiết / XP |
+|---|---|---|---|---|---|
+| 1 | `arc1_s01` | Nhập Học | `puppet_guard` (42) | — | 40 / 1 / 20 |
+| 2 | `arc1_s02` | Thanh Loan Thí Luận | `thanh_loan_thi_quan` **mới** (38) | — | 45 / 1 / 25 |
+| 3 | `arc1_s03` | Huyền Vũ Thí Võ | `huyen_vu_thi_quan` **mới** (48) | — | 50 / 1 / 25 |
+| 4 | `arc1_s04` | Bạch Lộ Thí Y | `shadow_fox` + `bach_lo_thi_quan` **mới** (23+36 = 59) | — | 50 / 1 / 25 |
+| 5 | `arc1_s05` | Cấm Địa Xích Diên | `book_wraith` + `shadow_fox` (55) | `bloodMoonRounds: 3` | 50 / 2 / 30 |
+| 6 | `arc1_s06` | Tàng Thư Các Có Ma | `book_wraith` ×2 (64) | — | 55 / 2 / 30 |
+| 7 | `arc1_s07` | Dạ Tập | `shadow_fox` ×3 (69) | — | 55 / 2 / 35 |
+| 8 | `arc1_s08` | Khảo Hạch Chi Linh | `khao_hach_chi_linh` **boss mới** (90) | — | 55 / 5 / 40 |
+
+**Tổng:** 400 Nguyệt Ngọc, 15 Huyền Thiết, XP Tu Luyện 20 → 40 theo màn (trả cho từng
+Hero trong `setup.heroIds`, `14` §16.3). Qua màn 8 tặng `m10` Chu Quyết.
+
+**Tuyến bài học** (theo `18` §4.5):
+
+- **s01:** nhịp trận cơ bản; `puppet_guard` `start: 0` → vòng 1 Tụ Lực (chuỗi rỗng),
+  dạy "địch cũng cần Nguyệt Lực".
+- **s02:** Tỏa Nguyệt của địch rút `moonReserve` — dạy tiêu Nguyệt Lực đúng lúc.
+- **s03:** giáp địch + Phản Đòn — dạy gom đòn lớn, `removeArmor`, và lượt thủ của địch.
+- **s04:** địch hồi phục — dạy dồn sát thương / hạ bên hỗ trợ trước (hồi `allAllies`).
+- **s05:** Huyết Nguyệt rút 2 HP mỗi Hero mỗi vòng — dạy kết thúc trận sớm.
+- **s06:** debuff của địch (Dễ Vỡ, Thiêu Đốt, Đóng Băng).
+- **s07:** bầy địch nhắm `lowestHp`; Ảnh Hồ mạnh lên ở Trăng Tròn (`moonOverrides`).
+- **s08:** boss đổi chiêu theo pha trăng — `moonOverrides` là thông tin công khai
+  (Nguyệt tính), dạy đọc pha trước khi ra tay.
+
+#### 13.3.2 Kẻ địch mới
+
+Ba "Thí Quan" là linh thể khảo thí do các Viện dựng lên — mỗi con một Viện, một bài
+học. Theo tinh thần Nguyệt tính (luật mới), mỗi kẻ địch mới có đúng **1 `moonOverride`**
+ở pha hợp viện; boss có **4** cho 4 pha từng có hiệu ứng (`new`, `firstQuarter`,
+`full`, `lastQuarter`). `art.portrait` để `""`.
+
+**`thanh_loan_thi_quan` — Thanh Loan Thí Quan** — `maxHp: 38`, `moonPower { start: 1, cap: 4 }`
+
+| intent | Tên | kind | cost | targeting | effects |
+|---|---|---|---|---|---|
+| `tlq_but_phong` | Bút Phong | attack | 1 | lowestHp | `damage 5 chosen` |
+| `tlq_toa_nguyet` | Tỏa Nguyệt | debuff | 1 | random | `drainMoonPower 2 chosen` |
+| `tlq_muc_an` | Mực Ấn | defend | 1 | — | `gainArmor 6 self` |
+| `tlq_luan_kiem` | Luận Kiếm | attack | 2 | random | `damage 4 chosen hits 2` |
+| `tlq_nguyet_chu` | Nguyệt Chú | debuff | 3 | random | `drainMoonPower 2 chosen` + `applyStatus weak 1 chosen` |
+
+`moonOverrides`: `firstQuarter` → `tlq_ban_nguyet_luan` "Bán Nguyệt Luận" (debuff,
+random): `drainMoonPower 3 chosen`.
+
+**`huyen_vu_thi_quan` — Huyền Vũ Thí Quan** — `maxHp: 48`, `moonPower { start: 1, cap: 4 }`
+
+| intent | Tên | kind | cost | targeting | effects |
+|---|---|---|---|---|---|
+| `hvq_thiet_chuong` | Thiết Chưởng | attack | 1 | front | `damage 5 chosen` |
+| `hvq_quy_giap` | Quy Giáp | defend | 1 | — | `gainArmor 7 self` |
+| `hvq_phan_kich` | Phản Kích | defend | 1 | — | `gainArmor 3 self` + `applyStatus reflect 3 self` |
+| `hvq_truy_phong` | Truy Phong | attack | 2 | lowestHp | `damage 8 chosen` |
+| `hvq_huyen_vu_bich` | Huyền Vũ Bích | defend | 3 | — | `gainArmor 10 self` + `applyStatus reflect 2 self` |
+
+`moonOverrides`: `lastQuarter` → `hvq_nguyet_bich` "Nguyệt Bích" (defend):
+`gainArmor 8 self` + `applyStatus reflect 2 self`.
+
+**`bach_lo_thi_quan` — Bạch Lộ Thí Quan** — `maxHp: 36`, `moonPower { start: 1, cap: 4 }`
+
+| intent | Tên | kind | cost | targeting | effects |
+|---|---|---|---|---|---|
+| `blq_cham_kich` | Châm Kích | attack | 1 | lowestHp | `damage 4 chosen` |
+| `blq_duong_sinh` | Dưỡng Sinh | buff | 1 | — | `applyStatus regen 2 allAllies` |
+| `blq_cam_lo` | Cam Lộ | buff | 1 | — | `heal 4 allAllies` |
+| `blq_kim_cham` | Kim Châm | attack | 2 | lowestHp | `damage 6 chosen` + `applyStatus vulnerable 1 chosen` |
+| `blq_hoi_xuan` | Hồi Xuân | buff | 3 | — | `heal 8 allAllies` + `cleanse self` |
+
+`moonOverrides`: `full` → `blq_nguyet_duoc` "Nguyệt Dược" (buff): `heal 6 allAllies` +
+`cleanse self`.
+
+**`khao_hach_chi_linh` — Khảo Hạch Chi Linh (boss)** — `maxHp: 90`,
+`moonPower { start: 2, cap: 7 }`. Linh thú gác cổng thi từ thời lập viện — đổi "đề
+thi" theo pha trăng. Chiêu gốc chỉ đánh ở 4 pha không có override.
+
+| intent | Tên | kind | cost | targeting | effects |
+|---|---|---|---|---|---|
+| `khl_thach_trao` | Thạch Trảo | attack | 2 | random | `damage 8 chosen` |
+| `khl_khao_an` | Khảo Ấn | debuff | 2 | random | `applyStatus vulnerable 2 chosen` + `applyStatus weak 1 chosen` |
+| `khl_tran_ap` | Trấn Áp | attack | 3 | — | `damage 4 allEnemies` |
+| `khl_ngoc_bich` | Ngọc Bích | defend | 3 | — | `gainArmor 10 self` |
+| `khl_lac_an` | Lạc Ấn | attack | 4 | lowestHp | `damage 12 chosen` |
+
+`moonOverrides` (đứng đầu chuỗi, cost 0 — `01` §9.2):
+
+| phase | intent | Tên | kind | targeting | effects |
+|---|---|---|---|---|---|
+| `new` | `khl_vo_nguyet_tram` | Vô Nguyệt Trảm | attack | lowestHp | `damage 12 chosen` |
+| `firstQuarter` | `khl_toa_nguyet_phap` | Tỏa Nguyệt Pháp | debuff | random | `drainMoonPower 2 chosen` |
+| `full` | `khl_vong_nguyet_nghi` | Vọng Nguyệt Nghi | buff | — | `heal 6 self` + `applyStatus regen 2 self` |
+| `lastQuarter` | `khl_huyen_vu_giap` | Huyền Vũ Giáp | defend | — | `gainArmor 10 self` + `applyStatus reflect 2 self` |
+
+Không `bloodMoonOverride`, không `phases` (đó là cơ chế boss co-op). So sánh sức
+mạnh: `moon_ape` 94 HP / đòn tới 18 — boss này 90 HP / đòn tới 12, đúng tầng dưới
+cho một arc dạy luật.
+
+#### 13.3.3 Lời thoại
+
+`speaker` chỉ dùng: `narrator`, Hero (`m05` Hoắc Liệt — nóng tính, thẳng; `f04` Ôn
+Như Ý — hiền, rụt rè nhưng bền; `m06` Tô Dạ — lười biếng bề ngoài, lạnh lùng bên
+trong, thủ thư Tàng Thư Các; `m10` Chu Quyết — tham vọng, tự ti ngầm, hay ghi chép —
+là bạn học trong truyện, chỉ vào đội sau arc), và id kẻ địch của màn đó. Thoại **không
+giả định** Hero nào có trong đội ra trận.
+
+**`arc1_s01` Nhập Học**
+
+`before`:
+- `narrator`: "Đêm khai giảng, cổng đá Vọng Nguyệt Thư Viện hé mở. Tấm biển ngang cổng chỉ viết một dòng: ứng viên vượt qua người gác cổng thì được nhập học."
+- `m05`: "Con rối gỗ mà cũng dám cản đường? Để ta đốn nó!"
+- `f04`: "Nghe nói khôi lỗi của học viện đánh chậm nhưng rất nặng... mọi người cẩn thận nhé."
+- `m06`: "(ngáp) Vòng đầu nó chưa tụ đủ Nguyệt Lực đâu. Thừa cơ đánh trước — đừng kéo dài."
+
+`after`:
+- `narrator`: "Pho khôi lỗi rạn nứt, chậm rãi quỵ gối. Tấm biển 'Nhập Học' tự lật mặt — hiện chữ 'ĐẬU'."
+- `m05`: "Chỉ thế thôi á? Bài thi của học viện tối cao có vẻ nhàn rỗi đấy."
+- `f04`: "Đừng chủ quan... bốn Viện còn bốn bài thí riêng, nghe nói một bài khó hơn một bài."
+- `narrator`: "Những cái tên mới được ghi vào sổ Vọng Nguyệt — trang đầu của một năm đầy sóng gió."
+
+**`arc1_s02` Thanh Loan Thí Luận**
+
+`before`:
+- `narrator`: "Sảnh Thanh Loan Viện — nơi văn chương và mưu lược được trọng nhất. Bài thí luận: đấu pháp với Thí Quan do viện dựng lên."
+- `thanh_loan_thi_quan`: "Tân sinh thường ôm khư khư Nguyệt Lực chờ đòn lớn. Thanh Loan có một chiêu khiến thói quen đó đổ sông đổ bể — gọi là Tỏa Nguyệt."
+- `m10`: "Tỏa Nguyệt... rút cạn Nguyệt Lực Dự Trữ của đối thủ. Đọc trong sách đã lâu, đây là lần đầu thấy người ta dùng thật."
+- `m05`: "Lời nhiều quá! Muốn lấy thì lấy — ta đánh nhanh hơn ngươi lấy!"
+- `thanh_loan_thi_quan`: "Khí phách tốt. Vào bài."
+
+`after`:
+- `thanh_loan_thi_quan`: "Tốt. Kẻ thắng không phải kẻ có nhiều Nguyệt Lực nhất — mà là kẻ tiêu nó đúng lúc nhất."
+- `m10`: "Ghi nhớ: Tỏa Nguyệt chỉ lấy được phần Dự Trữ đã tích — quỹ của vòng mới vẫn về đủ."
+- `f04`: "May quá... chỉ nhìn Nguyệt Lực bị hút đi thôi mà đã thấy hãi rồi."
+- `narrator`: "Dấu ấn Thanh Loan đầu tiên đóng vào sổ thi — bài thí luận đậu."
+
+**`arc1_s03` Huyền Vũ Thí Võ**
+
+`before`:
+- `narrator`: "Thao trường Huyền Vũ Viện — cát vàng, giáp đen, tiếng gió qua hàng thương giá. Bài thí võ không đòi đánh đẹp, chỉ đòi hạ một Thí Quan biết chắn đòn và trả đòn."
+- `huyen_vu_thi_quan`: "Đánh đi. Mỗi đòn các ngươi trút lên giáp của ta, một phần sẽ bật ngược về tay các ngươi."
+- `f04`: "Phản Đòn... đánh nhiều nhịp nhỏ thì mỗi nhịp đều bị phản. Phải gom thành đòn lớn, hoặc phá giáp trước!"
+- `m05`: "Đúng sở trường của ta — một nhát xuyên giáp cho xong!"
+- `m06`: "Võ sĩ đứng nghiêm thế kia thì đòn đâu khó đoán."
+
+`after`:
+- `huyen_vu_thi_quan`: "Được. Giáp chỉ là vỏ — thứ các ngươi vừa đánh vỡ là sự kiên trì, và nó đáng khâm phục."
+- `m05`: "Ha! Cuối cùng cũng có một bài thi ra hồn!"
+- `narrator`: "Dấu ấn Huyền Vũ — bài thí võ đậu."
+
+**`arc1_s04` Bạch Lộ Thí Y**
+
+`before`:
+- `narrator`: "Viện Bạch Lộ, sân thuốc ngập mùi thảo mộc. Bài thí y: vượt qua một Thí Quan chuyên chữa lành — đi cùng một con thú bị thương nó cứu hộ."
+- `bach_lo_thi_quan`: "Ta không đánh mạnh — nhưng ta chữa nhanh. Muốn thắng ta, các ngươi phải đánh nhanh hơn ta chữa."
+- `f04`: "Thầy là tiền bối của em... trận kéo dài là lợi thế của bên có hồi máu — mình phải dồn sát thương thật nhanh!"
+- `m10`: "Hoặc hạ người chữa trước — chặn nguồn hồi phục thì phần còn lại tự gãy."
+- `bach_lo_thi_quan`: "Vào bài đi. Cho ta xem các ngươi chữa được bệnh 'chần chừ' thế nào."
+
+`after`:
+- `bach_lo_thi_quan`: "Tốt lắm. Y thuật cứu được người — nhưng không cứu được một trận đấu đã quyết."
+- `f04`: "Cảm ơn thầy chỉ dạy ạ! Em ghi nhớ rồi."
+- `narrator`: "Dấu ấn Bạch Lộ — ba trong bốn bài thí đã xong."
+
+**`arc1_s05` Cấm Địa Xích Diên**
+
+`before`:
+- `narrator`: "Xích Diên Viện không đặt bài thí — họ niêm phong bí thuật trong một cấm địa. Đêm nay, cánh cửa ấy hé ra một khe."
+- `narrator`: "Gió tràn qua khe cửa mang theo mùi tàn khét. Và trên trời — trăng đang nhuộm màu máu. Huyết Nguyệt."
+- `m05`: "Trăng... đỏ? Cái quái gì thế này?!"
+- `m06`: "(vẻ ngái ngủ tan hẳn) Cấm Thuật. Ta đọc về nó — trong những cuốn sách không được phép đọc."
+- `f04`: "Trong Huyết Nguyệt, cơ thể sẽ không ngừng mất máu mỗi vòng... phải kết thúc trận này thật nhanh!"
+- `book_wraith`: "...kẻ lạ... đọc nhầm... dòng cấm..."
+
+`after`:
+- `narrator`: "Khe cấm địa khép lại trong im lặng. Nhưng thứ ánh sáng đỏ kia vẫn đọng lại nơi đáy mắt các ngươi."
+- `m06`: "Thứ đó học trò không dựng nổi. Có kẻ mở cánh cửa ấy — từ phía trong."
+- `m10`: "Sách ghi: Huyết Nguyệt là dấu hiệu của Cấm Thuật thức tỉnh. Nếu đúng... chuyện này mới chỉ bắt đầu."
+- `m05`: "Kẻ nào mở cửa thì đi tìm kẻ đó. Đơn giản!"
+
+**`arc1_s06` Tàng Thư Các Có Ma**
+
+`before`:
+- `narrator`: "Tàng Thư Các — nơi Tô Dạ làm thủ thư mỗi đêm. Gần đây sách tự xé trang, và từ kệ cũ vọng ra tiếng thì thầm không rõ từ đâu."
+- `m06`: "Phòng sách của ta có khách. Thư Hồn — những trang sách bị bỏ quên quá lâu, oán khí đọng thành hình."
+- `f04`: "Nghe tiếng xào xạc đó mà rùng hết cả mình..."
+- `book_wraith`: "...trang nào... cũng là ngục... cuốn nào... cũng thiếu... trang cuối..."
+- `m06`: "Đừng lắng tai nghe nó. Giọng của Thư Hồn làm người nghe mỏi mệt — nó sống bằng sự chú ý của ngươi."
+
+`after`:
+- `narrator`: "Thư Hồn tan thành những trang giấy rời, rơi xuống im ắng như một trận tuyết nhỏ."
+- `book_wraith`: "...trả lại... trang... cuối..."
+- `m06`: "(nhặt một trang rời) 'Nguyệt Thực Ký' — trang cuối của nó bị xé mất từ lâu. Ai đó đã đọc cuốn này trước cả ta."
+- `f04`: "Thắng rồi... nhưng chuyện Tô Dạ vừa nói còn đáng sợ hơn con ma lúc nãy."
+
+**`arc1_s07` Dạ Tập**
+
+`before`:
+- `narrator`: "Đường về ký túc xá cắt qua rừng trúc. Đêm nay gió lạnh — và trong bóng cây, có thứ đang lộ răng."
+- `m05`: "Ảnh Hồ! Cả bầy săn đêm — chúng luôn nhắm con mồi yếu nhất trước!"
+- `f04`: "B-ba con... giữ đội hình, đừng ai lạc hàng nhé!"
+- `m06`: "Chúng vào được học viện nghĩa là có người mở cửa. Trận này không phải tai nạn."
+- `narrator`: "Ba cái bóng lùa qua kẽ trúc, xếp thành hình răng nanh."
+
+`after`:
+- `narrator`: "Bầy Ảnh Hồ tan vào bóng tối như chưa từng hiện hữu, chỉ để lại vài sợi lông đen trên lá trúc."
+- `m05`: "Tập kích ban đêm ngay trong sân học viện?! Vọng Nguyệt rốt cuộc đang giấu cái gì?"
+- `m06`: "Ai đó muốn thử xem tân sinh năm nay có những gì. Câu trả lời — vừa được viết xong."
+- `narrator`: "Gió đêm lùa qua kẽ trúc — nghe như lời nhắn cuối trước ngày khảo hạch."
+
+**`arc1_s08` Khảo Hạch Chi Linh**
+
+`before`:
+- `narrator`: "Bài khảo hạch cuối cùng của năm nhất. Trên đài cao nhất của thư viện, linh thú gác cổng thi từ thời lập viện thức dậy."
+- `khao_hach_chi_linh`: "KẺ BƯỚC VÀO ĐIỆN KHẢO. TRĂNG ĐỔI PHA — TA ĐỔI ĐỀ. TIẾN LÊN, ỨNG VIÊN."
+- `m10`: "Nó đổi chiêu theo pha trăng — tra Nguyệt tính của nó trước khi ra tay, đừng đánh mù!"
+- `f04`: "Lớn quá... nhưng mình đã đi được đến tận đây — không lùi nữa!"
+- `m05`: "Trăng đổi thì ta đổi theo. Đơn giản!"
+
+`after`:
+- `khao_hach_chi_linh`: "ĐẬU. TÂN SINH CỦA VỌNG NGUYỆT — TỪ ĐÊM NAY, TRĂNG SẼ THEO DÕI CÁC NGƯƠI."
+- `narrator`: "Linh thú tan thành bụi ánh sáng, quyện lên quanh đỉnh thư viện. Trên bảng vàng, những cái tên mới được khắc ngang hàng các thế hệ trước."
+- `m10`: "(thở hắt) Cuối cùng mình cũng qua được... và mình sẽ còn học được nhiều hơn nữa."
+- `m05`: "Năm nhất mới mở màn thôi. Xem học viện này còn giấu bao nhiêu chuyện."
+- `narrator`: "Phần thưởng nhập môn: Chu Quyết — học sinh thường dân xuất sắc nhất khóa — chính thức gia nhập đội."
+
+#### 13.3.4 Ghi chú thiết kế
+
+- **Mốc sức mạnh:** số liệu bám tầng 1–2 hiện có (`puppet_guard` 42 HP, đòn 6–10;
+  `shadow_fox` 23 HP; `book_wraith` 32 HP; boss `moon_ape` 94 HP). Tổng HP màn tăng
+  dần 42 → 90; damage tối đa mỗi chiêu giữ ≤ 12 (một bậc dưới `moon_ape`).
+- **Nguyệt Luân mới:** spec `superpowers/specs/2026-09-30-nguyet-luan-redesign` (đã
+  duyệt, làm trước 7c.4) đổi pha khởi đầu thành ngẫu nhiên, mỗi pha một Ưu Đãi tag −1
+  cộng một Nguyệt Lệnh bốc theo trận, và quy ước mỗi kẻ địch có 1–2 Nguyệt tính công
+  khai. Bản này viết theo luật đó: 3 Thí Quan mỗi con đúng 1 `moonOverride` ở pha hợp
+  viện; boss giữ 4 (vì mục tiêu "đổi hành vi theo pha" của `18` §4.5). Chiêu trăng
+  không phụ thuộc lệnh được bốc — nhưng nếu lệnh `healMultiplier`/`armorMultiplier`
+  tương ứng không ra, hiệu ứng nhân đôi / ×1.5 của `full`/`lastQuarter` không xảy ra
+  (chấp nhận — chiêu vẫn kích). Sau khi `CombatStart.decrees` có trong schema có thể
+  ghim lệnh cho một số màn nếu muốn.
+- **Huyết Nguyệt màn 5:** `bloodMoonRounds: 3` → mỗi Hero mất ~6 HP trải 3 vòng đầu;
+  gặp kẻ địch `start: 0` nên vòng 1 tương đối nhẹ.
+- **Kẻ địch cũ không đổi số liệu** trong bản này; khi Nguyệt tính của chúng được thêm
+  (kế hoạch redesign, Task 6), các màn 5–7 sẽ nhận thêm chiêu trăng — tính vào mô
+  phỏng Step 4.
+- **Câu hỏi chờ duyệt:**
+  1. Màn 4 ghép `shadow_fox` làm "con thú bị thương" đi cùng Thí Quan Y — giữ hay để
+     Thí Quan Y đứng một mình (dễ hơn)?
+  2. Màn 8 để pha khởi đầu ngẫu nhiên (khuyến khích đọc Nguyệt tính) hay ghim
+     `start.moonIndex` cho ổn định lần đầu gặp boss?
+  3. `bloodMoonRounds` màn 5: 3 vòng (đề xuất) hay 2 vòng nhẹ hơn?
