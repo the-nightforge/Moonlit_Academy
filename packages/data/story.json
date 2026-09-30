@@ -1,6 +1,7 @@
 {
   "arcs": [
-    { "id": "arc1", "name": "Vọng Nguyệt", "stageIds": ["arc1_s01", "arc1_s02", "arc1_s03", "arc1_s04", "arc1_s05", "arc1_s06", "arc1_s07", "arc1_s08"], "rewardHeroId": "m10" }
+    { "id": "arc1", "name": "Vọng Nguyệt", "stageIds": ["arc1_s01", "arc1_s02", "arc1_s03", "arc1_s04", "arc1_s05", "arc1_s06", "arc1_s07", "arc1_s08"], "rewardHeroId": "m10" },
+    { "id": "arc2", "name": "Bóng Tối", "stageIds": ["arc2_s01", "arc2_s02", "arc2_s03", "arc2_s04", "arc2_s05", "arc2_s06", "arc2_s07", "arc2_s08"], "rewardHeroId": "f02" }
   ],
   "stages": [
     {
@@ -136,6 +137,161 @@
         { "speaker": "m10", "text": "(thở hắt) Cuối cùng mình cũng qua được... và mình sẽ còn học được nhiều hơn nữa." },
         { "speaker": "m05", "text": "Năm nhất mới mở màn thôi. Xem học viện này còn giấu bao nhiêu chuyện." },
         { "speaker": "narrator", "text": "Phần thưởng nhập môn: Chu Quyết — học sinh thường dân xuất sắc nhất khóa — chính thức gia nhập đội." }
+      ],
+      "firstClear": { "moonJade": 55, "darkIron": 5, "masteryXp": 40 }
+    },
+    {
+      "id": "arc2_s01", "arcId": "arc2", "name": "Thư Tín Mất Tích", "encounterId": "story_arc2_s01",
+      "before": [
+        { "speaker": "narrator", "text": "Ba tuần nay, thư của học sinh gửi về quê không một lá tới nơi. Đêm nay các ngươi phục quanh phòng bưu dịch — nơi bao thư chất thành từng đống nhỏ." },
+        { "speaker": "m10", "text": "Ghi lại: mười ba bao thư mất không dấu vết, sáp niêm không rách. Kẻ lấy biết cách mở thư mà không để lại dấu tay." },
+        { "speaker": "f04", "text": "Trong thư của mọi người... có cả địa chỉ nhà, lời nhắn cho cha mẹ. Sao ai lại muốn những thứ đó chứ?" },
+        { "speaker": "hac_y_mat_tham", "text": "Thư không chữ chỉ là giấy. Thư có chữ — là bản đồ. Đừng tưởng học viện này kín như các ngươi nghĩ." },
+        { "speaker": "m05", "text": "Nói hay đấy, đồ trộm! Cất bản đồ của ngươi đi — ta đóng dấu ngươi ngay tại đây!" }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Bóng áo đen loang xuống mái ngói rồi tan. Trong bọc hắn đánh rơi: hàng chục lá thư chưa đọc — mỗi lá đều bị xé mất đoạn ký tên." },
+        { "speaker": "m10", "text": "Không lấy tiền, không lấy nội dung — chỉ lấy tên. Chúng đang lập danh sách... danh sách những người ở học viện này." },
+        { "speaker": "hac_y_mat_tham", "text": "(khẽ, trước khi ngất) Vô Nguyệt không quên cái tên nào." },
+        { "speaker": "f04", "text": "Vô... Nguyệt? Nghe cái tên đó mà lạnh cả người..." },
+        { "speaker": "m05", "text": "Kẻ nào lập danh sách thì ta xé danh sách đó. Tìm hang của chúng thôi!" }
+      ],
+      "firstClear": { "moonJade": 40, "darkIron": 1, "masteryXp": 25 }
+    },
+    {
+      "id": "arc2_s02", "arcId": "arc2", "name": "Mật Thám", "encounterId": "story_arc2_s02",
+      "before": [
+        { "speaker": "narrator", "text": "Lần theo đống thư, các ngươi tới một căn phòng hoang ngoài bờ hồ — và nhận ra mình không phải thợ săn duy nhất tới trước." },
+        { "speaker": "f02", "text": "Á à ~ đội mới của thư viện cũng tới rồi. Muội tới trước các huynh đệ một bước — thói quen nghề nghiệp thôi." },
+        { "speaker": "m05", "text": "Ngươi là ai?! Đêm nay ta không tin cái bóng nào cả!" },
+        { "speaker": "f02", "text": "Diệp Linh Lung — người bán tin, không phải kẻ trộm thư. Tin xấu: tổ chim này đã dọn. Tin tốt: chúng để lại đồ đội trả ~" },
+        { "speaker": "hac_y_mat_tham", "text": "Con cáo của cung điện cũng ngửi được mùi này à... Coi chừng cái bóng sau lưng mình đi, mật thám." },
+        { "speaker": "m10", "text": "(thì thầm) 'Con cáo của cung điện' — ghi lại: cô ta không phải học sinh." }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Tổ chim đã trống thật — chỉ còn dây ràng, tro thư đốt và hai quân bài úp trên mặt bàn." },
+        { "speaker": "f02", "text": "Vô Nguyệt ~ cái tên này muội ngửi thấy từ trong cung ra tới đây. Ai học được cách 'ẩn thân trong ánh trăng' thì sẽ không dạy lại cho người khác đâu nhé." },
+        { "speaker": "f04", "text": "Vậy... cô theo dõi bọn này từ bao giờ?" },
+        { "speaker": "f02", "text": "Từ đêm mưa tuần trước. Đừng giật mình ~ muội còn theo dõi cả bọn chúng nữa — và chúng giỏi hơn các huynh tưởng nhiều." },
+        { "speaker": "m05", "text": "Giỏi đến đâu cũng chỉ là đồ lén lút. Bọn ta đây: đánh thẳng mặt!" }
+      ],
+      "firstClear": { "moonJade": 45, "darkIron": 1, "masteryXp": 30 }
+    },
+    {
+      "id": "arc2_s03", "arcId": "arc2", "name": "Vô Nguyệt Ám Sát", "encounterId": "story_arc2_s03",
+      "before": [
+        { "speaker": "narrator", "text": "Nửa đêm. Chuông báo động không kịp rung — ba cái bóng đã lọt qua tường, nhắm thẳng dãy ký túc của những người từng chạm vào bí mật Cấm Địa." },
+        { "speaker": "vo_nguyet_am_sat", "text": "Trăng lặn nơi này." },
+        { "speaker": "m05", "text": "Câu cửa miệng của chúng à? Nói xong câu đó ngươi nằm luôn được không?" },
+        { "speaker": "m06", "text": "(không ngáp nữa) ...Ẩn Thân. Đánh lan ra — nhắm đơn vào cái bóng là đánh vào hư không." },
+        { "speaker": "f04", "text": "Họ tiến lại mà không một tiếng động... mọi người đừng tách hàng!" }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Các bóng đen vỡ như mực gặp nước. Trên nền nhà chỉ còn một dấu ấn: vầng trăng bị tô đen." },
+        { "speaker": "m10", "text": "Chúng không nhắm vào người — chúng nhắm vào 'kẻ từng đọc trang cuối'. Cuốn 'Nguyệt Thực Ký' ấy... chúng muốn bịt miệng ai đã đọc nó." },
+        { "speaker": "m06", "text": "(im lặng lau tay áo) ...có những danh sách chỉ cần một nét gạch." },
+        { "speaker": "m05", "text": "Ai xách dao tới thì cứ tới. Vọng Nguyệt này chưa thua đêm nào!" },
+        { "speaker": "narrator", "text": "Trăng Khuyết Đầu nhô lên khỏi mái — mỏng như vết dao. Các ngươi sống qua đêm không trăng đầu tiên." }
+      ],
+      "firstClear": { "moonJade": 50, "darkIron": 2, "masteryXp": 30 }
+    },
+    {
+      "id": "arc2_s04", "arcId": "arc2", "name": "Tô Dạ Dao Động", "encounterId": "story_arc2_s04",
+      "before": [
+        { "speaker": "narrator", "text": "Nghi Sĩ của Vô Nguyệt không đến để giết — họ đến để 'nhắc nợ'. Kèm theo hai sát thủ: một tin nhắn bằng thứ ngôn ngữ chỉ kẻ trong nghề mới hiểu." },
+        { "speaker": "vo_nguyet_nghi_si", "text": "Tô Dạ. Dao động là quyền của người sống — nhưng kẻ ngủ không được phép mơ." },
+        { "speaker": "m06", "text": "...Ta vẫn đang ngủ. Về đi." },
+        { "speaker": "vo_nguyet_nghi_si", "text": "Vô Nguyệt không đòi lại thứ đã cho ngươi — chỉ đòi thứ ngươi hứa. Một cánh cửa mở, một đêm trăng tắt. Cũ kỹ, dễ nhớ." },
+        { "speaker": "f04", "text": "Tô Dạ... họ đang nói gì vậy? 'Cánh cửa mở' là sao...?" },
+        { "speaker": "m05", "text": "Ai hứa hẹn gì với bọn này thì đập bọn này xong rồi tính! Đứng về phía bọn ta trước đã!" },
+        { "speaker": "m06", "text": "(khẽ, như ngáp trong mơ) Được. Nợ xưa — trả bằng trận này." }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Nghi Sĩ quỵ xuống, nụ cười của kẻ tín đồ không rời môi. Hai sát thủ tan đi không hối tiếc — tin nhắn đã giao xong." },
+        { "speaker": "vo_nguyet_nghi_si", "text": "Dao động cũng là một câu trả lời, Tô Dạ à. Vô Nguyệt ghi nhận... câu trả lời đó." },
+        { "speaker": "m06", "text": "Ghi thì ghi. Ta là thủ thư — và thủ thư không giữ gì mãi cả, kể cả lời hứa." },
+        { "speaker": "m05", "text": "Đi ngủ đi Tô Dạ. Ai thắc mắc thì để ta trả lời — bằng thương." },
+        { "speaker": "f04", "text": "(lo lắng) Tô Dạ vẫn giấu gì đó... nhưng hắn vừa đứng về phía mình, phải không?" }
+      ],
+      "firstClear": { "moonJade": 50, "darkIron": 1, "masteryXp": 30 }
+    },
+    {
+      "id": "arc2_s05", "arcId": "arc2", "name": "Chợ Đêm Tin Tức", "encounterId": "story_arc2_s05",
+      "before": [
+        { "speaker": "narrator", "text": "Chợ đêm ngoài thành — nơi bí mật được cân lên cân bạc. Diệp Linh Lung dẫn đường: muốn biết Vô Nguyệt đánh đâu, phải trả bằng thứ tiền không mua nổi." },
+        { "speaker": "f02", "text": "Quy tắc chợ đêm: hỏi gì trả đó. Câu hỏi của chúng ta đắt ~ nên đêm nay ta đi đòi nợ thay vì mua." },
+        { "speaker": "fox_king", "text": "Hừ — khách quen của ta bán tin cho các ngươi được, nhưng trước phải trả 'phí giới thiệu'. Đám nhỏ của ta đói lắm." },
+        { "speaker": "m05", "text": "Sao ai trong chợ này cũng nói nhiều mà không nói gì?! Đánh xong rồi mặc cả!" },
+        { "speaker": "m10", "text": "(vừa né vừa viết) Chợ đêm = sở giao dịch tin tức. Ghi nhớ cho báo cáo— à không, cho chuyện kể sau này." }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Hồ Vương lùi vào sương, tiếng cười khàn còn vương trong ánh đèn lồng đỏ." },
+        { "speaker": "fox_king", "text": "Ta giữ chữ tín: khách của ngươi đã trả giá để 'mượn mắt trăng'. Đêm Trăng Non tới, chúng lên Quan Tinh Đài — nơi nhìn thấy mọi thứ, trừ bóng tối." },
+        { "speaker": "f02", "text": "Quan Tinh Đài ~ nơi giáo quan Khương Tịch đọc sao mỗi đêm. Muốn giết một nhà tiên tri thì trăng non là đêm duy nhất không ai nhìn thấy — kể cả ông ta." },
+        { "speaker": "m10", "text": "Phải báo cho giáo quan ngay — đêm Trăng Non chỉ còn vài ngày!" },
+        { "speaker": "f04", "text": "Đánh nhau trong đêm không trăng... tối tới mức không thấy cả tay mình..." }
+      ],
+      "firstClear": { "moonJade": 50, "darkIron": 2, "masteryXp": 35 }
+    },
+    {
+      "id": "arc2_s06", "arcId": "arc2", "name": "Quan Tinh Đài", "encounterId": "story_arc2_s06",
+      "start": { "moonIndex": 0 },
+      "before": [
+        { "speaker": "narrator", "text": "Quan Tinh Đài trên đỉnh núi — mái vòm xoay theo sao. Đêm nay trăng non, trời đen đặc, và những cái bóng đã leo tường trước khi ai kịp hô." },
+        { "speaker": "m08", "text": "Ta đọc được đêm nay từ ba năm trước. Nhưng viết lại nó — chỉ được từ đêm nay." },
+        { "speaker": "vo_nguyet_nghi_si", "text": "Vô Nguyệt Tế đã bắt đầu. Ánh trăng là lời nói dối đầu tiên — đêm nay đài của ngươi mù như mọi kẻ mù khác." },
+        { "speaker": "m08", "text": "Kẻ không thấy gì trong bóng tối thì không nên lên đài của ta. Ở đây, từng viên gạch nhớ hướng của sao." },
+        { "speaker": "m05", "text": "Trăng non là sân của bọn sát thủ — nhưng cũng là của ta! Đánh lan ra, đừng nhắm đơn!" },
+        { "speaker": "f04", "text": "Ẩn Thân của chúng kéo dài hơn trong đêm không trăng... mọi người đừng tản ra!" }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Tinh khí của đài vẫn sáng — ánh sao xuyên qua từng mảng tối như kim châm qua lụa đen. Bóng cuối cùng vỡ ra khi viền trời hớt qua tia sao đầu tiên." },
+        { "speaker": "vo_nguyet_nghi_si", "text": "Tế lễ hôm nay thất bại chỉ là dời ngày. Ảnh Chủ đã có 'trang cuối' — và trăng non sẽ quay lại, như mọi chu kỳ." },
+        { "speaker": "m08", "text": "Ta biết các ngươi đến từ lâu. Điều ta không ngờ là các em cũng đến — đọc sách tốt đấy, tân sinh." },
+        { "speaker": "m10", "text": "Ảnh Chủ — đầu não của Vô Nguyệt! Giáo quan, hang ổ của chúng ở đâu?" },
+        { "speaker": "m08", "text": "Dưới đài này. Nền của phế viện cũ — nơi trăng không soi tới, vì chính chúng đã tắt nó." },
+        { "speaker": "f04", "text": "(nuốt nước bọt) Vậy là đêm tới... chúng ta đi xuống đó à? Em chuẩn bị thêm thuốc đã." }
+      ],
+      "firstClear": { "moonJade": 55, "darkIron": 2, "masteryXp": 35 }
+    },
+    {
+      "id": "arc2_s07", "arcId": "arc2", "name": "Hắc Vệ", "encounterId": "story_arc2_s07",
+      "before": [
+        { "speaker": "narrator", "text": "Nền phế viện dưới chân đài — cổng hầm đen như miệng giếng. Gác cổng: một võ sĩ giáp đen, dáng đứng của người đã quên mình sống thế nào." },
+        { "speaker": "black_guard", "text": "Hắc Vệ. Lệnh duy nhất: không ai qua." },
+        { "speaker": "m05", "text": "Lệnh một chữ à? Ta có lệnh hai chữ: tránh ra!" },
+        { "speaker": "vo_nguyet_am_sat", "text": "Trăng lặn sâu nơi này — ngươi sẽ không nghe thấy chính mình ngã." },
+        { "speaker": "f04", "text": "Bộ giáp đó... là giáp thị vệ cũ của triều đình! Sao quân nhà vua lại gác cho Vô Nguyệt?!" },
+        { "speaker": "m10", "text": "(viết nhanh) Đội thị vệ mất tích ba năm trước — hồ sơ bị đốt sạch. Hóa ra là ở đây." }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Hắc Vệ gãy xuống như pho tượng mất nền. Phía sau hắn, hành lang đổ dốc vào một chỗ đen đặc tới mức ánh đèn cũng tắt." },
+        { "speaker": "black_guard", "text": "...(giọng vỡ, như người vừa tỉnh) ...báo... báo lên trên... trăng sẽ... tắt..." },
+        { "speaker": "m05", "text": "Hắn nhắc nhở mình à? Lạ thật — bị đánh bại mà như được đánh thức." },
+        { "speaker": "m10", "text": "Dưới đó là đầu não của chúng. Ai xuống cũng phải biết: mình đang bước vào nơi không còn trăng." },
+        { "speaker": "narrator", "text": "Ở đáy hành lang, có thứ đang thở chậm — đều như một mặt trăng thứ hai, nhưng không mang theo ánh sáng nào." }
+      ],
+      "firstClear": { "moonJade": 55, "darkIron": 2, "masteryXp": 40 }
+    },
+    {
+      "id": "arc2_s08", "arcId": "arc2", "name": "Vô Nguyệt Ảnh Chủ", "encounterId": "story_arc2_s08",
+      "before": [
+        { "speaker": "narrator", "text": "Đại điện không trăng. Giữa sảnh, một cái bóng đứng — không rõ hắn mặc áo đen, hay chính bóng đã đứng thành hình người." },
+        { "speaker": "vo_nguyet_anh_chu", "text": "Các ngươi đến với sức mạnh, với bạn bè, với ánh sáng trong người. Tốt. Ta lấy hết — từng thứ một." },
+        { "speaker": "f02", "text": "Ảnh Chủ ~ kẻ mua thông tin của mọi phe trừ Vô Nguyệt. Đêm nay ta bán miễn phí một tin: ngươi thua." },
+        { "speaker": "vo_nguyet_anh_chu", "text": "Mật thám của Thái Hậu. Ta biết mặt ngươi trước cả khi ngươi cất tiếng — ta cướp nó từ lâu rồi." },
+        { "speaker": "m06", "text": "(giọng lạnh, không còn vẻ ngái ngủ) Ngươi cho ta một cái tên trong danh sách. Đêm nay ta trả lại — bằng con dao cuối." },
+        { "speaker": "m05", "text": "Nói nhiều rồi! Bóng ơi là bóng — gặp thương thì cũng rách thôi!" }
+      ],
+      "after": [
+        { "speaker": "narrator", "text": "Ảnh Chủ không gục — hắn nhạt dần như vệt mực bị rửa khỏi trang sách. Trên đài trống, 'trang cuối' của Nguyệt Thực Ký trở về trong im lặng." },
+        { "speaker": "vo_nguyet_anh_chu", "text": "Trăng rạng... cũng chỉ là món nợ phải trả. Vô Nguyệt không bao giờ mất hết... chỉ đợi lặn..." },
+        { "speaker": "m06", "text": "Nợ xong. Kể từ đêm nay, ta chỉ là thủ thư." },
+        { "speaker": "f02", "text": "Nhiệm vụ của muội tới đây là hết ~ nhưng cung điện cho phép muội 'đổi bàn làm việc'. Thư viện này thú vị hơn tưởng tượng — muội ở lại nhé?" },
+        { "speaker": "f04", "text": "Thật á?! Em mừng quá — từ nay bọn mình cùng một đội!" },
+        { "speaker": "m10", "text": "Ghi nhận: Vô Nguyệt tàn diệt, 'trang cuối' trở về thư viện, Diệp Linh Lung nhập đội. Năm nhất... kết thúc chưa yên." },
+        { "speaker": "narrator", "text": "Trên bầu trời, Lưỡi Liềm Đầu nhú lên — như thể cả bầu trời cũng thở phào." },
+        { "speaker": "narrator", "text": "Phần thưởng kết arc: Diệp Linh Lung — mật thám của Thái Hậu, kẻ bán mọi thứ trừ sự thật — chính thức gia nhập đội." }
       ],
       "firstClear": { "moonJade": 55, "darkIron": 5, "masteryXp": 40 }
     }

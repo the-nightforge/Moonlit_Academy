@@ -474,5 +474,176 @@
       }
     ],
     "art": { "portrait": "" }
+  },
+  {
+    "id": "hac_y_mat_tham",
+    "name": "Hắc Y Mật Thám",
+    "maxHp": 10,
+    "moonPower": { "start": 1, "cap": 4 },
+    "intents": [
+      { "id": "hym_am_cham", "name": "Ám Châm", "kind": "attack", "targeting": "lowestHp", "cost": 1,
+        "effects": [{ "type": "damage", "amount": 2, "to": "chosen" }] },
+      { "id": "hym_thin_tuc", "name": "Thính Tức", "kind": "debuff", "targeting": "random", "cost": 1,
+        "effects": [{ "type": "drainMoonPower", "amount": 2, "to": "chosen" }] },
+      { "id": "hym_dao_an", "name": "Đạo Ấn", "kind": "special", "targeting": "highestHp", "cost": 2,
+        "effects": [{ "type": "stealBuff", "count": 1 }] },
+      { "id": "hym_mai_phuc", "name": "Mai Phục", "kind": "debuff", "targeting": "lowestHp", "cost": 2,
+        "effects": [{ "type": "applyStatus", "status": "vulnerable", "amount": 2, "to": "chosen" }] },
+      { "id": "hym_cap_bao", "name": "Cấp Báo", "kind": "debuff", "targeting": "random", "cost": 3,
+        "effects": [
+          { "type": "drainMoonPower", "amount": 3, "to": "chosen", "steal": true },
+          { "type": "damage", "amount": 3, "to": "chosen" }
+        ] }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "new",
+        "intent": {
+          "id": "hym_vo_nguyet_mat_lenh", "name": "Vô Nguyệt Mật Lệnh", "kind": "special", "targeting": "random",
+          "effects": [
+            { "type": "drainMoonPower", "amount": 3, "to": "chosen", "steal": true },
+            { "type": "stealBuff", "count": 1 }
+          ]
+        }
+      }
+    ],
+    "art": { "portrait": "" }
+  },
+  {
+    "id": "vo_nguyet_am_sat",
+    "name": "Vô Nguyệt Ám Sát",
+    "maxHp": 18,
+    "moonPower": { "start": 1, "cap": 4 },
+    "intents": [
+      { "id": "vas_lanh_dao", "name": "Lãnh Đao", "kind": "attack", "targeting": "lowestHp", "cost": 1,
+        "effects": [{ "type": "damage", "amount": 4, "to": "chosen" }] },
+      { "id": "vas_am_chu", "name": "Ám Chủ", "kind": "attack", "targeting": "random", "cost": 1,
+        "effects": [{ "type": "damage", "amount": 3, "to": "chosen" }] },
+      { "id": "vas_tan_anh", "name": "Tản Ảnh", "kind": "buff", "cost": 4,
+        "effects": [{ "type": "applyStatus", "status": "stealth", "amount": 2, "to": "self" }] },
+      { "id": "vas_doat_menh", "name": "Đoạt Mệnh", "kind": "attack", "targeting": "lowestHp", "cost": 3,
+        "effects": [{ "type": "damage", "amount": 7, "to": "chosen" }] },
+      { "id": "vas_vo_thanh", "name": "Vô Thanh", "kind": "buff", "cost": 4,
+        "effects": [
+          { "type": "applyStatus", "status": "stealth", "amount": 2, "to": "self" },
+          { "type": "applyStatus", "status": "strength", "amount": 1, "to": "self" }
+        ] }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "new",
+        "intent": {
+          "id": "vas_tan_nguyet_sat", "name": "Tân Nguyệt Sát", "kind": "attack", "targeting": "lowestHp",
+          "effects": [
+            { "type": "damage", "amount": 3, "to": "chosen" },
+            { "type": "applyStatus", "status": "stealth", "amount": 1, "to": "self" }
+          ]
+        }
+      }
+    ],
+    "art": { "portrait": "" }
+  },
+  {
+    "id": "vo_nguyet_nghi_si",
+    "name": "Vô Nguyệt Nghi Sĩ",
+    "maxHp": 22,
+    "moonPower": { "start": 1, "cap": 4 },
+    "intents": [
+      { "id": "vns_hac_chuc", "name": "Hắc Chúc", "kind": "attack", "targeting": "random", "cost": 1,
+        "effects": [
+          { "type": "damage", "amount": 3, "to": "chosen" },
+          { "type": "applyStatus", "status": "burn", "amount": 1, "to": "chosen" }
+        ] },
+      { "id": "vns_te_tinh", "name": "Tế Tinh", "kind": "buff", "cost": 2,
+        "effects": [{ "type": "heal", "amount": 1, "to": "allAllies" }] },
+      { "id": "vns_doan_tinh", "name": "Đoạn Tinh", "kind": "debuff", "targeting": "random", "cost": 2,
+        "effects": [{ "type": "drainMoonPower", "amount": 2, "to": "chosen", "steal": true }] },
+      { "id": "vns_vo_vong", "name": "Vô Vọng", "kind": "debuff", "cost": 4,
+        "effects": [{ "type": "applyStatus", "status": "weak", "amount": 2, "to": "allEnemies" }] },
+      { "id": "vns_tan_nguyet", "name": "Tàn Nguyệt", "kind": "buff", "cost": 4,
+        "effects": [
+          { "type": "heal", "amount": 2, "to": "allAllies" },
+          { "type": "applyStatus", "status": "regen", "amount": 1, "to": "allAllies" }
+        ] }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "new",
+        "intent": {
+          "id": "vns_vo_nguyet_te", "name": "Vô Nguyệt Tế", "kind": "buff",
+          "effects": [
+            { "type": "applyStatus", "status": "strength", "amount": 1, "to": "allAllies" },
+            { "type": "applyStatus", "status": "stealth", "amount": 1, "to": "allAllies" }
+          ]
+        }
+      }
+    ],
+    "art": { "portrait": "" }
+  },
+  {
+    "id": "vo_nguyet_anh_chu",
+    "name": "Vô Nguyệt Ảnh Chủ",
+    "maxHp": 75,
+    "moonPower": { "start": 2, "cap": 8 },
+    "intents": [
+      { "id": "vac_anh_cham", "name": "Ảnh Châm", "kind": "attack", "targeting": "random", "cost": 1,
+        "effects": [{ "type": "damage", "amount": 4, "to": "chosen" }] },
+      { "id": "vac_doat_uy", "name": "Đoạt Uy", "kind": "special", "targeting": "highestHp", "cost": 2,
+        "effects": [{ "type": "stealBuff", "count": 2 }] },
+      { "id": "vac_am_chieu", "name": "Ám Chiếu", "kind": "attack", "targeting": "lowestHp", "cost": 3,
+        "effects": [
+          { "type": "damage", "amount": 5, "to": "chosen" },
+          { "type": "applyStatus", "status": "weak", "amount": 2, "to": "chosen" }
+        ] },
+      { "id": "vac_tan_the", "name": "Tản Thể", "kind": "buff", "cost": 3,
+        "effects": [
+          { "type": "applyStatus", "status": "stealth", "amount": 2, "to": "self" },
+          { "type": "cleanse", "to": "self" }
+        ] },
+      { "id": "vac_doat_nguyet", "name": "Đoạt Nguyệt", "kind": "debuff", "targeting": "random", "cost": 4,
+        "effects": [
+          { "type": "drainMoonPower", "amount": 2, "to": "chosen", "steal": true },
+          { "type": "damage", "amount": 2, "to": "chosen" }
+        ] },
+      { "id": "vac_vo_nguyet_tram", "name": "Vô Nguyệt Trảm", "kind": "attack", "targeting": "lowestHp", "cost": 5,
+        "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }] }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "new",
+        "intent": {
+          "id": "vac_vo_nguyet_thiem", "name": "Vô Nguyệt Thiểm", "kind": "attack", "targeting": "lowestHp",
+          "effects": [{ "type": "damage", "amount": 10, "to": "chosen" }]
+        }
+      },
+      {
+        "phase": "firstQuarter",
+        "intent": {
+          "id": "vac_nhiep_tinh", "name": "Nhiếp Tinh", "kind": "debuff", "targeting": "random",
+          "effects": [
+            { "type": "drainMoonPower", "amount": 3, "to": "chosen", "steal": true },
+            { "type": "applyStatus", "status": "weak", "amount": 2, "to": "chosen" }
+          ]
+        }
+      },
+      {
+        "phase": "full",
+        "intent": {
+          "id": "vac_ty_nguyet", "name": "Tị Nguyệt", "kind": "defend",
+          "effects": [
+            { "type": "applyStatus", "status": "stealth", "amount": 2, "to": "self" },
+            { "type": "gainArmor", "amount": 10, "to": "self" }
+          ]
+        }
+      },
+      {
+        "phase": "lastQuarter",
+        "intent": {
+          "id": "vac_phe_nguyet", "name": "Phệ Nguyệt", "kind": "special", "targeting": "random",
+          "effects": [{ "type": "stealBuff", "count": 3 }]
+        }
+      }
+    ],
+    "art": { "portrait": "" }
   }
 ]

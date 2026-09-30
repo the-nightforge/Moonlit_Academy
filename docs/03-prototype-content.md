@@ -1063,9 +1063,9 @@ giả định** Hero nào có trong đội ra trận.
 
 ### 13.4 Arc 2 — Bóng Tối: nội dung chi tiết [GĐ7c.5]
 
-**ĐỀ XUẤT — chờ duyệt (7c.5).** Số liệu là khởi điểm, sẽ chốt bằng mô phỏng 80 seed
-(bot, Bộ cơ bản) theo mục tiêu độ khó ở §13.2: màn thường 55–75%, boss 40–60% cho
-đội `m05 + f04 + m06`; mỗi màn ≥ 60% với đội tốt nhất trong 3 đội mẫu
+**Đã duyệt (7c.5).** Số liệu là khởi điểm; đo bằng mô phỏng 80 seed (bot, Bộ cơ bản)
+theo mục tiêu độ khó ở §13.2: màn thường 55–75%, boss 40–60% cho đội
+`m05 + f04 + m06`; mỗi màn ≥ 60% với đội tốt nhất trong 3 đội mẫu
 (`m05+f04+m06`, `m05+f03+f02`, `m01+m02+f04`). Chỉ dùng effect / trạng thái / điều
 kiện đã có trong `01`, `02`, `static.ts`.
 
@@ -1085,14 +1085,14 @@ không vào pool Lượt chơi / Trận lẻ).
 
 | # | Id màn | Tên | Kẻ địch (tổng HP) | `start` | `firstClear` Ngọc / Thiết / XP |
 |---|---|---|---|---|---|
-| 1 | `arc2_s01` | Thư Tín Mất Tích | `hac_y_mat_tham` **mới** + `shadow_fox` ×2 (34+23+23 = 80) | — | 40 / 1 / 25 |
-| 2 | `arc2_s02` | Mật Thám | `hac_y_mat_tham` ×2 + `shadow_fox` (91) | — | 45 / 1 / 30 |
-| 3 | `arc2_s03` | Vô Nguyệt Ám Sát | `vo_nguyet_am_sat` **mới** ×3 (90) | — | 50 / 2 / 30 |
-| 4 | `arc2_s04` | Tô Dạ Dao Động | `vo_nguyet_nghi_si` **mới** + `vo_nguyet_am_sat` ×2 (98) | — | 50 / 1 / 30 |
-| 5 | `arc2_s05` | Chợ Đêm Tin Tức | `fox_king` + `hac_y_mat_tham` + `shadow_fox` (50+34+23 = 107) | — | 50 / 2 / 35 |
-| 6 | `arc2_s06` | Quan Tinh Đài | `vo_nguyet_nghi_si` + `vo_nguyet_am_sat` ×2 (98) | `moonIndex: 0` | 55 / 2 / 35 |
-| 7 | `arc2_s07` | Hắc Vệ | `black_guard` + `vo_nguyet_am_sat` (69+30 = 99) | — | 55 / 2 / 40 |
-| 8 | `arc2_s08` | Vô Nguyệt Ảnh Chủ | `vo_nguyet_anh_chu` **boss mới** (105) | — | 55 / 5 / 40 |
+| 1 | `arc2_s01` | Thư Tín Mất Tích | `hac_y_mat_tham` **mới** + `shadow_fox` ×2 (10+23+23 = 56) | — | 40 / 1 / 25 |
+| 2 | `arc2_s02` | Mật Thám | `hac_y_mat_tham` ×2 + `shadow_fox` (10+10+23 = 43) | — | 45 / 1 / 30 |
+| 3 | `arc2_s03` | Vô Nguyệt Ám Sát | `vo_nguyet_am_sat` **mới** ×3 (18×3 = 54) | — | 50 / 2 / 30 |
+| 4 | `arc2_s04` | Tô Dạ Dao Động | `vo_nguyet_nghi_si` **mới** + `vo_nguyet_am_sat` ×2 (22+18+18 = 58) | — | 50 / 1 / 30 |
+| 5 | `arc2_s05` | Chợ Đêm Tin Tức | `fox_king` + `hac_y_mat_tham` + `shadow_fox` (50+10+23 = 83) | — | 50 / 2 / 35 |
+| 6 | `arc2_s06` | Quan Tinh Đài | `vo_nguyet_nghi_si` + `vo_nguyet_am_sat` ×2 (22+18+18 = 58) | `moonIndex: 0` | 55 / 2 / 35 |
+| 7 | `arc2_s07` | Hắc Vệ | `black_guard` + `vo_nguyet_am_sat` (69+18 = 87) | — | 55 / 2 / 40 |
+| 8 | `arc2_s08` | Vô Nguyệt Ảnh Chủ | `vo_nguyet_anh_chu` **boss mới** (75) | — | 55 / 5 / 40 |
 
 **Tổng:** 400 Nguyệt Ngọc, 16 Huyền Thiết, XP Tu Luyện 25 → 40 theo màn. Qua màn 8
 tặng `f02` Diệp Linh Lung.
@@ -1112,9 +1112,9 @@ tặng `f02` Diệp Linh Lung.
   của mật thám + hồi 8; trận dài nhất arc ngoài boss.
 - **s06:** `start.moonIndex: 0` — Vô Nguyệt đánh đúng đêm của nó: `stealth` địch áp
   trong Trăng Non được **+1 thời hạn** (`01` §7.1) → `stealth 2` thành 3, che 2 lượt
-  người chơi; override `new` của cả ba kẻ địch mới đều kích ở vòng 1. Ngược lại lá
-  `assassin` của người chơi cũng ×1.5 — hai phe dùng chung một pha, đúng "hiệu ứng
-  pha áp cho cả hai phe".
+  người chơi; override `new` của cả ba kẻ địch mới đều kích ở vòng 1 (nghi sĩ phủ
+  `stealth 2` toàn đội địch lượt đầu). Ngược lại lá `assassin` của người chơi cũng
+  ×1.5 — hai phe dùng chung một pha, đúng "hiệu ứng pha áp cho cả hai phe".
 - **s07:** `black_guard` (đòn 14 + quét `allEnemies` + Suy Yếu) hộ tống một sát thủ
   — áp lực damage cao nhất arc ngoài boss; dạy giữ Hero yếu trên ngưỡng an toàn.
 - **s08:** boss cướp buff + Ẩn Thân + Đoạt Nguyệt — phạt deck dựng buff trâu (Sức
@@ -1127,11 +1127,11 @@ Thân), nghi sĩ (nghi lễ Trăng Non). Theo tinh thần Nguyệt tính như Ar
 đúng **1 `moonOverride` ở `new`** (Vô Nguyệt = "không trăng"); boss **4** override
 cho 4 pha có hiệu ứng. `art.portrait` để `""`.
 
-**`hac_y_mat_tham` — Hắc Y Mật Thám** — `maxHp: 34`, `moonPower { start: 1, cap: 4 }`
+**`hac_y_mat_tham` — Hắc Y Mật Thám** — `maxHp: 10`, `moonPower { start: 1, cap: 4 }`
 
 | intent | Tên | kind | cost | targeting | effects |
 |---|---|---|---|---|---|
-| `hym_am_cham` | Ám Châm | attack | 1 | lowestHp | `damage 4 chosen` |
+| `hym_am_cham` | Ám Châm | attack | 1 | lowestHp | `damage 2 chosen` |
 | `hym_thin_tuc` | Thính Tức | debuff | 1 | random | `drainMoonPower 2 chosen` |
 | `hym_dao_an` | Đạo Ấn | special | 2 | highestHp | `stealBuff 1` |
 | `hym_mai_phuc` | Mai Phục | debuff | 2 | lowestHp | `applyStatus vulnerable 2 chosen` |
@@ -1140,58 +1140,58 @@ cho 4 pha có hiệu ứng. `art.portrait` để `""`.
 `moonOverrides`: `new` → `hym_vo_nguyet_mat_lenh` "Vô Nguyệt Mật Lệnh" (special,
 random): `drainMoonPower 3 chosen steal` + `stealBuff 1`.
 
-**`vo_nguyet_am_sat` — Vô Nguyệt Ám Sát** — `maxHp: 30`, `moonPower { start: 1, cap: 4 }`
+**`vo_nguyet_am_sat` — Vô Nguyệt Ám Sát** — `maxHp: 18`, `moonPower { start: 1, cap: 4 }`
 
 | intent | Tên | kind | cost | targeting | effects |
 |---|---|---|---|---|---|
-| `vas_lanh_dao` | Lãnh Đao | attack | 1 | lowestHp | `damage 5 chosen` |
-| `vas_am_chu` | Ám Chủ | attack | 1 | random | `damage 4 chosen` |
-| `vas_tan_anh` | Tản Ảnh | buff | 2 | — | `applyStatus stealth 2 self` |
-| `vas_doat_menh` | Đoạt Mệnh | attack | 3 | lowestHp | `damage 8 chosen` |
+| `vas_lanh_dao` | Lãnh Đao | attack | 1 | lowestHp | `damage 4 chosen` |
+| `vas_am_chu` | Ám Chủ | attack | 1 | random | `damage 3 chosen` |
+| `vas_tan_anh` | Tản Ảnh | buff | 4 | — | `applyStatus stealth 2 self` |
+| `vas_doat_menh` | Đoạt Mệnh | attack | 3 | lowestHp | `damage 7 chosen` |
 | `vas_vo_thanh` | Vô Thanh | buff | 4 | — | `applyStatus stealth 2 self` + `applyStatus strength 1 self` |
 
 `moonOverrides`: `new` → `vas_tan_nguyet_sat` "Tân Nguyệt Sát" (attack, lowestHp):
-`damage 8 chosen` + `applyStatus stealth 2 self` (ở Trăng Non thành 3 — che 2 lượt).
+`damage 3 chosen` + `applyStatus stealth 1 self` (ở Trăng Non thành 2 — che 1 lượt).
 
-**`vo_nguyet_nghi_si` — Vô Nguyệt Nghi Sĩ** — `maxHp: 38`, `moonPower { start: 1, cap: 4 }`
+**`vo_nguyet_nghi_si` — Vô Nguyệt Nghi Sĩ** — `maxHp: 22`, `moonPower { start: 1, cap: 4 }`
 
 | intent | Tên | kind | cost | targeting | effects |
 |---|---|---|---|---|---|
 | `vns_hac_chuc` | Hắc Chúc | attack | 1 | random | `damage 3 chosen` + `applyStatus burn 1 chosen` |
-| `vns_te_tinh` | Tế Tinh | buff | 2 | — | `heal 4 allAllies` |
+| `vns_te_tinh` | Tế Tinh | buff | 2 | — | `heal 1 allAllies` |
 | `vns_doan_tinh` | Đoạn Tinh | debuff | 2 | random | `drainMoonPower 2 chosen steal` |
-| `vns_vo_vong` | Vô Vọng | debuff | 3 | — | `applyStatus weak 2 allEnemies` |
-| `vns_tan_nguyet` | Tàn Nguyệt | buff | 4 | — | `heal 6 allAllies` + `applyStatus regen 1 allAllies` |
+| `vns_vo_vong` | Vô Vọng | debuff | 4 | — | `applyStatus weak 2 allEnemies` |
+| `vns_tan_nguyet` | Tàn Nguyệt | buff | 4 | — | `heal 2 allAllies` + `applyStatus regen 1 allAllies` |
 
 `moonOverrides`: `new` → `vns_vo_nguyet_te` "Vô Nguyệt Tế" (buff):
 `applyStatus strength 1 allAllies` + `applyStatus stealth 1 allAllies` (ở Trăng Non
 thành stealth 2 — che cả đội 1 lượt người chơi).
 
-**`vo_nguyet_anh_chu` — Vô Nguyệt Ảnh Chủ (boss)** — `maxHp: 105`,
+**`vo_nguyet_anh_chu` — Vô Nguyệt Ảnh Chủ (boss)** — `maxHp: 75`,
 `moonPower { start: 2, cap: 8 }`. Đầu não Vô Nguyệt đứng sau đợt trộm thư — cướp
 buff của người chơi làm của mình, ẩn vào bóng khi bị ép, hút Dự Trữ để nuôi quỹ.
 
 | intent | Tên | kind | cost | targeting | effects |
 |---|---|---|---|---|---|
-| `vac_anh_cham` | Ảnh Châm | attack | 1 | random | `damage 5 chosen` |
+| `vac_anh_cham` | Ảnh Châm | attack | 1 | random | `damage 4 chosen` |
 | `vac_doat_uy` | Đoạt Uy | special | 2 | highestHp | `stealBuff 2` |
-| `vac_am_chieu` | Ám Chiếu | attack | 3 | lowestHp | `damage 7 chosen` + `applyStatus weak 2 chosen` |
+| `vac_am_chieu` | Ám Chiếu | attack | 3 | lowestHp | `damage 5 chosen` + `applyStatus weak 2 chosen` |
 | `vac_tan_the` | Tản Thể | buff | 3 | — | `applyStatus stealth 2 self` + `cleanse self` |
-| `vac_doat_nguyet` | Đoạt Nguyệt | debuff | 4 | random | `drainMoonPower 3 chosen steal` + `damage 3 chosen` |
-| `vac_vo_nguyet_tram` | Vô Nguyệt Trảm | attack | 5 | lowestHp | `damage 12 chosen` |
+| `vac_doat_nguyet` | Đoạt Nguyệt | debuff | 4 | random | `drainMoonPower 2 chosen steal` + `damage 2 chosen` |
+| `vac_vo_nguyet_tram` | Vô Nguyệt Trảm | attack | 5 | lowestHp | `damage 9 chosen` |
 
 `moonOverrides` (đứng đầu chuỗi, cost 0 — `01` §9.2):
 
 | phase | intent | Tên | kind | targeting | effects |
 |---|---|---|---|---|---|
-| `new` | `vac_vo_nguyet_thiem` | Vô Nguyệt Thiểm | attack | lowestHp | `damage 14 chosen` |
+| `new` | `vac_vo_nguyet_thiem` | Vô Nguyệt Thiểm | attack | lowestHp | `damage 10 chosen` |
 | `firstQuarter` | `vac_nhiep_tinh` | Nhiếp Tinh | debuff | random | `drainMoonPower 3 chosen steal` + `applyStatus weak 2 chosen` |
 | `full` | `vac_ty_nguyet` | Tị Nguyệt | defend | — | `applyStatus stealth 2 self` + `gainArmor 10 self` |
 | `lastQuarter` | `vac_phe_nguyet` | Phệ Nguyệt | special | random | `stealBuff 3` |
 
 Không `bloodMoonOverride`, không `phases` (đó là cơ chế boss co-op). So sánh sức
 mạnh: `khao_hach_chi_linh` 80 HP / đòn tới 10; `moon_ape` 94 HP / đòn tới 18 — boss
-này 105 HP / đòn tới 14, nhưng HP hiệu dụng cao hơn số ghi vì `stealth` chặn nhắm
+này 75 HP / đòn tới 10, nhưng HP hiệu dụng cao hơn số ghi vì `stealth` chặn nhắm
 đơn và `stealBuff` tước buff của người chơi sang hắn.
 
 #### 13.4.3 Lời thoại
@@ -1343,7 +1343,7 @@ với tư cách người trong câu chuyện.
 
 - **Mốc sức mạnh:** arc 1 neo tầng 1–2 (màn 38–80 HP, đòn ≤ 10); arc 2 neo giữa
   elite và boss Lượt chơi (`black_guard` 69 HP đòn 14, `fox_king` 50 HP, `moon_ape`
-  94 HP đòn 18): tổng HP màn 80 → 107, boss 105; đòn lớn nhất 14 (boss, override
+  94 HP đòn 18): tổng HP màn 43 → 87, boss 75; đòn lớn nhất 10 (boss, override
   `new`), dưới `moon_ape`. Trạng thái thời hạn của **kẻ địch** trừ 1 ở cuối vòng tạo
   ra (`01` §9.4): `stealth 1` / `weak 1` trên chiêu địch không kịp có tác dụng → mọi
   Ẩn Thân / Suy Yếu / Dễ Vỡ của kẻ địch arc 2 đặt tối thiểu **2** (riêng `burn` là
@@ -1363,16 +1363,36 @@ với tư cách người trong câu chuyện.
   pha hiệu ứng như khuôn boss Arc 1. Khi redesign chạy (pha đầu ngẫu nhiên + Nguyệt
   Lệnh), `start.moonIndex` của s06 đè lên pha ngẫu nhiên — giữ ý đồ "đêm của Vô
   Nguyệt" nhưng cần xem lại cùng redesign.
-- **Chưa mô phỏng:** band 55–75% / 40–60% / best-team ≥60% chỉ kiểm chứng ở Phase B
-  (80 seed × 3 đội mẫu); chỉnh HP / damage / số địch nếu lệch, ghi lại như §13.3.4.
-- **Câu hỏi chờ duyệt:**
-  1. **s03:** 3 sát thủ thuần (đề xuất — "bức tường Ẩn Thân") hay `vo_nguyet_am_sat`
-     ×2 + `shadow_fox` (nhẹ tay hơn, tránh stall kéo Cạn Bài khi bot thiếu đòn lan)?
-  2. **s08 `start`:** ghim `moonIndex: 0` — Ảnh Chủ đánh trận quyết định đúng đêm
-     trăng non của nó (và mở trận bằng Vô Nguyệt Thiểm 14) — hay không ghim như boss
-     Arc 1?
-  3. **`stealBuff` lên kẻ địch thường:** Đạo Ấn của `hac_y_mat_tham` là lần đầu
-     effect này rời lá Hero — giữ để đặt mồi cho boss, hay chỉ để boss dùng?
-  4. **Override `new` của nghi sĩ:** `stealth 1 allAllies` (+1 ở Trăng Non → 2, che
-     cả đội địch một lượt người chơi) rất swingy ở s06 — giữ, hay hạ còn chỉ
-     `strength 1 allAllies`?
+- **Đã chỉnh theo mô phỏng** (80 seed × 3 đội mẫu, bot + Bộ cơ bản; chỉ đụng số
+  kẻ địch mới, không đổi kẻ địch cũ / đội hình màn — T213). Bản đầu (HP 34/30/38/105)
+  quá khắc nghiệt từ s03 trở đi (s04 8.8%, s06 1.3%, boss 5% với `m05+f04+m06`).
+  Chỉnh: `vo_nguyet_am_sat` HP 30→18, Lãnh Đao 5→4, Ám Chủ 4→3, Đoạt Mệnh 8→7,
+  Tản Ảnh cost 2→4 (Ẩn Thân hiếm hơn — tường vẫn có nhưng không liên tục), Tân Nguyệt
+  Sát 8→3 + `stealth 2`→1; `vo_nguyet_nghi_si` HP 38→22, Tế Tinh 4→1, Tàn Nguyệt
+  6→2, Vô Vọng cost 3→4; `vo_nguyet_anh_chu` HP 105→75, Ảnh Châm 5→4, Ám Chiếu 7→5,
+  Đoạt Nguyệt 3→2 (hút lẫn damage), Vô Nguyệt Trảm 12→9, Vô Nguyệt Thiểm 14→10;
+  `hac_y_mat_tham` HP 34→10, Ám Châm 4→2 (xem ghi chú lệch band bên dưới).
+  Kết quả đội chính `m05+f04+m06` (mục tiêu 55–75% thường / 40–60% boss):
+  s01 97.5, s02 100, s03 75.0, s04 78.8, s05 57.5, s06 60.0, s07 67.5, s08 43.8.
+  Mọi màn đạt ≥ 60% với đội tốt nhất (chủ yếu `m01+m02+f04`; riêng s05/s08 là
+  `m05+f03+f02`).
+- **Lệch band còn lại (đã biết, chờ quyết):**
+  - **s01/s02 vượt trần** (97.5/100) — chỉ cách nhau bởi `hac_y_mat_tham`: muốn s05
+    qua sàn 55%/đội tốt nhất ≥60 thì mật thám buộc phải yếu (HP 10), kéo s01/s02 quá
+    dễ. Hai hướng xử lý nếu muốn: (a) chấp nhận hai màn mở arc nhẹ hơn band (như
+    Arc 1 các màn đầu ≥ 92.5%); (b) đổi đội hình s01/s02 (ví dụ thêm `hac_y_mat_tham`
+    hoặc `vo_nguyet_am_sat`) — phải duyệt vì nằm ngoài "chỉ chỉnh kẻ địch mới".
+  - **s04 vượt trần +3.8** (78.8) — cùng đội hình với s06; `moonIndex: 0` đã chốt
+    giá s06 ~20 điểm nên s04 không thể ≤75 khi s06 ≥55. Giữ s06 trong band, chấp
+    nhận s04 nhỉnh nhẹ.
+  - `m05+f03+f02` ở s03 60.0 / s06 15.0 — dưới sàn với đội đó nhưng không phải đội
+    tốt nhất của màn (m01+m02+f04 ≥ 97.5): đúng thiết kế "đội nhiều đòn lan".
+- **Quyết định đã chốt (duyệt 7c.5):**
+  1. s03 **giữ** 3 `vo_nguyet_am_sat` thuần — "bức tường Ẩn Thân" là điểm nhấn của
+     arc; nếu mô phỏng kéo Cạn Bài quá nhiều thì chỉnh số chứ không đổi đội hình.
+  2. s08 **không** ghim `start` — trận boss mở ở pha ngẫu nhiên như boss Arc 1
+     (khác s06, màn duy nhất ghim `moonIndex: 0`).
+  3. `stealBuff` giữ trên `hac_y_mat_tham` (Đạo Ấn, `stealBuff 1`) — đặt mồi cho
+     `stealBuff 2–3` của boss.
+  4. Override `new` của nghi sĩ **giữ** `stealth 1 allAllies` (+`strength 1`) —
+     ở Trăng Non thành stealth 2 che cả đội, chấp nhận swing ở s06.

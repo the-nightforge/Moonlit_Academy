@@ -59,12 +59,15 @@ describe("loadGameData", () => {
     expect(Object.keys(data.enemies)).toEqual([
       "puppet_guard", "shadow_fox", "moon_ape", "book_wraith", "black_guard", "fox_king", "eclipse_lord",
       "thanh_loan_thi_quan", "huyen_vu_thi_quan", "bach_lo_thi_quan", "khao_hach_chi_linh",
+      "hac_y_mat_tham", "vo_nguyet_am_sat", "vo_nguyet_nghi_si", "vo_nguyet_anh_chu",
     ]);
     expect(Object.keys(data.encounters)).toEqual([
       "enc_01", "enc_02", "enc_03", "enc_04", "enc_05", "enc_06", "enc_elite_01", "enc_elite_02",
       "enc_coop_01",
       "story_arc1_s01", "story_arc1_s02", "story_arc1_s03", "story_arc1_s04",
       "story_arc1_s05", "story_arc1_s06", "story_arc1_s07", "story_arc1_s08",
+      "story_arc2_s01", "story_arc2_s02", "story_arc2_s03", "story_arc2_s04",
+      "story_arc2_s05", "story_arc2_s06", "story_arc2_s07", "story_arc2_s08",
     ]);
     expect(Object.keys(data.runRelics)).toHaveLength(10);
     expect(Object.keys(data.augments)).toHaveLength(16);
