@@ -3,6 +3,7 @@ import { bondCardsForTeam, buildLoadout, claimMission, pendingUnlocks, starterDe
 import type { DeckError, GameData, SavedDeck } from "rules";
 import { errorText, logout, mutate } from "../account";
 import { startServerRun } from "../run-session";
+import { startStoryTicket } from "../story-session";
 import { restartSession, session } from "../session";
 import type { Team } from "../session";
 import { COLORS, OWNER_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
@@ -105,8 +106,17 @@ export class DeckSelectScene extends Phaser.Scene {
       return;
     }
     const data = session.data;
-    addText(this, this.root, WIDTH / 2, 30, "Chọn deck", 26, COLORS.gold).setOrigin(0.5);
-    addText(this, this.root, WIDTH / 2, 62, "Đội đi theo deck — mỗi deck mang 3 Hero của nó", 13, COLORS.dimText).setOrigin(0.5);
+    // Story mode: entered from an open stage's before-dialogue; Hủy leaves (`18` §4.4).
+    const storyStage = session.pendingStageId !== null ? data.storyStages[session.pendingStageId] : undefined;
+    if (session.pendingStageId !== null && storyStage === undefined) session.pendingStageId = null;
+    const storyMode = storyStage !== undefined;
+    if (storyMode) {
+      addText(this, this.root, WIDTH / 2, 30, `Cốt Truyện — ${storyStage.name}`, 26, COLORS.gold).setOrigin(0.5);
+      addText(this, this.root, WIDTH / 2, 62, "Chọn deck vào màn — kết quả trận được server kiểm chứng", 13, COLORS.dimText).setOrigin(0.5);
+    } else {
+      addText(this, this.root, WIDTH / 2, 30, "Chọn deck", 26, COLORS.gold).setOrigin(0.5);
+      addText(this, this.root, WIDTH / 2, 62, "Đội đi theo deck — mỗi deck mang 3 Hero của nó", 13, COLORS.dimText).setOrigin(0.5);
+    }
 
     const online = session.online;
     const canUnlock = Object.keys(data.heroes).some((id) => pendingUnlocks(data, session.profile, id) > 0);
@@ -119,6 +129,7 @@ export class DeckSelectScene extends Phaser.Scene {
     addButton(this, this.root, 1195, 30, 120, `Tu Luyện${canUnlock ? " ●" : ""}`, () => this.scene.start("mastery"), online);
     addButton(this, this.root, 1090, 480, 200, "Đấu Trường", () => this.scene.start("arena"), online);
     addButton(this, this.root, 1090, 524, 200, "Liên Thủ", () => this.scene.start("coop-lobby"), online);
+    addButton(this, this.root, 1090, 568, 200, "Cốt Truyện", () => this.scene.start("story"), online);
     if (online) {
       addCurrencyBar(this, this.root, 175, 30, session.profile.currencies);
       addButton(this, this.root, 90, 30, 140, "Đăng xuất", () => {
@@ -162,15 +173,19 @@ export class DeckSelectScene extends Phaser.Scene {
       });
     }
 
-    addText(this, this.root, 1090, 84, "Trận lẻ: chọn trận", 13, COLORS.dimText).setOrigin(0.5);
-    // Co-op encounters are only reachable through the Liên Thủ lobby.
-    Object.values(data.encounters).filter((encounter) => encounter.tier !== "coop").forEach((encounter, index) => {
-      const chosen = encounter.id === session.encounterId;
-      addButton(this, this.root, 1090, 116 + index * 42, 200, `${encounter.name}${chosen ? " ✓" : ""}`, () => {
-        session.encounterId = encounter.id;
-        this.render();
-      });
-    });
+    if (!storyMode) {
+      addText(this, this.root, 1090, 84, "Trận lẻ: chọn trận", 13, COLORS.dimText).setOrigin(0.5);
+      // Co-op encounters go through Liên Thủ; story encounters through Cốt Truyện.
+      Object.values(data.encounters)
+        .filter((encounter) => encounter.tier !== "coop" && encounter.tier !== "story")
+        .forEach((encounter, index) => {
+          const chosen = encounter.id === session.encounterId;
+          addButton(this, this.root, 1090, 116 + index * 42, 200, `${encounter.name}${chosen ? " ✓" : ""}`, () => {
+            session.encounterId = encounter.id;
+            this.render();
+          });
+        });
+    }
 
     const deck = decks.find((entry) => entry.id === this.selected) ?? decks[0]!;
     const valid = validateDeck(data, session.profile, deck).length === 0;
@@ -194,8 +209,27 @@ export class DeckSelectScene extends Phaser.Scene {
       restartSession(session.seed, session.encounterId, session.heroIds, [...deck.cardIds], built?.ok ? built.loadout : undefined);
       this.scene.start("combat");
     };
-    addButton(this, this.root, 200, y, 150, "Lượt chơi", play, valid && online);
-    addButton(this, this.root, 360, y, 150, "Trận lẻ", single, valid);
+    if (storyMode) {
+      const enter = () => {
+        if (this.busy) return;
+        this.busy = true;
+        startStoryTicket(session.pendingStageId!, { id: deck.id, heroIds: [...deck.heroIds] as Team }).then(
+          () => this.scene.start("combat"),
+          (error: unknown) => {
+            this.busy = false;
+            showToast(this, [errorText(error)]);
+          },
+        );
+      };
+      addButton(this, this.root, 200, y, 150, "Vào trận", enter, valid && online);
+      addButton(this, this.root, 360, y, 150, "Hủy", () => {
+        session.pendingStageId = null;
+        this.scene.start("story");
+      });
+    } else {
+      addButton(this, this.root, 200, y, 150, "Lượt chơi", play, valid && online);
+      addButton(this, this.root, 360, y, 150, "Trận lẻ", single, valid);
+    }
     addButton(this, this.root, 520, y, 150, "Sửa", () => this.edit(deck), !starter && online);
     addButton(this, this.root, 680, y, 150, "Sao chép", () => this.edit({ ...deck, id: "", name: `${deck.name} (bản sao)`.slice(0, 24) }), online);
     addButton(this, this.root, 840, y, 150, "Xóa", () => {

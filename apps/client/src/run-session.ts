@@ -31,6 +31,7 @@ export async function startServerRun(deck: { id: string; heroIds: Team }): Promi
   const { runId, setup, loadout } = await api<{ runId: string; setup: RunSetup; loadout: Loadout }>("POST", "/runs", { body });
   const ticket: RunTicket = { runId, setup, loadout, actions: [] };
   session.ticket = ticket;
+  session.story = null;
   persist(ticket);
   session.heroIds = setup.heroIds;
   session.seed = setup.seed;

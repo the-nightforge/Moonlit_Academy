@@ -15,6 +15,8 @@ import { MissionsScene } from "./scenes/missions-scene";
 import { ShopScene } from "./scenes/shop-scene";
 import { MasteryScene } from "./scenes/mastery-scene";
 import { RunScene } from "./scenes/run-scene";
+import { StoryScene } from "./scenes/story-scene";
+import { DialogueScene } from "./scenes/dialogue-scene";
 import { DESIGN_HEIGHT, DESIGN_WIDTH, RENDER_SCALE } from "./ui/theme";
 
 initApi(session.data);
@@ -31,7 +33,7 @@ const game = new Phaser.Game({
   },
   scene: [
     LoginScene, DeckSelectScene, DeckBuilderScene, MasteryScene, GachaScene, ShopScene, HeroesScene, MissionsScene, ArmoryScene,
-    ArenaScene, CoopLobbyScene, CombatScene, RunScene,
+    ArenaScene, CoopLobbyScene, CombatScene, RunScene, StoryScene, DialogueScene,
   ],
 });
 
