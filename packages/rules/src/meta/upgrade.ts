@@ -19,7 +19,8 @@ export function upgradeItem(
   id: string,
 ): { ok: true; profile: Profile; level: number; spent: number } | { ok: false; error: "not owned" | "maxed" | "not enough" } {
   const level = kind === "weapon" ? profile.weapons[id]?.refinement : profile.relics[id]?.resonance;
-  if (level === undefined) return { ok: false, error: "not owned" };
+  const def = kind === "weapon" ? data.weapons[id] : data.relics[id];
+  if (level === undefined || def === undefined) return { ok: false, error: "not owned" };
   if (level >= MAX_GEAR_LEVEL) return { ok: false, error: "maxed" };
   const cost = upgradeCost(data, kind, id, level);
   if (cost === null) return { ok: false, error: "not owned" };

@@ -27,9 +27,11 @@ describe("gear upgrades", () => {
     profile.currencies.darkIron = 2;
     expect(upgradeItem(data, profile, "weapon", "w_anh_nguyet_chuy")).toEqual({ ok: false, error: "not owned" });
     expect(upgradeItem(data, profile, "weapon", "nope")).toEqual({ ok: false, error: "not owned" });
-    profile.weapons = { w_anh_nguyet_chuy: { refinement: 1 }, w_thiet_thuan: { refinement: 5 } };
+    profile.weapons = { w_anh_nguyet_chuy: { refinement: 1 }, w_thiet_thuan: { refinement: 5 }, nope: { refinement: 5 } };
     expect(upgradeItem(data, profile, "weapon", "w_anh_nguyet_chuy")).toEqual({ ok: false, error: "not enough" });
     expect(upgradeItem(data, profile, "weapon", "w_thiet_thuan")).toEqual({ ok: false, error: "maxed" });
+    // Stale profile id absent from data reads as "not owned" before "maxed" (`14` §13.3 step 1).
+    expect(upgradeItem(data, profile, "weapon", "nope")).toEqual({ ok: false, error: "not owned" });
     expect(profile.currencies.darkIron).toBe(2);
   });
 
