@@ -175,7 +175,7 @@ Theo `18` §5.3; nâng cấp bằng vật liệu ở `14` §13.3, giá trong `ec
 - `banner_weapons` / `banner_relics` liệt kê mọi món (25 vũ khí / 16 Nguyệt Bảo);
   `pvp-config.freeWeaponIds` / `freeRelicIds` giữ nguyên, xem lại ở 7d.6.
 
-#### 7.3.1 Đề xuất 15 vũ khí bản mệnh (7d.3 — bản sửa sau duyệt sơ bộ, **chờ duyệt cuối**, chưa viết JSON)
+#### 7.3.1 Đề xuất 15 vũ khí bản mệnh (7d.3 — **đã duyệt**, JSON xong)
 
 Đã sửa theo 10 quyết định ở cuối mục; chờ duyệt cuối trước khi viết JSON — số
 liệu là khởi điểm cân bằng, đo lại bằng mô phỏng ở 7d.6.

@@ -160,10 +160,10 @@ export type Effect = (
   | { type: "bloodMoon"; rounds: number }                                // GĐ2
   | { type: "createCard"; cardId: string }                               // GĐ7: tạo lá token vào tay (01 §4.6); chỉ lá bài / levelUp.onLevelUp
   | { type: "drawCards"; amount: number }                                 // GĐ7: rút mù lá đầu chồng; thừa `handLimit` vào chồng bỏ (01 §4.2)
-  | { type: "summon"; summonId: string }                                  // GĐ7b: triệu hồi/triệu hồi lại Linh Thú (01 §17.1); chỉ lá bài
-  | { type: "sealIntent"; to: TargetRef }                                 // GĐ7b: Phong Ấn (01 §5.6); chỉ lá bài
-  | { type: "revive"; ratio: number; to: "chosen" | "lastFallen" }        // GĐ7b: Hồi Hồn (01 §5.6); to "chosen" chỉ trên lá `target: "fallenAlly"`, "lastFallen" chỉ trong onLevelUp
-  | { type: "extendDebuffs"; amount: number; to: TargetRef }              // GĐ7b: kéo dài debuff có thời hạn (01 §5.6); chỉ lá bài
+  | { type: "summon"; summonId: string }                                  // GĐ7b: triệu hồi/triệu hồi lại Linh Thú (01 §17.1); chỉ lá bài + hook vũ khí [GĐ7d]
+  | { type: "sealIntent"; to: TargetRef }                                 // GĐ7b: Phong Ấn (01 §5.6); chỉ lá bài + hook vũ khí [GĐ7d]
+  | { type: "revive"; ratio: number; to: "chosen" | "lastFallen" }        // GĐ7b: Hồi Hồn (01 §5.6); to "chosen" chỉ trên lá `target: "fallenAlly"`, "lastFallen" chỉ trong onLevelUp / hook vũ khí [GĐ7d]
+  | { type: "extendDebuffs"; amount: number; to: TargetRef }              // GĐ7b: kéo dài debuff có thời hạn (01 §5.6); chỉ lá bài + hook vũ khí [GĐ7d]
   | { type: "conditional"; condition: Condition; then: Effect[]; else?: Effect[] }
   | { type: "execute"; threshold: number; to: TargetRef; elseEffects?: Effect[] }
       // GĐ6: chỉ trong effects của Hợp Kích (01 §16.4) — kẻ địch trong `to` có
@@ -848,13 +848,15 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
 - **[GĐ6]** `execute` chỉ xuất hiện trong `effects` của `coop-combos.json` (không lá bài, không chiêu địch, không hook). `CardMatcher`: `ownerId` trỏ Hero tồn tại; `appliesStatus`, `effect`, `moonPhaseAfter` tham chiếu id có thật. `BossPhaseDef.phases`: `hpBelow` giai đoạn 1 = 1, các giai đoạn sau giảm dần trong (0, 1]; `reviveAfterRounds` chỉ ở giai đoạn cuối; `bloodMoonWhileActive`, `alwaysPlan` là cờ boolean. Encounter `tier: "coop"` không xuất hiện trên bản đồ lượt chơi; `enemyIds` của nó trỏ địch có `phases` hợp lệ. `coopConfig.encounterId` trỏ encounter có `tier: "coop"`; `reconnectSeconds > turnSeconds`; các `reward`/`rewardedMatchesPerDay` không âm.
 - **[GĐ7]** `createCard` (kể cả lồng trong `conditional` và trong `levelUp.onLevelUp` / `altLevelUp.onLevelUp`) phải trỏ tới lá `token` của **đúng Hero** tạo (`ownerId` = chủ lá / Hero đó); trên lá không có `ownerId` → lỗi. `token` không được nằm trong pool Hero nào (`cardIds` / `lockedCardIds` / `branches`), không được là lá "+" (`plusOf`) hay lá Song Hành (`bond`). `createCard` bị cấm ở mọi chỗ cấm `chooseCard`: chiêu địch, `moonOverrides` / `bloodMoonOverride`, hook Kỳ Vật / vũ khí / Nguyệt Bảo, `effects` của Hợp Kích. `combatConfig.levelUpRandomBuffs` ≥ 1 phần tử, `status` hợp lệ, `amount` nguyên dương.
 - **[GĐ7b]** `summons.json` (`SummonDef`): kiểm chéo ở mục 1.15. `summon`, `sealIntent`,
-  `revive`, `extendDebuffs` bị cấm ở mọi chỗ cấm `createCard` (dòng trên), cộng thêm
+  `revive`, `extendDebuffs` bị cấm ở mọi chỗ cấm `createCard` (dòng trên) — **trừ lá và
+  hook vũ khí [GĐ7d]**: vũ khí bản mệnh được dùng bốn effect này (`03` §7.3.1); cộng thêm
   `SummonDef.action` (mục 1.15) — Linh Thú không tự triệu hồi Linh Thú khác, không Phong
   Ấn, không Hồi Hồn, không kéo dài debuff. Lá có `target: "fallenAlly"` phải có đúng một
   effect `revive` với `to: "chosen"`; effect `revive` với `to: "chosen"` chỉ xuất hiện
   trên lá có `target: "fallenAlly"`; `revive` với `to: "lastFallen"` chỉ xuất hiện trong
-  `levelUp.onLevelUp` / `altLevelUp.onLevelUp`, không trên lá bài. `to: "owner"` chỉ
-  trong `SummonDef.action`; `to: "summon"` chỉ trên lá có `ownerId` hoặc `bond`.
+  `levelUp.onLevelUp` / `altLevelUp.onLevelUp` / hook vũ khí [GĐ7d], không trên lá bài.
+  `to: "owner"` chỉ trong `SummonDef.action`; `to: "summon"` chỉ trên lá có `ownerId`
+  hoặc `bond` hoặc hook vũ khí [GĐ7d].
 - **[GĐ7c]** `story.json` (mục 1.16): `arcs` và `stages` được phép rỗng (file khởi tạo
   rỗng; nội dung vào 7c.4 / 7c.5), id duy nhất; mọi `arc.stageIds` trỏ tới màn có sẵn;
   mỗi màn thuộc đúng **một** arc và `stage.arcId` khớp arc liệt kê nó (arc liệt kê màn ↔
