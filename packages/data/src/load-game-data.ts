@@ -78,19 +78,23 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   /** Linh Thú (`01` §17): whether any effect (incl. nested) targets `to`. */
   const usesTo = (effects: Effect[], to: string) => someEffect(effects, (e) => "to" in e && e.to === to);
   /** Linh Thú is out of place outside summon actions and hero cards (`02` §6).
-   *  Phong Ấn (`01` §5.6) is a card-only effect, banned wherever `summon` is. */
-  const checkNoSummon = (label: string, effects: Effect[]) => {
-    if (someEffect(effects, (effect) => effect.type === "summon")) {
-      errors.push(`${label}: summon is not allowed`);
-    }
-    if (someEffect(effects, (effect) => effect.type === "sealIntent")) {
-      errors.push(`${label}: sealIntent is not allowed`);
-    }
-    if (someEffect(effects, (effect) => effect.type === "revive")) {
-      errors.push(`${label}: revive is not allowed`);
+   *  Phong Ấn (`01` §5.6) is a card-only effect, banned wherever `summon` is.
+   *  `heroCardLike`: weapon cards and weapon hooks act as heroes (`01` §14.2–14.3),
+   *  so they may use every hero-card effect — only `to "owner"` stays banned. */
+  const checkNoSummon = (label: string, effects: Effect[], heroCardLike = false) => {
+    if (!heroCardLike) {
+      if (someEffect(effects, (effect) => effect.type === "summon")) {
+        errors.push(`${label}: summon is not allowed`);
+      }
+      if (someEffect(effects, (effect) => effect.type === "sealIntent")) {
+        errors.push(`${label}: sealIntent is not allowed`);
+      }
+      if (someEffect(effects, (effect) => effect.type === "revive")) {
+        errors.push(`${label}: revive is not allowed`);
+      }
+      if (usesTo(effects, "summon")) errors.push(`${label}: to "summon" is only allowed on hero cards`);
     }
     if (usesTo(effects, "owner")) errors.push(`${label}: to "owner" is only allowed in summon actions`);
-    if (usesTo(effects, "summon")) errors.push(`${label}: to "summon" is only allowed on hero cards`);
   };
 
   /** Effects and conditions only usable on player cards (`13` §2.3). */
@@ -473,7 +477,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(hook.effects, (effect) => effect.type === "createCard")) {
         errors.push(`${hookLabel}: createCard is not allowed`);
       }
-      checkNoSummon(hookLabel, hook.effects);
+      checkNoSummon(hookLabel, hook.effects, allowWearer);
       if (someEffect(hook.effects, (effect) => effect.type === "execute")) {
         errors.push(`${hookLabel}: execute is only allowed in co-op combos`);
       }
@@ -536,7 +540,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       if (someEffect(card.effects, (effect) => effect.type === "createCard")) {
         errors.push(`${levelLabel}: createCard is not allowed`);
       }
-      checkNoSummon(levelLabel, card.effects);
+      checkNoSummon(levelLabel, card.effects, true);
       checkHooks(levelLabel, hooks, true, true);
       checkHooks(`${levelLabel} signature`, signatureHooks ?? [], true, true);
     }

@@ -1489,5 +1489,2503 @@
     ]
    }
   ]
+ },
+ {
+  "id": "w_ngoc_but",
+  "name": "Ngọc Bút",
+  "rarity": "legendary",
+  "signatureHeroId": "m01",
+  "text": "Đầu trận: +1 Nguyệt Lực (Tạ Vân Chiêu: +2 Nguyệt Lực, rút 1 lá).",
+  "card": {
+   "name": "Bút Định Càn Khôn",
+   "cost": 3,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "scheme"
+   ],
+   "target": "none",
+   "effects": [
+    {
+     "type": "drawCards",
+     "amount": 2
+    },
+    {
+     "type": "gainMoonPower",
+     "amount": 2
+    }
+   ],
+   "text": "Rút 2 lá, +2 Nguyệt Lực."
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "combatStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "gainMoonPower",
+      "amount": 1
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "combatStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "gainMoonPower",
+      "amount": 2
+     },
+     {
+      "type": "drawCards",
+      "amount": 1
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Bút Định Càn Khôn +3 Nguyệt Lực.",
+    "card": {
+     "effects": [
+      {
+       "type": "drawCards",
+       "amount": 2
+      },
+      {
+       "type": "gainMoonPower",
+       "amount": 3
+      }
+     ],
+     "text": "Rút 2 lá, +3 Nguyệt Lực."
+    }
+   },
+   {
+    "text": "Bút Định Càn Khôn còn 2 Nguyệt Lực.",
+    "card": {
+     "cost": 2
+    }
+   },
+   {
+    "text": "Bút Định Càn Khôn rút 3 lá, +3 Nguyệt Lực.",
+    "card": {
+     "effects": [
+      {
+       "type": "drawCards",
+       "amount": 3
+      },
+      {
+       "type": "gainMoonPower",
+       "amount": 3
+      }
+     ],
+     "text": "Rút 3 lá, +3 Nguyệt Lực."
+    }
+   },
+   {
+    "text": "Đầu trận: +2 Nguyệt Lực (Tạ Vân Chiêu: +2 Nguyệt Lực, rút 1 lá, Dưỡng Nguyệt 1).",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       },
+       {
+        "type": "drawCards",
+        "amount": 1
+       },
+       {
+        "type": "gainMoonPowerPerTurn",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_cam_ve_kich",
+  "name": "Cấm Vệ Kích",
+  "rarity": "epic",
+  "signatureHeroId": "m02",
+  "text": "Đầu lượt người chơi: người mang +2 giáp (Lục Hàn Phong: +3 giáp, Phản Đòn 1).",
+  "card": {
+   "name": "Hộ Kích",
+   "cost": 2,
+   "copies": 2,
+   "type": "attack",
+   "tags": [
+    "attack",
+    "ward"
+   ],
+   "target": "enemy",
+   "effects": [
+    {
+     "type": "damage",
+     "amount": 4,
+     "to": "chosen"
+    },
+    {
+     "type": "gainArmor",
+     "amount": 3,
+     "to": "self"
+    }
+   ],
+   "text": "Gây 4 damage, nhận 3 giáp."
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "playerTurnStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "gainArmor",
+      "amount": 2,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "playerTurnStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "gainArmor",
+      "amount": 3,
+      "to": "self"
+     },
+     {
+      "type": "applyStatus",
+      "status": "reflect",
+      "amount": 1,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Hộ Kích gây 5 damage, nhận 4 giáp.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 5,
+       "to": "chosen"
+      },
+      {
+       "type": "gainArmor",
+       "amount": 4,
+       "to": "self"
+      }
+     ],
+     "text": "Gây 5 damage, nhận 4 giáp."
+    }
+   },
+   {
+    "text": "Hộ Kích còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
+   {
+    "text": "Hộ Kích gây 6 damage, nhận 5 giáp.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 6,
+       "to": "chosen"
+      },
+      {
+       "type": "gainArmor",
+       "amount": 5,
+       "to": "self"
+      }
+     ],
+     "text": "Gây 6 damage, nhận 5 giáp."
+    }
+   },
+   {
+    "text": "Đầu lượt người chơi: +3 giáp (Lục Hàn Phong: +4 giáp, Phản Đòn 2).",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnStart"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "playerTurnStart"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "reflect",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_van_kim_dau",
+  "name": "Vạn Kim Đẩu",
+  "rarity": "rare",
+  "signatureHeroId": "m03",
+  "text": "Mỗi lá Mưu Lược thứ 4 của người mang: +1 Nguyệt Lực (Mặc Tử Du: +2 Nguyệt Lực, mọi Hero +2 giáp).",
+  "card": {
+   "name": "Bản Kim",
+   "cost": 2,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "scheme"
+   ],
+   "target": "none",
+   "effects": [
+    {
+     "type": "gainMoonPower",
+     "amount": 1
+    },
+    {
+     "type": "chooseCard",
+     "look": 2
+    }
+   ],
+   "text": "+1 Nguyệt Lực. Chiêm Bài 2.",
+   "keywords": [
+    "chiem_bai"
+   ]
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "scheme",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 4,
+    "effects": [
+     {
+      "type": "gainMoonPower",
+      "amount": 1
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "scheme",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 4,
+    "effects": [
+     {
+      "type": "gainMoonPower",
+      "amount": 2
+     },
+     {
+      "type": "gainArmor",
+      "amount": 2,
+      "to": "allAllies"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Bản Kim Chiêm Bài 3.",
+    "card": {
+     "effects": [
+      {
+       "type": "gainMoonPower",
+       "amount": 1
+      },
+      {
+       "type": "chooseCard",
+       "look": 3
+      }
+     ],
+     "text": "+1 Nguyệt Lực. Chiêm Bài 3."
+    }
+   },
+   {
+    "text": "Bản Kim còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
+   {
+    "text": "Bản Kim thêm +2 Nguyệt Lực.",
+    "card": {
+     "effects": [
+      {
+       "type": "gainMoonPower",
+       "amount": 3
+      },
+      {
+       "type": "chooseCard",
+       "look": 3
+      }
+     ],
+     "text": "+3 Nguyệt Lực. Chiêm Bài 3."
+    }
+   },
+   {
+    "text": "Nội tại: mỗi lá Mưu Lược thứ 3.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "scheme",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 3,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 1
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "scheme",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 3,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       },
+       {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "allAllies"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_bach_ngan_cham",
+  "name": "Bạch Ngân Châm",
+  "rarity": "epic",
+  "signatureHeroId": "m04",
+  "text": "Mỗi lá hồi máu thứ 3 của người mang: Hero máu thấp nhất hồi 2 (Bùi Thanh Minh: hồi 3, Giải Trừ).",
+  "card": {
+   "name": "Ngân Châm",
+   "cost": 2,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "heal"
+   ],
+   "target": "ally",
+   "effects": [
+    {
+     "type": "heal",
+     "amount": 3,
+     "to": "chosen"
+    },
+    {
+     "type": "applyStatus",
+     "status": "regen",
+     "amount": 2,
+     "to": "chosen"
+    }
+   ],
+   "text": "1 đồng đội hồi 3 HP, Hồi Phục 2.",
+   "keywords": [
+    "hoi_phuc"
+   ]
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "heal",
+     "owner": "wearer"
+    },
+    "actor": "lowestHp",
+    "every": 3,
+    "effects": [
+     {
+      "type": "heal",
+      "amount": 2,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "heal",
+     "owner": "wearer"
+    },
+    "actor": "lowestHp",
+    "every": 3,
+    "effects": [
+     {
+      "type": "heal",
+      "amount": 3,
+      "to": "self"
+     },
+     {
+      "type": "cleanse",
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Ngân Châm hồi 4.",
+    "card": {
+     "effects": [
+      {
+       "type": "heal",
+       "amount": 4,
+       "to": "chosen"
+      },
+      {
+       "type": "applyStatus",
+       "status": "regen",
+       "amount": 2,
+       "to": "chosen"
+      }
+     ],
+     "text": "1 đồng đội hồi 4 HP, Hồi Phục 2."
+    }
+   },
+   {
+    "text": "Ngân Châm còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
+   {
+    "text": "Ngân Châm hồi 5, Hồi Phục 3.",
+    "card": {
+     "effects": [
+      {
+       "type": "heal",
+       "amount": 5,
+       "to": "chosen"
+      },
+      {
+       "type": "applyStatus",
+       "status": "regen",
+       "amount": 3,
+       "to": "chosen"
+      }
+     ],
+     "text": "1 đồng đội hồi 5 HP, Hồi Phục 3."
+    }
+   },
+   {
+    "text": "Nội tại hồi 3 (Bùi Thanh Minh: hồi 4, Giải Trừ).",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "heal",
+       "owner": "wearer"
+      },
+      "actor": "lowestHp",
+      "every": 3,
+      "effects": [
+       {
+        "type": "heal",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "heal",
+       "owner": "wearer"
+      },
+      "actor": "lowestHp",
+      "every": 3,
+      "effects": [
+       {
+        "type": "heal",
+        "amount": 4,
+        "to": "self"
+       },
+       {
+        "type": "cleanse",
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_huyet_tran_co",
+  "name": "Huyết Trận Cổ",
+  "rarity": "rare",
+  "signatureHeroId": "m07",
+  "text": "Khi Huyết Nguyệt bắt đầu: mọi Hero Hồi Phục 2 (Ninh An: 3, người mang +1 Sức Mạnh).",
+  "card": {
+   "name": "Trầm Cổ",
+   "cost": 2,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "harmony"
+   ],
+   "target": "none",
+   "effects": [
+    {
+     "type": "applyStatus",
+     "status": "empower",
+     "amount": 1,
+     "to": "allAllies"
+    },
+    {
+     "type": "heal",
+     "amount": 1,
+     "to": "allAllies"
+    }
+   ],
+   "text": "Mọi đồng đội Tích Lực 1, hồi 1 HP.",
+   "keywords": [
+    "cuong_hoa"
+   ]
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "bloodMoonStarted"
+    },
+    "actor": "each",
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "regen",
+      "amount": 2,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "bloodMoonStarted"
+    },
+    "actor": "each",
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "regen",
+      "amount": 3,
+      "to": "self"
+     }
+    ]
+   },
+   {
+    "on": {
+     "type": "bloodMoonStarted"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "strength",
+      "amount": 1,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Trầm Cổ Tích Lực 2.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "empower",
+       "amount": 2,
+       "to": "allAllies"
+      },
+      {
+       "type": "heal",
+       "amount": 1,
+       "to": "allAllies"
+      }
+     ],
+     "text": "Mọi đồng đội Tích Lực 2, hồi 1 HP."
+    }
+   },
+   {
+    "text": "Trầm Cổ còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
+   {
+    "text": "Trầm Cổ thêm Hồi Phục 2.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "empower",
+       "amount": 2,
+       "to": "allAllies"
+      },
+      {
+       "type": "heal",
+       "amount": 1,
+       "to": "allAllies"
+      },
+      {
+       "type": "applyStatus",
+       "status": "regen",
+       "amount": 2,
+       "to": "allAllies"
+      }
+     ],
+     "text": "Mọi đồng đội Tích Lực 2, hồi 1 HP, Hồi Phục 2.",
+     "keywords": [
+      "cuong_hoa",
+      "hoi_phuc"
+     ]
+    }
+   },
+   {
+    "text": "Huyết Nguyệt bắt đầu: mọi Hero Hồi Phục 3 (Ninh An: 4, người mang +2 Sức Mạnh).",
+    "hooks": [
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 4,
+        "to": "self"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_quan_tinh_truong",
+  "name": "Quan Tinh Trượng",
+  "rarity": "legendary",
+  "signatureHeroId": "m08",
+  "text": "Mỗi lần trăng đổi pha: +1 Nguyệt Lực (Khương Tịch: +1 Nguyệt Lực, mọi kẻ địch Suy Yếu 1 vòng).",
+  "card": {
+   "name": "Tinh Dịch",
+   "cost": 2,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "moon"
+   ],
+   "target": "none",
+   "effects": [
+    {
+     "type": "shiftMoon",
+     "amount": -1
+    },
+    {
+     "type": "chooseCard",
+     "look": 2
+    }
+   ],
+   "text": "Đổi Vận: trăng lùi 1 pha. Chiêm Bài 2.",
+   "keywords": [
+    "chiem_bai"
+   ]
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "moonPhaseEntered"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "gainMoonPower",
+      "amount": 1
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "moonPhaseEntered"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "gainMoonPower",
+      "amount": 1
+     },
+     {
+      "type": "applyStatus",
+      "status": "weak",
+      "amount": 1,
+      "to": "allEnemies"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Tinh Dịch Chiêm Bài 3.",
+    "card": {
+     "effects": [
+      {
+       "type": "shiftMoon",
+       "amount": -1
+      },
+      {
+       "type": "chooseCard",
+       "look": 3
+      }
+     ],
+     "text": "Đổi Vận: trăng lùi 1 pha. Chiêm Bài 3."
+    }
+   },
+   {
+    "text": "Tinh Dịch còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
+   {
+    "text": "Tinh Dịch thêm +1 Nguyệt Lực.",
+    "card": {
+     "effects": [
+      {
+       "type": "shiftMoon",
+       "amount": -1
+      },
+      {
+       "type": "gainMoonPower",
+       "amount": 1
+      },
+      {
+       "type": "chooseCard",
+       "look": 3
+      }
+     ],
+     "text": "Đổi Vận: trăng lùi 1 pha. +1 Nguyệt Lực. Chiêm Bài 3."
+    }
+   },
+   {
+    "text": "Mỗi lần trăng đổi pha: +2 Nguyệt Lực (Khương Tịch: +2 Nguyệt Lực, Suy Yếu 2 vòng).",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       },
+       {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_vong_quoc_cam",
+  "name": "Vong Quốc Cầm",
+  "rarity": "epic",
+  "signatureHeroId": "m09",
+  "text": "Mỗi lá Khống Chế thứ 4 của người mang: mọi kẻ địch Suy Yếu 1 vòng (Đoàn Lạc: thêm Dễ Vỡ 1 vòng).",
+  "card": {
+   "name": "Dư Âm",
+   "cost": 2,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "harmony",
+    "control"
+   ],
+   "target": "enemy",
+   "effects": [
+    {
+     "type": "applyStatus",
+     "status": "weak",
+     "amount": 1,
+     "to": "chosen"
+    },
+    {
+     "type": "extendDebuffs",
+     "amount": 1,
+     "to": "chosen"
+    }
+   ],
+   "text": "Suy Yếu 1 vòng; Kéo Dài 1 debuff có thời hạn của mục tiêu.",
+   "keywords": [
+    "suy_yeu",
+    "keo_dai"
+   ]
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "control",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 4,
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "weak",
+      "amount": 1,
+      "to": "allEnemies"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "control",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 4,
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "weak",
+      "amount": 1,
+      "to": "allEnemies"
+     },
+     {
+      "type": "applyStatus",
+      "status": "vulnerable",
+      "amount": 1,
+      "to": "allEnemies"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Dư Âm Suy Yếu 2 vòng.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "weak",
+       "amount": 2,
+       "to": "chosen"
+      },
+      {
+       "type": "extendDebuffs",
+       "amount": 1,
+       "to": "chosen"
+      }
+     ],
+     "text": "Suy Yếu 2 vòng; Kéo Dài 1 debuff có thời hạn của mục tiêu."
+    }
+   },
+   {
+    "text": "Dư Âm còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
+   {
+    "text": "Dư Âm Kéo Dài 2.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "weak",
+       "amount": 2,
+       "to": "chosen"
+      },
+      {
+       "type": "extendDebuffs",
+       "amount": 2,
+       "to": "chosen"
+      }
+     ],
+     "text": "Suy Yếu 2 vòng; Kéo Dài 2 debuff có thời hạn của mục tiêu."
+    }
+   },
+   {
+    "text": "Nội tại: mỗi lá Khống Chế thứ 3.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "control",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 3,
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "control",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 3,
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "allEnemies"
+       },
+       {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_han_mon_kiem",
+  "name": "Hàn Môn Kiếm",
+  "rarity": "rare",
+  "signatureHeroId": "m10",
+  "text": "Mỗi lá Mưu Lược thứ 3 của người mang: rút 1 lá (Chu Quyết: rút 1 lá, người mang Tích Lực 1).",
+  "card": {
+   "name": "Hàn Quang",
+   "cost": 2,
+   "copies": 2,
+   "type": "attack",
+   "tags": [
+    "attack",
+    "scheme"
+   ],
+   "target": "enemy",
+   "effects": [
+    {
+     "type": "damage",
+     "amount": 3,
+     "to": "chosen"
+    },
+    {
+     "type": "conditional",
+     "condition": {
+      "type": "cardsPlayedThisTurnAtLeast",
+      "count": 2
+     },
+     "then": [
+      {
+       "type": "damage",
+       "amount": 3,
+       "to": "chosen"
+      }
+     ]
+    }
+   ],
+   "text": "Gây 3 damage. Liên Hoàn 2: gây thêm 3.",
+   "keywords": [
+    "lien_hoan"
+   ]
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "scheme",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 3,
+    "effects": [
+     {
+      "type": "drawCards",
+      "amount": 1
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "scheme",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 3,
+    "effects": [
+     {
+      "type": "drawCards",
+      "amount": 1
+     },
+     {
+      "type": "applyStatus",
+      "status": "empower",
+      "amount": 1,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Hàn Quang gây 4 / +4.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 4,
+       "to": "chosen"
+      },
+      {
+       "type": "conditional",
+       "condition": {
+        "type": "cardsPlayedThisTurnAtLeast",
+        "count": 2
+       },
+       "then": [
+        {
+         "type": "damage",
+         "amount": 4,
+         "to": "chosen"
+        }
+       ]
+      }
+     ],
+     "text": "Gây 4 damage. Liên Hoàn 2: gây thêm 4."
+    }
+   },
+   {
+    "text": "Hàn Quang còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
+   {
+    "text": "Hàn Quang gây 5 / +5.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 5,
+       "to": "chosen"
+      },
+      {
+       "type": "conditional",
+       "condition": {
+        "type": "cardsPlayedThisTurnAtLeast",
+        "count": 2
+       },
+       "then": [
+        {
+         "type": "damage",
+         "amount": 5,
+         "to": "chosen"
+        }
+       ]
+      }
+     ],
+     "text": "Gây 5 damage. Liên Hoàn 2: gây thêm 5."
+    }
+   },
+   {
+    "text": "Nội tại: mỗi lá Mưu Lược thứ 2.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "scheme",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 2,
+      "effects": [
+       {
+        "type": "drawCards",
+        "amount": 1
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "scheme",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 2,
+      "effects": [
+       {
+        "type": "drawCards",
+        "amount": 1
+       },
+       {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 1,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_thien_nguyet_truong",
+  "name": "Thiên Nguyệt Trượng",
+  "rarity": "legendary",
+  "signatureHeroId": "f01",
+  "text": "Khi vào Trăng Tròn: +2 Nguyệt Lực (Thẩm Nguyệt Hoa: +3, rút 1 lá).",
+  "card": {
+   "name": "Trầm Nguyệt",
+   "cost": 3,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "moon"
+   ],
+   "target": "none",
+   "effects": [
+    {
+     "type": "shiftMoon",
+     "amount": 1
+    },
+    {
+     "type": "gainMoonPower",
+     "amount": 2
+    }
+   ],
+   "text": "Đổi Vận: trăng tiến 1 pha. +2 Nguyệt Lực."
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "moonPhaseEntered",
+     "phase": "full"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "gainMoonPower",
+      "amount": 2
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "moonPhaseEntered",
+     "phase": "full"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "gainMoonPower",
+      "amount": 3
+     },
+     {
+      "type": "drawCards",
+      "amount": 1
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Trầm Nguyệt +3 Nguyệt Lực.",
+    "card": {
+     "effects": [
+      {
+       "type": "shiftMoon",
+       "amount": 1
+      },
+      {
+       "type": "gainMoonPower",
+       "amount": 3
+      }
+     ],
+     "text": "Đổi Vận: trăng tiến 1 pha. +3 Nguyệt Lực."
+    }
+   },
+   {
+    "text": "Trầm Nguyệt còn 2 Nguyệt Lực.",
+    "card": {
+     "cost": 2
+    }
+   },
+   {
+    "text": "Trầm Nguyệt Đổi Vận 2 pha.",
+    "card": {
+     "effects": [
+      {
+       "type": "shiftMoon",
+       "amount": 2
+      },
+      {
+       "type": "gainMoonPower",
+       "amount": 3
+      }
+     ],
+     "text": "Đổi Vận: trăng tiến 2 pha. +3 Nguyệt Lực."
+    }
+   },
+   {
+    "text": "Khi vào Trăng Tròn hoặc Trăng Non: +2 Nguyệt Lực (Thẩm Nguyệt Hoa: +3, rút 1 lá).",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "new"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "full"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 3
+       },
+       {
+        "type": "drawCards",
+        "amount": 1
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "new"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 3
+       },
+       {
+        "type": "drawCards",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_xuyen_van_cung",
+  "name": "Xuyên Vân Cung",
+  "rarity": "rare",
+  "signatureHeroId": "f05",
+  "text": "Mỗi lá tấn công thứ 3 của người mang: gây 2 damage lên mọi kẻ địch (Hạ Chi: 3, thêm Đánh Dấu 1 vòng).",
+  "card": {
+   "name": "Phá Vân Tiễn",
+   "cost": 3,
+   "copies": 2,
+   "type": "attack",
+   "tags": [
+    "attack",
+    "assassin"
+   ],
+   "target": "enemy",
+   "effects": [
+    {
+     "type": "damage",
+     "amount": 4,
+     "to": "chosen"
+    },
+    {
+     "type": "conditional",
+     "condition": {
+      "type": "targetHasStatus",
+      "status": "mark"
+     },
+     "then": [
+      {
+       "type": "damage",
+       "amount": 4,
+       "to": "chosen"
+      }
+     ]
+    }
+   ],
+   "text": "Gây 4 damage; mục tiêu bị Đánh Dấu: gây thêm 4.",
+   "keywords": [
+    "danh_dau"
+   ]
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "cardType": "attack",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 3,
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 2,
+      "to": "allEnemies"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "cardType": "attack",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 3,
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 3,
+      "to": "allEnemies"
+     },
+     {
+      "type": "applyStatus",
+      "status": "mark",
+      "amount": 1,
+      "to": "allEnemies"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Phá Vân Tiễn gây 5 / +5.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 5,
+       "to": "chosen"
+      },
+      {
+       "type": "conditional",
+       "condition": {
+        "type": "targetHasStatus",
+        "status": "mark"
+       },
+       "then": [
+        {
+         "type": "damage",
+         "amount": 5,
+         "to": "chosen"
+        }
+       ]
+      }
+     ],
+     "text": "Gây 5 damage; mục tiêu bị Đánh Dấu: gây thêm 5."
+    }
+   },
+   {
+    "text": "Phá Vân Tiễn còn 2 Nguyệt Lực.",
+    "card": {
+     "cost": 2
+    }
+   },
+   {
+    "text": "Phá Vân Tiễn gây 6 / +6.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 6,
+       "to": "chosen"
+      },
+      {
+       "type": "conditional",
+       "condition": {
+        "type": "targetHasStatus",
+        "status": "mark"
+       },
+       "then": [
+        {
+         "type": "damage",
+         "amount": 6,
+         "to": "chosen"
+        }
+       ]
+      }
+     ],
+     "text": "Gây 6 damage; mục tiêu bị Đánh Dấu: gây thêm 6."
+    }
+   },
+   {
+    "text": "Nội tại: mỗi lá tấn công thứ 2.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "cardType": "attack",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 2,
+      "effects": [
+       {
+        "type": "damage",
+        "amount": 2,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "cardType": "attack",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 2,
+      "effects": [
+       {
+        "type": "damage",
+        "amount": 3,
+        "to": "allEnemies"
+       },
+       {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_kinh_hong_phien",
+  "name": "Kinh Hồng Phiến",
+  "rarity": "epic",
+  "signatureHeroId": "f06",
+  "text": "Mỗi lá Khống Chế thứ 4 của người mang: người mang Ẩn Thân 1 vòng (Lam Khê: Ẩn Thân 2 vòng, Hồi Phục 2).",
+  "card": {
+   "name": "Hồ Mị",
+   "cost": 2,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "harmony",
+    "control"
+   ],
+   "target": "enemy",
+   "effects": [
+    {
+     "type": "applyStatus",
+     "status": "charm",
+     "amount": 1,
+     "to": "chosen"
+    },
+    {
+     "type": "damage",
+     "amount": 2,
+     "to": "chosen"
+    }
+   ],
+   "text": "Mê Hoặc 1 chiêu, gây 2 damage.",
+   "keywords": [
+    "me_hoac"
+   ]
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "control",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 4,
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "stealth",
+      "amount": 1,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "control",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 4,
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "stealth",
+      "amount": 2,
+      "to": "self"
+     },
+     {
+      "type": "applyStatus",
+      "status": "regen",
+      "amount": 2,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Hồ Mị gây 4 damage.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "charm",
+       "amount": 1,
+       "to": "chosen"
+      },
+      {
+       "type": "damage",
+       "amount": 4,
+       "to": "chosen"
+      }
+     ],
+     "text": "Mê Hoặc 1 chiêu, gây 4 damage."
+    }
+   },
+   {
+    "text": "Hồ Mị Mê Hoặc 2 chiêu.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "charm",
+       "amount": 2,
+       "to": "chosen"
+      },
+      {
+       "type": "damage",
+       "amount": 4,
+       "to": "chosen"
+      }
+     ],
+     "text": "Mê Hoặc 2 chiêu, gây 4 damage."
+    }
+   },
+   {
+    "text": "Hồ Mị gây 6 damage.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "charm",
+       "amount": 2,
+       "to": "chosen"
+      },
+      {
+       "type": "damage",
+       "amount": 6,
+       "to": "chosen"
+      }
+     ],
+     "text": "Mê Hoặc 2 chiêu, gây 6 damage."
+    }
+   },
+   {
+    "text": "Nội tại: mỗi lá Khống Chế thứ 3.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "control",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 3,
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "stealth",
+        "amount": 1,
+        "to": "self"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "control",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 3,
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "stealth",
+        "amount": 2,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_phan_quan_but",
+  "name": "Phán Quan Bút",
+  "rarity": "rare",
+  "signatureHeroId": "f07",
+  "text": "Mỗi 2 lượt, đầu lượt người chơi: rút 1 lá (Cố Uyển: rút 1 lá, +1 Nguyệt Lực).",
+  "card": {
+   "name": "Đoạn Án",
+   "cost": 2,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "scheme",
+    "control"
+   ],
+   "target": "enemy",
+   "effects": [
+    {
+     "type": "sealIntent",
+     "to": "chosen"
+    },
+    {
+     "type": "applyStatus",
+     "status": "weak",
+     "amount": 1,
+     "to": "chosen"
+    }
+   ],
+   "text": "Phong Ấn mục tiêu, Suy Yếu 1 vòng.",
+   "keywords": [
+    "phong_an",
+    "suy_yeu"
+   ]
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "playerTurnStart"
+    },
+    "actor": "wearer",
+    "every": 2,
+    "effects": [
+     {
+      "type": "drawCards",
+      "amount": 1
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "playerTurnStart"
+    },
+    "actor": "wearer",
+    "every": 2,
+    "effects": [
+     {
+      "type": "drawCards",
+      "amount": 1
+     },
+     {
+      "type": "gainMoonPower",
+      "amount": 1
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Đoạn Án Suy Yếu 2 vòng.",
+    "card": {
+     "effects": [
+      {
+       "type": "sealIntent",
+       "to": "chosen"
+      },
+      {
+       "type": "applyStatus",
+       "status": "weak",
+       "amount": 2,
+       "to": "chosen"
+      }
+     ],
+     "text": "Phong Ấn mục tiêu, Suy Yếu 2 vòng."
+    }
+   },
+   {
+    "text": "Đoạn Án còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
+   {
+    "text": "Đoạn Án thêm gây 3 damage.",
+    "card": {
+     "effects": [
+      {
+       "type": "sealIntent",
+       "to": "chosen"
+      },
+      {
+       "type": "applyStatus",
+       "status": "weak",
+       "amount": 2,
+       "to": "chosen"
+      },
+      {
+       "type": "damage",
+       "amount": 3,
+       "to": "chosen"
+      }
+     ],
+     "text": "Phong Ấn mục tiêu, Suy Yếu 2 vòng, gây 3 damage."
+    }
+   },
+   {
+    "text": "Mỗi 2 lượt: rút 2 lá (Cố Uyển: rút 2 lá, +1 Nguyệt Lực).",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnStart"
+      },
+      "actor": "wearer",
+      "every": 2,
+      "effects": [
+       {
+        "type": "drawCards",
+        "amount": 2
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "playerTurnStart"
+      },
+      "actor": "wearer",
+      "every": 2,
+      "effects": [
+       {
+        "type": "drawCards",
+        "amount": 2
+       },
+       {
+        "type": "gainMoonPower",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_huyet_phuong_dao",
+  "name": "Huyết Phượng Đao",
+  "rarity": "legendary",
+  "signatureHeroId": "f08",
+  "text": "Khi Huyết Nguyệt bắt đầu: người mang +2 Sức Mạnh (Phượng Chiêu Dung: thêm mọi kẻ địch Thiêu Đốt 2).",
+  "card": {
+   "name": "Phượng Diệt",
+   "cost": 3,
+   "copies": 2,
+   "type": "attack",
+   "tags": [
+    "attack",
+    "forbidden"
+   ],
+   "target": "enemy",
+   "effects": [
+    {
+     "type": "loseHp",
+     "amount": 2,
+     "to": "self"
+    },
+    {
+     "type": "damage",
+     "amount": 9,
+     "to": "chosen"
+    }
+   ],
+   "text": "Mất 2 HP, gây 9 damage."
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "bloodMoonStarted"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "strength",
+      "amount": 2,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "bloodMoonStarted"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "strength",
+      "amount": 2,
+      "to": "self"
+     },
+     {
+      "type": "applyStatus",
+      "status": "burn",
+      "amount": 2,
+      "to": "allEnemies"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Phượng Diệt gây 11 damage.",
+    "card": {
+     "effects": [
+      {
+       "type": "loseHp",
+       "amount": 2,
+       "to": "self"
+      },
+      {
+       "type": "damage",
+       "amount": 11,
+       "to": "chosen"
+      }
+     ],
+     "text": "Mất 2 HP, gây 11 damage."
+    }
+   },
+   {
+    "text": "Phượng Diệt còn 2 Nguyệt Lực.",
+    "card": {
+     "cost": 2
+    }
+   },
+   {
+    "text": "Phượng Diệt mất 3 HP, gây 14 damage.",
+    "card": {
+     "effects": [
+      {
+       "type": "loseHp",
+       "amount": 3,
+       "to": "self"
+      },
+      {
+       "type": "damage",
+       "amount": 14,
+       "to": "chosen"
+      }
+     ],
+     "text": "Mất 3 HP, gây 14 damage."
+    }
+   },
+   {
+    "text": "Huyết Nguyệt bắt đầu: +3 Sức Mạnh (Phượng Chiêu Dung: thêm mọi kẻ địch Thiêu Đốt 3).",
+    "hooks": [
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 3,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "burn",
+        "amount": 3,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_ngoc_tho_boi",
+  "name": "Ngọc Thố Bội",
+  "rarity": "rare",
+  "signatureHeroId": "f09",
+  "text": "Đầu trận: triệu hồi Thỏ Ngọc (Tiểu Mãn: nó +2 giáp, +1 Sức Mạnh).",
+  "card": {
+   "name": "Thố Linh",
+   "cost": 3,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "harmony"
+   ],
+   "target": "none",
+   "effects": [
+    {
+     "type": "summon",
+     "summonId": "tho_ngoc"
+    },
+    {
+     "type": "gainArmor",
+     "amount": 2,
+     "to": "summon"
+    }
+   ],
+   "text": "Triệu hồi Thỏ Ngọc; Linh Thú +2 giáp.",
+   "keywords": [
+    "linh_thu"
+   ]
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "combatStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "summon",
+      "summonId": "tho_ngoc"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "combatStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "summon",
+      "summonId": "tho_ngoc"
+     },
+     {
+      "type": "gainArmor",
+      "amount": 2,
+      "to": "summon"
+     },
+     {
+      "type": "applyStatus",
+      "status": "strength",
+      "amount": 1,
+      "to": "summon"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Thố Linh: Linh Thú +4 giáp.",
+    "card": {
+     "effects": [
+      {
+       "type": "summon",
+       "summonId": "tho_ngoc"
+      },
+      {
+       "type": "gainArmor",
+       "amount": 4,
+       "to": "summon"
+      }
+     ],
+     "text": "Triệu hồi Thỏ Ngọc; Linh Thú +4 giáp."
+    }
+   },
+   {
+    "text": "Thố Linh còn 2 Nguyệt Lực.",
+    "card": {
+     "cost": 2
+    }
+   },
+   {
+    "text": "Thố Linh thêm +1 Sức Mạnh cho Linh Thú.",
+    "card": {
+     "effects": [
+      {
+       "type": "summon",
+       "summonId": "tho_ngoc"
+      },
+      {
+       "type": "gainArmor",
+       "amount": 4,
+       "to": "summon"
+      },
+      {
+       "type": "applyStatus",
+       "status": "strength",
+       "amount": 1,
+       "to": "summon"
+      }
+     ],
+     "text": "Triệu hồi Thỏ Ngọc; Linh Thú +4 giáp, +1 Sức Mạnh.",
+     "keywords": [
+      "linh_thu",
+      "suc_manh"
+     ]
+    }
+   },
+   {
+    "text": "Đầu trận: Thỏ Ngọc +3 giáp (Tiểu Mãn: +4 giáp, +1 Sức Mạnh, Khiêu Khích 1 vòng).",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "summon",
+        "summonId": "tho_ngoc"
+       },
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "summon"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "summon",
+        "summonId": "tho_ngoc"
+       },
+       {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "summon"
+       },
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 1,
+        "to": "summon"
+       },
+       {
+        "type": "applyStatus",
+        "status": "taunt",
+        "amount": 1,
+        "to": "summon"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_dan_hon_dang",
+  "name": "Dẫn Hồn Đăng",
+  "rarity": "legendary",
+  "signatureHeroId": "f10",
+  "text": "Khi một Hero ngã: mọi Hero +4 giáp (Liễu Tịnh Nhan: thêm Hồi Phục 2).",
+  "card": {
+   "name": "Minh Đăng",
+   "cost": 5,
+   "copies": 1,
+   "type": "skill",
+   "tags": [
+    "moon"
+   ],
+   "target": "fallenAlly",
+   "effects": [
+    {
+     "type": "revive",
+     "ratio": 0.5,
+     "to": "chosen"
+    },
+    {
+     "type": "gainArmor",
+     "amount": 3,
+     "to": "chosen"
+    }
+   ],
+   "text": "Hồi Hồn 50% HP, đồng đội đó +3 giáp.",
+   "keywords": [
+    "hoi_hon"
+   ]
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "heroDied"
+    },
+    "actor": "each",
+    "effects": [
+     {
+      "type": "gainArmor",
+      "amount": 4,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "heroDied"
+    },
+    "actor": "each",
+    "effects": [
+     {
+      "type": "gainArmor",
+      "amount": 4,
+      "to": "self"
+     },
+     {
+      "type": "applyStatus",
+      "status": "regen",
+      "amount": 2,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Minh Đăng: hồi sinh xong +5 giáp.",
+    "card": {
+     "effects": [
+      {
+       "type": "revive",
+       "ratio": 0.5,
+       "to": "chosen"
+      },
+      {
+       "type": "gainArmor",
+       "amount": 5,
+       "to": "chosen"
+      }
+     ],
+     "text": "Hồi Hồn 50% HP, đồng đội đó +5 giáp."
+    }
+   },
+   {
+    "text": "Minh Đăng còn 4 Nguyệt Lực.",
+    "card": {
+     "cost": 4
+    }
+   },
+   {
+    "text": "Minh Đăng Hồi Hồn 60%.",
+    "card": {
+     "effects": [
+      {
+       "type": "revive",
+       "ratio": 0.6,
+       "to": "chosen"
+      },
+      {
+       "type": "gainArmor",
+       "amount": 5,
+       "to": "chosen"
+      }
+     ],
+     "text": "Hồi Hồn 60% HP, đồng đội đó +5 giáp."
+    }
+   },
+   {
+    "text": "Khi một Hero ngã: mọi Hero +6 giáp, Hồi Phục 2 (Liễu Tịnh Nhan: thêm Hồi Hồn 20% cho đồng đội vừa ngã).",
+    "hooks": [
+     {
+      "on": {
+       "type": "heroDied"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 6,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "heroDied"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 6,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "heroDied"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "revive",
+        "ratio": 0.2,
+        "to": "lastFallen"
+       }
+      ]
+     }
+    ]
+   }
+  ]
  }
 ]

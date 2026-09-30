@@ -384,9 +384,9 @@ describe("economyConfig", () => {
 
 
 describe("weapons, moon relics and second level-up forms", () => {
-  it("loads 10 weapons with 4 refinements and 8 relics with 5 resonance levels; every hero has a second form", () => {
+  it("loads 25 weapons with 4 refinements and 8 relics with 5 resonance levels; every hero has a second form", () => {
     const data = loadGameData();
-    expect(Object.keys(data.weapons)).toHaveLength(10);
+    expect(Object.keys(data.weapons)).toHaveLength(25);
     expect(Object.keys(data.relics)).toHaveLength(8);
     expect(Object.values(data.weapons).every((weapon) => weapon.refinement.length === 4)).toBe(true);
     expect(Object.values(data.relics).every((relic) => relic.resonance.length === 5)).toBe(true);
@@ -394,7 +394,7 @@ describe("weapons, moon relics and second level-up forms", () => {
     expect(data.metaConfig.maxRelics).toBe(2);
     expect(data.economyConfig.gearDupeMoonStar).toEqual({ legendary: 10, epic: 4, rare: 1, common: 1 });
     const count = (rarity: string) => Object.values(data.weapons).filter((weapon) => weapon.rarity === rarity).length;
-    expect([count("legendary"), count("epic"), count("rare")]).toEqual([2, 4, 4]);
+    expect([count("legendary"), count("epic"), count("rare")]).toEqual([7, 8, 10]);
   });
 
   it("T212: rejects wearer outside weapon hooks, forbidden hook effects, wrong level counts and colliding ids", () => {
