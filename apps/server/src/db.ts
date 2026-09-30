@@ -104,6 +104,22 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX match_players_by_account ON match_players(account_id, match_id);
   `,
+  // 4 — phase 7c: story tickets (`16` §9).
+  `
+  CREATE TABLE story_tickets (
+    id TEXT PRIMARY KEY,
+    account_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    stage_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    setup_json TEXT NOT NULL,
+    loadout_json TEXT NOT NULL,
+    data_version TEXT NOT NULL,
+    created_at BIGINT NOT NULL,
+    finished_at BIGINT,
+    result_json TEXT
+  );
+  CREATE INDEX story_tickets_by_account ON story_tickets(account_id, status);
+  `,
 ];
 
 /** Rewrites `?` placeholders to `$1..$n`, skipping single-quoted literals. */

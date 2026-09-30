@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { dataVersion, loadGameData } from "data";
-import type { Action, GameData, Loadout, RunAction, RunSetup, RunState } from "rules";
-import { applyRunAction, autoChoiceAction, cardDefOf, createRun, getValidTargets, isCardPlayable, reachableNodeIds, starterDeck } from "rules";
+import type { Action, CombatState, GameData, Loadout, RunAction, RunSetup, RunState, StorySetup, StoryStageDef } from "rules";
+import { applyAction, applyRunAction, autoChoiceAction, cardDefOf, chooseCombatAction, createRun, createStoryCombat, getValidTargets, isCardPlayable, reachableNodeIds, starterDeck } from "rules";
 import { hashToken } from "../src/auth";
 import { buildApp } from "../src/app";
 import type { ServerConfig } from "../src/config";
@@ -195,4 +195,36 @@ function botAction(data: GameData, run: RunState): RunAction {
     case "lost":
       throw new Error("run is over");
   }
+}
+
+/** Two arcs × two stages on existing encounters (same shape as the rules helper `withTestStory`). */
+export function withServerStory(server: TestServer): void {
+  const stage = (id: string, arcId: string, encounterId: string): StoryStageDef => ({
+    id, arcId, name: id, encounterId, before: [], after: [], firstClear: { moonJade: 40, darkIron: 1, masteryXp: 30 },
+  });
+  server.data.storyArcs = {
+    t_arc1: { id: "t_arc1", name: "Arc 1", stageIds: ["t_a1s1", "t_a1s2"], rewardHeroId: "m10" },
+    t_arc2: { id: "t_arc2", name: "Arc 2", stageIds: ["t_a2s1", "t_a2s2"], rewardHeroId: "f02" },
+  };
+  server.data.storyStages = {
+    t_a1s1: stage("t_a1s1", "t_arc1", "enc_01"),
+    t_a1s2: stage("t_a1s2", "t_arc1", "enc_02"),
+    t_a2s1: stage("t_a2s1", "t_arc2", "enc_03"),
+    t_a2s2: stage("t_a2s2", "t_arc2", "enc_01"),
+  };
+}
+
+/** Plays a story combat to the end with the heuristic bot; returns the actions sent. */
+export function playStory(data: GameData, setup: StorySetup, loadout?: Loadout): { state: CombatState; actions: Action[] } {
+  let state = createStoryCombat(data, setup, loadout).state;
+  const actions: Action[] = [];
+  while (state.status !== "won" && state.status !== "lost") {
+    const action = chooseCombatAction(data, state, 0);
+    const result = applyAction(data, state, action);
+    if (!result.ok) throw new Error(result.error);
+    actions.push(action);
+    state = result.state;
+    if (actions.length > 2000) throw new Error("playStory: combat did not end");
+  }
+  return { state, actions };
 }
