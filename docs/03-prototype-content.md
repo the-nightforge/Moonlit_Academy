@@ -1058,3 +1058,321 @@ giả định** Hero nào có trong đội ra trận.
   2. Màn 8 **không** ghim `start.moonIndex` — pha đầu theo luật hiện hành (index 1;
      khi redesign chạy sẽ là ngẫu nhiên), khuyến khích đọc Nguyệt tính.
   3. Màn 5 giữ `bloodMoonRounds: 3` như đề xuất.
+
+---
+
+### 13.4 Arc 2 — Bóng Tối: nội dung chi tiết [GĐ7c.5]
+
+**ĐỀ XUẤT — chờ duyệt (7c.5).** Số liệu là khởi điểm, sẽ chốt bằng mô phỏng 80 seed
+(bot, Bộ cơ bản) theo mục tiêu độ khó ở §13.2: màn thường 55–75%, boss 40–60% cho
+đội `m05 + f04 + m06`; mỗi màn ≥ 60% với đội tốt nhất trong 3 đội mẫu
+(`m05+f04+m06`, `m05+f03+f02`, `m01+m02+f04`). Chỉ dùng effect / trạng thái / điều
+kiện đã có trong `01`, `02`, `static.ts`.
+
+Bối cảnh arc: sau khảo hạch năm nhất, thư từ của học sinh bị lấy cắp dẫn tới một mạng
+mật thám trong học viện — tổ chức **Vô Nguyệt** (trùng tên nội tại thức tỉnh của Tô
+Dạ — không phải ngẫu nhiên) đang lập danh sách người trong học viện, ám sát kẻ đã
+đọc tài liệu cấm, và lấy "trang cuối" của *Nguyệt Thực Ký*. Các tuyến đã gieo ở Arc
+1 chụp lại thành một âm mưu: kẻ mở cửa cho Ảnh Hồ (s07), trang sách bị xé (s06), cánh
+cửa Cấm Địa mở từ phía trong (s05). Định nghĩa arc (Phase B ghi vào `story.json`):
+`arcs[1] = { id: "arc2", name: "Bóng Tối", stageIds: [arc2_s01…arc2_s08],
+rewardHeroId: "f02" }`.
+
+#### 13.4.1 Bảng màn
+
+Mỗi màn `arc2_sNN` trỏ encounter `story_arc2_sNN` (`tier: "story"`, `name` = tên màn,
+không vào pool Lượt chơi / Trận lẻ).
+
+| # | Id màn | Tên | Kẻ địch (tổng HP) | `start` | `firstClear` Ngọc / Thiết / XP |
+|---|---|---|---|---|---|
+| 1 | `arc2_s01` | Thư Tín Mất Tích | `hac_y_mat_tham` **mới** + `shadow_fox` ×2 (34+23+23 = 80) | — | 40 / 1 / 25 |
+| 2 | `arc2_s02` | Mật Thám | `hac_y_mat_tham` ×2 + `shadow_fox` (91) | — | 45 / 1 / 30 |
+| 3 | `arc2_s03` | Vô Nguyệt Ám Sát | `vo_nguyet_am_sat` **mới** ×3 (90) | — | 50 / 2 / 30 |
+| 4 | `arc2_s04` | Tô Dạ Dao Động | `vo_nguyet_nghi_si` **mới** + `vo_nguyet_am_sat` ×2 (98) | — | 50 / 1 / 30 |
+| 5 | `arc2_s05` | Chợ Đêm Tin Tức | `fox_king` + `hac_y_mat_tham` + `shadow_fox` (50+34+23 = 107) | — | 50 / 2 / 35 |
+| 6 | `arc2_s06` | Quan Tinh Đài | `vo_nguyet_nghi_si` + `vo_nguyet_am_sat` ×2 (98) | `moonIndex: 0` | 55 / 2 / 35 |
+| 7 | `arc2_s07` | Hắc Vệ | `black_guard` + `vo_nguyet_am_sat` (69+30 = 99) | — | 55 / 2 / 40 |
+| 8 | `arc2_s08` | Vô Nguyệt Ảnh Chủ | `vo_nguyet_anh_chu` **boss mới** (105) | — | 55 / 5 / 40 |
+
+**Tổng:** 400 Nguyệt Ngọc, 16 Huyền Thiết, XP Tu Luyện 25 → 40 theo màn. Qua màn 8
+tặng `f02` Diệp Linh Lung.
+
+**Tuyến ý đồ** (khác Arc 1: đây là chiến tranh thật, không còn là bài thí):
+
+- **s01:** mở arc ở độ khó Arc 1 cuối — mật thám hút Dự Trữ (`drainMoonPower`) và
+  cướp 1 buff (`stealBuff 1`, mồi cho boss), cáo trộm nhắm `lowestHp`.
+- **s02:** hai mật thám hút Dự Trữ luân phiên — dạy "tiêu quỹ trong lượt, đừng để
+  Dự Trữ cho kẻ địch hút"; hạ kẻ hút trước.
+- **s03:** bức tường Ẩn Thân — 3 sát thủ thay phiên `stealth 2` (đủ che 1 lượt người
+  chơi); nhắm đơn vào bóng là phí lượt, lá `allEnemies` (Song Nhận Loạn Vũ của M06…)
+  trả đúng giá. Đội `m05+f03+f02` có nhiều đòn lan hơn — dự kiến là "đội tốt nhất".
+- **s04:** nghi sĩ + sát thủ hộ tống — địch có sustain (`heal allAllies`) và quét
+  `weak` toàn đội; kẻ ít hơn nhưng trận kéo dài.
+- **s05:** `fox_king` (elite tầng 5+) cầm chợ đêm — stealth của Vương + hút Dự Trữ
+  của mật thám + hồi 8; trận dài nhất arc ngoài boss.
+- **s06:** `start.moonIndex: 0` — Vô Nguyệt đánh đúng đêm của nó: `stealth` địch áp
+  trong Trăng Non được **+1 thời hạn** (`01` §7.1) → `stealth 2` thành 3, che 2 lượt
+  người chơi; override `new` của cả ba kẻ địch mới đều kích ở vòng 1. Ngược lại lá
+  `assassin` của người chơi cũng ×1.5 — hai phe dùng chung một pha, đúng "hiệu ứng
+  pha áp cho cả hai phe".
+- **s07:** `black_guard` (đòn 14 + quét `allEnemies` + Suy Yếu) hộ tống một sát thủ
+  — áp lực damage cao nhất arc ngoài boss; dạy giữ Hero yếu trên ngưỡng an toàn.
+- **s08:** boss cướp buff + Ẩn Thân + Đoạt Nguyệt — phạt deck dựng buff trâu (Sức
+  Mạnh/Hồi Phục/Hộ Vệ không chốt nhanh là của hắn), thưởng deck đánh thẳng.
+
+#### 13.4.2 Kẻ địch mới
+
+Ba kẻ địch thường đều thuộc tổ chức Vô Nguyệt — mật thám (hút/cướp), sát thủ (Ẩn
+Thân), nghi sĩ (nghi lễ Trăng Non). Theo tinh thần Nguyệt tính như Arc 1: mỗi con
+đúng **1 `moonOverride` ở `new`** (Vô Nguyệt = "không trăng"); boss **4** override
+cho 4 pha có hiệu ứng. `art.portrait` để `""`.
+
+**`hac_y_mat_tham` — Hắc Y Mật Thám** — `maxHp: 34`, `moonPower { start: 1, cap: 4 }`
+
+| intent | Tên | kind | cost | targeting | effects |
+|---|---|---|---|---|---|
+| `hym_am_cham` | Ám Châm | attack | 1 | lowestHp | `damage 4 chosen` |
+| `hym_thin_tuc` | Thính Tức | debuff | 1 | random | `drainMoonPower 2 chosen` |
+| `hym_dao_an` | Đạo Ấn | special | 2 | highestHp | `stealBuff 1` |
+| `hym_mai_phuc` | Mai Phục | debuff | 2 | lowestHp | `applyStatus vulnerable 2 chosen` |
+| `hym_cap_bao` | Cấp Báo | debuff | 3 | random | `drainMoonPower 3 chosen steal` + `damage 3 chosen` |
+
+`moonOverrides`: `new` → `hym_vo_nguyet_mat_lenh` "Vô Nguyệt Mật Lệnh" (special,
+random): `drainMoonPower 3 chosen steal` + `stealBuff 1`.
+
+**`vo_nguyet_am_sat` — Vô Nguyệt Ám Sát** — `maxHp: 30`, `moonPower { start: 1, cap: 4 }`
+
+| intent | Tên | kind | cost | targeting | effects |
+|---|---|---|---|---|---|
+| `vas_lanh_dao` | Lãnh Đao | attack | 1 | lowestHp | `damage 5 chosen` |
+| `vas_am_chu` | Ám Chủ | attack | 1 | random | `damage 4 chosen` |
+| `vas_tan_anh` | Tản Ảnh | buff | 2 | — | `applyStatus stealth 2 self` |
+| `vas_doat_menh` | Đoạt Mệnh | attack | 3 | lowestHp | `damage 8 chosen` |
+| `vas_vo_thanh` | Vô Thanh | buff | 4 | — | `applyStatus stealth 2 self` + `applyStatus strength 1 self` |
+
+`moonOverrides`: `new` → `vas_tan_nguyet_sat` "Tân Nguyệt Sát" (attack, lowestHp):
+`damage 8 chosen` + `applyStatus stealth 2 self` (ở Trăng Non thành 3 — che 2 lượt).
+
+**`vo_nguyet_nghi_si` — Vô Nguyệt Nghi Sĩ** — `maxHp: 38`, `moonPower { start: 1, cap: 4 }`
+
+| intent | Tên | kind | cost | targeting | effects |
+|---|---|---|---|---|---|
+| `vns_hac_chuc` | Hắc Chúc | attack | 1 | random | `damage 3 chosen` + `applyStatus burn 1 chosen` |
+| `vns_te_tinh` | Tế Tinh | buff | 2 | — | `heal 4 allAllies` |
+| `vns_doan_tinh` | Đoạn Tinh | debuff | 2 | random | `drainMoonPower 2 chosen steal` |
+| `vns_vo_vong` | Vô Vọng | debuff | 3 | — | `applyStatus weak 2 allEnemies` |
+| `vns_tan_nguyet` | Tàn Nguyệt | buff | 4 | — | `heal 6 allAllies` + `applyStatus regen 1 allAllies` |
+
+`moonOverrides`: `new` → `vns_vo_nguyet_te` "Vô Nguyệt Tế" (buff):
+`applyStatus strength 1 allAllies` + `applyStatus stealth 1 allAllies` (ở Trăng Non
+thành stealth 2 — che cả đội 1 lượt người chơi).
+
+**`vo_nguyet_anh_chu` — Vô Nguyệt Ảnh Chủ (boss)** — `maxHp: 105`,
+`moonPower { start: 2, cap: 8 }`. Đầu não Vô Nguyệt đứng sau đợt trộm thư — cướp
+buff của người chơi làm của mình, ẩn vào bóng khi bị ép, hút Dự Trữ để nuôi quỹ.
+
+| intent | Tên | kind | cost | targeting | effects |
+|---|---|---|---|---|---|
+| `vac_anh_cham` | Ảnh Châm | attack | 1 | random | `damage 5 chosen` |
+| `vac_doat_uy` | Đoạt Uy | special | 2 | highestHp | `stealBuff 2` |
+| `vac_am_chieu` | Ám Chiếu | attack | 3 | lowestHp | `damage 7 chosen` + `applyStatus weak 2 chosen` |
+| `vac_tan_the` | Tản Thể | buff | 3 | — | `applyStatus stealth 2 self` + `cleanse self` |
+| `vac_doat_nguyet` | Đoạt Nguyệt | debuff | 4 | random | `drainMoonPower 3 chosen steal` + `damage 3 chosen` |
+| `vac_vo_nguyet_tram` | Vô Nguyệt Trảm | attack | 5 | lowestHp | `damage 12 chosen` |
+
+`moonOverrides` (đứng đầu chuỗi, cost 0 — `01` §9.2):
+
+| phase | intent | Tên | kind | targeting | effects |
+|---|---|---|---|---|---|
+| `new` | `vac_vo_nguyet_thiem` | Vô Nguyệt Thiểm | attack | lowestHp | `damage 14 chosen` |
+| `firstQuarter` | `vac_nhiep_tinh` | Nhiếp Tinh | debuff | random | `drainMoonPower 3 chosen steal` + `applyStatus weak 2 chosen` |
+| `full` | `vac_ty_nguyet` | Tị Nguyệt | defend | — | `applyStatus stealth 2 self` + `gainArmor 10 self` |
+| `lastQuarter` | `vac_phe_nguyet` | Phệ Nguyệt | special | random | `stealBuff 3` |
+
+Không `bloodMoonOverride`, không `phases` (đó là cơ chế boss co-op). So sánh sức
+mạnh: `khao_hach_chi_linh` 80 HP / đòn tới 10; `moon_ape` 94 HP / đòn tới 18 — boss
+này 105 HP / đòn tới 14, nhưng HP hiệu dụng cao hơn số ghi vì `stealth` chặn nhắm
+đơn và `stealBuff` tước buff của người chơi sang hắn.
+
+#### 13.4.3 Lời thoại
+
+`speaker` chỉ dùng: `narrator`, Hero (`m05`, `f04`, `m10` như Arc 1; `f02`, `m06`,
+`m08` là nhân vật truyện ở màn 2/4/6 và lặp lại ở 5/8), và id kẻ địch của màn đó.
+Thoại **không giả định** Hero nào có trong đội ra trận — `f02`/`m06`/`m08` chỉ nói
+với tư cách người trong câu chuyện.
+
+**`arc2_s01` Thư Tín Mất Tích**
+
+`before`:
+- `narrator`: "Ba tuần nay, thư của học sinh gửi về quê không một lá tới nơi. Đêm nay các ngươi phục quanh phòng bưu dịch — nơi bao thư chất thành từng đống nhỏ."
+- `m10`: "Ghi lại: mười ba bao thư mất không dấu vết, sáp niêm không rách. Kẻ lấy biết cách mở thư mà không để lại dấu tay."
+- `f04`: "Trong thư của mọi người... có cả địa chỉ nhà, lời nhắn cho cha mẹ. Sao ai lại muốn những thứ đó chứ?"
+- `hac_y_mat_tham`: "Thư không chữ chỉ là giấy. Thư có chữ — là bản đồ. Đừng tưởng học viện này kín như các ngươi nghĩ."
+- `m05`: "Nói hay đấy, đồ trộm! Cất bản đồ của ngươi đi — ta đóng dấu ngươi ngay tại đây!"
+
+`after`:
+- `narrator`: "Bóng áo đen loang xuống mái ngói rồi tan. Trong bọc hắn đánh rơi: hàng chục lá thư chưa đọc — mỗi lá đều bị xé mất đoạn ký tên."
+- `m10`: "Không lấy tiền, không lấy nội dung — chỉ lấy tên. Chúng đang lập danh sách... danh sách những người ở học viện này."
+- `hac_y_mat_tham`: "(khẽ, trước khi ngất) Vô Nguyệt không quên cái tên nào."
+- `f04`: "Vô... Nguyệt? Nghe cái tên đó mà lạnh cả người..."
+- `m05`: "Kẻ nào lập danh sách thì ta xé danh sách đó. Tìm hang của chúng thôi!"
+
+**`arc2_s02` Mật Thám**
+
+`before`:
+- `narrator`: "Lần theo đống thư, các ngươi tới một căn phòng hoang ngoài bờ hồ — và nhận ra mình không phải thợ săn duy nhất tới trước."
+- `f02`: "Á à ~ đội mới của thư viện cũng tới rồi. Muội tới trước các huynh đệ một bước — thói quen nghề nghiệp thôi."
+- `m05`: "Ngươi là ai?! Đêm nay ta không tin cái bóng nào cả!"
+- `f02`: "Diệp Linh Lung — người bán tin, không phải kẻ trộm thư. Tin xấu: tổ chim này đã dọn. Tin tốt: chúng để lại đồ đội trả ~"
+- `hac_y_mat_tham`: "Con cáo của cung điện cũng ngửi được mùi này à... Coi chừng cái bóng sau lưng mình đi, mật thám."
+- `m10`: "(thì thầm) 'Con cáo của cung điện' — ghi lại: cô ta không phải học sinh."
+
+`after`:
+- `narrator`: "Tổ chim đã trống thật — chỉ còn dây ràng, tro thư đốt và hai quân bài úp trên mặt bàn."
+- `f02`: "Vô Nguyệt ~ cái tên này muội ngửi thấy từ trong cung ra tới đây. Ai học được cách 'ẩn thân trong ánh trăng' thì sẽ không dạy lại cho người khác đâu nhé."
+- `f04`: "Vậy... cô theo dõi bọn này từ bao giờ?"
+- `f02`: "Từ đêm mưa tuần trước. Đừng giật mình ~ muội còn theo dõi cả bọn chúng nữa — và chúng giỏi hơn các huynh tưởng nhiều."
+- `m05`: "Giỏi đến đâu cũng chỉ là đồ lén lút. Bọn ta đây: đánh thẳng mặt!"
+
+**`arc2_s03` Vô Nguyệt Ám Sát**
+
+`before`:
+- `narrator`: "Nửa đêm. Chuông báo động không kịp rung — ba cái bóng đã lọt qua tường, nhắm thẳng dãy ký túc của những người từng chạm vào bí mật Cấm Địa."
+- `vo_nguyet_am_sat`: "Trăng lặn nơi này."
+- `m05`: "Câu cửa miệng của chúng à? Nói xong câu đó ngươi nằm luôn được không?"
+- `m06`: "(không ngáp nữa) ...Ẩn Thân. Đánh lan ra — nhắm đơn vào cái bóng là đánh vào hư không."
+- `f04`: "Họ tiến lại mà không một tiếng động... mọi người đừng tách hàng!"
+
+`after`:
+- `narrator`: "Các bóng đen vỡ như mực gặp nước. Trên nền nhà chỉ còn một dấu ấn: vầng trăng bị tô đen."
+- `m10`: "Chúng không nhắm vào người — chúng nhắm vào 'kẻ từng đọc trang cuối'. Cuốn 'Nguyệt Thực Ký' ấy... chúng muốn bịt miệng ai đã đọc nó."
+- `m06`: "(im lặng lau tay áo) ...có những danh sách chỉ cần một nét gạch."
+- `m05`: "Ai xách dao tới thì cứ tới. Vọng Nguyệt này chưa thua đêm nào!"
+- `narrator`: "Trăng Khuyết Đầu nhô lên khỏi mái — mỏng như vết dao. Các ngươi sống qua đêm không trăng đầu tiên."
+
+**`arc2_s04` Tô Dạ Dao Động**
+
+`before`:
+- `narrator`: "Nghi Sĩ của Vô Nguyệt không đến để giết — họ đến để 'nhắc nợ'. Kèm theo hai sát thủ: một tin nhắn bằng thứ ngôn ngữ chỉ kẻ trong nghề mới hiểu."
+- `vo_nguyet_nghi_si`: "Tô Dạ. Dao động là quyền của người sống — nhưng kẻ ngủ không được phép mơ."
+- `m06`: "...Ta vẫn đang ngủ. Về đi."
+- `vo_nguyet_nghi_si`: "Vô Nguyệt không đòi lại thứ đã cho ngươi — chỉ đòi thứ ngươi hứa. Một cánh cửa mở, một đêm trăng tắt. Cũ kỹ, dễ nhớ."
+- `f04`: "Tô Dạ... họ đang nói gì vậy? 'Cánh cửa mở' là sao...?"
+- `m05`: "Ai hứa hẹn gì với bọn này thì đập bọn này xong rồi tính! Đứng về phía bọn ta trước đã!"
+- `m06`: "(khẽ, như ngáp trong mơ) Được. Nợ xưa — trả bằng trận này."
+
+`after`:
+- `narrator`: "Nghi Sĩ quỵ xuống, nụ cười của kẻ tín đồ không rời môi. Hai sát thủ tan đi không hối tiếc — tin nhắn đã giao xong."
+- `vo_nguyet_nghi_si`: "Dao động cũng là một câu trả lời, Tô Dạ à. Vô Nguyệt ghi nhận... câu trả lời đó."
+- `m06`: "Ghi thì ghi. Ta là thủ thư — và thủ thư không giữ gì mãi cả, kể cả lời hứa."
+- `m05`: "Đi ngủ đi Tô Dạ. Ai thắc mắc thì để ta trả lời — bằng thương."
+- `f04`: "(lo lắng) Tô Dạ vẫn giấu gì đó... nhưng hắn vừa đứng về phía mình, phải không?"
+
+**`arc2_s05` Chợ Đêm Tin Tức**
+
+`before`:
+- `narrator`: "Chợ đêm ngoài thành — nơi bí mật được cân lên cân bạc. Diệp Linh Lung dẫn đường: muốn biết Vô Nguyệt đánh đâu, phải trả bằng thứ tiền không mua nổi."
+- `f02`: "Quy tắc chợ đêm: hỏi gì trả đó. Câu hỏi của chúng ta đắt ~ nên đêm nay ta đi đòi nợ thay vì mua."
+- `fox_king`: "Hừ — khách quen của ta bán tin cho các ngươi được, nhưng trước phải trả 'phí giới thiệu'. Đám nhỏ của ta đói lắm."
+- `m05`: "Sao ai trong chợ này cũng nói nhiều mà không nói gì?! Đánh xong rồi mặc cả!"
+- `m10`: "(vừa né vừa viết) Chợ đêm = sở giao dịch tin tức. Ghi nhớ cho báo cáo— à không, cho chuyện kể sau này."
+
+`after`:
+- `narrator`: "Hồ Vương lùi vào sương, tiếng cười khàn còn vương trong ánh đèn lồng đỏ."
+- `fox_king`: "Ta giữ chữ tín: khách của ngươi đã trả giá để 'mượn mắt trăng'. Đêm Trăng Non tới, chúng lên Quan Tinh Đài — nơi nhìn thấy mọi thứ, trừ bóng tối."
+- `f02`: "Quan Tinh Đài ~ nơi giáo quan Khương Tịch đọc sao mỗi đêm. Muốn giết một nhà tiên tri thì trăng non là đêm duy nhất không ai nhìn thấy — kể cả ông ta."
+- `m10`: "Phải báo cho giáo quan ngay — đêm Trăng Non chỉ còn vài ngày!"
+- `f04`: "Đánh nhau trong đêm không trăng... tối tới mức không thấy cả tay mình..."
+
+**`arc2_s06` Quan Tinh Đài**
+
+`before`:
+- `narrator`: "Quan Tinh Đài trên đỉnh núi — mái vòm xoay theo sao. Đêm nay trăng non, trời đen đặc, và những cái bóng đã leo tường trước khi ai kịp hô."
+- `m08`: "Ta đọc được đêm nay từ ba năm trước. Nhưng viết lại nó — chỉ được từ đêm nay."
+- `vo_nguyet_nghi_si`: "Vô Nguyệt Tế đã bắt đầu. Ánh trăng là lời nói dối đầu tiên — đêm nay đài của ngươi mù như mọi kẻ mù khác."
+- `m08`: "Kẻ không thấy gì trong bóng tối thì không nên lên đài của ta. Ở đây, từng viên gạch nhớ hướng của sao."
+- `m05`: "Trăng non là sân của bọn sát thủ — nhưng cũng là của ta! Đánh lan ra, đừng nhắm đơn!"
+- `f04`: "Ẩn Thân của chúng kéo dài hơn trong đêm không trăng... mọi người đừng tản ra!"
+
+`after`:
+- `narrator`: "Tinh khí của đài vẫn sáng — ánh sao xuyên qua từng mảng tối như kim châm qua lụa đen. Bóng cuối cùng vỡ ra khi viền trời hớt qua tia sao đầu tiên."
+- `vo_nguyet_nghi_si`: "Tế lễ hôm nay thất bại chỉ là dời ngày. Ảnh Chủ đã có 'trang cuối' — và trăng non sẽ quay lại, như mọi chu kỳ."
+- `m08`: "Ta biết các ngươi đến từ lâu. Điều ta không ngờ là các em cũng đến — đọc sách tốt đấy, tân sinh."
+- `m10`: "Ảnh Chủ — đầu não của Vô Nguyệt! Giáo quan, hang ổ của chúng ở đâu?"
+- `m08`: "Dưới đài này. Nền của phế viện cũ — nơi trăng không soi tới, vì chính chúng đã tắt nó."
+- `f04`: "(nuốt nước bọt) Vậy là đêm tới... chúng ta đi xuống đó à? Em chuẩn bị thêm thuốc đã."
+
+**`arc2_s07` Hắc Vệ**
+
+`before`:
+- `narrator`: "Nền phế viện dưới chân đài — cổng hầm đen như miệng giếng. Gác cổng: một võ sĩ giáp đen, dáng đứng của người đã quên mình sống thế nào."
+- `black_guard`: "Hắc Vệ. Lệnh duy nhất: không ai qua."
+- `m05`: "Lệnh một chữ à? Ta có lệnh hai chữ: tránh ra!"
+- `vo_nguyet_am_sat`: "Trăng lặn sâu nơi này — ngươi sẽ không nghe thấy chính mình ngã."
+- `f04`: "Bộ giáp đó... là giáp thị vệ cũ của triều đình! Sao quân nhà vua lại gác cho Vô Nguyệt?!"
+- `m10`: "(viết nhanh) Đội thị vệ mất tích ba năm trước — hồ sơ bị đốt sạch. Hóa ra là ở đây."
+
+`after`:
+- `narrator`: "Hắc Vệ gãy xuống như pho tượng mất nền. Phía sau hắn, hành lang đổ dốc vào một chỗ đen đặc tới mức ánh đèn cũng tắt."
+- `black_guard`: "...(giọng vỡ, như người vừa tỉnh) ...báo... báo lên trên... trăng sẽ... tắt..."
+- `m05`: "Hắn nhắc nhở mình à? Lạ thật — bị đánh bại mà như được đánh thức."
+- `m10`: "Dưới đó là đầu não của chúng. Ai xuống cũng phải biết: mình đang bước vào nơi không còn trăng."
+- `narrator`: "Ở đáy hành lang, có thứ đang thở chậm — đều như một mặt trăng thứ hai, nhưng không mang theo ánh sáng nào."
+
+**`arc2_s08` Vô Nguyệt Ảnh Chủ**
+
+`before`:
+- `narrator`: "Đại điện không trăng. Giữa sảnh, một cái bóng đứng — không rõ hắn mặc áo đen, hay chính bóng đã đứng thành hình người."
+- `vo_nguyet_anh_chu`: "Các ngươi đến với sức mạnh, với bạn bè, với ánh sáng trong người. Tốt. Ta lấy hết — từng thứ một."
+- `f02`: "Ảnh Chủ ~ kẻ mua thông tin của mọi phe trừ Vô Nguyệt. Đêm nay ta bán miễn phí một tin: ngươi thua."
+- `vo_nguyet_anh_chu`: "Mật thám của Thái Hậu. Ta biết mặt ngươi trước cả khi ngươi cất tiếng — ta cướp nó từ lâu rồi."
+- `m06`: "(giọng lạnh, không còn vẻ ngái ngủ) Ngươi cho ta một cái tên trong danh sách. Đêm nay ta trả lại — bằng con dao cuối."
+- `m05`: "Nói nhiều rồi! Bóng ơi là bóng — gặp thương thì cũng rách thôi!"
+
+`after`:
+- `narrator`: "Ảnh Chủ không gục — hắn nhạt dần như vệt mực bị rửa khỏi trang sách. Trên đài trống, 'trang cuối' của Nguyệt Thực Ký trở về trong im lặng."
+- `vo_nguyet_anh_chu`: "Trăng rạng... cũng chỉ là món nợ phải trả. Vô Nguyệt không bao giờ mất hết... chỉ đợi lặn..."
+- `m06`: "Nợ xong. Kể từ đêm nay, ta chỉ là thủ thư."
+- `f02`: "Nhiệm vụ của muội tới đây là hết ~ nhưng cung điện cho phép muội 'đổi bàn làm việc'. Thư viện này thú vị hơn tưởng tượng — muội ở lại nhé?"
+- `f04`: "Thật á?! Em mừng quá — từ nay bọn mình cùng một đội!"
+- `m10`: "Ghi nhận: Vô Nguyệt tàn diệt, 'trang cuối' trở về thư viện, Diệp Linh Lung nhập đội. Năm nhất... kết thúc chưa yên."
+- `narrator`: "Trên bầu trời, Lưỡi Liềm Đầu nhú lên — như thể cả bầu trời cũng thở phào."
+- `narrator`: "Phần thưởng kết arc: Diệp Linh Lung — mật thám của Thái Hậu, kẻ bán mọi thứ trừ sự thật — chính thức gia nhập đội."
+
+#### 13.4.4 Ghi chú thiết kế
+
+- **Mốc sức mạnh:** arc 1 neo tầng 1–2 (màn 38–80 HP, đòn ≤ 10); arc 2 neo giữa
+  elite và boss Lượt chơi (`black_guard` 69 HP đòn 14, `fox_king` 50 HP, `moon_ape`
+  94 HP đòn 18): tổng HP màn 80 → 107, boss 105; đòn lớn nhất 14 (boss, override
+  `new`), dưới `moon_ape`. Trạng thái thời hạn của **kẻ địch** trừ 1 ở cuối vòng tạo
+  ra (`01` §9.4): `stealth 1` / `weak 1` trên chiêu địch không kịp có tác dụng → mọi
+  Ẩn Thân / Suy Yếu / Dễ Vỡ của kẻ địch arc 2 đặt tối thiểu **2** (riêng `burn` là
+  cộng dồn, `freeze`/`strength`/`regen`/`stealBuff`/`drainMoonPower` không phụ
+  thuộc con số này).
+- **Không dùng `empower` / `mark` trong chiêu địch** — cả hai chỉ cộng damage khi
+  đòn đến từ lá bài (`ctx.card`, `01` §10.1); chiêu địch không có lá. Dùng
+  `strength` (vĩnh viễn, áp cho mọi đòn) thay `empower` cho sát thủ/boss.
+- **`stealBuff` trong chiêu địch:** được phép trong `IntentDef` (chỉ `onEnter` của
+  phase boss co-op và hook Kỳ Vật/Binh Khí/Hợp Kích cấm — `02` §6). `hac_y_mat_tham`
+  lấy 1 làm mồi, boss lấy 2–3.
+- **`drainMoonPower … steal`:** cộng quỹ `moonPower` của kẻ địch đang thi hành
+  (`01` §9.3.2) — vòng sau vẫn tính `base(r) + moonReserve`, nên phần "cướp" chủ yếu
+  là nghĩa (Đoạt Nguyệt), không kỳ vọng lợi thế lớn; phần rút Dự Trữ mới là áp lực.
+- **Tương thích redesign Nguyệt Luân (đã duyệt, chưa cài):** mỗi kẻ địch mới đúng 1
+  `moonOverride` ở `new` — Nguyệt tính "Vô Nguyệt" tự nhiên; boss 4 override cho 4
+  pha hiệu ứng như khuôn boss Arc 1. Khi redesign chạy (pha đầu ngẫu nhiên + Nguyệt
+  Lệnh), `start.moonIndex` của s06 đè lên pha ngẫu nhiên — giữ ý đồ "đêm của Vô
+  Nguyệt" nhưng cần xem lại cùng redesign.
+- **Chưa mô phỏng:** band 55–75% / 40–60% / best-team ≥60% chỉ kiểm chứng ở Phase B
+  (80 seed × 3 đội mẫu); chỉnh HP / damage / số địch nếu lệch, ghi lại như §13.3.4.
+- **Câu hỏi chờ duyệt:**
+  1. **s03:** 3 sát thủ thuần (đề xuất — "bức tường Ẩn Thân") hay `vo_nguyet_am_sat`
+     ×2 + `shadow_fox` (nhẹ tay hơn, tránh stall kéo Cạn Bài khi bot thiếu đòn lan)?
+  2. **s08 `start`:** ghim `moonIndex: 0` — Ảnh Chủ đánh trận quyết định đúng đêm
+     trăng non của nó (và mở trận bằng Vô Nguyệt Thiểm 14) — hay không ghim như boss
+     Arc 1?
+  3. **`stealBuff` lên kẻ địch thường:** Đạo Ấn của `hac_y_mat_tham` là lần đầu
+     effect này rời lá Hero — giữ để đặt mồi cho boss, hay chỉ để boss dùng?
+  4. **Override `new` của nghi sĩ:** `stealth 1 allAllies` (+1 ở Trăng Non → 2, che
+     cả đội địch một lượt người chơi) rất swingy ở s06 — giữ, hay hạ còn chỉ
+     `strength 1 allAllies`?
