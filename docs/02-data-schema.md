@@ -721,7 +721,7 @@ export type CombatEvent =
   | { type: "statusRemoved"; targetId: string; status: StatusId }
   | { type: "moonPowerChanged"; value: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
-  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" | "start" }   // GĐ2; rounds 0 = hết; GĐ7c: "start" = Huyết Nguyệt đầu trận (CombatSetup.start)
+  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" | "boss" | "start" }   // GĐ2; rounds 0 = hết; "boss" = giai đoạn boss co-op (01 §16.5); GĐ7c: "start" = Huyết Nguyệt đầu trận (CombatSetup.start)
   | { type: "intentsRevealed"; enemyId: string; moonPower: number; intents: { intentId: string; cost: number; targetId: string | null }[] }  // GĐ4a: một event cho cả chuỗi mỗi địch (thay intentRevealed); chuỗi rỗng = Tụ Lực
   | { type: "intentsCancelled"; enemyId: string; intentIds: string[] }   // GĐ4b: Tỏa/Đoạt Nguyệt hủy chiêu cuối chuỗi, theo thứ tự bị bỏ (01 §9.5)
   | { type: "sealStripped"; unitId: string; refId: string }                                   // GĐ7b: chiêu/lá/hành động của đơn vị mang dấu Phong Ấn bị tước mọi effect không-damage; refId = intentId / instanceId / summonId (01 §5.6)
@@ -849,15 +849,16 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
   trên lá có `target: "fallenAlly"`; `revive` với `to: "lastFallen"` chỉ xuất hiện trong
   `levelUp.onLevelUp` / `altLevelUp.onLevelUp`, không trên lá bài. `to: "owner"` chỉ
   trong `SummonDef.action`; `to: "summon"` chỉ trên lá có `ownerId` hoặc `bond`.
-- **[GĐ7c]** `story.json` (mục 1.16): `arcs` và `stages` không rỗng, id duy nhất; mọi
-  `arc.stageIds` trỏ tới màn có sẵn; mỗi màn thuộc đúng **một** arc và `stage.arcId`
-  khớp arc liệt kê nó (arc liệt kê màn ↔ màn trỏ arc); `stage.encounterId` trỏ encounter
-  có `tier: "story"`; `arc.rewardHeroId` trỏ Hero có sẵn; `speaker` của `DialogueLine`
-  là `"narrator"` hoặc id Hero / kẻ địch có sẵn; `start.moonIndex` nguyên 0–7,
-  `start.bloodMoonRounds` nguyên ≥ 1; `firstClear` các số nguyên ≥ 0. `drainMoonPower` nới luật
-  "chỉ lá bài" của dòng [GĐ4b]: được phép cả trong chiêu địch của kẻ địch (`intents`,
-  `moonOverrides`, `bloodMoonOverride`) — nghĩa `01` §9.3.2; vẫn cấm trong hook Kỳ Vật /
-  Nguyệt Bảo và `SummonDef.action` (hook vũ khí đã cho phép sẵn, `01` §14.3).
+- **[GĐ7c]** `story.json` (mục 1.16): `arcs` và `stages` được phép rỗng (file khởi tạo
+  rỗng; nội dung vào 7c.4 / 7c.5), id duy nhất; mọi `arc.stageIds` trỏ tới màn có sẵn;
+  mỗi màn thuộc đúng **một** arc và `stage.arcId` khớp arc liệt kê nó (arc liệt kê màn ↔
+  màn trỏ arc); `stage.encounterId` trỏ encounter có `tier: "story"`; `arc.rewardHeroId`
+  trỏ Hero có sẵn; `speaker` của `DialogueLine` là `"narrator"` hoặc id Hero / kẻ địch có
+  sẵn; `start.moonIndex` nguyên 0–7, `start.bloodMoonRounds` nguyên ≥ 1; `firstClear` các
+  số nguyên ≥ 0. `drainMoonPower` nới luật "chỉ lá bài" của dòng [GĐ4b]: được phép cả
+  trong chiêu địch của kẻ địch (`intents`, `moonOverrides`, `bloodMoonOverride`) — nghĩa
+  `01` §9.3.2; vẫn cấm trong hook Kỳ Vật / Nguyệt Bảo và `SummonDef.action` (hook vũ khí
+  đã cho phép sẵn, `01` §14.3).
 
 Dữ liệu sai → báo lỗi rõ ràng ngay khi khởi động, không chạy game với dữ liệu lỗi.
 
