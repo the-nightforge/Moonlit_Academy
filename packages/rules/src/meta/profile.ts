@@ -34,6 +34,7 @@ export function createProfile(data: GameData): Profile {
     honorShop: { weekKey: "", monthKey: "", bought: {}, boughtMonth: {} },
     arena: { rating: 1000, wins: 0, losses: 0, draws: 0, rankedGames: 0, honorDay: { dayKey: "", gained: 0 } },
     coop: { dayKey: "", clears: 0, rewarded: 0 },
+    story: { cleared: [] },
     achievements: [],
     stats: {},
     flags: { starterGiftClaimed: false, localImportDone: false },
@@ -233,6 +234,7 @@ export function parseProfile(data: GameData, raw: unknown): { profile: Profile; 
       rewarded: count(raw.coop.rewarded),
     };
   }
+  profile.story = { cleared: isRecord(raw.story) ? strings(raw.story.cleared).filter((id) => data.storyStages[id] !== undefined) : [] };
   profile.achievements = strings(raw.achievements);
   profile.stats = counters(raw.stats);
   const flags = isRecord(raw.flags) ? raw.flags : {};
@@ -269,6 +271,7 @@ export function mergeImportedProfile(
     highest += 1;
     next.decks.push({ ...clone(deck), id: `d${highest}` });
   }
+  // story stays server-only (`18` §4.2).
   next.flags.localImportDone = true;
   return { ok: true, profile: next };
 }

@@ -97,6 +97,8 @@ export interface Profile {
   arena: ArenaStats;
   /** Co-op raid per-day counters (`14` §15); resets when `dayKey` rolls over. */
   coop: { dayKey: string; clears: number; rewarded: number };
+  /** Story progress (`18` §4.2); server-only. */
+  story: { cleared: string[] };
   achievements: string[];
   stats: Record<string, number>;
   flags: { starterGiftClaimed: boolean; localImportDone: boolean };

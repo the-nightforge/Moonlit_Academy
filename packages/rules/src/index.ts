@@ -52,8 +52,14 @@ export {
 } from "./meta/profile";
 export { deckWeapons, deleteDeck, saveDeck, starterDeck, validateDeck } from "./meta/deck";
 export { replayRun } from "./meta/replay";
-export { createStoryCombat, replayStoryCombat } from "./meta/story";
-export type { StorySetup, StoryReplayResult } from "./meta/story";
+export {
+  applyStoryResult,
+  createStoryCombat,
+  replayStoryCombat,
+  storyStageUnlocked,
+  unlockedStageIds,
+} from "./meta/story";
+export type { StorySetup, StoryReplayResult, StoryRewards } from "./meta/story";
 export {
   applyRunRewards,
   checkAchievements,

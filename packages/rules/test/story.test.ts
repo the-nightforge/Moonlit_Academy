@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { parseGameData } from "data";
-import { applyAction, chooseCombatAction, createCombat, createStoryCombat, replayStoryCombat, starterDeck } from "../src/index";
+import {
+  applyAction, applyStoryResult, chooseCombatAction, createCombat, createProfile, createStoryCombat,
+  mergeImportedProfile, parseProfile, replayStoryCombat, starterDeck, storyStageUnlocked, unlockedStageIds,
+} from "../src/index";
 import type { Action, StorySetup } from "../src/index";
 import { rawTestInput, testData, withTestStory } from "./helpers";
 
@@ -77,5 +80,64 @@ describe("story combat", () => {
     // Without start, a story combat is exactly createCombat on the stage encounter.
     const plain = createStoryCombat(data, setupFor(data, "t_a2s2"));
     expect(plain).toEqual(createCombat(data, { heroIds: TEAM, encounterId: "enc_01", seed: 7, deckCardIds: starterDeck(data, TEAM) }));
+  });
+});
+
+describe("story progress", () => {
+  it("T303: stages open in order; arc 2 needs all of arc 1", () => {
+    const data = storyData();
+    const profile = createProfile(data);
+    expect(unlockedStageIds(data, profile)).toEqual(["t_a1s1"]);
+    profile.story.cleared = ["t_a1s1"];
+    expect(storyStageUnlocked(data, profile, "t_a1s2")).toBe(true);
+    expect(storyStageUnlocked(data, profile, "t_a2s1")).toBe(false);
+    profile.story.cleared = ["t_a1s1", "t_a1s2"];
+    expect(storyStageUnlocked(data, profile, "t_a2s1")).toBe(true);
+    expect(storyStageUnlocked(data, profile, "t_a2s2")).toBe(false);
+    expect(storyStageUnlocked(data, profile, "nope")).toBe(false);
+  });
+
+  it("T304: first clear pays once; the last stage of an arc grants its hero, a dupe becomes Tinh Hồn", () => {
+    const data = storyData();
+    const start = createProfile(data);
+    const setup = setupFor(data, "t_a1s1");
+    const lost = applyStoryResult(data, start, setup, false);
+    expect(lost.rewards).toEqual({ firstClear: false, moonJade: 0, darkIron: 0, gains: [], hero: null });
+    expect(lost.profile).toEqual(start);
+
+    const won = applyStoryResult(data, start, setup, true);
+    expect(won.profile.story.cleared).toEqual(["t_a1s1"]);
+    expect(won.rewards).toMatchObject({ firstClear: true, moonJade: 40, darkIron: 1, hero: null });
+    expect(won.rewards.gains.map((g) => [g.heroId, g.xp])).toEqual([["m05", 30], ["f04", 30], ["m06", 30]]);
+    expect(won.profile.currencies.moonJade).toBe(start.currencies.moonJade + 40);
+    expect(start.story.cleared).toEqual([]); // input not mutated
+
+    const again = applyStoryResult(data, won.profile, setup, true);
+    expect(again.rewards.firstClear).toBe(false);
+    expect(again.profile).toEqual(won.profile);
+
+    const last = applyStoryResult(data, won.profile, setupFor(data, "t_a1s2"), true);
+    expect(last.rewards.hero).toMatchObject({ itemId: "m10", outcome: "newHero" });
+    expect(last.profile.heroes["m10"]).toBeDefined();
+
+    const dupe = structuredClone(won.profile);
+    dupe.heroes["m10"] = { xp: 0, unlockedCardIds: [], constellation: 0, bonusUnlocks: 0, levelUpForm: "base" };
+    const dupeResult = applyStoryResult(data, dupe, setupFor(data, "t_a1s2"), true);
+    expect(dupeResult.rewards.hero?.outcome).not.toBe("newHero");
+    expect(dupeResult.profile.heroes["m10"]!.constellation).toBe(1);
+  });
+
+  it("T307: old profiles get an empty story; imports never touch story", () => {
+    const data = storyData();
+    const saved = JSON.parse(JSON.stringify(createProfile(data))) as Record<string, unknown>;
+    delete saved.story;
+    expect(parseProfile(data, saved).profile.story).toEqual({ cleared: [] });
+    expect(parseProfile(data, { ...saved, story: { cleared: ["t_a1s1", "ghost"] } }).profile.story).toEqual({ cleared: ["t_a1s1"] });
+    const server = createProfile(data);
+    server.story.cleared = ["t_a1s1"];
+    const local = createProfile(data);
+    local.story.cleared = ["t_a1s1", "t_a1s2"];
+    const merged = mergeImportedProfile(data, server, local);
+    expect(merged.ok && merged.profile.story).toEqual({ cleared: ["t_a1s1"] });
   });
 });
