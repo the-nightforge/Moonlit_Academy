@@ -30,8 +30,8 @@ const SIZE: Record<string, [number, number]> = {
   [HUD.medallion]: [108, 108],
   [HUD.hourglass]: [22, 30],
   [HUD.cardFace]: [110, 160],
-  [HUD.bannerAttack]: [80, 22],
-  [HUD.bannerSkill]: [80, 22],
+  [HUD.bannerAttack]: [70, 26],
+  [HUD.bannerSkill]: [70, 26],
 };
 
 const GOLD: [number, string][] = [
@@ -202,10 +202,11 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
     ctx.stroke();
     highlight(ctx, c - 18, c - 22, 16, 7);
   },
-  // Hand card frame (110×160): indigo lacquer, a double gold line with cloud
-  // curls in the corners, the round moon gate (center 55,63), the type
-  // plaque (55,99) and the parchment text panel (y 107–153). The name banner,
-  // emblem and owner jewel are added by the scene.
+  // Hand card frame (110×160): indigo lacquer, one gold line with corner
+  // studs, the round moon gate (center 55,66, r 25), the type plaque (55,99)
+  // and the parchment text panel (y 108–152). Nothing overlaps: the cost
+  // coin, name banner, emblem and owner jewel are added by the scene into
+  // the free header (y 8–37) and around.
   [HUD.cardFace]: (ctx, w, h) => {
     ctx.beginPath();
     ctx.roundRect(0, 0, w, h, 9);
@@ -223,49 +224,39 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
       ctx.stroke();
     }
     ctx.restore();
-    // Double gold line.
+    // One gold line, a stud in each corner.
     ctx.strokeStyle = linear(ctx, 0, h, GOLD);
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.roundRect(3.5, 3.5, w - 7, h - 7, 7);
     ctx.stroke();
-    ctx.strokeStyle = "rgba(232,196,90,0.55)";
-    ctx.lineWidth = 0.7;
-    ctx.beginPath();
-    ctx.roundRect(6.5, 6.5, w - 13, h - 13, 5);
-    ctx.stroke();
-    // Cloud curls in the corners.
-    ctx.strokeStyle = "rgba(244,211,94,0.9)";
-    ctx.lineWidth = 1;
-    for (const [cx, cy, sx, sy] of [[9, 9, 1, 1], [w - 9, 9, -1, 1], [9, h - 9, 1, -1], [w - 9, h - 9, -1, -1]] as const) {
+    ctx.fillStyle = "#f4d35e";
+    for (const [cx, cy] of [[7.5, 7.5], [w - 7.5, 7.5], [7.5, h - 7.5], [w - 7.5, h - 7.5]] as const) {
       ctx.beginPath();
-      ctx.arc(cx + sx * 3, cy + sy * 3, 3, 0, Math.PI * 2);
-      ctx.moveTo(cx + sx * 6, cy + sy * 3);
-      ctx.quadraticCurveTo(cx + sx * 12, cy + sy * 1, cx + sx * 16, cy + sy * 4);
-      ctx.moveTo(cx + sx * 3, cy + sy * 6);
-      ctx.quadraticCurveTo(cx + sx * 1, cy + sy * 12, cx + sx * 4, cy + sy * 16);
-      ctx.stroke();
+      ctx.arc(cx, cy, 1.4, 0, Math.PI * 2);
+      ctx.fill();
     }
     // Moon gate: night sky disc, gold ring, inner hairline, four studs.
     const gx = w / 2;
-    const gy = 63;
-    ctx.fillStyle = radial(ctx, gx, gy, 28, [[0, "#2a3878"], [0.7, "#0e1438"], [1, "#060920"]]);
+    const gy = 66;
+    const gr = 25;
+    ctx.fillStyle = radial(ctx, gx, gy, gr, [[0, "#2a3878"], [0.7, "#0e1438"], [1, "#060920"]]);
     ctx.beginPath();
-    ctx.arc(gx, gy, 28, 0, Math.PI * 2);
+    ctx.arc(gx, gy, gr, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = linear(ctx, gy - 28, gy + 28, GOLD);
-    ctx.lineWidth = 2.6;
+    ctx.strokeStyle = linear(ctx, gy - gr, gy + gr, GOLD);
+    ctx.lineWidth = 2.4;
     ctx.stroke();
     ctx.strokeStyle = "rgba(244,211,94,0.45)";
     ctx.lineWidth = 0.7;
     ctx.beginPath();
-    ctx.arc(gx, gy, 24, 0, Math.PI * 2);
+    ctx.arc(gx, gy, gr - 4, 0, Math.PI * 2);
     ctx.stroke();
     ctx.fillStyle = "#f4d35e";
     for (let k = 0; k < 4; k++) {
-      const a = (Math.PI / 2) * k - Math.PI / 2;
+      const a = (Math.PI / 2) * k;
       ctx.beginPath();
-      ctx.arc(gx + 28 * Math.cos(a), gy + 28 * Math.sin(a), 2.2, 0, Math.PI * 2);
+      ctx.arc(gx + gr * Math.cos(a), gy + gr * Math.sin(a), 2, 0, Math.PI * 2);
       ctx.fill();
     }
     // Type plaque.

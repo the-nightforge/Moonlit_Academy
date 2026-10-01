@@ -1527,17 +1527,17 @@ export class CombatScene extends Phaser.Scene {
         broken ? COLORS.dead : isValidTarget || mulliganPicked ? COLORS.goldFill : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
       ),
     );
-    // Moon gate (center 0,-17): the card's own art if there is one, else its tag icon in a tag-colored sky.
-    const gateY = -17;
+    // Moon gate (center 0,-14): the card's own art if there is one, else its tag icon in a tag-colored sky.
+    const gateY = -14;
     const color = cardColorOf(card);
-    if (!this.coverImage(`cards:${instance.cardId}`, 0, gateY, 48, 48, container)) {
+    if (!this.coverImage(`cards:${instance.cardId}`, 0, gateY, 42, 42, container)) {
       ensureTextures(this);
-      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.62).setAlpha(broken ? 0.15 : 0.5));
-      for (const [sx, sy, r] of [[-13, -9, 0.9], [12, -13, 0.7], [15, 6, 0.6], [-16, 7, 0.5]] as const) {
+      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.55).setAlpha(broken ? 0.15 : 0.5));
+      for (const [sx, sy, r] of [[-12, -8, 0.9], [11, -12, 0.7], [14, 6, 0.6], [-14, 7, 0.5]] as const) {
         container.add(this.add.circle(sx, gateY + sy, r, 0xffffff, 0.7));
       }
       const iconKey = cardIconOf(card);
-      if (this.textures.exists(iconKey)) container.add(this.add.image(0, gateY, iconKey).setDisplaySize(34, 34).setAlpha(broken ? 0.5 : 1));
+      if (this.textures.exists(iconKey)) container.add(this.add.image(0, gateY, iconKey).setDisplaySize(30, 30).setAlpha(broken ? 0.5 : 1));
     }
     // Owner jewel on the bottom edge.
     container.add(
@@ -1546,25 +1546,30 @@ export class CombatScene extends Phaser.Scene {
         .setAngle(45)
         .setStrokeStyle(1, COLORS.goldFill),
     );
-    // Name banner (red lacquer: attack, blue: skill), its left end under the cost coin.
-    const bannerX = 9;
-    const bannerY = -60;
+    // Name banner (red lacquer: attack, blue: skill) right of the cost coin; long names take two lines.
+    const bannerX = 12;
+    const bannerY = -58;
     container.add(grey(hudImage(this, card.type === "attack" ? HUD.bannerAttack : HUD.bannerSkill, bannerX, bannerY)));
-    container.add(
-      this.fitWidth(
-        this.add
-          .text(bannerX + 4, bannerY, card.name, {
-            ...TEXT_BASE,
-            fontSize: card.name.length > 11 ? "10px" : "11px",
-            fontStyle: "bold",
-            color: "#fff1d0",
-            stroke: "#2a0a0a",
-            strokeThickness: 2,
-          })
-          .setOrigin(0.5),
-        64,
-      ),
-    );
+    const name = this.add
+      .text(bannerX + 2, bannerY, card.name, {
+        ...TEXT_BASE,
+        fontSize: "10px",
+        fontStyle: "bold",
+        color: "#fff1d0",
+        stroke: "#2a0a0a",
+        strokeThickness: 2,
+        align: "center",
+        lineSpacing: -3,
+      })
+      .setOrigin(0.5);
+    // One line at 10px, else one at 9px, else two lines at 10px, else two at 9px (wider).
+    if (name.width > 54) name.setFontSize(9);
+    if (name.width > 54) name.setFontSize(10).setWordWrapWidth(52);
+    if (name.height > 25) name.setFontSize(9).setWordWrapWidth(60);
+    this.fitWidth(name, 60);
+    // A name that still wraps to three lines shrinks to the banner's height.
+    if (name.displayHeight > 25) name.setScale(name.scaleX * (25 / name.displayHeight));
+    container.add(name);
     // Type plaque: the weapon or bond overrides the card type.
     const plaque =
       weapon !== undefined ? `⚔ ${weapon.name}` : partnerId !== undefined ? "Song Hành" : card.type === "attack" ? "Tấn Công" : "Kỹ Năng";
@@ -1601,9 +1606,10 @@ export class CombatScene extends Phaser.Scene {
 
     const effectiveCost = getEffectiveCost(this.gameData, this.state, instanceId);
     // Inset so the coin's rim sits clear of the card border.
+    // Its own corner: clear of the gold line (≥ 3.5 px) and of the banner.
     const coinX = -CARD_W / 2 + 19;
-    const coinY = -60;
-    container.add(hudImage(this, HUD.cost, coinX, coinY, 0.82));
+    const coinY = -58;
+    container.add(hudImage(this, HUD.cost, coinX, coinY, 0.78));
     container.add(
       this.add
         .text(coinX, coinY, `${effectiveCost}`, {
@@ -1633,7 +1639,7 @@ export class CombatScene extends Phaser.Scene {
     if (instance.heldTurns > 0 && card.keywords?.includes("tich_tu")) {
       container.add(
         this.add
-          .text(0, 6, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold, stroke: "#05070f", strokeThickness: 3 })
+          .text(0, 8, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold, stroke: "#05070f", strokeThickness: 3 })
           .setOrigin(0.5),
       );
     }
