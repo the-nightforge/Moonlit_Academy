@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, getEffectiveCost } from "../src/index";
-import { armorSixCard, healFiveCard, rewindMoonCard, stealthOneCard } from "./fixtures";
+import { healFiveCard, rewindMoonCard, stealthOneCard } from "./fixtures";
 import { injectCard, instanceIdOf, makeTestCombat, pendingCardOptions, setHand, p0 } from "./helpers";
 
 describe("moon phases", () => {
@@ -41,8 +41,10 @@ describe("moon phases", () => {
     expect(result.state.heroes[2]?.statuses.some((s) => s.id === "stealth")).toBe(false);
   });
 
-  it("T23: new moon extends applied stealth by 1", () => {
+  it("T23: new moon extends applied stealth by 1 under the Bóng Mờ decree", () => {
     const { data, state } = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { new: "bong_mo" } },
       setup: (s) => {
         s.moonIndex = 0;
       },
@@ -57,19 +59,21 @@ describe("moon phases", () => {
     expect(result.state.heroes[2]?.statuses).toContainEqual({ id: "stealth", value: 2 });
   });
 
-  it("T24: first quarter makes control cards cost 0 with a floor of 0", () => {
+  it("T24: first quarter makes control cards cost 1 less, floored at 0", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 2;
       },
     });
-    expect(getEffectiveCost(data, state, instanceIdOf(state, "m06_nguyet_anh_an"))).toBe(0);
-    expect(getEffectiveCost(data, state, instanceIdOf(state, "m05_ho_gam"))).toBe(0);
+    expect(getEffectiveCost(data, state, instanceIdOf(state, "m06_nguyet_anh_an"))).toBe(1);
+    expect(getEffectiveCost(data, state, instanceIdOf(state, "m05_ho_gam"))).toBe(1);
     expect(getEffectiveCost(data, state, instanceIdOf(state, "m05_liet_hoa_xung_phong"))).toBe(4);
   });
 
-  it("T25: full moon doubles healing", () => {
+  it("T25: full moon doubles healing under the Viên Nguyệt decree", () => {
     const { data, state } = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { full: "vien_nguyet" } },
       setup: (s) => {
         s.moonIndex = 4;
         s.heroes[1]!.hp = 20;
@@ -89,6 +93,8 @@ describe("moon phases", () => {
 
   it("T26: healing is capped by missing HP after the multiplier", () => {
     const { data, state } = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { full: "vien_nguyet" } },
       setup: (s) => {
         s.moonIndex = 4;
         s.heroes[1]!.hp = 25;
@@ -106,33 +112,30 @@ describe("moon phases", () => {
     expect(result.events.find((e) => e.type === "healed")).toMatchObject({ amount: 5 });
   });
 
-  it("T27: last quarter multiplies gained armor by 1.5", () => {
+  it("T27: last quarter discounts ward cards; armor is no longer multiplied by the phase", () => {
     const { data, state } = makeTestCombat({
       setup: (s) => {
         s.moonIndex = 6;
-        setHand(s, ["m05_ho_gam"]);
       },
     });
-    const armor = injectCard(state, data, armorSixCard);
-    const armored = applyAction(data, state, {
+    const ward = injectCard(state, data, data.cards["f03_phong_tuyet_chuong"]!);
+    expect(getEffectiveCost(data, state, ward)).toBe(3); // ward giá 4 − 1
+    const healCard = injectCard(state, data, data.cards["f04_linh_chi_ho_the"]!);
+    expect(getEffectiveCost(data, state, healCard)).toBe(2); // heal: no tag bonus
+    const played = applyAction(data, state, {
       type: "playCard",
-      instanceId: armor,
+      instanceId: healCard,
       targetId: "hero:m06",
     });
-    expect(armored.ok).toBe(true);
-    if (!armored.ok) return;
-    const roared = applyAction(data, armored.state, {
-      type: "playCard",
-      instanceId: instanceIdOf(armored.state, "m05_ho_gam"),
-    });
-    expect(roared.ok).toBe(true);
-    if (!roared.ok) return;
-    expect(roared.state.heroes[2]?.armor).toBe(9);
-    expect(roared.state.heroes[0]?.armor).toBe(7);
+    expect(played.ok).toBe(true);
+    if (!played.ok) return;
+    expect(played.state.heroes[2]?.armor).toBe(4); // giáp đúng bằng lá — no ×1.5 without Huyền Giáp
   });
 
   it("T28: shiftMoon takes effect immediately for later plays", () => {
     const { data, state } = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { full: "vien_nguyet" } },
       setup: (s) => {
         s.moonIndex = 3;
         p0(s).moonPower = 11;

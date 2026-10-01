@@ -135,6 +135,8 @@ export function describeEvent(
       return `Tán Chiêu: ${name(event.heroId)} mất ${event.instanceIds.length} lá trong chồng`;
     case "moonShifted":
       return `Pha ${event.from} → ${event.to}`;
+    case "moonDecreesRolled":
+      return `Bốc pha ${event.moonIndex}; Nguyệt Lệnh: ${event.decrees.join(", ")}`;
     case "bloodMoonChanged":
       return `Huyết Nguyệt còn ${event.rounds} vòng (${event.cause})`;
     case "intentsRevealed":

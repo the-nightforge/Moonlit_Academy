@@ -1,5 +1,6 @@
 import { z } from "zod";
-import type { Effect, GameData, RunRelicHook, WeaponHook } from "rules";
+import { DECREE_ONLY_MODIFIERS } from "rules";
+import type { Effect, GameData, MoonModifier, RunRelicHook, WeaponHook } from "rules";
 import { rawGameDataSchema } from "./schema";
 import heroesJson from "../heroes.json";
 import cardsJson from "../cards.json";
@@ -265,9 +266,36 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     errors.push(`moonPhases: expected 8 phases, got ${moonPhases.length}`);
   }
   const seenIndex = new Set<number>();
+  const seenDecrees = new Set<string>();
   for (const phase of moonPhases) {
     if (seenIndex.has(phase.index)) errors.push(`moonPhases: duplicate index ${phase.index}`);
     seenIndex.add(phase.index);
+    for (const modifier of phase.tagBonus) {
+      if (DECREE_ONLY_MODIFIERS.has(modifier.type)) {
+        errors.push(`moon phase "${phase.id}": tagBonus modifier "${modifier.type}" is decree-only`);
+      }
+    }
+    for (const decree of phase.decrees) {
+      if (seenDecrees.has(decree.id)) errors.push(`moon decree "${decree.id}" is duplicated`);
+      seenDecrees.add(decree.id);
+    }
+  }
+
+  // Nguyệt Lệnh modifier types are decree-only (`02` §1.7): never in run relics,
+  // augments or moon relic resonance levels.
+  const checkDecreeOnly = (label: string, modifiers: MoonModifier[] | undefined) => {
+    for (const modifier of modifiers ?? []) {
+      if (DECREE_ONLY_MODIFIERS.has(modifier.type)) {
+        errors.push(`${label}: modifier "${modifier.type}" is decree-only`);
+      }
+    }
+  };
+  for (const relic of runRelics) checkDecreeOnly(`run relic "${relic.id}"`, relic.modifiers);
+  for (const augment of runAugments) checkDecreeOnly(`run augment "${augment.id}"`, augment.modifiers);
+  for (const relic of relics) {
+    for (const [index, level] of relic.resonance.entries()) {
+      checkDecreeOnly(`relic "${relic.id}" resonance ${index + 1}`, level.modifiers);
+    }
   }
 
   for (const encounter of encounters) {
@@ -697,11 +725,19 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       arcOfStage.set(stageId, arc.id);
     }
   }
+  const phaseById = new Map<string, (typeof moonPhases)[number]>(moonPhases.map((phase) => [phase.id, phase]));
   for (const s of story.stages) {
     if (arcOfStage.get(s.id) !== s.arcId) errors.push(`story stage "${s.id}": arcId "${s.arcId}" does not list it`);
     if (encounterById.get(s.encounterId)?.tier !== "story") errors.push(`story stage "${s.id}": encounter "${s.encounterId}" must have tier "story"`);
     for (const line of [...s.before, ...s.after]) {
       if (!speakers.has(line.speaker)) errors.push(`story stage "${s.id}": speaker "${line.speaker}" does not exist`);
+    }
+    // `start.decrees` may only pin decree ids of the phase they key (`02` §1.16).
+    for (const [phaseId, decreeId] of Object.entries(s.start?.decrees ?? {})) {
+      const phase = phaseById.get(phaseId);
+      if (!phase?.decrees.some((decree) => decree.id === decreeId)) {
+        errors.push(`story stage "${s.id}": start.decrees "${phaseId}" is not a decree of that phase: "${decreeId}"`);
+      }
     }
   }
 

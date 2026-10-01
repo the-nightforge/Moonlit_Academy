@@ -1,5 +1,6 @@
 import { applySignatureCards, bondCardsForTeam } from "../create-combat";
 import { drawCards } from "../draw";
+import { rollMoon } from "../moon";
 import { nextRandom, shuffle } from "../rng";
 import type {
   CardInstance,
@@ -141,6 +142,7 @@ export function createPvpCombat(
     firstPlayer,
     round: 1,
     moonIndex: 1,
+    moonDecrees: [],
     bloodMoonRounds: 0,
     players,
     heroes,
@@ -148,6 +150,7 @@ export function createPvpCombat(
     cards,
     rngState,
   };
+  rollMoon(data, state, undefined, events);
   for (const seat of players) drawCards(data, state, seat, data.combatConfig.handSize, events);
   return { state, events };
 }

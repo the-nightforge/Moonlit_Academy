@@ -164,6 +164,8 @@ export interface CombatState {
   activePlayer: number;
   round: number;
   moonIndex: number;
+  /** Nguyệt Lệnh id per phase index (`01` §7.3). */
+  moonDecrees: string[];
   bloodMoonRounds: number;
   players: PlayerState[];
   heroes: HeroState[];

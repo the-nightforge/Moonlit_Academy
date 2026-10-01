@@ -243,6 +243,25 @@ const moonModifierSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("costModifierForTag"), tag: cardTagSchema, amount: intAmount, min: intAmount, while: z.literal("bloodMoon").optional() }),
   z.object({ type: z.literal("healMultiplier"), multiplier: z.number().positive() }),
   z.object({ type: z.literal("armorMultiplier"), multiplier: z.number().positive() }),
+  // Nguyệt Lệnh only (`01` §7.5, `02` §1.7 — DECREE_ONLY_MODIFIERS):
+  z.object({ type: z.literal("firstHitBonus"), amount: intAmount }),
+  z.object({ type: z.literal("turnMoonPowerBonus"), amount: intAmount }),
+  z.object({ type: z.literal("turnStartDraw"), amount: intAmount }),
+  z.object({ type: z.literal("turnStartHeal"), amount: intAmount, target: z.enum(["all", "lowestRatio"]) }),
+  z.object({ type: z.literal("debuffDurationBonus"), amount: intAmount }),
+  z.object({ type: z.literal("turnStartStatusOnHighestHp"), status: statusIdSchema, amount: intAmount }),
+  z.object({ type: z.literal("firstSingleHitReduction"), amount: intAmount }),
+  z.object({ type: z.literal("attackChainBonus"), amount: intAmount }),
+  z.object({ type: z.literal("buffMultiplier"), statuses: z.array(statusIdSchema).min(1), multiplier: z.number().positive() }),
+  z.object({ type: z.literal("stealthSuppressed") }),
+  z.object({ type: z.literal("discardForMoonPower"), perTurn: z.number().int().positive(), moonPower: intAmount }),
+  z.object({ type: z.literal("discardDamage"), amount: intAmount }),
+  z.object({ type: z.literal("bloodPact"), hp: z.number().int().positive(), draw: z.number().int().positive() }),
+  z.object({ type: z.literal("reflectMultiplier"), multiplier: z.number().positive() }),
+  z.object({ type: z.literal("keepArmor") }),
+  z.object({ type: z.literal("chooseCardExtraLook"), amount: intAmount }),
+  z.object({ type: z.literal("freeChooseCard"), look: z.number().int().positive() }),
+  z.object({ type: z.literal("recycleDiscard"), count: z.number().int().positive() }),
 ]);
 
 export const moonPhaseDefSchema = z.object({
@@ -250,7 +269,14 @@ export const moonPhaseDefSchema = z.object({
   id: moonPhaseIdSchema,
   name: z.string().min(1),
   icon: z.string().min(1),
-  modifiers: z.array(moonModifierSchema),
+  tagBonus: z.array(moonModifierSchema),
+  tagBonusText: z.string().min(1),
+  decrees: z.array(z.object({
+    id: idSchema,
+    name: z.string().min(1),
+    text: z.string().min(1),
+    modifiers: z.array(moonModifierSchema),
+  })).length(3),
 });
 
 const nodeTypeSchema = z.enum(["combat", "elite", "rest", "treasure", "boss"]);
@@ -569,6 +595,7 @@ export const storySchema = z.object({
     start: z.object({
       moonIndex: z.number().int().min(0).max(7).optional(),
       bloodMoonRounds: z.number().int().positive().optional(),
+      decrees: z.record(moonPhaseIdSchema, idSchema).optional(),
     }).optional(),
     before: z.array(dialogueLineSchema),
     after: z.array(dialogueLineSchema),

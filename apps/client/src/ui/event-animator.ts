@@ -403,6 +403,13 @@ function animateEvent(
         });
       });
     }
+    case "moonDecreesRolled": {
+      // `01` §7.6 — minimal banner: start phase + its decree. Full Nguyệt Lệnh UI is Task 7.
+      const phase = ctx.gameData.moonPhases[event.moonIndex];
+      const decree = phase?.decrees.find((d) => d.id === event.decrees[event.moonIndex]);
+      const label = phase ? `${phase.icon} ${phase.name} · ${decree?.name ?? "—"}` : "Nguyệt Luân";
+      return floatText(scene, WIDTH / 2, 300, label, "#f4d35e", 22, 600);
+    }
     case "intentsRevealed":
       // Enemies no longer telegraph their chain (`01` §9.2) — nothing to show.
       return instant();

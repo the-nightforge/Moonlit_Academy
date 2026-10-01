@@ -142,8 +142,10 @@ describe("statuses", () => {
     expect(result.state.heroes[0]?.statuses).toContainEqual({ id: "burn", value: 2 });
   });
 
-  it("T41: regen ticking under a full moon heals double", () => {
+  it("T41: regen ticking under a full moon heals double with Viên Nguyệt", () => {
     const { data, state } = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { full: "vien_nguyet" } },
       mutateData: makeEnemiesIdle,
       setup: (s) => {
         s.moonIndex = 3;

@@ -150,9 +150,13 @@ describe("phase 4b keywords", () => {
     expect(end(enemyRage.data, enemyRage.state).state.heroes[0]!.hp).toBe(m05 - 10);
   });
 
-  it("T155: Dư Sinh turns overheal into armor, scaled by the moon armor multiplier", () => {
-    const { data, state } = makeTestCombat(idle);
-    state.moonIndex = 6; // Hạ Huyền: armor ×1.5
+  it("T155: Dư Sinh turns overheal into armor, scaled by the Huyền Giáp decree multiplier", () => {
+    const { data, state } = makeTestCombat({
+      ...idle,
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { lastQuarter: "huyen_giap" } },
+    });
+    state.moonIndex = 6; // Hạ Huyền + Huyền Giáp: armor ×1.5
     const hero = state.heroes[0]!;
     hero.hp = hero.maxHp - 2;
     const mend = card("test_mend", [{ type: "heal", amount: 5, to: "chosen", overflow: "armor" }], "ally", "skill");
@@ -161,9 +165,13 @@ describe("phase 4b keywords", () => {
     expect(result.state.heroes[0]!.armor).toBe(Math.floor(3 * 1.5));
   });
 
-  it("T156: Tụ Dược heals regen × multiplier × moon heal multiplier and removes regen", () => {
-    const { data, state } = makeTestCombat(idle);
-    state.moonIndex = 4; // Trăng Tròn: heal ×2
+  it("T156: Tụ Dược heals regen × multiplier × Viên Nguyệt heal multiplier and removes regen", () => {
+    const { data, state } = makeTestCombat({
+      ...idle,
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { full: "vien_nguyet" } },
+    });
+    state.moonIndex = 4; // Trăng Tròn + Viên Nguyệt: heal ×2
     const hero = state.heroes[0]!;
     hero.hp = 10;
     hero.statuses.push({ id: "regen", value: 4 });

@@ -1,6 +1,7 @@
 import { bossPhaseOf } from "./coop/boss";
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
+import { phaseModifiers } from "./moon";
 import { opponentsOf, summonsOf } from "./players";
 import { cardOwners, getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
 import { hasStatus } from "./statuses";
@@ -84,8 +85,8 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
   const tagsInHand = new Set(player.hand.flatMap((id) => defOf(id)?.tags ?? []));
   const moonCount = data.moonPhases.length;
   const landingScore = (shift: number) => {
-    const phase = data.moonPhases[(((state.moonIndex + shift) % moonCount) + moonCount) % moonCount]!;
-    return phase.modifiers.filter((m) => ("tag" in m ? tagsInHand.has(m.tag) : true)).length;
+    const index = (((state.moonIndex + shift) % moonCount) + moonCount) % moonCount;
+    return phaseModifiers(data, state, index).filter((m) => ("tag" in m ? tagsInHand.has(m.tag) : true)).length;
   };
   for (const instanceId of ordered) {
     const card = defOf(instanceId)!;
@@ -204,8 +205,8 @@ function bestMoonOffset(data: GameData, state: CombatState, seat: number): 0 | 1
   let best: 0 | 1 | 2 = 0;
   let bestScore = -1;
   for (const offset of [0, 1, 2] as const) {
-    const phase = data.moonPhases[(state.moonIndex + offset) % data.moonPhases.length]!;
-    const score = phase.modifiers.filter((m) => "tag" in m ? tags.has(m.tag) : true).length;
+    const score = phaseModifiers(data, state, (state.moonIndex + offset) % data.moonPhases.length)
+      .filter((m) => "tag" in m ? tags.has(m.tag) : true).length;
     if (score > bestScore) { best = offset; bestScore = score; }
   }
   return best;

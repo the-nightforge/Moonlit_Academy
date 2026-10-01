@@ -1,31 +1,106 @@
 [
   {
     "index": 0, "id": "new", "name": "Trăng Non", "icon": "🌑",
-    "modifiers": [
-      { "type": "damageMultiplierForTag", "tag": "assassin", "multiplier": 1.5 },
-      { "type": "stealthDurationBonus", "amount": 1 }
+    "tagBonus": [{ "type": "damageMultiplierForTag", "tag": "assassin", "multiplier": 1.5 }],
+    "tagBonusText": "Lá ám sát ×1.5 damage",
+    "decrees": [
+      { "id": "am_da", "name": "Ám Dạ", "text": "Mọi hồi máu (kể cả Hồi Phục) ×0.5, làm tròn xuống.",
+        "modifiers": [{ "type": "healMultiplier", "multiplier": 0.5 }] },
+      { "id": "bong_mo", "name": "Bóng Mờ", "text": "Ẩn Thân được áp +1 thời hạn.",
+        "modifiers": [{ "type": "stealthDurationBonus", "amount": 1 }] },
+      { "id": "tap_kich", "name": "Tập Kích", "text": "Hit damage đầu tiên mỗi lượt của mỗi bên +3.",
+        "modifiers": [{ "type": "firstHitBonus", "amount": 3 }] }
     ]
   },
-  { "index": 1, "id": "waxingCrescent", "name": "Lưỡi Liềm Đầu", "icon": "🌒", "modifiers": [] },
+  {
+    "index": 1, "id": "waxingCrescent", "name": "Lưỡi Liềm Đầu", "icon": "🌒",
+    "tagBonus": [{ "type": "costModifierForTag", "tag": "scheme", "amount": -1, "min": 0 }],
+    "tagBonusText": "Lá mưu lược −1 Nguyệt Lực",
+    "decrees": [
+      { "id": "nguyet_sinh", "name": "Nguyệt Sinh", "text": "Người chơi: quỹ đầu lượt +1 Nguyệt Lực. Kẻ địch: lên chuỗi trong pha này với quỹ +1.",
+        "modifiers": [{ "type": "turnMoonPowerBonus", "amount": 1 }] },
+      { "id": "khai_tri", "name": "Khai Trí", "text": "Đầu lượt người chơi, sau rút bù: rút thêm 1 lá.",
+        "modifiers": [{ "type": "turnStartDraw", "amount": 1 }] },
+      { "id": "mam_song", "name": "Mầm Sống", "text": "Đầu lượt mỗi bên, mọi đơn vị còn sống bên đó (kể cả Linh Thú) hồi 2 HP.",
+        "modifiers": [{ "type": "turnStartHeal", "amount": 2, "target": "all" }] }
+    ]
+  },
   {
     "index": 2, "id": "firstQuarter", "name": "Bán Nguyệt", "icon": "🌓",
-    "modifiers": [{ "type": "costModifierForTag", "tag": "control", "amount": -2, "min": 0 }]
+    "tagBonus": [{ "type": "costModifierForTag", "tag": "control", "amount": -1, "min": 0 }],
+    "tagBonusText": "Lá khống chế −1 Nguyệt Lực",
+    "decrees": [
+      { "id": "thien_binh", "name": "Thiên Bình", "text": "Debuff có thời hạn mới được áp +1 thời hạn.",
+        "modifiers": [{ "type": "debuffDurationBonus", "amount": 1 }] },
+      { "id": "the_can", "name": "Thế Cân", "text": "Đầu vòng, Hero HP cao nhất và kẻ địch HP cao nhất bị Suy Yếu 1.",
+        "modifiers": [{ "type": "turnStartStatusOnHighestHp", "status": "weak", "amount": 1 }] },
+      { "id": "the_thu", "name": "Thế Thủ", "text": "Đòn đơn mục tiêu đầu tiên mỗi đơn vị nhận trong vòng giảm 3 damage.",
+        "modifiers": [{ "type": "firstSingleHitReduction", "amount": 3 }] }
+    ]
   },
-  { "index": 3, "id": "waxingGibbous", "name": "Trăng Khuyết Đầu", "icon": "🌔", "modifiers": [] },
+  {
+    "index": 3, "id": "waxingGibbous", "name": "Trăng Khuyết Đầu", "icon": "🌔",
+    "tagBonus": [{ "type": "costModifierForTag", "tag": "attack", "amount": -1, "min": 0 }],
+    "tagBonusText": "Lá tấn công −1 Nguyệt Lực",
+    "decrees": [
+      { "id": "lien_kich", "name": "Liên Kích", "text": "Lá tấn công từ lá thứ hai trở đi trong lượt +2 damage mỗi hit; chiêu địch nối sau một chiêu đánh +2 mỗi hit.",
+        "modifiers": [{ "type": "attackChainBonus", "amount": 2 }] },
+      { "id": "cuong_nguyet", "name": "Cuồng Nguyệt", "text": "Sức Mạnh và Tích Lực được áp gấp đôi giá trị.",
+        "modifiers": [{ "type": "buffMultiplier", "statuses": ["strength", "empower"], "multiplier": 2 }] },
+      { "id": "pha_giap", "name": "Phá Giáp", "text": "Giáp nhận được ×0.5, làm tròn xuống.",
+        "modifiers": [{ "type": "armorMultiplier", "multiplier": 0.5 }] }
+    ]
+  },
   {
     "index": 4, "id": "full", "name": "Trăng Tròn", "icon": "🌕",
-    "modifiers": [
-      { "type": "healMultiplier", "multiplier": 2 },
-      { "type": "costModifierForTag", "tag": "harmony", "amount": -2, "min": 0 }
+    "tagBonus": [{ "type": "costModifierForTag", "tag": "harmony", "amount": -1, "min": 0 }],
+    "tagBonusText": "Lá điều hòa −1 Nguyệt Lực",
+    "decrees": [
+      { "id": "vien_nguyet", "name": "Viên Nguyệt", "text": "Mọi hồi máu (kể cả Hồi Phục) ×2.",
+        "modifiers": [{ "type": "healMultiplier", "multiplier": 2 }] },
+      { "id": "nguyet_chieu", "name": "Nguyệt Chiếu", "text": "Khi vào pha: gỡ Ẩn Thân của mọi đơn vị. Trong pha: áp Ẩn Thân không có tác dụng.",
+        "modifiers": [{ "type": "stealthSuppressed" }] },
+      { "id": "doan_vien", "name": "Đoàn Viên", "text": "Đầu lượt mỗi bên: đơn vị còn sống tỉ lệ HP thấp nhất bên đó (tính cả Linh Thú) hồi 5 HP.",
+        "modifiers": [{ "type": "turnStartHeal", "amount": 5, "target": "lowestRatio" }] }
     ]
   },
-  { "index": 5, "id": "waningGibbous", "name": "Trăng Khuyết Cuối", "icon": "🌖", "modifiers": [] },
+  {
+    "index": 5, "id": "waningGibbous", "name": "Trăng Khuyết Cuối", "icon": "🌖",
+    "tagBonus": [{ "type": "costModifierForTag", "tag": "forbidden", "amount": -1, "min": 0 }],
+    "tagBonusText": "Lá cấm −1 Nguyệt Lực",
+    "decrees": [
+      { "id": "xa_than", "name": "Xả Thân", "text": "Người chơi được Hủy Bài tối đa 2 lá trên tay mỗi lượt; mỗi lá hủy +1 Nguyệt Lực.",
+        "modifiers": [{ "type": "discardForMoonPower", "perTurn": 2, "moonPower": 1 }] },
+      { "id": "doan_tuyet", "name": "Đoạn Tuyệt", "text": "Mỗi lá rời tay vào chồng bỏ mà không được đánh làm đơn vị đối phương có HP thấp nhất mất 2 HP.",
+        "modifiers": [{ "type": "discardDamage", "amount": 2 }] },
+      { "id": "huyet_te", "name": "Huyết Tế", "text": "Mỗi lượt 1 lần: một Hero còn sống có HP > 3 mất 3 HP, người chơi rút 2 lá.",
+        "modifiers": [{ "type": "bloodPact", "hp": 3, "draw": 2 }] }
+    ]
+  },
   {
     "index": 6, "id": "lastQuarter", "name": "Hạ Huyền", "icon": "🌗",
-    "modifiers": [
-      { "type": "armorMultiplier", "multiplier": 1.5 },
-      { "type": "costModifierForTag", "tag": "ward", "amount": -2, "min": 0 }
+    "tagBonus": [{ "type": "costModifierForTag", "tag": "ward", "amount": -1, "min": 0 }],
+    "tagBonusText": "Lá hộ thể −1 Nguyệt Lực",
+    "decrees": [
+      { "id": "huyen_giap", "name": "Huyền Giáp", "text": "Giáp nhận được ×1.5.",
+        "modifiers": [{ "type": "armorMultiplier", "multiplier": 1.5 }] },
+      { "id": "phan_chan", "name": "Phản Chấn", "text": "Phản Đòn gây gấp đôi.",
+        "modifiers": [{ "type": "reflectMultiplier", "multiplier": 2 }] },
+      { "id": "giu_giap", "name": "Giữ Giáp", "text": "Giáp không bị xóa và Phản Đòn không bị gỡ ở đầu lượt.",
+        "modifiers": [{ "type": "keepArmor" }] }
     ]
   },
-  { "index": 7, "id": "waningCrescent", "name": "Lưỡi Liềm Cuối", "icon": "🌘", "modifiers": [] }
+  {
+    "index": 7, "id": "waningCrescent", "name": "Lưỡi Liềm Cuối", "icon": "🌘",
+    "tagBonus": [{ "type": "costModifierForTag", "tag": "moon", "amount": -1, "min": 0 }],
+    "tagBonusText": "Lá nguyệt −1 Nguyệt Lực",
+    "decrees": [
+      { "id": "chiem_tinh", "name": "Chiêm Tinh", "text": "Mọi Chiêm Bài của người chơi xem thêm 2 lá.",
+        "modifiers": [{ "type": "chooseCardExtraLook", "amount": 2 }] },
+      { "id": "boi_nguyet", "name": "Bói Nguyệt", "text": "Đầu lượt người chơi: Chiêm Bài 3 miễn phí.",
+        "modifiers": [{ "type": "freeChooseCard", "look": 3 }] },
+      { "id": "luan_hoi", "name": "Luân Hồi", "text": "Cuối lượt người chơi: tối đa 2 lá mới nhất trong chồng bỏ về đáy chồng rút.",
+        "modifiers": [{ "type": "recycleDiscard", "count": 2 }] }
+    ]
+  }
 ]

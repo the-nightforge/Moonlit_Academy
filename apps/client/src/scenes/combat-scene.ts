@@ -629,9 +629,9 @@ export class CombatScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setAlpha(active ? 1 : 0.45);
     });
-    const next =
-      this.gameData.moonPhases[(this.state.moonIndex + 1) % this.gameData.moonPhases.length]!;
-    const effect = describePhase(next);
+    const nextIndex = (this.state.moonIndex + 1) % this.gameData.moonPhases.length;
+    const next = this.gameData.moonPhases[nextIndex]!;
+    const effect = describePhase(this.gameData, this.state, nextIndex);
     this.text(
       WIDTH / 2 + 190,
       y,
@@ -1433,8 +1433,8 @@ export class CombatScene extends Phaser.Scene {
       const offset = raw as 0 | 1 | 2;
       const x = startX + index * spacing;
       const y = 380;
-      const phase =
-        this.gameData.moonPhases[(this.state.moonIndex + offset) % this.gameData.moonPhases.length]!;
+      const phaseIndex = (this.state.moonIndex + offset) % this.gameData.moonPhases.length;
+      const phase = this.gameData.moonPhases[phaseIndex]!;
       const panel = this.add.rectangle(x, y, 212, 116, 0x141b33);
       panel.setStrokeStyle(1, COLORS.goldFill);
       panel.setInteractive({ useHandCursor: true });
@@ -1448,7 +1448,7 @@ export class CombatScene extends Phaser.Scene {
       this.text(x, y - 12, `${phase.icon} ${phase.name}`, 16, COLORS.gold).setOrigin(0.5);
       this.root.add(
         this.add
-          .text(x, y + 18, describePhase(phase), {
+          .text(x, y + 18, describePhase(this.gameData, this.state, phaseIndex), {
             ...TEXT_BASE,
             fontSize: "11px",
             color: COLORS.dimText,

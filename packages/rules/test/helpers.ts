@@ -1,5 +1,5 @@
 import { loadGameData, rawGameInput } from "data";
-import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, LevelUpCounter, LevelUpPassive, Loadout, PlayerState, Profile, StoryStageDef } from "../src/index";
+import type { CardDef, CombatEvent, CombatStart, CombatState, GameData, IntentDef, LevelUpCounter, LevelUpPassive, Loadout, PlayerState, Profile, StoryStageDef } from "../src/index";
 import { applyAction, createCombat } from "../src/index";
 import { idleIntent } from "./fixtures";
 
@@ -50,6 +50,11 @@ export function ownAllHeroes(data: GameData, profile: Profile): Profile {
   return { ...profile, heroes };
 }
 
+/** Removes every decree effect: phases keep only their tag bonus (legacy-free test baseline). */
+export function withoutDecrees(data: GameData): void {
+  for (const phase of data.moonPhases) for (const decree of phase.decrees) decree.modifiers = [];
+}
+
 export interface TestCombatOverrides {
   heroIds?: [string, string, string];
   encounterId?: string;
@@ -58,6 +63,10 @@ export interface TestCombatOverrides {
   heroes?: { hp: number; maxHp: number }[];
   runRelicIds?: string[];
   loadout?: Loadout;
+  /** "real" keeps the rolled/pinned decree modifiers; default strips them via `withoutDecrees`. */
+  decrees?: "real";
+  /** `CombatSetup.start` — pins moonIndex / decree ids (`01` §7.6). Default `{ moonIndex: 1 }`. */
+  start?: CombatStart;
   mutateData?: (data: GameData) => void;
   /** Default: an empty mulligan is sent so the state is at the player's first turn. */
   mulligan?: "pending";
@@ -70,6 +79,7 @@ export function makeTestCombat(overrides: TestCombatOverrides = {}): {
   events: CombatEvent[];
 } {
   const data = testData();
+  if (overrides.decrees !== "real") withoutDecrees(data);
   overrides.mutateData?.(data);
   const created = createCombat(data, {
     heroIds: overrides.heroIds ?? ["m05", "f04", "m06"],
@@ -78,6 +88,7 @@ export function makeTestCombat(overrides: TestCombatOverrides = {}): {
     deckCardIds: overrides.deckCardIds,
     heroes: overrides.heroes,
     runRelicIds: overrides.runRelicIds,
+    start: overrides.start ?? { moonIndex: 1 },
   }, overrides.loadout);
   let { state } = created;
   const events = [...created.events];

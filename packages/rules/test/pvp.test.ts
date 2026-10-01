@@ -494,6 +494,7 @@ describe("T225 forfeit", () => {
       activePlayer: 0,
       round: 1,
       moonIndex: 0,
+      moonDecrees: [],
       bloodMoonRounds: 0,
       players: [p0Like()],
       heroes: [],

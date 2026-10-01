@@ -287,14 +287,45 @@ export type MoonModifier =
   | { type: "stealthDurationBonus"; amount: number }
   | { type: "costModifierForTag"; tag: CardTag; amount: number; min: number; while?: "bloodMoon" }
   | { type: "healMultiplier"; multiplier: number }
-  | { type: "armorMultiplier"; multiplier: number };
+  | { type: "armorMultiplier"; multiplier: number }
+  // Nguyệt Lệnh only (`01` §7.3):
+  | { type: "firstHitBonus"; amount: number }
+  | { type: "turnMoonPowerBonus"; amount: number }
+  | { type: "turnStartDraw"; amount: number }
+  | { type: "turnStartHeal"; amount: number; target: "all" | "lowestRatio" }
+  | { type: "debuffDurationBonus"; amount: number }
+  | { type: "turnStartStatusOnHighestHp"; status: StatusId; amount: number }
+  | { type: "firstSingleHitReduction"; amount: number }
+  | { type: "attackChainBonus"; amount: number }
+  | { type: "buffMultiplier"; statuses: StatusId[]; multiplier: number }
+  | { type: "stealthSuppressed" }
+  | { type: "discardForMoonPower"; perTurn: number; moonPower: number }
+  | { type: "discardDamage"; amount: number }
+  | { type: "bloodPact"; hp: number; draw: number }
+  | { type: "reflectMultiplier"; multiplier: number }
+  | { type: "keepArmor" }
+  | { type: "chooseCardExtraLook"; amount: number }
+  | { type: "freeChooseCard"; look: number }
+  | { type: "recycleDiscard"; count: number };
+
+/** A Nguyệt Lệnh — one decree rolled per phase at combat start (`01` §7.5–7.6). */
+export interface MoonDecreeDef {
+  id: string;
+  name: string;
+  text: string;
+  modifiers: MoonModifier[];
+}
 
 export interface MoonPhaseDef {
   index: number;
   id: MoonPhaseId;
   name: string;
   icon: string;
-  modifiers: MoonModifier[];
+  /** Fixed tag bonus of the phase (`01` §7.1). */
+  tagBonus: MoonModifier[];
+  tagBonusText: string;
+  /** Exactly 3 decrees; `rollMoon` picks one per phase (`01` §7.6). */
+  decrees: MoonDecreeDef[];
 }
 
 export type NodeType = "combat" | "elite" | "rest" | "treasure" | "boss";
@@ -603,10 +634,12 @@ export interface CoopSide {
   loadout: Loadout;
 }
 
-/** Moon state a combat starts in (`01` §2); story stages only. */
+/** Moon state a combat starts in (`01` §2, §7.6); story stages only. */
 export interface CombatStart {
   moonIndex?: number;
   bloodMoonRounds?: number;
+  /** Overrides the rolled decree of the named phases (`01` §7.6). */
+  decrees?: Partial<Record<MoonPhaseId, string>>;
 }
 
 /** One line of story dialogue (`18` §4.1). `speaker`: hero id, enemy id or "narrator". */

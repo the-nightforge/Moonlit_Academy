@@ -318,9 +318,12 @@ describe("phase 7a — bot heuristics (7a.6)", () => {
     });
     expect(chooseCombatAction(dead.data, dead.state, 0).type).toBe("endTurn");
 
-    // The same card played at waning gibbous lands on last quarter (armor modifier).
+    // The same card played at waning gibbous lands on last quarter, whose pinned
+    // Huyền Giáp decree (untagged modifier) helps every hand.
     const live = makeTestCombat({
       heroIds: ["m05", "f04", "m06"],
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { lastQuarter: "huyen_giap" } },
       setup: (s) => {
         p0(s).moonPower = 9;
         setHand(s, ["f04_nguyet_quang_dan"]);

@@ -1,6 +1,7 @@
 import { applySignatureCards, bondCardsForTeam } from "../create-combat";
 import { drawCards } from "../draw";
 import { planEnemyIntents } from "../intent";
+import { rollMoon } from "../moon";
 import { shuffle } from "../rng";
 import type {
   CardInstance,
@@ -174,6 +175,7 @@ export function createCoopCombat(
     activePlayer: 0,
     round: 1,
     moonIndex: 1,
+    moonDecrees: [],
     bloodMoonRounds: 0,
     players,
     heroes,
@@ -186,6 +188,7 @@ export function createCoopCombat(
       ? { boss: { enemyId: boss.id, phase: 1, reviveCountdown: null, revived: false } }
       : {}),
   };
+  rollMoon(data, state, undefined, events);
   for (const seat of players) drawCards(data, state, seat, data.combatConfig.handSize, events);
   planEnemyIntents(data, state, events);
   return { state, events };

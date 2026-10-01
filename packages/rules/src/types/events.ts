@@ -38,6 +38,8 @@ export type CombatEvent =
   | { type: "cardChosen"; instanceId: string; bottomed: string[]; player?: number }
   | { type: "moonChoiceOpened"; options: number[]; player?: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
+  /** `01` §7.6 — `rollMoon`: the start phase and the rolled decree ids after `start` overrides. */
+  | { type: "moonDecreesRolled"; moonIndex: number; decrees: string[] }
   | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" | "boss" | "start" }
   | {
       type: "intentsRevealed";

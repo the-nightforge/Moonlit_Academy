@@ -12,6 +12,14 @@ export {
 } from "./players";
 export { dismissSummonOf, isSummon, summonEffect, summonOf } from "./summons";
 export { cardDefOf, relicAt, weaponAt, weaponCardDef, weaponHooks } from "./gear";
+export {
+  activeModifiers,
+  currentDecree,
+  decreeModifier,
+  DECREE_ONLY_MODIFIERS,
+  phaseModifiers,
+  rollMoon,
+} from "./moon";
 export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-combat";
 export { createPvpCombat } from "./pvp/create";
 export { createCoopCombat } from "./coop/create";
