@@ -4,6 +4,7 @@ import { checkLevelUps, sealFilteredEffects } from "./levelup";
 import { summonsOf } from "./players";
 import { fireEventHooks } from "./run-relic-hooks";
 import { getStatus, hasStatus, removeStatus } from "./statuses";
+import { decreeTurnHeal } from "./turn";
 import { interceptHit, passiveOf } from "./turn-passives";
 import type { CombatEvent, CombatState, EnemyState, GameData, HeroState, Targeting } from "./types/index";
 
@@ -61,6 +62,8 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
     fireEventHooks(data, state, events, start, state.bloodMoonRounds);
     if (checkCombatEnd(state, events)) return;
   }
+  // Mầm Sống / Đoàn Viên (`01` §9.3): the enemy side's turn-start heal.
+  decreeTurnHeal(data, state, state.enemies, events);
   for (const enemy of state.enemies) {
     // Phong Ấn (`01` §5.6): the mark covers this enemy's whole turn — frozen or
     // dead enemies lose it unused.

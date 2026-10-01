@@ -432,7 +432,9 @@ export function resolveEffect(
     case "chooseCard": {
       const seat = playerOf(state, ctx.source.id);
       if (!seat) return;
-      const extra = heroesOf(state, seat.index).reduce((sum, hero) => { const p = hero.alive && hero.leveledUp ? levelUpPassive(data, hero) : undefined; return sum + (p?.type === "chooseCardExtraLook" ? p.amount : 0); }, 0);
+      // Chiêm Tinh (`01` §7.5): the decree stacks with Định Cục's passive.
+      const extra = heroesOf(state, seat.index).reduce((sum, hero) => { const p = hero.alive && hero.leveledUp ? levelUpPassive(data, hero) : undefined; return sum + (p?.type === "chooseCardExtraLook" ? p.amount : 0); }, 0)
+        + (decreeModifier(data, state, "chooseCardExtraLook")?.amount ?? 0);
       const options = seat.drawPile.splice(0, Math.min(effect.look + extra, seat.drawPile.length));
       if (options.length === 0) return;
       if (options.length === 1) {

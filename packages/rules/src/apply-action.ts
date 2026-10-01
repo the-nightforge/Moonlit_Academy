@@ -6,6 +6,7 @@ import { checkCombatEnd, processDeaths, resolveEffects } from "./effects";
 import { guardianOf } from "./enemy-turn";
 import { cardDefOf } from "./gear";
 import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive, sealFilteredEffects } from "./levelup";
+import { decreeModifier } from "./moon";
 import { activePlayerState, heroesOf, seatTag } from "./players";
 import { pvpEndTurn } from "./pvp/turn";
 import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
@@ -345,6 +346,7 @@ function forfeit(data: GameData, state: CombatState, action: Extract<Action, { t
       }
       seat.pendingChoice = null;
       delete seat.moonChoicePending;
+      delete seat.omenPending;
     }
     for (const hero of heroesOf(next, seat.index)) {
       if (hero.alive) hero.hp = 0;
@@ -409,6 +411,17 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
       chooseCard(data, next, nextSeat, action.instanceId, pending.options, events);
       bumpSeat(data, next, seat.index, "cardsChosen", 1);
       checkLevelUps(data, next, events);
+      // Bói Nguyệt (`01` §3.1 step 12): a Chiêm Bài queued behind an earlier
+      // choice opens now — ahead of Chọn Pha (openMoonChoice waits while a
+      // choice is pending).
+      if (nextSeat.omenPending === true) {
+        delete nextSeat.omenPending;
+        const omen = decreeModifier(data, next, "freeChooseCard");
+        const seer = heroesOf(next, nextSeat.index).find((hero) => hero.alive);
+        if (omen !== undefined && seer !== undefined) {
+          resolveEffects(data, next, [{ type: "chooseCard", look: omen.look }], { source: seer, noHooks: true }, events);
+        }
+      }
       openMoonChoice(next, nextSeat, events);
       return { ok: true, state: next, events };
     }

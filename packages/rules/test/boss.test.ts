@@ -29,7 +29,9 @@ describe("boss and blood moon intents", () => {
       heroIds: ["m05", "f03", "f02"],
       encounterId: "enc_04",
       decrees: "real",
-      start: { moonIndex: 1, decrees: { lastQuarter: "huyen_giap" } },
+      // `waningCrescent` pinned off Bói Nguyệt so no free Chiêm Bài blocks the
+      // round-3 play; `chiem_tinh` is inert here (no Chiêm Bài is resolved).
+      start: { moonIndex: 1, decrees: { lastQuarter: "huyen_giap", waningCrescent: "chiem_tinh" } },
     });
     state.moonIndex = 5;
     setIntent(state, 0, idleIntent, null);

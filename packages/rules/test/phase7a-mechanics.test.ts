@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CardDef, CombatState, GameData, IntentDef, LevelUpCounter, LevelUpPassive } from "../src/index";
 import { applyAction, autoChoiceAction, chooseCombatAction, createCoopCombat, createPvpCombat, createProfile, getEffectiveCost, previewEnemyIntent, validateDeck } from "../src/index";
 import { chooseThreeCard, idleIntent } from "./fixtures";
-import { injectCard, instanceIdOf, makeEnemiesIdle, makeTestCombat, ownAllHeroes, p0, setHand, setIntent, testData, withLevelUp } from "./helpers";
+import { injectCard, instanceIdOf, makeEnemiesIdle, makeTestCombat, ownAllHeroes, p0, setHand, setIntent, testData, withLevelUp, withoutDecrees } from "./helpers";
 
 /** Puts a test card into `seat`'s hand (injectCard only knows seat 0). */
 function giveCard(state: CombatState, data: GameData, seat: number, card: CardDef): string {
@@ -224,6 +224,7 @@ describe("phase 7a — Chọn Pha", () => {
 
   it("T268b: co-op — when both seats owe Chọn Pha, only seat 0 chooses", () => {
     const data = testData();
+    withoutDecrees(data); // no Bói Nguyệt Chiêm Bài ahead of Chọn Pha (`01` §3.1)
     quanTinh(data);
     const side = { heroIds: ["m06", "f04", "m05"] as [string, string, string], loadout: { heroes: {} } };
     let state = createCoopCombat(data, { seed: 7, players: [side, side], encounterId: "enc_coop_01" }).state;
@@ -245,6 +246,7 @@ describe("phase 7a — Chọn Pha", () => {
 
   it("T267b: co-op — a dead chooser resolves the choice without a shift or a crash", () => {
     const data = testData();
+    withoutDecrees(data); // no Bói Nguyệt Chiêm Bài ahead of Chọn Pha (`01` §3.1)
     quanTinh(data);
     const side = { heroIds: ["m06", "f04", "m05"] as [string, string, string], loadout: { heroes: {} } };
     let state = createCoopCombat(data, { seed: 7, players: [side, side], encounterId: "enc_coop_01" }).state;

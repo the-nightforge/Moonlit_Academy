@@ -129,6 +129,8 @@ export interface PlayerState {
   pendingChoice: PendingChoice | null;
   /** Chọn Pha owed this turn (a hero was leveled with `chooseMoon` at turn start). */
   moonChoicePending?: true;
+  /** Bói Nguyệt (`01` §3.1 step 12): the decree's free Chiêm Bài is queued behind an already-open choice; opens when that choice is answered, before Chọn Pha. */
+  omenPending?: true;
   /**
    * Per-combat hook counters, keyed "<relicId>#<hookIndex>" (run relics, augments,
    * moon relics) or "<weaponId>@<heroId>#<hookIndex>" (weapons).

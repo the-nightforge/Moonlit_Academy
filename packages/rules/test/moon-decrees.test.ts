@@ -4,12 +4,13 @@ import {
   createCombat,
   createPvpCombat,
   getEffectiveCost,
+  getStatus,
   phaseModifiers,
   starterDeck,
 } from "../src/index";
-import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "../src/index";
+import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, PvpSide } from "../src/index";
 import { aoeFiveCard, healFiveCard, idleIntent, stealthOneCard, strike9Intent } from "./fixtures";
-import { injectCard, makeEnemiesIdle, makeTestCombat, p0, rawTestInput, setHand, setIntent, setPlan, testData, withLevelUp } from "./helpers";
+import { injectCard, makeEnemiesIdle, makeTestCombat, p0, pendingCardOptions, rawTestInput, setHand, setIntent, setPlan, testData, withLevelUp } from "./helpers";
 import { parseGameData } from "data";
 
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
@@ -97,7 +98,11 @@ describe("Nguyệt Luân — dữ liệu và bốc lệnh", () => {
     expect(pinned.moonIndex).toBe(4);
     expect(pinned.moonDecrees[4]).toBe("doan_vien");
     expect(pinned.players[0]!.drawPile).toEqual(a.players[0]!.drawPile);
-    expect(pinned.rngState).toBe(a.rngState);
+    // The decree roll rides a side stream: a no-op override (pinning the phase
+    // the roll already landed on) leaves the combat RNG identical. A real
+    // override may legitimately diverge downstream — Nguyệt Sinh's +1 fund
+    // changes round-1 intent picks (`01` §9.2).
+    expect(make(42, { moonIndex: a.moonIndex }).state.rngState).toBe(a.rngState);
     const side = (heroIds: [string, string, string]) => ({ heroIds, loadout: { heroes: {}, pvp: true as const } });
     const pvp = createPvpCombat(data, { seed: 42, players: [side(TEAM), side(["f03", "f02", "m01"])] });
     expect(pvp.state.moonDecrees).toHaveLength(8);
@@ -395,5 +400,278 @@ describe("Nguyệt Luân — lệnh chiến đấu", () => {
     if (!hmTurn.ok) return;
     expect(hmTurn.state.moonIndex).toBe(3);
     expect(hmTurn.state.heroes[0]!.statuses).toContainEqual({ id: "strength", value: 2 });
+  });
+});
+
+const chooseTwoCard = testCard("test_choose_2", "f04", "skill", "none", [
+  { type: "chooseCard", look: 2 },
+]);
+
+const pvpSide = (heroIds: [string, string, string]): PvpSide => ({
+  heroIds,
+  loadout: { heroes: {}, pvp: true },
+});
+
+describe("Nguyệt Luân — lệnh đầu lượt và Chiêm Bài", () => {
+  it("T319a: Nguyệt Sinh — the player's turn fund +1 and enemy chains plan with +1 while the phase lasts", () => {
+    // Phase 1 start: the round-1 fund already carries the decree (`01` §3.1 step 7).
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { waxingCrescent: "nguyet_sinh" } },
+      mutateData: makeEnemiesIdle,
+    });
+    expect(p0(combat.state).moonPower).toBe(4); // base(1) = 3, +1
+    // createCombat planned round-1 chains at phase 1: base(1) = 0, +1 (`01` §9.2).
+    expect(combat.state.enemies.map((enemy) => enemy.moonPower)).toEqual([1, 1]);
+    // Baseline with decree modifiers stripped: base funds only.
+    const baseline = makeTestCombat({ start: { moonIndex: 1 }, mutateData: makeEnemiesIdle });
+    expect(p0(baseline.state).moonPower).toBe(3);
+    expect(baseline.state.enemies.map((enemy) => enemy.moonPower)).toEqual([0, 0]);
+
+    // A later turn inside the same phase: round 2 at phase 1 funds base(2) + 1.
+    const late = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 0, decrees: { waxingCrescent: "nguyet_sinh" } },
+      mutateData: makeEnemiesIdle,
+    });
+    const end = applyAction(late.data, late.state, { type: "endTurn" });
+    expect(end.ok).toBe(true);
+    if (!end.ok) return;
+    expect(end.state.moonIndex).toBe(1);
+    // Turn 1's unspent fund carried over as reserve: base(2) 4 + reserve 3 + decree 1.
+    expect(p0(end.state).moonPower).toBe(8);
+    expect(end.state.enemies.map((enemy) => enemy.moonPower)).toEqual([2, 2]); // base(2) = 1, +1
+    const lateBase = applyAction(baseline.data, baseline.state, { type: "endTurn" });
+    expect(lateBase.ok).toBe(true);
+    if (!lateBase.ok) return;
+    expect(p0(lateBase.state).moonPower).toBe(7); // base(2) 4 + reserve 3
+    expect(lateBase.state.enemies.map((enemy) => enemy.moonPower)).toEqual([1, 1]);
+  });
+
+  it("T319b: Khai Trí — one extra card after refill; at handLimit the drawn card spills to the discard pile", () => {
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 0, decrees: { waxingCrescent: "khai_tri" } },
+      mutateData: makeEnemiesIdle,
+    });
+    expect(p0(combat.state).hand).toHaveLength(6); // turn 1 is still phase 0
+    const end = applyAction(combat.data, combat.state, { type: "endTurn" });
+    expect(end.ok).toBe(true);
+    if (!end.ok) return;
+    expect(end.state.moonIndex).toBe(1);
+    expect(p0(end.state).hand).toHaveLength(7); // refill to 6, Khai Trí +1
+
+    const full = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 0, decrees: { waxingCrescent: "khai_tri" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        p0(s).hand.push(...p0(s).drawPile.splice(-2)); // hand at handLimit (8)
+      },
+    });
+    const topCard = p0(full.state).drawPile[0]!;
+    const fullEnd = applyAction(full.data, full.state, { type: "endTurn" });
+    expect(fullEnd.ok).toBe(true);
+    if (!fullEnd.ok) return;
+    expect(p0(fullEnd.state).hand).toHaveLength(8);
+    expect(p0(fullEnd.state).hand).not.toContain(topCard);
+    expect(p0(fullEnd.state).discardPile).toContain(topCard);
+    expect(fullEnd.events).toContainEqual({ type: "cardDiscarded", instanceIds: [topCard] });
+  });
+
+  it("T319c: Mầm Sống — every living unit of the side whose turn starts heals a flat 2", () => {
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 0, decrees: { waxingCrescent: "mam_song" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        s.heroes[0]!.hp = s.heroes[0]!.maxHp - 5;
+        s.enemies[0]!.hp = s.enemies[0]!.maxHp - 5;
+      },
+    });
+    // The enemy turn of round 1 still runs under phase 0 — no heal there.
+    const end = applyAction(combat.data, combat.state, { type: "endTurn" });
+    expect(end.ok).toBe(true);
+    if (!end.ok) return;
+    expect(end.state.moonIndex).toBe(1);
+    // Round-2 player turn (phase 1): the damaged hero heals 2, flat (no multiplier).
+    expect(end.events).toContainEqual({ type: "healed", targetId: "hero:m05", amount: 2 });
+    expect(end.state.heroes[0]!.hp).toBe(end.state.heroes[0]!.maxHp - 3);
+    expect(end.events.some((e) => e.type === "healed" && e.targetId === "enemy:0")).toBe(false);
+    // Round-2 enemy turn (still phase 1): the enemy side heals after its status ticks.
+    const end2 = applyAction(combat.data, end.state, { type: "endTurn" });
+    expect(end2.ok).toBe(true);
+    if (!end2.ok) return;
+    expect(end2.events).toContainEqual({ type: "healed", targetId: "enemy:0", amount: 2 });
+    expect(end2.state.enemies[0]!.hp).toBe(end2.state.enemies[0]!.maxHp - 3);
+  });
+
+  it("T319d: Đoàn Viên — only the lowest-HP-ratio unit of the side heals 5", () => {
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 3, decrees: { full: "doan_vien" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        s.heroes[0]!.hp = Math.floor(s.heroes[0]!.maxHp / 2);
+        s.heroes[1]!.hp = 3; // lowest ratio
+        s.enemies[1]!.hp = 1; // lowest ratio on the enemy side
+      },
+    });
+    const end = applyAction(combat.data, combat.state, { type: "endTurn" });
+    expect(end.ok).toBe(true);
+    if (!end.ok) return;
+    expect(end.state.moonIndex).toBe(4);
+    const heroHeals = end.events.filter((e) => e.type === "healed" && e.targetId.startsWith("hero:"));
+    expect(heroHeals).toEqual([{ type: "healed", targetId: "hero:f04", amount: 5 }]);
+    expect(end.state.heroes[1]!.hp).toBe(8);
+    expect(end.state.heroes[0]!.hp).toBe(Math.floor(end.state.heroes[0]!.maxHp / 2));
+    const end2 = applyAction(combat.data, end.state, { type: "endTurn" });
+    expect(end2.ok).toBe(true);
+    if (!end2.ok) return;
+    const enemyHeals = end2.events.filter((e) => e.type === "healed" && e.targetId.startsWith("enemy:"));
+    expect(enemyHeals).toEqual([{ type: "healed", targetId: "enemy:1", amount: 5 }]);
+    expect(end2.state.enemies[1]!.hp).toBe(6);
+  });
+
+  it("T319e: Thế Cân — highest-HP hero of each seat and highest-HP enemy take weak once per round; PvP stores double duration", () => {
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { firstQuarter: "the_can" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        s.heroes[0]!.hp = 10;
+        s.heroes[2]!.hp = 5; // f04 stands at full hp — the highest of the seat
+        s.enemies[0]!.hp = 10; // enemy:1 (full) is the highest-HP enemy
+      },
+    });
+    const end = applyAction(combat.data, combat.state, { type: "endTurn" });
+    expect(end.ok).toBe(true);
+    if (!end.ok) return;
+    expect(end.state.moonIndex).toBe(2);
+    expect(getStatus(end.state.heroes[1]!, "weak")?.value).toBe(1);
+    expect(getStatus(end.state.enemies[1]!, "weak")?.value).toBe(1);
+    expect(end.events.filter((e) => e.type === "statusApplied" && e.status === "weak")).toEqual([
+      { type: "statusApplied", targetId: "hero:f04", status: "weak", value: 1 },
+      { type: "statusApplied", targetId: "enemy:1", status: "weak", value: 1 },
+    ]);
+    // Round 3 sits at phase 3 — Thế Cân does not reapply, and weak 1 ticks out.
+    const end2 = applyAction(combat.data, end.state, { type: "endTurn" });
+    expect(end2.ok).toBe(true);
+    if (!end2.ok) return;
+    expect(end2.events.some((e) => e.type === "statusApplied" && e.status === "weak")).toBe(false);
+    expect(end2.state.heroes[1]!.statuses.some((s) => s.id === "weak")).toBe(false);
+    expect(end2.state.enemies[1]!.statuses.some((s) => s.id === "weak")).toBe(false);
+
+    // PvP: each seat's own highest-HP hero takes weak at its turn start, duration ×2.
+    const pvpData = testData();
+    const pvp = createPvpCombat(pvpData, {
+      seed: 42,
+      players: [pvpSide(["m05", "f04", "m06"]), pvpSide(["f03", "m05", "m06"])],
+    });
+    pvp.state.moonIndex = 2;
+    pvp.state.moonDecrees[2] = "the_can";
+    let cur = pvp.state;
+    for (const seat of [0, 1] as const) {
+      const mul = applyAction(pvpData, cur, { type: "mulligan", instanceIds: [], player: seat });
+      expect(mul.ok).toBe(true);
+      if (!mul.ok) return;
+      cur = mul.state;
+    }
+    const first = cur.firstPlayer!;
+    // PvP stats differ per hero — the decree hits the seat's highest-HP hero.
+    const topOf = (s: CombatState, seat: number) =>
+      s.heroes.filter((h) => h.player === seat).reduce((a, b) => (b.hp > a.hp ? b : a));
+    const firstTop = topOf(cur, first).id;
+    expect(getStatus(cur.heroes.find((h) => h.id === firstTop)!, "weak")?.value).toBe(2);
+    expect(cur.heroes.filter((h) => h.player !== first).every((h) => !h.statuses.some((s) => s.id === "weak"))).toBe(true);
+    const pvpEnd = applyAction(pvpData, cur, { type: "endTurn" });
+    expect(pvpEnd.ok).toBe(true);
+    if (!pvpEnd.ok) return;
+    const second = (1 - first) as 0 | 1;
+    expect(pvpEnd.state.activePlayer).toBe(second);
+    const secondTop = topOf(pvpEnd.state, second).id;
+    expect(getStatus(pvpEnd.state.heroes.find((h) => h.id === secondTop)!, "weak")?.value).toBe(2);
+    // The first seat's weak ticked down with its turn end (PvP durations tick per turn).
+    expect(getStatus(pvpEnd.state.heroes.find((h) => h.id === firstTop)!, "weak")?.value).toBe(1);
+  });
+
+  it("T323a: Chiêm Tinh — every Chiêm Bài of the player sees +2 cards (stacking with Định Cục)", () => {
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 7, decrees: { waningCrescent: "chiem_tinh" } },
+    });
+    const guide = injectCard(combat.state, combat.data, chooseTwoCard);
+    const res = play(combat.data, combat.state, guide);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(pendingCardOptions(res.state)).toHaveLength(4); // look 2 + decree 2
+
+    const stacked = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 7, decrees: { waningCrescent: "chiem_tinh" } },
+      mutateData: withLevelUp("m05", { passive: { type: "chooseCardExtraLook", amount: 1 } }),
+      setup: (s) => {
+        s.heroes[0]!.leveledUp = true;
+      },
+    });
+    const stackedGuide = injectCard(stacked.state, stacked.data, chooseTwoCard);
+    const stackedRes = play(stacked.data, stacked.state, stackedGuide);
+    expect(stackedRes.ok).toBe(true);
+    if (!stackedRes.ok) return;
+    expect(pendingCardOptions(stackedRes.state)).toHaveLength(5); // look 2 + passive 1 + decree 2
+  });
+
+  it("T323b: Bói Nguyệt — a free Chiêm Bài 3 at turn start; queues behind Vạn Kim, ahead of Chọn Pha", () => {
+    // Alone it opens right as the turn starts.
+    const plain = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 7, decrees: { waningCrescent: "boi_nguyet" } },
+      mulligan: "pending",
+    });
+    const top3 = p0(plain.state).drawPile.slice(0, 3);
+    const started = applyAction(plain.data, plain.state, { type: "mulligan", instanceIds: [] });
+    expect(started.ok).toBe(true);
+    if (!started.ok) return;
+    expect(started.state.status).toBe("choosing");
+    expect(p0(started.state).pendingChoice).toEqual({ kind: "chooseCard", options: top3 });
+
+    // With Vạn Kim and Quan Tinh: Vạn Kim opens first, Bói Nguyệt queues on
+    // `omenPending`, and Chọn Pha only opens once both Chiêm Bài are answered.
+    const ordered = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 7, decrees: { waningCrescent: "boi_nguyet" } },
+      mulligan: "pending",
+      mutateData: (d) => {
+        withLevelUp("m05", { passive: { type: "freeChooseCardPerTurn", look: 4 } })(d);
+        withLevelUp("f04", { passive: { type: "chooseMoon" } })(d);
+      },
+      setup: (s) => {
+        s.heroes[0]!.leveledUp = true;
+        s.heroes[1]!.leveledUp = true;
+      },
+    });
+    const opened = applyAction(ordered.data, ordered.state, { type: "mulligan", instanceIds: [] });
+    expect(opened.ok).toBe(true);
+    if (!opened.ok) return;
+    const vanKim = pendingCardOptions(opened.state);
+    expect(vanKim).toHaveLength(4);
+    expect(p0(opened.state).omenPending).toBe(true);
+    const answeredVanKim = applyAction(ordered.data, opened.state, { type: "chooseCard", instanceId: vanKim[0]! });
+    expect(answeredVanKim.ok).toBe(true);
+    if (!answeredVanKim.ok) return;
+    expect(answeredVanKim.state.status).toBe("choosing");
+    const omen = pendingCardOptions(answeredVanKim.state);
+    expect(omen).toHaveLength(3);
+    expect(p0(answeredVanKim.state).omenPending).toBeUndefined();
+    const answeredOmen = applyAction(ordered.data, answeredVanKim.state, { type: "chooseCard", instanceId: omen[0]! });
+    expect(answeredOmen.ok).toBe(true);
+    if (!answeredOmen.ok) return;
+    expect(p0(answeredOmen.state).pendingChoice).toEqual({ kind: "chooseMoon", options: [0, 1, 2] });
+    expect(answeredOmen.events).toContainEqual({ type: "moonChoiceOpened", options: [0, 1, 2] });
+    const moon = applyAction(ordered.data, answeredOmen.state, { type: "chooseMoon", offset: 0 });
+    expect(moon.ok).toBe(true);
+    if (!moon.ok) return;
+    expect(moon.state.status).toBe("playerTurn");
+    expect(p0(moon.state).pendingChoice).toBeNull();
   });
 });
