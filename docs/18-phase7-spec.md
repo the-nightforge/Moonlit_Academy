@@ -32,7 +32,7 @@ chuẩn; tài liệu này giữ bối cảnh và lý do.
 **Điều kiện trước:** GĐ 6 (`17`) đã vào `main`. 5e.2 (triển khai Internet thật) độc lập,
 làm song song khi người dùng sẵn sàng.
 
-**Trạng thái:** 7c xong — Cốt truyện Arc 1–2; tiếp theo 7d (§5).
+**Trạng thái:** 7d xong — GĐ 7 hoàn thành (điểm mở: `docs/playtest-notes.md` Phase 7d).
 
 **Thư viện mới:** không có.
 
@@ -516,10 +516,13 @@ màn, 5 ở boss arc; XP Tu Luyện theo màn; 1 Hero.
 - `economy-config.json` → `upgradeCost`:
   ```json
   "upgradeCost": {
-    "weapon": { "rare": [2,3,4,5], "epic": [3,5,7,9], "legendary": [5,8,11,14] },
+    "weapon": { "rare": [8,10,12,14], "epic": [25,30,35,40],
+      "legendary": [45,55,65,75] },
     "relic":  { "rare": [2,3,4,5], "epic": [3,5,7,9], "legendary": [5,8,11,14] }
   }
   ```
+  *(Hàng `weapon` là giá đã chỉnh sau mô phỏng 7d.6 — ban đầu trùng hàng `relic`;
+  xem `docs/playtest-notes.md` Phase 7d.)*
   `upgradeCost[kind][rarity][level − 1]` là giá đi từ `level` lên `level + 1`
   (level 1…4 — cùng nghĩa "chỉ số = cấp đích − 2", R2…R5). Hàm `upgradeCost(data,
   kind, id, level)` đọc giá đó, trả `null` khi id lạ hoặc `level` ngoài 1…4. Vũ khí

@@ -202,21 +202,25 @@ Nguyên tắc đề xuất:
 
 | Vũ khí | Độ hiếm | Lá R1 | Nội tại R1 | R2 | R3 | R4 | R5 |
 |---|---|---|---|---|---|---|---|
-| Ngọc Bút `w_ngoc_but` (bản mệnh M01) | Legendary | *Bút Định Càn Khôn* 3 · 2 · kỹ năng [scheme]: rút 2 lá, +2 NL | Đầu trận +1 NL (M01: +2 NL, rút 1 lá) | +3 NL | cost 2 | rút 3, +3 NL | +2 NL (M01: +2 NL, rút 1 lá, Dưỡng Nguyệt 1) |
-| Cấm Vệ Kích `w_cam_ve_kich` (M02) | Epic | *Hộ Kích* 2 · 2 · tấn công [attack, ward]: gây 4, nhận 3 giáp | Đầu lượt người chơi: người mang +2 giáp (M02: +3, Phản Đòn 1) | gây 5, +4 giáp | cost 1 | gây 6, +5 giáp | +3 giáp (M02: +4, Phản Đòn 2) |
-| Vạn Kim Đẩu `w_van_kim_dau` (M03) | Rare | *Bản Kim* 2 · 2 · kỹ năng [scheme]: Chiêm Bài 2, +1 NL | Mỗi lá `scheme` thứ 4 của người mang: +1 NL (M03: +2, mọi Hero +2 giáp) | Chiêm Bài 3 | cost 1 | thêm +2 NL | thành mỗi lá thứ **3** |
-| Bạch Ngân Châm `w_bach_ngan_cham` (M04) | Epic | *Ngân Châm* 2 · 2 · kỹ năng [heal]: 1 đồng đội hồi 3, Hồi Phục 2 | Mỗi lá `heal` thứ 3 của người mang: Hero máu thấp nhất hồi 2 (M04: hồi 3, Giải Trừ) | hồi 4 | cost 1 | hồi 5, Hồi Phục 3 | hồi 3 (M04: hồi 4, Giải Trừ) |
-| Huyết Trận Cổ `w_huyet_tran_co` (M07) | Rare | *Trầm Cổ* 2 · 2 · kỹ năng [harmony]: mọi đồng đội Tích Lực 1, hồi 1 | Khi Huyết Nguyệt bắt đầu: mọi Hero Hồi Phục 2 (M07: 3, người mang +1 Sức Mạnh) | Tích Lực 2 | cost 1 | Tích Lực 2, thêm Hồi Phục 2 | Hồi Phục 3 (M07: 4, người mang +2 Sức Mạnh) |
+| Ngọc Bút `w_ngoc_but` (bản mệnh M01) | Legendary | *Bút Định Càn Khôn* 2 · 2 · kỹ năng [scheme]: rút 2 lá, +3 NL | Đầu trận +1 NL (M01: +2 NL, rút 1 lá) | +4 NL | cost 1 | rút 3, +4 NL | +2 NL (M01: +2 NL, rút 1 lá, Dưỡng Nguyệt 1) |
+| Cấm Vệ Kích `w_cam_ve_kich` (M02) | Epic | *Hộ Kích* 2 · 2 · tấn công [attack, ward]: gây 3, nhận 2 giáp | Đầu lượt người chơi: người mang +1 giáp (M02: +2) | gây 5, +4 giáp | cost 1; M02: thêm Phản Đòn 1 | gây 6, +5 giáp | +3 giáp (M02: +4, Phản Đòn 2) |
+| Vạn Kim Đẩu `w_van_kim_dau` (M03) | Rare | *Bản Kim* 1 · 2 · kỹ năng [scheme]: Chiêm Bài 2, +2 NL | Mỗi lá `scheme` thứ 4 của người mang: +1 NL (M03: +2, mọi Hero +2 giáp) | Chiêm Bài 3 | cost 0 | thêm +2 NL | thành mỗi lá thứ **3** |
+| Bạch Ngân Châm `w_bach_ngan_cham` (M04) | Epic | *Ngân Châm* 2 · 2 · kỹ năng [heal, harmony]: 1 đồng đội hồi 3, Hồi Phục 2; gây 3 lên mọi kẻ địch cho mỗi Hero đầy HP | Mỗi lá `heal` thứ 3 của người mang: Hero máu thấp nhất hồi 2 (M04: hồi 3, Giải Trừ) | hồi 4 | cost 1 | hồi 5, Hồi Phục 3 | hồi 3 (M04: hồi 4, Giải Trừ) |
+| Huyết Trận Cổ `w_huyet_tran_co` (M07) | Rare | *Trầm Cổ* 2 · 2 · kỹ năng [harmony]: mọi đồng đội Tích Lực 1 | Khi Huyết Nguyệt bắt đầu: mọi Hero Hồi Phục 1 (M07: 2, người mang +1 Sức Mạnh) | Tích Lực 2, hồi 1 | cost 1 | Tích Lực 2, thêm Hồi Phục 2 | Hồi Phục 3 (M07: 4, người mang +2 Sức Mạnh) |
 | Quan Tinh Trượng `w_quan_tinh_truong` (M08) | Legendary | *Tinh Dịch* 2 · 2 · kỹ năng [moon]: Đổi Vận trăng lùi 1 pha, Chiêm Bài 2 | Mỗi lần trăng đổi pha: +1 NL (M08: +1 NL, mọi kẻ địch Suy Yếu 1 vòng) | Chiêm Bài 3 | cost 1 | thêm +1 NL | +2 NL mỗi lần đổi pha (M08: +2 NL, Suy Yếu 2 vòng) |
 | Vong Quốc Cầm `w_vong_quoc_cam` (M09) | Epic | *Dư Âm* 2 · 2 · kỹ năng [harmony, control]: Suy Yếu 1 vòng; Kéo Dài 1 debuff có thời hạn của mục tiêu | Mỗi lá `control` thứ 4 của người mang: mọi kẻ địch Suy Yếu 1 vòng (M09: thêm Dễ Vỡ 1 vòng) | Suy Yếu 2 vòng | cost 1 | Kéo Dài 2 | thành mỗi lá thứ **3** |
 | Hàn Môn Kiếm `w_han_mon_kiem` (M10) | Rare | *Hàn Quang* 2 · 2 · tấn công [attack, scheme]: gây 3; Liên Hoàn 2: gây thêm 3 | Mỗi lá `scheme` thứ 3 của người mang: rút 1 lá (M10: rút 1, người mang Tích Lực 1) | 4 / +4 | cost 1 | 5 / +5 | thành mỗi lá thứ **2** |
 | Thiên Nguyệt Trượng `w_thien_nguyet_truong` (F01) | Legendary | *Trầm Nguyệt* 3 · 2 · kỹ năng [moon]: Đổi Vận 1 pha, +2 NL | Khi vào Trăng Tròn: +2 NL (F01: +3, rút 1 lá) | +3 NL | cost 2 | Đổi Vận 2 pha | Trăng Tròn **hoặc Trăng Non** (F01: +3, rút 1) |
 | Xuyên Vân Cung `w_xuyen_van_cung` (F05) | Rare | *Phá Vân Tiễn* 3 · 2 · tấn công [attack, assassin]: gây 4; mục tiêu bị Đánh Dấu: gây thêm 4 | Mỗi lá tấn công thứ 3 của người mang: gây 2 lên mọi kẻ địch (F05: 3, thêm Đánh Dấu 1 vòng) | 5 / +5 | cost 2 | 6 / +6 | thành mỗi lá thứ **2** |
 | Kinh Hồng Phiến `w_kinh_hong_phien` (F06) | Epic | *Hồ Mị* 2 · 2 · kỹ năng [harmony, control]: Mê Hoặc 1 chiêu, gây 2 | Mỗi lá `control` thứ 4 của người mang: người mang Ẩn Thân 1 vòng (F06: Ẩn Thân 2 vòng, Hồi Phục 2) | gây 4 | Mê Hoặc 2 chiêu | gây 6 | thành mỗi lá thứ **3** |
-| Phán Quan Bút `w_phan_quan_but` (F07) | Rare | *Đoạn Án* 2 · 2 · kỹ năng [scheme, control]: Phong Ấn mục tiêu, Suy Yếu 1 vòng | Mỗi 2 lượt, đầu lượt người chơi: rút 1 lá (F07: rút 1, +1 NL) | Suy Yếu 2 vòng | cost 1 | thêm gây 3 | rút 2 (F07: rút 2, +1 NL) |
-| Huyết Phượng Đao `w_huyet_phuong_dao` (F08) | Legendary | *Phượng Diệt* 3 · 2 · tấn công [attack, forbidden]: mất 2 HP, gây 9 | Khi Huyết Nguyệt bắt đầu: người mang +2 Sức Mạnh (F08: thêm mọi kẻ địch Thiêu Đốt 2) | gây 11 | cost 2 | mất 3 HP, gây 14 | +3 Sức Mạnh (F08: thêm Thiêu Đốt 3) |
-| Ngọc Thố Bội `w_ngoc_tho_boi` (F09) | Rare | *Thố Linh* 3 · 2 · kỹ năng [harmony]: Triệu hồi Thỏ Ngọc, Linh Thú +2 giáp | Đầu trận: triệu hồi Thỏ Ngọc (F09: nó +2 giáp, +1 Sức Mạnh) | Linh Thú +4 giáp | cost 2 | thêm +1 Sức Mạnh cho Linh Thú | đầu trận Thỏ Ngọc +3 giáp (F09: +4, +1 Sức Mạnh, Khiêu Khích 1 vòng) |
+| Phán Quan Bút `w_phan_quan_but` (F07) | Rare | *Đoạn Án* 3 · 2 · kỹ năng [scheme, control]: Phong Ấn mục tiêu, Suy Yếu 1 vòng | — | Suy Yếu 2 vòng | cost 1; mỗi 3 lượt, đầu lượt người chơi: rút 1 (F07: rút 1, +1 NL) | thêm gây 3 | rút 2 mỗi 2 lượt (F07: rút 2, +1 NL) |
+| Huyết Phượng Đao `w_huyet_phuong_dao` (F08) | Legendary | *Phượng Diệt* 3 · 2 · tấn công [attack, forbidden]: mất 2 HP, gây 7 | Khi Huyết Nguyệt bắt đầu: người mang +1 Sức Mạnh (F08: +2 Sức Mạnh, thêm mọi kẻ địch Thiêu Đốt 1) | gây 9 | cost 2 | mất 3 HP, gây 11 | +3 Sức Mạnh (F08: thêm Thiêu Đốt 3) |
+| Ngọc Thố Bội `w_ngoc_tho_boi` (F09) | Rare | *Thố Linh* 4 · 2 · kỹ năng [harmony]: Triệu hồi Thỏ Ngọc | — | Linh Thú +4 giáp | cost 2; đầu trận triệu hồi Thỏ Ngọc (F09: nó +2 giáp, +1 Sức Mạnh) | thêm +1 Sức Mạnh cho Linh Thú | đầu trận Thỏ Ngọc +3 giáp (F09: +4, +1 Sức Mạnh, Khiêu Khích 1 vòng) |
 | Dẫn Hồn Đăng `w_dan_hon_dang` (F10) | Legendary | *Minh Đăng* 5 · 1 · kỹ năng [moon], nhắm đồng đội đã ngã: Hồi Hồn 50% HP, +3 giáp | Khi một Hero ngã: mọi Hero +4 giáp (F10: thêm Hồi Phục 2) | hồi sinh xong +5 giáp | cost 4 | Hồi Hồn 60% | +6 giáp, Hồi Phục 2 (F10: thêm Hồi Hồn 20% cho đồng đội vừa ngã) |
+
+*(Các ô của Ngọc Bút, Cấm Vệ Kích, Vạn Kim Đẩu, Bạch Ngân Châm, Huyết Trận Cổ,
+Phán Quan Bút, Huyết Phượng Đao, Ngọc Thố Bội đã cập nhật theo gói chỉnh sau
+mô phỏng 7d.6 — xem `docs/playtest-notes.md` Phase 7d.)*
 
 **Ghi chú cơ chế:**
 
@@ -261,7 +265,8 @@ Nguyên tắc đề xuất:
 - **F08:** `loseHp` trên lá `forbidden` nuôi `forbiddenHpLost`; khi F08 thăng cấp
   Huyết Phượng, `forbiddenNoSelfHpLoss` bỏ qua phần mất máu của lá này — tự sát
   thương "miễn phí" là điểm thưởng bản mệnh.
-- **F09:** `summon` trong lá và trong hook `combatStart` đều nuôi `summonsMade`;
+- **F09:** `summon` trong lá và trong hook `combatStart` (hook từ R3 sau chỉnh
+  7d.6) đều nuôi `summonsMade`;
   bản sao thứ hai của lá (đã có Thỏ) = hồi đầy + Sức Mạnh 1 theo keyword Linh
   Thú, nên lá không bao giờ chết. F09 thăng cấp (cả hai dạng) áp Thức Tỉnh /
   Khiêu Khích lên Thỏ được triệu hồi này như thường.
@@ -277,7 +282,8 @@ Nguyên tắc đề xuất:
    `discountNextCard` (không sửa schema/rules trong 7d).
 3. *Minh Đăng* giữ `target: "fallenAlly"` + `copies: 1` như đề xuất.
 4. R5 bản mệnh F10 giữ `revive lastFallen` 20% khi Hero ngã.
-5. Nội tại F09 giữ `combatStart` triệu hồi Thỏ Ngọc miễn phí.
+5. Nội tại F09 giữ `combatStart` triệu hồi Thỏ Ngọc miễn phí *(đã chỉnh 7d.6:
+   hook dời sang R3 — R1 chỉ còn lá Thố Linh)*.
 6. Nội tại M08 **đổi** thành "mỗi lần trăng đổi pha: +1 NL" — trigger
    `moonPhaseEntered` không lọc `phase` (khuôn Vọng Nguyệt Kính); R5 nâng lên
    +2 NL thay vì thêm pha thứ hai.

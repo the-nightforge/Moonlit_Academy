@@ -56,7 +56,8 @@ Hồ sơ là dữ liệu JSON thuần; mọi hàm dưới đây là hàm thuần
     { "id": "shop_epic_hero", "item": { "type": "heroChoice", "rarity": "epic" }, "price": 120, "limitPerWeek": 1 }
   ],
   "upgradeCost": {
-    "weapon": { "rare": [2, 3, 4, 5], "epic": [3, 5, 7, 9], "legendary": [5, 8, 11, 14] },
+    "weapon": { "rare": [8, 10, 12, 14], "epic": [25, 30, 35, 40],
+      "legendary": [45, 55, 65, 75] },
     "relic":  { "rare": [2, 3, 4, 5], "epic": [3, 5, 7, 9], "legendary": [5, 8, 11, 14] }
   }
 }
@@ -522,11 +523,19 @@ Giá nằm trong `economy-config.json → upgradeCost`, theo độ hiếm của 
 (`upgradeCost[kind][rarity][level − 1]` = giá từ `level` lên `level + 1`; vật phẩm độ
 hiếm `common` dùng hàng `rare`):
 
-| Độ hiếm | R1→R2 | R2→R3 | R3→R4 | R4→R5 |
-|---|---|---|---|---|
-| `rare` | 2 | 3 | 4 | 5 |
-| `epic` | 3 | 5 | 7 | 9 |
-| `legendary` | 5 | 8 | 11 | 14 |
+| Loại | Độ hiếm | R1→R2 | R2→R3 | R3→R4 | R4→R5 | Tổng R1→R5 |
+|---|---|---|---|---|---|---|
+| `weapon` | `rare` | 8 | 10 | 12 | 14 | 44 |
+| `weapon` | `epic` | 25 | 30 | 35 | 40 | 130 |
+| `weapon` | `legendary` | 45 | 55 | 65 | 75 | 240 |
+| `relic` | `rare` | 2 | 3 | 4 | 5 | 14 |
+| `relic` | `epic` | 3 | 5 | 7 | 9 | 24 |
+| `relic` | `legendary` | 5 | 8 | 11 | 14 | 38 |
+
+Hàng `weapon` là giá **đã chỉnh sau mô phỏng** (7d.6, xem `docs/playtest-notes.md`
+Phase 7d): giá ban đầu trùng hàng `relic` khiến Epic R1→R5 chỉ ~4 ngày, Legendary
+~6 ngày — quá nhanh so với mục tiêu `18` §5.5 (Epic ~3–4 tuần, Legendary ~6–8
+tuần). Hàng `relic` giữ số thiết kế ban đầu.
 
 `upgradeItem` theo thứ tự:
 

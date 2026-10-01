@@ -194,10 +194,13 @@ Expected: FAIL (`upgradeItem` chưa có).
 ```json
   "runRewards": { "moonJadePerFloor": 3, "moonJadeWin": 20, "firstWinOfDay": 30, "darkIronWin": 3, "darkIronLoss": 1, "darkIronLossMinFloor": 2 },
   "upgradeCost": {
-    "weapon": { "rare": [2, 3, 4, 5], "epic": [3, 5, 7, 9], "legendary": [5, 8, 11, 14] },
+    "weapon": { "rare": [8, 10, 12, 14], "epic": [25, 30, 35, 40],
+      "legendary": [45, 55, 65, 75] },
     "relic": { "rare": [2, 3, 4, 5], "epic": [3, 5, 7, 9], "legendary": [5, 8, 11, 14] }
   },
 ```
+  *(Hàng `weapon` đã chỉnh sau mô phỏng 7d.6 — giá kế hoạch ban đầu trùng hàng
+  `relic`; xem `docs/playtest-notes.md` Phase 7d.)*
   - `schema.ts` → `economyConfigSchema`: `runRewards` thêm `darkIronWin: nonNegativeInt, darkIronLoss: nonNegativeInt, darkIronLossMinFloor: z.number().int().positive()`; thêm
 
 ```ts

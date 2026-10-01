@@ -367,7 +367,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ### Phần 7d — Trang bị bản mệnh + nâng cấp vật liệu
 
-**Giai đoạn hiện tại: 7d đang làm — `docs/18-phase7-spec.md` §5**
+**Giai đoạn hiện tại: 7 xong — `docs/18-phase7-spec.md` đã hoàn thành**
 
 Đặc tả: `18-phase7-spec.md` §5. Kế hoạch chi tiết:
 `docs/superpowers/plans/2026-09-30-phase7d-gear-materials.md` (7 Task).
@@ -399,4 +399,5 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 ### Bước 7d.6 — Mô phỏng, chỉnh số, đóng GĐ 7 *(Task 7)*
 > `run-playtest` có trang bị (R1 ≤ +10 điểm thắng); `economy-sim` vật liệu + Cốt truyện
 > (Epic R1→R5 ~3–4 tuần, Legendary ~6–8 tuần — `18` §5.5); gói chỉnh (duyệt);
-> `playtest-notes.md` mục Phase 7d; đóng GĐ 7.
+> `playtest-notes.md` mục Phase 7d; đóng GĐ 7. *(Đã xong — kết quả và điểm mở xem
+> `docs/playtest-notes.md` Phase 7d.)*

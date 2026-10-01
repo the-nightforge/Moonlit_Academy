@@ -1395,3 +1395,141 @@ nhất thấp nhất: arc2_s05 75.0%).
     steal/drain, trận dài ~15 vòng).
   - Quan sát: thoại before/after có dài quá không (5–8 câu/màn), cảm giác độ khó
     so với số liệu, pha trăng đầu trận có đọc được trên UI không.
+
+# Playtest Notes — Phase 7d (bước 7d.6)
+
+## Phương pháp
+
+- **Trang bị:** `run-playtest` (`PLAYTEST_GEAR=1 PLAYTEST_SEEDS=80`). 15 vũ khí
+  bản mệnh 7d.3 đo trên đội đầu tiên trong `TEAMS` chứa Hero bản mệnh (Hero bản
+  mệnh mang vũ khí, deck bỏ lá cuối của người mang như quy ước 4e); 8 Nguyệt
+  Bảo mới + 10 vũ khí cũ + 8 Nguyệt Bảo cũ đo trên cả 12 đội (cách đo relic sẵn
+  có). Mốc = cùng đội, không trang bị. Ô một đội = 80 lượt → sai số ±~8 điểm
+  (khoảng tin cậy 95% ±16); ô 12 đội = 960 lượt → ±~3. Ô trang bị bỏ `replayRun`
+  (tất định loadout đã có `meta-gear*` cover) — ~40% chi phí ô.
+- **Kinh tế:** `economy-sim` 200 người chơi ảo × 60 ngày — 2 lượt/ngày (Huyền
+  Thiết qua `applyRunRewards`), 1 màn Cốt truyện mới/ngày tới hết 16
+  (`applyStoryResult` `won`), nhiệm vụ, shop Tinh Hồn, quay banner Hero khi đủ
+  Ngọc. **Hai track vật liệu riêng** (Epic `w_anh_nguyet_chuy`, Legendary
+  `w_xich_diem_thuong`, vào R1 ngày 0; cùng độ hiếm cùng giá nên đại diện bất kỳ):
+  nhận toàn bộ Huyền Thiết ngày đó, `upgradeItem` lặp tới hết vật liệu; không
+  quay Binh Khí Các → tiến độ thuần vật liệu.
+- **PvP:** `PLAYTEST_PVP=1` — 2×4000 cặp đội bốc mẫu: trần vs trang bị R1 ngẫu
+  nhiên trong pool `pvp-config.freeWeaponIds`/`freeRelicIds` (toàn trang bị cũ;
+  không món 7d nào nằm trong pool).
+
+## Kinh tế: trước → sau chỉnh giá
+
+| Chỉ số | Trước (giá cũ) | Sau (giá chỉnh) | Mục tiêu `18` §5.5 | Kết quả |
+|---|---|---|---|---|
+| Epic R1→R5, ngày (trung vị / p90) | 4 / 5 (tổng giá 24) | **22 / 24** (tổng 130) | ~21–28 (3–4 tuần) | ✓ |
+| Legendary R1→R5, ngày (trung vị / p90) | 6 / 7 (tổng 38) | **46 / 49** (tổng 240) | ~42–56 (6–8 tuần) | ✓ |
+| Chưa R5 sau 60 ngày | 0/200 | 0/200 | — | — |
+| Huyền Thiết/ngày | 5.0 | 5.0 | — | — |
+| Cốt truyện (tổng 16 màn) | 800 Ngọc, 31 Huyền Thiết | 800 Ngọc, 31 Huyền Thiết | — | — |
+| Tỉ trọng Ngọc Cốt truyện / lệch nhịp quay | 7.0% / 7.0% | 7.0% / 7.0% | ≤15% | ✓ |
+
+## Trang bị: R1 / R5 trước → sau chỉnh
+
+Mốc toàn đội trần: **38%** (tầng TB 6.2). Mốc từng đội suy ra từ chênh:
+m01+m02+f04 ≈ 41–42%, m03+m10+m04 ≈ 17–18%, f01+m07+m06 ≈ 34%, f05+f07+m06 ≈
+66%, m08+f08+m05 ≈ 20%, f06+m09+f03 ≈ 2%, f09+f10+m05 ≈ 12–13%.
+
+### 15 vũ khí bản mệnh (mỗi món trên đội bản mệnh)
+
+| Vũ khí | Đội | Δ R1 trước | Δ R1 sau | Δ R5 sau | > +10 R1? |
+|---|---|---|---|---|---|
+| Ngọc Bút (m01, leg) | m01+m02+f04 | −21 | −21¹ | −10 | — |
+| Cấm Vệ Kích (m02, epic) | m01+m02+f04 | +26 | **+6** | +40 | ✓ |
+| Vạn Kim Đẩu (m03, rare) | m03+m10+m04 | −11 | −13¹ | −13 | — |
+| Bạch Ngân Châm (m04, epic) | m03+m10+m04 | −13 | **0** | +9 | ✓ |
+| Huyết Trận Cổ (m07, rare) | f01+m07+m06 | +17 | **+4** | +20 | ✓ |
+| Quan Tinh Trượng (m08, leg) | m08+f08+m05 | +5 | +5 | +10 | — |
+| Vong Quốc Cầm (m09, epic) | f06+m09+f03 | +4 | +4 | +4 | — |
+| Hàn Môn Kiếm (m10, rare) | m03+m10+m04 | +8 | +8 | +35 | — |
+| Thiên Nguyệt Trượng (f01, leg) | f01+m07+m06 | +3 | +3 | +6 | — |
+| Xuyên Vân Cung (f05, rare) | f05+f07+m06 | +6 | +6 | +18 | — |
+| Kinh Hồng Phiến (f06, epic) | f06+m09+f03 | −1 | −1 | −3 | — |
+| Phán Quan Bút (f07, rare) | f05+f07+m06 | +15 | **+8** (v2) | +29 | ✓ |
+| Huyết Phượng Đao (f08, leg) | m08+f08+m05 | +15 | **+1** | +14 | ✓ |
+| Ngọc Thố Bội (f09, rare) | f09+f10+m05 | +34 | **+9** (v2) | +38 | ✓ |
+| Dẫn Hồn Đăng (f10, leg) | f09+f10+m05 | −1 | −1 | +3 | — |
+
+¹ Hai món buff vẫn âm sau vòng 1 (Ngọc Bút −21, Vạn Kim Đẩu −13): lá Binh Khí
+vẫn yếu hơn lá deck bị bỏ trên đội này — mục tiêu chỉ chặn phía trên, ghi điểm
+mở. Vòng 2 (đo lại sau khi 2 món vẫn flag): Phán Quan Bút **+19** sau `every`
+2→3 → đẩy nội tại rút bài hẳn lên R3 + lá Đoạn Án 2→3 NL → còn **+8**; Ngọc
+Thố Bội **+11** sau khi dời summon → lá Thố Linh còn bare `summon` 4 NL (mất
+rider +2 giáp) → còn **+9**. Cột "Δ R1 sau" là số cuối cùng (vòng 2 cho hai món
+đó).
+
+### 8 Nguyệt Bảo mới (12 đội, mốc 38%) — không đổi qua chỉnh
+
+| Nguyệt Bảo | Δ R1 | Δ R5 |
+|---|---|---|
+| Càn Khôn Bàn (leg) | +6 | +2 |
+| Ngự Linh Chuông (leg) | +5 | +21 |
+| Hồ Tâm Châu (epic) | +5 | +18 |
+| Bất Động Ấn (epic) | 0 | +5 |
+| Phong Tỏa Ấn (epic) | +2 | +7 |
+| Kim Cang Phù (rare) | +1 | +4 |
+| Huyết Luyện Đỉnh (rare) | 0 | +2 |
+| Hàn Lâm Ấn (rare) | +1 | +8 |
+
+Cả 8 đạt ở R1 (R5 >+20 không bị chặn — cần 4 bản trùng/vật liệu).
+
+### Trang bị cũ (12 đội) — đo lại, không chỉnh
+
+Vũ khí cũ R1: max Hàn Tuyết Song Kiếm +10 (borderline trong nhiễu — 4e đo +6);
+còn lại ≤ +3 (Thiết Thuẫn/Liệt Cung/Thanh Tâm Bình −4/−5, trong nhiễu so số 4e).
+Nguyệt Bảo cũ R1 ≤ +5. Toàn bộ 25 lá Binh Khí đều từng được đánh.
+
+## Gói chỉnh đã áp (đã duyệt)
+
+- **`economy-config.json` → `upgradeCost.weapon`:** rare `[8,10,12,14]` (tổng 44),
+  epic `[25,30,35,40]` (130), legendary `[45,55,65,75]` (240). Hàng `relic`,
+  `runRewards.darkIron*`, `firstClear` giữ nguyên (nguồn thu đã hợp lý — chỉ giá
+  quá rẻ).
+- **5 nerf R1 vũ khí** (đúng gói duyệt): Ngọc Thố Bội summon `combatStart` → R3;
+  Cấm Vệ Kích sig giáp 3→2 + Phản Đòn 1 → R3, hooks giáp 2→1, lá 4→3 dmg/3→2
+  giáp; Huyết Trận Cổ lá bỏ hồi 1, sig regen 3→2, hooks regen 2→1; Huyết Phượng
+  Đao lá 9→7 (R2 11→9, R4 14→11), hooks Sức Mạnh 2→1, sig Thiêu Đốt 2→1; Phán
+  Quan Bút `every` 2→3 — **và vòng 2 sau đo lại** (2 món vẫn >+10): Phán Quan
+  Bút engine → R3 + lá 2→3 NL, Ngọc Thố Bội lá bare summon 4 NL.
+- **3 buff lá R1 âm** (vốn từ sẵn có, không vượt +10): Ngọc Bút lá 3→2 NL + NL
+  2→3 (thang R2/R4 kéo theo); Vạn Kim Đẩu lá 2→1 NL + NL 1→2 (R3 cost 1→0);
+  Bạch Ngân Châm lá thêm `scaledDamage` `alliesAtFullHp` 3 lên `allEnemies` +
+  tag `harmony`.
+
+## PvP (`PLAYTEST_PVP=1`, 2×4000 trận)
+
+| Chỉ số | Mục tiêu | Không trang bị | Trang bị R1 ngẫu nhiên |
+|---|---|---|---|
+| Người đi trước thắng | ~47–53 (`15` §4.9) | 56% | 56% |
+| Hòa (roundCap) | thấp | 2% | 2% |
+| Vòng TB / trung vị | 8–12 | 9.7 / 9 | 11.6 / 11 |
+| Thắng theo Hero | 40–60% (`18` §1.3) | 40–61 (m09 61) | 38–62 (f10/f04 62, m03 38) |
+
+Trang bị R1 kéo dài trận ~+2 vòng (vẫn trong band 8–12); đi trước và hòa không
+đổi. Biên Hero 38–62% lệch band ±~2 điểm, trong sai số ~±3 tại ~1200 trận/Hero —
+m09 61% ở trần đã có từ trước. **Pool PvP không có món 7d** → không có hệ quả
+cho `freeWeaponIds`/`freeRelicIds`; giữ nguyên, xem lại khi có data người chơi.
+
+## Điểm mở
+
+- **Ngọc Bút −21 / Vạn Kim Đẩu −13 sau buff** — lá R1 vẫn lỗi so lá bị bỏ trên
+  đội yếu; mục tiêu R1 chỉ chặn phía trên nên không chặn, cân nhắc buff thêm
+  (hoặc chấp nhận) ở đợt cân sau.
+- **Phán Quan Bút / Ngọc Thố Bội cần nerf vòng 2** mới về ≤ +10 (+8 / +9): nội
+  tại R1 của cả hai giờ trống (engine rút bài / summon đều từ R3) — nếu sau này
+  thấy R1–R2 quá nghèo, cân nhắc thêm rider nhẹ ở R2 thay vì trả engine về R1.
+- **Hàn Tuyết Song Kiếm (cũ) +10** — borderline trong nhiễu ±8 (4e đo +6), theo
+  dõi.
+- **Kinh Hồng Phiến ≈0 trên đội f06+m09+f03 (2%)** — đội quá yếu để đo giá trị
+  món, không kết luận được.
+- **Minh Đăng (Dẫn Hồn Đăng, f10) 0×/20 trận ở monitoring Task 4** — lá
+  `fallenAlly` chết tay khi chưa có Hero ngã; kiểm chức năng xác nhận hoạt động
+  đúng. Cờ giữ nguyên: cân nhắc đổi target / thêm bản sao ở đợt sau.
+- **PvP band Hero 38–62%** (trần 40–61) — lệch nhẹ ±2 ngoài mục tiêu 40–60, đã
+  ghi nhận từ 7b; xem lại bằng người chơi thật.
+- **Chơi tay Cốt truyện** treo từ 7c — bot không thay cảm nhận (xem mục trên).
