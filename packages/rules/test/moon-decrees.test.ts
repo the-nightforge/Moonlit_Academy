@@ -1,14 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   applyAction,
+  chooseCombatAction,
   createCombat,
+  createCoopCombat,
   createPvpCombat,
   getEffectiveCost,
   getStatus,
   phaseModifiers,
   starterDeck,
+  viewFor,
 } from "../src/index";
-import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, PvpSide } from "../src/index";
+import type { CardDef, CombatEvent, CombatState, CoopSide, GameData, IntentDef, PvpSide } from "../src/index";
 import { aoeFiveCard, healFiveCard, idleIntent, stealthOneCard, strike9Intent } from "./fixtures";
 import { injectCard, makeEnemiesIdle, makeTestCombat, p0, pendingCardOptions, rawTestInput, setHand, setIntent, setPlan, testData, withLevelUp } from "./helpers";
 import { parseGameData } from "data";
@@ -909,5 +912,310 @@ describe("Nguyệt Luân — Hủy Bài, Huyết Tế, Đoạn Tuyệt, Giữ Gi
     expect(p0(end.state).drawPile.slice(-2)).toEqual([b, c]);
     expect(p0(end.state).hand).not.toContain(b);
     expect(p0(end.state).hand).not.toContain(c);
+  });
+});
+
+describe("Nguyệt Luân — Nguyệt tính kẻ địch và bot", () => {
+  const shiftOneCard: CardDef = {
+    id: "test_shift_1", name: "Test Shift", ownerId: "f04", cost: 0, copies: 1,
+    type: "skill", tags: [], target: "none", effects: [{ type: "shiftMoon", amount: 1 }], text: "",
+  };
+  /** An unplayable (cost 99) card whose only job is lending `tag` to the hand. */
+  const tagAnchor = (id: string, tag: CardDef["tags"][number]): CardDef => ({
+    id, name: id, ownerId: "m05", cost: 99, copies: 1, type: "skill", tags: [tag], target: "none", effects: [], text: "",
+  });
+  const emptyHand = (s: CombatState): void => {
+    p0(s).discardPile.push(...p0(s).hand);
+    p0(s).hand = [];
+  };
+  /** Paid pools idle but Nguyệt tính (`moonOverrides`) stay real. */
+  const idlePaidIntents = (d: GameData): void => {
+    for (const def of Object.values(d.enemies)) def.intents = [{ ...idleIntent, cost: 0 }];
+  };
+
+  it("T324a: Khôi Lỗi planning under Trăng Khuyết Đầu leads its chain with Nguyệt Chùy at cost 0, then fires it free", () => {
+    // Chains plan at round end under the NEW phase (`01` §9.2): the waxingGibbous
+    // override lands ahead of paid picks with no cost. Thiên Bình / Liên Kích are
+    // pinned so no rolled decree touches the numbers.
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 2, decrees: { firstQuarter: "thien_binh", waxingGibbous: "lien_kich" } },
+      mutateData: idlePaidIntents,
+    });
+    const end = applyAction(combat.data, combat.state, { type: "endTurn" });
+    expect(end.ok).toBe(true);
+    if (!end.ok) return;
+    expect(end.state.moonIndex).toBe(3); // waxingGibbous
+    const puppet = end.state.enemies[0]!;
+    expect(puppet.defId).toBe("puppet_guard");
+    expect(puppet.plannedIntents[0]!.intent.id).toBe("puppet_moon_hammer");
+    expect(puppet.plannedIntents[0]!.cost).toBe(0);
+    const reveal = end.events.find(
+      (e): e is Extract<CombatEvent, { type: "intentsRevealed" }> =>
+        e.type === "intentsRevealed" && e.enemyId === "enemy:0",
+    );
+    expect(reveal?.intents[0]).toEqual({ intentId: "puppet_moon_hammer", cost: 0, targetId: "hero:m05" });
+
+    // The next enemy turn runs under the trait phase: the override executes
+    // first, for free — 8 damage on the highest-HP hero (m05, 40).
+    const enemyTurn = applyAction(combat.data, end.state, { type: "endTurn" });
+    expect(enemyTurn.ok).toBe(true);
+    if (!enemyTurn.ok) return;
+    const puppetActs = enemyTurn.events.filter(
+      (e) => e.type === "intentExecuted" && e.enemyId === "enemy:0",
+    );
+    expect(puppetActs[0]).toMatchObject({ intentId: "puppet_moon_hammer", targetId: "hero:m05" });
+    expect(enemyTurn.events).toContainEqual({
+      type: "damageDealt", sourceId: "enemy:0", targetId: "hero:m05", amount: 8, blocked: 0, hpLost: 8,
+    });
+    expect(enemyTurn.state.heroes[0]!.hp).toBe(32);
+  });
+
+  it("T324b: a pure Đổi Vận is held back when its landing phase carries a living enemy's Nguyệt tính", () => {
+    // Trăng Tròn → +1 lands on Trăng Khuyết Cuối: the phase's forbidden tag bonus
+    // matches the anchor in hand, so the landing "scores" — but Ảnh Hồ's
+    // waningGibbous trait (Hồ Hút Huyết) waits there. The bot passes.
+    const trait = makeTestCombat({ start: { moonIndex: 4 }, setup: emptyHand });
+    injectCard(trait.state, trait.data, shiftOneCard);
+    injectCard(trait.state, trait.data, tagAnchor("test_anchor_forbidden", "forbidden"));
+    expect(chooseCombatAction(trait.data, trait.state, 0)).toEqual({ type: "endTurn" });
+
+    // Only living enemies count: with the fox down, the same landing is fine.
+    const cleared = makeTestCombat({
+      start: { moonIndex: 4 },
+      setup: (s) => {
+        emptyHand(s);
+        s.enemies[1]!.alive = false; // shadow_fox
+      },
+    });
+    const liveShift = injectCard(cleared.state, cleared.data, shiftOneCard);
+    injectCard(cleared.state, cleared.data, tagAnchor("test_anchor_forbidden", "forbidden"));
+    expect(chooseCombatAction(cleared.data, cleared.state, 0)).toEqual({ type: "playCard", instanceId: liveShift });
+  });
+
+  it("T324c: knownIntents — the next phase's Nguyệt tính is public, so a Phong Ấn finds a strippable effect", () => {
+    const sealCardDef = testCard("test_seal_trait", "f04", "skill", "enemy", [
+      { type: "sealIntent", to: "chosen" },
+    ]);
+    const puppetOnlyTraits = (d: GameData): void => {
+      idlePaidIntents(d);
+      for (const def of Object.values(d.enemies)) {
+        if (def.id !== "puppet_guard") def.moonOverrides = [];
+      }
+    };
+    // Hạ Huyền (6) → the next phase Lưỡi Liềm Cuối (7) carries Khôi Lỗi's Canh
+    // Thư Lệnh (allAllies armor — a strippable non-damage effect): the seal has
+    // a target even though every paid intent is idle damage-wise.
+    const beforeTrait = makeTestCombat({
+      start: { moonIndex: 6 },
+      mutateData: puppetOnlyTraits,
+      setup: emptyHand,
+    });
+    const sealId = injectCard(beforeTrait.state, beforeTrait.data, sealCardDef);
+    expect(chooseCombatAction(beforeTrait.data, beforeTrait.state, 0)).toEqual({
+      type: "playCard", instanceId: sealId, targetId: "enemy:0",
+    });
+
+    // Trăng Non (0) → next phase Lưỡi Liềm Đầu has no Nguyệt tính in enc_01 —
+    // every known intent is pure damage, so the seal stays in hand.
+    const offTrait = makeTestCombat({
+      start: { moonIndex: 0 },
+      mutateData: puppetOnlyTraits,
+      setup: emptyHand,
+    });
+    injectCard(offTrait.state, offTrait.data, sealCardDef);
+    expect(chooseCombatAction(offTrait.data, offTrait.state, 0)).toEqual({ type: "endTurn" });
+  });
+
+  it("T324d: Xả Thân — the bot converts the costliest dead card into Nguyệt Lực while the hand stays fat", () => {
+    const costly = (id: string, cost: number): CardDef => ({
+      id, name: id, ownerId: "m05", cost, copies: 1, type: "skill", tags: [], target: "none", effects: [], text: "",
+    });
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 5, decrees: { waningGibbous: "xa_than" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        emptyHand(s);
+        p0(s).moonPower = 0; // nothing in hand is playable
+      },
+    });
+    for (let i = 0; i < 5; i++) injectCard(combat.state, combat.data, costly(`test_filler_${i}`, 3));
+    const big = injectCard(combat.state, combat.data, costly("test_too_big", 9));
+
+    const first = chooseCombatAction(combat.data, combat.state, 0);
+    expect(first).toEqual({ type: "discardCard", instanceId: big });
+    const discarded = applyAction(combat.data, combat.state, first);
+    expect(discarded.ok).toBe(true);
+    if (!discarded.ok) return;
+    // perTurn is 2 and the hand is still ≥5: the bot discards again, then stops.
+    const second = chooseCombatAction(combat.data, discarded.state, 0);
+    expect(second.type).toBe("discardCard");
+    const again = applyAction(combat.data, discarded.state, second);
+    expect(again.ok).toBe(true);
+    if (!again.ok) return;
+    expect(chooseCombatAction(combat.data, again.state, 0)).toEqual({ type: "endTurn" });
+  });
+
+  it("T324e: Huyết Tế — with a thin hand the bot sacrifices the healthiest hero for two draws", () => {
+    const filler = (id: string): CardDef => ({
+      id, name: id, ownerId: "m05", cost: 3, copies: 1, type: "skill", tags: [], target: "none", effects: [], text: "",
+    });
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 5, decrees: { waningGibbous: "huyet_te" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        emptyHand(s);
+        p0(s).moonPower = 0;
+      },
+    });
+    for (let i = 0; i < 3; i++) injectCard(combat.state, combat.data, filler(`test_pact_filler_${i}`));
+    // All heroes at 100% HP — the biggest pool (m05, 40) is the offering.
+    expect(chooseCombatAction(combat.data, combat.state, 0)).toEqual({ type: "bloodPact", heroId: "hero:m05" });
+  });
+});
+
+describe("Nguyệt Luân — PvP / co-op checks", () => {
+  const strike5 = (id: string, ownerId: string): CardDef =>
+    testCard(id, ownerId, "attack", "enemy", [{ type: "damage", amount: 5, to: "chosen" }]);
+
+  /** `pvpInjectCard` from pvp.test.ts — a fixture card straight into a seat's hand. */
+  const injectFor = (data: GameData, state: CombatState, seat: number, card: CardDef): string => {
+    data.cards[card.id] = card;
+    const instanceId = `p${seat}_${card.id}`;
+    state.cards[instanceId] = {
+      instanceId, cardId: card.id, ownerIds: [card.ownerId!], player: seat, heldTurns: 0,
+    };
+    state.players[seat]!.hand.push(instanceId);
+    return instanceId;
+  };
+  const mulliganBoth = (data: GameData, state: CombatState): CombatState => {
+    let cur = state;
+    for (const seat of [0, 1] as const) {
+      const res = applyAction(data, cur, { type: "mulligan", instanceIds: [], player: seat });
+      expect(res.ok).toBe(true);
+      if (!res.ok) throw new Error(`mulligan failed: ${res.error}`);
+      cur = res.state;
+    }
+    return cur;
+  };
+
+  it("T325a: viewFor shows both seats the same rolled moonDecrees", () => {
+    const data = testData();
+    const pvp = createPvpCombat(data, {
+      seed: 42,
+      players: [pvpSide(TEAM), pvpSide(["f03", "f02", "m01"])],
+    });
+    expect(pvp.state.moonDecrees).toHaveLength(8);
+    const cur = mulliganBoth(data, pvp.state);
+    for (const seat of [0, 1] as const) {
+      expect(viewFor(cur, seat).moonDecrees).toEqual(cur.moonDecrees);
+    }
+    expect(viewFor(cur, 0).moonDecrees).toEqual(viewFor(cur, 1).moonDecrees);
+  });
+
+  it("T325b: Tập Kích's first-hit bonus is counted per seat", () => {
+    const data = testData();
+    const pvp = createPvpCombat(data, {
+      seed: 42,
+      players: [pvpSide(TEAM), pvpSide(["f03", "f02", "m01"])],
+    });
+    pvp.state.moonIndex = 0;
+    pvp.state.moonDecrees[0] = "tap_kich";
+    const opened = mulliganBoth(data, pvp.state);
+    const first = opened.activePlayer;
+    const second = (1 - first) as 0 | 1;
+    const ownerOf = (state: CombatState, seat: number) => state.heroes.find((h) => h.player === seat)!.defId;
+    const foeOf = (state: CombatState, seat: number) => state.heroes.find((h) => h.player !== seat)!.id;
+
+    const a1 = injectFor(data, opened, first, strike5("test_tk_a1", ownerOf(opened, first)));
+    const hit1 = applyAction(data, opened, { type: "playCard", instanceId: a1, targetId: foeOf(opened, first) });
+    expect(hit1.ok).toBe(true);
+    if (!hit1.ok) return;
+    expect(dealtAmounts(hit1.events)).toEqual([8]); // 5 + Tập Kích 3
+
+    const a2 = injectFor(data, hit1.state, first, strike5("test_tk_a2", ownerOf(hit1.state, first)));
+    const hit2 = applyAction(data, hit1.state, { type: "playCard", instanceId: a2, targetId: foeOf(hit1.state, first) });
+    expect(hit2.ok).toBe(true);
+    if (!hit2.ok) return;
+    expect(dealtAmounts(hit2.events)).toEqual([5]); // the seat's bonus is spent
+
+    // The other seat's own first hit still carries the decree (moon stays at 0
+    // until the second player ends the round).
+    const pass = applyAction(data, hit2.state, { type: "endTurn", player: first });
+    expect(pass.ok).toBe(true);
+    if (!pass.ok) return;
+    expect(pass.state.activePlayer).toBe(second);
+    const b1 = injectFor(data, pass.state, second, strike5("test_tk_b1", ownerOf(pass.state, second)));
+    const hit3 = applyAction(data, pass.state, { type: "playCard", instanceId: b1, targetId: foeOf(pass.state, second) });
+    expect(hit3.ok).toBe(true);
+    if (!hit3.ok) return;
+    expect(dealtAmounts(hit3.events)).toEqual([8]);
+  });
+
+  it("T325c: Đoạn Tuyệt cuts the opposing seat's lowest-HP hero", () => {
+    const data = testData();
+    // Xả Thân folded into Đoạn Tuyệt's modifier list so a discard is legal —
+    // a phase only ever rolls one decree (same trick as T321b).
+    data.moonPhases[5]!.decrees.find((d) => d.id === "doan_tuyet")!.modifiers
+      .push({ type: "discardForMoonPower", perTurn: 2, moonPower: 1 });
+    const pvp = createPvpCombat(data, {
+      seed: 42,
+      players: [pvpSide(TEAM), pvpSide(["f03", "f02", "m01"])],
+    });
+    pvp.state.moonIndex = 5;
+    pvp.state.moonDecrees[5] = "doan_tuyet";
+    const cur = mulliganBoth(data, pvp.state);
+    const active = cur.activePlayer;
+    const victims = cur.heroes.filter((h) => h.player !== active);
+    victims[0]!.hp = 15;
+    victims[1]!.hp = 8; // the opposing seat's lowest
+    victims[2]!.hp = 12;
+    const res = applyAction(data, cur, {
+      type: "discardCard",
+      instanceId: cur.players[active]!.hand[0]!,
+      player: active,
+    });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    const cuts = res.events.filter((e) => e.type === "hpLost");
+    expect(cuts).toEqual([{ type: "hpLost", targetId: victims[1]!.id, amount: 2, cause: "decree" }]);
+    expect(res.state.heroes.filter((h) => h.player === active).every((h) => h.hp === h.maxHp)).toBe(true);
+  });
+
+  it("T325d: co-op Thế Cân fires exactly once per round — each seat's top hero and the boss, one application each", () => {
+    const data = testData();
+    makeEnemiesIdle(data);
+    data.enemies["eclipse_lord"]!.phases = [{ hpBelow: 1, intents: [{ ...idleIntent, cost: 0 }] }];
+    const side = (heroIds: [string, string, string]): CoopSide => ({ heroIds, loadout: { heroes: {} } });
+    const coop = createCoopCombat(data, {
+      seed: 7,
+      players: [side(["m05", "f04", "m06"]), side(["f02", "f03", "m05"])],
+      encounterId: "enc_coop_01",
+    });
+    coop.state.moonIndex = 1;
+    coop.state.moonDecrees[2] = "the_can";
+    let cur = mulliganBoth(data, coop.state);
+    // Seat 0 ends first — the shared turn is still open, no turn-start fires.
+    const half = applyAction(data, cur, { type: "endTurn", player: 0 });
+    expect(half.ok).toBe(true);
+    if (!half.ok) return;
+    expect(half.events.some((e) => e.type === "statusApplied" && e.status === "weak")).toBe(false);
+    cur = half.state;
+    // Seat 1 ends: the round closes, the moon lands on firstQuarter, and the
+    // shared turn start applies Thế Cân exactly once per target group.
+    const done = applyAction(data, cur, { type: "endTurn", player: 1 });
+    expect(done.ok).toBe(true);
+    if (!done.ok) return;
+    expect(done.state.moonIndex).toBe(2);
+    const weakEvents = done.events.filter((e) => e.type === "statusApplied" && e.status === "weak");
+    expect(weakEvents.map((e) => (e as { targetId: string }).targetId).sort()).toEqual(
+      ["enemy:0", "p0_hero:m05", "p1_hero:m05"].sort(),
+    );
+    for (const id of ["p0_hero:m05", "p1_hero:m05", "enemy:0"]) {
+      const unit = [...done.state.heroes, ...done.state.enemies].find((u) => u.id === id)!;
+      expect(getStatus(unit, "weak")?.value).toBe(1);
+    }
   });
 });

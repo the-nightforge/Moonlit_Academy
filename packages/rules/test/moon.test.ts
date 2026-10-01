@@ -243,7 +243,10 @@ describe("moon phases", () => {
     if (!result.ok) return;
     expect(result.state.moonIndex).toBe(5);
     const fox = result.state.enemies[1]!;
-    expect(fox.plannedIntents[0]?.intent.id).toBe("fox_shadow_kill");
-    expect(fox.plannedIntents[0]?.intent.id).not.toBe("moon_illusion");
+    // Task 6: waningGibbous is the fox's Nguyệt tính — Hồ Hút Huyết leads free;
+    // the paid kit follows and the full-moon override is gone entirely.
+    expect(fox.plannedIntents[0]?.intent.id).toBe("fox_blood_sip");
+    expect(fox.plannedIntents[0]?.cost).toBe(0);
+    expect(fox.plannedIntents.every((plan) => plan.intent.id !== "moon_illusion")).toBe(true);
   });
 });

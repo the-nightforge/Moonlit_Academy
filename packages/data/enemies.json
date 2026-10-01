@@ -25,6 +25,22 @@
           { "type": "damage", "amount": 10, "to": "chosen" }
         ] }
     ],
+    "moonOverrides": [
+      {
+        "phase": "waxingGibbous",
+        "intent": {
+          "id": "puppet_moon_hammer", "name": "Nguyệt Chùy", "kind": "attack", "targeting": "highestHp",
+          "effects": [{ "type": "damage", "amount": 8, "to": "chosen" }]
+        }
+      },
+      {
+        "phase": "waningCrescent",
+        "intent": {
+          "id": "puppet_ward_order", "name": "Canh Thư Lệnh", "kind": "defend",
+          "effects": [{ "type": "gainArmor", "amount": 6, "to": "allAllies" }]
+        }
+      }
+    ],
     "art": { "portrait": "" }
   },
   {
@@ -63,6 +79,16 @@
           "kind": "special",
           "targeting": "lowestHp",
           "effects": [{ "type": "damage", "amount": 6, "to": "chosen" }]
+        }
+      },
+      {
+        "phase": "waningGibbous",
+        "intent": {
+          "id": "fox_blood_sip", "name": "Hồ Hút Huyết", "kind": "attack", "targeting": "lowestHp",
+          "effects": [
+            { "type": "damage", "amount": 4, "to": "chosen" },
+            { "type": "heal", "amount": 4, "to": "self" }
+          ]
         }
       }
     ],
@@ -125,6 +151,24 @@
             { "type": "applyStatus", "status": "reflect", "amount": 3, "to": "self" }
           ]
         }
+      },
+      {
+        "phase": "waxingCrescent",
+        "intent": {
+          "id": "ape_moon_rise",
+          "name": "Nguyệt Khởi",
+          "kind": "buff",
+          "effects": [{ "type": "applyStatus", "status": "strength", "amount": 1, "to": "self" }]
+        }
+      },
+      {
+        "phase": "waningCrescent",
+        "intent": {
+          "id": "ape_fading_roar",
+          "name": "Tàn Nguyệt Hống",
+          "kind": "attack",
+          "effects": [{ "type": "damage", "amount": 4, "to": "allEnemies" }]
+        }
       }
     ],
     "bloodMoonOverride": {
@@ -152,6 +196,22 @@
       { "id": "wraith_seal", "name": "Phong Ấn", "kind": "debuff", "targeting": "highestHp", "cost": 3,
         "effects": [{ "type": "applyStatus", "status": "freeze", "amount": 1, "to": "chosen" }] }
     ],
+    "moonOverrides": [
+      {
+        "phase": "waxingCrescent",
+        "intent": {
+          "id": "wraith_open_book", "name": "Mở Sách", "kind": "debuff",
+          "effects": [{ "type": "applyStatus", "status": "vulnerable", "amount": 1, "to": "allEnemies" }]
+        }
+      },
+      {
+        "phase": "waningCrescent",
+        "intent": {
+          "id": "wraith_burn_page", "name": "Thiêu Trang", "kind": "debuff",
+          "effects": [{ "type": "applyStatus", "status": "burn", "amount": 3, "to": "allEnemies" }]
+        }
+      }
+    ],
     "art": {
       "portrait": ""
     }
@@ -175,6 +235,25 @@
         "effects": [{ "type": "damage", "amount": 6, "to": "allEnemies" }] },
       { "id": "black_cleave", "name": "Hắc Trảm", "kind": "attack", "targeting": "lowestHp", "cost": 5,
         "effects": [{ "type": "damage", "amount": 14, "to": "chosen" }] }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "waxingGibbous",
+        "intent": {
+          "id": "black_moon_cleave", "name": "Hắc Nguyệt Trảm", "kind": "attack", "targeting": "lowestHp",
+          "effects": [{ "type": "damage", "amount": 10, "to": "chosen" }]
+        }
+      },
+      {
+        "phase": "waningGibbous",
+        "intent": {
+          "id": "black_blood_shield", "name": "Huyết Thuẫn", "kind": "defend",
+          "effects": [
+            { "type": "gainArmor", "amount": 10, "to": "self" },
+            { "type": "applyStatus", "status": "strength", "amount": 1, "to": "self" }
+          ]
+        }
+      }
     ],
     "art": {
       "portrait": ""
@@ -203,6 +282,28 @@
             "else": [{ "type": "damage", "amount": 4, "hits": 4, "to": "chosen" }]
           }
         ] }
+    ],
+    "moonOverrides": [
+      {
+        "phase": "new",
+        "intent": {
+          "id": "fox_king_shadow", "name": "Vương Ảnh", "kind": "attack", "targeting": "lowestHp",
+          "effects": [
+            { "type": "applyStatus", "status": "stealth", "amount": 1, "to": "self" },
+            { "type": "damage", "amount": 6, "to": "chosen" }
+          ]
+        }
+      },
+      {
+        "phase": "waningGibbous",
+        "intent": {
+          "id": "fox_king_blood_feast", "name": "Huyết Yến", "kind": "buff",
+          "effects": [
+            { "type": "heal", "amount": 6, "to": "self" },
+            { "type": "applyStatus", "status": "weak", "amount": 1, "to": "allEnemies" }
+          ]
+        }
+      }
     ],
     "art": {
       "portrait": ""

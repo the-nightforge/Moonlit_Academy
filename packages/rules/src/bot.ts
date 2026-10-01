@@ -1,8 +1,8 @@
 import { bossPhaseOf } from "./coop/boss";
 import { cardDefOf } from "./gear";
 import { levelUpPassive } from "./levelup";
-import { phaseModifiers } from "./moon";
-import { opponentsOf, summonsOf } from "./players";
+import { decreeModifier, phaseModifiers } from "./moon";
+import { heroesOf, opponentsOf, summonsOf } from "./players";
 import { cardOwners, getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
 import { hasStatus } from "./statuses";
 import { isSummon, summonOf } from "./summons";
@@ -15,6 +15,7 @@ import type {
   GameData,
   HeroState,
   IntentDef,
+  MoonPhaseId,
   UnitState,
 } from "./types/index";
 
@@ -84,10 +85,20 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
   // one whose tag is somewhere in the hand exists there.
   const tagsInHand = new Set(player.hand.flatMap((id) => defOf(id)?.tags ?? []));
   const moonCount = data.moonPhases.length;
-  const landingScore = (shift: number) => {
-    const index = (((state.moonIndex + shift) % moonCount) + moonCount) % moonCount;
-    return phaseModifiers(data, state, index).filter((m) => ("tag" in m ? tagsInHand.has(m.tag) : true)).length;
-  };
+  // Nguyệt tính (`01` §9.4): every phase where a living enemy's moonOverride
+  // would fire for free. `bloodMoonOverride` is ignored — it is not a phase trait.
+  const enemyTraitPhases = new Set<MoonPhaseId>(
+    state.enemies
+      .filter((enemy) => enemy.alive)
+      .flatMap((enemy) => (data.enemies[enemy.defId]?.moonOverrides ?? []).map((entry) => entry.phase)),
+  );
+  const landingIndex = (shift: number) => (((state.moonIndex + shift) % moonCount) + moonCount) % moonCount;
+  const landingScore = (shift: number) =>
+    phaseModifiers(data, state, landingIndex(shift)).filter((m) => ("tag" in m ? tagsInHand.has(m.tag) : true)).length;
+  // A landing "helps" when its decree matches the hand AND no living enemy's
+  // Nguyệt tính waits there to fire free at the head of the chain.
+  const landingHelps = (shift: number) =>
+    landingScore(shift) > 0 && !enemyTraitPhases.has(data.moonPhases[landingIndex(shift)]!.id);
   for (const instanceId of ordered) {
     const card = defOf(instanceId)!;
     const owners = cardOwners(state, state.cards[instanceId]!);
@@ -120,7 +131,7 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
           !hero.leveledUp &&
           data.heroes[hero.defId]?.levelUp.counter === "moonShifts",
       );
-      if (!leveling && !shiftTotals(card.effects).some((shift) => landingScore(shift) > 0)) continue;
+      if (!leveling && !shiftTotals(card.effects).some(landingHelps)) continue;
     }
     // Living units opposing the card's owner — enemies in PvE/co-op, the other
     // seat's heroes and Linh Thú in PvP (`17` §3.4, §17.3).
@@ -195,6 +206,27 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
       targetId = [...pool].sort((a, b) => ratio(a) - ratio(b))[0];
     }
     if (targetId !== undefined) return { type: "playCard", instanceId, targetId };
+  }
+  // Xả Thân (`01` §5.8): a hand of 5+ pays its costliest unplayable card into
+  // Nguyệt Lực while discards remain; returning the action re-asks the bot.
+  const discardRule = decreeModifier(data, state, "discardForMoonPower");
+  if (
+    discardRule !== undefined &&
+    player.hand.length >= 5 &&
+    (player.discardsThisTurn ?? 0) < discardRule.perTurn
+  ) {
+    const dead = player.hand
+      .filter((id) => !isCardPlayable(data, state, id, seat))
+      .sort((a, b) => getEffectiveCost(data, state, b) - getEffectiveCost(data, state, a));
+    if (dead[0] !== undefined) return { type: "discardCard", instanceId: dead[0] };
+  }
+  // Huyết Tế (`01` §5.9): a thin hand (<5) buys draws with the healthiest hero's blood.
+  const pactRule = decreeModifier(data, state, "bloodPact");
+  if (pactRule !== undefined && player.bloodPactUsed !== true && player.hand.length < 5) {
+    const offering = heroesOf(state, seat)
+      .filter((hero) => hero.alive && hero.hp / hero.maxHp >= 0.6)
+      .sort((a, b) => b.hp - a.hp)[0];
+    if (offering !== undefined) return { type: "bloodPact", heroId: offering.id };
   }
   return { type: "endTurn" };
 }
@@ -338,7 +370,14 @@ function knownIntents(data: GameData, state: CombatState, enemy: EnemyState): In
   const def = data.enemies[enemy.defId];
   if (!def) return [];
   const pool = bossPhaseOf(data, state, enemy, def)?.intents ?? def.intents;
-  return pool.filter((intent) => intent.cost <= enemy.moonPower);
+  const affordable: IntentDef[] = pool.filter((intent) => intent.cost <= enemy.moonPower);
+  // Nguyệt tính is public (`01` §9.4): the next phase's moonOverride plans free
+  // at the chain's head, so the bot counts it like a cost-0 pick it can see.
+  const nextPhase = data.moonPhases[(state.moonIndex + 1) % data.moonPhases.length]?.id;
+  const trait = enemy.alive
+    ? def.moonOverrides?.find((entry) => entry.phase === nextPhase)?.intent
+    : undefined;
+  return trait !== undefined ? [trait, ...affordable] : affordable;
 }
 
 /** Damage `unit` could deal next turn, from public info only: an enemy's affordable kit; card-pool attack power for PvP heroes/summons (`17` §4.8). */
