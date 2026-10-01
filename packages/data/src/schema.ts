@@ -5,6 +5,7 @@ const idSchema = z.string().regex(/^[a-z0-9_]+$/);
 
 const factionSchema = z.enum(["thanhLoan", "huyenVu", "bachLo", "xichDien", "neutral"]);
 const archetypeSchema = z.enum(["vanguard", "striker", "controller", "support", "specialist"]);
+const attackStyleSchema = z.enum(["slash", "spear", "darts", "bow", "herb"]);
 const raritySchema = z.enum(["common", "rare", "epic", "legendary"]);
 const moonPhaseIdSchema = z.enum([
   "new", "waxingCrescent", "firstQuarter", "waxingGibbous",
@@ -150,6 +151,7 @@ export const heroDefSchema = z.object({
   name: z.string().min(1),
   faction: factionSchema,
   archetype: archetypeSchema,
+  attackStyle: attackStyleSchema.optional(),
   rarity: raritySchema,
   maxHp: z.number().int().positive(),
   cardIds: z.array(idSchema).length(6),
@@ -218,6 +220,7 @@ export const enemyDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
   maxHp: z.number().int().positive(),
+  attackStyle: attackStyleSchema.optional(),
   intents: z.array(enemyIntentDefSchema).min(1),
   moonPower: z.object({
     start: z.number().int().nonnegative(),
@@ -298,6 +301,7 @@ export const weaponDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
   rarity: raritySchema,
+  attackStyle: attackStyleSchema.optional(),
   archetype: archetypeSchema.optional(),
   signatureHeroId: idSchema.optional(),
   text: z.string().min(1),

@@ -4,6 +4,7 @@
     "name": "Hoắc Liệt",
     "faction": "huyenVu",
     "archetype": "vanguard",
+    "attackStyle": "spear",
     "rarity": "legendary",
     "maxHp": 40,
     "cardIds": [
@@ -92,6 +93,7 @@
     "name": "Ôn Như Ý",
     "faction": "bachLo",
     "archetype": "support",
+    "attackStyle": "herb",
     "rarity": "rare",
     "maxHp": 30,
     "cardIds": [
@@ -165,6 +167,7 @@
     "name": "Tô Dạ",
     "faction": "neutral",
     "archetype": "striker",
+    "attackStyle": "darts",
     "rarity": "epic",
     "maxHp": 28,
     "cardIds": [
@@ -240,6 +243,7 @@
     "name": "Tần Sương",
     "faction": "huyenVu",
     "archetype": "striker",
+    "attackStyle": "slash",
     "rarity": "epic",
     "maxHp": 32,
     "cardIds": [
@@ -463,6 +467,7 @@
     "name": "Lục Hàn Phong",
     "faction": "huyenVu",
     "archetype": "vanguard",
+    "attackStyle": "slash",
     "rarity": "epic",
     "maxHp": 42,
     "cardIds": [
@@ -1068,6 +1073,7 @@
     "name": "Hạ Chi",
     "faction": "huyenVu",
     "archetype": "striker",
+    "attackStyle": "bow",
     "rarity": "rare",
     "maxHp": 32,
     "cardIds": [

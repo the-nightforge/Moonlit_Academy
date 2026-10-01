@@ -2,6 +2,8 @@ import type { Loadout } from "./meta";
 
 export type Faction = "thanhLoan" | "huyenVu" | "bachLo" | "xichDien" | "neutral";
 export type Archetype = "vanguard" | "striker" | "controller" | "support" | "specialist";
+/** How a unit's attacks look on screen; presentation only, the rules ignore it. */
+export type AttackStyle = "slash" | "spear" | "darts" | "bow" | "herb";
 export type Rarity = "common" | "rare" | "epic" | "legendary";
 
 export type MoonPhaseId =
@@ -100,6 +102,8 @@ export interface HeroDef {
   name: string;
   faction: Faction;
   archetype: Archetype;
+  /** Lore weapon; an equipped weapon's style wins. Missing = archetype default. */
+  attackStyle?: AttackStyle;
   rarity: Rarity;
   maxHp: number;
   cardIds: string[];
@@ -247,6 +251,7 @@ export interface EnemyDef {
   id: string;
   name: string;
   maxHp: number;
+  attackStyle?: AttackStyle;
   intents: EnemyIntentDef[];
   moonPower: { start: number; cap: number };
   moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];
@@ -367,6 +372,7 @@ export interface WeaponDef {
   id: string;
   name: string;
   rarity: Rarity;
+  attackStyle?: AttackStyle;
   /** Shared weapons: shown only, any hero may carry any weapon. */
   archetype?: Archetype;
   signatureHeroId?: string;

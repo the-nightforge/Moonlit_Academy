@@ -479,6 +479,7 @@
     "id": "hac_y_mat_tham",
     "name": "Hắc Y Mật Thám",
     "maxHp": 10,
+    "attackStyle": "darts",
     "moonPower": { "start": 1, "cap": 4 },
     "intents": [
       { "id": "hym_am_cham", "name": "Ám Châm", "kind": "attack", "targeting": "lowestHp", "cost": 1,
@@ -513,6 +514,7 @@
     "id": "vo_nguyet_am_sat",
     "name": "Vô Nguyệt Ám Sát",
     "maxHp": 18,
+    "attackStyle": "darts",
     "moonPower": { "start": 1, "cap": 4 },
     "intents": [
       { "id": "vas_lanh_dao", "name": "Lãnh Đao", "kind": "attack", "targeting": "lowestHp", "cost": 1,

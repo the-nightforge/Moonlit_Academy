@@ -3,6 +3,7 @@
   "id": "w_xich_diem_thuong",
   "name": "Xích Diệm Thương",
   "rarity": "legendary",
+  "attackStyle": "spear",
   "signatureHeroId": "m05",
   "text": "Đầu trận người mang Phản Đòn 2 (Hoắc Liệt: Phản Đòn 3).",
   "card": {
@@ -156,6 +157,7 @@
   "id": "w_anh_nguyet_chuy",
   "name": "Ảnh Nguyệt Chủy",
   "rarity": "epic",
+  "attackStyle": "darts",
   "signatureHeroId": "m06",
   "text": "Mỗi lá sát thủ thứ 3 của người mang: +1 Nguyệt Lực (Tô Dạ: +2).",
   "card": {
@@ -373,6 +375,7 @@
   "id": "w_han_tuyet_song_kiem",
   "name": "Hàn Tuyết Song Kiếm",
   "rarity": "epic",
+  "attackStyle": "slash",
   "signatureHeroId": "f03",
   "text": "Đầu trận mọi kẻ địch Suy Yếu 1 vòng (Tần Sương mang: R5 mạnh hơn).",
   "card": {
@@ -1038,6 +1041,7 @@
   "id": "w_liet_cung",
   "name": "Liệt Cung",
   "rarity": "rare",
+  "attackStyle": "bow",
   "archetype": "striker",
   "text": "Người mang kết liễu kẻ địch: +1 Nguyệt Lực.",
   "card": {
@@ -1633,6 +1637,7 @@
   "id": "w_cam_ve_kich",
   "name": "Cấm Vệ Kích",
   "rarity": "epic",
+  "attackStyle": "spear",
   "signatureHeroId": "m02",
   "text": "Đầu lượt người chơi: người mang +1 giáp (Lục Hàn Phong: +2 giáp).",
   "card": {
@@ -1950,6 +1955,7 @@
   "id": "w_bach_ngan_cham",
   "name": "Bạch Ngân Châm",
   "rarity": "epic",
+  "attackStyle": "darts",
   "signatureHeroId": "m04",
   "text": "Mỗi lá hồi máu thứ 3 của người mang: Hero máu thấp nhất hồi 2 (Bùi Thanh Minh: hồi 3, Giải Trừ).",
   "card": {
@@ -2631,6 +2637,7 @@
   "id": "w_han_mon_kiem",
   "name": "Hàn Môn Kiếm",
   "rarity": "rare",
+  "attackStyle": "slash",
   "signatureHeroId": "m10",
   "text": "Mỗi lá Mưu Lược thứ 3 của người mang: rút 1 lá (Chu Quyết: rút 1 lá, người mang Tích Lực 1).",
   "card": {
@@ -2988,6 +2995,7 @@
   "id": "w_xuyen_van_cung",
   "name": "Xuyên Vân Cung",
   "rarity": "rare",
+  "attackStyle": "bow",
   "signatureHeroId": "f05",
   "text": "Mỗi lá tấn công thứ 3 của người mang: gây 2 damage lên mọi kẻ địch (Hạ Chi: 3, thêm Đánh Dấu 1 vòng).",
   "card": {
@@ -3521,6 +3529,7 @@
   "id": "w_huyet_phuong_dao",
   "name": "Huyết Phượng Đao",
   "rarity": "legendary",
+  "attackStyle": "slash",
   "signatureHeroId": "f08",
   "text": "Khi Huyết Nguyệt bắt đầu: người mang +1 Sức Mạnh (Phượng Chiêu Dung: +2 Sức Mạnh, thêm mọi kẻ địch Thiêu Đốt 1).",
   "card": {
