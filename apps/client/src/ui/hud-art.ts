@@ -16,6 +16,7 @@ export const HUD = {
   count: "hud_count",
   medallion: "hud_medallion",
   hourglass: "hud_hourglass",
+  cardFace: "hud_card_face",
 } as const;
 
 const SIZE: Record<string, [number, number]> = {
@@ -26,6 +27,7 @@ const SIZE: Record<string, [number, number]> = {
   [HUD.count]: [38, 22],
   [HUD.medallion]: [108, 108],
   [HUD.hourglass]: [22, 30],
+  [HUD.cardFace]: [110, 160],
 };
 
 const GOLD: [number, string][] = [
@@ -195,6 +197,44 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
     ctx.arc(c, c, c - 12, 0, Math.PI * 2);
     ctx.stroke();
     highlight(ctx, c - 18, c - 22, 16, 7);
+  },
+  // Hand card face: indigo lacquer, a thin gold inner line, the emblem window
+  // (y 30–86) and a filigree divider under the name. The owner's color is the
+  // outer border, drawn by the scene.
+  [HUD.cardFace]: (ctx, w, h) => {
+    ctx.beginPath();
+    ctx.roundRect(0, 0, w, h, 9);
+    ctx.fillStyle = linear(ctx, 0, h, [[0, "#222d5c"], [0.5, "#151c40"], [1, "#0b1030"]]);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(244,211,94,0.45)";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.roundRect(4.5, 4.5, w - 9, h - 9, 6);
+    ctx.stroke();
+    // Emblem window.
+    ctx.beginPath();
+    ctx.roundRect(7, 30, w - 14, 56, 5);
+    ctx.fillStyle = radial(ctx, w / 2, 58, 52, [[0, "#2a3570"], [0.7, "#0d1230"], [1, "#070a1c"]]);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(244,211,94,0.75)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Divider: a line with a small diamond in the middle.
+    const y = 107;
+    ctx.strokeStyle = "rgba(244,211,94,0.55)";
+    ctx.beginPath();
+    ctx.moveTo(16, y);
+    ctx.lineTo(w / 2 - 6, y);
+    ctx.moveTo(w / 2 + 6, y);
+    ctx.lineTo(w - 16, y);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(244,211,94,0.85)";
+    ctx.beginPath();
+    ctx.moveTo(w / 2, y - 3);
+    ctx.lineTo(w / 2 + 3, y);
+    ctx.lineTo(w / 2, y + 3);
+    ctx.lineTo(w / 2 - 3, y);
+    ctx.fill();
   },
   [HUD.hourglass]: (ctx, w, h) => {
     ctx.fillStyle = linear(ctx, 0, h, GOLD);

@@ -75,6 +75,22 @@ export function attackLookOf(data: GameData, state: CombatState, sourceId: strin
   return { kind, color: STYLE_COLOR[kind] };
 }
 
+/** Emblem icon of a card (a `ui:` texture), by its first matching tag. */
+const TAG_ICON: [CardTag, string][] = [
+  ["forbidden", "ui:moon_blood"],
+  ["moon", "ui:moon_full"],
+  ["scheme", "ui:seal"],
+  ["control", "ui:status_freeze"],
+  ["ward", "ui:shield"],
+  ["harmony", "ui:status_charm"],
+  ["heal", "ui:status_regen"],
+  ["assassin", "ui:status_stealth"],
+];
+
+export function cardIconOf(card: CardDef): string {
+  return TAG_ICON.find(([tag]) => card.tags.includes(tag))?.[1] ?? (card.type === "attack" ? "ui:intent_attack" : "ui:intent_special");
+}
+
 /** Glow of a card: its first tag's color (see TAG_COLOR order), else moon gold. */
 export function cardColorOf(card: CardDef): number {
   return TAG_COLOR.find(([tag]) => card.tags.includes(tag))?.[1] ?? STYLE_COLOR.spell;

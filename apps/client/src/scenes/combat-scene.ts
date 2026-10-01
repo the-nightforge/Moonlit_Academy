@@ -45,6 +45,7 @@ import { confirmModal, isModalOpen } from "../ui/widgets";
 import { playEventQueue } from "../ui/event-animator";
 import { GLOW as VFX_GLOW, STAR as VFX_STAR, ensureTextures } from "../ui/vfx";
 import { HUD, hudImage } from "../ui/hud-art";
+import { cardColorOf, cardIconOf } from "../ui/attack-style";
 import {
   BLOOD_MOON_BG,
   COLORS,
@@ -866,6 +867,69 @@ export class CombatScene extends Phaser.Scene {
     }
   }
 
+  /** Point at distance `d` along a w×h card's border, clockwise from the top center. */
+  private framePoint(w: number, h: number, d: number): { x: number; y: number } {
+    const per = 2 * (w + h);
+    let t = ((d % per) + per) % per;
+    const legs: [number, (t: number) => { x: number; y: number }][] = [
+      [w / 2, (t) => ({ x: t, y: -h / 2 })],
+      [h, (t) => ({ x: w / 2, y: -h / 2 + t })],
+      [w, (t) => ({ x: w / 2 - t, y: h / 2 })],
+      [h, (t) => ({ x: -w / 2, y: h / 2 - t })],
+      [w / 2, (t) => ({ x: -w / 2 + t, y: -h / 2 })],
+    ];
+    for (const [len, at] of legs) {
+      if (t <= len) return at(t);
+      t -= len;
+    }
+    return { x: 0, y: -h / 2 };
+  }
+
+  /** Thức Tỉnh progress: the frame is traced in gold from the top center, clockwise. */
+  private frameTrace(c: Phaser.GameObjects.Container, w: number, h: number, progress: number) {
+    if (progress <= 0) return;
+    const g = this.add.graphics().lineStyle(2.5, COLORS.goldFill, 0.9);
+    const total = 2 * (w + h) * progress;
+    g.beginPath();
+    const start = this.framePoint(w, h, 0);
+    g.moveTo(start.x, start.y);
+    for (let d = 4; d <= total; d += 4) {
+      const p = this.framePoint(w, h, d);
+      g.lineTo(p.x, p.y);
+    }
+    g.strokePath();
+    c.add(g);
+  }
+
+  /** Thức Tỉnh: two moonlit neon comets run around the frame forever over a soft gold rim. */
+  private neonFrame(c: Phaser.GameObjects.Container, w: number, h: number) {
+    c.add(this.roundBox(w + 2, h + 2, null, 0, 2, 0xffe9a0, CARD_RADIUS + 1).setAlpha(0.55));
+    const g = this.add.graphics().setBlendMode("ADD");
+    c.add(g);
+    const per = 2 * (w + h);
+    const tail = per * 0.22;
+    const run = { d: 0 };
+    const draw = () => {
+      g.clear();
+      for (const offset of [0, per / 2]) {
+        for (let i = 0; i < 18; i++) {
+          const a = this.framePoint(w, h, run.d + offset - (tail * i) / 18);
+          const b = this.framePoint(w, h, run.d + offset - (tail * (i + 1)) / 18);
+          const fade = 1 - i / 18;
+          // Moonlit neon: a wide cyan glow with a white-hot core, distinct from the gold frame.
+          g.lineStyle(4 + 8 * fade, 0x4fc8ff, 0.5 * fade).lineBetween(a.x, a.y, b.x, b.y);
+          g.lineStyle(2.5, 0xe8fbff, fade).lineBetween(a.x, a.y, b.x, b.y);
+        }
+        const head = this.framePoint(w, h, run.d + offset);
+        g.fillStyle(0x4fc8ff, 0.45).fillCircle(head.x, head.y, 7);
+        g.fillStyle(0xffffff, 1).fillCircle(head.x, head.y, 3);
+      }
+    };
+    draw();
+    const tween = this.tweens.add({ targets: run, d: per, duration: 2600, repeat: -1, ease: "Linear", onUpdate: draw });
+    g.once("destroy", () => tween.remove());
+  }
+
   /** A looping tween on a card part; it dies with the part when `renderAll` rebuilds the card. */
   private loopTween(target: Phaser.GameObjects.GameObject, config: Omit<Phaser.Types.Tweens.TweenBuilderConfig, "targets">) {
     const tween = this.tweens.add({ targets: target, yoyo: true, repeat: -1, ease: "Sine.easeInOut", ...config });
@@ -1051,7 +1115,8 @@ export class CombatScene extends Phaser.Scene {
     const perRow = Math.max(1, Math.floor((spec.w - 8) / step));
     icons.forEach((icon, index) => {
       const ix = -spec.w / 2 + 6 + r + (index % perRow) * step;
-      const iy = spec.h / 2 - 30 - r - Math.floor(index / perRow) * step;
+      // Clear of the HP bar (h/2 - 32 … h/2 - 26).
+      const iy = spec.h / 2 - 37 - r - Math.floor(index / perRow) * step;
       const hasIcon = this.textures.exists(icon.iconKey);
       const circle = this.badge(ix, iy, r, hasIcon ? "" : icon.glyph, icon.color, c, 0x0a0e20, 12);
       if (hasIcon) c.add(this.add.image(ix, iy, icon.iconKey).setDisplaySize(2 * r - 1, 2 * r - 1));
@@ -1363,15 +1428,9 @@ export class CombatScene extends Phaser.Scene {
         hero.sealedBy !== undefined ? "Phong Ấn: lá lượt tới chỉ còn damage" : "",
       ],
     });
-    const bx = w / 2 - 16;
-    const by = -h / 2 + 16;
-    this.badge(bx, by, 13, "★", COLORS.goldFill, c, hero.leveledUp ? COLORS.goldFill : 0x0a0e20, 13, hero.leveledUp ? "#0a0e20" : COLORS.dimText);
-    const progress = hero.leveledUp ? 0 : Math.min(1, hero.levelUpCounter / threshold);
-    if (progress > 0) {
-      const arc = this.add.graphics();
-      arc.lineStyle(3, COLORS.goldFill).beginPath().arc(bx, by, 13, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2).strokePath();
-      c.add(arc);
-    }
+    if (!hero.alive) return;
+    if (hero.leveledUp) this.neonFrame(c, w, h);
+    else this.frameTrace(c, w, h, Math.min(1, hero.levelUpCounter / threshold));
   }
 
   private renderHeroes() {
@@ -1455,21 +1514,28 @@ export class CombatScene extends Phaser.Scene {
 
     const isValidTarget = this.targeting === instanceId;
     const mulliganPicked = this.mulliganPicks.has(instanceId);
+    // Face: lacquer card with an emblem window; the owner's color is the border.
+    const face = hudImage(this, HUD.cardFace, 0, 0);
+    if (broken) face.setTint(0x80808a);
+    container.add(face);
     container.add(
       this.roundBox(
         CARD_W,
         CARD_H,
-        broken ? 0x30303a : 0x141b33,
-        1,
+        null,
+        0,
         isValidTarget || mulliganPicked ? 3 : 2,
         broken ? COLORS.dead : isValidTarget || mulliganPicked ? COLORS.goldFill : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
       ),
     );
-    const cardArt =
-      this.coverImage(`cards:${instance.cardId}`, 0, 0, CARD_W - 6, CARD_H - 6, container) ??
-      this.coverImage(`heroes:${ownerId}`, 0, 0, CARD_W - 6, CARD_H - 6, container);
-    if (cardArt) {
-      container.add(this.roundBox(CARD_W - 6, CARD_H - 6, 0x0a0e20, 0.5, 0, 0, CARD_RADIUS - 2));
+    // Emblem window (y -50…6): the card's own art if there is one, else its tag icon on a tag-colored glow.
+    const windowY = -22;
+    if (!this.coverImage(`cards:${instance.cardId}`, 0, windowY, CARD_W - 16, 54, container)) {
+      ensureTextures(this);
+      const color = cardColorOf(card);
+      container.add(this.add.image(0, windowY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.75).setAlpha(broken ? 0.2 : 0.55));
+      const iconKey = cardIconOf(card);
+      if (this.textures.exists(iconKey)) container.add(this.add.image(0, windowY, iconKey).setDisplaySize(40, 40).setAlpha(broken ? 0.5 : 1));
     }
     if (weapon !== undefined) {
       // Weapon card (`01` §14.2): inner orange frame and the weapon's name.
@@ -1485,11 +1551,7 @@ export class CombatScene extends Phaser.Scene {
     if (partnerId !== undefined) {
       // Bond card: second owner's color as an inner border.
       if (!broken && !isValidTarget) {
-        container.add(
-          this.add
-            .rectangle(0, 0, CARD_W - 8, CARD_H - 8)
-            .setStrokeStyle(2, OWNER_COLORS[partnerId] ?? COLORS.panelBorder),
-        );
+        container.add(this.roundBox(CARD_W - 8, CARD_H - 8, null, 0, 2, OWNER_COLORS[partnerId] ?? COLORS.panelBorder, CARD_RADIUS - 2));
       }
       container.add(
         this.add
@@ -1506,9 +1568,7 @@ export class CombatScene extends Phaser.Scene {
     if (hintComboId !== undefined) {
       // Hợp Kích hint (`17` §9.3): bright frame marks a card whose other half
       // the partner already played this turn.
-      container.add(
-        this.add.rectangle(0, 0, CARD_W - 4, CARD_H - 4).setStrokeStyle(2, 0xffe080),
-      );
+      container.add(this.roundBox(CARD_W - 4, CARD_H - 4, null, 0, 2, 0xffe080, CARD_RADIUS - 1));
       container.add(
         this.add
           .text(0, CARD_H / 2 - 12, "⚡ Hợp Kích", { ...TEXT_BASE, fontSize: "10px", color: "#ffe080" })
@@ -1517,10 +1577,13 @@ export class CombatScene extends Phaser.Scene {
     }
 
     const effectiveCost = getEffectiveCost(this.gameData, this.state, instanceId);
-    container.add(hudImage(this, HUD.cost, -CARD_W / 2 + 14, -CARD_H / 2 + 14, 0.95));
+    // Inset so the coin's rim sits clear of the card border.
+    const coinX = -CARD_W / 2 + 18;
+    const coinY = -CARD_H / 2 + 17;
+    container.add(hudImage(this, HUD.cost, coinX, coinY, 0.85));
     container.add(
       this.add
-        .text(-CARD_W / 2 + 14, -CARD_H / 2 + 14, `${effectiveCost}`, {
+        .text(coinX, coinY, `${effectiveCost}`, {
           ...TEXT_BASE,
           fontSize: "15px",
           fontStyle: "bold",
@@ -1533,7 +1596,7 @@ export class CombatScene extends Phaser.Scene {
     if (effectiveCost < card.cost) {
       container.add(
         this.add
-          .text(-CARD_W / 2 + 30, -CARD_H / 2 + 14, `${card.cost}`, {
+          .text(coinX + 16, coinY, `${card.cost}`, {
             ...TEXT_BASE,
             fontSize: "10px",
             color: COLORS.dimText,
@@ -1541,23 +1604,24 @@ export class CombatScene extends Phaser.Scene {
           .setOrigin(0, 0.5),
       );
       container.add(
-        this.add.rectangle(-CARD_W / 2 + 34, -CARD_H / 2 + 14, 10, 1, 0xffffff, 0.7),
+        this.add.rectangle(coinX + 20, coinY, 10, 1, 0xffffff, 0.7),
       );
     }
     if (instance.heldTurns > 0 && card.keywords?.includes("tich_tu")) {
       container.add(
         this.add
-          .text(0, -CARD_H / 2 + 34, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold })
+          .text(0, 1, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold, stroke: "#05070f", strokeThickness: 3 })
           .setOrigin(0.5),
       );
     }
 
     container.add(
       this.add
-        .text(0, -20, card.name, {
+        .text(0, 16, card.name, {
           ...TEXT_BASE,
-          fontSize: "13px",
-          color: COLORS.text,
+          fontSize: "12px",
+          fontStyle: "bold",
+          color: COLORS.gold,
           align: "center",
           wordWrap: { width: CARD_W - 14 },
         })
@@ -1565,7 +1629,7 @@ export class CombatScene extends Phaser.Scene {
     );
     container.add(
       this.add
-        .text(0, 42, card.text, {
+        .text(0, 32, card.text, {
           ...TEXT_BASE,
           fontSize: "9px",
           color: COLORS.dimText,
