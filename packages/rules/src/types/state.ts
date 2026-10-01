@@ -123,6 +123,10 @@ export interface PlayerState {
   cardsPlayedThisTurn: number;
   /** Attack cards already resolved this turn (Liên Kích, `01` §7.5) — the count at resolve time gates the chain bonus. */
   attackCardsThisTurn?: number;
+  /** Xả Thân (`01` §5.8): cards this seat already discarded via `discardCard` this turn; reset at turn start. */
+  discardsThisTurn?: number;
+  /** Huyết Tế (`01` §5.9): the seat already paid blood this turn; reset at turn start. */
+  bloodPactUsed?: true;
   /** Cards created this combat (`createCard`); names the next `t<n>` instance. */
   createdCards?: number;
   /** A pending Chiêm Bài pick or Chọn Pha; Chiêm Bài option instance ids are out of the draw pile until resolved. */

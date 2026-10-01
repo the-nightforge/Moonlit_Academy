@@ -1,8 +1,8 @@
 import { cloneState } from "./clone";
 import { fireCoopCombos } from "./coop/combos";
 import { coopEndTurn, startCoopTurn } from "./coop/turn";
-import { addToHand } from "./draw";
-import { checkCombatEnd, processDeaths, resolveEffects } from "./effects";
+import { addToHand, discardUnplayed, drawCards } from "./draw";
+import { checkCombatEnd, loseHp, processDeaths, resolveEffects } from "./effects";
 import { guardianOf } from "./enemy-turn";
 import { cardDefOf } from "./gear";
 import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive, sealFilteredEffects } from "./levelup";
@@ -399,6 +399,38 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
       const next = cloneState(state);
       const events: CombatEvent[] = [];
       playCard(data, next, next.players[seat.index]!, action, events);
+      return { ok: true, state: next, events };
+    }
+    case "discardCard": {
+      // Hủy Bài (`01` §5.8): only while a Xả Thân decree is up, per-turn cap.
+      const rule = decreeModifier(data, state, "discardForMoonPower");
+      if (!rule) return { ok: false, error: "no discard decree" };
+      if (!seat.hand.includes(action.instanceId)) return { ok: false, error: "card not in hand" };
+      if ((seat.discardsThisTurn ?? 0) >= rule.perTurn) return { ok: false, error: "discard limit" };
+      const next = cloneState(state);
+      const events: CombatEvent[] = [];
+      const nextSeat = next.players[seat.index]!;
+      nextSeat.hand = nextSeat.hand.filter((id) => id !== action.instanceId);
+      discardUnplayed(data, next, nextSeat, [action.instanceId], events);
+      nextSeat.discardsThisTurn = (nextSeat.discardsThisTurn ?? 0) + 1;
+      nextSeat.moonPower += rule.moonPower;
+      events.push({ type: "moonPowerChanged", value: nextSeat.moonPower, ...seatTag(next, seat.index) });
+      return { ok: true, state: next, events };
+    }
+    case "bloodPact": {
+      // Huyết Tế (`01` §5.9): once per turn, a living hero of the seat pays
+      // `hp` HP (cause "bloodPact") for `draw` cards.
+      const rule = decreeModifier(data, state, "bloodPact");
+      if (!rule) return { ok: false, error: "no blood pact decree" };
+      if (seat.bloodPactUsed) return { ok: false, error: "blood pact used" };
+      const hero = heroesOf(state, seat.index).find((h) => h.id === action.heroId);
+      if (!hero?.alive || hero.hp <= rule.hp) return { ok: false, error: "invalid hero" };
+      const next = cloneState(state);
+      const events: CombatEvent[] = [];
+      const nextSeat = next.players[seat.index]!;
+      nextSeat.bloodPactUsed = true;
+      loseHp(data, next.heroes.find((h) => h.id === hero.id)!, rule.hp, "bloodPact", events);
+      drawCards(data, next, nextSeat, rule.draw, events);
       return { ok: true, state: next, events };
     }
     case "chooseCard": {

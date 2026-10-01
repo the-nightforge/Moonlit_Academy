@@ -1,5 +1,5 @@
 import { tickBossRevive } from "./coop/boss";
-import { drawCards, refillHand } from "./draw";
+import { discardUnplayed, drawCards, refillHand } from "./draw";
 import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "./effects";
 import { runEnemyTurn } from "./enemy-turn";
 import { planEnemyIntents } from "./intent";
@@ -24,16 +24,21 @@ export function startPlayerTurn(
   events.push({ type: "turnStarted", side: "hero", round: state.round, ...seatTag(state, player.index) });
   player.cardsPlayedThisTurn = 0;
   // Liên Kích + Tập Kích (`01` §7.5): the seat's chain counter and its first-hit
-  // key reset when its turn starts.
+  // key reset when its turn starts. Xả Thân / Huyết Tế flags reset too (`01` §3.1).
   delete player.attackCardsThisTurn;
+  delete player.discardsThisTurn;
+  delete player.bloodPactUsed;
   state.firstHitKeys = (state.firstHitKeys ?? []).filter((key) => key !== `p${player.index}`);
   const mySummons = summonsOf(state).filter((summon) => summon.player === player.index);
-  for (const unit of [...heroesOf(state, player.index), ...mySummons]) {
-    if (unit.armor > 0) {
-      unit.armor = 0;
-      events.push({ type: "armorRemoved", targetId: unit.id });
+  // Giữ Giáp (`01` §3.1 step 1): the decree skips the armor wipe and the Phản Đòn strip.
+  if (!decreeModifier(data, state, "keepArmor")) {
+    for (const unit of [...heroesOf(state, player.index), ...mySummons]) {
+      if (unit.armor > 0) {
+        unit.armor = 0;
+        events.push({ type: "armorRemoved", targetId: unit.id });
+      }
+      removeStatus(unit, "reflect", events);
     }
-    removeStatus(unit, "reflect", events);
   }
   const anyAllyRegen = heroesOf(state, player.index).some(
     (hero) => hero.alive && hasStatus(hero, "regen"),
@@ -233,8 +238,16 @@ export function endSeatTurn(
   );
   if (broken.length > 0) {
     player.hand = player.hand.filter((id) => !broken.includes(id));
-    player.discardPile.push(...broken);
-    events.push({ type: "cardDiscarded", instanceIds: broken, ...seatTag(state, player.index) });
+    // Tàn Chiêu cards leave unplayed — Đoạn Tuyệt still cuts for each (`01` §3.3).
+    discardUnplayed(data, state, player, broken, events);
+    if (["won", "lost"].includes(state.status)) return;
+  }
+  // Luân Hồi (`01` §3.3 step 1): the newest discards return under the draw pile.
+  const recycle = decreeModifier(data, state, "recycleDiscard");
+  if (recycle && player.discardPile.length > 0) {
+    const back = player.discardPile.splice(-recycle.count);
+    player.drawPile.push(...back);
+    events.push({ type: "cardsRecycled", instanceIds: back, ...seatTag(state, player.index) });
   }
   for (const id of player.hand) state.cards[id]!.heldTurns += 1;
   for (const instance of Object.values(state.cards)) {

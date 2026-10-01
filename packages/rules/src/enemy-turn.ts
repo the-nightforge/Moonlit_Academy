@@ -1,6 +1,7 @@
 import { checkCombatEnd, resolveEffects, tickUnitStatuses } from "./effects";
 import { chooseHeroTarget } from "./intent";
 import { checkLevelUps, sealFilteredEffects } from "./levelup";
+import { decreeModifier } from "./moon";
 import { summonsOf } from "./players";
 import { fireEventHooks } from "./run-relic-hooks";
 import { getStatus, hasStatus, removeStatus } from "./statuses";
@@ -45,12 +46,15 @@ export function guardianOf(state: CombatState, targetId: string): HeroState | un
 export function runEnemyTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
   state.status = "enemyTurn";
   events.push({ type: "turnStarted", side: "enemy", round: state.round });
-  for (const enemy of state.enemies) {
-    if (enemy.armor > 0) {
-      enemy.armor = 0;
-      events.push({ type: "armorRemoved", targetId: enemy.id });
+  // Giữ Giáp (`01` §9.3 step 1): the decree skips the enemy side's armor wipe too.
+  if (!decreeModifier(data, state, "keepArmor")) {
+    for (const enemy of state.enemies) {
+      if (enemy.armor > 0) {
+        enemy.armor = 0;
+        events.push({ type: "armorRemoved", targetId: enemy.id });
+      }
+      removeStatus(enemy, "reflect", events);
     }
-    removeStatus(enemy, "reflect", events);
   }
   // Tập Kích (`01` §7.5): the enemy side's first-hit key resets with its turn.
   state.firstHitKeys = (state.firstHitKeys ?? []).filter((key) => key !== "enemy");

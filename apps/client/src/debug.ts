@@ -109,6 +109,8 @@ export function describeEvent(
     }
     case "cardDiscarded":
       return `Bỏ ${event.instanceIds.length} lá`;
+    case "cardsRecycled":
+      return `Luân Hồi: ${event.instanceIds.length} lá về đáy chồng`;
     case "cardCreated":
       return event.instanceId === null ? "Tay đầy — không tạo lá" : "Tạo lá";
     case "damageDealt":

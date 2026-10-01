@@ -90,6 +90,8 @@ const HP_LOSS_LABELS: Record<HpLostEvent["cause"], string> = {
   burn: "Đốt ",
   reflect: "Phản ",
   bloodMoon: "Huyết ",
+  decree: "Lệnh ",
+  bloodPact: "Tế ",
 };
 
 function isBloodMoonLoss(
@@ -252,6 +254,8 @@ function animateEvent(
       return floatText(scene, WIDTH / 2, 330, `◆ ${name}`, "#f4d35e", 22, 300);
     }
     case "cardDiscarded":
+    // Luân Hồi (`01` §3.3): reuse the discard beat until the real animation lands.
+    case "cardsRecycled":
       return instant();
     case "cardCreated": {
       // `18` §2.2: the token flies from its owner hero's panel into the hand;

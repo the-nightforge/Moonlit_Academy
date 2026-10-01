@@ -675,3 +675,239 @@ describe("Nguyệt Luân — lệnh đầu lượt và Chiêm Bài", () => {
     expect(p0(moon.state).pendingChoice).toBeNull();
   });
 });
+
+describe("Nguyệt Luân — Hủy Bài, Huyết Tế, Đoạn Tuyệt, Giữ Giáp, Luân Hồi", () => {
+  const decreeLost = (events: CombatEvent[]) =>
+    events.filter((e): e is Extract<CombatEvent, { type: "hpLost" }> => e.type === "hpLost" && e.cause === "decree");
+
+  it("T321a: discardCard (Xả Thân) — wrong decree / not in hand / per-turn limit; a legal discard gains +1 moonPower", () => {
+    // Phase 5 under a different decree → the action does not exist.
+    const wrongPhase = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 5, decrees: { waningGibbous: "doan_tuyet" } },
+      mutateData: makeEnemiesIdle,
+    });
+    expect(
+      applyAction(wrongPhase.data, wrongPhase.state, { type: "discardCard", instanceId: p0(wrongPhase.state).hand[0]! }),
+    ).toEqual({ ok: false, error: "no discard decree" });
+
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 5, decrees: { waningGibbous: "xa_than" } },
+      mutateData: makeEnemiesIdle,
+    });
+    const moonBefore = p0(combat.state).moonPower;
+    const [firstId, secondId, thirdId] = p0(combat.state).hand;
+    const inDeck = p0(combat.state).drawPile[0]!;
+    expect(applyAction(combat.data, combat.state, { type: "discardCard", instanceId: inDeck }))
+      .toEqual({ ok: false, error: "card not in hand" });
+
+    const first = applyAction(combat.data, combat.state, { type: "discardCard", instanceId: firstId! });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(p0(first.state).hand).not.toContain(firstId);
+    expect(p0(first.state).discardPile).toContain(firstId);
+    expect(p0(first.state).moonPower).toBe(moonBefore + 1);
+    expect(p0(first.state).discardsThisTurn).toBe(1);
+    expect(first.events).toContainEqual({ type: "cardDiscarded", instanceIds: [firstId] });
+    expect(first.events).toContainEqual({ type: "moonPowerChanged", value: moonBefore + 1 });
+
+    const second = applyAction(combat.data, first.state, { type: "discardCard", instanceId: secondId! });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    expect(p0(second.state).moonPower).toBe(moonBefore + 2);
+    expect(applyAction(combat.data, second.state, { type: "discardCard", instanceId: thirdId! }))
+      .toEqual({ ok: false, error: "discard limit" });
+  });
+
+  it("T321b: Đoạn Tuyệt — discardCard, Tàn Chiêu and handLimit overflow each cost the lowest-HP enemy 2 HP (cause decree)", () => {
+    // discardCard fires it: Xả Thân is added to Đoạn Tuyệt's modifier list so
+    // both sit under the same rolled decree (a phase only ever rolls one).
+    const combined = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 5, decrees: { waningGibbous: "doan_tuyet" } },
+      mutateData: (d) => {
+        makeEnemiesIdle(d);
+        d.moonPhases[5]!.decrees.find((decree) => decree.id === "doan_tuyet")!.modifiers
+          .push({ type: "discardForMoonPower", perTurn: 2, moonPower: 1 });
+      },
+      setup: (s) => {
+        s.enemies[0]!.hp = 7;
+        s.enemies[1]!.hp = 3; // lowest HP — takes the cut
+      },
+    });
+    const discarded = p0(combined.state).hand[0]!;
+    const res = applyAction(combined.data, combined.state, { type: "discardCard", instanceId: discarded });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(decreeLost(res.events)).toEqual([{ type: "hpLost", targetId: "enemy:1", amount: 2, cause: "decree" }]);
+    expect(res.state.enemies[1]!.hp).toBe(1);
+    expect(res.state.enemies[0]!.hp).toBe(7);
+    expect(p0(res.state).discardPile).toContain(discarded);
+
+    // Tàn Chiêu at turn end: the fallen owner's cards leave the hand unplayed.
+    const broken = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 5, decrees: { waningGibbous: "doan_tuyet" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        s.enemies[0]!.hp = 9;
+        s.enemies[1]!.hp = 4;
+        s.heroes[2]!.alive = false; // m06 down → its cards become Tàn Chiêu
+        s.heroes[2]!.hp = 0;
+        s.heroes[2]!.statuses = [];
+        // Move m06's other hand cards out first — the injected card is the only Tàn Chiêu.
+        const owned = p0(s).hand.filter((id) => s.cards[id]!.ownerIds.includes("m06"));
+        p0(s).discardPile.push(...owned);
+        p0(s).hand = p0(s).hand.filter((id) => !owned.includes(id));
+      },
+    });
+    const deadCard = injectCard(broken.state, broken.data, testCard("test_tan_chieu", "m06", "skill", "none", []));
+    const end = applyAction(broken.data, broken.state, { type: "endTurn" });
+    expect(end.ok).toBe(true);
+    if (!end.ok) return;
+    expect(p0(end.state).discardPile).toContain(deadCard);
+    expect(end.events).toContainEqual({ type: "cardDiscarded", instanceIds: [deadCard] });
+    expect(decreeLost(end.events)).toEqual([{ type: "hpLost", targetId: "enemy:1", amount: 2, cause: "decree" }]);
+    expect(end.state.enemies[1]!.hp).toBe(2);
+    expect(end.state.enemies[0]!.hp).toBe(9);
+
+    // Overflow past handLimit: each spilled card cuts the lowest-HP enemy.
+    const overflow = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 5, decrees: { waningGibbous: "doan_tuyet" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        p0(s).hand.push(...p0(s).drawPile.splice(-1)); // hand 7
+        s.enemies[0]!.hp = 5; // lowest
+        s.enemies[1]!.hp = 8;
+      },
+    });
+    const draw3 = injectCard(overflow.state, overflow.data, testCard("test_draw_3", "f04", "skill", "none", [
+      { type: "drawCards", amount: 3 },
+    ])); // hand 8 = handLimit; playing leaves 7 → room 1, two spill
+    const top3 = p0(overflow.state).drawPile.slice(0, 3);
+    const spilled = applyAction(overflow.data, overflow.state, { type: "playCard", instanceId: draw3 });
+    expect(spilled.ok).toBe(true);
+    if (!spilled.ok) return;
+    expect(p0(spilled.state).hand).toHaveLength(8);
+    // Spills land during effect resolution — the played card follows them onto the pile.
+    expect(p0(spilled.state).discardPile.slice(-3)).toEqual([top3[1]!, top3[2]!, draw3]);
+    expect(spilled.events).toContainEqual({ type: "cardDiscarded", instanceIds: [top3[1]!, top3[2]!] });
+    expect(decreeLost(spilled.events)).toEqual([
+      { type: "hpLost", targetId: "enemy:0", amount: 2, cause: "decree" },
+      { type: "hpLost", targetId: "enemy:0", amount: 2, cause: "decree" },
+    ]);
+    expect(spilled.state.enemies[0]!.hp).toBe(1);
+    expect(spilled.state.enemies[1]!.hp).toBe(8);
+  });
+
+  it("T322a: bloodPact (Huyết Tế) — wrong decree / used / hp ≤ modifier rejected; a legal pact loses 3 HP (cause bloodPact) and draws 2", () => {
+    const wrongPhase = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 5, decrees: { waningGibbous: "xa_than" } },
+      mutateData: makeEnemiesIdle,
+    });
+    expect(applyAction(wrongPhase.data, wrongPhase.state, { type: "bloodPact", heroId: "hero:m05" }))
+      .toEqual({ ok: false, error: "no blood pact decree" });
+
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 5, decrees: { waningGibbous: "huyet_te" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        s.heroes[2]!.hp = 3; // exactly at the pact's floor — not a legal offering
+      },
+    });
+    expect(applyAction(combat.data, combat.state, { type: "bloodPact", heroId: "hero:m06" }))
+      .toEqual({ ok: false, error: "invalid hero" });
+    expect(applyAction(combat.data, combat.state, { type: "bloodPact", heroId: "enemy:0" }))
+      .toEqual({ ok: false, error: "invalid hero" });
+
+    const handBefore = p0(combat.state).hand.length;
+    const hpBefore = combat.state.heroes[0]!.hp;
+    const res = applyAction(combat.data, combat.state, { type: "bloodPact", heroId: "hero:m05" });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.events).toContainEqual({ type: "hpLost", targetId: "hero:m05", amount: 3, cause: "bloodPact" });
+    expect(res.state.heroes[0]!.hp).toBe(hpBefore - 3);
+    expect(p0(res.state).hand).toHaveLength(handBefore + 2);
+    expect(res.events).toContainEqual({ type: "cardsDrawn", instanceIds: p0(res.state).hand.slice(-2) });
+    expect(p0(res.state).bloodPactUsed).toBe(true);
+    // Once per turn: a second pact is refused even with a legal hero.
+    expect(applyAction(combat.data, res.state, { type: "bloodPact", heroId: "hero:f04" }))
+      .toEqual({ ok: false, error: "blood pact used" });
+  });
+
+  it("T322b: Giữ Giáp — armor and reflect survive both sides' turn starts while the decree lasts", () => {
+    // Player side: turn 2 opens under lastQuarter → the hero's armor/reflect
+    // set during round 1 are kept; the enemy turn of round 1 (phase 5) still
+    // clears the enemy's armor — the decree is not up yet.
+    const heroSide = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 5, decrees: { lastQuarter: "giu_giap" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        s.heroes[0]!.armor = 10;
+        s.heroes[0]!.statuses.push({ id: "reflect", value: 2 });
+        s.enemies[0]!.armor = 8;
+      },
+    });
+    const end1 = applyAction(heroSide.data, heroSide.state, { type: "endTurn" });
+    expect(end1.ok).toBe(true);
+    if (!end1.ok) return;
+    expect(end1.state.moonIndex).toBe(6);
+    expect(end1.events).toContainEqual({ type: "armorRemoved", targetId: "enemy:0" }); // phase-5 enemy turn: cleared
+    expect(end1.state.enemies[0]!.armor).toBe(0);
+    expect(end1.events.some((e) => e.type === "armorRemoved" && e.targetId === "hero:m05")).toBe(false);
+    expect(end1.state.heroes[0]!.armor).toBe(10);
+    expect(getStatus(end1.state.heroes[0]!, "reflect")?.value).toBe(2);
+
+    // Enemy side: the enemy turn runs under lastQuarter → its armor and
+    // reflect are kept; the next player turn (phase 7, decree over) clears
+    // hero armor again — the skip is decree-gated.
+    const enemySide = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 6, decrees: { lastQuarter: "giu_giap" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        s.enemies[0]!.armor = 10;
+        s.enemies[0]!.statuses.push({ id: "reflect", value: 2 });
+        s.heroes[0]!.armor = 5;
+      },
+    });
+    const end2 = applyAction(enemySide.data, enemySide.state, { type: "endTurn" });
+    expect(end2.ok).toBe(true);
+    if (!end2.ok) return;
+    expect(end2.events.some((e) => e.type === "armorRemoved" && e.targetId === "enemy:0")).toBe(false);
+    expect(end2.events.some((e) => e.type === "statusRemoved" && e.targetId === "enemy:0" && e.status === "reflect")).toBe(false);
+    expect(end2.state.enemies[0]!.armor).toBe(10);
+    expect(getStatus(end2.state.enemies[0]!, "reflect")?.value).toBe(2);
+    expect(end2.state.moonIndex).toBe(7);
+    expect(end2.events).toContainEqual({ type: "armorRemoved", targetId: "hero:m05" });
+    expect(end2.state.heroes[0]!.armor).toBe(0);
+  });
+
+  it("T322c: Luân Hồi — the two newest discards go to the bottom of the draw pile (newest deepest)", () => {
+    let recycledIds: string[] = [];
+    const combat = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 7, decrees: { waningCrescent: "luan_hoi" } },
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        recycledIds = p0(s).drawPile.splice(0, 3);
+        p0(s).discardPile.push(...recycledIds); // [a, b, c] — c is the newest
+      },
+    });
+    const [a, b, c] = recycledIds;
+    const end = applyAction(combat.data, combat.state, { type: "endTurn" });
+    expect(end.ok).toBe(true);
+    if (!end.ok) return;
+    expect(end.events).toContainEqual({ type: "cardsRecycled", instanceIds: [b, c] });
+    expect(p0(end.state).discardPile).toEqual([a]);
+    // drawPile[0] is the top — the recycled pair sits at the tail, c deepest.
+    expect(p0(end.state).drawPile.slice(-2)).toEqual([b, c]);
+    expect(p0(end.state).hand).not.toContain(b);
+    expect(p0(end.state).hand).not.toContain(c);
+  });
+});

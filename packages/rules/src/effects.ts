@@ -189,12 +189,12 @@ export function computeDamageAmount(
   return Math.max(0, Math.floor(flat * multiplier));
 }
 
-/** HP loss that ignores armor and multipliers (loseHp, burn, reflect, blood moon). */
+/** HP loss that ignores armor and multipliers (loseHp, burn, reflect, blood moon, decrees). */
 export function loseHp(
   data: GameData,
   unit: UnitState,
   amount: number,
-  cause: "loseHp" | "burn" | "reflect" | "bloodMoon",
+  cause: Extract<CombatEvent, { type: "hpLost" }>["cause"],
   events: CombatEvent[],
 ): number {
   const lost = Math.min(unit.hp, amount);

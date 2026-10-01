@@ -23,6 +23,8 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
   for (const seat of state.players) {
     seat.cardsPlayedThisTurn = 0;
     delete seat.attackCardsThisTurn;
+    delete seat.discardsThisTurn;
+    delete seat.bloodPactUsed;
     seat.done = false;
   }
   // Tập Kích (`01` §7.5): both seats' first-hit keys reset with the shared turn.
@@ -31,12 +33,15 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
   );
   state.playedThisTurn = [];
 
-  for (const unit of [...state.heroes, ...summonsOf(state)]) {
-    if (unit.armor > 0) {
-      unit.armor = 0;
-      events.push({ type: "armorRemoved", targetId: unit.id });
+  // Giữ Giáp (`01` §3.1 step 1): the decree skips the armor wipe / reflect strip.
+  if (!decreeModifier(data, state, "keepArmor")) {
+    for (const unit of [...state.heroes, ...summonsOf(state)]) {
+      if (unit.armor > 0) {
+        unit.armor = 0;
+        events.push({ type: "armorRemoved", targetId: unit.id });
+      }
+      removeStatus(unit, "reflect", events);
     }
-    removeStatus(unit, "reflect", events);
   }
   for (const seat of state.players) {
     const mine = heroesOf(state, seat.index);
