@@ -16,6 +16,8 @@ import type {
   CombatState,
   EnemyState,
   GameData,
+  HeroState,
+  PlayerState,
   StatusInstance,
   SummonState,
 } from "rules";
@@ -37,17 +39,18 @@ import {
   describeEvent,
 } from "../debug";
 import manifest from "virtual:assets-manifest";
-import { showCardTooltip } from "../ui/card-tooltip";
+import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
 import { confirmModal, isModalOpen } from "../ui/widgets";
 import { playEventQueue } from "../ui/event-animator";
 import {
   BLOOD_MOON_BG,
-  BLOOD_MOON_TEXT,
   COLORS,
+  COMBAT_LAYOUT,
   TEXT_BASE,
   OWNER_COLORS,
   PHASE_BG,
-  STATUS_LABELS,
+  SEAL_ICON,
+  STATUS_ICONS,
   describePhase,
   useDesignCamera,
 } from "../ui/theme";
@@ -56,11 +59,49 @@ const WIDTH = 1280;
 const HEIGHT = 720;
 const CARD_W = 110;
 const CARD_H = 160;
-const SUMMON_W = 112;
-const SUMMON_H = 62;
-/** Hand zone: clear of the Nguyệt Lực block (left) and the pile / end-turn column (right). */
-const HAND_LEFT = 180;
-const HAND_RIGHT = 1045;
+/** Hand zone: clear of the draw pile (left) and the end-turn button (right). */
+const HAND_LEFT = 130;
+const HAND_RIGHT = 1140;
+/** A hovered hand card is lifted (scaled 1.15) until its bottom edge shows. */
+const HAND_LIFT_Y = HEIGHT - (CARD_H * 1.15) / 2 - 6;
+/** Unit cards are portrait (2:3): enemies / opponents on the top row, own heroes below. */
+const TOP_ROW_Y = 170;
+const HERO_ROW_Y = 400;
+const UNIT_W = 128;
+const UNIT_H = 184;
+const HERO_W = 136;
+const HERO_H = 196;
+const COOP_HERO_W = 112;
+const COOP_HERO_H = 162;
+const BOSS_W = 144;
+const BOSS_H = 204;
+const SUMMON_W = 88;
+const SUMMON_H = 124;
+
+/** Centers of `count` cards spread `step` apart around the screen's middle. */
+function rowXs(count: number, step: number): number[] {
+  return Array.from({ length: count }, (_, index) => WIDTH / 2 + (index - (count - 1) / 2) * step);
+}
+
+interface UnitCardSpec {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  artKey: string;
+  name: string;
+  nameColor?: string;
+  hp: number;
+  hostile: boolean;
+  armor: number;
+  statuses: StatusInstance[];
+  sealed: boolean;
+  frame: number;
+  alive: boolean;
+  stealth?: boolean;
+  tooltip: () => string[];
+}
 
 const ERROR_LABELS: [RegExp, string][] = [
   [/not the player turn/, "Chưa tới lượt người chơi"],
@@ -270,7 +311,7 @@ export class CombatScene extends Phaser.Scene {
       return;
     }
     const text = this.add
-      .text(WIDTH / 2, 300, banner.text, { ...TEXT_BASE, fontSize: "30px", color: banner.color })
+      .text(WIDTH / 2, COMBAT_LAYOUT.midY, banner.text, { ...TEXT_BASE, fontSize: "30px", color: banner.color })
       .setOrigin(0.5)
       .setDepth(180)
       .setScale(0.6)
@@ -455,7 +496,7 @@ export class CombatScene extends Phaser.Scene {
   private showError(error: string) {
     this.errorText?.destroy();
     const text = this.add
-      .text(WIDTH / 2, 525, errorLabel(error), {
+      .text(WIDTH / 2, 572, errorLabel(error), {
         ...TEXT_BASE,
         fontSize: "15px",
         color: "#ff8080",
@@ -478,11 +519,7 @@ export class CombatScene extends Phaser.Scene {
     this.tooltip?.destroy();
     this.tooltip = null;
     this.cardViews.clear();
-    const phase = this.gameData.moonPhases[this.state.moonIndex]!;
-    const background = this.state.bloodMoonRounds > 0 ? BLOOD_MOON_BG : PHASE_BG[phase.id];
-    this.root.add(
-      this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, background).setDepth(-10),
-    );
+    this.renderBackground();
     this.unitAnchors.clear();
     this.unitViews.clear();
     this.errorText = undefined;
@@ -492,7 +529,7 @@ export class CombatScene extends Phaser.Scene {
         ? comboHintFor(this.gameData, this.state, this.mySeat)
         : new Map();
     this.renderTopBar();
-    this.renderMoonWheel();
+    this.renderMoon();
     if (this.state.mode === "pvp") {
       this.renderOpponentRow();
       this.renderOpponentHand();
@@ -565,129 +602,200 @@ export class CombatScene extends Phaser.Scene {
     return text;
   }
 
+  /**
+   * The artwork fills the screen under a light scrim; Huyết Nguyệt adds a red
+   * wash and a red edge. Without the artwork the phase color is the background.
+   */
+  private renderBackground() {
+    const phase = this.gameData.moonPhases[this.state.moonIndex]!;
+    const bloodMoon = this.state.bloodMoonRounds > 0;
+    const art = this.coverImage("backgrounds:background", WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, this.root);
+    if (art === null) {
+      this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, bloodMoon ? BLOOD_MOON_BG : PHASE_BG[phase.id]));
+      return;
+    }
+    this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x060a18, 0.3));
+    if (bloodMoon) {
+      this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, BLOOD_MOON_BG, 0.35));
+      this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH - 24, HEIGHT - 24).setStrokeStyle(24, 0xc01030, 0.35));
+    }
+  }
+
+  /** The encounter being fought: story stage, run node or the single-combat pick. */
+  private encounterName(): string {
+    const run = session.run;
+    const runNode = run?.map.floors.flat().find((node) => node.id === run.position);
+    const stage = session.story ? this.gameData.storyStages[session.story.setup.stageId] : undefined;
+    if (stage) return stage.name;
+    return this.gameData.encounters[runNode?.encounterId ?? session.encounterId]?.name ?? "";
+  }
+
+  /** Shows `lines` while the pointer is over `target` (a text tooltip at `at`). */
+  private hoverTooltip(
+    target: Phaser.GameObjects.GameObject,
+    at: () => { x: number; y: number },
+    lines: () => string[],
+  ) {
+    target.on("pointerover", () => {
+      this.tooltip?.destroy();
+      const { x, y } = at();
+      this.tooltip = showTextTooltip(this, x, y, lines());
+    });
+    target.on("pointerout", () => {
+      this.tooltip?.destroy();
+      this.tooltip = null;
+    });
+  }
+
+  /** A round badge: dark fill, colored ring, centered label. */
+  private badge(
+    x: number,
+    y: number,
+    r: number,
+    label: string,
+    ring: number,
+    parent: Phaser.GameObjects.Container,
+    fill = 0x0a0e20,
+    size = 13,
+    color: string = COLORS.text,
+  ): Phaser.GameObjects.Arc {
+    const circle = this.add.circle(x, y, r, fill, 0.92).setStrokeStyle(2, ring);
+    parent.add(circle);
+    this.text(x, y, label, size, color, parent).setOrigin(0.5);
+    return circle;
+  }
+
+  /**
+   * Top-left plate: the encounter (PvE) or the opponent / partner (PvP, co-op).
+   * Details — Kỳ Vật, the other seat's Nguyệt Lực and hand — live in its tooltip.
+   */
   private renderTopBar() {
-    this.text(24, 14, `Vòng ${this.state.round}`, 16);
     const match = this.netMatch;
-    if (match) {
-      // Partner strip (co-op) / opponent strip (`17` §7.3): name, NL, pile counts.
-      const otherSeat = this.state.players.find((p) => p.index !== this.mySeat);
-      const otherInfo = match.others[0];
-      if (otherSeat && otherInfo) {
-        const doneTag = this.isCoop && this.state.status === "playerTurn"
-          ? otherSeat.done ? " · ✓ xong" : " · đang đánh"
-          : "";
-        this.text(
-          24,
-          36,
-          `${this.isCoop ? "Đồng đội " : ""}${otherInfo.username}${otherInfo.connected ? "" : " ⛔"} — NL ${otherSeat.moonPower} · DT ${Math.min(otherSeat.moonReserve, otherSeat.moonPower)} · Tay ${otherSeat.hand.length} · Chồng ${otherSeat.drawPile.length} · Bỏ ${otherSeat.discardPile.length}${doneTag}`,
-          12,
-          COLORS.dimText,
+    const other = match ? this.state.players.find((p) => p.index !== this.mySeat) : undefined;
+    const otherInfo = match?.others[0];
+    const plate = this.add.graphics();
+    plate.fillStyle(0x0a0e20, 0.78).fillRoundedRect(16, 14, 240, 44, 22);
+    plate.lineStyle(1, COLORS.panelBorder).strokeRoundedRect(16, 14, 240, 44, 22);
+    this.root.add(plate);
+    const glyph = this.state.mode === "pvp" ? "⚔" : this.isCoop ? "♥" : "☾";
+    this.badge(38, 36, 18, glyph, COLORS.goldFill, this.root, COLORS.button, 16, COLORS.gold);
+    const name = otherInfo ? `${otherInfo.username}${otherInfo.connected ? "" : " ⛔"}` : this.encounterName();
+    this.fitWidth(this.text(64, 36, name, 14).setOrigin(0, 0.5), this.isCoop ? 150 : 180);
+    if (this.isCoop && other?.done === true && this.state.status === "playerTurn") {
+      this.badge(232, 36, 11, "✓", COLORS.goldFill, this.root, 0x0a0e20, 12, COLORS.gold);
+    }
+    const hit = this.add.zone(136, 36, 240, 44).setInteractive();
+    this.root.add(hit);
+    this.hoverTooltip(hit, () => ({ x: 16, y: 64 }), () => {
+      if (other && otherInfo) {
+        return [
+          `${this.isCoop ? "Đồng đội" : "Đối thủ"} ${otherInfo.username}${otherInfo.connected ? "" : " — mất kết nối"}`,
+          `Nguyệt Lực ${other.moonPower} · Dự Trữ ${Math.min(other.moonReserve, other.moonPower)}`,
+          `Trên tay ${other.hand.length} lá`,
+          this.isCoop && this.state.status === "playerTurn" ? (other.done ? "Đã xong lượt" : "Đang đánh") : "",
+        ];
+      }
+      const seat = activePlayerState(this.state);
+      const relics = seat.runRelicIds.map((id: string) => (this.gameData.runRelics[id] ?? this.gameData.augments[id])?.name ?? id);
+      return [name, relics.length > 0 ? `Kỳ Vật · Lõi: ${relics.join(" · ")}` : ""];
+    });
+    // The other seat's draw pile sits at the top row's height (`17` §7.3 piles).
+    if (other) this.renderPile(other, TOP_ROW_Y, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ");
+    this.text(WIDTH - 40, 36, "⚙", 18, COLORS.dimText).setOrigin(0.5);
+    if (match && !match.ended) {
+      const flag = this.badge(WIDTH - 136, 36, 16, "⚑", 0x884455, this.root, 0x40202a, 14, "#ff9090");
+      flag.setInteractive({ useHandCursor: true });
+      flag.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button !== 0) return;
+        void confirmModal(this, "Bỏ cuộc trận này? Trận tính là thua.", { label: "Bỏ cuộc", danger: true }).then((ok) => {
+          if (ok && this.netMatch && !this.netMatch.ended) this.netMatch.resign();
+        });
+      });
+      this.hoverTooltip(flag, () => ({ x: WIDTH - 300, y: 60 }), () => ["Bỏ cuộc"]);
+    }
+    if (match && match.deadline !== null) {
+      const { x, y } = COMBAT_LAYOUT.endTurn;
+      this.timerText = this.text(x, y - 66, "", 15, COLORS.gold).setOrigin(0.5);
+    }
+  }
+
+  /** Current moon phase only, in the artwork's top ornament; rules in the tooltip. */
+  private renderMoon() {
+    const { x, y } = COMBAT_LAYOUT.moon;
+    const phase = this.gameData.moonPhases[this.state.moonIndex]!;
+    const bloodMoon = this.state.bloodMoonRounds > 0;
+    const ring = this.badge(x, y, 28, phase.icon, bloodMoon ? 0xff5a5a : COLORS.goldFill, this.root, 0x0a0e20, 28);
+    ring.setInteractive();
+    this.hoverTooltip(ring, () => ({ x: x + 36, y: y - 20 }), () => [
+      phase.name,
+      describePhase(phase),
+      bloodMoon ? `Huyết Nguyệt — còn ${this.state.bloodMoonRounds} vòng` : "",
+    ]);
+  }
+
+  /**
+   * One unit as a portrait card: art, HP badge (top-left), armor under it,
+   * status icons inside above the name strip. Name and numbers in detail are
+   * in the hover tooltip. Registered for targeting and animations.
+   */
+  private renderUnitCard(spec: UnitCardSpec): Phaser.GameObjects.Container {
+    const { id, x, y, w, h } = spec;
+    const c = this.add.container(x, y);
+    this.root.add(c);
+    this.unitAnchors.set(id, { x, y });
+    this.unitViews.set(id, c);
+    const isValidTarget = this.targeting !== null && this.validTargetIds.has(id);
+    const panel = this.add.rectangle(0, 0, w, h, spec.hostile ? COLORS.panelEnemy : COLORS.panelHero);
+    panel.setStrokeStyle(isValidTarget ? 3 : 2, isValidTarget ? COLORS.goldFill : spec.frame);
+    c.add(panel);
+    this.coverImage(spec.artKey, 0, 0, w - 6, h - 6, c);
+    c.add(this.add.rectangle(0, h / 2 - 15, w - 6, 24, 0x0a0e20, 0.8));
+    this.fitWidth(this.text(0, h / 2 - 15, spec.name, 12, spec.nameColor ?? COLORS.text, c).setOrigin(0.5), w - 14);
+    this.badge(-w / 2 + 16, -h / 2 + 16, 16, `${spec.hp}`, spec.hostile ? COLORS.hpFillEnemy : COLORS.hpFillHero, c,
+      spec.hostile ? 0x4a1818 : 0x183a20, 13);
+    if (spec.armor > 0) this.badge(-w / 2 + 16, -h / 2 + 46, 12, `${spec.armor}`, 0x9fd4ff, c, 0x1e3a5a, 11);
+    if (spec.stealth) c.add(this.add.rectangle(0, 0, w, h, 0x8899ff, 0.15));
+    if (!spec.alive) {
+      c.add(this.add.rectangle(0, 0, w, h, 0x000000, 0.6));
+      this.text(0, 0, "Ngã", 18, "#ffffff", c).setOrigin(0.5);
+      // Hồi Hồn (`18` §3.5): keep the gold frame readable over the dim overlay.
+      if (isValidTarget) c.add(this.add.rectangle(0, 0, w, h).setStrokeStyle(3, COLORS.goldFill));
+    }
+    this.unitPanelHit(panel, w, h, id);
+    this.hoverTooltip(panel, () => ({ x: x + w / 2 + 8, y: y - h / 2 }), spec.tooltip);
+    this.statusIcons(spec, c);
+    if (this.targeting !== null && !isValidTarget) c.setAlpha(0.4);
+    return c;
+  }
+
+  /** In-card status icons, bottom-up rows above the name strip; each explains itself on hover. */
+  private statusIcons(spec: UnitCardSpec, c: Phaser.GameObjects.Container) {
+    const icons = spec.statuses.map((status) => ({ ...STATUS_ICONS[status.id], value: status.value }));
+    if (spec.sealed) icons.push({ ...SEAL_ICON, value: 0 });
+    const r = 10;
+    const step = 2 * r + 4;
+    const perRow = Math.max(1, Math.floor((spec.w - 8) / step));
+    icons.forEach((icon, index) => {
+      const ix = -spec.w / 2 + 6 + r + (index % perRow) * step;
+      const iy = spec.h / 2 - 30 - r - Math.floor(index / perRow) * step;
+      const circle = this.badge(ix, iy, r, icon.glyph, icon.color, c, 0x0a0e20, 12);
+      if (icon.value > 0) {
+        c.add(
+          this.add
+            .text(ix + r + 1, iy + r + 1, `${icon.value}`, { ...TEXT_BASE, fontSize: "10px", color: "#ffffff", stroke: "#000000", strokeThickness: 3 })
+            .setOrigin(1, 1),
         );
       }
-      const myDone = this.isCoop && this.mySeatState?.done === true;
-      const partnerDone = this.isCoop && otherSeat?.done === true;
-      const label =
-        this.state.status === "playerTurn" || this.state.status === "choosing"
-          ? this.isCoop
-            ? myDone
-              ? partnerDone ? "— Chờ lượt kẻ địch —" : "— Đã xong · chờ đồng đội —"
-              : "— Lượt chung —"
-            : "— Lượt của bạn —"
-          : this.state.status === "opponentTurn" || (this.state.status === "mulligan" && this.state.players[this.mySeat]!.mulliganDone)
-            ? this.isCoop ? "— Chờ đồng đội —" : "— Lượt đối thủ —"
-            : this.isCoop && this.state.status === "enemyTurn"
-              ? "— Lượt kẻ địch —"
-              : "";
-      if (label) this.text(WIDTH / 2, 40, label, 15, COLORS.gold).setOrigin(0.5, 0);
-      if (match.deadline !== null) {
-        this.timerText = this.text(1150, 40, "", 16, COLORS.gold).setOrigin(1, 0);
-      }
-    } else {
-      const seat = activePlayerState(this.state);
-      if (seat.runRelicIds.length > 0) {
-        const names = seat.runRelicIds
-          .map((id: string) => (this.gameData.runRelics[id] ?? this.gameData.augments[id])?.name ?? id)
-          .join(" · ");
-        this.text(24, 36, `Kỳ Vật · Lõi: ${names}`, 11, COLORS.dimText);
-      }
-    }
-    const phase = this.gameData.moonPhases[this.state.moonIndex]!;
-    this.text(WIDTH / 2, 14, `( ${phase.icon} ${phase.name} )`, 16).setOrigin(0.5, 0);
-    this.text(WIDTH - 24, 14, "⚙", 18, COLORS.dimText).setOrigin(1, 0);
-  }
-
-  private renderMoonWheel() {
-    const y = 58;
-    this.gameData.moonPhases.forEach((phase, index) => {
-      const x = WIDTH / 2 + (index - 3.5) * 36;
-      const active = index === this.state.moonIndex;
-      if (active) {
-        const halo = this.add.circle(x, y, 16, COLORS.panelBorder, 0.6);
-        this.root.add(halo);
-      }
-      this.text(x, y, phase.icon, active ? 22 : 15)
-        .setOrigin(0.5)
-        .setAlpha(active ? 1 : 0.45);
+      const keyword = this.gameData.keywords[icon.keywordId];
+      circle.setInteractive({ useHandCursor: this.targeting !== null });
+      circle.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0) this.onUnitClicked(spec.id);
+      });
+      this.hoverTooltip(circle, () => ({ x: spec.x + spec.w / 2 + 8, y: spec.y + iy }), () => [
+        `${keyword?.name ?? icon.keywordId}${icon.value > 0 ? ` ${icon.value}` : ""}`,
+        keyword?.text ?? "",
+      ]);
     });
-    const next =
-      this.gameData.moonPhases[(this.state.moonIndex + 1) % this.gameData.moonPhases.length]!;
-    const effect = describePhase(next);
-    this.text(
-      WIDTH / 2 + 190,
-      y,
-      `→ kế tiếp: ${next.icon} ${effect}`,
-      12,
-      COLORS.dimText,
-    ).setOrigin(0, 0.5);
-    if (this.state.bloodMoonRounds > 0) {
-      this.text(
-        WIDTH / 2 - 170,
-        y,
-        `🔴 Huyết Nguyệt · còn ${this.state.bloodMoonRounds} vòng`,
-        13,
-        BLOOD_MOON_TEXT,
-      ).setOrigin(1, 0.5);
-    }
-  }
-
-  private hpBar(
-    x: number,
-    y: number,
-    width: number,
-    hp: number,
-    maxHp: number,
-    fill: number,
-    parent: Phaser.GameObjects.Container,
-  ) {
-    const height = 14;
-    parent.add(this.add.rectangle(x, y, width, height, COLORS.hpTrack).setOrigin(0, 0.5));
-    const fillWidth = Math.max(0, (hp / maxHp) * width);
-    if (fillWidth > 0) {
-      parent.add(this.add.rectangle(x, y, fillWidth, height, fill).setOrigin(0, 0.5));
-    }
-    this.text(x + width / 2, y, `${hp}/${maxHp}`, 10, COLORS.text, parent).setOrigin(0.5);
-  }
-
-  private statusChips(
-    x: number,
-    y: number,
-    statuses: StatusInstance[],
-    maxWidth: number,
-    parent: Phaser.GameObjects.Container,
-  ) {
-    let cursor = x;
-    let row = y;
-    for (const status of statuses) {
-      const label = `${STATUS_LABELS[status.id]} ${status.value}`;
-      const chipWidth = label.length * 7 + 12;
-      if (cursor + chipWidth > x + maxWidth) {
-        cursor = x;
-        row += 20;
-      }
-      parent.add(this.add.rectangle(cursor, row, chipWidth, 16, 0x0a0e20).setOrigin(0, 0.5));
-      this.text(cursor + chipWidth / 2, row, label, 10, "#cfd6f0", parent).setOrigin(0.5, 0.5);
-      cursor += chipWidth + 4;
-    }
   }
 
   // Draws a texture cover-fitted into a w×h box centered at (x, y).
@@ -742,286 +850,158 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /**
-   * Linh Thú (`01` §17): a compact unit panel — name, HP bar, armor, status
-   * chips. Registered in `unitAnchors`/`unitViews` so damage animations and
-   * targeting treat it like any other unit (Linh Thú are valid `ally` picks,
-   * and `enemy` picks for the opposing seat in PvP).
+   * Linh Thú (`01` §17): a small portrait card in its side's summon zone, right
+   * of the row. Valid `ally` picks, and `enemy` picks for the opposing seat in PvP.
    */
-  private renderSummonPanel(
-    summon: SummonState,
-    cx: number,
-    cy: number,
-    w = SUMMON_W,
-  ): void {
-    const h = SUMMON_H;
-    const c = this.add.container(cx, cy);
-    this.root.add(c);
-    this.unitAnchors.set(summon.id, { x: cx, y: cy });
-    this.unitViews.set(summon.id, c);
-    const isValidTarget = this.validTargetIds.has(summon.id);
-    const panel = this.add.rectangle(0, 0, w, h, COLORS.panelHero);
-    panel.setStrokeStyle(
-      this.targeting && isValidTarget ? 2 : 1,
-      this.targeting && isValidTarget ? COLORS.goldFill : COLORS.panelBorder,
-    );
-    c.add(panel);
+  private renderSummonPanel(summon: SummonState, cx: number, cy: number, hostile: boolean): void {
     const name = this.gameData.summons[summon.summonId]?.name ?? "Linh Thú";
-    const nameText = this.text(0, -h / 2 + 11, name, 11, COLORS.gold, c).setOrigin(0.5);
-    if (nameText.width > w - 8) nameText.setScale((w - 8) / nameText.width);
-    // Phong Ấn (`01` §5.6): same marker enemies and opposing heroes show —
-    // bottom-right inside the panel (the 4px gap above can't hold a label).
-    if (summon.sealedBy !== undefined) {
-      this.text(w / 2 - 9, h / 2 - 11, "⛨", 11, "#b9a8ff", c).setOrigin(1, 0.5);
-    }
-    this.hpBar(-w / 2 + 8, -5, w - 16, summon.hp, summon.maxHp, COLORS.hpFillHero, c);
-    if (summon.armor > 0) {
-      this.text(-w / 2 + 8, h / 2 - 12, `🛡 ${summon.armor}`, 10, COLORS.armor, c);
-    }
-    this.statusChips(
-      summon.armor > 0 ? -w / 2 + 44 : -w / 2 + 8,
-      h / 2 - 12,
-      summon.statuses,
-      w - (summon.armor > 0 ? 52 : 16),
-      c,
-    );
-    if (this.targeting && !isValidTarget) c.setAlpha(0.4);
-    this.unitPanelHit(panel, w, h, summon.id);
+    this.renderUnitCard({
+      id: summon.id,
+      x: cx,
+      y: cy,
+      w: SUMMON_W,
+      h: SUMMON_H,
+      artKey: `summons:${summon.summonId}`,
+      name,
+      nameColor: COLORS.gold,
+      hp: summon.hp,
+      hostile,
+      armor: summon.armor,
+      statuses: summon.statuses,
+      sealed: summon.sealedBy !== undefined,
+      frame: COLORS.panelBorder,
+      alive: true,
+      tooltip: () => [name, `HP ${summon.hp}/${summon.maxHp}${summon.armor > 0 ? ` · Giáp ${summon.armor}` : ""}`],
+    });
+  }
+
+  /** The living Linh Thú of `heroes`, left to right from `startX` (the row's summon zone). */
+  private renderSummonRow(heroes: HeroState[], y: number, startX: number, hostile: boolean) {
+    heroes
+      .flatMap((hero) => this.summonOfHero(hero.id) ?? [])
+      .forEach((summon, index) => this.renderSummonPanel(summon, startX + index * (SUMMON_W + 12), y, hostile));
   }
 
   private renderEnemies() {
     const enemies = this.state.enemies;
-    const panelW = this.isCoop ? 280 : 220;
-    const panelH = 140;
+    const bossId = this.state.boss?.enemyId;
+    const xs = rowXs(enemies.length, (bossId !== undefined ? BOSS_W : UNIT_W) + 42);
     enemies.forEach((enemy, index) => {
-      const cx = (WIDTH / (enemies.length + 1)) * (index + 1);
-      // Phong Ấn: the unit is sealed — its next-turn intents lose every non-damage effect.
-      if (enemy.sealedBy !== undefined) {
-        this.text(cx, 132, "⛨ Phong Ấn", 12, "#b9a8ff").setOrigin(0.5, 1);
-      }
-      const cy = 205;
-      const c = this.add.container(cx, cy);
-      this.root.add(c);
-      this.unitAnchors.set(enemy.id, { x: cx, y: cy });
-      this.unitViews.set(enemy.id, c);
-      const isValidTarget = this.validTargetIds.has(enemy.id);
-      const panel = this.add.rectangle(0, 0, panelW, panelH, COLORS.panelEnemy);
-      panel.setStrokeStyle(
-        this.targeting && isValidTarget ? 2 : 1,
-        this.targeting && isValidTarget ? COLORS.goldFill : COLORS.panelBorder,
-      );
-      c.add(panel);
-      const enemyArt = this.coverImage(
-        `enemies:${enemy.defId}`,
-        0,
-        0,
-        panelW - 6,
-        panelH - 6,
-        c,
-      );
-      if (enemyArt) {
-        c.add(this.add.rectangle(0, 0, panelW - 6, panelH - 6, 0x0a0e20, 0.45));
-      }
       const def = this.gameData.enemies[enemy.defId]!;
-      this.fitWidth(this.text(0, -panelH / 2 + 16, def.name, 15, COLORS.text, c).setOrigin(0.5), panelW - 20);
-      // Right of the armor line: the title row belongs to the name alone (long boss names).
-      this.text(
-        panelW / 2 - 14,
-        12,
-        `NL ${enemy.moonPower}${enemy.moonReserve > 0 ? ` +${enemy.moonReserve}` : ""}`,
-        12,
-        COLORS.gold,
-        c,
-      ).setOrigin(1, 0);
-      this.hpBar(-panelW / 2 + 14, -14, panelW - 28, enemy.hp, enemy.maxHp, COLORS.hpFillEnemy, c);
-      this.renderBossExtras(enemy, def, c, panelW, panelH);
-      if (enemy.armor > 0) {
-        this.text(-panelW / 2 + 14, 12, `🛡 ${enemy.armor}`, 12, COLORS.armor, c);
-      }
-      this.statusChips(-panelW / 2 + 14, 38, enemy.statuses, panelW - 28, c);
-      if (!enemy.alive) {
-        c.add(this.add.rectangle(0, 0, panelW, panelH, 0x000000, 0.55));
-        this.text(0, 0, "Ngã", 20, "#ffffff", c).setOrigin(0.5);
-      } else if (enemy.statuses.some((s) => s.id === "stealth")) {
-        c.add(this.add.rectangle(0, 0, panelW, panelH, 0x8899ff, 0.12));
-      }
-      if (this.targeting && !isValidTarget) c.setAlpha(0.4);
-      this.unitPanelHit(panel, panelW, panelH, enemy.id);
+      const boss = enemy.id === bossId && def.phases !== undefined;
+      const w = boss ? BOSS_W : UNIT_W;
+      const h = boss ? BOSS_H : UNIT_H;
+      const c = this.renderUnitCard({
+        id: enemy.id,
+        x: xs[index]!,
+        y: TOP_ROW_Y,
+        w,
+        h,
+        artKey: `enemies:${enemy.defId}`,
+        name: def.name,
+        hp: enemy.hp,
+        hostile: true,
+        armor: enemy.armor,
+        statuses: enemy.statuses,
+        sealed: enemy.sealedBy !== undefined,
+        frame: COLORS.panelBorder,
+        alive: enemy.alive,
+        stealth: enemy.statuses.some((s: StatusInstance) => s.id === "stealth"),
+        tooltip: () => this.enemyTooltip(enemy, def),
+      });
+      if (boss) this.renderBossBadges(c, w, h);
     });
   }
 
-  /**
-   * Co-op boss furniture (`17` §9.3): the phase ticks on the HP bar (each
-   * `phases[i].hpBelow` threshold) and, in the final phase, the revive
-   * countdown before the boss stands back up.
-   */
-  private renderBossExtras(
-    enemy: EnemyState,
-    def: { name: string; phases?: { hpBelow: number }[] },
-    c: Phaser.GameObjects.Container,
-    panelW: number,
-    panelH: number,
-  ): void {
+  /** Nguyệt Lực stays public (`01` §9.2) but off the card: the enemy's hover tooltip. */
+  private enemyTooltip(enemy: EnemyState, def: { name: string; phases?: { hpBelow: number }[] }): string[] {
     const boss = this.state.boss;
-    if (boss === undefined || boss.enemyId !== enemy.id || def.phases === undefined) return;
     const phases = def.phases;
-    const barX = -panelW / 2 + 14;
-    const barW = panelW - 28;
-    // Threshold marks where the NEXT phase begins (phase 1's hpBelow is 1).
-    for (let i = 1; i < phases.length; i++) {
-      const markX = barX + phases[i]!.hpBelow * barW;
-      c.add(this.add.rectangle(markX, -14, 2, 20, 0xffd080));
-    }
-    this.text(
-      barX + barW - 4,
-      -panelH / 2 + 32,
-      `Giai đoạn ${boss.phase}/${phases.length}`,
-      11,
-      COLORS.gold,
-      c,
-    ).setOrigin(1, 0.5);
+    const bossLines =
+      boss !== undefined && boss.enemyId === enemy.id && phases !== undefined
+        ? [
+            `Giai đoạn ${boss.phase}/${phases.length}` +
+              (boss.phase < phases.length ? ` — sang giai đoạn sau khi HP dưới ${Math.round(phases[boss.phase]!.hpBelow * 100)}%` : ""),
+            boss.reviveCountdown !== null ? `Hồi sinh sau ${boss.reviveCountdown} vòng` : "",
+          ]
+        : [];
+    return [
+      def.name,
+      `HP ${enemy.hp}/${enemy.maxHp}${enemy.armor > 0 ? ` · Giáp ${enemy.armor}` : ""}`,
+      `Nguyệt Lực ${enemy.moonPower}${enemy.moonReserve > 0 ? ` (+${enemy.moonReserve} Dự Trữ)` : ""}`,
+      enemy.sealedBy !== undefined ? "Phong Ấn: chiêu lượt tới chỉ còn damage" : "",
+      ...bossLines,
+    ];
+  }
+
+  /** Co-op boss (`17` §9.3): phase badge top-right, revive countdown under it. */
+  private renderBossBadges(c: Phaser.GameObjects.Container, w: number, h: number): void {
+    const boss = this.state.boss!;
+    const phases = this.gameData.enemies[this.state.enemies.find((e) => e.id === boss.enemyId)!.defId]!.phases!;
+    this.badge(w / 2 - 18, -h / 2 + 18, 16, `${boss.phase}/${phases.length}`, COLORS.goldFill, c, 0x0a0e20, 11, COLORS.gold);
     if (boss.reviveCountdown !== null) {
-      this.text(
-        0,
-        panelH / 2 - 18,
-        `☾ Hồi sinh sau ${boss.reviveCountdown} vòng`,
-        12,
-        "#ff8090",
-        c,
-      ).setOrigin(0.5);
+      this.badge(w / 2 - 18, -h / 2 + 52, 14, `☾${boss.reviveCountdown}`, 0xff8090, c, 0x3a1020, 11, "#ff8090");
     }
   }
 
   /**
-   * Co-op (`17` §9.3): the partner's hand, shrunk — visible but not playable.
-   * Cards keep their owner-colored border and show a tooltip on hover.
+   * Co-op (`17` §9.3): the partner's hand as small cost tiles under the top-left
+   * plate — visible but not playable; hover shows the card.
    */
   private renderPartnerHand(): void {
     const partner = this.state.players.find((p) => p.index !== this.mySeat);
     if (!partner) return;
-    const hand = partner.hand;
-    const mw = 46;
-    const mh = 50;
-    const spacing = mw + 4;
-    const startX = WIDTH / 2 - ((hand.length - 1) * spacing) / 2;
-    hand.forEach((instanceId, index) => {
-      const x = startX + index * spacing;
-      const y = 528;
+    partner.hand.forEach((instanceId, index) => {
+      const x = 34 + index * 34;
+      const y = 86;
       const instance = this.state.cards[instanceId];
       const card = instance ? cardDefOf(this.gameData, this.state, instance) : undefined;
       if (instance === undefined || card === undefined) return;
-      const mini = this.add.container(x, y);
-      this.root.add(mini);
-      const ownerId = instance.ownerIds[0]!;
-      const back = this.add.rectangle(0, 0, mw, mh, 0x141b33);
-      back.setStrokeStyle(1, OWNER_COLORS[ownerId] ?? COLORS.panelBorder);
-      mini.add(back);
-      mini.add(
-        this.add
-          .text(-mw / 2 + 12, -mh / 2 + 10, `${card.cost}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.text })
-          .setOrigin(0.5),
-      );
-      mini.add(
-        this.add
-          .text(0, 4, card.name, {
-            ...TEXT_BASE,
-            fontSize: "8px",
-            color: COLORS.text,
-            align: "center",
-            wordWrap: { width: mw - 6 },
-          })
-          .setOrigin(0.5, 0.5),
-      );
-      mini.setInteractive({
-        hitArea: new Phaser.Geom.Rectangle(-mw / 2, -mh / 2, mw, mh),
-        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-      });
-      mini.on("pointerover", () => {
+      const tile = this.add.rectangle(x, y, 30, 40, 0x141b33).setStrokeStyle(1, OWNER_COLORS[instance.ownerIds[0]!] ?? 0x5f8fdd);
+      this.root.add(tile);
+      this.text(x, y, `${card.cost}`, 12).setOrigin(0.5);
+      tile.setInteractive();
+      tile.on("pointerover", () => {
         this.tooltip?.destroy();
-        this.tooltip = showCardTooltip(this, x + mw / 2 + 8, y, this.gameData, card);
+        this.tooltip = showCardTooltip(this, x + 20, y + 200, this.gameData, card);
       });
-      mini.on("pointerout", () => {
+      tile.on("pointerout", () => {
         this.tooltip?.destroy();
         this.tooltip = null;
       });
     });
   }
 
-  /** PvP (`17` §7.3): the opponent's heroes take the enemy row, intents hidden. */
+  /** PvP (`17` §7.3): the opponent's heroes take the top row, intents hidden. */
   private renderOpponentRow() {
     const opponents = this.state.heroes.filter((hero) => hero.player !== this.mySeat);
-    const panelW = 220;
-    const panelH = 140;
+    const xs = rowXs(opponents.length, UNIT_W + 42);
     opponents.forEach((hero, index) => {
-      const cx = (WIDTH / (opponents.length + 1)) * (index + 1);
-      // Phong Ấn (`01` §5.6): the hero is sealed — its cards lose every non-damage effect next turn.
-      if (hero.sealedBy !== undefined) {
-        this.text(cx, 132, "⛨ Phong Ấn", 12, "#b9a8ff").setOrigin(0.5, 1);
-      }
-      const cy = 205;
-      const c = this.add.container(cx, cy);
-      this.root.add(c);
-      this.unitAnchors.set(hero.id, { x: cx, y: cy });
-      this.unitViews.set(hero.id, c);
-      const isValidTarget = this.validTargetIds.has(hero.id);
-      const panel = this.add.rectangle(0, 0, panelW, panelH, COLORS.panelEnemy);
-      panel.setStrokeStyle(
-        this.targeting && isValidTarget ? 2 : 1,
-        this.targeting && isValidTarget ? COLORS.goldFill : COLORS.panelBorder,
-      );
-      c.add(panel);
-      const upKey = `heroes:${hero.defId}_up`;
-      const heroArt = this.coverImage(
-        hero.leveledUp && this.textures.exists(upKey) ? upKey : `heroes:${hero.defId}`,
-        0, 0, panelW - 6, panelH - 6, c,
-      );
-      if (heroArt) c.add(this.add.rectangle(0, 0, panelW - 6, panelH - 6, 0x0a0e20, 0.45));
-      const def = this.gameData.heroes[hero.defId]!;
-      this.fitWidth(this.text(0, -panelH / 2 + 16, `${def.name}${hero.leveledUp ? " ★" : ""}`, 15, COLORS.text, c).setOrigin(0.5), panelW - 20);
-      this.hpBar(-panelW / 2 + 14, -14, panelW - 28, hero.hp, hero.maxHp, COLORS.hpFillEnemy, c);
-      if (hero.armor > 0) this.text(-panelW / 2 + 14, 12, `🛡 ${hero.armor}`, 12, COLORS.armor, c);
-      this.statusChips(-panelW / 2 + 14, 38, hero.statuses, panelW - 28, c);
-      if (!hero.alive) {
-        c.add(this.add.rectangle(0, 0, panelW, panelH, 0x000000, 0.55));
-        this.text(0, 0, "Ngã", 20, "#ffffff", c).setOrigin(0.5);
-      }
-      if (this.targeting && !isValidTarget) c.setAlpha(0.4);
-      this.unitPanelHit(panel, panelW, panelH, hero.id);
-      // Linh Thú (`01` §17): no room under the opponent row — the panel sits in
-      // the gap right of its hero (opposing summons are `enemy` targets, §17.3).
-      const summon = this.summonOfHero(hero.id);
-      if (summon) this.renderSummonPanel(summon, cx + panelW / 2 + 50, cy, 92);
+      this.renderHeroCard(hero, xs[index]!, TOP_ROW_Y, UNIT_W, UNIT_H, true, COLORS.panelBorder);
     });
+    // Opposing Linh Thú are `enemy` targets (`01` §17.3).
+    this.renderSummonRow(opponents, TOP_ROW_Y, (xs.at(-1) ?? WIDTH / 2) + UNIT_W / 2 + 34 + SUMMON_W / 2, true);
   }
 
-  /** The opponent's hand — face-down card backs only (`17` §4.8). */
+  /** The opponent's hand — face-down card backs under the top-left plate (`17` §4.8). */
   private renderOpponentHand() {
     const oppSeat = this.state.players.find((p) => p.index !== this.mySeat);
     if (!oppSeat) return;
-    const count = oppSeat.hand.length;
-    const startX = WIDTH / 2 - ((count - 1) * 34) / 2;
-    for (let i = 0; i < count; i++) {
-      const back = this.add
-        .rectangle(startX + i * 34, 110, 30, 44, 0x2c3e6e)
-        .setStrokeStyle(1, COLORS.panelBorder);
-      this.root.add(back);
+    for (let i = 0; i < oppSeat.hand.length; i++) {
+      this.root.add(this.add.rectangle(30 + i * 26, 84, 22, 32, 0x2c3e6e).setStrokeStyle(1, COLORS.panelBorder));
     }
   }
 
   /** Fixed emote list + mute (`17` §7.3, `pvp-config.emotes`); one send per 3 s. */
   private renderEmoteControls(): void {
-    const btn = this.add.rectangle(1204, 36, 110, 30, COLORS.button);
-    btn.setStrokeStyle(1, this.emotePanel ? COLORS.goldFill : COLORS.panelBorder);
+    const btn = this.badge(WIDTH - 88, 36, 16, session.emotesMuted ? "🔕" : "💬", this.emotePanel ? COLORS.goldFill : COLORS.panelBorder, this.root, COLORS.button, 13);
     btn.setInteractive({ useHandCursor: true });
-    btn.on("pointerover", () => btn.setFillStyle(0x3a5090));
-    btn.on("pointerout", () => btn.setFillStyle(COLORS.button));
     btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (pointer.button === 0) {
         this.emotePanel = !this.emotePanel;
         this.renderAll();
       }
     });
-    this.root.add(btn);
-    this.text(1204, 36, `${session.emotesMuted ? "🔕" : "💬"} Biểu cảm`, 12).setOrigin(0.5);
     if (!this.emotePanel) return;
     const emotes = (this.isCoop ? this.gameData.coopConfig.emotes : this.gameData.pvpConfig.emotes) ?? [];
     const layer = this.add.container(0, 0).setDepth(120);
@@ -1065,101 +1045,67 @@ export class CombatScene extends Phaser.Scene {
       .setDepth(201);
   }
 
+  /**
+   * A hero's portrait card: HP / armor badges, status icons, and top-right the
+   * Thức Tỉnh badge — a ★ ringed by its progress, solid gold once awakened.
+   */
+  private renderHeroCard(hero: HeroState, x: number, y: number, w: number, h: number, hostile: boolean, frame: number) {
+    const def = this.gameData.heroes[hero.defId]!;
+    const upKey = `heroes:${hero.defId}_up`;
+    // Shown from state: the second form's name, the Tinh Hồn 2 threshold (`01` §8).
+    const passiveName = hero.levelUpForm === "alt" ? def.altLevelUp.name : def.levelUp.name;
+    const threshold = hero.constellation >= 2 ? def.levelUp.constellationThreshold : def.levelUp.threshold;
+    const c = this.renderUnitCard({
+      id: hero.id,
+      x,
+      y,
+      w,
+      h,
+      artKey: hero.leveledUp && this.textures.exists(upKey) ? upKey : `heroes:${hero.defId}`,
+      name: def.name,
+      nameColor: hero.leveledUp ? COLORS.gold : COLORS.text,
+      hp: hero.hp,
+      hostile,
+      armor: hero.armor,
+      statuses: hero.statuses,
+      sealed: hero.sealedBy !== undefined,
+      frame: hero.leveledUp ? COLORS.goldFill : frame,
+      alive: hero.alive,
+      stealth: hero.statuses.some((s) => s.id === "stealth"),
+      tooltip: () => [
+        `${def.name}${hero.leveledUp ? " ★" : ""}`,
+        `HP ${hero.hp}/${hero.maxHp}${hero.armor > 0 ? ` · Giáp ${hero.armor}` : ""}`,
+        hero.leveledUp ? `${passiveName} — đã Thức Tỉnh` : `${passiveName}: ${hero.levelUpCounter}/${threshold}`,
+        hero.sealedBy !== undefined ? "Phong Ấn: lá lượt tới chỉ còn damage" : "",
+      ],
+    });
+    const bx = w / 2 - 16;
+    const by = -h / 2 + 16;
+    this.badge(bx, by, 13, "★", COLORS.goldFill, c, hero.leveledUp ? COLORS.goldFill : 0x0a0e20, 13, hero.leveledUp ? "#0a0e20" : COLORS.dimText);
+    const progress = hero.leveledUp ? 0 : Math.min(1, hero.levelUpCounter / threshold);
+    if (progress > 0) {
+      const arc = this.add.graphics();
+      arc.lineStyle(3, COLORS.goldFill).beginPath().arc(bx, by, 13, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2).strokePath();
+      c.add(arc);
+    }
+  }
+
   private renderHeroes() {
     const coop = this.isCoop;
-    // Co-op (`17` §9.3): all 6 heroes — own 3 left, partner's 3 right.
-    const heroes = this.state.mode === "pvp"
-      ? this.state.heroes.filter((hero) => hero.player === this.mySeat)
-      : coop
-        ? [
-            ...this.state.heroes.filter((hero) => hero.player === this.mySeat),
-            ...this.state.heroes.filter((hero) => hero.player !== this.mySeat),
-          ]
-        : this.state.heroes;
-    const panelW = coop ? 190 : 240;
-    const panelH = coop ? 150 : 170;
-    // Rows sit a bit higher than the enemy row suggests: a hero's Linh Thú
-    // panel (`01` §17) hangs directly below and must stay clear of the hand.
-    const cy = coop ? 380 : 394;
-    if (coop) {
-      const partnerName = this.netMatch?.others[0]?.username ?? "Đồng đội";
-      this.text(322, 290, "Bạn", 13, COLORS.gold).setOrigin(0.5);
-      this.text(958, 290, `Đồng đội ${partnerName}`, 13, "#8fb8ff").setOrigin(0.5);
-      this.root.add(this.add.rectangle(WIDTH / 2, 420, 1, 175, 0x2a3454));
-    }
+    const own = this.state.heroes.filter((hero) => hero.player === this.mySeat);
+    // Co-op (`17` §9.3): all 6 heroes — own 3 left, partner's 3 right (blue frames).
+    const partner = coop ? this.state.heroes.filter((hero) => hero.player !== this.mySeat) : [];
+    const heroes = this.state.mode === "pvp" || coop ? [...own, ...partner] : this.state.heroes;
+    const w = coop ? COOP_HERO_W : HERO_W;
+    const h = coop ? COOP_HERO_H : HERO_H;
+    const xs = coop
+      ? heroes.map((_, index) => WIDTH / 2 + (index < 3 ? -1 : 1) * (18 + w / 2) + (index < 3 ? index - 2 : index - 3) * (w + 12))
+      : rowXs(heroes.length, w + 34);
     heroes.forEach((hero, index) => {
-      const cx = coop
-        ? index < 3
-          ? 122 + index * 200
-          : 758 + (index - 3) * 200
-        : (WIDTH / (heroes.length + 1)) * (index + 1);
-      const c = this.add.container(cx, cy);
-      this.root.add(c);
-      this.unitAnchors.set(hero.id, { x: cx, y: cy });
-      this.unitViews.set(hero.id, c);
-      const isValidTarget = this.validTargetIds.has(hero.id);
-      const panel = this.add.rectangle(0, 0, panelW, panelH, COLORS.panelHero);
-      // Seat-colored frame in co-op: own heroes gold, partner's blue (`17` §9.3).
-      const seatColor = coop && hero.player !== this.mySeat ? 0x5f8fdd : COLORS.panelBorder;
-      panel.setStrokeStyle(
-        this.targeting && isValidTarget ? 2 : hero.leveledUp ? 2 : coop ? 2 : 1,
-        this.targeting && isValidTarget
-          ? COLORS.goldFill
-          : hero.leveledUp
-            ? COLORS.goldFill
-            : seatColor,
-      );
-      c.add(panel);
-      const upKey = `heroes:${hero.defId}_up`;
-      const heroArt = this.coverImage(
-        hero.leveledUp && this.textures.exists(upKey) ? upKey : `heroes:${hero.defId}`,
-        0,
-        0,
-        panelW - 6,
-        panelH - 6,
-        c,
-      );
-      if (heroArt) {
-        c.add(this.add.rectangle(0, 0, panelW - 6, panelH - 6, 0x0a0e20, 0.45));
-      }
-      const def = this.gameData.heroes[hero.defId]!;
-      const star = hero.leveledUp ? " ★" : "";
-      this.text(
-        0,
-        -panelH / 2 + 18,
-        `${def.name}${star}`,
-        16,
-        hero.leveledUp ? COLORS.gold : COLORS.text,
-        c,
-      ).setOrigin(0.5);
-      this.hpBar(-panelW / 2 + 16, -30, panelW - 32, hero.hp, hero.maxHp, COLORS.hpFillHero, c);
-      if (hero.armor > 0) {
-        this.text(-panelW / 2 + 16, -4, `🛡 ${hero.armor}`, 12, COLORS.armor, c);
-      }
-      this.statusChips(-panelW / 2 + 16, 22, hero.statuses, panelW - 32, c);
-      // Shown from state: the second form's name, the Tinh Hồn 2 threshold (`01` §8).
-      const passiveName = hero.levelUpForm === "alt" ? def.altLevelUp.name : def.levelUp.name;
-      const threshold = hero.constellation >= 2 ? def.levelUp.constellationThreshold : def.levelUp.threshold;
-      const progress = hero.leveledUp ? passiveName : `${passiveName} ${hero.levelUpCounter}/${threshold}`;
-      this.text(0, panelH / 2 - 20, progress, 11, COLORS.dimText, c).setOrigin(0.5);
-      if (!hero.alive) {
-        c.add(this.add.rectangle(0, 0, panelW, panelH, 0x000000, 0.55));
-        this.text(0, 0, "Ngã", 20, "#ffffff", c).setOrigin(0.5);
-        // Hồi Hồn (`18` §3.5): a fallen Hero can be a `fallenAlly` pick — keep
-        // the gold frame readable over the dim overlay (the overlay rects are
-        // not interactive, so the panel below still takes the click).
-        if (this.targeting && isValidTarget) {
-          c.add(this.add.rectangle(0, 0, panelW, panelH).setStrokeStyle(2, COLORS.goldFill));
-        }
-      }
-      if (this.targeting && !isValidTarget) c.setAlpha(0.4);
-      this.unitPanelHit(panel, panelW, panelH, hero.id);
-      // Linh Thú (`01` §17): its compact panel hangs directly below the owner's.
-      const summon = this.summonOfHero(hero.id);
-      if (summon) {
-        this.renderSummonPanel(summon, cx, cy + panelH / 2 + 4 + SUMMON_H / 2);
-      }
+      const frame = coop && hero.player !== this.mySeat ? 0x5f8fdd : COLORS.panelBorder;
+      this.renderHeroCard(hero, xs[index]!, HERO_ROW_Y, w, h, false, frame);
     });
+    this.renderSummonRow(heroes, HERO_ROW_Y, Math.max(...xs) + w / 2 + 34 + SUMMON_W / 2, false);
     // Hộ Vệ (`18` §2.2): a thin gold link from each guarded hero to its guardian.
     // Anchors for both rows (opponent row renders before this) already exist.
     const links = this.add.graphics();
@@ -1175,6 +1121,29 @@ export class CombatScene extends Phaser.Scene {
     }
     if (drewLink) this.root.add(links);
     else links.destroy();
+  }
+
+  /**
+   * A seat's draw pile as card backs peeking from the left edge, with diamonds:
+   * cards left (red when 6 or fewer) and the discard count under it.
+   */
+  private renderPile(seat: PlayerState, y: number, color: number, owner: string) {
+    const { x } = COMBAT_LAYOUT.pile;
+    this.root.add(this.add.rectangle(x + 5, y + 5, 84, 120, 0x1b2448).setStrokeStyle(1, COLORS.panelBorder));
+    this.root.add(this.add.rectangle(x, y, 84, 120, 0x223060).setStrokeStyle(2, color));
+    this.text(x + 22, y, "☾", 22, COLORS.gold).setOrigin(0.5);
+    const left = seat.drawPile.length;
+    const low = left <= 6;
+    this.root.add(this.add.rectangle(84, y - 22, 28, 28, low ? 0x7a2a2a : color).setAngle(45).setStrokeStyle(1, 0x0a0e20));
+    this.text(84, y - 22, `${left}`, 13, low ? "#ffd0d0" : "#ffffff").setOrigin(0.5);
+    this.root.add(this.add.rectangle(84, y + 24, 22, 22, 0x3a3f55).setAngle(45).setStrokeStyle(1, 0x0a0e20));
+    this.text(84, y + 24, `${seat.discardPile.length}`, 11, COLORS.dimText).setOrigin(0.5);
+    const hit = this.add.zone(48, y, 100, 130).setInteractive();
+    this.root.add(hit);
+    this.hoverTooltip(hit, () => ({ x: 104, y: y - 40 }), () => [
+      `Chồng bài ${owner}`,
+      `Còn ${left} lá · Bỏ ${seat.discardPile.length} lá`,
+    ]);
   }
 
   private renderCard(instanceId: string, x: number, y: number) {
@@ -1337,17 +1306,20 @@ export class CombatScene extends Phaser.Scene {
       this.tooltip?.destroy();
       const hintName =
         hintComboId !== undefined ? this.gameData.coopCombos[hintComboId]?.name : undefined;
+      // Hand cards peek from the bottom edge: hovering always lifts them into full view.
+      const inHand = y === COMBAT_LAYOUT.handY;
+      const liftY = inHand ? HAND_LIFT_Y : y - 18;
       this.tooltip = showCardTooltip(
         this,
         x + CARD_W / 2 + 10,
-        y - 40,
+        liftY - 40,
         this.gameData,
         cardDefOf(this.gameData, this.state, instance)!,
         hintName !== undefined ? [`⚡ ${hintName} — đồng đội đã đánh nửa kia`] : [],
       );
-      if (!broken && (this.state.status === "playerTurn" || this.state.status === "mulligan")) {
+      if (!broken && (inHand || this.state.status === "playerTurn" || this.state.status === "mulligan")) {
         container.setScale(1.15);
-        container.y = y - 18;
+        container.y = liftY;
         container.setDepth(10);
         // Depth does not reorder a container's children: lift the card over its neighbours.
         this.root.bringToTop(container);
@@ -1370,7 +1342,7 @@ export class CombatScene extends Phaser.Scene {
     const card = cardDefOf(this.gameData, this.state, this.state.cards[this.targeting!]!)!;
     this.text(
       WIDTH / 2,
-      92,
+      COMBAT_LAYOUT.midY,
       `Chọn mục tiêu cho ${card.name} — chuột phải / Esc để hủy`,
       13,
       COLORS.gold,
@@ -1379,13 +1351,13 @@ export class CombatScene extends Phaser.Scene {
 
   private renderMulliganBar() {
     if (this.state.players[this.mySeat]?.mulliganDone) {
-      this.text(WIDTH / 2, 520, this.isCoop ? "Chờ đồng đội Đổi Bài…" : "Chờ đối thủ Đổi Bài…", 14, COLORS.dimText).setOrigin(0.5);
+      this.text(WIDTH / 2, 550, this.isCoop ? "Chờ đồng đội Đổi Bài…" : "Chờ đối thủ Đổi Bài…", 14, COLORS.dimText).setOrigin(0.5);
       return;
     }
     const picks = this.mulliganPicks.size;
-    this.text(WIDTH / 2, 520, `Đổi Bài: chọn tối đa ${this.gameData.combatConfig.maxMulligan} lá để đổi`, 14, COLORS.gold).setOrigin(0.5);
+    this.text(WIDTH / 2, 550, `Đổi Bài: chọn tối đa ${this.gameData.combatConfig.maxMulligan} lá để đổi`, 14, COLORS.gold).setOrigin(0.5);
     // Where the end-turn button sits: the phase's main action keeps one place.
-    this.endScreenButton(1150, 660, picks > 0 ? `Đổi (${picks})` : "Giữ nguyên", () => {
+    this.endScreenButton(1180, COMBAT_LAYOUT.endTurn.y, picks > 0 ? `Đổi (${picks})` : "Giữ nguyên", () => {
       const instanceIds = [...this.mulliganPicks];
       this.mulliganPicks.clear();
       this.dispatch({ type: "mulligan", instanceIds });
@@ -1689,27 +1661,8 @@ export class CombatScene extends Phaser.Scene {
 
   private renderBottomBar() {
     const seat = this.state.players[this.mySeat] ?? activePlayerState(this.state);
-    const power = seat.moonPower;
-    const reserve = Math.min(seat.moonReserve, power);
     // Nothing to spend while Đổi Bài is open.
-    if (this.state.status !== "mulligan") {
-      this.text(30, 545, "Nguyệt Lực", 13, COLORS.dimText);
-      // One dot per point (Dự Trữ last, green), 7 per row: fixed steps, so dots never overlap.
-      const reserveFill = Phaser.Display.Color.HexStringToColor(COLORS.costCheap).color;
-      for (let i = 0; i < power; i++) {
-        const dot = this.add.circle(37 + (i % 7) * 17, 572 + Math.floor(i / 7) * 16, 6, i < power - reserve ? COLORS.goldFill : reserveFill);
-        dot.setStrokeStyle(1, 0x0a0e20);
-        this.root.add(dot);
-      }
-      const dotRows = Math.max(1, Math.ceil(power / 7));
-      const infoY = 584 + dotRows * 16;
-      this.text(30, infoY - 4, reserve > 0 ? `${power} (Dự Trữ ${reserve})` : `${power}`, 12, COLORS.dimText);
-      const extras = [
-        seat.cardsPlayedThisTurn > 0 ? `Liên Hoàn ${seat.cardsPlayedThisTurn}` : "",
-        seat.moonPowerBonus > 0 ? `+${seat.moonPowerBonus}/lượt` : "",
-      ].filter((part) => part.length > 0);
-      if (extras.length > 0) this.text(30, infoY + 16, extras.join("  ·  "), 12, COLORS.gold);
-    }
+    if (this.state.status !== "mulligan") this.renderMoonPower(seat);
 
     // A full hand (up to `handLimit`) squeezes its cards to stay inside the zone;
     // the hovered card is lifted above its neighbours in renderCard.
@@ -1718,63 +1671,68 @@ export class CombatScene extends Phaser.Scene {
     const handWidth = (hand.length - 1) * spacing + CARD_W;
     const left = Phaser.Math.Clamp(WIDTH / 2 - handWidth / 2, HAND_LEFT, HAND_RIGHT - handWidth);
     hand.forEach((instanceId, index) => {
-      this.renderCard(instanceId, left + CARD_W / 2 + index * spacing, 632);
+      this.renderCard(instanceId, left + CARD_W / 2 + index * spacing, COMBAT_LAYOUT.handY);
     });
 
-    const pile = seat.drawPile.length;
-    this.text(1090, 548, `Chồng bài ${pile}`, 16, pile <= 6 ? "#ff8080" : COLORS.text);
-    this.text(1090, 576, `Bỏ ${seat.discardPile.length}`, 13, COLORS.dimText);
-
-    if (this.state.status === "playerTurn" || (this.isCoop && this.state.status === "choosing")) {
-      const btnX = 1150;
-      const btnY = 660;
-      // Co-op (`17` §9.3): "Xong" marks this seat done; the shared turn ends
-      // only when both seats are done (or the 45 s clock runs out).
-      const myDone = this.isCoop && seat.done === true;
-      const btn = this.add.rectangle(btnX, btnY, 190, 56, myDone ? 0x23283c : COLORS.button);
-      btn.setStrokeStyle(1, myDone ? COLORS.panelBorder : COLORS.goldFill);
-      if (!myDone) {
-        btn.setInteractive({ useHandCursor: true });
-        btn.on("pointerover", () => btn.setFillStyle(0x3a5090));
-        btn.on("pointerout", () => btn.setFillStyle(COLORS.button));
-        btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-          if (pointer.button === 0 && !this.inputLocked) this.dispatch({ type: "endTurn" });
-        });
-      }
-      this.root.add(btn);
-      this.text(btnX, btnY, this.isCoop ? (myDone ? "ĐÃ XONG ✓" : "XONG") : "KẾT THÚC LƯỢT", 15).setOrigin(0.5);
-      this.text(
-        btnX,
-        btnY + 30,
-        `Giữ ${Math.min(this.gameData.combatConfig.moonReserveMax, seat.moonPower)}`,
-        11,
-        COLORS.dimText,
-      ).setOrigin(0.5, 0);
-      if (this.isCoop) {
-        const partner = this.state.players.find((p) => p.index !== this.mySeat);
-        if (partner) {
-          this.text(
-            1090,
-            612,
-            `Đồng đội: ${partner.done ? "đã xong ✓" : "đang đánh…"}`,
-            12,
-            partner.done ? COLORS.gold : COLORS.dimText,
-          );
-        }
-      }
-    }
-    if (this.netMatch && !this.netMatch.ended) {
-      const btn = this.add.rectangle(1150, 590, 100, 30, 0x40202a);
-      btn.setStrokeStyle(1, 0x884455);
-      btn.setInteractive({ useHandCursor: true });
-      btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        if (pointer.button !== 0) return;
-        void confirmModal(this, "Bỏ cuộc trận này? Trận tính là thua.", { label: "Bỏ cuộc", danger: true }).then((ok) => {
-          if (ok && this.netMatch && !this.netMatch.ended) this.netMatch.resign();
-        });
-      });
-      this.root.add(btn);
-      this.text(1150, 590, "Bỏ cuộc", 12, "#ff9090").setOrigin(0.5);
+    this.renderPile(seat, COMBAT_LAYOUT.pile.y, 0x3f7fd0, "của bạn");
+    if (this.state.status !== "mulligan" && this.state.status !== "won" && this.state.status !== "lost") {
+      this.renderEndTurn(seat);
     }
   }
+
+  /** Top-right, under the settings icon: Nguyệt Lực, Dự Trữ as a green badge when kept. */
+  private renderMoonPower(seat: PlayerState) {
+    const { x, y } = COMBAT_LAYOUT.moonPower;
+    const power = seat.moonPower;
+    const reserve = Math.min(seat.moonReserve, power);
+    const orb = this.badge(x, y, 30, `${power}`, COLORS.goldFill, this.root, 0x2a2410, 24, COLORS.gold);
+    if (reserve > 0) this.badge(x, y + 46, 13, `${reserve}`, 0x7fe07f, this.root, 0x1f4a2a, 12);
+    orb.setInteractive();
+    this.hoverTooltip(orb, () => ({ x: x - 250, y: y + 34 }), () => [
+      `Nguyệt Lực ${power}`,
+      reserve > 0 ? `Trong đó ${reserve} Dự Trữ (giữ từ lượt trước)` : "",
+      seat.moonPowerBonus > 0 ? `+${seat.moonPowerBonus} mỗi lượt` : "",
+    ]);
+  }
+
+  /**
+   * Bottom-right round button: ⌛ ends the turn (✓ marks the seat done in co-op,
+   * `17` §9.3) and shows the round. Dim while it is not this seat's move; the
+   * tooltip says whose turn it is.
+   */
+  private renderEndTurn(seat: PlayerState) {
+    const { x, y } = COMBAT_LAYOUT.endTurn;
+    const coop = this.isCoop;
+    const canAct = this.state.status === "playerTurn" || (coop && this.state.status === "choosing");
+    const myDone = coop && seat.done === true;
+    const active = canAct && !myDone;
+    const btn = this.add.circle(x, y, 46, active ? COLORS.button : 0x23283c, 0.95);
+    btn.setStrokeStyle(active ? 2 : 1, active ? COLORS.goldFill : COLORS.panelBorder);
+    this.root.add(btn);
+    this.text(x, y - 8, coop ? "✓" : "⌛", 26, active ? COLORS.gold : COLORS.dimText).setOrigin(0.5);
+    this.text(x, y + 22, `Vòng ${this.state.round}`, 11, active ? COLORS.text : COLORS.dimText).setOrigin(0.5);
+    btn.setInteractive({ useHandCursor: active });
+    if (active) {
+      btn.on("pointerover", () => btn.setFillStyle(0x3a5090, 0.95));
+      btn.on("pointerout", () => btn.setFillStyle(COLORS.button, 0.95));
+      btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0 && !this.inputLocked) this.dispatch({ type: "endTurn" });
+      });
+    }
+    const keep = Math.min(this.gameData.combatConfig.moonReserveMax, seat.moonPower);
+    const partnerDone = this.state.players.find((p) => p.index !== this.mySeat)?.done === true;
+    const waiting = myDone
+      ? partnerDone ? "Chờ lượt kẻ địch" : "Đã xong — chờ đồng đội"
+      : this.state.status === "enemyTurn"
+        ? "Lượt kẻ địch"
+        : this.state.status === "opponentTurn"
+          ? coop ? "Chờ đồng đội" : "Lượt đối thủ"
+          : "";
+    this.hoverTooltip(btn, () => ({ x: x - 290, y: y - 60 }), () =>
+      active
+        ? [`${coop ? "Xong lượt" : "Kết thúc lượt"} (phím E) — vòng ${this.state.round}`, `Giữ ${keep} Nguyệt Lực sang lượt sau`]
+        : [waiting, `Vòng ${this.state.round}`],
+    );
+  }
+
 }

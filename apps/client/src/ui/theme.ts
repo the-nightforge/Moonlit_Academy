@@ -75,6 +75,43 @@ export const STATUS_LABELS: Record<StatusId, string> = {
   charm: "Mê",
 };
 
+/**
+ * In-card status icon: glyph, ring color and the `keywords.json` entry whose
+ * name/text the hover tooltip shows (the rules text lives in data).
+ */
+export const STATUS_ICONS: Record<StatusId, { glyph: string; color: number; keywordId: string }> = {
+  stealth: { glyph: "◌", color: 0x8899ff, keywordId: "an_than" },
+  taunt: { glyph: "!", color: 0xe0a040, keywordId: "khieu_khich" },
+  weak: { glyph: "↓", color: 0x9a7fd0, keywordId: "suy_yeu" },
+  vulnerable: { glyph: "✖", color: 0xd06060, keywordId: "de_vo" },
+  mark: { glyph: "◎", color: 0xe06080, keywordId: "danh_dau" },
+  burn: { glyph: "♨", color: 0xe07030, keywordId: "thieu_dot" },
+  regen: { glyph: "✚", color: 0x58b368, keywordId: "hoi_phuc" },
+  strength: { glyph: "↑", color: 0xd05454, keywordId: "suc_manh" },
+  empower: { glyph: "✦", color: 0xf4d35e, keywordId: "cuong_hoa" },
+  freeze: { glyph: "❄", color: 0x7fc8e8, keywordId: "dong_bang" },
+  reflect: { glyph: "⟲", color: 0xb0b0c0, keywordId: "phan_don" },
+  guard: { glyph: "⛉", color: 0x9fd4ff, keywordId: "ho_ve" },
+  charm: { glyph: "♥", color: 0xe080c0, keywordId: "me_hoac" },
+};
+
+/** Phong Ấn (`01` §5.6) is not a status but shows as one more in-card icon. */
+export const SEAL_ICON = { glyph: "⛨", color: 0xb9a8ff, keywordId: "phong_an" } as const;
+
+/** Combat screen anchors the scene and the event animator share (design px). */
+export const COMBAT_LAYOUT = {
+  moon: { x: 640, y: 40 },
+  moonPower: { x: 1232, y: 104 },
+  endTurn: { x: 1200, y: 648 },
+  /** Own draw pile; an opponent's / partner's sits at the top row's height. */
+  pile: { x: 14, y: 400 },
+  /** Hand cards peek from the bottom edge; hovering lifts one fully. */
+  handY: 680,
+  /** Floating combat text between the two rows. */
+  midY: 284,
+  unitFlash: { w: 140, h: 200 },
+} as const;
+
 export const FACTION_LABELS: Record<Faction, string> = {
   thanhLoan: "Thanh Loan Viện",
   huyenVu: "Huyền Vũ Viện",

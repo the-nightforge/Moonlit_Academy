@@ -124,7 +124,7 @@ function sceneTexts(page: Page, key: string): Promise<string[]> {
   }, key);
 }
 
-test("7b: Linh Thú renders under its Hero and a fallen Hero can be picked for Hồi Hồn", async ({ page }) => {
+test("7b: Linh Thú renders beside the hero row and a fallen Hero can be picked for Hồi Hồn", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(String(error)));
   page.on("console", (message) => {
@@ -288,8 +288,8 @@ test("7b: Linh Thú renders under its Hero and a fallen Hero can be picked for H
     return [...scene.validTargetIds];
   });
   expect(validTargets).toContain("summon:f09");
-  // F09 is the leftmost hero (320, 394); its Linh Thú panel sits below at ~514.
-  await clickDesign(page, 320, 514);
+  // Heroes sit at x = 470/640/810, y = 400; Linh Thú cards line up right of the row (first at 956).
+  await clickDesign(page, 956, 400);
   await expect
     .poll(
       async () =>
@@ -341,8 +341,8 @@ test("7b: Linh Thú renders under its Hero and a fallen Hero can be picked for H
   });
   expect(fallenTargets).toEqual(["hero:f06"]);
   // The "Ngã" overlay is not interactive — the dead panel takes the click.
-  // F06 is the rightmost hero (960, 394).
-  await clickDesign(page, 960, 394);
+  // F06 is the rightmost hero (810, 400).
+  await clickDesign(page, 810, 400);
   await expect
     .poll(async () => (await probe(page)).heroes.find((h) => h.defId === "f06")?.alive, {
       timeout: 15_000,

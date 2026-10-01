@@ -1,9 +1,10 @@
 import type Phaser from "phaser";
 import { cardDefOf } from "rules";
 import type { CombatEvent, CombatState, GameData, IntentDef } from "rules";
-import { STATUS_LABELS, TEXT_BASE } from "./theme";
+import { COMBAT_LAYOUT, STATUS_LABELS, TEXT_BASE } from "./theme";
 
 const WIDTH = 1280;
+const { moon, moonPower, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
 
 export interface AnimContext {
   gameData: GameData;
@@ -194,10 +195,6 @@ export async function playEventQueue(
   }
 }
 
-function moonX(index: number): number {
-  return WIDTH / 2 + (index - 3.5) * 36;
-}
-
 function animateEvent(
   scene: Phaser.Scene,
   event: CombatEvent,
@@ -215,7 +212,7 @@ function animateEvent(
           : event.side === "hero"
             ? "— Lượt người chơi —"
             : "— Lượt kẻ địch —";
-      return floatText(scene, WIDTH / 2, 96, label, "#cfd6f0", 16, 350);
+      return floatText(scene, WIDTH / 2, midY, label, "#cfd6f0", 16, 350);
     }
     case "cardsDrawn": {
       const ids = event.instanceIds;
@@ -225,13 +222,13 @@ function animateEvent(
           (id, i) =>
             new Promise<void>((resolve) => {
               const rect = scene.add
-                .rectangle(1090, 560, 30, 44, 0x2c3e6e)
+                .rectangle(pile.x + 40, pile.y, 30, 44, 0x2c3e6e)
                 .setStrokeStyle(1, 0xf4d35e)
                 .setDepth(100);
               scene.tweens.add({
                 targets: rect,
                 x: WIDTH / 2 + (i - (ids.length - 1) / 2) * 70,
-                y: 610,
+                y: handY,
                 delay: i * 60,
                 duration: 120,
                 onComplete: () => {
@@ -244,12 +241,12 @@ function animateEvent(
       ).then(() => undefined);
     }
     case "deckShuffled":
-      return floatText(scene, 1090, 540, "Xáo lại chồng bỏ", "#cfd6f0", 12, 300);
+      return floatText(scene, pile.x + 60, pile.y - 70, "Xáo lại chồng bỏ", "#cfd6f0", 12, 300);
     case "cardPlayed": {
       const instance = ctx.state.cards[event.instanceId];
       const card = instance ? cardDefOf(ctx.gameData, ctx.state, instance) : undefined;
       const name = card?.name ?? "";
-      return floatText(scene, WIDTH / 2, 330, `◆ ${name}`, "#f4d35e", 22, 300);
+      return floatText(scene, WIDTH / 2, midY, `◆ ${name}`, "#f4d35e", 22, 300);
     }
     case "cardDiscarded":
       return instant();
@@ -268,7 +265,7 @@ function animateEvent(
         if (!anchor) return instant();
         return floatText(scene, anchor.x, anchor.y - 62, "Tay đầy", "#ff8080", 14, 350);
       }
-      const from = anchor ?? { x: 1090, y: 560 };
+      const from = anchor ?? { x: pile.x + 40, y: pile.y };
       const mine = (event.player ?? 0) === (ctx.mySeat ?? 0);
       return new Promise<void>((resolve) => {
         const rect = scene.add
@@ -278,7 +275,7 @@ function animateEvent(
         scene.tweens.add({
           targets: rect,
           x: mine ? WIDTH / 2 : from.x,
-          y: mine ? 610 : from.y,
+          y: mine ? handY : from.y,
           alpha: mine ? 1 : 0,
           duration: 180,
           onComplete: () => {
@@ -292,7 +289,7 @@ function animateEvent(
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
       const jobs: Promise<void>[] = [
-        flash(scene, anchor.x, anchor.y, 200, 130, 0xc03030, 250),
+        flash(scene, anchor.x, anchor.y, unitFlash.w, unitFlash.h, 0xc03030, 250),
         floatText(
           scene,
           anchor.x,
@@ -319,7 +316,7 @@ function animateEvent(
       if (!anchor) return instant();
       const bloodMoon = event.cause === "bloodMoon";
       return Promise.all([
-        flash(scene, anchor.x, anchor.y, 200, 130, bloodMoon ? 0xc01030 : 0x8a2be2, 200),
+        flash(scene, anchor.x, anchor.y, unitFlash.w, unitFlash.h, bloodMoon ? 0xc01030 : 0x8a2be2, 200),
         floatText(
           scene,
           anchor.x,
@@ -333,21 +330,21 @@ function animateEvent(
     }
     case "bloodMoonChanged": {
       if (event.rounds === 0) {
-        return floatText(scene, WIDTH / 2, 300, "Huyết Nguyệt tan", "#cfd6f0", 22, 500);
+        return floatText(scene, WIDTH / 2, midY, "Huyết Nguyệt tan", "#cfd6f0", 22, 500);
       }
       if (event.cause === "card") {
         return Promise.all([
           flash(scene, WIDTH / 2, 360, WIDTH, 720, 0x8b0000, 500),
-          floatText(scene, WIDTH / 2, 300, "🔴 Huyết Nguyệt!", "#ff5a5a", 30, 500),
+          floatText(scene, WIDTH / 2, midY, "🔴 Huyết Nguyệt!", "#ff5a5a", 30, 500),
         ]).then(() => undefined);
       }
-      return floatText(scene, WIDTH / 2, 300, `Huyết Nguyệt còn ${event.rounds} vòng`, "#ff5a5a", 18, 500);
+      return floatText(scene, WIDTH / 2, midY, `Huyết Nguyệt còn ${event.rounds} vòng`, "#ff5a5a", 18, 500);
     }
     case "healed": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
       return Promise.all([
-        flash(scene, anchor.x, anchor.y, 200, 130, 0x2e8b57, 250),
+        flash(scene, anchor.x, anchor.y, unitFlash.w, unitFlash.h, 0x2e8b57, 250),
         floatText(scene, anchor.x, anchor.y - 50, `+${event.amount}`, "#7fe07f", 18, 300),
       ]).then(() => undefined);
     }
@@ -385,23 +382,28 @@ function animateEvent(
       );
     }
     case "moonPowerChanged":
-      return floatText(scene, 105, 566, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 200);
+      return floatText(scene, moonPower.x - 60, moonPower.y, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 200);
     case "moonShifted": {
-      const fromX = moonX(event.from);
-      const toX = moonX(event.to);
-      return new Promise((resolve) => {
-        const marker = scene.add.circle(fromX, 58, 18, 0xf4d35e, 0.35).setDepth(95);
+      // One moon on screen: a ring pulses out of it and the new phase's name floats down.
+      const ring = new Promise<void>((resolve) => {
+        const glow = scene.add.circle(moon.x, moon.y, 28).setStrokeStyle(3, 0xf4d35e).setDepth(95);
         scene.tweens.add({
-          targets: marker,
-          x: toX,
+          targets: glow,
+          scale: 1.8,
+          alpha: 0,
           duration: 400,
-          ease: "Sine.easeInOut",
+          ease: "Sine.easeOut",
           onComplete: () => {
-            marker.destroy();
+            glow.destroy();
             resolve();
           },
         });
       });
+      const phase = ctx.gameData.moonPhases[event.to];
+      return Promise.all([
+        ring,
+        floatText(scene, moon.x, moon.y + 50, phase ? `${phase.icon} ${phase.name}` : "", "#f4d35e", 15, 400),
+      ]).then(() => undefined);
     }
     case "intentsRevealed":
       // Enemies no longer telegraph their chain (`01` §9.2) — nothing to show.
@@ -466,16 +468,16 @@ function animateEvent(
     case "heroLeveledUp": {
       const anchor = anchorOf(event.heroId);
       const jobs: Promise<void>[] = [
-        floatText(scene, WIDTH / 2, 300, `★ ${event.name} ★`, "#f4d35e", 26, 900),
+        floatText(scene, WIDTH / 2, midY, `★ ${event.name} ★`, "#f4d35e", 26, 900),
       ];
-      if (anchor) jobs.push(flash(scene, anchor.x, anchor.y, 240, 170, 0xf4d35e, 500));
+      if (anchor) jobs.push(flash(scene, anchor.x, anchor.y, unitFlash.w, unitFlash.h, 0xf4d35e, 500));
       return Promise.all(jobs).then(() => undefined);
     }
     case "unitDied": {
       const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
       return new Promise((resolve) => {
-        const rect = scene.add.rectangle(anchor.x, anchor.y, 220, 150, 0x333344, 0).setDepth(95);
+        const rect = scene.add.rectangle(anchor.x, anchor.y, unitFlash.w, unitFlash.h, 0x333344, 0).setDepth(95);
         scene.tweens.add({
           targets: rect,
           alpha: 0.6,
@@ -491,15 +493,15 @@ function animateEvent(
       const relic = ctx.gameData.runRelics[event.runRelicId];
       const name = relic?.name ?? ctx.gameData.augments[event.runRelicId]?.name ?? event.runRelicId;
       const color = relic === undefined ? "#e0b0ff" : "#9fd4ff";
-      return floatText(scene, WIDTH / 2, 250, `✦ ${name}`, color, 18, 400);
+      return floatText(scene, WIDTH / 2, midY, `✦ ${name}`, color, 18, 400);
     }
     case "relicTriggered": {
       const name = ctx.gameData.relics[event.relicId]?.name ?? event.relicId;
-      return floatText(scene, WIDTH / 2, 250, `☾ ${name}`, "#f4d35e", 18, 400);
+      return floatText(scene, WIDTH / 2, midY, `☾ ${name}`, "#f4d35e", 18, 400);
     }
     case "weaponTriggered": {
       const name = ctx.gameData.weapons[event.weaponId]?.name ?? event.weaponId;
-      return floatText(scene, WIDTH / 2, 250, `⚔ ${name}`, "#ffb080", 18, 400);
+      return floatText(scene, WIDTH / 2, midY, `⚔ ${name}`, "#ffb080", 18, 400);
     }
     case "combatEnded":
       return instant();
@@ -510,7 +512,7 @@ function animateEvent(
         disconnect: "mất kết nối",
       };
       const who = event.player === ctx.mySeat ? "Bạn" : "Đối thủ";
-      return floatText(scene, WIDTH / 2, 300, `${who} ${reasons[event.reason] ?? event.reason}`, "#ff8080", 22, 700);
+      return floatText(scene, WIDTH / 2, midY, `${who} ${reasons[event.reason] ?? event.reason}`, "#ff8080", 22, 700);
     }
     case "playerDisconnected":
       return floatText(
@@ -523,20 +525,20 @@ function animateEvent(
         600,
       );
     case "mulliganed":
-      return floatText(scene, WIDTH / 2, 520, `Đổi ${event.returned.length} lá`, "#cfd6f0", 14, 250);
+      return floatText(scene, WIDTH / 2, 550, `Đổi ${event.returned.length} lá`, "#cfd6f0", 14, 250);
     case "choiceOpened":
-      return floatText(scene, WIDTH / 2, 520, "Chiêm Bài", "#f4d35e", 16, 250);
+      return floatText(scene, WIDTH / 2, 550, "Chiêm Bài", "#f4d35e", 16, 250);
     case "moonChoiceOpened":
-      return floatText(scene, WIDTH / 2, 520, "Chọn Pha", "#f4d35e", 16, 250);
+      return floatText(scene, WIDTH / 2, 550, "Chọn Pha", "#f4d35e", 16, 250);
     case "cardChosen":
       return instant();
     case "deckedOut":
-      return floatText(scene, WIDTH / 2, 300, "CẠN BÀI", "#ff8080", 28, 700);
+      return floatText(scene, WIDTH / 2, midY, "CẠN BÀI", "#ff8080", 28, 700);
     case "cardsPurged":
-      return floatText(scene, 1120, 548, `-${event.instanceIds.length} lá (Tán Chiêu)`, "#8b93b8", 12, 300);
+      return floatText(scene, pile.x + 90, pile.y - 70, `-${event.instanceIds.length} lá (Tán Chiêu)`, "#8b93b8", 12, 300);
     case "moonReserveChanged": {
       if (event.side === "hero") {
-        return floatText(scene, 100, 530, `Dự Trữ ${event.value}`, "#7fd4ff", 13, 250);
+        return floatText(scene, moonPower.x - 60, moonPower.y + 46, `Dự Trữ ${event.value}`, "#7fd4ff", 13, 250);
       }
       const anchor = event.enemyId !== undefined ? anchorOf(event.enemyId) : undefined;
       if (!anchor) return instant();
@@ -603,11 +605,10 @@ function animateEvent(
     case "heroRevived": {
       // Hồi Hồn (`18` §3.5): a fallen hero stands back up — gold flash + float.
       const anchor = anchorOf(event.heroId);
-      const coop = ctx.state.mode === "coop";
       const jobs: Promise<void>[] = [
-        floatText(scene, anchor?.x ?? WIDTH / 2, (anchor?.y ?? 396) - 62, "Hồi Hồn", "#f4d35e", 20, 600),
+        floatText(scene, anchor?.x ?? WIDTH / 2, (anchor?.y ?? 400) - 62, "Hồi Hồn", "#f4d35e", 20, 600),
       ];
-      if (anchor) jobs.push(flash(scene, anchor.x, anchor.y, coop ? 190 : 240, coop ? 150 : 170, 0xf4d35e, 500));
+      if (anchor) jobs.push(flash(scene, anchor.x, anchor.y, unitFlash.w, unitFlash.h, 0xf4d35e, 500));
       return Promise.all(jobs).then(() => undefined);
     }
     default:
