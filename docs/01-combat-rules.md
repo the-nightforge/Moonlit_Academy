@@ -371,6 +371,56 @@ Ví dụ — `bloodMoon(2)` đánh trong lượt người chơi vòng N:
 | Đầu lượt vòng N+1 | 1 — mỗi Hero còn sống mất 2 HP |
 | Cuối vòng N+1 | 0 — hết |
 
+### 7.5 Nguyệt Lệnh — quy ước làm rõ [Nguyệt Luân mới]
+
+*Các điểm luật đã làm rõ cho Nguyệt Luân mới (spec
+`superpowers/specs/2026-09-30-nguyet-luan-redesign-design.md` §4). §7.1–7.2 còn
+mô tả hệ cũ; sẽ được viết lại đầy đủ (ưu đãi tag, bảng lệnh, pha khởi đầu) ở
+bước tài liệu kế tiếp.*
+
+- **Bốc lệnh (`rollMoon`).** Pha khởi đầu và một lệnh cho mỗi pha được bốc từ
+  một **luồng RNG phụ**: `seed = (rngState ^ 0x6d2b79f5) >>> 0`, lấy `rngState`
+  lúc gọi, rồi lặp `nextRandom` trên luồng phụ. Luồng phụ **không** đổi
+  `state.rngState`, nên thứ tự xáo bài và lên chuỗi kẻ địch không bị ảnh hưởng;
+  kết quả vẫn tất định theo seed của trận.
+- **Đoạn Tuyệt.** Mỗi lá rời tay vào chồng bỏ mà không được đánh làm đơn vị
+  đối phương còn sống HP thấp nhất của chủ lá **mất HP** (`hpLost` cause
+  `"decree"`): không qua giáp, không phải đòn tấn công, không có đơn vị nguồn
+  (lá Tàn Chiêu có chủ đã ngã).
+- **Mốc theo lượt / vòng:**
+  - **Tập Kích:** "đầu tiên mỗi lượt của mỗi bên" theo dõi bằng
+    `CombatState.firstHitKeys?: string[]` — khóa `"p<seat>"` cho ghế người
+    chơi, `"enemy"` cho phe kẻ địch. Xóa khóa của một bên khi bắt đầu lượt
+    của bên đó. Hit của Linh Thú tính vào khóa ghế chủ.
+  - **Thế Thủ:** theo dõi bằng `UnitState.shieldUsed?: true`, xóa ở
+    `advanceRound`.
+- **Liên Kích:**
+  - Lá: `PlayerState.attackCardsThisTurn?` +1 sau khi một lá `type: "attack"`
+    giải quyết xong, đặt lại đầu lượt người chơi; lá đang đánh được +2 mỗi
+    hit nếu số đếm ≥ 1 lúc bắt đầu giải quyết.
+  - Kẻ địch: trong `runEnemyTurn`, chiêu `kind` `attack` / `attackDefend`
+    được +2 mỗi hit nếu **trước nó** trong cùng chuỗi của kẻ địch đó đã thi
+    hành một chiêu `attack` / `attackDefend`.
+- **Thế Cân:**
+  - PvE / co-op: chạy **một lần mỗi vòng**, ở đầu lượt người chơi của ghế 0 —
+    Hero còn sống HP cao nhất của **mỗi ghế** và kẻ địch còn sống HP cao nhất
+    bị Suy Yếu 1.
+  - PvP: đầu lượt mỗi ghế, Hero còn sống HP cao nhất **của ghế đó** bị Suy
+    Yếu 2 (thời hạn PvP ×2).
+  - Hòa HP → vị trí nhỏ nhất.
+- **Mầm Sống / Đoàn Viên:**
+  - Hồi phẳng, **không** nhân hệ số hồi (pha của hai lệnh này không có lệnh
+    hồi ×).
+  - Người chơi: sau bước Huyết Nguyệt (mục 3.1 bước 4). Kẻ địch: sau tick
+    trạng thái đầu lượt địch.
+  - "Mọi đơn vị" gồm Linh Thú.
+- **Nguyệt Chiếu:** gỡ Ẩn Thân của mọi đơn vị khi `moonIndex` đổi **thành**
+  Trăng Tròn (cuối vòng, `shiftMoon`, Chọn Pha) và khi trận bắt đầu ở Trăng
+  Tròn (`enterPhase` từ `rollMoon`).
+- **Thiên Bình:** chỉ cộng cho debuff có thời hạn: `weak`, `vulnerable`,
+  `mark` (giao của `DEBUFF_STATUSES` và `DURATION_STATUSES`). PvP cộng
+  `+1 × 2`.
+
 ---
 
 ## 8. Thăng cấp Hero

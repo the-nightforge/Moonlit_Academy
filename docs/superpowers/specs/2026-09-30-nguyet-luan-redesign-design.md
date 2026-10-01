@@ -23,7 +23,7 @@ Review gameplay sau 7b cho thấy Nguyệt Luân rập khuôn:
 | Thành phần | Tóm tắt |
 |---|---|
 | **Ưu đãi tag** (cố định) | Mỗi pha ưu đãi 1 tag lá bài: −1 Nguyệt Lực, riêng Trăng Non là damage ×1.5 cho `assassin` |
-| **Nguyệt Lệnh** (bốc mỗi trận) | Mỗi pha có 3 lệnh; lúc tạo trận bốc 1 lệnh cho mỗi pha bằng RNG trong state; áp cho **cả hai phe** |
+| **Nguyệt Lệnh** (bốc mỗi trận) | Mỗi pha có 3 lệnh; lúc tạo trận bốc 1 lệnh cho mỗi pha bằng luồng RNG phụ từ seed (§4.1); áp cho **cả hai phe** |
 | **Pha khởi đầu** | Bốc ngẫu nhiên 0–7 lúc tạo trận (trước đây luôn là 1) |
 | **Nguyệt tính** | Mỗi loại địch có 1–2 chiêu trăng (`moonOverrides`), thông tin công khai |
 | **Hủy Bài, Huyết Tế** | Action mới của người chơi, chỉ hợp lệ khi lệnh tương ứng có hiệu lực |
@@ -50,26 +50,27 @@ Tag `heal` không có ưu đãi riêng; Trăng Tròn có lệnh Viên Nguyệt (
 - "Đầu lượt" của phe kẻ địch là lúc bắt đầu lượt kẻ địch (§9 luật trận).
 - Lệnh có hiệu lực khi pha đang là pha của lệnh. Các lệnh "đầu lượt" xét pha **tại thời điểm** đầu lượt đó.
 - Lệnh cộng thêm vào modifier Kỳ Vật đang có (`01` §13), giống modifier pha cũ.
+- Mất HP do lệnh (`hpLost` cause `"decree"` / `"bloodPact"`): không qua giáp, không phải đòn tấn công, không có đơn vị nguồn (`01` §10.3).
 
 | Pha | Id lệnh | Tên | Hiệu ứng | Modifier |
 |---|---|---|---|---|
 | 0 Trăng Non | `am_da` | Ám Dạ | Mọi hồi máu (kể cả Hồi Phục) ×0.5, làm tròn xuống | `healMultiplier 0.5` (sẵn) |
 | | `bong_mo` | Bóng Mờ | Ẩn Thân được áp +1 thời hạn | `stealthDurationBonus 1` (sẵn) |
-| | `tap_kich` | Tập Kích | Hit damage **đầu tiên** mỗi lượt của mỗi bên +3 (tính cả damage từ lá bài lẫn chiêu địch; đòn nhiều hit chỉ hit đầu được cộng) | `firstHitBonus { amount: 3 }` |
+| | `tap_kich` | Tập Kích | Hit damage **đầu tiên** mỗi lượt của mỗi bên +3 (tính cả damage từ lá bài lẫn chiêu địch; đòn nhiều hit chỉ hit đầu được cộng). Theo dõi bằng `CombatState.firstHitKeys?: string[]` — khóa `"p<seat>"` cho ghế người chơi, `"enemy"` cho phe kẻ địch; xóa khóa của một bên khi bắt đầu lượt của bên đó. Hit của Linh Thú tính vào khóa ghế chủ | `firstHitBonus { amount: 3 }` |
 | 1 Lưỡi Liềm Đầu | `nguyet_sinh` | Nguyệt Sinh | Người chơi: quỹ đầu lượt +1 Nguyệt Lực. Kẻ địch: lên chuỗi trong pha này với quỹ +1 | `turnMoonPowerBonus { amount: 1 }` |
 | | `khai_tri` | Khai Trí | Đầu lượt người chơi, sau rút bù: rút thêm 1 lá (tuân `handLimit`) | `turnStartDraw { amount: 1 }` |
-| | `mam_song` | Mầm Sống | Đầu lượt mỗi bên, mọi đơn vị còn sống bên đó hồi 2 HP (sau Thiêu Đốt / Hồi Phục) | `turnStartHeal { amount: 2, target: "all" }` |
-| 2 Bán Nguyệt | `thien_binh` | Thiên Bình | Mọi debuff có thời hạn mới được áp +1 thời hạn (mọi nguồn) | `debuffDurationBonus { amount: 1 }` |
-| | `the_can` | Thế Cân | Đầu lượt người chơi: Hero còn sống HP cao nhất và kẻ địch còn sống HP cao nhất mỗi bên bị Suy Yếu 1 (hòa → vị trí nhỏ nhất). PvP: mỗi người chơi, đầu lượt của mình | `turnStartStatusOnHighestHp { status: "weak", amount: 1 }` |
-| | `the_thu` | Thế Thủ | Mỗi đơn vị: hit damage đơn mục tiêu **đầu tiên** nó nhận trong mỗi vòng −3 (tối thiểu 0; trước giáp) | `firstSingleHitReduction { amount: 3 }` |
-| 3 Trăng Khuyết Đầu | `lien_kich` | Liên Kích | Lá tấn công (`type: "attack"`) đánh khi trong lượt đã có ít nhất 1 lá tấn công khác được đánh: mỗi hit +2. Kẻ địch: chiêu `kind: "attack"` đứng sau một chiêu `attack` khác trong cùng chuỗi: mỗi hit +2 | `attackChainBonus { amount: 2 }` |
+| | `mam_song` | Mầm Sống | Đầu lượt mỗi bên, mọi đơn vị còn sống bên đó (kể cả Linh Thú) hồi 2 HP — hồi phẳng, **không** nhân hệ số hồi. Người chơi: sau bước Huyết Nguyệt (`01` §3.1 bước 4); kẻ địch: sau tick trạng thái đầu lượt địch | `turnStartHeal { amount: 2, target: "all" }` |
+| 2 Bán Nguyệt | `thien_binh` | Thiên Bình | Debuff có thời hạn mới được áp +1 thời hạn (mọi nguồn) — chỉ `weak`, `vulnerable`, `mark` (giao của `DEBUFF_STATUSES` và `DURATION_STATUSES`). PvP cộng `+1 × 2` | `debuffDurationBonus { amount: 1 }` |
+| | `the_can` | Thế Cân | PvE / co-op: **một lần mỗi vòng**, ở đầu lượt người chơi của ghế 0 — Hero còn sống HP cao nhất của **mỗi ghế** và kẻ địch còn sống HP cao nhất bị Suy Yếu 1. PvP: đầu lượt mỗi ghế, Hero còn sống HP cao nhất **của ghế đó** bị Suy Yếu 2 (thời hạn PvP ×2). Hòa HP → vị trí nhỏ nhất | `turnStartStatusOnHighestHp { status: "weak", amount: 1 }` |
+| | `the_thu` | Thế Thủ | Mỗi đơn vị: hit damage đơn mục tiêu **đầu tiên** nó nhận trong mỗi vòng −3 (tối thiểu 0; trước giáp). Theo dõi bằng `UnitState.shieldUsed?: true`, xóa ở `advanceRound` | `firstSingleHitReduction { amount: 3 }` |
+| 3 Trăng Khuyết Đầu | `lien_kich` | Liên Kích | Lá: `PlayerState.attackCardsThisTurn?` +1 sau khi một lá `type: "attack"` giải quyết xong (đặt lại đầu lượt người chơi); lá đang đánh được +2 mỗi hit nếu số đếm ≥ 1 lúc bắt đầu giải quyết. Kẻ địch: chiêu `kind` `attack` / `attackDefend` được +2 mỗi hit nếu **trước nó** trong cùng chuỗi của kẻ địch đó đã thi hành một chiêu `attack` / `attackDefend` | `attackChainBonus { amount: 2 }` |
 | | `cuong_nguyet` | Cuồng Nguyệt | Sức Mạnh và Cường Hóa được áp gấp đôi giá trị | `buffMultiplier { statuses: ["strength", "empower"], multiplier: 2 }` |
 | | `pha_giap` | Phá Giáp | Giáp nhận được ×0.5, làm tròn xuống | `armorMultiplier 0.5` (sẵn) |
 | 4 Trăng Tròn | `vien_nguyet` | Viên Nguyệt | Mọi hồi máu ×2 | `healMultiplier 2` (sẵn) |
-| | `nguyet_chieu` | Nguyệt Chiếu | Khi vào pha: gỡ Ẩn Thân của mọi đơn vị. Trong pha: áp Ẩn Thân không có tác dụng | `stealthSuppressed` |
-| | `doan_vien` | Đoàn Viên | Đầu lượt mỗi bên: đơn vị còn sống HP thấp nhất bên đó (tỉ lệ HP; hòa → vị trí nhỏ nhất) hồi 5 HP | `turnStartHeal { amount: 5, target: "lowestRatio" }` |
+| | `nguyet_chieu` | Nguyệt Chiếu | Khi vào pha: gỡ Ẩn Thân của mọi đơn vị — "vào pha" gồm mọi lần `moonIndex` đổi **thành** Trăng Tròn (cuối vòng, `shiftMoon`, Chọn Pha) và trận bắt đầu ở Trăng Tròn (`enterPhase` từ `rollMoon`). Trong pha: áp Ẩn Thân không có tác dụng | `stealthSuppressed` |
+| | `doan_vien` | Đoàn Viên | Đầu lượt mỗi bên: đơn vị còn sống HP thấp nhất bên đó (tỉ lệ HP; hòa → vị trí nhỏ nhất; tính cả Linh Thú) hồi 5 HP — hồi phẳng, **không** nhân hệ số hồi; cùng mốc với Mầm Sống | `turnStartHeal { amount: 5, target: "lowestRatio" }` |
 | 5 Trăng Khuyết Cuối | `xa_than` | Xả Thân | Người chơi được **hủy** tối đa 2 lá trên tay mỗi lượt (action `discardCard`); mỗi lá hủy +1 Nguyệt Lực | `discardForMoonPower { perTurn: 2, moonPower: 1 }` |
-| | `doan_tuyet` | Đoạn Tuyệt | Mỗi lá rời tay vào chồng bỏ **mà không được đánh** (hủy, Tàn Chiêu cuối lượt, vượt `handLimit`) gây 2 damage lên đơn vị đối phương còn sống HP thấp nhất của chủ lá (không phải đòn tấn công) | `discardDamage { amount: 2 }` |
+| | `doan_tuyet` | Đoạn Tuyệt | Mỗi lá rời tay vào chồng bỏ **mà không được đánh** (hủy, Tàn Chiêu cuối lượt, vượt `handLimit`) làm đơn vị đối phương còn sống HP thấp nhất của chủ lá mất 2 HP (`hpLost` cause `"decree"`: không qua giáp, không phải đòn tấn công, không có đơn vị nguồn — lá Tàn Chiêu có chủ đã ngã) | `discardDamage { amount: 2 }` |
 | | `huyet_te` | Huyết Tế | Mỗi lượt 1 lần, người chơi chọn một Hero còn sống có HP > 3: Hero đó mất 3 HP (`loseHp`), người chơi rút 2 lá (action `bloodPact`) | `bloodPact { hp: 3, draw: 2 }` |
 | 6 Hạ Huyền | `huyen_giap` | Huyền Giáp | Giáp nhận được ×1.5 | `armorMultiplier 1.5` (sẵn) |
 | | `phan_chan` | Phản Chấn | Phản Đòn gây gấp đôi | `reflectMultiplier { multiplier: 2 }` |
@@ -80,9 +81,9 @@ Tag `heal` không có ưu đãi riêng; Trăng Tròn có lệnh Viên Nguyệt (
 
 ### 4.1 Bốc lệnh và pha khởi đầu
 
-Trong `createCombat` (và `createCoopCombat`, `createPvpCombat`), **ngay sau khi xáo chồng bài** (`deckShuffled`), dùng RNG trong state:
+Trong `createCombat` (và `createCoopCombat`, `createPvpCombat`), **ngay sau khi xáo chồng bài** (`deckShuffled`), `rollMoon` bốc từ một **luồng RNG phụ** tính từ `rngState`: `seed = (rngState ^ 0x6d2b79f5) >>> 0` (lấy `rngState` lúc gọi), rồi lặp `nextRandom` (`rng.ts`) trên luồng phụ — mỗi lần bốc lấy `floor(value × n)`. Luồng phụ **không** đổi `state.rngState`, nên thứ tự xáo bài và lên chuỗi kẻ địch không bị ảnh hưởng; kết quả vẫn tất định theo seed của trận.
 
-1. Bốc pha khởi đầu: `moonIndex = floor(nextRandom(rngState).value × 8)` (`rng.ts`).
+1. Bốc pha khởi đầu: `moonIndex` (n = 8).
 2. Với pha 0 → 7 theo thứ tự: bốc 1 trong 3 lệnh của pha (theo thứ tự trong dữ liệu) → `state.moonDecrees: string[8]`.
 3. Phát event `moonDecreesRolled { decrees, moonIndex }`.
 
@@ -99,6 +100,7 @@ Dữ liệu cũ (golden T213, phiếu cũ) sẽ khác kết quả. Chấp nhận
 - `bloodPact { heroId; player? }`:
   - Hợp lệ khi lệnh hiện tại là `huyet_te`, chưa dùng trong lượt (`PlayerState.bloodPactUsed`), Hero thuộc người chơi, còn sống, `hp > hp của modifier`.
   - Kết quả: Hero mất HP (`hpLost cause "bloodPact"`), rồi `drawCards 2`.
+- `hpLost.cause` nhận thêm `"decree"` (Đoạn Tuyệt, §4) và `"bloodPact"` (Huyết Tế).
 - Server: `combatActionSchema` và schema action của realtime (PvP / co-op) thêm hai action này.
 
 ## 5. Nguyệt tính kẻ địch
