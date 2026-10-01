@@ -875,3 +875,60 @@ export async function castCard(
   scene.time.delayedCall(450, () => motes.destroy());
   await wait(scene, target ? 260 : 160);
 }
+
+/**
+ * The Nguyệt Luân turns: a wheel of the phase icons (`ui:moon_<id>`) opens at
+ * center stage with the old phase on top, turns until the new phase reaches the
+ * top, flares, then collapses into the moon badge.
+ */
+export async function moonWheel(
+  scene: Phaser.Scene,
+  stage: Point,
+  badge: Point,
+  phaseIds: readonly string[],
+  from: number,
+  to: number,
+  color = 0xf4d35e,
+): Promise<void> {
+  ensureTextures(scene);
+  const n = phaseIds.length;
+  const R = 78;
+  const step = 360 / n;
+  // Shortest signed turn: +2 turns two notches, a wrap from 7 to 0 turns one.
+  const notches = ((((to - from) % n) + n + n / 2) % n) - n / 2;
+  const wheel = scene.add.container(stage.x, stage.y).setDepth(DEPTH - 3).setScale(0.6).setAlpha(0);
+  wheel.add(scene.add.image(0, 0, RING).setBlendMode("ADD").setTint(color).setScale((R / 27) * S));
+  wheel.add(scene.add.image(0, 0, RUNE).setBlendMode("ADD").setTint(color).setAlpha(0.7).setScale(((R * 0.62) / 29) * S));
+  const icons = phaseIds.map((id, i) => {
+    const deg = ((i - from) * step - 90) * (Math.PI / 180);
+    const key = `ui:moon_${id}`;
+    const icon = scene.textures.exists(key)
+      ? scene.add.image(R * Math.cos(deg), R * Math.sin(deg), key).setDisplaySize(30, 30)
+      : scene.add.image(R * Math.cos(deg), R * Math.sin(deg), GLOW).setTint(color).setScale(0.3 * S);
+    wheel.add(icon);
+    return icon;
+  });
+  await tween(scene, { targets: wheel, alpha: 1, scale: 1, duration: 200, ease: "Back.easeOut" });
+  const top = { x: stage.x, y: stage.y - R };
+  const marker = addFx(scene, top, GLOW).setTint(color).setScale(0.55 * S).setAlpha(0.8);
+  const turn = { angle: 0 };
+  await tween(scene, {
+    targets: turn,
+    angle: -notches * step,
+    duration: 260 + 130 * Math.abs(notches),
+    ease: "Cubic.easeInOut",
+    onUpdate: () => {
+      wheel.setAngle(turn.angle);
+      icons.forEach((icon) => icon.setAngle(-turn.angle));
+    },
+  });
+  const arrived = icons[to];
+  if (arrived) scene.tweens.add({ targets: arrived, scale: arrived.scale * 1.45, duration: 160, yoyo: true, ease: "Sine.easeOut" });
+  impact(scene, top, color, -Math.PI / 2, 0.8);
+  await wait(scene, 220);
+  fadeOut(scene, marker, { duration: 200 });
+  await tween(scene, { targets: wheel, x: badge.x, y: badge.y, scale: 0.25, alpha: 0, duration: 280, ease: "Cubic.easeIn" });
+  wheel.destroy();
+  const flare = addFx(scene, badge, GLOW).setTint(color).setScale(0.5 * S);
+  fadeOut(scene, flare, { scale: 1.6 * S, duration: 300 });
+}

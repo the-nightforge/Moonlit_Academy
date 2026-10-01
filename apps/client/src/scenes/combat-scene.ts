@@ -52,6 +52,7 @@ import {
   SEAL_ICON,
   STATUS_ICONS,
   describePhase,
+  RENDER_SCALE,
   useDesignCamera,
 } from "../ui/theme";
 
@@ -173,7 +174,9 @@ export class CombatScene extends Phaser.Scene {
   preload() {
     for (const [category, files] of Object.entries(manifest)) {
       for (const [key, url] of Object.entries(files)) {
-        this.load.image(`${category}:${key}`, url);
+        // SVG icons rasterize at the canvas scale so they stay sharp under the zoomed camera.
+        if (url.endsWith(".svg")) this.load.svg(`${category}:${key}`, url, { scale: RENDER_SCALE });
+        else this.load.image(`${category}:${key}`, url);
       }
     }
   }
@@ -725,7 +728,10 @@ export class CombatScene extends Phaser.Scene {
     const { x, y } = COMBAT_LAYOUT.moon;
     const phase = this.gameData.moonPhases[this.state.moonIndex]!;
     const bloodMoon = this.state.bloodMoonRounds > 0;
-    const ring = this.badge(x, y, 28, phase.icon, bloodMoon ? 0xff5a5a : COLORS.goldFill, this.root, 0x0a0e20, 28);
+    const iconKey = `ui:moon_${bloodMoon ? "blood" : phase.id}`;
+    const hasIcon = this.textures.exists(iconKey);
+    const ring = this.badge(x, y, 28, hasIcon ? "" : phase.icon, bloodMoon ? 0xff5a5a : COLORS.goldFill, this.root, 0x0a0e20, 28);
+    if (hasIcon) this.root.add(this.add.image(x, y, iconKey).setDisplaySize(46, 46));
     ring.setInteractive();
     this.hoverTooltip(ring, () => ({ x: x + 36, y: y - 20 }), () => [
       phase.name,

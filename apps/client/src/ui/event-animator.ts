@@ -3,7 +3,7 @@ import { cardDefOf } from "rules";
 import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "rules";
 import { attackLookOf, cardColorOf } from "./attack-style";
 import { COMBAT_LAYOUT, STATUS_LABELS, TEXT_BASE } from "./theme";
-import { castCard, playAttack } from "./vfx";
+import { castCard, moonWheel, playAttack } from "./vfx";
 
 const WIDTH = 1280;
 const { moon, moonPower, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
@@ -417,26 +417,12 @@ function animateEvent(
     case "moonPowerChanged":
       return floatText(scene, moonPower.x - 60, moonPower.y, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 200);
     case "moonShifted": {
-      // One moon on screen: a ring pulses out of it and the new phase's name floats down.
-      const ring = new Promise<void>((resolve) => {
-        const glow = scene.add.circle(moon.x, moon.y, 28).setStrokeStyle(3, 0xf4d35e).setDepth(95);
-        scene.tweens.add({
-          targets: glow,
-          scale: 1.8,
-          alpha: 0,
-          duration: 400,
-          ease: "Sine.easeOut",
-          onComplete: () => {
-            glow.destroy();
-            resolve();
-          },
-        });
-      });
+      // The Nguyệt Luân turns at center stage and settles into the moon badge; the new phase's name floats down.
       const phase = ctx.gameData.moonPhases[event.to];
-      return Promise.all([
-        ring,
-        floatText(scene, moon.x, moon.y + 50, phase ? `${phase.icon} ${phase.name}` : "", "#f4d35e", 15, 400),
-      ]).then(() => undefined);
+      const phaseIds = ctx.gameData.moonPhases.map((entry) => entry.id);
+      return moonWheel(scene, { x: WIDTH / 2, y: midY }, moon, phaseIds, event.from, event.to).then(() =>
+        floatText(scene, moon.x, moon.y + 50, phase?.name ?? "", "#f4d35e", 15, 400),
+      );
     }
     case "intentsRevealed":
       // Enemies no longer telegraph their chain (`01` §9.2) — nothing to show.
