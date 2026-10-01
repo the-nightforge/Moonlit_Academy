@@ -1,8 +1,9 @@
 import { resolveEffects } from "./effects";
 import { pickTarget } from "./intent";
 import { bumpCounter, levelUpPassive, sealFilteredEffects } from "./levelup";
+import { applyStatusDecreed } from "./moon";
 import { opponentsOf, prefixedId, seatTag, summonsOf } from "./players";
-import { applyStatus, hasStatus } from "./statuses";
+import { hasStatus } from "./statuses";
 import type { CombatEvent, CombatState, GameData, HeroState, SummonState, UnitState } from "./types/index";
 
 export function isSummon(unit: UnitState): unit is SummonState {
@@ -35,7 +36,7 @@ export function summonEffect(data: GameData, state: CombatState, hero: HeroState
       summon.hp = summon.maxHp;
       events.push({ type: "healed", targetId: summon.id, amount: healed });
     }
-    applyStatus(summon, "strength", 1, hero.id, events);
+    applyStatusDecreed(data, state, summon, "strength", 1, hero.id, events);
   } else {
     const defId = summonDefIdFor(data, hero, summonId);
     const def = data.summons[defId]!;
@@ -60,7 +61,7 @@ export function summonEffect(data: GameData, state: CombatState, hero: HeroState
   const passive = hero.leveledUp ? levelUpPassive(data, hero) : undefined;
   if (passive?.type === "summonTaunts") {
     const factor = state.mode === "pvp" ? 2 : 1;
-    applyStatus(summon, "taunt", passive.rounds * factor, hero.id, events);
+    applyStatusDecreed(data, state, summon, "taunt", passive.rounds * factor, hero.id, events);
   }
 }
 

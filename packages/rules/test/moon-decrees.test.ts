@@ -9,7 +9,7 @@ import {
 } from "../src/index";
 import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "../src/index";
 import { aoeFiveCard, healFiveCard, idleIntent, stealthOneCard, strike9Intent } from "./fixtures";
-import { injectCard, makeTestCombat, p0, rawTestInput, setHand, setIntent, setPlan, testData } from "./helpers";
+import { injectCard, makeEnemiesIdle, makeTestCombat, p0, rawTestInput, setHand, setIntent, setPlan, testData, withLevelUp } from "./helpers";
 import { parseGameData } from "data";
 
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
@@ -337,5 +337,63 @@ describe("Nguyệt Luân — lệnh chiến đấu", () => {
     if (!reStealth.ok) return;
     expect(reStealth.events.some((e) => e.type === "statusApplied" && e.status === "stealth")).toBe(false);
     expect(reStealth.state.heroes[2]!.statuses.some((s) => s.id === "stealth")).toBe(false);
+  });
+
+  it("T320b: decree status rules reach direct applyStatus sources — passives, summon gains, turn-start buffs", () => {
+    // Nguyệt Chiếu (full): Vũ Y's stealthOnCharm grant is suppressed too.
+    const vuY = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 4, decrees: { full: "nguyet_chieu" } },
+      mutateData: withLevelUp("f04", { passive: { type: "stealthOnCharm", rounds: 1 } }),
+      setup: (s) => {
+        s.heroes[1]!.leveledUp = true;
+      },
+    });
+    const charmCard = injectCard(vuY.state, vuY.data, testCard("test_charm_nc", "f04", "skill", "enemy", [
+      { type: "applyStatus", status: "charm", amount: 1, to: "chosen" },
+    ]));
+    const vuYRes = play(vuY.data, vuY.state, charmCard, "enemy:0");
+    expect(vuYRes.ok).toBe(true);
+    if (!vuYRes.ok) return;
+    expect(vuYRes.state.enemies[0]!.statuses).toContainEqual({ id: "charm", value: 1, sourceId: "hero:f04" });
+    expect(vuYRes.state.heroes[1]!.statuses.some((s) => s.id === "stealth")).toBe(false);
+    expect(vuYRes.events.some((e) => e.type === "statusApplied" && e.status === "stealth")).toBe(false);
+
+    // Thiên Bình (firstQuarter): Chép Sử's sealWeakens applies +1 like any other source.
+    const sealWeak = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 2, decrees: { firstQuarter: "thien_binh" } },
+      mutateData: withLevelUp("f04", { passive: { type: "sealWeakens", amount: 1 } }),
+      setup: (s) => {
+        s.heroes[1]!.leveledUp = true;
+      },
+    });
+    const sealCard = injectCard(sealWeak.state, sealWeak.data, testCard("test_seal_tb", "f04", "skill", "enemy", [
+      { type: "sealIntent", to: "chosen" },
+    ]));
+    const sealRes = play(sealWeak.data, sealWeak.state, sealCard, "enemy:0");
+    expect(sealRes.ok).toBe(true);
+    if (!sealRes.ok) return;
+    expect(sealRes.state.enemies[0]!.statuses).toContainEqual({ id: "weak", value: 2 });
+
+    // Cuồng Nguyệt (waxingGibbous): Huyết Mạch's rolled buff doubles — strength 1 → 2.
+    // The roll fires at the next player turn, one phase after the pinned start.
+    const huyetMach = makeTestCombat({
+      decrees: "real",
+      start: { moonIndex: 2, decrees: { waxingGibbous: "cuong_nguyet" } },
+      mutateData: (d) => {
+        makeEnemiesIdle(d);
+        withLevelUp("m05", { passive: { type: "randomBuffPerTurn" } })(d);
+        d.combatConfig.levelUpRandomBuffs = [{ status: "strength", amount: 1 }];
+      },
+      setup: (s) => {
+        s.heroes[0]!.leveledUp = true;
+      },
+    });
+    const hmTurn = applyAction(huyetMach.data, huyetMach.state, { type: "endTurn" });
+    expect(hmTurn.ok).toBe(true);
+    if (!hmTurn.ok) return;
+    expect(hmTurn.state.moonIndex).toBe(3);
+    expect(hmTurn.state.heroes[0]!.statuses).toContainEqual({ id: "strength", value: 2 });
   });
 });

@@ -1,7 +1,7 @@
 import { relicAt } from "./gear";
 import { summonsOf } from "./players";
 import { nextRandom } from "./rng";
-import { removeStatus } from "./statuses";
+import { applyStatus, DEBUFF_STATUSES, DURATION_STATUSES, removeStatus } from "./statuses";
 import type {
   CardTag,
   CombatEvent,
@@ -10,6 +10,8 @@ import type {
   GameData,
   MoonDecreeDef,
   MoonModifier,
+  StatusId,
+  UnitState,
 } from "./types/index";
 
 /** Modifier types that only Nguyệt Lệnh may carry (not relics, augments, moon relics). */
@@ -71,6 +73,43 @@ export function enterPhase(data: GameData, state: CombatState, events: CombatEve
   for (const unit of [...state.heroes, ...summonsOf(state), ...state.enemies]) {
     removeStatus(unit, "stealth", events);
   }
+}
+
+/**
+ * Decree adjustments to one status application (`01` §7.5): Nguyệt Chiếu
+ * suppresses Ẩn Thân, Cuồng Nguyệt multiplies listed buffs, Thiên Bình extends
+ * duration debuffs (PvP ×2). Returns the adjusted amount, or null when the
+ * application is suppressed. Applies to every source, not only card effects.
+ */
+export function decreeStatusAmount(
+  data: GameData,
+  state: CombatState,
+  status: StatusId,
+  amount: number,
+): number | null {
+  if (status === "stealth" && decreeModifier(data, state, "stealthSuppressed")) return null;
+  const buff = decreeModifier(data, state, "buffMultiplier");
+  if (buff?.statuses.includes(status)) amount *= buff.multiplier;
+  const extend = decreeModifier(data, state, "debuffDurationBonus");
+  if (extend && DEBUFF_STATUSES.has(status) && DURATION_STATUSES.has(status)) {
+    amount += extend.amount * (state.mode === "pvp" ? 2 : 1);
+  }
+  return amount;
+}
+
+/** `applyStatus` with decree adjustments — the counterpart of the `applyStatus` effect case for direct applications (`01` §7.5). */
+export function applyStatusDecreed(
+  data: GameData,
+  state: CombatState,
+  unit: UnitState,
+  status: StatusId,
+  amount: number,
+  sourceId: string,
+  events: CombatEvent[],
+): void {
+  const adjusted = decreeStatusAmount(data, state, status, amount);
+  if (adjusted === null) return;
+  applyStatus(unit, status, adjusted, sourceId, events);
 }
 
 /**

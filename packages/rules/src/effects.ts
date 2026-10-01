@@ -3,7 +3,9 @@ import { addToHand, drawCards } from "./draw";
 import { drainEnemyMoonPower } from "./intent";
 import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "./levelup";
 import {
+  applyStatusDecreed,
   decreeModifier,
+  decreeStatusAmount,
   enterPhase,
   moonArmorMultiplier,
   moonCardDamageMultiplier,
@@ -264,7 +266,7 @@ function dealDamage(
     const hero = ctx.source as HeroState;
     if (!hero.firstHitUsedThisTurn) {
       hero.firstHitUsedThisTurn = true;
-      if (target.alive && target.hp > 0) applyStatus(target, "vulnerable", passive.rounds, hero.id, events);
+      if (target.alive && target.hp > 0) applyStatusDecreed(data, state, target, "vulnerable", passive.rounds, hero.id, events);
     }
   }
   // Biên Tái: the first hit each turn from the hero's attack cards marks the opposing target.
@@ -273,7 +275,7 @@ function dealDamage(
     if (!hero.firstHitUsedThisTurn) {
       hero.firstHitUsedThisTurn = true;
       const factor = state.mode === "pvp" ? 2 : 1;
-      if (target.alive && target.hp > 0) applyStatus(target, "mark", passive.rounds * factor, hero.id, events);
+      if (target.alive && target.hp > 0) applyStatusDecreed(data, state, target, "mark", passive.rounds * factor, hero.id, events);
     }
   }
 
@@ -475,14 +477,12 @@ export function resolveEffect(
       if (passive?.type === "debuffDurationBonus" && debuff && DURATION_STATUSES.has(effect.status)) amount += passive.amount * durationFactor;
       // Kinh Hồng Vũ: each charm the hero applies carries extra charges (`18` §3.3).
       if (passive?.type === "charmMastery" && effect.status === "charm") amount += passive.extraCharges;
-      // Nguyệt Chiếu (`01` §7.5): Ẩn Thân cannot be applied while the decree holds.
-      if (effect.status === "stealth" && decreeModifier(data, state, "stealthSuppressed")) return;
-      // Cuồng Nguyệt: listed buffs apply at a multiple of their value.
-      const buff = decreeModifier(data, state, "buffMultiplier");
-      if (buff?.statuses.includes(effect.status)) amount *= buff.multiplier;
-      // Thiên Bình: duration debuffs apply longer (every source).
-      const extend = decreeModifier(data, state, "debuffDurationBonus");
-      if (extend && debuff && DURATION_STATUSES.has(effect.status)) amount += extend.amount * durationFactor;
+      // Nguyệt Chiếu / Cuồng Nguyệt / Thiên Bình (`01` §7.5): the same
+      // adjustments direct `applyStatusDecreed` applications get — suppression
+      // skips target resolution and counters entirely.
+      const adjusted = decreeStatusAmount(data, state, effect.status, amount);
+      if (adjusted === null) return;
+      amount = adjusted;
       let targets = resolveTargets(state, effect.to, ctx);
       if (
         effect.status === "regen" &&
@@ -505,7 +505,7 @@ export function resolveEffect(
         if (effect.status === "charm" && ctx.source.side === "hero" && opponentsOf(state, ctx.source).includes(target)) {
           bumpCounter(data, ctx.source as HeroState, "charmsApplied", 1);
           // Vũ Y: charming an enemy hides the charmer (`18` §3.3).
-          if (passive?.type === "stealthOnCharm") applyStatus(ctx.source, "stealth", passive.rounds * durationFactor, ctx.source.id, events);
+          if (passive?.type === "stealthOnCharm") applyStatusDecreed(data, state, ctx.source, "stealth", passive.rounds * durationFactor, ctx.source.id, events);
         }
         if (effect.status === "regen") cleanseIfHealer(data, ctx, target, events);
       }
@@ -540,7 +540,11 @@ export function resolveEffect(
       const bonus = cardPassive(data, ctx)?.type === "stealBonus" ? 1 : 0;
       for (const entry of stolen) {
         removeStatus(target, entry.id, events);
-        applyStatus(ctx.source, entry.id, entry.value + bonus, ctx.source.id, events);
+        // "Cùng giá trị" (`01` §6.5): a transfer is not a fresh application —
+        // no decree multiplier; under Nguyệt Chiếu stolen Ẩn Thân simply ends.
+        if (!(entry.id === "stealth" && decreeModifier(data, state, "stealthSuppressed"))) {
+          applyStatus(ctx.source, entry.id, entry.value + bonus, ctx.source.id, events);
+        }
         if (ctx.source.side === "hero") {
           bumpCounter(data, ctx.source as HeroState, "buffsStolen", 1);
         }
@@ -705,7 +709,7 @@ export function resolveEffect(
         }
         if (passive?.type === "sealWeakens") {
           const factor = state.mode === "pvp" ? 2 : 1;
-          applyStatus(target, "weak", passive.amount * factor, ctx.source.id, events);
+          applyStatusDecreed(data, state, target, "weak", passive.amount * factor, ctx.source.id, events);
         }
       }
       return;
