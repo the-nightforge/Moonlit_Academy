@@ -18,7 +18,7 @@ const TEX = 2;
 const S = 1 / TEX;
 const BLOCKED_COLOR = 0x9fd4ff;
 
-const GLOW = "vfx_glow";
+export const GLOW = "vfx_glow";
 const RING = "vfx_ring";
 const SPARK = "vfx_spark";
 const SLASH = "vfx_slash";
@@ -30,7 +30,7 @@ const LEAF = "vfx_leaf";
 const RUNE = "vfx_rune";
 const WAVE = "vfx_wave";
 const BEAM = "vfx_beam";
-const STAR = "vfx_star";
+export const STAR = "vfx_star";
 const CRESCENT = "vfx_crescent";
 const BRUSH = "vfx_brush";
 const TALISMAN = "vfx_talisman";
@@ -57,7 +57,7 @@ function linear(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: numbe
   return g;
 }
 
-function ensureTextures(scene: Phaser.Scene): void {
+export function ensureTextures(scene: Phaser.Scene): void {
   canvasTexture(scene, GLOW, 64, 64, (ctx) => {
     const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
     g.addColorStop(0, "rgba(255,255,255,1)");
@@ -835,4 +835,185 @@ async function blood(scene: Phaser.Scene, from: Point, to: Point, color: number,
   scene.time.delayedCall(900, () => drops.destroy());
   impact(scene, to, hitColor, angle, 1.1);
   await Promise.all([first, second]);
+}
+
+/**
+ * The played card leaves the hand: it rises to center stage, flares, then
+ * dissolves into motes that stream to the target (or burst out when untargeted).
+ */
+export async function castCard(
+  scene: Phaser.Scene,
+  view: Phaser.GameObjects.Container,
+  stage: Point,
+  color: number,
+  target?: Point,
+): Promise<void> {
+  ensureTextures(scene);
+  view.parentContainer?.bringToTop(view);
+  await tween(scene, { targets: view, x: stage.x, y: stage.y, scale: 1.15, angle: 0, duration: 220, ease: "Cubic.easeOut" });
+  const halo = addFx(scene, stage, GLOW).setTint(color).setScale(0.6 * S).setAlpha(0.9);
+  fadeOut(scene, halo, { scale: 3 * S, duration: 380, ease: "Cubic.easeOut" });
+  const ring = addFx(scene, stage, RING).setTint(color).setScale(0.8 * S);
+  fadeOut(scene, ring, { scale: 3.2 * S, duration: 360, ease: "Cubic.easeOut" });
+  await wait(scene, 90);
+  scene.tweens.add({ targets: view, alpha: 0, scale: 0.9, duration: 180, ease: "Sine.easeIn" });
+  const motes = scene.add
+    .particles(stage.x, stage.y, GLOW, {
+      x: { min: -50, max: 50 },
+      y: { min: -70, max: 70 },
+      lifespan: 360,
+      scale: { start: 0.14 * S, end: 0.04 * S },
+      alpha: { start: 1, end: 0.2 },
+      tint: [color, 0xffffff],
+      blendMode: "ADD",
+      emitting: false,
+      // moveTo is in the emitter's local space.
+      ...(target ? { moveToX: target.x - stage.x, moveToY: target.y - stage.y } : { speed: { min: 60, max: 180 } }),
+    })
+    .setDepth(DEPTH);
+  motes.explode(18);
+  scene.time.delayedCall(450, () => motes.destroy());
+  await wait(scene, target ? 260 : 160);
+}
+
+/**
+ * The Nguyệt Luân turns: a wheel of the phase icons (`ui:moon_<id>`) opens at
+ * center stage with the old phase on top, turns until the new phase reaches the
+ * top, flares, then collapses into the moon badge.
+ */
+export async function moonWheel(
+  scene: Phaser.Scene,
+  stage: Point,
+  badge: Point,
+  phaseIds: readonly string[],
+  from: number,
+  to: number,
+  color = 0xf4d35e,
+): Promise<void> {
+  ensureTextures(scene);
+  const n = phaseIds.length;
+  const R = 78;
+  const step = 360 / n;
+  // Shortest signed turn: +2 turns two notches, a wrap from 7 to 0 turns one.
+  const notches = ((((to - from) % n) + n + n / 2) % n) - n / 2;
+  const wheel = scene.add.container(stage.x, stage.y).setDepth(DEPTH - 3).setScale(0.6).setAlpha(0);
+  wheel.add(scene.add.image(0, 0, RING).setBlendMode("ADD").setTint(color).setScale((R / 27) * S));
+  wheel.add(scene.add.image(0, 0, RUNE).setBlendMode("ADD").setTint(color).setAlpha(0.7).setScale(((R * 0.62) / 29) * S));
+  const icons = phaseIds.map((id, i) => {
+    const deg = ((i - from) * step - 90) * (Math.PI / 180);
+    const key = `ui:moon_${id}`;
+    const icon = scene.textures.exists(key)
+      ? scene.add.image(R * Math.cos(deg), R * Math.sin(deg), key).setDisplaySize(30, 30)
+      : scene.add.image(R * Math.cos(deg), R * Math.sin(deg), GLOW).setTint(color).setScale(0.3 * S);
+    wheel.add(icon);
+    return icon;
+  });
+  await tween(scene, { targets: wheel, alpha: 1, scale: 1, duration: 200, ease: "Back.easeOut" });
+  const top = { x: stage.x, y: stage.y - R };
+  const marker = addFx(scene, top, GLOW).setTint(color).setScale(0.55 * S).setAlpha(0.8);
+  const turn = { angle: 0 };
+  await tween(scene, {
+    targets: turn,
+    angle: -notches * step,
+    duration: 260 + 130 * Math.abs(notches),
+    ease: "Cubic.easeInOut",
+    onUpdate: () => {
+      wheel.setAngle(turn.angle);
+      icons.forEach((icon) => icon.setAngle(-turn.angle));
+    },
+  });
+  const arrived = icons[to];
+  if (arrived) scene.tweens.add({ targets: arrived, scale: arrived.scale * 1.45, duration: 160, yoyo: true, ease: "Sine.easeOut" });
+  impact(scene, top, color, -Math.PI / 2, 0.8);
+  await wait(scene, 220);
+  fadeOut(scene, marker, { duration: 200 });
+  await tween(scene, { targets: wheel, x: badge.x, y: badge.y, scale: 0.25, alpha: 0, duration: 280, ease: "Cubic.easeIn" });
+  wheel.destroy();
+  const flare = addFx(scene, badge, GLOW).setTint(color).setScale(0.5 * S);
+  fadeOut(scene, flare, { scale: 1.6 * S, duration: 300 });
+}
+
+/**
+ * A status icon bursts out above the unit. Applied: it pops, hangs, then drops
+ * into the card. Removed: it swells and shatters. Resolves after the pop so a
+ * chain of statuses does not stall the queue; the rest plays on.
+ */
+export async function statusPop(scene: Phaser.Scene, at: Point, iconKey: string, color: number, removed = false): Promise<void> {
+  ensureTextures(scene);
+  const pos = { x: at.x, y: at.y - 46 };
+  const flare = addFx(scene, pos, GLOW).setTint(color).setScale(0.3 * S);
+  fadeOut(scene, flare, { scale: removed ? 0.9 * S : 1.4 * S, duration: 320 });
+  if (!scene.textures.exists(iconKey)) return wait(scene, 120);
+  const icon = scene.add.image(pos.x, pos.y, iconKey).setDepth(DEPTH).setDisplaySize(34, 34);
+  const base = icon.scaleX;
+  if (removed) {
+    icon.setAlpha(0.9);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + rand(-0.3, 0.3);
+      const spark = addFx(scene, pos, SPARK).setTint(color).setRotation(a).setScale(0.5 * S, S);
+      fadeOut(scene, spark, { x: pos.x + Math.cos(a) * 34, y: pos.y + Math.sin(a) * 34, scaleX: 0.1 * S, duration: 260, ease: "Cubic.easeOut" });
+    }
+    fadeOut(scene, icon, { scale: base * 1.6, duration: 220, ease: "Cubic.easeOut" });
+    return wait(scene, 120);
+  }
+  icon.setScale(0);
+  await tween(scene, { targets: icon, scale: base * 1.3, duration: 170, ease: "Back.easeOut" });
+  scene.tweens.add({
+    targets: icon,
+    scale: base,
+    duration: 100,
+    onComplete: () =>
+      fadeOut(scene, icon, { x: at.x - 30, y: at.y + 52, scale: base * 0.5, delay: 220, duration: 240, ease: "Cubic.easeIn" }),
+  });
+}
+
+/**
+ * A fallen unit burns away: a hot flash, the card darkens and lifts as it
+ * fades, ash and embers drift up from the whole card. A boss cracks first
+ * (white shockwave, harder shake). The re-render then shows the fallen card.
+ */
+export async function deathBurn(
+  scene: Phaser.Scene,
+  view: Phaser.GameObjects.Container | undefined,
+  at: Point,
+  boss = false,
+): Promise<void> {
+  ensureTextures(scene);
+  const power = boss ? 1.6 : 1;
+  const bounds = view?.getBounds();
+  const size = bounds ? { w: bounds.width, h: bounds.height } : { w: 120, h: 170 };
+  if (boss) {
+    impact(scene, at, 0xffffff, -Math.PI / 2, 1.8);
+    await wait(scene, 180);
+  }
+  const heat = addFx(scene, at, GLOW).setTint(0xff6a30).setScale(0.6 * S * power);
+  fadeOut(scene, heat, { scale: 2.4 * S * power, duration: 520, ease: "Cubic.easeOut" });
+  const ash = scene.add
+    .particles(at.x, at.y, GLOW, {
+      x: { min: -size.w / 2, max: size.w / 2 },
+      y: { min: -size.h / 2, max: size.h / 2 },
+      speedY: { min: -90, max: -30 },
+      speedX: { min: -20, max: 20 },
+      lifespan: { min: 700, max: 1200 },
+      scale: { start: 0.12 * S, end: 0 },
+      alpha: { start: 0.9, end: 0 },
+      tint: [0x8a8a9a, 0x5a5a66, 0xff8040, 0xffb060],
+      blendMode: "ADD",
+      frequency: 10,
+      quantity: boss ? 3 : 2,
+    })
+    .setDepth(DEPTH);
+  if (view) {
+    // Rounded like the cards (radius 9).
+    const sw = size.w / view.scaleX;
+    const sh = size.h / view.scaleY;
+    const scorch = scene.add.graphics().fillStyle(0x2a0a04, 1).fillRoundedRect(-sw / 2, -sh / 2, sw, sh, 9).setAlpha(0);
+    view.add(scorch);
+    scene.tweens.add({ targets: scorch, alpha: 0.7, duration: 260 });
+    await tween(scene, { targets: view, alpha: 0, y: at.y - 14, scale: 0.94, duration: 560, delay: 120, ease: "Sine.easeIn" });
+  } else {
+    await wait(scene, 560);
+  }
+  ash.stop();
+  scene.time.delayedCall(1300, () => ash.destroy());
 }

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { COLORS, CURRENCY_LABELS, DESIGN_HEIGHT, DESIGN_WIDTH, TEXT_BASE } from "./theme";
+import { COLORS, CURRENCY_LABELS, DESIGN_HEIGHT, DESIGN_WIDTH, TEXT_BASE, visibleWorld } from "./theme";
 
 export function addText(
   scene: Phaser.Scene,
@@ -309,7 +309,8 @@ export function showModal(scene: Phaser.Scene, options: ModalOptions): Promise<M
   return new Promise((resolve) => {
     const cx = DESIGN_WIDTH / 2;
     const layer = scene.add.container(0, 0).setDepth(2000);
-    layer.add(scene.add.rectangle(cx, DESIGN_HEIGHT / 2, DESIGN_WIDTH, DESIGN_HEIGHT, 0x000000, 0.6).setInteractive());
+    const view = visibleWorld(scene);
+    layer.add(scene.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x000000, 0.6).setInteractive());
     const message = scene.add
       .text(cx, 0, options.message, { ...TEXT_BASE, fontSize: "15px", color: COLORS.text, align: "center", wordWrap: { width: MODAL_W - 60 }, lineSpacing: 4 })
       .setOrigin(0.5, 0);

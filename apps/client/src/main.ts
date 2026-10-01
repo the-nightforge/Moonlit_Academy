@@ -29,7 +29,8 @@ const game = new Phaser.Game({
   height: DESIGN_HEIGHT * RENDER_SCALE,
   backgroundColor: "#0b1026",
   scale: {
-    mode: Phaser.Scale.FIT,
+    // The design area stays whole and centered; a wider/taller window shows more around it.
+    mode: Phaser.Scale.EXPAND,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   scene: [

@@ -1,9 +1,9 @@
 import type Phaser from "phaser";
 import { cardDefOf } from "rules";
 import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "rules";
-import { attackLookOf } from "./attack-style";
-import { COMBAT_LAYOUT, STATUS_LABELS, TEXT_BASE } from "./theme";
-import { playAttack } from "./vfx";
+import { attackLookOf, cardColorOf } from "./attack-style";
+import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
+import { castCard, deathBurn, moonWheel, playAttack, statusPop } from "./vfx";
 
 const WIDTH = 1280;
 const { moon, moonPower, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
@@ -13,6 +13,10 @@ export interface AnimContext {
   state: CombatState;
   unitAnchors: Map<string, { x: number; y: number }>;
   unitViews: Map<string, Phaser.GameObjects.Container>;
+  /** The local player's hand cards: a played card flies out of its slot. */
+  cardViews?: Map<string, Phaser.GameObjects.Container>;
+  /** Where the moon icon sits (follows the background art); defaults to the layout spot. */
+  moonAnchor?: { x: number; y: number };
   /** The local player's seat in a PvP view (`17` §4.8); 0 in PvE. */
   mySeat?: number;
 }
@@ -276,8 +280,13 @@ function animateEvent(
     case "cardPlayed": {
       const instance = ctx.state.cards[event.instanceId];
       const card = instance ? cardDefOf(ctx.gameData, ctx.state, instance) : undefined;
-      const name = card?.name ?? "";
-      return floatText(scene, WIDTH / 2, midY, `◆ ${name}`, "#f4d35e", 22, 300);
+      const view = ctx.cardViews?.get(event.instanceId);
+      if (card && view) {
+        const target = event.targetId !== undefined ? anchorOf(event.targetId) : undefined;
+        return castCard(scene, view, { x: WIDTH / 2, y: midY }, cardColorOf(card), target);
+      }
+      // Another seat's card (co-op partner, PvP opponent): no hand view to fly.
+      return floatText(scene, WIDTH / 2, midY, `◆ ${card?.name ?? ""}`, "#f4d35e", 22, 300);
     }
     case "cardDiscarded":
       return instant();
@@ -384,6 +393,7 @@ function animateEvent(
     case "statusApplied": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
+      void statusPop(scene, anchor, `ui:status_${event.status}`, STATUS_ICONS[event.status].color);
       return floatText(
         scene,
         anchor.x,
@@ -397,6 +407,7 @@ function animateEvent(
     case "statusRemoved": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
+      void statusPop(scene, anchor, `ui:status_${event.status}`, STATUS_ICONS[event.status].color, true);
       return floatText(
         scene,
         anchor.x,
@@ -410,26 +421,13 @@ function animateEvent(
     case "moonPowerChanged":
       return floatText(scene, moonPower.x - 60, moonPower.y, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 200);
     case "moonShifted": {
-      // One moon on screen: a ring pulses out of it and the new phase's name floats down.
-      const ring = new Promise<void>((resolve) => {
-        const glow = scene.add.circle(moon.x, moon.y, 28).setStrokeStyle(3, 0xf4d35e).setDepth(95);
-        scene.tweens.add({
-          targets: glow,
-          scale: 1.8,
-          alpha: 0,
-          duration: 400,
-          ease: "Sine.easeOut",
-          onComplete: () => {
-            glow.destroy();
-            resolve();
-          },
-        });
-      });
+      // The Nguyệt Luân turns at center stage and settles into the moon badge; the new phase's name floats down.
       const phase = ctx.gameData.moonPhases[event.to];
-      return Promise.all([
-        ring,
-        floatText(scene, moon.x, moon.y + 50, phase ? `${phase.icon} ${phase.name}` : "", "#f4d35e", 15, 400),
-      ]).then(() => undefined);
+      const phaseIds = ctx.gameData.moonPhases.map((entry) => entry.id);
+      const at = ctx.moonAnchor ?? moon;
+      return moonWheel(scene, { x: WIDTH / 2, y: midY }, at, phaseIds, event.from, event.to).then(() =>
+        floatText(scene, at.x, at.y + 46, phase?.name ?? "", "#f4d35e", 15, 400),
+      );
     }
     case "intentsRevealed":
       // Enemies no longer telegraph their chain (`01` §9.2) — nothing to show.
@@ -502,18 +500,8 @@ function animateEvent(
     case "unitDied": {
       const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
-      return new Promise((resolve) => {
-        const rect = scene.add.rectangle(anchor.x, anchor.y, unitFlash.w, unitFlash.h, 0x333344, 0).setDepth(95);
-        scene.tweens.add({
-          targets: rect,
-          alpha: 0.6,
-          duration: 400,
-          onComplete: () => {
-            rect.destroy();
-            resolve();
-          },
-        });
-      });
+      const boss = ctx.state.boss?.enemyId === event.unitId;
+      return deathBurn(scene, ctx.unitViews.get(event.unitId), anchor, boss);
     }
     case "runRelicTriggered": {
       const relic = ctx.gameData.runRelics[event.runRelicId];
