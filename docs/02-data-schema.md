@@ -12,6 +12,13 @@ export type Faction = "thanhLoan" | "huyenVu" | "bachLo" | "xichDien" | "neutral
 export type Archetype = "vanguard" | "striker" | "controller" | "support" | "specialist";
 export type Rarity = "common" | "rare" | "epic" | "legendary";
 
+// Kiểu ra đòn — CHỈ để hiển thị (VFX ở client), bộ luật không đọc.
+// Binh khí vật lý (slash…bow) chỉ vung với lá attack; lá skill của Hero đó ra pháp ấn màu theo tag.
+// Kiểu pháp thuật (herb…blood) dùng cho mọi lá của Hero.
+export type AttackStyle =
+  | "slash" | "spear" | "darts" | "bow"
+  | "herb" | "fan" | "ink" | "music" | "ribbon" | "fire" | "star" | "moon" | "talisman" | "blood";
+
 export type MoonPhaseId =
   | "new" | "waxingCrescent" | "firstQuarter" | "waxingGibbous"
   | "full" | "waningGibbous" | "lastQuarter" | "waningCrescent";
@@ -34,6 +41,7 @@ export interface HeroDef {
   name: string;             // "Hoắc Liệt" (hiển thị)
   faction: Faction;
   archetype: Archetype;
+  attackStyle?: AttackStyle; // binh khí theo lore; thiếu → mặc định theo archetype (vanguard/striker chém, support thảo dược, còn lại pháp ấn)
   rarity: Rarity;
   maxHp: number;
   cardIds: string[];        // đúng 6 lá miễn phí (GĐ 4b)
@@ -209,6 +217,7 @@ export interface EnemyDef {
   id: string;               // "puppet_guard"
   name: string;
   maxHp: number;
+  attackStyle?: AttackStyle;        // hiển thị đòn đánh (nhuộm đỏ); thiếu → slash
   intents: EnemyIntentDef[];        // GĐ4a: ≥ 1 (thay intentPattern)
   moonPower: { start: number; cap: number };   // GĐ4a: start ≤ cap; perRound dùng chung của CombatConfig
   moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];   // intent không có cost
@@ -364,6 +373,7 @@ Luật: `01` §8 (dạng thứ hai), `01` §14, `14` §10.1, §13. Nội dung: `
 ```ts
 interface WeaponDef {
   id: string; name: string; rarity: Rarity;
+  attackStyle?: AttackStyle;        // khi đeo: thay kiểu ra đòn của lá attack (không đổi lá skill)
   archetype?: Archetype;            // vũ khí chung (chỉ để hiển thị)
   signatureHeroId?: string;         // vũ khí bản mệnh
   text: string;                     // nội tại R1 (hiển thị)
