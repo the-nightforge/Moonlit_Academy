@@ -77,10 +77,10 @@ const HAND_RIGHT = 1140;
 /** A hovered hand card is lifted (scaled 1.15) until its bottom edge shows. */
 const HAND_LIFT_Y = HEIGHT - (CARD_H * 1.15) / 2 - 6;
 /** Unit cards are portrait (2:3): enemies / opponents on the top row, own heroes below. */
-/** Both rows use one card size. Top row: top edge level with the encounter plate (y 14). */
+/** Both rows use one card size; the top row sits below the frame, clear of the moon socket. */
 const UNIT_W = 136;
 const UNIT_H = 196;
-const TOP_ROW_Y = 14 + UNIT_H / 2;
+const TOP_ROW_Y = 170;
 /** Own row: bottom edge ~46 px above the peeking hand (top ≈ 600), leaving the middle for the action. */
 const HERO_ROW_Y = 456;
 /** Corner radius of every card (units, hand, art). */

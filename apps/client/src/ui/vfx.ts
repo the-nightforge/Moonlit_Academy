@@ -1004,9 +1004,12 @@ export async function deathBurn(
     })
     .setDepth(DEPTH);
   if (view) {
-    const scorch = scene.add.rectangle(0, 0, size.w / view.scaleX, size.h / view.scaleY, 0x2a0a04, 0);
+    // Rounded like the cards (radius 9).
+    const sw = size.w / view.scaleX;
+    const sh = size.h / view.scaleY;
+    const scorch = scene.add.graphics().fillStyle(0x2a0a04, 1).fillRoundedRect(-sw / 2, -sh / 2, sw, sh, 9).setAlpha(0);
     view.add(scorch);
-    scene.tweens.add({ targets: scorch, fillAlpha: 0.7, duration: 260 });
+    scene.tweens.add({ targets: scorch, alpha: 0.7, duration: 260 });
     await tween(scene, { targets: view, alpha: 0, y: at.y - 14, scale: 0.94, duration: 560, delay: 120, ease: "Sine.easeIn" });
   } else {
     await wait(scene, 560);
