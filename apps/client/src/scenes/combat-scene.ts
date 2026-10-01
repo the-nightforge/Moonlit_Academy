@@ -18,6 +18,7 @@ import type {
   GameData,
   HeroState,
   PlayerState,
+  StatusId,
   StatusInstance,
   SummonState,
 } from "rules";
@@ -42,7 +43,7 @@ import manifest from "virtual:assets-manifest";
 import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
 import { confirmModal, isModalOpen } from "../ui/widgets";
 import { playEventQueue } from "../ui/event-animator";
-import { GLOW as VFX_GLOW, ensureTextures } from "../ui/vfx";
+import { GLOW as VFX_GLOW, STAR as VFX_STAR, ensureTextures } from "../ui/vfx";
 import {
   BLOOD_MOON_BG,
   COLORS,
@@ -762,10 +763,8 @@ export class CombatScene extends Phaser.Scene {
     this.badge(-w / 2 + 16, -h / 2 + 16, 16, `${spec.hp}`, spec.hostile ? COLORS.hpFillEnemy : COLORS.hpFillHero, c,
       spec.hostile ? 0x4a1818 : 0x183a20, 13);
     if (spec.armor > 0) this.badge(-w / 2 + 16, -h / 2 + 46, 12, `${spec.armor}`, 0x9fd4ff, c, 0x1e3a5a, 11);
-    if (spec.statuses.some((status) => status.id === "freeze")) this.frostOverlay(c, w, h);
     if (spec.stealth) this.stealthVeil(c, w, h);
-    if (spec.statuses.some((status) => status.id === "burn")) this.burnEmbers(c, w, h);
-    if (spec.statuses.some((status) => status.id === "taunt")) this.tauntAura(c, w, h);
+    this.statusLooks(c, w, h, spec.statuses);
     if (!spec.alive) {
       c.add(this.add.rectangle(0, 0, w, h, 0x000000, 0.6));
       this.text(0, 0, "Ngã", 18, "#ffffff", c).setOrigin(0.5);
@@ -806,39 +805,153 @@ export class CombatScene extends Phaser.Scene {
     this.loopTween(mist, { fillAlpha: 0.28, duration: 1600 });
   }
 
-  /** Thiêu Đốt: heat glowing up from the bottom edge, embers rising off the card. */
-  private burnEmbers(c: Phaser.GameObjects.Container, w: number, h: number) {
+  /**
+   * Lasting looks of the statuses a unit carries, drawn inside its card so they
+   * die with it on re-render. Ẩn Thân comes from `spec.stealth` (`stealthVeil`).
+   */
+  private statusLooks(c: Phaser.GameObjects.Container, w: number, h: number, statuses: StatusInstance[]) {
     ensureTextures(this);
-    const heat = this.add.image(0, h / 2 - 8, VFX_GLOW).setBlendMode("ADD").setTint(0xff6a30).setAlpha(0.3);
-    heat.setScale((w / 64) * 0.75, 0.35);
-    c.add(heat);
-    this.loopTween(heat, { alpha: 0.55, duration: 650 });
+    const looks: Partial<Record<StatusId, () => void>> = {
+      freeze: () => this.frostOverlay(c, w, h),
+      // Thiêu Đốt: heat along the bottom edge, embers rising off the card.
+      burn: () => {
+        this.edgeGlow(c, w, h, 0xff6a30);
+        this.drift(c, w, h, { from: "bottom", speedY: [-55, -22], tint: [0xff8040, 0xffb060, 0xff5030], scale: 0.12, frequency: 70 });
+      },
+      // Khiêu Khích: a red rim pulsing around the card, the taunt flag swaying on its top edge.
+      taunt: () => {
+        this.rimPulse(c, w, h, 0xff6a50, true);
+        this.edgeIcon(c, "ui:status_taunt", 0, -h / 2 - 2, 26, { angle: 8, duration: 900 }, [0.3, 0.9]);
+      },
+      // Suy Yếu: violet wisps sinking down the card.
+      weak: () => this.drift(c, w, h, { from: "top", speedY: [18, 40], tint: [0xb9a8ff, 0x7a68c8], scale: 0.11, frequency: 150 }),
+      // Dễ Vỡ: a glowing crack across the card, flickering.
+      vulnerable: () => this.crack(c, w, h),
+      // Đánh Dấu: a crosshair turning slowly over the card.
+      mark: () => this.edgeIcon(c, "ui:status_mark", 0, -14, w * 0.62, { angle: 360, duration: 6000, yoyo: false, ease: "Linear" }, [0.5, 0.5], 0.5),
+      // Hồi Phục: soft green light at the bottom, motes drifting up.
+      regen: () => {
+        this.edgeGlow(c, w, h, 0x58d870);
+        this.drift(c, w, h, { from: "bottom", speedY: [-28, -12], tint: [0x7fe07f, 0xc8ffb0], scale: 0.1, frequency: 160 });
+      },
+      // Sức Mạnh: an orange power rim.
+      strength: () => this.rimPulse(c, w, h, 0xffa060, false),
+      // Cường Hóa: gold stars twinkling over the card.
+      empower: () =>
+        this.drift(c, w, h, { from: "all", speedY: [-4, 4], tint: [0xf4d35e, 0xfff4c2], scale: 0.32, frequency: 220, texture: VFX_STAR, lifespan: 800 }),
+      // Phản Đòn: a light sheen sweeping across the card.
+      reflect: () => this.sheen(c, w, h),
+      // Hộ Vệ: a blue barrier around the card, breathing.
+      guard: () => {
+        const barrier = this.add.rectangle(0, 0, w + 8, h + 8, 0x9fd4ff, 0.08).setStrokeStyle(2, 0x9fd4ff, 0.85);
+        c.add(barrier);
+        this.loopTween(barrier, { scaleX: 1.025, scaleY: 1.02, fillAlpha: 0.16, duration: 1000 });
+      },
+      // Mê Hoặc: small hearts floating up.
+      charm: () => {
+        if (!this.textures.exists("ui:status_charm")) return;
+        this.drift(c, w, h, { from: "bottom", speedY: [-30, -14], tint: [0xffffff], scale: 14 / (48 * RENDER_SCALE), frequency: 260, texture: "ui:status_charm", add: false });
+      },
+    };
+    for (const status of statuses) looks[status.id]?.();
+  }
+
+  /** A soft colored glow breathing along the card's bottom edge. */
+  private edgeGlow(c: Phaser.GameObjects.Container, w: number, h: number, color: number) {
+    const glow = this.add.image(0, h / 2 - 8, VFX_GLOW).setBlendMode("ADD").setTint(color).setAlpha(0.3);
+    glow.setScale((w / 64) * 0.75, 0.35);
+    c.add(glow);
+    this.loopTween(glow, { alpha: 0.55, duration: 650 });
+  }
+
+  /** A colored rim pulsing around the card; `halo` adds a wide soft outer band. */
+  private rimPulse(c: Phaser.GameObjects.Container, w: number, h: number, color: number, halo: boolean) {
+    const rim = this.add.rectangle(0, 0, w + 4, h + 4).setStrokeStyle(3, color, 0.95);
+    c.add(rim);
+    this.loopTween(rim, { alpha: 0.35, duration: 700 });
+    if (!halo) return;
+    const band = this.add.rectangle(0, 0, w + 10, h + 10).setStrokeStyle(8, color, 0.25);
+    c.add(band);
+    this.loopTween(band, { scaleX: 1.04, scaleY: 1.03, alpha: 0.4, duration: 700 });
+  }
+
+  /** A status icon sitting on the card, animated by `motion` (looping). */
+  private edgeIcon(
+    c: Phaser.GameObjects.Container,
+    key: string,
+    x: number,
+    y: number,
+    size: number,
+    motion: Omit<Phaser.Types.Tweens.TweenBuilderConfig, "targets">,
+    origin: [number, number],
+    alpha = 1,
+  ) {
+    if (!this.textures.exists(key)) return;
+    const icon = this.add.image(x, y, key).setDisplaySize(size, size).setOrigin(...origin).setAlpha(alpha);
+    c.add(icon);
+    this.loopTween(icon, motion);
+  }
+
+  /** Particles drifting over the card (inside it, so they go with it). */
+  private drift(
+    c: Phaser.GameObjects.Container,
+    w: number,
+    h: number,
+    opts: {
+      from: "top" | "bottom" | "all";
+      speedY: [number, number];
+      tint: number[];
+      scale: number;
+      frequency: number;
+      texture?: string;
+      lifespan?: number;
+      add?: boolean;
+    },
+  ) {
+    const y = opts.from === "top" ? -h / 2 + 16 : opts.from === "bottom" ? h / 2 - 10 : 0;
     c.add(
-      this.add.particles(0, h / 2 - 10, VFX_GLOW, {
+      this.add.particles(0, y, opts.texture ?? VFX_GLOW, {
         x: { min: -w / 2 + 6, max: w / 2 - 6 },
-        speedY: { min: -55, max: -22 },
+        ...(opts.from === "all" ? { y: { min: -h / 2 + 10, max: h / 2 - 30 } } : {}),
+        speedY: { min: opts.speedY[0], max: opts.speedY[1] },
         speedX: { min: -10, max: 10 },
-        lifespan: { min: 900, max: 1500 },
-        scale: { start: 0.12, end: 0 },
+        lifespan: opts.lifespan ?? { min: 900, max: 1500 },
+        scale: { start: opts.scale, end: 0 },
         alpha: { start: 0.95, end: 0 },
-        tint: [0xff8040, 0xffb060, 0xff5030],
-        blendMode: "ADD",
-        frequency: 70,
+        tint: opts.tint,
+        blendMode: opts.add === false ? "NORMAL" : "ADD",
+        frequency: opts.frequency,
       }),
     );
   }
 
-  /** Khiêu Khích: a red rim pulsing around the card, the taunt flag swaying on its top edge. */
-  private tauntAura(c: Phaser.GameObjects.Container, w: number, h: number) {
-    const halo = this.add.rectangle(0, 0, w + 10, h + 10).setStrokeStyle(8, 0xff5040, 0.25);
-    const rim = this.add.rectangle(0, 0, w + 4, h + 4).setStrokeStyle(3, 0xff6a50, 0.95);
-    c.add([halo, rim]);
-    this.loopTween(rim, { alpha: 0.35, duration: 700 });
-    this.loopTween(halo, { scaleX: 1.04, scaleY: 1.03, alpha: 0.4, duration: 700 });
-    if (!this.textures.exists("ui:status_taunt")) return;
-    const flag = this.add.image(0, -h / 2 - 2, "ui:status_taunt").setDisplaySize(26, 26).setOrigin(0.3, 0.9);
-    c.add(flag);
-    this.loopTween(flag, { angle: 8, duration: 900 });
+  /** Dễ Vỡ: a jagged glowing crack from the top edge down the card, flickering. */
+  private crack(c: Phaser.GameObjects.Container, w: number, h: number) {
+    const path = [
+      [0.2, -0.5],
+      [0.06, -0.26],
+      [0.2, -0.1],
+      [-0.03, 0.08],
+      [0.09, 0.22],
+    ].map(([x, y]) => [x! * w, y! * h] as const);
+    const g = this.add.graphics();
+    for (const [width, color, alpha] of [[5, 0xff6a30, 0.35], [1.6, 0xffd2b0, 0.95]] as const) {
+      g.lineStyle(width, color, alpha).beginPath();
+      g.moveTo(path[0]![0], path[0]![1]);
+      for (const [x, y] of path.slice(1)) g.lineTo(x, y);
+      g.moveTo(path[2]![0], path[2]![1]).lineTo(path[2]![0] + w * 0.16, path[2]![1] + h * 0.06);
+      g.strokePath();
+    }
+    c.add(g);
+    this.loopTween(g, { alpha: 0.4, duration: 420 });
+  }
+
+  /** Phản Đòn: a narrow band of light sweeping across the card every couple of seconds. */
+  private sheen(c: Phaser.GameObjects.Container, w: number, h: number) {
+    const band = this.add.image(-w / 2 + 10, 0, VFX_GLOW).setBlendMode("ADD").setTint(0xcfe8ff).setAlpha(0.45);
+    band.setScale(0.25, (h / 64) * 0.9);
+    c.add(band);
+    this.loopTween(band, { x: w / 2 - 10, duration: 700, yoyo: false, repeatDelay: 1600, ease: "Sine.easeInOut" });
   }
 
   /** In-card status icons, bottom-up rows above the name strip; each explains itself on hover. */
