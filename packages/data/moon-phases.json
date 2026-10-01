@@ -32,7 +32,7 @@
     "decrees": [
       { "id": "thien_binh", "name": "Thiên Bình", "text": "Debuff có thời hạn mới được áp +1 thời hạn.",
         "modifiers": [{ "type": "debuffDurationBonus", "amount": 1 }] },
-      { "id": "the_can", "name": "Thế Cân", "text": "Đầu vòng, Hero HP cao nhất và kẻ địch HP cao nhất bị Suy Yếu 1.",
+      { "id": "the_can", "name": "Thế Cân", "text": "Đầu vòng, Hero HP cao nhất và kẻ địch HP cao nhất bị Suy Yếu 1 (PvP: 2).",
         "modifiers": [{ "type": "turnStartStatusOnHighestHp", "status": "weak", "amount": 1 }] },
       { "id": "the_thu", "name": "Thế Thủ", "text": "Đòn đơn mục tiêu đầu tiên mỗi đơn vị nhận trong vòng giảm 3 damage.",
         "modifiers": [{ "type": "firstSingleHitReduction", "amount": 3 }] }
