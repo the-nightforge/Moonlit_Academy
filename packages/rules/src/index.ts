@@ -17,6 +17,7 @@ export {
   currentDecree,
   decreeModifier,
   DECREE_ONLY_MODIFIERS,
+  enterPhase,
   phaseModifiers,
   rollMoon,
 } from "./moon";

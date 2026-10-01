@@ -21,8 +21,13 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
   events.push({ type: "turnStarted", side: "hero", round: state.round });
   for (const seat of state.players) {
     seat.cardsPlayedThisTurn = 0;
+    delete seat.attackCardsThisTurn;
     seat.done = false;
   }
+  // Tập Kích (`01` §7.5): both seats' first-hit keys reset with the shared turn.
+  state.firstHitKeys = (state.firstHitKeys ?? []).filter(
+    (key) => !state.players.some((seat) => key === `p${seat.index}`),
+  );
   state.playedThisTurn = [];
 
   for (const unit of [...state.heroes, ...summonsOf(state)]) {

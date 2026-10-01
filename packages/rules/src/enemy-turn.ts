@@ -51,6 +51,8 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
     }
     removeStatus(enemy, "reflect", events);
   }
+  // Tập Kích (`01` §7.5): the enemy side's first-hit key resets with its turn.
+  state.firstHitKeys = (state.firstHitKeys ?? []).filter((key) => key !== "enemy");
   for (const enemy of state.enemies) {
     if (!enemy.alive) continue;
     const start = events.length;
@@ -75,9 +77,13 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
       }
       continue;
     }
+    // Liên Kích (`01` §7.5): an attack/attackDefend intent behind an earlier
+    // executed attack/attackDefend of this same chain hits harder.
+    let attacked = false;
     for (const planned of enemy.plannedIntents) {
       if (!enemy.alive) break;
       const intent = planned.intent;
+      const attackChain = attacked && (intent.kind === "attack" || intent.kind === "attackDefend");
       let targetId: string | null = null;
       let damageMultiplier: number | undefined;
       if (intent.targeting !== undefined) {
@@ -122,9 +128,11 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
           intentKind: intent.kind,
           ...(targetId !== null ? { chosenId: targetId } : {}),
           ...(damageMultiplier !== undefined ? { damageMultiplier } : {}),
+          ...(attackChain ? { attackChain: true as const } : {}),
         },
         events,
       );
+      if (intent.kind === "attack" || intent.kind === "attackDefend") attacked = true;
       if (state.status !== "enemyTurn") return;
     }
   }

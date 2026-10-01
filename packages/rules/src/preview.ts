@@ -77,7 +77,9 @@ function previewIntent(
     for (const target of targets) {
       damages.push({
         targetId: target.id,
-        amount: computeDamageAmount(data, state, ctx, target, base),
+        // `consume: false` — a preview computes the Tập Kích bonus without
+        // spending the side's first-hit key (`01` §7.5).
+        amount: computeDamageAmount(data, state, ctx, target, base, false),
         hits: effect.hits ?? 1,
       });
     }

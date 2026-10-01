@@ -4,6 +4,7 @@ import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "./effec
 import { runEnemyTurn } from "./enemy-turn";
 import { planEnemyIntents } from "./intent";
 import { bumpCounter, checkLevelUps, levelUpPassive } from "./levelup";
+import { enterPhase } from "./moon";
 import { baseMoonPower } from "./moon-power";
 import { heroesOf, seatTag, summonsOf } from "./players";
 import { cardOwners } from "./queries";
@@ -22,6 +23,10 @@ export function startPlayerTurn(
   state.status = "playerTurn";
   events.push({ type: "turnStarted", side: "hero", round: state.round, ...seatTag(state, player.index) });
   player.cardsPlayedThisTurn = 0;
+  // Liên Kích + Tập Kích (`01` §7.5): the seat's chain counter and its first-hit
+  // key reset when its turn starts.
+  delete player.attackCardsThisTurn;
+  state.firstHitKeys = (state.firstHitKeys ?? []).filter((key) => key !== `p${player.index}`);
   const mySummons = summonsOf(state).filter((summon) => summon.player === player.index);
   for (const unit of [...heroesOf(state, player.index), ...mySummons]) {
     if (unit.armor > 0) {
@@ -104,10 +109,18 @@ export function tickDurations(state: CombatState, events: CombatEvent[]): void {
 
 /** The shared part of a round's end: moon phase advances, blood moon ticks, round++. */
 export function advanceRound(data: GameData, state: CombatState, events: CombatEvent[]): void {
+  // Thế Thủ (`01` §7.5): every unit's first-single-hit shield rearms each round.
+  for (const unit of [...state.heroes, ...summonsOf(state), ...state.enemies]) {
+    delete unit.shieldUsed;
+  }
   const from = state.moonIndex;
   state.moonIndex = (state.moonIndex + 1) % data.moonPhases.length;
+  // Hook scan starts at the moonShifted event — enterPhase may append
+  // statusRemoved (Nguyệt Chiếu) between it and the hook pass.
+  const hookStart = events.length;
   events.push({ type: "moonShifted", from, to: state.moonIndex, cause: "roundEnd" });
-  fireEventHooks(data, state, events, events.length - 1, state.bloodMoonRounds);
+  enterPhase(data, state, events);
+  fireEventHooks(data, state, events, hookStart, state.bloodMoonRounds);
   if (checkCombatEnd(state, events)) return;
   if (state.bloodMoonRounds > 0) {
     // A `bloodMoonWhileActive` boss phase keeps Blood Moon at 1+ (`01` §16.5).

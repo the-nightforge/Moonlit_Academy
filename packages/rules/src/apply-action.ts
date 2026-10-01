@@ -124,7 +124,18 @@ function playCard(
     }
   }
 
-  const ctx = { source: owner, actors: owners, card, chosenId, instanceId: instance.instanceId, comboBonus };
+  // Liên Kích (`01` §7.5): the count at the start of resolution decides the
+  // chain bonus — the attack card being played only counts afterward.
+  const attackChain = card.type === "attack" && (player.attackCardsThisTurn ?? 0) > 0;
+  const ctx = {
+    source: owner,
+    actors: owners,
+    card,
+    chosenId,
+    instanceId: instance.instanceId,
+    comboBonus,
+    ...(attackChain ? { attackChain: true as const } : {}),
+  };
   // Phong Ấn (`01` §5.6): a card owned by a sealed hero keeps damage only —
   // the mark covers the whole seat turn, like an enemy's intent chain.
   const sealedOwner = owners.find((hero) => hero.sealedBy !== undefined);
@@ -167,6 +178,7 @@ function playCard(
   }
   player.discardPile.push(instance.instanceId);
   player.cardsPlayedThisTurn += 1;
+  if (card.type === "attack") player.attackCardsThisTurn = (player.attackCardsThisTurn ?? 0) + 1;
 }
 
 /** Owner(s) losing empower/stealth after an attack card: a bond card's damage actors. */

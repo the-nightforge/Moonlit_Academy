@@ -1,5 +1,7 @@
 import { relicAt } from "./gear";
+import { summonsOf } from "./players";
 import { nextRandom } from "./rng";
+import { removeStatus } from "./statuses";
 import type {
   CardTag,
   CombatEvent,
@@ -56,6 +58,19 @@ export function rollMoon(data: GameData, state: CombatState, start: CombatStart 
     if (id !== undefined) state.moonDecrees[phase.index] = id;
   }
   events.push({ type: "moonDecreesRolled", moonIndex: state.moonIndex, decrees: [...state.moonDecrees] });
+  enterPhase(data, state, events);
+}
+
+/**
+ * Runs every time `moonIndex` becomes a phase — round end, `shiftMoon`, Chọn
+ * Pha, or the rolled start phase (`01` §7.6). Currently only Nguyệt Chiếu uses
+ * the point: `stealthSuppressed` strips Ẩn Thân from every unit.
+ */
+export function enterPhase(data: GameData, state: CombatState, events: CombatEvent[]): void {
+  if (!decreeModifier(data, state, "stealthSuppressed")) return;
+  for (const unit of [...state.heroes, ...summonsOf(state), ...state.enemies]) {
+    removeStatus(unit, "stealth", events);
+  }
 }
 
 /**
