@@ -19,7 +19,7 @@
     { "id": "shop_epic_hero", "item": { "type": "heroChoice", "rarity": "epic" }, "price": 120, "limitPerWeek": 1 }
   ],
   "upgradeCost": {
-    "weapon": { "rare": [2, 3, 4, 5], "epic": [3, 5, 7, 9], "legendary": [5, 8, 11, 14] },
+    "weapon": { "rare": [8, 10, 12, 14], "epic": [25, 30, 35, 40], "legendary": [45, 55, 65, 75] },
     "relic": { "rare": [2, 3, 4, 5], "epic": [3, 5, 7, 9], "legendary": [5, 8, 11, 14] }
   }
 }

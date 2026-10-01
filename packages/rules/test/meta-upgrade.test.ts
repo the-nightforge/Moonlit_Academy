@@ -11,14 +11,16 @@ describe("gear upgrades", () => {
     const data = testData();
     const profile = createProfile(data);
     profile.weapons = { w_anh_nguyet_chuy: { refinement: 1 } }; // epic
-    profile.currencies.darkIron = 10;
+    // Post-sim tuned `upgradeCost` (7d.6): read the price from config instead of pinning it.
+    const price = data.economyConfig.upgradeCost.weapon.epic[0]!;
+    profile.currencies.darkIron = price;
     const result = upgradeItem(data, profile, "weapon", "w_anh_nguyet_chuy");
-    expect(result).toMatchObject({ ok: true, level: 2, spent: 3 });
+    expect(result).toMatchObject({ ok: true, level: 2, spent: price });
     if (!result.ok) return;
     expect(result.profile.weapons["w_anh_nguyet_chuy"]).toEqual({ refinement: 2 });
-    expect(result.profile.currencies.darkIron).toBe(7);
+    expect(result.profile.currencies.darkIron).toBe(0);
     expect(profile.weapons["w_anh_nguyet_chuy"]).toEqual({ refinement: 1 });
-    expect(profile.currencies.darkIron).toBe(10);
+    expect(profile.currencies.darkIron).toBe(price);
   });
 
   it("T309: not owned, maxed and not enough leave the profile unchanged", () => {

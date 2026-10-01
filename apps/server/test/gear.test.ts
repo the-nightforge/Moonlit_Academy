@@ -81,10 +81,12 @@ describe("gear routes", () => {
   it("T311: upgrade routes spend materials through If-Match; rule errors are 400", async () => {
     const server = await testServer();
     const { token } = await register(server);
+    // Post-sim tuned `upgradeCost` (7d.6): read the epic R1→R2 price from config.
+    const price = server.data.economyConfig.upgradeCost.weapon.epic[0]!;
     await editProfile(server, (profile) => {
-      profile.weapons = { w_anh_nguyet_chuy: { refinement: 1 } }; // epic: R1→R2 costs 3
+      profile.weapons = { w_anh_nguyet_chuy: { refinement: 1 } }; // epic
       profile.relics = { r_huyet_ngoc_boi: { resonance: 5 } }; // epic, already maxed
-      profile.currencies.darkIron = 4;
+      profile.currencies.darkIron = price + 1;
       profile.currencies.moonDust = 50;
     });
     const url = "/api/profile/weapons/w_anh_nguyet_chuy/upgrade";
@@ -93,7 +95,7 @@ describe("gear routes", () => {
 
     const ok = await call(server, "POST", url, { token, rev: 1 });
     expect(ok.status).toBe(200);
-    expect(ok.body).toMatchObject({ rev: 2, level: 2, spent: 3 });
+    expect(ok.body).toMatchObject({ rev: 2, level: 2, spent: price });
     expect(ok.body.profile.weapons["w_anh_nguyet_chuy"]).toEqual({ refinement: 2 });
     expect(ok.body.profile.currencies.darkIron).toBe(1);
 
