@@ -5,7 +5,10 @@ const idSchema = z.string().regex(/^[a-z0-9_]+$/);
 
 const factionSchema = z.enum(["thanhLoan", "huyenVu", "bachLo", "xichDien", "neutral"]);
 const archetypeSchema = z.enum(["vanguard", "striker", "controller", "support", "specialist"]);
-const attackStyleSchema = z.enum(["slash", "spear", "darts", "bow", "herb"]);
+const attackStyleSchema = z.enum([
+  "slash", "spear", "darts", "bow",
+  "herb", "fan", "ink", "music", "ribbon", "fire", "star", "moon", "talisman", "blood",
+]);
 const raritySchema = z.enum(["common", "rare", "epic", "legendary"]);
 const moonPhaseIdSchema = z.enum([
   "new", "waxingCrescent", "firstQuarter", "waxingGibbous",

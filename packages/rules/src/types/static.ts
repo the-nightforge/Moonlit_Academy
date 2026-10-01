@@ -3,7 +3,10 @@ import type { Loadout } from "./meta";
 export type Faction = "thanhLoan" | "huyenVu" | "bachLo" | "xichDien" | "neutral";
 export type Archetype = "vanguard" | "striker" | "controller" | "support" | "specialist";
 /** How a unit's attacks look on screen; presentation only, the rules ignore it. */
-export type AttackStyle = "slash" | "spear" | "darts" | "bow" | "herb";
+/** Weapons (slash…bow) swing only on attack cards; the casting styles (herb…blood) color every card of the hero. */
+export type AttackStyle =
+  | "slash" | "spear" | "darts" | "bow"
+  | "herb" | "fan" | "ink" | "music" | "ribbon" | "fire" | "star" | "moon" | "talisman" | "blood";
 export type Rarity = "common" | "rare" | "epic" | "legendary";
 
 export type MoonPhaseId =

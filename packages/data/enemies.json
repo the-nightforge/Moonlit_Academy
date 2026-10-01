@@ -139,6 +139,7 @@
     "id": "book_wraith",
     "name": "Thư Hồn",
     "maxHp": 32,
+    "attackStyle": "ink",
     "moonPower": { "start": 0, "cap": 3 },
     "intents": [
       { "id": "wraith_curse", "name": "Nguyền Thư", "kind": "debuff", "targeting": "random", "cost": 1,
@@ -160,6 +161,7 @@
     "id": "black_guard",
     "name": "Hắc Giáp Vệ",
     "maxHp": 69,
+    "attackStyle": "spear",
     "moonPower": { "start": 1, "cap": 5 },
     "intents": [
       { "id": "black_roar", "name": "Chấn Hồn", "kind": "debuff", "cost": 1,
@@ -184,6 +186,7 @@
     "id": "fox_king",
     "name": "Hồ Vương",
     "maxHp": 50,
+    "attackStyle": "fire",
     "moonPower": { "start": 1, "cap": 5 },
     "intents": [
       { "id": "fox_king_veil", "name": "Huyễn Ảnh", "kind": "buff", "cost": 1,
@@ -212,6 +215,7 @@
     "id": "eclipse_lord",
     "name": "Nguyệt Thực Ma Quân",
     "maxHp": 210,
+    "attackStyle": "blood",
     "moonPower": { "start": 4, "cap": 12 },
     "intents": [
       { "id": "ecl_nguyet_nha", "name": "Nguyệt Nha", "kind": "attack", "targeting": "lowestHp", "cost": 3,
@@ -316,6 +320,7 @@
     "id": "thanh_loan_thi_quan",
     "name": "Thanh Loan Thí Quan",
     "maxHp": 38,
+    "attackStyle": "fan",
     "moonPower": { "start": 1, "cap": 4 },
     "intents": [
       { "id": "tlq_but_phong", "name": "Bút Phong", "kind": "attack", "targeting": "lowestHp", "cost": 1,
@@ -347,6 +352,7 @@
     "id": "huyen_vu_thi_quan",
     "name": "Huyền Vũ Thí Quan",
     "maxHp": 48,
+    "attackStyle": "spear",
     "moonPower": { "start": 1, "cap": 4 },
     "intents": [
       { "id": "hvq_thiet_chuong", "name": "Thiết Chưởng", "kind": "attack", "targeting": "front", "cost": 1,
@@ -384,6 +390,7 @@
     "id": "bach_lo_thi_quan",
     "name": "Bạch Lộ Thí Quan",
     "maxHp": 30,
+    "attackStyle": "ribbon",
     "moonPower": { "start": 1, "cap": 4 },
     "intents": [
       { "id": "blq_cham_kich", "name": "Châm Kích", "kind": "attack", "targeting": "lowestHp", "cost": 1,
@@ -421,6 +428,7 @@
     "id": "khao_hach_chi_linh",
     "name": "Khảo Hạch Chi Linh",
     "maxHp": 80,
+    "attackStyle": "talisman",
     "moonPower": { "start": 2, "cap": 7 },
     "intents": [
       { "id": "khl_thach_trao", "name": "Thạch Trảo", "kind": "attack", "targeting": "random", "cost": 2,
@@ -549,6 +557,7 @@
     "id": "vo_nguyet_nghi_si",
     "name": "Vô Nguyệt Nghi Sĩ",
     "maxHp": 22,
+    "attackStyle": "talisman",
     "moonPower": { "start": 1, "cap": 4 },
     "intents": [
       { "id": "vns_hac_chuc", "name": "Hắc Chúc", "kind": "attack", "targeting": "random", "cost": 1,
@@ -586,6 +595,7 @@
     "id": "vo_nguyet_anh_chu",
     "name": "Vô Nguyệt Ảnh Chủ",
     "maxHp": 75,
+    "attackStyle": "blood",
     "moonPower": { "start": 2, "cap": 8 },
     "intents": [
       { "id": "vac_anh_cham", "name": "Ảnh Châm", "kind": "attack", "targeting": "random", "cost": 1,

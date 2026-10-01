@@ -7,6 +7,7 @@ const data = {
     f05: { archetype: "striker", attackStyle: "bow" },
     f04: { archetype: "support" },
     m08: { archetype: "controller" },
+    m09: { archetype: "controller", attackStyle: "music" },
   },
   weapons: { w_xich_diem_thuong: { attackStyle: "spear" }, w_tinh_ban: {} },
   enemies: { vo_nguyet_am_sat: { attackStyle: "darts" }, shadow_fox: {} },
@@ -18,6 +19,7 @@ function stateWith(weapons: { heroId: string; weaponId: string }[] = []): Combat
       { id: "hero:f05", defId: "f05", player: 0 },
       { id: "hero:f04", defId: "f04", player: 0 },
       { id: "hero:m08", defId: "m08", player: 0 },
+      { id: "hero:m09", defId: "m09", player: 0 },
     ],
     enemies: [
       { id: "enemy:0", defId: "vo_nguyet_am_sat" },
@@ -48,8 +50,14 @@ describe("attackLookOf", () => {
     expect(attackLookOf(data, stateWith(), "hero:m08").kind).toBe("spell");
   });
 
-  it("non-attack cards cast a spell colored by tag", () => {
+  it("a skill card does not swing a physical weapon: spell colored by tag", () => {
     expect(attackLookOf(data, stateWith(), "hero:f05", card("skill", ["heal", "moon"]))).toEqual({ kind: "spell", color: 0xf4d35e });
+  });
+
+  it("a casting style colors skills too, and an equipped weapon only changes attacks", () => {
+    const state = stateWith([{ heroId: "m09", weaponId: "w_xich_diem_thuong" }]);
+    expect(attackLookOf(data, state, "hero:m09", card("skill", ["harmony"])).kind).toBe("music");
+    expect(attackLookOf(data, state, "hero:m09", card("attack", ["harmony"])).kind).toBe("spear");
   });
 
   it("enemies use their style, tinted red; default slash", () => {

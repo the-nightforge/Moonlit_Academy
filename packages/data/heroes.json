@@ -318,6 +318,7 @@
     "name": "Diệp Linh Lung",
     "faction": "xichDien",
     "archetype": "specialist",
+    "attackStyle": "darts",
     "rarity": "epic",
     "maxHp": 26,
     "cardIds": [
@@ -392,6 +393,7 @@
     "name": "Tạ Vân Chiêu",
     "faction": "thanhLoan",
     "archetype": "support",
+    "attackStyle": "talisman",
     "rarity": "legendary",
     "maxHp": 30,
     "cardIds": [
@@ -543,6 +545,7 @@
     "name": "Mặc Tử Du",
     "faction": "thanhLoan",
     "archetype": "specialist",
+    "attackStyle": "fan",
     "rarity": "rare",
     "maxHp": 30,
     "cardIds": [
@@ -623,6 +626,7 @@
     "name": "Bùi Thanh Minh",
     "faction": "bachLo",
     "archetype": "support",
+    "attackStyle": "herb",
     "rarity": "epic",
     "maxHp": 32,
     "cardIds": [
@@ -697,6 +701,7 @@
     "name": "Thẩm Nguyệt Hoa",
     "faction": "thanhLoan",
     "archetype": "specialist",
+    "attackStyle": "moon",
     "rarity": "legendary",
     "maxHp": 32,
     "cardIds": [
@@ -778,6 +783,7 @@
     "name": "Ninh An",
     "faction": "bachLo",
     "archetype": "specialist",
+    "attackStyle": "blood",
     "rarity": "rare",
     "maxHp": 34,
     "cardIds": [
@@ -851,6 +857,7 @@
     "name": "Khương Tịch",
     "faction": "xichDien",
     "archetype": "controller",
+    "attackStyle": "star",
     "rarity": "legendary",
     "maxHp": 30,
     "cardIds": [
@@ -925,6 +932,7 @@
     "name": "Chu Quyết",
     "faction": "thanhLoan",
     "archetype": "striker",
+    "attackStyle": "ink",
     "rarity": "rare",
     "maxHp": 30,
     "cardIds": [
@@ -999,6 +1007,7 @@
     "name": "Phượng Chiêu Dung",
     "faction": "xichDien",
     "archetype": "striker",
+    "attackStyle": "fire",
     "rarity": "legendary",
     "maxHp": 34,
     "cardIds": [
@@ -1148,6 +1157,7 @@
     "name": "Lam Khê",
     "faction": "bachLo",
     "archetype": "controller",
+    "attackStyle": "ribbon",
     "rarity": "epic",
     "maxHp": 30,
     "cardIds": [
@@ -1224,6 +1234,7 @@
     "name": "Cố Uyển",
     "faction": "thanhLoan",
     "archetype": "controller",
+    "attackStyle": "ink",
     "rarity": "rare",
     "maxHp": 30,
     "cardIds": [
@@ -1298,6 +1309,7 @@
     "name": "Tiểu Mãn",
     "faction": "bachLo",
     "archetype": "specialist",
+    "attackStyle": "moon",
     "rarity": "common",
     "maxHp": 28,
     "cardIds": [
@@ -1372,6 +1384,7 @@
     "name": "Liễu Tịnh Nhan",
     "faction": "neutral",
     "archetype": "support",
+    "attackStyle": "moon",
     "rarity": "legendary",
     "maxHp": 30,
     "cardIds": [
@@ -1453,6 +1466,7 @@
     "name": "Đoàn Lạc",
     "faction": "bachLo",
     "archetype": "controller",
+    "attackStyle": "music",
     "rarity": "epic",
     "maxHp": 32,
     "cardIds": [

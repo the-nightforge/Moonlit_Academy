@@ -15,8 +15,20 @@ const STYLE_COLOR: Record<AttackKind, number> = {
   darts: 0xcfd8f0,
   bow: 0xffe08a,
   herb: 0x7fe07f,
+  fan: 0xb8f0e0,
+  ink: 0xa8c0ff,
+  music: 0x8fe8d8,
+  ribbon: 0x9fc8ff,
+  fire: 0xc080ff,
+  star: 0xcfe6ff,
+  moon: 0xf4d35e,
+  talisman: 0xffd27a,
+  blood: 0xd03a4a,
   spell: 0xf4d35e,
 };
+
+/** Physical weapons swing only on attack cards; skills cast a spell instead. */
+const WEAPON_STYLES = new Set<AttackKind>(["slash", "spear", "darts", "bow"]);
 
 /** Heroes without a lore weapon fight like their archetype. */
 const ARCHETYPE_KIND: Record<Archetype, AttackKind> = {
@@ -40,25 +52,26 @@ const TAG_COLOR: [CardTag, number][] = [
 ];
 
 /**
- * Look of a hit from `sourceId`. `card` is the card being played, if any:
- * non-attack cards cast a spell colored by tag; attack cards (and card-less
- * hits) use the equipped weapon's style, else the hero's lore weapon, else the
- * archetype default. Enemies use their own style, tinted red.
+ * Look of a hit from `sourceId`. `card` is the card being played, if any.
+ * Attack cards (and card-less hits) use the equipped weapon's style, else the
+ * hero's lore style, else the archetype default. Skill cards use the hero's
+ * lore style when it is a casting one (fan, ink, moon…); a physical weapon
+ * does not swing for a skill, which casts a spell colored by tag instead.
+ * Enemies use their own style, tinted red.
  */
 export function attackLookOf(data: GameData, state: CombatState, sourceId: string, card?: CardDef): AttackLook {
   const enemy = state.enemies.find((unit) => unit.id === sourceId);
   if (enemy) return { kind: data.enemies[enemy.defId]?.attackStyle ?? "slash", color: ENEMY_COLOR };
   const hero = state.heroes.find((unit) => unit.id === sourceId);
   if (!hero) return { kind: "slash", color: STYLE_COLOR.slash };
+  const def = data.heroes[hero.defId];
+  const lore: AttackKind = def?.attackStyle ?? (def ? ARCHETYPE_KIND[def.archetype] : "slash");
   if (card && card.type !== "attack") {
+    if (!WEAPON_STYLES.has(lore) && lore !== "spell") return { kind: lore, color: STYLE_COLOR[lore] };
     const color = TAG_COLOR.find(([tag]) => card.tags.includes(tag))?.[1] ?? STYLE_COLOR.spell;
     return { kind: "spell", color };
   }
   const weaponId = state.players[hero.player]?.weapons.find((weapon) => weapon.heroId === hero.defId)?.weaponId;
-  const def = data.heroes[hero.defId];
-  const kind =
-    (weaponId !== undefined ? data.weapons[weaponId]?.attackStyle : undefined) ??
-    def?.attackStyle ??
-    (def ? ARCHETYPE_KIND[def.archetype] : "slash");
+  const kind = (weaponId !== undefined ? data.weapons[weaponId]?.attackStyle : undefined) ?? lore;
   return { kind, color: STYLE_COLOR[kind] };
 }

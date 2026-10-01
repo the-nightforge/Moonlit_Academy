@@ -28,6 +28,12 @@ const ARROW = "vfx_arrow";
 const BOW = "vfx_bow";
 const LEAF = "vfx_leaf";
 const RUNE = "vfx_rune";
+const WAVE = "vfx_wave";
+const BEAM = "vfx_beam";
+const STAR = "vfx_star";
+const CRESCENT = "vfx_crescent";
+const BRUSH = "vfx_brush";
+const TALISMAN = "vfx_talisman";
 
 function canvasTexture(
   scene: Phaser.Scene,
@@ -214,6 +220,105 @@ function ensureTextures(scene: Phaser.Scene): void {
       ctx.fill();
     }
   });
+  // Sound wave: an arc bulging toward +x.
+  canvasTexture(scene, WAVE, 24, 64, (ctx) => {
+    ctx.strokeStyle = "#fff";
+    ctx.lineCap = "round";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(-26, 32, 42, -0.62, 0.62);
+    ctx.stroke();
+    ctx.globalAlpha = 0.45;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(-31, 32, 42, -0.55, 0.55);
+    ctx.stroke();
+  });
+  // Moonbeam pillar: bright core, soft sides, brightest near the top.
+  canvasTexture(scene, BEAM, 32, 128, (ctx) => {
+    ctx.fillStyle = linear(ctx, 0, 0, 32, 0, [
+      [0, "rgba(255,255,255,0)"],
+      [0.38, "rgba(255,255,255,0.7)"],
+      [0.5, "#fff"],
+      [0.62, "rgba(255,255,255,0.7)"],
+      [1, "rgba(255,255,255,0)"],
+    ]);
+    ctx.fillRect(0, 0, 32, 128);
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.fillStyle = linear(ctx, 0, 0, 0, 128, [[0, "rgba(255,255,255,0.4)"], [0.2, "#fff"], [1, "rgba(255,255,255,0.5)"]]);
+    ctx.fillRect(0, 0, 32, 128);
+  });
+  canvasTexture(scene, STAR, 24, 24, (ctx) => {
+    const g = ctx.createRadialGradient(12, 12, 0, 12, 12, 12);
+    g.addColorStop(0, "rgba(255,255,255,0.9)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 24, 24);
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.moveTo(12, 1);
+    ctx.lineTo(13.6, 10.4);
+    ctx.lineTo(23, 12);
+    ctx.lineTo(13.6, 13.6);
+    ctx.lineTo(12, 23);
+    ctx.lineTo(10.4, 13.6);
+    ctx.lineTo(1, 12);
+    ctx.lineTo(10.4, 10.4);
+    ctx.closePath();
+    ctx.fill();
+  });
+  canvasTexture(scene, CRESCENT, 48, 48, (ctx) => {
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(24, 24, 20, 0, Math.PI * 2);
+    ctx.arc(32, 18, 17, 0, Math.PI * 2, true);
+    ctx.fill("evenodd");
+  });
+  // Calligraphy stroke: a heavy press on the left, dry bristles trailing right.
+  canvasTexture(scene, BRUSH, 128, 24, (ctx) => {
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.moveTo(4, 12);
+    ctx.quadraticCurveTo(6, 2, 22, 4);
+    ctx.quadraticCurveTo(70, 7, 124, 11);
+    ctx.quadraticCurveTo(72, 16, 22, 20);
+    ctx.quadraticCurveTo(6, 22, 4, 12);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = 0.8;
+    for (const [y, end] of [[6, 96], [9, 118], [15, 110], [18, 84]] as const) {
+      ctx.beginPath();
+      ctx.moveTo(30, y);
+      ctx.lineTo(end, 11 + (y - 12) * 0.3);
+      ctx.stroke();
+    }
+  });
+  // Paper talisman (bùa): yellow paper, red frame and glyph — drawn in color, never tinted.
+  canvasTexture(scene, TALISMAN, 14, 30, (ctx) => {
+    ctx.fillStyle = linear(ctx, 0, 0, 0, 30, [[0, "#fffbe6"], [0.5, "#f2dc8a"], [1, "#c8a24a"]]);
+    ctx.fillRect(0, 0, 14, 30);
+    ctx.strokeStyle = "#c03040";
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(1.5, 1.5, 11, 27);
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(4.5, 6);
+    ctx.lineTo(9.5, 6);
+    ctx.moveTo(7, 4.5);
+    ctx.lineTo(7, 11);
+    ctx.moveTo(4.5, 9);
+    ctx.lineTo(9.5, 9);
+    ctx.moveTo(7, 13);
+    ctx.lineTo(7, 21);
+    ctx.moveTo(4.5, 16);
+    ctx.lineTo(9.5, 16);
+    ctx.moveTo(4.5, 21);
+    ctx.lineTo(7, 19);
+    ctx.lineTo(9.5, 21);
+    ctx.stroke();
+    ctx.fillStyle = "#d03a4a";
+    ctx.fillRect(5, 24, 4, 3);
+  });
 }
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
@@ -334,6 +439,24 @@ export function playAttack(scene: Phaser.Scene, look: AttackLook, from: Point, t
       return herb(scene, from, to, look.color, hitColor, angle);
     case "spell":
       return spell(scene, from, to, look.color, hitColor, angle);
+    case "fan":
+      return fan(scene, from, to, look.color, hitColor, angle);
+    case "ink":
+      return ink(scene, from, to, look.color, hitColor, angle);
+    case "music":
+      return music(scene, from, to, look.color, hitColor, angle);
+    case "ribbon":
+      return ribbon(scene, from, to, look.color, hitColor, angle);
+    case "fire":
+      return fire(scene, from, to, look.color, hitColor, angle);
+    case "star":
+      return star(scene, from, to, look.color, hitColor);
+    case "moon":
+      return moon(scene, from, to, look.color, hitColor, angle);
+    case "talisman":
+      return talisman(scene, from, to, look.color, hitColor, angle);
+    case "blood":
+      return blood(scene, from, to, look.color, hitColor, angle);
     default: {
       const never: never = look.kind;
       return never;
@@ -344,15 +467,19 @@ export function playAttack(scene: Phaser.Scene, look: AttackLook, from: Point, t
 async function slash(scene: Phaser.Scene, from: Point, to: Point, color: number, hitColor: number, angle: number, view?: Phaser.GameObjects.Container) {
   lunge(scene, view, from, to, 0.16, 110);
   if (view) await wait(scene, 90);
-  const rot = rand(-0.85, -0.35);
-  const blade = [
-    addFx(scene, to, SLASH).setTint(color).setRotation(rot).setScale(0.2 * S, S),
-    addFx(scene, to, SLASH).setRotation(rot).setScale(0.2 * S, 0.45 * S),
-  ];
   impact(scene, to, hitColor, angle);
-  await tween(scene, { targets: blade, scaleX: 1.1 * S, rotation: rot + 0.18, duration: 110, ease: "Cubic.easeOut" });
-  await tween(scene, { targets: blade, alpha: 0, scaleY: 0.15 * S, duration: 220, ease: "Sine.easeIn" });
-  blade.forEach((b) => b.destroy());
+  await blade(scene, to, color, rand(-0.85, -0.35));
+}
+
+/** One crescent cut across `at`: grows along its arc, then thins out. */
+async function blade(scene: Phaser.Scene, at: Point, color: number, rot: number) {
+  const layers = [
+    addFx(scene, at, SLASH).setTint(color).setRotation(rot).setScale(0.2 * S, S),
+    addFx(scene, at, SLASH).setRotation(rot).setScale(0.2 * S, 0.45 * S),
+  ];
+  await tween(scene, { targets: layers, scaleX: 1.1 * S, rotation: rot + 0.18, duration: 110, ease: "Cubic.easeOut" });
+  await tween(scene, { targets: layers, alpha: 0, scaleY: 0.15 * S, duration: 220, ease: "Sine.easeIn" });
+  layers.forEach((layer) => layer.destroy());
 }
 
 async function thrust(scene: Phaser.Scene, from: Point, to: Point, color: number, hitColor: number, angle: number, view?: Phaser.GameObjects.Container) {
@@ -467,4 +594,245 @@ async function spell(scene: Phaser.Scene, from: Point, to: Point, color: number,
   impact(scene, to, hitColor, angle, 1.1);
   fadeOut(scene, sigil, { scale: 1.6 * S, rotation: 1.8, duration: 220 });
   await wait(scene, 120);
+}
+
+/** Point `t` (0..1) along from→to, pushed sideways by `off` px and up by `lift` px. */
+function along(from: Point, to: Point, t: number, off = 0, lift = 0): Point {
+  const side = Math.atan2(to.y - from.y, to.x - from.x) + Math.PI / 2;
+  return {
+    x: from.x + (to.x - from.x) * t + Math.cos(side) * off,
+    y: from.y + (to.y - from.y) * t + Math.sin(side) * off - lift,
+  };
+}
+
+/** Three spinning wind blades fan out from the fan and close on the target. */
+async function fan(scene: Phaser.Scene, from: Point, to: Point, color: number, hitColor: number, angle: number) {
+  await Promise.all(
+    [-1, 0, 1].map(async (side, i) => {
+      await wait(scene, i * 50);
+      const wind = addFx(scene, from, SLASH).setTint(color).setScale(0.26 * S, 0.5 * S);
+      const stop = trail(scene, wind, color, 0.06);
+      const p = { t: 0 };
+      await tween(scene, {
+        targets: p,
+        t: 1,
+        duration: 320,
+        ease: "Sine.easeIn",
+        onUpdate: () => {
+          const at = along(from, to, p.t, Math.sin(p.t * Math.PI) * side * 64);
+          wind.setPosition(at.x, at.y).setRotation(p.t * Math.PI * 6);
+        },
+      });
+      stop();
+      wind.destroy();
+      impact(scene, to, hitColor, angle, side === 0 ? 0.9 : 0.45);
+    }),
+  );
+  await wait(scene, 80);
+}
+
+/** Ink drops lobbed in an arc, then a calligraphy stroke written across the target. */
+async function ink(scene: Phaser.Scene, from: Point, to: Point, color: number, hitColor: number, angle: number) {
+  await Promise.all(
+    [0, 1, 2].map(async (i) => {
+      await wait(scene, i * 60);
+      const end = { x: to.x + rand(-16, 16), y: to.y + rand(-12, 12) };
+      const drop = addFx(scene, from, GLOW).setTint(color).setScale(0.2 * S);
+      const stop = trail(scene, drop, color, 0.08);
+      const p = { t: 0 };
+      await tween(scene, {
+        targets: p,
+        t: 1,
+        duration: 260,
+        onUpdate: () => {
+          const at = along(from, end, p.t, 0, Math.sin(p.t * Math.PI) * 60);
+          drop.setPosition(at.x, at.y);
+        },
+      });
+      stop();
+      drop.destroy();
+    }),
+  );
+  const start = { x: to.x - 58, y: to.y + 18 };
+  const strokes = [
+    addFx(scene, start, BRUSH).setOrigin(0, 0.5).setTint(color).setRotation(-0.32).setScale(0, 1.1 * S),
+    addFx(scene, start, BRUSH).setOrigin(0, 0.5).setRotation(-0.32).setScale(0, 0.5 * S).setAlpha(0.8),
+  ];
+  impact(scene, to, hitColor, angle, 1.1);
+  await tween(scene, { targets: strokes, scaleX: S, duration: 140, ease: "Cubic.easeOut" });
+  strokes.forEach((stroke) => fadeOut(scene, stroke, { duration: 320, delay: 80 }));
+  await wait(scene, 120);
+}
+
+/** Sound waves from the zither swell as they travel; notes rise at the player. */
+async function music(scene: Phaser.Scene, from: Point, to: Point, color: number, hitColor: number, angle: number) {
+  const css = `#${color.toString(16).padStart(6, "0")}`;
+  ["♪", "♫"].forEach((glyph, i) => {
+    const note = scene.add
+      .text(from.x + (i ? 18 : -18), from.y - 30, glyph, { fontSize: "20px", color: css })
+      .setOrigin(0.5)
+      .setDepth(DEPTH);
+    scene.tweens.add({
+      targets: note,
+      y: note.y - 40,
+      alpha: 0,
+      duration: 700,
+      delay: i * 120,
+      ease: "Sine.easeOut",
+      onComplete: () => note.destroy(),
+    });
+  });
+  await Promise.all(
+    [0, 1, 2].map(async (i) => {
+      await wait(scene, i * 90);
+      const wave = addFx(scene, from, WAVE).setTint(color).setRotation(angle).setScale(0.5 * S).setAlpha(0.95);
+      await tween(scene, { targets: wave, x: to.x, y: to.y, scale: 1.5 * S, duration: 320, ease: "Sine.easeIn" });
+      fadeOut(scene, wave, { scale: 2.2 * S, duration: 180 });
+      impact(scene, to, hitColor, angle, i === 2 ? 0.9 : 0.35);
+    }),
+  );
+  await wait(scene, 60);
+}
+
+/** A silk ribbon lashes out in a travelling wave, then whips back. */
+async function ribbon(scene: Phaser.Scene, from: Point, to: Point, color: number, hitColor: number, angle: number) {
+  const g = scene.add.graphics().setBlendMode("ADD").setDepth(DEPTH);
+  const length = Math.hypot(to.x - from.x, to.y - from.y);
+  const p = { head: 0, tail: 0, phase: 0 };
+  const draw = () => {
+    g.clear();
+    const n = 30;
+    let prev: Point | undefined;
+    for (let k = 0; k <= n; k++) {
+      const u = p.tail + ((p.head - p.tail) * k) / n;
+      const at = along(from, to, u / length, Math.sin(u * 0.045 + p.phase) * 18 * (1 - (u / length) * 0.6));
+      if (prev) {
+        const w = 1 + 6 * Math.sin((Math.PI * k) / n);
+        g.lineStyle(w, color, 0.8).lineBetween(prev.x, prev.y, at.x, at.y);
+        g.lineStyle(w * 0.35, 0xffffff, 0.85).lineBetween(prev.x, prev.y, at.x, at.y);
+      }
+      prev = at;
+    }
+  };
+  await tween(scene, { targets: p, head: length, phase: 4, duration: 260, ease: "Cubic.easeOut", onUpdate: draw });
+  impact(scene, to, hitColor, angle, 0.9);
+  await tween(scene, { targets: p, tail: length, phase: 7, duration: 220, ease: "Cubic.easeIn", onUpdate: draw });
+  g.destroy();
+}
+
+/** A fireball gathers in the hand, flies trailing flames and bursts. */
+async function fire(scene: Phaser.Scene, from: Point, to: Point, color: number, hitColor: number, angle: number) {
+  const ball = addFx(scene, from, GLOW).setTint(color).setScale(0.15 * S);
+  const core = addFx(scene, from, GLOW).setScale(0.08 * S);
+  const flames = scene.add
+    .particles(0, 0, GLOW, {
+      follow: ball,
+      frequency: 10,
+      lifespan: { min: 220, max: 380 },
+      speed: { min: 10, max: 40 },
+      scale: { start: 0.34 * S, end: 0 },
+      alpha: { start: 0.8, end: 0 },
+      tint: [color, 0xff80c0, 0xffffff],
+      blendMode: "ADD",
+    })
+    .setDepth(DEPTH - 1);
+  await tween(scene, { targets: ball, scale: 0.6 * S, duration: 140, ease: "Back.easeOut" });
+  core.setScale(0.28 * S);
+  await tween(scene, { targets: [ball, core], x: to.x, y: to.y, duration: 300, ease: "Quad.easeIn" });
+  flames.stop();
+  scene.time.delayedCall(400, () => flames.destroy());
+  ball.destroy();
+  core.destroy();
+  impact(scene, to, hitColor, angle, 1.4);
+  await wait(scene, 100);
+}
+
+/** Star shards fall from the sky onto the target. */
+async function star(scene: Phaser.Scene, from: Point, to: Point, color: number, hitColor: number) {
+  const cast = addFx(scene, from, GLOW).setTint(color).setScale(0.2 * S);
+  fadeOut(scene, cast, { scale: 0.8 * S, duration: 300 });
+  await Promise.all(
+    [0, 1, 2, 3, 4].map(async (i) => {
+      await wait(scene, i * 55);
+      const sky = { x: to.x + rand(-130, 130), y: to.y - rand(180, 240) };
+      const end = { x: to.x + rand(-18, 18), y: to.y + rand(-14, 14) };
+      const shard = addFx(scene, sky, STAR).setTint(color).setScale(0.7 * S);
+      const stop = trail(scene, shard, color, 0.09);
+      await tween(scene, { targets: shard, x: end.x, y: end.y, rotation: 3, duration: 260, ease: "Quad.easeIn" });
+      stop();
+      shard.destroy();
+      impact(scene, end, hitColor, Math.atan2(end.y - sky.y, end.x - sky.x), i === 4 ? 1 : 0.4);
+    }),
+  );
+  await wait(scene, 60);
+}
+
+/** A crescent rises over the target and drops a moonbeam on it. */
+async function moon(scene: Phaser.Scene, from: Point, to: Point, color: number, hitColor: number, angle: number) {
+  const cast = addFx(scene, from, GLOW).setTint(color).setScale(0.2 * S);
+  fadeOut(scene, cast, { scale: 0.8 * S, duration: 300 });
+  const top = { x: to.x, y: to.y - 96 };
+  const crescent = addFx(scene, top, CRESCENT).setTint(color).setScale(0.3 * S).setAlpha(0);
+  await tween(scene, { targets: crescent, alpha: 1, scale: 0.9 * S, duration: 200, ease: "Back.easeOut" });
+  const beam = addFx(scene, top, BEAM).setOrigin(0.5, 0).setTint(color).setScale(0.9 * S, 0);
+  await tween(scene, { targets: beam, scaleY: (120 / 128) * S, duration: 120, ease: "Quad.easeIn" });
+  impact(scene, to, hitColor, angle, 1.2);
+  fadeOut(scene, beam, { scaleX: 0.2 * S, duration: 280 });
+  fadeOut(scene, crescent, { y: top.y - 16, duration: 320 });
+  await wait(scene, 120);
+}
+
+/** Three paper talismans flutter onto the target, flare and burst. */
+async function talisman(scene: Phaser.Scene, from: Point, to: Point, color: number, hitColor: number, angle: number) {
+  const papers = await Promise.all(
+    [-1, 0, 1].map(async (side, i) => {
+      await wait(scene, i * 70);
+      const paper = scene.add.image(from.x, from.y, TALISMAN).setScale(S).setDepth(DEPTH);
+      const end = { x: to.x + side * 24, y: to.y + rand(-12, 8) };
+      const p = { t: 0 };
+      await tween(scene, {
+        targets: p,
+        t: 1,
+        duration: 300,
+        ease: "Sine.easeInOut",
+        onUpdate: () => {
+          const at = along(from, end, p.t, Math.sin(p.t * Math.PI * 3) * 8 * (side || 1), Math.sin(p.t * Math.PI) * 30);
+          paper.setPosition(at.x, at.y).setRotation(Math.sin(p.t * Math.PI * 4) * 0.4 + side * 0.2);
+        },
+      });
+      const flare = addFx(scene, end, GLOW).setTint(color).setScale(0.3 * S);
+      fadeOut(scene, flare, { scale: 0.9 * S, duration: 220 });
+      return paper;
+    }),
+  );
+  await wait(scene, 110);
+  papers.forEach((paper) => fadeOut(scene, paper, { scale: 1.5 * S, duration: 180 }));
+  impact(scene, to, hitColor, angle, 1.2);
+  await wait(scene, 100);
+}
+
+/** Two blood-moon cuts cross in an X; blood drips from the wound. */
+async function blood(scene: Phaser.Scene, from: Point, to: Point, color: number, hitColor: number, angle: number) {
+  const cast = addFx(scene, from, GLOW).setTint(color).setScale(0.2 * S);
+  fadeOut(scene, cast, { scale: 0.9 * S, duration: 260 });
+  const first = blade(scene, to, color, -0.7);
+  impact(scene, to, hitColor, angle, 0.8);
+  await wait(scene, 90);
+  const second = blade(scene, to, color, 0.7 + Math.PI);
+  const drops = scene.add
+    .particles(to.x, to.y, GLOW, {
+      speed: { min: 20, max: 90 },
+      angle: { min: 60, max: 120 },
+      gravityY: 420,
+      lifespan: { min: 500, max: 800 },
+      scale: { start: 0.12 * S, end: 0.04 * S },
+      tint: color,
+      blendMode: "ADD",
+      emitting: false,
+    })
+    .setDepth(DEPTH);
+  drops.explode(14);
+  scene.time.delayedCall(900, () => drops.destroy());
+  impact(scene, to, hitColor, angle, 1.1);
+  await Promise.all([first, second]);
 }
