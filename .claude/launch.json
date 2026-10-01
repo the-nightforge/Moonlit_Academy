@@ -6,6 +6,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev"],
       "port": 5173
+    },
+    {
+      "name": "assets",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "client", "exec", "vite", "public", "--port", "5180", "--strictPort"],
+      "port": 5180
     }
   ]
 }
