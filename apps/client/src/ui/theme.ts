@@ -27,9 +27,23 @@ export const RENDER_SCALE = Math.min(
 /** Base style for every Text object: rasterized at RENDER_SCALE so it stays crisp. */
 export const TEXT_BASE = { fontFamily: FONT, resolution: RENDER_SCALE } as const;
 
-/** Lets a scene keep using design-pixel coordinates on the high-resolution canvas. */
+/**
+ * Lets a scene keep using design-pixel coordinates on the high-resolution canvas.
+ * The design area stays centered when the window (EXPAND scale mode) resizes.
+ */
 export function useDesignCamera(scene: Phaser.Scene): void {
-  scene.cameras.main.setZoom(RENDER_SCALE).centerOn(DESIGN_WIDTH / 2, DESIGN_HEIGHT / 2);
+  const center = () => scene.cameras.main.setZoom(RENDER_SCALE).centerOn(DESIGN_WIDTH / 2, DESIGN_HEIGHT / 2);
+  center();
+  scene.scale.on("resize", center);
+  scene.events.once("shutdown", () => scene.scale.off("resize", center));
+}
+
+/** The world rect the main camera shows: the design area plus whatever a wider/taller window adds. */
+export function visibleWorld(scene: Phaser.Scene): { x: number; y: number; w: number; h: number } {
+  const cam = scene.cameras.main;
+  const w = cam.width / cam.zoom;
+  const h = cam.height / cam.zoom;
+  return { x: DESIGN_WIDTH / 2 - w / 2, y: DESIGN_HEIGHT / 2 - h / 2, w, h };
 }
 
 export const COLORS = {

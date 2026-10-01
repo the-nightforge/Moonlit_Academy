@@ -58,7 +58,11 @@ function probe(page: Page): Promise<Probe> {
 /** Clicks a design-space coordinate on the fitted canvas. */
 async function clickDesign(page: Page, x: number, y: number): Promise<void> {
   const box = await page.locator("canvas").boundingBox();
-  await page.mouse.click(box!.x + (x / 1280) * box!.width, box!.y + (y / 720) * box!.height);
+  // EXPAND scale mode: the 1280×720 design area is centered at the smaller fit scale.
+  const s = Math.min(box!.width / 1280, box!.height / 720);
+  const left = box!.x + (box!.width - 1280 * s) / 2;
+  const top = box!.y + (box!.height - 720 * s) / 2;
+  await page.mouse.click(left + x * s, top + y * s);
 }
 
 /** Every Text object inside the active scene's (nested) display containers. */

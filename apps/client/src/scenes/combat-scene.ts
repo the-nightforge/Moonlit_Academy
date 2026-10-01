@@ -56,10 +56,18 @@ import {
   describePhase,
   RENDER_SCALE,
   useDesignCamera,
+  visibleWorld,
 } from "../ui/theme";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
+/**
+ * The round socket in the top frame of `backgrounds/background.png`, in source
+ * pixels (1671×941): where the moon icon sits and how big it fits. Re-measure
+ * if the art changes.
+ */
+const BG_MOON_SOCKET = { x: 836, y: 26, size: 52 };
+
 const CARD_W = 110;
 const CARD_H = 160;
 /** Hand zone: clear of the draw pile (left) and the end-turn button (right). */
@@ -133,6 +141,8 @@ export class CombatScene extends Phaser.Scene {
   private targeting: string | null = null;
   private validTargetIds = new Set<string>();
   private cardViews = new Map<string, Phaser.GameObjects.Container>();
+  /** Where the moon icon sits (the background art's socket); set by `renderBackground`. */
+  private moonAnchor: { x: number; y: number; size: number } = { ...COMBAT_LAYOUT.moon, size: 46 };
   private unitAnchors = new Map<string, { x: number; y: number }>();
   private unitViews = new Map<string, Phaser.GameObjects.Container>();
   private errorText?: Phaser.GameObjects.Text;
@@ -200,6 +210,10 @@ export class CombatScene extends Phaser.Scene {
     this.storyFinishing = false;
     if (this.netMatch) this.bindNet(this.netMatch);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.unbindNet());
+    // The background covers the visible window, so a resize redraws the screen.
+    const onResize = () => this.renderAll();
+    this.scale.on("resize", onResize);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off("resize", onResize));
     useDesignCamera(this);
     this.root = this.add.container(0, 0);
     this.input.mouse?.disableContextMenu();
@@ -434,6 +448,7 @@ export class CombatScene extends Phaser.Scene {
       unitAnchors: this.unitAnchors,
       unitViews: this.unitViews,
       cardViews: this.cardViews,
+      moonAnchor: this.moonAnchor,
       mySeat: this.mySeat,
     });
   }
@@ -602,6 +617,12 @@ export class CombatScene extends Phaser.Scene {
     return t;
   }
 
+  /** A black veil over everything the window shows (wider than the design area under EXPAND). */
+  private screenDim(alpha: number): Phaser.GameObjects.Rectangle {
+    const view = visibleWorld(this);
+    return this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x000000, alpha);
+  }
+
   /** Shrinks a one-line label that would overrun its panel. */
   private fitWidth(text: Phaser.GameObjects.Text, maxWidth: number): Phaser.GameObjects.Text {
     if (text.width > maxWidth) text.setScale(maxWidth / text.width);
@@ -612,18 +633,36 @@ export class CombatScene extends Phaser.Scene {
    * The artwork fills the screen under a light scrim; Huyết Nguyệt adds a red
    * wash and a red edge. Without the artwork the phase color is the background.
    */
+  /**
+   * Covers the whole visible window, anchored to the top edge so the art's
+   * frame (and its moon socket) stays in view; extra height crops the bottom.
+   * Also places the moon icon in that socket (`moonAnchor`).
+   */
   private renderBackground() {
     const phase = this.gameData.moonPhases[this.state.moonIndex]!;
     const bloodMoon = this.state.bloodMoonRounds > 0;
-    const art = this.coverImage("backgrounds:background", WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, this.root);
-    if (art === null) {
-      this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, bloodMoon ? BLOOD_MOON_BG : PHASE_BG[phase.id]));
+    const view = visibleWorld(this);
+    const cx = view.x + view.w / 2;
+    const cy = view.y + view.h / 2;
+    const key = "backgrounds:background";
+    this.moonAnchor = { x: COMBAT_LAYOUT.moon.x, y: COMBAT_LAYOUT.moon.y, size: 46 };
+    if (!this.textures.exists(key)) {
+      this.root.add(this.add.rectangle(cx, cy, view.w, view.h, bloodMoon ? BLOOD_MOON_BG : PHASE_BG[phase.id]));
       return;
     }
-    this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x060a18, 0.3));
+    const source = this.textures.get(key).getSourceImage();
+    const scale = Math.max(view.w / source.width, view.h / source.height);
+    this.root.add(this.add.image(cx, view.y, key).setOrigin(0.5, 0).setScale(scale));
+    const socket = BG_MOON_SOCKET;
+    this.moonAnchor = {
+      x: cx + (socket.x - source.width / 2) * scale,
+      y: view.y + socket.y * scale,
+      size: socket.size * scale,
+    };
+    this.root.add(this.add.rectangle(cx, cy, view.w, view.h, 0x060a18, 0.3));
     if (bloodMoon) {
-      this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, BLOOD_MOON_BG, 0.35));
-      this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH - 24, HEIGHT - 24).setStrokeStyle(24, 0xc01030, 0.35));
+      this.root.add(this.add.rectangle(cx, cy, view.w, view.h, BLOOD_MOON_BG, 0.35));
+      this.root.add(this.add.rectangle(cx, cy, view.w - 24, view.h - 24).setStrokeStyle(24, 0xc01030, 0.35));
     }
   }
 
@@ -726,16 +765,18 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /** Current moon phase only, in the artwork's top ornament; rules in the tooltip. */
+  /** The current phase's icon, sitting bare in the background art's moon socket. */
   private renderMoon() {
-    const { x, y } = COMBAT_LAYOUT.moon;
+    const { x, y, size } = this.moonAnchor;
     const phase = this.gameData.moonPhases[this.state.moonIndex]!;
     const bloodMoon = this.state.bloodMoonRounds > 0;
     const iconKey = `ui:moon_${bloodMoon ? "blood" : phase.id}`;
-    const hasIcon = this.textures.exists(iconKey);
-    const ring = this.badge(x, y, 28, hasIcon ? "" : phase.icon, bloodMoon ? 0xff5a5a : COLORS.goldFill, this.root, 0x0a0e20, 28);
-    if (hasIcon) this.root.add(this.add.image(x, y, iconKey).setDisplaySize(46, 46));
-    ring.setInteractive();
-    this.hoverTooltip(ring, () => ({ x: x + 36, y: y - 20 }), () => [
+    const moon = this.textures.exists(iconKey)
+      ? this.add.image(x, y, iconKey).setDisplaySize(size, size)
+      : this.text(x, y, phase.icon, Math.round(size * 0.6), COLORS.gold).setOrigin(0.5);
+    this.root.add(moon);
+    moon.setInteractive();
+    this.hoverTooltip(moon, () => ({ x: x + size / 2 + 8, y: y - 10 }), () => [
       phase.name,
       describePhase(phase),
       bloodMoon ? `Huyết Nguyệt — còn ${this.state.bloodMoonRounds} vòng` : "",
@@ -1227,7 +1268,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderReconnectOverlay() {
-    this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.55).setDepth(200));
+    this.root.add(this.screenDim(0.55).setDepth(200));
     this.text(WIDTH / 2, HEIGHT / 2, "Mất kết nối — đang kết nối lại…", 20, COLORS.gold)
       .setOrigin(0.5)
       .setDepth(201);
@@ -1560,7 +1601,7 @@ export class CombatScene extends Phaser.Scene {
     }
     if (pending.kind !== "chooseCard") return;
     const options = pending.options;
-    this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.6));
+    this.root.add(this.screenDim(0.6));
     this.text(WIDTH / 2, 250, "Chiêm Bài — chọn 1 lá, các lá còn lại xuống đáy chồng", 16, COLORS.gold).setOrigin(0.5);
     const spacing = CARD_W + 30;
     const startX = WIDTH / 2 - ((options.length - 1) * spacing) / 2;
@@ -1579,7 +1620,7 @@ export class CombatScene extends Phaser.Scene {
    * wheel +1/+2. Each button previews the phase it would land on.
    */
   private renderMoonChoice(options: number[]) {
-    this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.6));
+    this.root.add(this.screenDim(0.6));
     this.text(
       WIDTH / 2,
       250,
@@ -1637,7 +1678,7 @@ export class CombatScene extends Phaser.Scene {
         disconnect: "Bạn mất kết nối quá lâu",
         combat: "",
       };
-      this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.65));
+      this.root.add(this.screenDim(0.65));
       this.text(
         WIDTH / 2, HEIGHT / 2 - 40,
         draw ? "HÒA" : won ? "THẮNG" : "THUA",
@@ -1680,7 +1721,7 @@ export class CombatScene extends Phaser.Scene {
     if (this.isStory) {
       const won = this.state.status === "won";
       const stage = this.storyStageId !== null ? this.gameData.storyStages[this.storyStageId] : undefined;
-      this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.65));
+      this.root.add(this.screenDim(0.65));
       this.text(
         WIDTH / 2,
         HEIGHT / 2 - 40,
@@ -1702,7 +1743,7 @@ export class CombatScene extends Phaser.Scene {
       return;
     }
     const won = this.state.status === "won";
-    this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.65));
+    this.root.add(this.screenDim(0.65));
     this.text(
       WIDTH / 2,
       HEIGHT / 2 - 30,
@@ -1869,12 +1910,33 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /** Top-right, under the settings icon: Nguyệt Lực, Dự Trữ as a green badge when kept. */
+  /**
+   * Nguyệt Lực orb: a dark glass core that brightens as it fills, ringed by one
+   * arc per point up to the cap (gold; the kept Dự Trữ points green), the
+   * number in the middle and the label underneath.
+   */
   private renderMoonPower(seat: PlayerState) {
     const { x, y } = COMBAT_LAYOUT.moonPower;
     const power = seat.moonPower;
     const reserve = Math.min(seat.moonReserve, power);
-    const orb = this.badge(x, y, 30, `${power}`, COLORS.goldFill, this.root, 0x2a2410, 24, COLORS.gold);
-    if (reserve > 0) this.badge(x, y + 46, 13, `${reserve}`, 0x7fe07f, this.root, 0x1f4a2a, 12);
+    const cap = this.gameData.combatConfig.moonPower.cap;
+    ensureTextures(this);
+    const core = this.add.circle(x, y, 27, 0x0a0e20, 0.94).setStrokeStyle(1.5, COLORS.goldFill, 0.8);
+    const glow = this.add.image(x, y, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e);
+    glow.setScale(0.55).setAlpha(0.12 + 0.6 * Math.min(1, power / cap));
+    const arcs = this.add.graphics();
+    const step = (Math.PI * 2) / cap;
+    for (let i = 0; i < cap; i++) {
+      const start = -Math.PI / 2 + i * step + 0.07;
+      const color = i < reserve ? 0x7fe07f : i < power ? 0xf4d35e : 0x3a3524;
+      arcs.lineStyle(5, color, i < power ? 1 : 0.9).beginPath().arc(x, y, 34, start, start + step - 0.14).strokePath();
+    }
+    this.root.add([glow, core, arcs]);
+    this.text(x, y - 1, `${power}`, 24, COLORS.gold).setOrigin(0.5);
+    this.text(x, y + 50, seat.moonPowerBonus > 0 ? `Nguyệt Lực +${seat.moonPowerBonus}` : "Nguyệt Lực", 11, COLORS.gold)
+      .setOrigin(0.5)
+      .setStroke("#05070f", 4);
+    const orb = core;
     orb.setInteractive();
     this.hoverTooltip(orb, () => ({ x: x - 250, y: y + 34 }), () => [
       `Nguyệt Lực ${power}`,

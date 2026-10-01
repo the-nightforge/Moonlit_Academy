@@ -15,6 +15,8 @@ export interface AnimContext {
   unitViews: Map<string, Phaser.GameObjects.Container>;
   /** The local player's hand cards: a played card flies out of its slot. */
   cardViews?: Map<string, Phaser.GameObjects.Container>;
+  /** Where the moon icon sits (follows the background art); defaults to the layout spot. */
+  moonAnchor?: { x: number; y: number };
   /** The local player's seat in a PvP view (`17` §4.8); 0 in PvE. */
   mySeat?: number;
 }
@@ -422,8 +424,9 @@ function animateEvent(
       // The Nguyệt Luân turns at center stage and settles into the moon badge; the new phase's name floats down.
       const phase = ctx.gameData.moonPhases[event.to];
       const phaseIds = ctx.gameData.moonPhases.map((entry) => entry.id);
-      return moonWheel(scene, { x: WIDTH / 2, y: midY }, moon, phaseIds, event.from, event.to).then(() =>
-        floatText(scene, moon.x, moon.y + 50, phase?.name ?? "", "#f4d35e", 15, 400),
+      const at = ctx.moonAnchor ?? moon;
+      return moonWheel(scene, { x: WIDTH / 2, y: midY }, at, phaseIds, event.from, event.to).then(() =>
+        floatText(scene, at.x, at.y + 46, phase?.name ?? "", "#f4d35e", 15, 400),
       );
     }
     case "intentsRevealed":
