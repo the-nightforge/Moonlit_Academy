@@ -77,11 +77,14 @@ const HAND_RIGHT = 1140;
 /** A hovered hand card is lifted (scaled 1.15) until its bottom edge shows. */
 const HAND_LIFT_Y = HEIGHT - (CARD_H * 1.15) / 2 - 6;
 /** Unit cards are portrait (2:3): enemies / opponents on the top row, own heroes below. */
-/** Top row centered so its cards' top edge is level with the encounter plate (y 14). */
-const TOP_ROW_Y = 14 + 184 / 2;
-const HERO_ROW_Y = 400;
-const UNIT_W = 128;
-const UNIT_H = 184;
+/** Both rows use one card size. Top row: top edge level with the encounter plate (y 14). */
+const UNIT_W = 136;
+const UNIT_H = 196;
+const TOP_ROW_Y = 14 + UNIT_H / 2;
+/** Own row: bottom edge ~46 px above the peeking hand (top ≈ 600), leaving the middle for the action. */
+const HERO_ROW_Y = 456;
+/** Corner radius of every card (units, hand, art). */
+const CARD_RADIUS = 9;
 const HERO_W = 136;
 const HERO_H = 196;
 const COOP_HERO_W = 112;
@@ -628,6 +631,22 @@ export class CombatScene extends Phaser.Scene {
     return this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x000000, alpha);
   }
 
+  /** A w×h rounded box centered on (0, 0): optional fill, optional stroke. */
+  private roundBox(
+    w: number,
+    h: number,
+    fill: number | null,
+    fillAlpha = 1,
+    strokeWidth = 0,
+    strokeColor = 0,
+    radius = CARD_RADIUS,
+  ): Phaser.GameObjects.Graphics {
+    const g = this.add.graphics();
+    if (fill !== null) g.fillStyle(fill, fillAlpha).fillRoundedRect(-w / 2, -h / 2, w, h, radius);
+    if (strokeWidth > 0) g.lineStyle(strokeWidth, strokeColor, 1).strokeRoundedRect(-w / 2, -h / 2, w, h, radius);
+    return g;
+  }
+
   /** Shrinks a one-line label that would overrun its panel. */
   private fitWidth(text: Phaser.GameObjects.Text, maxWidth: number): Phaser.GameObjects.Text {
     if (text.width > maxWidth) text.setScale(maxWidth / text.width);
@@ -800,8 +819,8 @@ export class CombatScene extends Phaser.Scene {
     this.unitAnchors.set(id, { x, y });
     this.unitViews.set(id, c);
     const isValidTarget = this.targeting !== null && this.validTargetIds.has(id);
-    const panel = this.add.rectangle(0, 0, w, h, spec.hostile ? COLORS.panelEnemy : COLORS.panelHero);
-    panel.setStrokeStyle(isValidTarget ? 3 : 2, isValidTarget ? COLORS.goldFill : spec.frame);
+    c.add(this.roundBox(w, h, spec.hostile ? COLORS.panelEnemy : COLORS.panelHero, 1, isValidTarget ? 3 : 2, isValidTarget ? COLORS.goldFill : spec.frame));
+    const panel = this.add.rectangle(0, 0, w, h, 0x000000, 0.001);
     c.add(panel);
     this.coverImage(spec.artKey, 0, 0, w - 6, h - 6, c);
     c.add(this.add.rectangle(0, h / 2 - 15, w - 6, 24, 0x0a0e20, 0.8));
@@ -810,10 +829,10 @@ export class CombatScene extends Phaser.Scene {
     if (spec.stealth) this.stealthVeil(c, w, h);
     this.statusLooks(c, w, h, spec.statuses);
     if (!spec.alive) {
-      c.add(this.add.rectangle(0, 0, w, h, 0x000000, 0.6));
+      c.add(this.roundBox(w, h, 0x000000, 0.6));
       this.text(0, 0, "Ngã", 18, "#ffffff", c).setOrigin(0.5);
       // Hồi Hồn (`18` §3.5): keep the gold frame readable over the dim overlay.
-      if (isValidTarget) c.add(this.add.rectangle(0, 0, w, h).setStrokeStyle(3, COLORS.goldFill));
+      if (isValidTarget) c.add(this.roundBox(w, h, null, 0, 3, COLORS.goldFill));
     }
     this.unitPanelHit(panel, w, h, id);
     this.hoverTooltip(panel, () => ({ x: x + w / 2 + 8, y: y - h / 2 }), spec.tooltip);
@@ -823,14 +842,14 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /**
-   * HP as an octagonal gem (jade for allies, crimson for foes) at the top-left
-   * corner, armor as a shield under it, and a thin HP bar above the name strip.
+   * HP in a red heart at the top-left corner, armor as a shield under it, and a
+   * thin HP bar above the name strip (green for allies, red for foes).
    */
   private hpPlate(c: Phaser.GameObjects.Container, spec: UnitCardSpec, w: number, h: number) {
     const gx = -w / 2 + 17;
     const gy = -h / 2 + 17;
-    c.add(hudImage(this, spec.hostile ? HUD.gemEnemy : HUD.gemHero, gx, gy, 0.9));
-    c.add(this.add.text(gx, gy, `${spec.hp}`, { ...TEXT_BASE, fontSize: "14px", fontStyle: "bold", color: "#ffffff", stroke: "#05070f", strokeThickness: 3 }).setOrigin(0.5));
+    c.add(hudImage(this, HUD.heart, gx, gy, 0.95));
+    c.add(this.add.text(gx, gy - 1, `${spec.hp}`, { ...TEXT_BASE, fontSize: "14px", fontStyle: "bold", color: "#ffffff", stroke: "#05070f", strokeThickness: 3 }).setOrigin(0.5));
     if (spec.armor > 0) {
       c.add(hudImage(this, HUD.shield, gx, gy + 32, 0.85));
       c.add(this.add.text(gx, gy + 31, `${spec.armor}`, { ...TEXT_BASE, fontSize: "12px", fontStyle: "bold", color: "#ffffff", stroke: "#0a1830", strokeThickness: 3 }).setOrigin(0.5));
@@ -855,9 +874,9 @@ export class CombatScene extends Phaser.Scene {
 
   /** Đóng Băng: an icy film with a frost rim and snowflakes on the card edges, breathing slowly. */
   private frostOverlay(c: Phaser.GameObjects.Container, w: number, h: number) {
-    const ice = this.add.rectangle(0, 0, w, h, 0x9fd4ff, 0.08).setStrokeStyle(3, 0xd8f0ff, 0.9);
-    c.add(ice);
-    this.loopTween(ice, { fillAlpha: 0.2, duration: 1300 });
+    const ice = this.roundBox(w, h, 0x9fd4ff, 0.2, 3, 0xd8f0ff);
+    c.add(ice.setAlpha(0.7));
+    this.loopTween(ice, { alpha: 1, duration: 1300 });
     if (!this.textures.exists("ui:status_freeze")) return;
     for (const side of [-1, 1]) {
       const flake = this.add.image(side * (w / 2 - 2), -12, "ui:status_freeze").setDisplaySize(22, 22);
@@ -868,10 +887,10 @@ export class CombatScene extends Phaser.Scene {
 
   /** Ẩn Thân: the card fades into a drifting mist. */
   private stealthVeil(c: Phaser.GameObjects.Container, w: number, h: number) {
-    const mist = this.add.rectangle(0, 0, w, h, 0x8899ff, 0.1);
-    c.add(mist);
+    const mist = this.roundBox(w, h, 0x8899ff, 0.28);
+    c.add(mist.setAlpha(0.35));
     c.setAlpha(0.72);
-    this.loopTween(mist, { fillAlpha: 0.28, duration: 1600 });
+    this.loopTween(mist, { alpha: 1, duration: 1600 });
   }
 
   /**
@@ -912,9 +931,9 @@ export class CombatScene extends Phaser.Scene {
       reflect: () => this.sheen(c, w, h),
       // Hộ Vệ: a blue barrier around the card, breathing.
       guard: () => {
-        const barrier = this.add.rectangle(0, 0, w + 8, h + 8, 0x9fd4ff, 0.08).setStrokeStyle(2, 0x9fd4ff, 0.85);
-        c.add(barrier);
-        this.loopTween(barrier, { scaleX: 1.025, scaleY: 1.02, fillAlpha: 0.16, duration: 1000 });
+        const barrier = this.roundBox(w + 8, h + 8, 0x9fd4ff, 0.14, 2, 0x9fd4ff, CARD_RADIUS + 4);
+        c.add(barrier.setAlpha(0.7));
+        this.loopTween(barrier, { scaleX: 1.025, scaleY: 1.02, alpha: 1, duration: 1000 });
       },
       // Mê Hoặc: small hearts floating up.
       charm: () => {
@@ -935,13 +954,13 @@ export class CombatScene extends Phaser.Scene {
 
   /** A colored rim pulsing around the card; `halo` adds a wide soft outer band. */
   private rimPulse(c: Phaser.GameObjects.Container, w: number, h: number, color: number, halo: boolean) {
-    const rim = this.add.rectangle(0, 0, w + 4, h + 4).setStrokeStyle(3, color, 0.95);
+    const rim = this.roundBox(w + 4, h + 4, null, 0, 3, color, CARD_RADIUS + 2);
     c.add(rim);
     this.loopTween(rim, { alpha: 0.35, duration: 700 });
     if (!halo) return;
-    const band = this.add.rectangle(0, 0, w + 10, h + 10).setStrokeStyle(8, color, 0.25);
+    const band = this.roundBox(w + 10, h + 10, null, 0, 8, color, CARD_RADIUS + 5).setAlpha(0.25);
     c.add(band);
-    this.loopTween(band, { scaleX: 1.04, scaleY: 1.03, alpha: 0.4, duration: 700 });
+    this.loopTween(band, { scaleX: 1.04, scaleY: 1.03, alpha: 0.45, duration: 700 });
   }
 
   /** A status icon sitting on the card, animated by `motion` (looping). */
@@ -1066,18 +1085,23 @@ export class CombatScene extends Phaser.Scene {
     parent: Phaser.GameObjects.Container,
   ): Phaser.GameObjects.Image | null {
     if (!this.textures.exists(key)) return null;
-    const source = this.textures.get(key).getSourceImage();
-    const scale = Math.max(w / source.width, h / source.height);
-    const cropW = Math.min(source.width, w / scale);
-    const cropH = Math.min(source.height, h / scale);
-    const img = this.add.image(x, y, key);
-    img.setScale(scale);
-    img.setCrop(
-      (source.width - cropW) / 2,
-      (source.height - cropH) / 2,
-      cropW,
-      cropH,
-    );
+    const rounded = `${key}@${w}x${h}`;
+    if (!this.textures.exists(rounded)) {
+      const source = this.textures.get(key).getSourceImage() as CanvasImageSource & { width: number; height: number };
+      const scale = Math.max(w / source.width, h / source.height);
+      const cropW = Math.min(source.width, w / scale);
+      const cropH = Math.min(source.height, h / scale);
+      const canvas = this.textures.createCanvas(rounded, Math.ceil(w * RENDER_SCALE), Math.ceil(h * RENDER_SCALE));
+      if (!canvas) return null;
+      const ctx = canvas.getContext();
+      ctx.scale(RENDER_SCALE, RENDER_SCALE);
+      ctx.beginPath();
+      ctx.roundRect(0, 0, w, h, CARD_RADIUS - 2);
+      ctx.clip();
+      ctx.drawImage(source, (source.width - cropW) / 2, (source.height - cropH) / 2, cropW, cropH, 0, 0, w, h);
+      canvas.refresh();
+    }
+    const img = this.add.image(x, y, rounded).setScale(1 / RENDER_SCALE);
     parent.add(img);
     return img;
   }
@@ -1429,28 +1453,28 @@ export class CombatScene extends Phaser.Scene {
     this.root.add(container);
     this.cardViews.set(instanceId, container);
 
-    const bg = this.add.rectangle(0, 0, CARD_W, CARD_H, broken ? 0x30303a : 0x141b33);
     const isValidTarget = this.targeting === instanceId;
     const mulliganPicked = this.mulliganPicks.has(instanceId);
-    bg.setStrokeStyle(
-      isValidTarget || mulliganPicked ? 3 : 2,
-      broken
-        ? COLORS.dead
-        : isValidTarget || mulliganPicked
-          ? COLORS.goldFill
-          : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
+    container.add(
+      this.roundBox(
+        CARD_W,
+        CARD_H,
+        broken ? 0x30303a : 0x141b33,
+        1,
+        isValidTarget || mulliganPicked ? 3 : 2,
+        broken ? COLORS.dead : isValidTarget || mulliganPicked ? COLORS.goldFill : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
+      ),
     );
-    container.add(bg);
     const cardArt =
       this.coverImage(`cards:${instance.cardId}`, 0, 0, CARD_W - 6, CARD_H - 6, container) ??
       this.coverImage(`heroes:${ownerId}`, 0, 0, CARD_W - 6, CARD_H - 6, container);
     if (cardArt) {
-      container.add(this.add.rectangle(0, 0, CARD_W - 6, CARD_H - 6, 0x0a0e20, 0.5));
+      container.add(this.roundBox(CARD_W - 6, CARD_H - 6, 0x0a0e20, 0.5, 0, 0, CARD_RADIUS - 2));
     }
     if (weapon !== undefined) {
       // Weapon card (`01` §14.2): inner orange frame and the weapon's name.
       if (!broken && !isValidTarget) {
-        container.add(this.add.rectangle(0, 0, CARD_W - 8, CARD_H - 8).setStrokeStyle(2, 0xe08a3c));
+        container.add(this.roundBox(CARD_W - 8, CARD_H - 8, null, 0, 2, 0xe08a3c, CARD_RADIUS - 2));
       }
       container.add(
         this.add
@@ -1622,11 +1646,11 @@ export class CombatScene extends Phaser.Scene {
 
   private renderMulliganBar() {
     if (this.state.players[this.mySeat]?.mulliganDone) {
-      this.text(WIDTH / 2, 550, this.isCoop ? "Chờ đồng đội Đổi Bài…" : "Chờ đối thủ Đổi Bài…", 14, COLORS.dimText).setOrigin(0.5);
+      this.text(WIDTH / 2, 578, this.isCoop ? "Chờ đồng đội Đổi Bài…" : "Chờ đối thủ Đổi Bài…", 14, COLORS.dimText).setOrigin(0.5);
       return;
     }
     const picks = this.mulliganPicks.size;
-    this.text(WIDTH / 2, 550, `Đổi Bài: chọn tối đa ${this.gameData.combatConfig.maxMulligan} lá để đổi`, 14, COLORS.gold).setOrigin(0.5);
+    this.text(WIDTH / 2, 578, `Đổi Bài: chọn tối đa ${this.gameData.combatConfig.maxMulligan} lá để đổi`, 14, COLORS.gold).setOrigin(0.5);
     // Where the end-turn button sits: the phase's main action keeps one place.
     this.endScreenButton(1180, COMBAT_LAYOUT.endTurn.y, picks > 0 ? `Đổi (${picks})` : "Giữ nguyên", () => {
       const instanceIds = [...this.mulliganPicks];

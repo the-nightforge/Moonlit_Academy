@@ -9,8 +9,7 @@ import { RENDER_SCALE } from "./theme";
  */
 
 export const HUD = {
-  gemHero: "hud_gem_hero",
-  gemEnemy: "hud_gem_enemy",
+  heart: "hud_heart",
   shield: "hud_shield",
   cost: "hud_cost",
   cardBack: "hud_card_back",
@@ -20,8 +19,7 @@ export const HUD = {
 } as const;
 
 const SIZE: Record<string, [number, number]> = {
-  [HUD.gemHero]: [40, 40],
-  [HUD.gemEnemy]: [40, 40],
+  [HUD.heart]: [40, 38],
   [HUD.shield]: [30, 34],
   [HUD.cost]: [30, 30],
   [HUD.cardBack]: [80, 116],
@@ -46,15 +44,6 @@ function radial(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, 
   const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.35, 0, x, y, r);
   for (const [at, color] of stops) g.addColorStop(at, color);
   return g;
-}
-
-function octagon(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
-  ctx.beginPath();
-  for (let i = 0; i < 8; i++) {
-    const a = (Math.PI / 4) * i + Math.PI / 8;
-    ctx[i ? "lineTo" : "moveTo"](cx + r * Math.cos(a), cy + r * Math.sin(a));
-  }
-  ctx.closePath();
 }
 
 function shieldPath(ctx: CanvasRenderingContext2D, w: number, h: number, inset: number) {
@@ -82,8 +71,15 @@ function highlight(ctx: CanvasRenderingContext2D, x: number, y: number, rx: numb
 }
 
 const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number) => void> = {
-  [HUD.gemHero]: (ctx) => gem(ctx, ["#d8ffe0", "#3fae62", "#0e3a1e"]),
-  [HUD.gemEnemy]: (ctx) => gem(ctx, ["#ffc0b0", "#c83a48", "#40080e"]),
+  [HUD.heart]: (ctx, w, h) => {
+    heartPath(ctx, w, h, 0.5);
+    ctx.fillStyle = linear(ctx, 0, h, GOLD);
+    ctx.fill();
+    heartPath(ctx, w, h, 3);
+    ctx.fillStyle = radial(ctx, w / 2, h * 0.45, w * 0.48, [[0, "#ffb8ae"], [0.5, "#d8303c"], [1, "#4e0810"]]);
+    ctx.fill();
+    highlight(ctx, w * 0.3, h * 0.28, 5, 2.6);
+  },
   [HUD.shield]: (ctx, w, h) => {
     shieldPath(ctx, w, h, 1);
     ctx.fillStyle = linear(ctx, 0, h, GOLD);
@@ -229,18 +225,20 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
   },
 };
 
-function gem(ctx: CanvasRenderingContext2D, core: [string, string, string]) {
-  octagon(ctx, 20, 20, 19.5);
-  ctx.fillStyle = linear(ctx, 0, 40, GOLD);
-  ctx.fill();
-  octagon(ctx, 20, 20, 16);
-  ctx.fillStyle = radial(ctx, 20, 20, 16, [[0, core[0]], [0.55, core[1]], [1, core[2]]]);
-  ctx.fill();
-  ctx.strokeStyle = "rgba(0,0,0,0.35)";
-  ctx.lineWidth = 1;
-  octagon(ctx, 20, 20, 12.5);
-  ctx.stroke();
-  highlight(ctx, 14, 12, 6, 3);
+/** A heart filling a w×h box, `inset` px in from its edge. */
+function heartPath(ctx: CanvasRenderingContext2D, w: number, h: number, inset: number) {
+  const l = inset;
+  const r = w - inset;
+  const t = inset;
+  const b = h - inset;
+  const cx = w / 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, b);
+  ctx.bezierCurveTo(cx - (cx - l) * 0.55, b - (b - t) * 0.2, l, t + (b - t) * 0.55, l, t + (b - t) * 0.32);
+  ctx.bezierCurveTo(l, t + (b - t) * 0.05, cx - (cx - l) * 0.15, t - (b - t) * 0.04, cx, t + (b - t) * 0.22);
+  ctx.bezierCurveTo(cx + (r - cx) * 0.15, t - (b - t) * 0.04, r, t + (b - t) * 0.05, r, t + (b - t) * 0.32);
+  ctx.bezierCurveTo(r, t + (b - t) * 0.55, cx + (r - cx) * 0.55, b - (b - t) * 0.2, cx, b);
+  ctx.closePath();
 }
 
 /** Draws every HUD texture once per game (textures are shared by scenes). */

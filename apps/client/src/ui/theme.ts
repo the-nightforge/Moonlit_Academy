@@ -118,11 +118,11 @@ export const COMBAT_LAYOUT = {
   moonPower: { x: 1232, y: 104 },
   endTurn: { x: 1200, y: 648 },
   /** Own draw pile; an opponent's / partner's sits at the top row's height. */
-  pile: { x: 14, y: 400 },
+  pile: { x: 14, y: 456 },
   /** Hand cards peek from the bottom edge; hovering lifts one fully. */
   handY: 680,
   /** Floating combat text between the two rows. */
-  midY: 250,
+  midY: 284,
   unitFlash: { w: 140, h: 200 },
 } as const;
 
