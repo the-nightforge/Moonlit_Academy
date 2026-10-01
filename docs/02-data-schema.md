@@ -670,7 +670,7 @@ export interface PlayerState {
   cardsPlayedThisTurn: number;
   pendingChoice: PendingChoice | null;
   moonChoicePending?: true; // GĐ7: nợ Chọn Pha lượt này (Hero `chooseMoon` đã thăng cấp lúc đầu lượt)
-  omenPending?: true;       // [Nguyệt Luân mới] Bói Nguyệt: nợ Chiêm Bài miễn phí, mở sau Vạn Kim / trước Chọn Pha (01 §3.1 bước 12)
+  omenPending?: number;     // [Nguyệt Luân mới] Bói Nguyệt: nợ Chiêm Bài miễn phí (lưu `look`), mở sau Vạn Kim / trước Chọn Pha (01 §3.1 bước 12)
   attackCardsThisTurn?: number;  // [Nguyệt Luân mới] Liên Kích: số lá attack đã giải quyết trong lượt (01 §5.2)
   discardsThisTurn?: number;     // [Nguyệt Luân mới] Xả Thân: số lá đã Hủy Bài trong lượt (01 §5.8)
   bloodPactUsed?: true;          // [Nguyệt Luân mới] Huyết Tế: đã dùng trong lượt (01 §5.9)

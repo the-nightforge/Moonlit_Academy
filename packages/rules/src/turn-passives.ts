@@ -87,7 +87,7 @@ export function seatTurnStart(data: GameData, state: CombatState, player: Player
     if (player.pendingChoice === null) {
       resolveEffects(data, state, [{ type: "chooseCard", look: omen.look }], { source: seer, noHooks: true }, events);
     } else {
-      player.omenPending = true;
+      player.omenPending = omen.look;
     }
   }
   const owes = heroes.some((hero) => passiveOf(data, hero)?.type === "chooseMoon");

@@ -655,7 +655,7 @@ describe("Nguyệt Luân — lệnh đầu lượt và Chiêm Bài", () => {
     if (!opened.ok) return;
     const vanKim = pendingCardOptions(opened.state);
     expect(vanKim).toHaveLength(4);
-    expect(p0(opened.state).omenPending).toBe(true);
+    expect(p0(opened.state).omenPending).toBe(3);
     const answeredVanKim = applyAction(ordered.data, opened.state, { type: "chooseCard", instanceId: vanKim[0]! });
     expect(answeredVanKim.ok).toBe(true);
     if (!answeredVanKim.ok) return;
