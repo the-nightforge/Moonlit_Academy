@@ -17,6 +17,8 @@ export const HUD = {
   medallion: "hud_medallion",
   hourglass: "hud_hourglass",
   cardFace: "hud_card_face",
+  bannerAttack: "hud_banner_attack",
+  bannerSkill: "hud_banner_skill",
 } as const;
 
 const SIZE: Record<string, [number, number]> = {
@@ -28,6 +30,8 @@ const SIZE: Record<string, [number, number]> = {
   [HUD.medallion]: [108, 108],
   [HUD.hourglass]: [22, 30],
   [HUD.cardFace]: [110, 160],
+  [HUD.bannerAttack]: [80, 22],
+  [HUD.bannerSkill]: [80, 22],
 };
 
 const GOLD: [number, string][] = [
@@ -198,44 +202,96 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
     ctx.stroke();
     highlight(ctx, c - 18, c - 22, 16, 7);
   },
-  // Hand card face: indigo lacquer, a thin gold inner line, the emblem window
-  // (y 30–86) and a filigree divider under the name. The owner's color is the
-  // outer border, drawn by the scene.
+  // Hand card frame (110×160): indigo lacquer, a double gold line with cloud
+  // curls in the corners, the round moon gate (center 55,63), the type
+  // plaque (55,99) and the parchment text panel (y 107–153). The name banner,
+  // emblem and owner jewel are added by the scene.
   [HUD.cardFace]: (ctx, w, h) => {
     ctx.beginPath();
     ctx.roundRect(0, 0, w, h, 9);
-    ctx.fillStyle = linear(ctx, 0, h, [[0, "#222d5c"], [0.5, "#151c40"], [1, "#0b1030"]]);
+    ctx.fillStyle = linear(ctx, 0, h, [[0, "#26306a"], [0.45, "#161d46"], [1, "#0a0e2a"]]);
     ctx.fill();
-    ctx.strokeStyle = "rgba(244,211,94,0.45)";
-    ctx.lineWidth = 0.8;
+    // Faint lattice of the lacquer.
+    ctx.save();
+    ctx.clip();
+    ctx.strokeStyle = "rgba(160,180,255,0.05)";
+    ctx.lineWidth = 1;
+    for (let d = -h; d < w + h; d += 9) {
+      ctx.beginPath();
+      ctx.moveTo(d, 0);
+      ctx.lineTo(d + h, h);
+      ctx.stroke();
+    }
+    ctx.restore();
+    // Double gold line.
+    ctx.strokeStyle = linear(ctx, 0, h, GOLD);
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.roundRect(4.5, 4.5, w - 9, h - 9, 6);
+    ctx.roundRect(3.5, 3.5, w - 7, h - 7, 7);
     ctx.stroke();
-    // Emblem window.
+    ctx.strokeStyle = "rgba(232,196,90,0.55)";
+    ctx.lineWidth = 0.7;
     ctx.beginPath();
-    ctx.roundRect(7, 30, w - 14, 56, 5);
-    ctx.fillStyle = radial(ctx, w / 2, 58, 52, [[0, "#2a3570"], [0.7, "#0d1230"], [1, "#070a1c"]]);
+    ctx.roundRect(6.5, 6.5, w - 13, h - 13, 5);
+    ctx.stroke();
+    // Cloud curls in the corners.
+    ctx.strokeStyle = "rgba(244,211,94,0.9)";
+    ctx.lineWidth = 1;
+    for (const [cx, cy, sx, sy] of [[9, 9, 1, 1], [w - 9, 9, -1, 1], [9, h - 9, 1, -1], [w - 9, h - 9, -1, -1]] as const) {
+      ctx.beginPath();
+      ctx.arc(cx + sx * 3, cy + sy * 3, 3, 0, Math.PI * 2);
+      ctx.moveTo(cx + sx * 6, cy + sy * 3);
+      ctx.quadraticCurveTo(cx + sx * 12, cy + sy * 1, cx + sx * 16, cy + sy * 4);
+      ctx.moveTo(cx + sx * 3, cy + sy * 6);
+      ctx.quadraticCurveTo(cx + sx * 1, cy + sy * 12, cx + sx * 4, cy + sy * 16);
+      ctx.stroke();
+    }
+    // Moon gate: night sky disc, gold ring, inner hairline, four studs.
+    const gx = w / 2;
+    const gy = 63;
+    ctx.fillStyle = radial(ctx, gx, gy, 28, [[0, "#2a3878"], [0.7, "#0e1438"], [1, "#060920"]]);
+    ctx.beginPath();
+    ctx.arc(gx, gy, 28, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "rgba(244,211,94,0.75)";
+    ctx.strokeStyle = linear(ctx, gy - 28, gy + 28, GOLD);
+    ctx.lineWidth = 2.6;
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(244,211,94,0.45)";
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.arc(gx, gy, 24, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "#f4d35e";
+    for (let k = 0; k < 4; k++) {
+      const a = (Math.PI / 2) * k - Math.PI / 2;
+      ctx.beginPath();
+      ctx.arc(gx + 28 * Math.cos(a), gy + 28 * Math.sin(a), 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Type plaque.
+    ctx.beginPath();
+    ctx.roundRect(gx - 31, 92.5, 62, 13, 6.5);
+    ctx.fillStyle = "#0a0e26";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(232,196,90,0.9)";
+    ctx.lineWidth = 0.9;
+    ctx.stroke();
+    // Parchment text panel.
+    ctx.beginPath();
+    ctx.roundRect(9, 108, w - 18, 44, 4);
+    ctx.fillStyle = linear(ctx, 108, 152, [[0, "#f7ecd2"], [1, "#d9c391"]]);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(110,72,26,0.85)";
     ctx.lineWidth = 1;
     ctx.stroke();
-    // Divider: a line with a small diamond in the middle.
-    const y = 107;
-    ctx.strokeStyle = "rgba(244,211,94,0.55)";
+    ctx.strokeStyle = "rgba(110,72,26,0.25)";
     ctx.beginPath();
-    ctx.moveTo(16, y);
-    ctx.lineTo(w / 2 - 6, y);
-    ctx.moveTo(w / 2 + 6, y);
-    ctx.lineTo(w - 16, y);
+    ctx.moveTo(12, 110.5);
+    ctx.lineTo(w - 12, 110.5);
     ctx.stroke();
-    ctx.fillStyle = "rgba(244,211,94,0.85)";
-    ctx.beginPath();
-    ctx.moveTo(w / 2, y - 3);
-    ctx.lineTo(w / 2 + 3, y);
-    ctx.lineTo(w / 2, y + 3);
-    ctx.lineTo(w / 2 - 3, y);
-    ctx.fill();
   },
+  [HUD.bannerAttack]: (ctx, w, h) => banner(ctx, w, h, ["#e05a5a", "#a8202c", "#5a0c16"]),
+  [HUD.bannerSkill]: (ctx, w, h) => banner(ctx, w, h, ["#5a8ad8", "#1e4888", "#0c2048"]),
   [HUD.hourglass]: (ctx, w, h) => {
     ctx.fillStyle = linear(ctx, 0, h, GOLD);
     ctx.fillRect(1, 1, w - 2, 3);
@@ -264,6 +320,32 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
     ctx.fillRect(w / 2 - 0.5, h / 2, 1, h / 2 - 9);
   },
 };
+
+/** Name banner: a lacquered ribbon with swallowtail ends and gold edges. */
+function banner(ctx: CanvasRenderingContext2D, w: number, h: number, lacquer: [string, string, string]) {
+  const ribbon = (inset: number) => {
+    ctx.beginPath();
+    ctx.moveTo(inset, inset);
+    ctx.lineTo(w - inset, inset);
+    ctx.lineTo(w - 7 - inset * 0.5, h / 2);
+    ctx.lineTo(w - inset, h - inset);
+    ctx.lineTo(inset, h - inset);
+    ctx.lineTo(7 + inset * 0.5, h / 2);
+    ctx.closePath();
+  };
+  ribbon(0.6);
+  ctx.fillStyle = linear(ctx, 0, h, GOLD);
+  ctx.fill();
+  ribbon(2);
+  ctx.fillStyle = linear(ctx, 0, h, [[0, lacquer[0]], [0.5, lacquer[1]], [1, lacquer[2]]]);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.28)";
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(9, 4);
+  ctx.lineTo(w - 9, 4);
+  ctx.stroke();
+}
 
 /** A heart filling a w×h box, `inset` px in from its edge. */
 function heartPath(ctx: CanvasRenderingContext2D, w: number, h: number, inset: number) {

@@ -1514,10 +1514,9 @@ export class CombatScene extends Phaser.Scene {
 
     const isValidTarget = this.targeting === instanceId;
     const mulliganPicked = this.mulliganPicks.has(instanceId);
-    // Face: lacquer card with an emblem window; the owner's color is the border.
-    const face = hudImage(this, HUD.cardFace, 0, 0);
-    if (broken) face.setTint(0x80808a);
-    container.add(face);
+    // Frame: lacquer, gold double line, moon gate, plaque, parchment; the owner's color is the border.
+    const grey = (img: Phaser.GameObjects.Image) => (broken ? img.setTint(0x80808a) : img);
+    container.add(grey(hudImage(this, HUD.cardFace, 0, 0)));
     container.add(
       this.roundBox(
         CARD_W,
@@ -1528,40 +1527,64 @@ export class CombatScene extends Phaser.Scene {
         broken ? COLORS.dead : isValidTarget || mulliganPicked ? COLORS.goldFill : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
       ),
     );
-    // Emblem window (y -50…6): the card's own art if there is one, else its tag icon on a tag-colored glow.
-    const windowY = -22;
-    if (!this.coverImage(`cards:${instance.cardId}`, 0, windowY, CARD_W - 16, 54, container)) {
+    // Moon gate (center 0,-17): the card's own art if there is one, else its tag icon in a tag-colored sky.
+    const gateY = -17;
+    const color = cardColorOf(card);
+    if (!this.coverImage(`cards:${instance.cardId}`, 0, gateY, 48, 48, container)) {
       ensureTextures(this);
-      const color = cardColorOf(card);
-      container.add(this.add.image(0, windowY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.75).setAlpha(broken ? 0.2 : 0.55));
+      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.62).setAlpha(broken ? 0.15 : 0.5));
+      for (const [sx, sy, r] of [[-13, -9, 0.9], [12, -13, 0.7], [15, 6, 0.6], [-16, 7, 0.5]] as const) {
+        container.add(this.add.circle(sx, gateY + sy, r, 0xffffff, 0.7));
+      }
       const iconKey = cardIconOf(card);
-      if (this.textures.exists(iconKey)) container.add(this.add.image(0, windowY, iconKey).setDisplaySize(40, 40).setAlpha(broken ? 0.5 : 1));
+      if (this.textures.exists(iconKey)) container.add(this.add.image(0, gateY, iconKey).setDisplaySize(34, 34).setAlpha(broken ? 0.5 : 1));
     }
+    // Owner jewel on the bottom edge.
+    container.add(
+      this.add
+        .rectangle(0, CARD_H / 2 - 4, 7, 7, OWNER_COLORS[ownerId] ?? COLORS.panelBorder)
+        .setAngle(45)
+        .setStrokeStyle(1, COLORS.goldFill),
+    );
+    // Name banner (red lacquer: attack, blue: skill), its left end under the cost coin.
+    const bannerX = 9;
+    const bannerY = -60;
+    container.add(grey(hudImage(this, card.type === "attack" ? HUD.bannerAttack : HUD.bannerSkill, bannerX, bannerY)));
+    container.add(
+      this.fitWidth(
+        this.add
+          .text(bannerX + 4, bannerY, card.name, {
+            ...TEXT_BASE,
+            fontSize: card.name.length > 11 ? "10px" : "11px",
+            fontStyle: "bold",
+            color: "#fff1d0",
+            stroke: "#2a0a0a",
+            strokeThickness: 2,
+          })
+          .setOrigin(0.5),
+        64,
+      ),
+    );
+    // Type plaque: the weapon or bond overrides the card type.
+    const plaque =
+      weapon !== undefined ? `⚔ ${weapon.name}` : partnerId !== undefined ? "Song Hành" : card.type === "attack" ? "Tấn Công" : "Kỹ Năng";
+    container.add(
+      this.fitWidth(
+        this.add.text(0, 19, plaque, { ...TEXT_BASE, fontSize: "9px", color: weapon !== undefined ? "#ffb080" : COLORS.gold }).setOrigin(0.5),
+        56,
+      ),
+    );
     if (weapon !== undefined) {
       // Weapon card (`01` §14.2): inner orange frame and the weapon's name.
       if (!broken && !isValidTarget) {
         container.add(this.roundBox(CARD_W - 8, CARD_H - 8, null, 0, 2, 0xe08a3c, CARD_RADIUS - 2));
       }
-      container.add(
-        this.add
-          .text(CARD_W / 2 - 8, -CARD_H / 2 + 10, `⚔ ${weapon.name}`, { ...TEXT_BASE, fontSize: "10px", color: "#ffb080" })
-          .setOrigin(1, 0.5),
-      );
     }
     if (partnerId !== undefined) {
       // Bond card: second owner's color as an inner border.
       if (!broken && !isValidTarget) {
         container.add(this.roundBox(CARD_W - 8, CARD_H - 8, null, 0, 2, OWNER_COLORS[partnerId] ?? COLORS.panelBorder, CARD_RADIUS - 2));
       }
-      container.add(
-        this.add
-          .text(CARD_W / 2 - 8, -CARD_H / 2 + 10, "Song Hành", {
-            ...TEXT_BASE,
-            fontSize: "11px",
-            color: COLORS.gold,
-          })
-          .setOrigin(1, 0.5),
-      );
     }
 
     const hintComboId = this.comboHints.get(instanceId);
@@ -1571,16 +1594,16 @@ export class CombatScene extends Phaser.Scene {
       container.add(this.roundBox(CARD_W - 4, CARD_H - 4, null, 0, 2, 0xffe080, CARD_RADIUS - 1));
       container.add(
         this.add
-          .text(0, CARD_H / 2 - 12, "⚡ Hợp Kích", { ...TEXT_BASE, fontSize: "10px", color: "#ffe080" })
+          .text(0, CARD_H / 2 - 14, "⚡ Hợp Kích", { ...TEXT_BASE, fontSize: "10px", color: "#ffe080", stroke: "#2a1a04", strokeThickness: 3 })
           .setOrigin(0.5),
       );
     }
 
     const effectiveCost = getEffectiveCost(this.gameData, this.state, instanceId);
     // Inset so the coin's rim sits clear of the card border.
-    const coinX = -CARD_W / 2 + 18;
-    const coinY = -CARD_H / 2 + 17;
-    container.add(hudImage(this, HUD.cost, coinX, coinY, 0.85));
+    const coinX = -CARD_W / 2 + 19;
+    const coinY = -60;
+    container.add(hudImage(this, HUD.cost, coinX, coinY, 0.82));
     container.add(
       this.add
         .text(coinX, coinY, `${effectiveCost}`, {
@@ -1596,48 +1619,38 @@ export class CombatScene extends Phaser.Scene {
     if (effectiveCost < card.cost) {
       container.add(
         this.add
-          .text(coinX + 16, coinY, `${card.cost}`, {
+          .text(coinX, coinY + 17, `${card.cost}`, {
             ...TEXT_BASE,
             fontSize: "10px",
             color: COLORS.dimText,
           })
-          .setOrigin(0, 0.5),
+          .setOrigin(0.5),
       );
       container.add(
-        this.add.rectangle(coinX + 20, coinY, 10, 1, 0xffffff, 0.7),
+        this.add.rectangle(coinX, coinY + 17, 9, 1, 0xffffff, 0.8),
       );
     }
     if (instance.heldTurns > 0 && card.keywords?.includes("tich_tu")) {
       container.add(
         this.add
-          .text(0, 1, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold, stroke: "#05070f", strokeThickness: 3 })
+          .text(0, 6, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold, stroke: "#05070f", strokeThickness: 3 })
           .setOrigin(0.5),
       );
     }
 
-    container.add(
-      this.add
-        .text(0, 16, card.name, {
-          ...TEXT_BASE,
-          fontSize: "12px",
-          fontStyle: "bold",
-          color: COLORS.gold,
-          align: "center",
-          wordWrap: { width: CARD_W - 14 },
-        })
-        .setOrigin(0.5),
-    );
-    container.add(
-      this.add
-        .text(0, 32, card.text, {
-          ...TEXT_BASE,
-          fontSize: "9px",
-          color: COLORS.dimText,
-          align: "center",
-          wordWrap: { width: CARD_W - 12 },
-        })
-        .setOrigin(0.5, 0),
-    );
+    const body = this.add
+      .text(0, 31, card.text, {
+        ...TEXT_BASE,
+        fontSize: "9px",
+        color: "#3a2810",
+        align: "center",
+        lineSpacing: -1,
+        wordWrap: { width: CARD_W - 24 },
+      })
+      .setOrigin(0.5, 0);
+    // Long texts shrink until they fit the parchment (the tooltip has them full size).
+    for (let size = 8.5; body.height > 41 && size >= 6.5; size -= 0.5) body.setFontSize(size);
+    container.add(body);
 
     if (mulliganPicked) {
       container.add(

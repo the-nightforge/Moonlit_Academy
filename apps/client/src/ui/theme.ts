@@ -175,7 +175,7 @@ export const NODE_LABELS: Record<NodeType, string> = {
   boss: "Boss",
 };
 
-const TAG_LABELS: Record<CardTag, string> = {
+export const TAG_LABELS: Record<CardTag, string> = {
   attack: "tấn công",
   control: "khống chế",
   assassin: "ám sát",
