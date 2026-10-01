@@ -122,7 +122,7 @@ export const COMBAT_LAYOUT = {
   /** Hand cards peek from the bottom edge; hovering lifts one fully. */
   handY: 680,
   /** Floating combat text between the two rows. */
-  midY: 284,
+  midY: 250,
   unitFlash: { w: 140, h: 200 },
 } as const;
 

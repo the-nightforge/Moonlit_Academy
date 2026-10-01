@@ -44,6 +44,7 @@ import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
 import { confirmModal, isModalOpen } from "../ui/widgets";
 import { playEventQueue } from "../ui/event-animator";
 import { GLOW as VFX_GLOW, STAR as VFX_STAR, ensureTextures } from "../ui/vfx";
+import { HUD, hudImage } from "../ui/hud-art";
 import {
   BLOOD_MOON_BG,
   COLORS,
@@ -76,7 +77,8 @@ const HAND_RIGHT = 1140;
 /** A hovered hand card is lifted (scaled 1.15) until its bottom edge shows. */
 const HAND_LIFT_Y = HEIGHT - (CARD_H * 1.15) / 2 - 6;
 /** Unit cards are portrait (2:3): enemies / opponents on the top row, own heroes below. */
-const TOP_ROW_Y = 170;
+/** Top row centered so its cards' top edge is level with the encounter plate (y 14). */
+const TOP_ROW_Y = 14 + 184 / 2;
 const HERO_ROW_Y = 400;
 const UNIT_W = 128;
 const UNIT_H = 184;
@@ -104,6 +106,8 @@ interface UnitCardSpec {
   name: string;
   nameColor?: string;
   hp: number;
+  /** Draws the HP bar above the name strip when given. */
+  maxHp?: number;
   hostile: boolean;
   armor: number;
   statuses: StatusInstance[];
@@ -550,7 +554,6 @@ export class CombatScene extends Phaser.Scene {
         ? comboHintFor(this.gameData, this.state, this.mySeat)
         : new Map();
     this.renderTopBar();
-    this.renderMoon();
     if (this.state.mode === "pvp") {
       this.renderOpponentRow();
       this.renderOpponentHand();
@@ -559,6 +562,8 @@ export class CombatScene extends Phaser.Scene {
     }
     if (this.isCoop) this.renderPartnerHand();
     this.renderHeroes();
+    // After the units: a centered top-row card reaches up to the frame socket.
+    this.renderMoon();
     this.renderBottomBar();
     if (this.netMatch && !this.netMatch.ended) this.renderEmoteControls();
     if (this.targeting !== null) this.renderTargetingHint();
@@ -801,9 +806,7 @@ export class CombatScene extends Phaser.Scene {
     this.coverImage(spec.artKey, 0, 0, w - 6, h - 6, c);
     c.add(this.add.rectangle(0, h / 2 - 15, w - 6, 24, 0x0a0e20, 0.8));
     this.fitWidth(this.text(0, h / 2 - 15, spec.name, 12, spec.nameColor ?? COLORS.text, c).setOrigin(0.5), w - 14);
-    this.badge(-w / 2 + 16, -h / 2 + 16, 16, `${spec.hp}`, spec.hostile ? COLORS.hpFillEnemy : COLORS.hpFillHero, c,
-      spec.hostile ? 0x4a1818 : 0x183a20, 13);
-    if (spec.armor > 0) this.badge(-w / 2 + 16, -h / 2 + 46, 12, `${spec.armor}`, 0x9fd4ff, c, 0x1e3a5a, 11);
+    this.hpPlate(c, spec, w, h);
     if (spec.stealth) this.stealthVeil(c, w, h);
     this.statusLooks(c, w, h, spec.statuses);
     if (!spec.alive) {
@@ -817,6 +820,31 @@ export class CombatScene extends Phaser.Scene {
     this.statusIcons(spec, c);
     if (this.targeting !== null && !isValidTarget) c.setAlpha(0.4);
     return c;
+  }
+
+  /**
+   * HP as an octagonal gem (jade for allies, crimson for foes) at the top-left
+   * corner, armor as a shield under it, and a thin HP bar above the name strip.
+   */
+  private hpPlate(c: Phaser.GameObjects.Container, spec: UnitCardSpec, w: number, h: number) {
+    const gx = -w / 2 + 17;
+    const gy = -h / 2 + 17;
+    c.add(hudImage(this, spec.hostile ? HUD.gemEnemy : HUD.gemHero, gx, gy, 0.9));
+    c.add(this.add.text(gx, gy, `${spec.hp}`, { ...TEXT_BASE, fontSize: "14px", fontStyle: "bold", color: "#ffffff", stroke: "#05070f", strokeThickness: 3 }).setOrigin(0.5));
+    if (spec.armor > 0) {
+      c.add(hudImage(this, HUD.shield, gx, gy + 32, 0.85));
+      c.add(this.add.text(gx, gy + 31, `${spec.armor}`, { ...TEXT_BASE, fontSize: "12px", fontStyle: "bold", color: "#ffffff", stroke: "#0a1830", strokeThickness: 3 }).setOrigin(0.5));
+    }
+    if (!spec.maxHp) return;
+    const barW = w - 12;
+    const barY = h / 2 - 29;
+    const ratio = Math.max(0, Math.min(1, spec.hp / spec.maxHp));
+    const fill = spec.hostile ? 0xd03a4a : 0x4cc070;
+    c.add(this.add.rectangle(0, barY, barW + 2, 6, 0x05070f, 0.85).setStrokeStyle(1, 0xb08a3a, 0.8));
+    if (ratio > 0) {
+      c.add(this.add.rectangle(-barW / 2, barY, barW * ratio, 4, fill).setOrigin(0, 0.5));
+      c.add(this.add.rectangle(-barW / 2, barY - 1, barW * ratio, 1, 0xffffff, 0.35).setOrigin(0, 0.5));
+    }
   }
 
   /** A looping tween on a card part; it dies with the part when `renderAll` rebuilds the card. */
@@ -1094,6 +1122,7 @@ export class CombatScene extends Phaser.Scene {
       name,
       nameColor: COLORS.gold,
       hp: summon.hp,
+      maxHp: summon.maxHp,
       hostile,
       armor: summon.armor,
       statuses: summon.statuses,
@@ -1129,6 +1158,7 @@ export class CombatScene extends Phaser.Scene {
         artKey: `enemies:${enemy.defId}`,
         name: def.name,
         hp: enemy.hp,
+        maxHp: enemy.maxHp,
         hostile: true,
         armor: enemy.armor,
         statuses: enemy.statuses,
@@ -1294,6 +1324,7 @@ export class CombatScene extends Phaser.Scene {
       name: def.name,
       nameColor: hero.leveledUp ? COLORS.gold : COLORS.text,
       hp: hero.hp,
+      maxHp: hero.maxHp,
       hostile,
       armor: hero.armor,
       statuses: hero.statuses,
@@ -1356,20 +1387,30 @@ export class CombatScene extends Phaser.Scene {
    * A seat's draw pile as card backs peeking from the left edge, with diamonds:
    * cards left (red when 6 or fewer) and the discard count under it.
    */
+  /**
+   * Draw pile as stacked card backs (up to three layers, by how many are left)
+   * with a count lozenge; the discard pile as a small greyed back beside it.
+   * `color` tints the backs of another seat's pile.
+   */
   private renderPile(seat: PlayerState, y: number, color: number, owner: string) {
-    const { x } = COMBAT_LAYOUT.pile;
-    this.root.add(this.add.rectangle(x + 5, y + 5, 84, 120, 0x1b2448).setStrokeStyle(1, COLORS.panelBorder));
-    this.root.add(this.add.rectangle(x, y, 84, 120, 0x223060).setStrokeStyle(2, color));
-    this.text(x + 22, y, "☾", 22, COLORS.gold).setOrigin(0.5);
+    const x = COMBAT_LAYOUT.pile.x + 34;
     const left = seat.drawPile.length;
     const low = left <= 6;
-    this.root.add(this.add.rectangle(84, y - 22, 28, 28, low ? 0x7a2a2a : color).setAngle(45).setStrokeStyle(1, 0x0a0e20));
-    this.text(84, y - 22, `${left}`, 13, low ? "#ffd0d0" : "#ffffff").setOrigin(0.5);
-    this.root.add(this.add.rectangle(84, y + 24, 22, 22, 0x3a3f55).setAngle(45).setStrokeStyle(1, 0x0a0e20));
-    this.text(84, y + 24, `${seat.discardPile.length}`, 11, COLORS.dimText).setOrigin(0.5);
-    const hit = this.add.zone(48, y, 100, 130).setInteractive();
+    const tint = owner === "của bạn" ? 0xffffff : color;
+    const layers = left === 0 ? 0 : Math.min(3, 1 + Math.floor(left / 10));
+    for (let i = layers - 1; i >= 0; i--) {
+      this.root.add(hudImage(this, HUD.cardBack, x + i * 4, y - i * 4, 0.82).setTint(tint).setAlpha(i === 0 ? 1 : 0.85));
+    }
+    if (layers === 0) this.root.add(this.add.rectangle(x, y, 66, 95).setStrokeStyle(1, COLORS.panelBorder, 0.8));
+    this.root.add(hudImage(this, HUD.count, x, y + 50));
+    this.text(x, y + 50, `${left}`, 13, low ? "#ff8a8a" : COLORS.gold).setOrigin(0.5).setStroke("#05070f", 3);
+    const discard = this.add.container(x + 52, y + 34);
+    discard.add(hudImage(this, HUD.cardBack, 0, 0, 0.42).setTint(0x8890a8).setAlpha(0.8));
+    discard.add(this.add.text(0, 0, `${seat.discardPile.length}`, { ...TEXT_BASE, fontSize: "12px", color: COLORS.text, stroke: "#05070f", strokeThickness: 3 }).setOrigin(0.5));
+    this.root.add(discard);
+    const hit = this.add.zone(x + 10, y, 110, 140).setInteractive();
     this.root.add(hit);
-    this.hoverTooltip(hit, () => ({ x: 104, y: y - 40 }), () => [
+    this.hoverTooltip(hit, () => ({ x: x + 80, y: y - 40 }), () => [
       `Chồng bài ${owner}`,
       `Còn ${left} lá · Bỏ ${seat.discardPile.length} lá`,
     ]);
@@ -1452,15 +1493,16 @@ export class CombatScene extends Phaser.Scene {
     }
 
     const effectiveCost = getEffectiveCost(this.gameData, this.state, instanceId);
-    const badge = this.add.circle(-CARD_W / 2 + 14, -CARD_H / 2 + 14, 12, 0x0a0e20);
-    badge.setStrokeStyle(1, COLORS.panelBorder);
-    container.add(badge);
+    container.add(hudImage(this, HUD.cost, -CARD_W / 2 + 14, -CARD_H / 2 + 14, 0.95));
     container.add(
       this.add
         .text(-CARD_W / 2 + 14, -CARD_H / 2 + 14, `${effectiveCost}`, {
           ...TEXT_BASE,
-          fontSize: "14px",
-          color: effectiveCost < card.cost ? COLORS.costCheap : COLORS.text,
+          fontSize: "15px",
+          fontStyle: "bold",
+          color: effectiveCost < card.cost ? COLORS.costCheap : COLORS.gold,
+          stroke: "#05070f",
+          strokeThickness: 3,
         })
         .setOrigin(0.5),
     );
@@ -1956,15 +1998,29 @@ export class CombatScene extends Phaser.Scene {
     const canAct = this.state.status === "playerTurn" || (coop && this.state.status === "choosing");
     const myDone = coop && seat.done === true;
     const active = canAct && !myDone;
-    const btn = this.add.circle(x, y, 46, active ? COLORS.button : 0x23283c, 0.95);
-    btn.setStrokeStyle(active ? 2 : 1, active ? COLORS.goldFill : COLORS.panelBorder);
+    // A gold medallion: hourglass (✓ in co-op), the label, the round; it glows while it is your move.
+    const medal = this.add.container(x, y);
+    this.root.add(medal);
+    if (active) {
+      ensureTextures(this);
+      const glow = this.add.image(0, 0, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e).setScale(1.25).setAlpha(0.25);
+      medal.add(glow);
+      this.loopTween(glow, { alpha: 0.55, scale: 1.4, duration: 900 });
+    }
+    const face = hudImage(this, HUD.medallion, 0, 0);
+    if (!active) face.setTint(0x6a6f88);
+    medal.add(face);
+    if (coop) medal.add(this.add.text(0, -16, "✓", { ...TEXT_BASE, fontSize: "24px", color: active ? COLORS.gold : COLORS.dimText }).setOrigin(0.5));
+    else medal.add(hudImage(this, HUD.hourglass, 0, -16).setAlpha(active ? 1 : 0.45));
+    const label = coop ? "Xong lượt" : "Kết thúc";
+    medal.add(this.add.text(0, 6, label, { ...TEXT_BASE, fontSize: "12px", fontStyle: "bold", color: active ? COLORS.gold : COLORS.dimText }).setOrigin(0.5));
+    medal.add(this.add.text(0, 24, `Vòng ${this.state.round}`, { ...TEXT_BASE, fontSize: "10px", color: active ? COLORS.text : COLORS.dimText }).setOrigin(0.5));
+    const btn = this.add.circle(x, y, 52, 0x000000, 0.001);
     this.root.add(btn);
-    this.text(x, y - 8, coop ? "✓" : "⌛", 26, active ? COLORS.gold : COLORS.dimText).setOrigin(0.5);
-    this.text(x, y + 22, `Vòng ${this.state.round}`, 11, active ? COLORS.text : COLORS.dimText).setOrigin(0.5);
     btn.setInteractive({ useHandCursor: active });
     if (active) {
-      btn.on("pointerover", () => btn.setFillStyle(0x3a5090, 0.95));
-      btn.on("pointerout", () => btn.setFillStyle(COLORS.button, 0.95));
+      btn.on("pointerover", () => medal.setScale(1.06));
+      btn.on("pointerout", () => medal.setScale(1));
       btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
         if (pointer.button === 0 && !this.inputLocked) this.dispatch({ type: "endTurn" });
       });
