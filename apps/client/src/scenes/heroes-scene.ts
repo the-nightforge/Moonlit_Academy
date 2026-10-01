@@ -4,10 +4,14 @@ import { errorText, mutate } from "../account";
 import { session } from "../session";
 import { showCardTooltip } from "../ui/card-tooltip";
 import { COLORS, CONSTELLATION_TEXT, FACTION_LABELS, OWNER_COLORS, RARITY_COLORS, RARITY_LABELS, TEXT_BASE, useDesignCamera } from "../ui/theme";
-import { addButton, addCurrencyBar, addText } from "../ui/widgets";
+import { addButton, addScreenHeader, addText, alertModal, RowScroller } from "../ui/widgets";
 
 const WIDTH = 1280;
 const MAX_CONSTELLATION = CONSTELLATION_TEXT.length;
+/** Hero list: rows on screen between the title and the bottom buttons; the rest scroll. */
+const LIST_TOP = 76;
+const LIST_ROW = 76;
+const LIST_ROWS = 7;
 
 const stars = (level: number) => "★".repeat(level) + "☆".repeat(MAX_CONSTELLATION - level);
 
@@ -17,6 +21,7 @@ export class HeroesScene extends Phaser.Scene {
   private heroId = "";
   private tooltip: Phaser.GameObjects.Container | null = null;
   private busy = false;
+  private listScroll!: RowScroller;
 
   constructor() {
     super("heroes");
@@ -26,6 +31,7 @@ export class HeroesScene extends Phaser.Scene {
     useDesignCamera(this);
     this.root = this.add.container(0, 0);
     this.heroId = Object.keys(session.data.heroes)[0]!;
+    this.listScroll = new RowScroller(this, { x: 40, y: LIST_TOP, width: 380, height: LIST_ROWS * LIST_ROW }, () => this.render());
     this.render();
   }
 
@@ -35,14 +41,19 @@ export class HeroesScene extends Phaser.Scene {
     this.tooltip = null;
     const data = session.data;
     const profile = session.profile;
-    addText(this, this.root, WIDTH / 2, 28, "Kho Hero", 26, COLORS.gold).setOrigin(0.5);
-    addCurrencyBar(this, this.root, 40, 28, profile.currencies);
+    addScreenHeader(this, this.root, {
+      title: "Kho Hero",
+      back: { onBack: () => this.scene.start("deck-select") },
+      currencies: profile.currencies,
+    });
 
-    Object.values(data.heroes).forEach((hero, index) => {
-      const y = 100 + index * 92;
+    const heroes = Object.values(data.heroes);
+    const [first, end] = this.listScroll.range(heroes.length, LIST_ROWS);
+    heroes.slice(first, end).forEach((hero, index) => {
+      const y = LIST_TOP + LIST_ROW / 2 + index * LIST_ROW;
       const owned = profile.heroes[hero.id];
       const chosen = hero.id === this.heroId;
-      const panel = this.add.rectangle(230, y, 380, 80, chosen ? 0x2a3a70 : 0x141b33).setAlpha(owned ? 1 : 0.55);
+      const panel = this.add.rectangle(230, y, 380, LIST_ROW - 8, chosen ? 0x2a3a70 : 0x141b33).setAlpha(owned ? 1 : 0.55);
       const golden = owned?.constellation === MAX_CONSTELLATION;
       panel.setStrokeStyle(golden ? 3 : 1, golden ? COLORS.goldFill : chosen ? COLORS.goldFill : RARITY_COLORS[hero.rarity]);
       panel.setInteractive({ useHandCursor: true });
@@ -51,16 +62,18 @@ export class HeroesScene extends Phaser.Scene {
         this.render();
       });
       this.root.add(panel);
-      this.root.add(this.add.rectangle(48, y, 6, 64, OWNER_COLORS[hero.id] ?? COLORS.panelBorder));
-      addText(this, this.root, 62, y - 24, `${hero.name}  ·  ${RARITY_LABELS[hero.rarity]}`, 15);
-      addText(this, this.root, 62, y + 2, owned ? `Tinh Hồn ${stars(owned.constellation)}` : "Chưa sở hữu", 13, owned ? COLORS.gold : COLORS.dimText);
-      if (owned && pendingUnlocks(data, profile, hero.id) > 0) addText(this, this.root, 62, y + 22, "● Có lượt mở lá", 12, COLORS.gold);
+      this.root.add(this.add.rectangle(48, y, 6, LIST_ROW - 20, OWNER_COLORS[hero.id] ?? COLORS.panelBorder));
+      addText(this, this.root, 62, y - 25, `${hero.name}  ·  ${RARITY_LABELS[hero.rarity]}`, 15);
+      addText(this, this.root, 62, y - 3, owned ? `Tinh Hồn ${stars(owned.constellation)}` : "Chưa sở hữu", 13, owned ? COLORS.gold : COLORS.dimText);
+      if (owned && pendingUnlocks(data, profile, hero.id) > 0) addText(this, this.root, 62, y + 15, "● Có lượt mở lá", 12, COLORS.gold);
     });
+    this.listScroll.addArrows(this.root);
 
     this.renderDetail();
-    addButton(this, this.root, 90, 680, 140, "◂ Quay lại", () => this.scene.start("deck-select"));
-    addButton(this, this.root, 250, 680, 150, "Triệu Hồi", () => this.scene.start("gacha"));
-    addButton(this, this.root, 410, 680, 150, "Tu Luyện", () => this.scene.start("mastery", { heroId: this.heroId }), profile.heroes[this.heroId] !== undefined);
+    addButton(this, this.root, 115, 680, 150, "Triệu Hồi", () => this.scene.start("gacha"));
+    addButton(this, this.root, 275, 680, 150, "Tu Luyện", () => this.scene.start("mastery", { heroId: this.heroId }), profile.heroes[this.heroId] !== undefined, {
+      disabledReason: "Chưa sở hữu Hero này — nhận từ Triệu Hồi",
+    });
   }
 
   /** Level-up form choice (Tinh Hồn 5, `14` §10.1); the server checks it again. */
@@ -84,7 +97,7 @@ export class HeroesScene extends Phaser.Scene {
         },
         (error: unknown) => {
           this.busy = false;
-          window.alert(errorText(error));
+          void alertModal(this, errorText(error));
           this.render();
         },
       );

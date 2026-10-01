@@ -5,7 +5,7 @@ import { readLegacyProfile, retireLegacyProfile } from "../profile-store";
 import { abandonSavedRun, resumeRun, savedRun } from "../run-session";
 import { session } from "../session";
 import { COLORS, useDesignCamera } from "../ui/theme";
-import { addButton, addText } from "../ui/widgets";
+import { addButton, addText, alertModal } from "../ui/widgets";
 
 const WIDTH = 1280;
 
@@ -120,7 +120,7 @@ export class LoginScene extends Phaser.Scene {
           await mutate("POST", "/profile/import", { local: legacy });
           retireLegacyProfile();
         } catch (error) {
-          window.alert(errorText(error));
+          await alertModal(this, errorText(error));
         }
       } else {
         retireLegacyProfile();

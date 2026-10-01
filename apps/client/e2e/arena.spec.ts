@@ -193,13 +193,15 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
     return key === "deck-select";
   }, undefined, { timeout: 30_000 });
   await enterArena(pageW);
-  await clickDesign(pageW, 1090, 518); // "Cửa hàng Vinh Dự"
+  await clickDesign(pageW, 1110, 518); // "Cửa hàng Vinh Dự"
   await expect.poll(() => sceneKey(pageW), { timeout: 15_000 }).toBe("shop");
 
   const before = await api("/api/profile", { token: winner.token });
   const jadeBefore = (before.body.profile as { currencies: { moonJade: number } }).currencies.moonJade;
-  pageW.once("dialog", (dialog) => void dialog.accept());
-  await clickDesign(pageW, 1020, 150); // "Mua" — vé kéo 160 Ngọc (150 Vinh Dự)
+  await clickDesign(pageW, 1020, 170); // "Mua" — vé kéo 160 Ngọc (150 Vinh Dự)
+  // In-game confirm dialog: Enter picks its default action ("Mua").
+  await pageW.waitForFunction(() => (window as unknown as { __vn: { isModalOpen(): boolean } }).__vn.isModalOpen());
+  await pageW.keyboard.press("Enter");
   await expect
     .poll(async () => {
       const reply = await api("/api/profile", { token: winner.token });
