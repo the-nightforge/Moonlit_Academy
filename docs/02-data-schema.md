@@ -856,7 +856,7 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
   trên lá có `target: "fallenAlly"`; `revive` với `to: "lastFallen"` chỉ xuất hiện trong
   `levelUp.onLevelUp` / `altLevelUp.onLevelUp` / hook vũ khí [GĐ7d], không trên lá bài.
   `to: "owner"` chỉ trong `SummonDef.action`; `to: "summon"` chỉ trên lá có `ownerId`
-  hoặc `bond` hoặc hook vũ khí [GĐ7d].
+  hoặc `bond` hoặc lá/hook vũ khí [GĐ7d].
 - **[GĐ7c]** `story.json` (mục 1.16): `arcs` và `stages` được phép rỗng (file khởi tạo
   rỗng; nội dung vào 7c.4 / 7c.5), id duy nhất; mọi `arc.stageIds` trỏ tới màn có sẵn;
   mỗi màn thuộc đúng **một** arc và `stage.arcId` khớp arc liệt kê nó (arc liệt kê màn ↔

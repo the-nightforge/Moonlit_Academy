@@ -585,6 +585,18 @@ describe("co-op data", () => {
     const unknown = rawData();
     unknown.cards[0].effects = [{ type: "summon", summonId: "s_nope" }];
     expect(() => parseGameData(unknown)).toThrow(/summon references missing summon "s_nope"/);
+
+    // Weapon cards and hooks may summon (§6 [GĐ7d]) — their ids must resolve too.
+    const weaponCard = rawData();
+    const thoBoi = weaponCard.weapons.find((weapon: any) => weapon.id === "w_ngoc_tho_boi");
+    thoBoi.card.effects = [{ type: "summon", summonId: "s_nope" }];
+    expect(() => parseGameData(weaponCard)).toThrow(/weapon "w_ngoc_tho_boi" R1: summon references missing summon "s_nope"/);
+
+    const weaponHook = rawData();
+    weaponHook.weapons.find((weapon: any) => weapon.id === "w_ngoc_tho_boi").hooks = [
+      { on: { type: "combatStart" }, actor: "each", effects: [{ type: "summon", summonId: "s_nope" }] },
+    ];
+    expect(() => parseGameData(weaponHook)).toThrow(/weapon "w_ngoc_tho_boi" R1 hook: summon references missing summon "s_nope"/);
   });
 
   it("T295b: fallenAlly cards must revive; revive only on fallenAlly cards or onLevelUp", () => {

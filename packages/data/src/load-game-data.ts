@@ -663,6 +663,24 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     checkSummonRefs(`card "${card.id}"`, card.effects);
     if (usesTo(card.effects, "owner")) errors.push(`card "${card.id}": to "owner" is only allowed in summon actions`);
   }
+  // Weapon cards and hooks may summon (`02` §6 [GĐ7d]) — their summonIds must resolve too.
+  for (const weapon of weapons) {
+    let card = weapon.card;
+    let hooks = weapon.hooks;
+    let signatureHooks = weapon.signatureHooks;
+    for (let level = 1; level <= weapon.refinement.length + 1; level++) {
+      if (level > 1) {
+        const change = weapon.refinement[level - 2]!;
+        card = { ...card, ...change.card };
+        hooks = change.hooks ?? hooks;
+        signatureHooks = change.signatureHooks ?? signatureHooks;
+      }
+      const levelLabel = `weapon "${weapon.id}" R${level}`;
+      checkSummonRefs(levelLabel, card.effects);
+      for (const hook of hooks) checkSummonRefs(`${levelLabel} hook`, hook.effects);
+      for (const hook of signatureHooks ?? []) checkSummonRefs(`${levelLabel} signature hook`, hook.effects);
+    }
+  }
 
   // Cốt truyện (`02` §1.16): arcs list their stages, stages point back at their arc,
   // their encounter is tier "story" and every speaker is a hero, an enemy or "narrator".

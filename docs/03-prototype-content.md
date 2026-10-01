@@ -178,7 +178,7 @@ Theo `18` §5.3; nâng cấp bằng vật liệu ở `14` §13.3, giá trong `ec
 
 #### 7.3.1 Đề xuất 15 vũ khí bản mệnh (7d.3 — **đã duyệt**, JSON xong)
 
-Đã sửa theo 10 quyết định ở cuối mục; chờ duyệt cuối trước khi viết JSON — số
+Đã sửa theo 10 quyết định ở cuối mục; đã duyệt và viết JSON — số
 liệu là khởi điểm cân bằng, đo lại bằng mô phỏng ở 7d.6.
 Ký hiệu như bảng §7.1: `cost · copies · loại [tag]: hiệu ứng`; `(X: …)` trong cột
 nội tại / R5 là phiên bản bản mệnh (`signatureHooks`); NL = Nguyệt Lực.
@@ -300,7 +300,7 @@ mô phỏng 7d.6 — xem `docs/playtest-notes.md` Phase 7d.)*
 10. Trần R5 bản mệnh duyệt nguyên văn: Ngọc Bút (Dưỡng Nguyệt 1), Huyết Phượng
     Đao (+3 Sức Mạnh, Thiêu Đốt 3 AoE), Ngọc Thố Bội (Thỏ đầu trận đủ buff).
 
-#### 7.3.2 Đề xuất 8 Nguyệt Bảo mới (7d.4 — **đã duyệt**, chờ viết JSON)
+#### 7.3.2 Đề xuất 8 Nguyệt Bảo mới (7d.4 — **đã duyệt**, JSON xong)
 
 Đã sửa theo quyết định ở cuối mục — số liệu là khởi điểm cân bằng, đo lại bằng mô
 phỏng ở 7d.6. Ký hiệu như §7.2: mỗi cấp Cộng Minh (CM) là **bản đầy đủ**; ô ghi
