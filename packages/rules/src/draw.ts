@@ -1,6 +1,9 @@
+import { checkBossPhase } from "./coop/boss";
 import { checkCombatEnd, loseHp, processDeaths } from "./effects";
+import { checkLevelUps } from "./levelup";
 import { decreeModifier } from "./moon";
 import { seatTag } from "./players";
+import { fireEventHooks } from "./run-relic-hooks";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "./types/index";
 
 /**
@@ -28,8 +31,13 @@ export function discardUnplayed(
     ).filter((unit) => unit.alive && unit.hp > 0);
     const victim = foes.sort((a, b) => a.hp - b.hp || a.position - b.position)[0];
     if (!victim) return;
+    const start = events.length;
     loseHp(data, victim, cut.amount, "decree", events);
     processDeaths(data, state, events, undefined);
+    checkLevelUps(data, state, events);
+    checkBossPhase(data, state, events);
+    if (checkCombatEnd(state, events)) return;
+    fireEventHooks(data, state, events, start, state.bloodMoonRounds, player.index);
     if (checkCombatEnd(state, events)) return;
   }
 }

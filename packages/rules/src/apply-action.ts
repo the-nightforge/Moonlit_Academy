@@ -430,6 +430,7 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
       const nextSeat = next.players[seat.index]!;
       nextSeat.bloodPactUsed = true;
       loseHp(data, next.heroes.find((h) => h.id === hero.id)!, rule.hp, "bloodPact", events);
+      checkLevelUps(data, next, events);
       drawCards(data, next, nextSeat, rule.draw, events);
       return { ok: true, state: next, events };
     }
