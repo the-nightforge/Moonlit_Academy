@@ -761,7 +761,8 @@ export class CombatScene extends Phaser.Scene {
     this.badge(-w / 2 + 16, -h / 2 + 16, 16, `${spec.hp}`, spec.hostile ? COLORS.hpFillEnemy : COLORS.hpFillHero, c,
       spec.hostile ? 0x4a1818 : 0x183a20, 13);
     if (spec.armor > 0) this.badge(-w / 2 + 16, -h / 2 + 46, 12, `${spec.armor}`, 0x9fd4ff, c, 0x1e3a5a, 11);
-    if (spec.stealth) c.add(this.add.rectangle(0, 0, w, h, 0x8899ff, 0.15));
+    if (spec.statuses.some((status) => status.id === "freeze")) this.frostOverlay(c, w, h);
+    if (spec.stealth) this.stealthVeil(c, w, h);
     if (!spec.alive) {
       c.add(this.add.rectangle(0, 0, w, h, 0x000000, 0.6));
       this.text(0, 0, "Ngã", 18, "#ffffff", c).setOrigin(0.5);
@@ -775,17 +776,46 @@ export class CombatScene extends Phaser.Scene {
     return c;
   }
 
+  /** A looping tween on a card part; it dies with the part when `renderAll` rebuilds the card. */
+  private loopTween(target: Phaser.GameObjects.GameObject, config: Omit<Phaser.Types.Tweens.TweenBuilderConfig, "targets">) {
+    const tween = this.tweens.add({ targets: target, yoyo: true, repeat: -1, ease: "Sine.easeInOut", ...config });
+    target.once("destroy", () => tween.remove());
+  }
+
+  /** Đóng Băng: an icy film with a frost rim and snowflakes on the card edges, breathing slowly. */
+  private frostOverlay(c: Phaser.GameObjects.Container, w: number, h: number) {
+    const ice = this.add.rectangle(0, 0, w, h, 0x9fd4ff, 0.08).setStrokeStyle(3, 0xd8f0ff, 0.9);
+    c.add(ice);
+    this.loopTween(ice, { fillAlpha: 0.2, duration: 1300 });
+    if (!this.textures.exists("ui:status_freeze")) return;
+    for (const side of [-1, 1]) {
+      const flake = this.add.image(side * (w / 2 - 2), -12, "ui:status_freeze").setDisplaySize(22, 22);
+      c.add(flake);
+      this.loopTween(flake, { angle: side * 25, duration: 2400 });
+    }
+  }
+
+  /** Ẩn Thân: the card fades into a drifting mist. */
+  private stealthVeil(c: Phaser.GameObjects.Container, w: number, h: number) {
+    const mist = this.add.rectangle(0, 0, w, h, 0x8899ff, 0.1);
+    c.add(mist);
+    c.setAlpha(0.72);
+    this.loopTween(mist, { fillAlpha: 0.28, duration: 1600 });
+  }
+
   /** In-card status icons, bottom-up rows above the name strip; each explains itself on hover. */
   private statusIcons(spec: UnitCardSpec, c: Phaser.GameObjects.Container) {
-    const icons = spec.statuses.map((status) => ({ ...STATUS_ICONS[status.id], value: status.value }));
-    if (spec.sealed) icons.push({ ...SEAL_ICON, value: 0 });
+    const icons = spec.statuses.map((status) => ({ ...STATUS_ICONS[status.id], value: status.value, iconKey: `ui:status_${status.id}` }));
+    if (spec.sealed) icons.push({ ...SEAL_ICON, value: 0, iconKey: "ui:seal" });
     const r = 10;
     const step = 2 * r + 4;
     const perRow = Math.max(1, Math.floor((spec.w - 8) / step));
     icons.forEach((icon, index) => {
       const ix = -spec.w / 2 + 6 + r + (index % perRow) * step;
       const iy = spec.h / 2 - 30 - r - Math.floor(index / perRow) * step;
-      const circle = this.badge(ix, iy, r, icon.glyph, icon.color, c, 0x0a0e20, 12);
+      const hasIcon = this.textures.exists(icon.iconKey);
+      const circle = this.badge(ix, iy, r, hasIcon ? "" : icon.glyph, icon.color, c, 0x0a0e20, 12);
+      if (hasIcon) c.add(this.add.image(ix, iy, icon.iconKey).setDisplaySize(2 * r - 1, 2 * r - 1));
       if (icon.value > 0) {
         c.add(
           this.add

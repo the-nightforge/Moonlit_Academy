@@ -932,3 +932,37 @@ export async function moonWheel(
   const flare = addFx(scene, badge, GLOW).setTint(color).setScale(0.5 * S);
   fadeOut(scene, flare, { scale: 1.6 * S, duration: 300 });
 }
+
+/**
+ * A status icon bursts out above the unit. Applied: it pops, hangs, then drops
+ * into the card. Removed: it swells and shatters. Resolves after the pop so a
+ * chain of statuses does not stall the queue; the rest plays on.
+ */
+export async function statusPop(scene: Phaser.Scene, at: Point, iconKey: string, color: number, removed = false): Promise<void> {
+  ensureTextures(scene);
+  const pos = { x: at.x, y: at.y - 46 };
+  const flare = addFx(scene, pos, GLOW).setTint(color).setScale(0.3 * S);
+  fadeOut(scene, flare, { scale: removed ? 0.9 * S : 1.4 * S, duration: 320 });
+  if (!scene.textures.exists(iconKey)) return wait(scene, 120);
+  const icon = scene.add.image(pos.x, pos.y, iconKey).setDepth(DEPTH).setDisplaySize(34, 34);
+  const base = icon.scaleX;
+  if (removed) {
+    icon.setAlpha(0.9);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + rand(-0.3, 0.3);
+      const spark = addFx(scene, pos, SPARK).setTint(color).setRotation(a).setScale(0.5 * S, S);
+      fadeOut(scene, spark, { x: pos.x + Math.cos(a) * 34, y: pos.y + Math.sin(a) * 34, scaleX: 0.1 * S, duration: 260, ease: "Cubic.easeOut" });
+    }
+    fadeOut(scene, icon, { scale: base * 1.6, duration: 220, ease: "Cubic.easeOut" });
+    return wait(scene, 120);
+  }
+  icon.setScale(0);
+  await tween(scene, { targets: icon, scale: base * 1.3, duration: 170, ease: "Back.easeOut" });
+  scene.tweens.add({
+    targets: icon,
+    scale: base,
+    duration: 100,
+    onComplete: () =>
+      fadeOut(scene, icon, { x: at.x - 30, y: at.y + 52, scale: base * 0.5, delay: 220, duration: 240, ease: "Cubic.easeIn" }),
+  });
+}

@@ -2,8 +2,8 @@ import type Phaser from "phaser";
 import { cardDefOf } from "rules";
 import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "rules";
 import { attackLookOf, cardColorOf } from "./attack-style";
-import { COMBAT_LAYOUT, STATUS_LABELS, TEXT_BASE } from "./theme";
-import { castCard, moonWheel, playAttack } from "./vfx";
+import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
+import { castCard, moonWheel, playAttack, statusPop } from "./vfx";
 
 const WIDTH = 1280;
 const { moon, moonPower, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
@@ -391,6 +391,7 @@ function animateEvent(
     case "statusApplied": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
+      void statusPop(scene, anchor, `ui:status_${event.status}`, STATUS_ICONS[event.status].color);
       return floatText(
         scene,
         anchor.x,
@@ -404,6 +405,7 @@ function animateEvent(
     case "statusRemoved": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
+      void statusPop(scene, anchor, `ui:status_${event.status}`, STATUS_ICONS[event.status].color, true);
       return floatText(
         scene,
         anchor.x,
