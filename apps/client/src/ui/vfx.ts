@@ -966,3 +966,51 @@ export async function statusPop(scene: Phaser.Scene, at: Point, iconKey: string,
       fadeOut(scene, icon, { x: at.x - 30, y: at.y + 52, scale: base * 0.5, delay: 220, duration: 240, ease: "Cubic.easeIn" }),
   });
 }
+
+/**
+ * A fallen unit burns away: a hot flash, the card darkens and lifts as it
+ * fades, ash and embers drift up from the whole card. A boss cracks first
+ * (white shockwave, harder shake). The re-render then shows the fallen card.
+ */
+export async function deathBurn(
+  scene: Phaser.Scene,
+  view: Phaser.GameObjects.Container | undefined,
+  at: Point,
+  boss = false,
+): Promise<void> {
+  ensureTextures(scene);
+  const power = boss ? 1.6 : 1;
+  const bounds = view?.getBounds();
+  const size = bounds ? { w: bounds.width, h: bounds.height } : { w: 120, h: 170 };
+  if (boss) {
+    impact(scene, at, 0xffffff, -Math.PI / 2, 1.8);
+    await wait(scene, 180);
+  }
+  const heat = addFx(scene, at, GLOW).setTint(0xff6a30).setScale(0.6 * S * power);
+  fadeOut(scene, heat, { scale: 2.4 * S * power, duration: 520, ease: "Cubic.easeOut" });
+  const ash = scene.add
+    .particles(at.x, at.y, GLOW, {
+      x: { min: -size.w / 2, max: size.w / 2 },
+      y: { min: -size.h / 2, max: size.h / 2 },
+      speedY: { min: -90, max: -30 },
+      speedX: { min: -20, max: 20 },
+      lifespan: { min: 700, max: 1200 },
+      scale: { start: 0.12 * S, end: 0 },
+      alpha: { start: 0.9, end: 0 },
+      tint: [0x8a8a9a, 0x5a5a66, 0xff8040, 0xffb060],
+      blendMode: "ADD",
+      frequency: 10,
+      quantity: boss ? 3 : 2,
+    })
+    .setDepth(DEPTH);
+  if (view) {
+    const scorch = scene.add.rectangle(0, 0, size.w / view.scaleX, size.h / view.scaleY, 0x2a0a04, 0);
+    view.add(scorch);
+    scene.tweens.add({ targets: scorch, fillAlpha: 0.7, duration: 260 });
+    await tween(scene, { targets: view, alpha: 0, y: at.y - 14, scale: 0.94, duration: 560, delay: 120, ease: "Sine.easeIn" });
+  } else {
+    await wait(scene, 560);
+  }
+  ash.stop();
+  scene.time.delayedCall(1300, () => ash.destroy());
+}

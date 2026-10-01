@@ -3,7 +3,7 @@ import { cardDefOf } from "rules";
 import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "rules";
 import { attackLookOf, cardColorOf } from "./attack-style";
 import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
-import { castCard, moonWheel, playAttack, statusPop } from "./vfx";
+import { castCard, deathBurn, moonWheel, playAttack, statusPop } from "./vfx";
 
 const WIDTH = 1280;
 const { moon, moonPower, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
@@ -497,18 +497,8 @@ function animateEvent(
     case "unitDied": {
       const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
-      return new Promise((resolve) => {
-        const rect = scene.add.rectangle(anchor.x, anchor.y, unitFlash.w, unitFlash.h, 0x333344, 0).setDepth(95);
-        scene.tweens.add({
-          targets: rect,
-          alpha: 0.6,
-          duration: 400,
-          onComplete: () => {
-            rect.destroy();
-            resolve();
-          },
-        });
-      });
+      const boss = ctx.state.boss?.enemyId === event.unitId;
+      return deathBurn(scene, ctx.unitViews.get(event.unitId), anchor, boss);
     }
     case "runRelicTriggered": {
       const relic = ctx.gameData.runRelics[event.runRelicId];
