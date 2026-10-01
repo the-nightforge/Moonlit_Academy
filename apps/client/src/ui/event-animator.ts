@@ -1,7 +1,9 @@
 import type Phaser from "phaser";
 import { cardDefOf } from "rules";
-import type { CombatEvent, CombatState, GameData, IntentDef } from "rules";
+import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "rules";
+import { attackLookOf } from "./attack-style";
 import { COMBAT_LAYOUT, STATUS_LABELS, TEXT_BASE } from "./theme";
+import { playAttack } from "./vfx";
 
 const WIDTH = 1280;
 const { moon, moonPower, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
@@ -85,6 +87,17 @@ function instant(): Promise<void> {
 }
 
 type HpLostEvent = Extract<CombatEvent, { type: "hpLost" }>;
+type DamageEvent = Extract<CombatEvent, { type: "damageDealt" }>;
+
+/** Events after which damage no longer comes from the last played card. */
+const CARDLESS_SOURCES = new Set<CombatEvent["type"]>([
+  "turnStarted",
+  "intentExecuted",
+  "summonActed",
+  "relicTriggered",
+  "weaponTriggered",
+  "runRelicTriggered",
+]);
 
 const HP_LOSS_LABELS: Record<HpLostEvent["cause"], string> = {
   loseHp: "",
@@ -159,9 +172,26 @@ export async function playEventQueue(
   events: CombatEvent[],
   ctx: AnimContext,
 ): Promise<void> {
+  /** The card whose effects are resolving: its hits take the card's look. */
+  let card: CardDef | undefined;
   for (let i = 0; i < events.length; i++) {
     const event = events[i]!;
     const next = events[i + 1];
+    if (event.type === "cardPlayed") {
+      const instance = ctx.state.cards[event.instanceId];
+      card = instance ? cardDefOf(ctx.gameData, ctx.state, instance) : undefined;
+    } else if (CARDLESS_SOURCES.has(event.type)) {
+      card = undefined;
+    }
+    if (event.type === "damageDealt") {
+      // Hits of one source in a row (area attacks) land together.
+      const group: DamageEvent[] = [event];
+      while (events[i + 1]?.type === "damageDealt" && (events[i + 1] as DamageEvent).sourceId === event.sourceId) {
+        group.push(events[++i] as DamageEvent);
+      }
+      await Promise.all(group.map((hit) => animateEvent(scene, hit, ctx, card)));
+      continue;
+    }
     if (
       event.type === "statusRemoved" &&
       next?.type === "statusApplied" &&
@@ -191,7 +221,7 @@ export async function playEventQueue(
         continue;
       }
     }
-    await animateEvent(scene, event, ctx);
+    await animateEvent(scene, event, ctx, card);
   }
 }
 
@@ -199,6 +229,7 @@ function animateEvent(
   scene: Phaser.Scene,
   event: CombatEvent,
   ctx: AnimContext,
+  card?: CardDef,
 ): Promise<void> {
   const anchorOf = (unitId: string) => ctx.unitAnchors.get(unitId);
 
@@ -288,28 +319,23 @@ function animateEvent(
     case "damageDealt": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
-      const jobs: Promise<void>[] = [
-        flash(scene, anchor.x, anchor.y, unitFlash.w, unitFlash.h, 0xc03030, 250),
-        floatText(
-          scene,
-          anchor.x,
-          anchor.y - 50,
-          event.hpLost > 0 ? `-${event.hpLost}` : "Chặn",
-          event.hpLost > 0 ? "#ff6b6b" : "#9aa3c0",
-          20,
-          350,
-        ),
-      ];
-      if (event.blocked > 0) {
-        jobs.push(
-          floatText(scene, anchor.x, anchor.y - 24, `🛡 ${event.blocked}`, "#9fd4ff", 13, 300),
-        );
-      }
-      const view = ctx.unitViews.get(event.targetId);
-      if (view) {
-        scene.tweens.add({ targets: view, x: view.x + 6, duration: 45, yoyo: true, repeat: 3 });
-      }
-      return Promise.all(jobs).then(() => undefined);
+      const from = anchorOf(event.sourceId) ?? { x: anchor.x, y: anchor.y + 200 };
+      const fromHero = ctx.state.heroes.some((hero) => hero.id === event.sourceId);
+      const look = attackLookOf(ctx.gameData, ctx.state, event.sourceId, card);
+      // The number pops and the card shakes when the hit lands, not when it is thrown.
+      return playAttack(scene, look, from, anchor, {
+        blocked: event.hpLost === 0,
+        ...(fromHero ? { attackerView: ctx.unitViews.get(event.sourceId) } : {}),
+      }).then(() => {
+        const view = ctx.unitViews.get(event.targetId);
+        if (view) scene.tweens.add({ targets: view, x: view.x + 6, duration: 45, yoyo: true, repeat: 3 });
+        const jobs = [
+          floatText(scene, anchor.x, anchor.y - 50, event.hpLost > 0 ? `-${event.hpLost}` : "Chặn",
+            event.hpLost > 0 ? "#ff6b6b" : "#9aa3c0", 20, 350),
+        ];
+        if (event.blocked > 0) jobs.push(floatText(scene, anchor.x, anchor.y - 24, `🛡 ${event.blocked}`, "#9fd4ff", 13, 300));
+        return Promise.all(jobs).then(() => undefined);
+      });
     }
     case "hpLost": {
       const anchor = anchorOf(event.targetId);
@@ -452,7 +478,7 @@ function animateEvent(
       return Promise.all([
         lunge,
         floatText(scene, anchor.x, anchor.y + 90, intent?.name ?? "", "#ffb070", 18, 550),
-        ...aimed.map((to) => beam(scene, anchor, to, 0xff7050, 550, 5)),
+        ...(intent?.kind === "attack" || intent?.kind === "attackDefend" ? [] : aimed.map((to) => beam(scene, anchor, to, 0xff7050, 550, 5))),
       ]).then(() => undefined);
     }
     case "intentSkipped": {
