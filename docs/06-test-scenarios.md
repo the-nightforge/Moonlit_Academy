@@ -44,7 +44,9 @@ Quy ước trong bảng: kẻ địch "Khôi Lỗi" = `puppet_guard` (HP 42), "�
 `CombatSetup.start.moonIndex` tương ứng (và `start.decrees` nếu test cần một lệnh
 cụ thể); bỏ `start` → pha khởi đầu và lệnh bốc tất định theo seed. Test không
 phụ thuộc pha (đa số bộ test) nên kèm `start.moonIndex` cố định để giữ kết quả
-ổn định qua mọi seed.
+ổn định qua mọi seed. Helper `makeTestCombat` **mặc định tắt mọi lệnh** (rỗng
+`modifiers` của từng lệnh) — test chỉ định pha mà không định lệnh vẫn tất định;
+test cần lệnh thật truyền `decrees: "real"` kèm `start.decrees`.
 
 | Mã | Thiết lập | Hành động | Kết quả mong đợi |
 |---|---|---|---|

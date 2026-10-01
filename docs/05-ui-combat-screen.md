@@ -111,7 +111,7 @@ Client giữ một **hàng đợi event**, phát lần lượt, mỗi event mộ
 | `hpLost` | Chớp tím, số bay lên. `cause: "reflect"`: tia phản từ mục tiêu về nguồn; `cause: "bloodMoon"`: chớp đỏ trên mọi Hero cùng lúc; `cause: "decree"` **[Nguyệt Luân mới]**: chớp trắng trăng (Đoạn Tuyệt); `cause: "bloodPact"` **[Nguyệt Luân mới]**: chớp đỏ tự gây | 250 ms |
 | `moonDecreesRolled` **[Nguyệt Luân mới]** | Chỉ ở đầu trận: 8 tên lệnh rớt nhẹ vào các pha trên bánh xe rồi mờ, để lại tên lệnh của pha hiện tại trên thanh trên | 800 ms |
 | `cardDiscarded` **[Nguyệt Luân mới]** | Lá được `discardCard` chọn tan ra (vào chồng bỏ) | 300 ms |
-| `cardsRecycled` **[Nguyệt Luân mới]** | Lá trên tay ngập nhẹ về phía chồng rút | 250 ms |
+| `cardsRecycled` **[Nguyệt Luân mới]** | Lá cuối chồng bỏ trượt về đáy chồng rút | 250 ms |
 | `healed` | Chớp xanh lá, số `+N` bay lên | 300 ms |
 | `armorGained` | Biểu tượng khiên phóng to | 200 ms |
 | `statusApplied` / `statusRemoved` | Nhãn trạng thái bật ra / mờ đi. Cướp buff (`statusRemoved` rồi `statusApplied` cùng status, liên tiếp): nhãn bay từ mục tiêu sang người cướp | 150 ms |

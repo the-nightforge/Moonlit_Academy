@@ -69,9 +69,9 @@ Action `{ type: "mulligan", instanceIds }`:
     3. **Bói Nguyệt** (lệnh `freeChooseCard`): mở Chiêm Bài `look` miễn phí **sau** Vạn Kim; nếu đang có `pendingChoice` (Vạn Kim chưa trả lời) → đặt cờ `omenPending`, mở ngay sau khi Chiêm Bài đó được trả lời và **trước** Chọn Pha.
     4. **Quan Tinh** (`chooseMoon`): mở **Chọn Pha** (mục 5.5) — chỉ **sau khi** mọi Chiêm Bài (kể cả Bói Nguyệt) đã được trả lời, và chỉ khi Hero đã thăng cấp **lúc đầu lượt**; Hero thăng cấp giữa lượt thì Chọn Pha mở từ lượt sau (`moonChoicePending`).
 
-Vòng 1 đi qua đủ các bước (bước 7 thường không rút gì vì tay đã đủ `handSize` lá sau Đổi Bài).
+Vòng 1 đi qua đủ các bước (bước 8 thường không rút gì vì tay đã đủ `handSize` lá sau Đổi Bài).
 
-**[GĐ4b] Dưỡng Nguyệt** (effect `gainMoonPowerPerTurn { amount }`, chỉ trên lá bài): `moonPowerBonus += amount` — từ lượt sau, mỗi đầu lượt quỹ được cộng thêm `moonPowerBonus` (bước 6). Không có trần; cộng dồn qua mọi lần dùng; giữ tới hết trận.
+**[GĐ4b] Dưỡng Nguyệt** (effect `gainMoonPowerPerTurn { amount }`, chỉ trên lá bài): `moonPowerBonus += amount` — từ lượt sau, mỗi đầu lượt quỹ được cộng thêm `moonPowerBonus` (bước 7). Không có trần; cộng dồn qua mọi lần dùng; giữ tới hết trận.
 
 ### 3.2 Trong lượt
 Người chơi thực hiện bất kỳ số lượng hành động nào:
@@ -114,7 +114,7 @@ Người chơi thực hiện bất kỳ số lượng hành động nào:
 - **Không bao giờ xáo chồng bỏ vào chồng bài.** Chồng bỏ là "nghĩa địa".
 - Rút khi chồng rỗng: ngừng rút, không lỗi, không event.
 - **[GĐ7]** Effect `drawCards { amount }`: rút mù `amount` lá đầu chồng vào tay đơn vị hành động (`cardsDrawn`). Không đếm `cardsChosen` (không phải Chiêm Bài).
-- **[GĐ7]** Giới hạn tay: `handSize` (6) chỉ là mốc **rút bù** đầu lượt. Effect lá/nội tại đưa lá vào tay (`drawCards`, Chiêm Bài, `createCard`) được vượt `handSize` nhưng không quá `handLimit` (8) — lá thừa ngưỡng đi thẳng vào chồng bỏ (`cardDiscarded`; `createCard` phát `cardCreated { instanceId: null }`).
+- **[GĐ7]** Giới hạn tay: `handSize` (6) chỉ là mốc **rút bù** đầu lượt. Effect lá/nội tại đưa lá vào tay (`drawCards`, Chiêm Bài, `createCard`) được vượt `handSize` nhưng không quá `handLimit` (8) — lá thừa ngưỡng đi thẳng vào chồng bỏ (`cardDiscarded`; `createCard` phát `cardCreated { instanceId: null }`). Lá rời tay theo đường này cũng tính cho lệnh **Đoạn Tuyệt** (`discardDamage`, mục 7.5).
 
 ### 4.3 Tàn Chiêu
 - Khi Hero **ngã**: mọi bản lá của Hero đó **trong `drawPile`** bị Tán Chiêu sang `discardPile` (mục 10.4); mọi lá của Hero đó **trên tay** thành **Tàn Chiêu**. Lá Song Hành thành Tàn Chiêu khi **một trong hai** owner ngã.
@@ -132,7 +132,7 @@ chiPhíThựcTế = max(0, cost + các điều chỉnh)
 Các điều chỉnh (cộng dồn):
 - **[Nguyệt Luân mới]** Ưu Đãi Pha: lá mang `tag` được ưu đãi của pha hiện tại **−1** Nguyệt Lực (tối thiểu 0) — bảy pha giảm giá, pha Trăng Non không có ưu đãi giá (mục 7.1). Modifier lệnh `costModifierForTag` (nếu lệnh đang có hiệu lực) cộng dồn theo cùng quy tắc.
 - Sau các điều chỉnh theo pha: M06 dạng thăng cấp *Vô Nguyệt* (`firstOwnCardDiscount`) — lá riêng **đầu tiên của Tô Dạ** đánh trong mỗi lượt giảm thêm `amount` (tối thiểu 0, xem mục 8). Không áp cho lá Song Hành.
-- **[GĐ7]** `turnDiscount` (Thiên Cơ): cộng thêm vào phần giảm sau cùng, chỉ trong lượt (mục 3.1 bước 11). `tagDiscountOwnCards` (Tự Do): lá của Hero có nội tại đó và mang `tag` khớp −`amount` (tối thiểu 0).
+- **[GĐ7]** `turnDiscount` (Thiên Cơ): cộng thêm vào phần giảm sau cùng, chỉ trong lượt (mục 3.1 bước 12). `tagDiscountOwnCards` (Tự Do): lá của Hero có nội tại đó và mang `tag` khớp −`amount` (tối thiểu 0).
 
 ### 4.6 Lá tạo ra [GĐ7]
 - Effect `createCard { cardId }` (chỉ trên lá bài và `levelUp.onLevelUp`; luôn vào tay, không có trường `to`): tạo card instance mới của lá `cardId`, chủ là Hero đang giải quyết effect, `instanceId` = `prefixedId` `t<n>` theo bộ đếm `PlayerState.createdCards` — PvE `t1`, `t2`…; nhiều người chơi `p<i>_t<n>` (`02` §2).
@@ -199,7 +199,7 @@ Condition `selfHpBelow`, `selfHasStatus` xét đơn vị hành động của eff
 - Điều chỉnh chi phí theo tag của pha trăng áp bình thường.
 
 ### 5.5 Chọn Pha [GĐ7]
-- Khi người chơi "nợ" Chọn Pha (mục 3.1 bước 11): `pendingChoice = { kind: "chooseMoon", options: [0, 1, 2] }` (giữ pha, tiến 1, tiến 2), event `moonChoiceOpened { options }`, `status = "choosing"`. Co-op: `status` giữ `playerTurn` — lượt đồng đội không bị khóa (mục 16.2); nếu cả hai người đều nợ, chỉ người 0 chọn.
+- Khi người chơi "nợ" Chọn Pha (mục 3.1 bước 12): `pendingChoice = { kind: "chooseMoon", options: [0, 1, 2] }` (giữ pha, tiến 1, tiến 2), event `moonChoiceOpened { options }`, `status = "choosing"`. Co-op: `status` giữ `playerTurn` — lượt đồng đội không bị khóa (mục 16.2); nếu cả hai người đều nợ, chỉ người 0 chọn.
 - Action `{ type: "chooseMoon", offset }`: hợp lệ khi `pendingChoice.kind = "chooseMoon"` và `offset` thuộc `options`; `offset` ngoài `options` → `"not a choice option"`; không có lựa chọn đang chờ → `"no pending choice"`; trong khi `choosing`, Action khác bị từ chối (`"choice pending"`).
 - Trả lời: `pendingChoice` và `moonChoicePending` được xóa, `status` về `playerTurn`. `offset > 0` chạy `shiftMoon(offset)` với nguồn là Hero có nội tại `chooseMoon` (`moonShifted` cause `"card"`); `offset = 0` giữ nguyên pha, không event.
 - Trả lời Chiêm Bài cuối cùng cũng kiểm lại `moonChoicePending` và mở Chọn Pha nếu còn nợ (mục 3.1 bước 12).
@@ -300,8 +300,9 @@ Action `{ type: "discardCard", instanceId }` — bỏ một lá trên tay mà kh
 - Lá Tàn Chiêu cũng hủy được (nó vẫn chiếm tay, mục 4.3). Xả Thân và Đoạn
   Tuyệt thuộc cùng bể lệnh của pha 5 nên **không bao giờ** đồng thời có hiệu
   lực — mỗi pha chỉ có một lệnh được bốc (mục 7.5).
-- PvP / co-op: `discardCard` là hành động của **ghế đang tới lượt** (mục 15.6,
-  16.2); lá phải nằm trên tay ghế đó.
+- PvP / co-op: `discardCard` là hành động của **ghế gửi action** (PvP: ghế
+  đang tới lượt, mục 15.6; co-op: ghế chưa Xong, mục 16.2); lá phải nằm trên
+  tay ghế đó.
 
 ### 5.9 Huyết Tế — `bloodPact` [Nguyệt Lệnh]
 
@@ -356,7 +357,7 @@ Trạng thái bị gỡ khi thời hạn/số tầng/giá trị về 0.
 
 ### 6.5 Cướp buff (`stealBuff`) [GĐ2]
 - Effect `stealBuff { count }`: chuyển tối đa `count` **buff** từ mục tiêu `chosen` sang đơn vị hành động, lấy theo thứ tự trong `statuses[]` của mục tiêu.
-- Với mỗi buff: gỡ khỏi mục tiêu (`statusRemoved`), rồi áp cho đơn vị hành động với cùng giá trị theo cột "Khi áp thêm" (**không** cộng thêm `stealthExtraRounds` của lệnh Bóng Mờ, mục 7.5) → `statusApplied` với giá trị sau khi gộp.
+- Với mỗi buff: gỡ khỏi mục tiêu (`statusRemoved`), rồi áp cho đơn vị hành động với cùng giá trị theo cột "Khi áp thêm" (**không** cộng thêm `stealthDurationBonus` của lệnh Bóng Mờ, mục 7.5) → `statusApplied` với giá trị sau khi gộp.
 - Mục tiêu không có buff: không làm gì, không phát event.
 
 ---
@@ -733,7 +734,7 @@ healed = min(maxHp − hp, floor(amount × hệ số hồi máu))
 
 - **Thắng:** mọi kẻ địch ngã → `status = "won"`.
 - **Thua:** mọi Hero ngã → `status = "lost"`.
-- **Thua — Cạn Bài:** đầu lượt người chơi, tay rỗng **và** `drawPile` rỗng → event `deckedOut`, rồi `status = "lost"` (mục 3.1 bước 8).
+- **Thua — Cạn Bài:** đầu lượt người chơi, tay rỗng **và** `drawPile` rỗng → event `deckedOut`, rồi `status = "lost"` (mục 3.1 bước 9).
 - Kiểm tra sau **mỗi effect**, mỗi tick trạng thái. Trận kết thúc thì mọi hành động sau đó bị từ chối. Không còn giới hạn số vòng trong luật (mô phỏng vẫn giữ trần an toàn, `12` §8).
 - Nếu cả hai cùng xảy ra trong một effect (ví dụ damage lan): ưu tiên **thắng**.
 

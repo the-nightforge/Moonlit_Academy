@@ -109,9 +109,9 @@ Ví dụ một lịch trăng (pha khởi đầu bốc ra `waxingGibbous`):
 
 | Vòng | 1 | 2 | 3 | 4 | 5 |
 |---|---|---|---|---|---|
-| Pha | 🌔 | 🌖 | 🌗 | 🌘 | 🌑 |
-| Ưu đãi | attack −1 | forbidden −1 | ward −1 | moon −1 | assassin ×1.5 |
-| Lệnh (ví dụ) | Liên Kích | Xả Thân | Huyền Giáp | Chiêm Tinh | Tập Kích |
+| Pha | 🌔 | 🌕 | 🌖 | 🌗 | 🌘 |
+| Ưu đãi | attack −1 | harmony −1 | forbidden −1 | ward −1 | moon −1 |
+| Lệnh (ví dụ) | Liên Kích | Viên Nguyệt | Xả Thân | Huyền Giáp | Chiêm Tinh |
 
 (Chưa tính Đổi Vận; lệnh trong bảng chỉ là một khả năng — 1 trong 3 của mỗi pha.)
 Kẻ địch cũng hưởng / chịu lệnh và có **Nguyệt tính** riêng (chiêu trăng công
