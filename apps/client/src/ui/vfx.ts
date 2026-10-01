@@ -18,7 +18,7 @@ const TEX = 2;
 const S = 1 / TEX;
 const BLOCKED_COLOR = 0x9fd4ff;
 
-const GLOW = "vfx_glow";
+export const GLOW = "vfx_glow";
 const RING = "vfx_ring";
 const SPARK = "vfx_spark";
 const SLASH = "vfx_slash";
@@ -57,7 +57,7 @@ function linear(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: numbe
   return g;
 }
 
-function ensureTextures(scene: Phaser.Scene): void {
+export function ensureTextures(scene: Phaser.Scene): void {
   canvasTexture(scene, GLOW, 64, 64, (ctx) => {
     const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
     g.addColorStop(0, "rgba(255,255,255,1)");

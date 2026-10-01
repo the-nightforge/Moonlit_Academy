@@ -42,6 +42,7 @@ import manifest from "virtual:assets-manifest";
 import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
 import { confirmModal, isModalOpen } from "../ui/widgets";
 import { playEventQueue } from "../ui/event-animator";
+import { GLOW as VFX_GLOW, ensureTextures } from "../ui/vfx";
 import {
   BLOOD_MOON_BG,
   COLORS,
@@ -763,6 +764,8 @@ export class CombatScene extends Phaser.Scene {
     if (spec.armor > 0) this.badge(-w / 2 + 16, -h / 2 + 46, 12, `${spec.armor}`, 0x9fd4ff, c, 0x1e3a5a, 11);
     if (spec.statuses.some((status) => status.id === "freeze")) this.frostOverlay(c, w, h);
     if (spec.stealth) this.stealthVeil(c, w, h);
+    if (spec.statuses.some((status) => status.id === "burn")) this.burnEmbers(c, w, h);
+    if (spec.statuses.some((status) => status.id === "taunt")) this.tauntAura(c, w, h);
     if (!spec.alive) {
       c.add(this.add.rectangle(0, 0, w, h, 0x000000, 0.6));
       this.text(0, 0, "Ngã", 18, "#ffffff", c).setOrigin(0.5);
@@ -801,6 +804,41 @@ export class CombatScene extends Phaser.Scene {
     c.add(mist);
     c.setAlpha(0.72);
     this.loopTween(mist, { fillAlpha: 0.28, duration: 1600 });
+  }
+
+  /** Thiêu Đốt: heat glowing up from the bottom edge, embers rising off the card. */
+  private burnEmbers(c: Phaser.GameObjects.Container, w: number, h: number) {
+    ensureTextures(this);
+    const heat = this.add.image(0, h / 2 - 8, VFX_GLOW).setBlendMode("ADD").setTint(0xff6a30).setAlpha(0.3);
+    heat.setScale((w / 64) * 0.75, 0.35);
+    c.add(heat);
+    this.loopTween(heat, { alpha: 0.55, duration: 650 });
+    c.add(
+      this.add.particles(0, h / 2 - 10, VFX_GLOW, {
+        x: { min: -w / 2 + 6, max: w / 2 - 6 },
+        speedY: { min: -55, max: -22 },
+        speedX: { min: -10, max: 10 },
+        lifespan: { min: 900, max: 1500 },
+        scale: { start: 0.12, end: 0 },
+        alpha: { start: 0.95, end: 0 },
+        tint: [0xff8040, 0xffb060, 0xff5030],
+        blendMode: "ADD",
+        frequency: 70,
+      }),
+    );
+  }
+
+  /** Khiêu Khích: a red rim pulsing around the card, the taunt flag swaying on its top edge. */
+  private tauntAura(c: Phaser.GameObjects.Container, w: number, h: number) {
+    const halo = this.add.rectangle(0, 0, w + 10, h + 10).setStrokeStyle(8, 0xff5040, 0.25);
+    const rim = this.add.rectangle(0, 0, w + 4, h + 4).setStrokeStyle(3, 0xff6a50, 0.95);
+    c.add([halo, rim]);
+    this.loopTween(rim, { alpha: 0.35, duration: 700 });
+    this.loopTween(halo, { scaleX: 1.04, scaleY: 1.03, alpha: 0.4, duration: 700 });
+    if (!this.textures.exists("ui:status_taunt")) return;
+    const flag = this.add.image(0, -h / 2 - 2, "ui:status_taunt").setDisplaySize(26, 26).setOrigin(0.3, 0.9);
+    c.add(flag);
+    this.loopTween(flag, { angle: 8, duration: 900 });
   }
 
   /** In-card status icons, bottom-up rows above the name strip; each explains itself on hover. */
