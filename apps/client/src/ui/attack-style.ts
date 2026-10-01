@@ -68,10 +68,14 @@ export function attackLookOf(data: GameData, state: CombatState, sourceId: strin
   const lore: AttackKind = def?.attackStyle ?? (def ? ARCHETYPE_KIND[def.archetype] : "slash");
   if (card && card.type !== "attack") {
     if (!WEAPON_STYLES.has(lore) && lore !== "spell") return { kind: lore, color: STYLE_COLOR[lore] };
-    const color = TAG_COLOR.find(([tag]) => card.tags.includes(tag))?.[1] ?? STYLE_COLOR.spell;
-    return { kind: "spell", color };
+    return { kind: "spell", color: cardColorOf(card) };
   }
   const weaponId = state.players[hero.player]?.weapons.find((weapon) => weapon.heroId === hero.defId)?.weaponId;
   const kind = (weaponId !== undefined ? data.weapons[weaponId]?.attackStyle : undefined) ?? lore;
   return { kind, color: STYLE_COLOR[kind] };
+}
+
+/** Glow of a card: its first tag's color (see TAG_COLOR order), else moon gold. */
+export function cardColorOf(card: CardDef): number {
+  return TAG_COLOR.find(([tag]) => card.tags.includes(tag))?.[1] ?? STYLE_COLOR.spell;
 }

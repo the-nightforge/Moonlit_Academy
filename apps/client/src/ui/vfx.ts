@@ -836,3 +836,42 @@ async function blood(scene: Phaser.Scene, from: Point, to: Point, color: number,
   impact(scene, to, hitColor, angle, 1.1);
   await Promise.all([first, second]);
 }
+
+/**
+ * The played card leaves the hand: it rises to center stage, flares, then
+ * dissolves into motes that stream to the target (or burst out when untargeted).
+ */
+export async function castCard(
+  scene: Phaser.Scene,
+  view: Phaser.GameObjects.Container,
+  stage: Point,
+  color: number,
+  target?: Point,
+): Promise<void> {
+  ensureTextures(scene);
+  view.parentContainer?.bringToTop(view);
+  await tween(scene, { targets: view, x: stage.x, y: stage.y, scale: 1.15, angle: 0, duration: 220, ease: "Cubic.easeOut" });
+  const halo = addFx(scene, stage, GLOW).setTint(color).setScale(0.6 * S).setAlpha(0.9);
+  fadeOut(scene, halo, { scale: 3 * S, duration: 380, ease: "Cubic.easeOut" });
+  const ring = addFx(scene, stage, RING).setTint(color).setScale(0.8 * S);
+  fadeOut(scene, ring, { scale: 3.2 * S, duration: 360, ease: "Cubic.easeOut" });
+  await wait(scene, 90);
+  scene.tweens.add({ targets: view, alpha: 0, scale: 0.9, duration: 180, ease: "Sine.easeIn" });
+  const motes = scene.add
+    .particles(stage.x, stage.y, GLOW, {
+      x: { min: -50, max: 50 },
+      y: { min: -70, max: 70 },
+      lifespan: 360,
+      scale: { start: 0.14 * S, end: 0.04 * S },
+      alpha: { start: 1, end: 0.2 },
+      tint: [color, 0xffffff],
+      blendMode: "ADD",
+      emitting: false,
+      // moveTo is in the emitter's local space.
+      ...(target ? { moveToX: target.x - stage.x, moveToY: target.y - stage.y } : { speed: { min: 60, max: 180 } }),
+    })
+    .setDepth(DEPTH);
+  motes.explode(18);
+  scene.time.delayedCall(450, () => motes.destroy());
+  await wait(scene, target ? 260 : 160);
+}

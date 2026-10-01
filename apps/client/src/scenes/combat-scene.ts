@@ -428,6 +428,7 @@ export class CombatScene extends Phaser.Scene {
       state: this.state,
       unitAnchors: this.unitAnchors,
       unitViews: this.unitViews,
+      cardViews: this.cardViews,
       mySeat: this.mySeat,
     });
   }

@@ -1,9 +1,9 @@
 import type Phaser from "phaser";
 import { cardDefOf } from "rules";
 import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "rules";
-import { attackLookOf } from "./attack-style";
+import { attackLookOf, cardColorOf } from "./attack-style";
 import { COMBAT_LAYOUT, STATUS_LABELS, TEXT_BASE } from "./theme";
-import { playAttack } from "./vfx";
+import { castCard, playAttack } from "./vfx";
 
 const WIDTH = 1280;
 const { moon, moonPower, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
@@ -13,6 +13,8 @@ export interface AnimContext {
   state: CombatState;
   unitAnchors: Map<string, { x: number; y: number }>;
   unitViews: Map<string, Phaser.GameObjects.Container>;
+  /** The local player's hand cards: a played card flies out of its slot. */
+  cardViews?: Map<string, Phaser.GameObjects.Container>;
   /** The local player's seat in a PvP view (`17` §4.8); 0 in PvE. */
   mySeat?: number;
 }
@@ -276,8 +278,13 @@ function animateEvent(
     case "cardPlayed": {
       const instance = ctx.state.cards[event.instanceId];
       const card = instance ? cardDefOf(ctx.gameData, ctx.state, instance) : undefined;
-      const name = card?.name ?? "";
-      return floatText(scene, WIDTH / 2, midY, `◆ ${name}`, "#f4d35e", 22, 300);
+      const view = ctx.cardViews?.get(event.instanceId);
+      if (card && view) {
+        const target = event.targetId !== undefined ? anchorOf(event.targetId) : undefined;
+        return castCard(scene, view, { x: WIDTH / 2, y: midY }, cardColorOf(card), target);
+      }
+      // Another seat's card (co-op partner, PvP opponent): no hand view to fly.
+      return floatText(scene, WIDTH / 2, midY, `◆ ${card?.name ?? ""}`, "#f4d35e", 22, 300);
     }
     case "cardDiscarded":
       return instant();
