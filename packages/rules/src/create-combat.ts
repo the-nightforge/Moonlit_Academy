@@ -171,6 +171,13 @@ export function createCombat(
     rngState,
   };
 
+  // Story stages (`01` §2): the moon is set before round 1 is planned.
+  if (setup.start?.moonIndex !== undefined) state.moonIndex = setup.start.moonIndex;
+  if (setup.start?.bloodMoonRounds !== undefined) {
+    state.bloodMoonRounds = setup.start.bloodMoonRounds;
+    events.push({ type: "bloodMoonChanged", rounds: state.bloodMoonRounds, cause: "start" });
+  }
+
   planEnemyIntents(data, state, events);
   drawCards(data, state, state.players[0]!, data.combatConfig.handSize, events);
   return { state, events };

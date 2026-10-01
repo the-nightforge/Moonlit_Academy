@@ -41,19 +41,34 @@
     "pool": {
       "legendary": [
         "w_xich_diem_thuong",
-        "w_tinh_ban"
+        "w_tinh_ban",
+        "w_ngoc_but",
+        "w_quan_tinh_truong",
+        "w_thien_nguyet_truong",
+        "w_huyet_phuong_dao",
+        "w_dan_hon_dang"
       ],
       "epic": [
         "w_anh_nguyet_chuy",
         "w_han_tuyet_song_kiem",
         "w_thien_dien_phien",
-        "w_huyen_linh_kinh"
+        "w_huyen_linh_kinh",
+        "w_cam_ve_kich",
+        "w_bach_ngan_cham",
+        "w_vong_quoc_cam",
+        "w_kinh_hong_phien"
       ],
       "rare": [
         "w_bach_hoa_tram",
         "w_thiet_thuan",
         "w_liet_cung",
-        "w_thanh_tam_binh"
+        "w_thanh_tam_binh",
+        "w_van_kim_dau",
+        "w_huyet_tran_co",
+        "w_han_mon_kiem",
+        "w_xuyen_van_cung",
+        "w_phan_quan_but",
+        "w_ngoc_tho_boi"
       ],
       "common": []
     }
@@ -65,17 +80,25 @@
     "pool": {
       "legendary": [
         "r_thien_sach",
-        "r_vong_nguyet_kinh"
+        "r_vong_nguyet_kinh",
+        "r_can_khon_ban",
+        "r_ngu_linh_chuong"
       ],
       "epic": [
         "r_huyet_ngoc_boi",
         "r_loan_linh_an",
-        "r_xich_diem_chau"
+        "r_xich_diem_chau",
+        "r_ho_tam_chau",
+        "r_bat_dong_an",
+        "r_phong_toa_an"
       ],
       "rare": [
         "r_bach_lo_huong_nang",
         "r_huyen_vu_giap_phu",
-        "r_tran_hon_linh"
+        "r_tran_hon_linh",
+        "r_kim_cang_phu",
+        "r_huyet_luyen_dinh",
+        "r_han_lam_an"
       ],
       "common": []
     }

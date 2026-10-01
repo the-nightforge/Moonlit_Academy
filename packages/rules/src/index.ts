@@ -53,6 +53,14 @@ export {
 export { deckWeapons, deleteDeck, saveDeck, starterDeck, validateDeck } from "./meta/deck";
 export { replayRun } from "./meta/replay";
 export {
+  applyStoryResult,
+  createStoryCombat,
+  replayStoryCombat,
+  storyStageUnlocked,
+  unlockedStageIds,
+} from "./meta/story";
+export type { StorySetup, StoryReplayResult, StoryRewards } from "./meta/story";
+export {
   applyRunRewards,
   checkAchievements,
   claimMission,
@@ -61,6 +69,8 @@ export {
   recordProgress,
 } from "./meta/economy";
 export type { RunRewards } from "./meta/economy";
+export { upgradeCost, upgradeItem } from "./meta/upgrade";
+export type { UpgradeKind } from "./meta/upgrade";
 export { dayKey, monthKey, weekKey } from "./meta/periods";
 export { ratingChange, tierFor, RATING_START } from "./meta/rating";
 export { applyPvpResult, buyHonorItem, HONOR_PER_DAY } from "./meta/honor";

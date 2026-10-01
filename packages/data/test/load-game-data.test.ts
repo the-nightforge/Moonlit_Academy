@@ -20,6 +20,7 @@ import pvpConfigJson from "../pvp-config.json";
 import coopConfigJson from "../coop-config.json";
 import coopCombosJson from "../coop-combos.json";
 import summonsJson from "../summons.json";
+import storyJson from "../story.json";
 import { loadGameData, parseGameData } from "../src/index";
 
 function rawData(): any {
@@ -45,6 +46,7 @@ function rawData(): any {
     coopConfig: coopConfigJson,
     coopCombos: coopCombosJson,
     summons: summonsJson,
+    story: storyJson,
   }));
 }
 
@@ -56,10 +58,16 @@ describe("loadGameData", () => {
     expect(Object.keys(data.cards)).toHaveLength(270); // 240 hero + 9 bond + 20 constellation-4 plus cards + 1 token
     expect(Object.keys(data.enemies)).toEqual([
       "puppet_guard", "shadow_fox", "moon_ape", "book_wraith", "black_guard", "fox_king", "eclipse_lord",
+      "thanh_loan_thi_quan", "huyen_vu_thi_quan", "bach_lo_thi_quan", "khao_hach_chi_linh",
+      "hac_y_mat_tham", "vo_nguyet_am_sat", "vo_nguyet_nghi_si", "vo_nguyet_anh_chu",
     ]);
     expect(Object.keys(data.encounters)).toEqual([
       "enc_01", "enc_02", "enc_03", "enc_04", "enc_05", "enc_06", "enc_elite_01", "enc_elite_02",
       "enc_coop_01",
+      "story_arc1_s01", "story_arc1_s02", "story_arc1_s03", "story_arc1_s04",
+      "story_arc1_s05", "story_arc1_s06", "story_arc1_s07", "story_arc1_s08",
+      "story_arc2_s01", "story_arc2_s02", "story_arc2_s03", "story_arc2_s04",
+      "story_arc2_s05", "story_arc2_s06", "story_arc2_s07", "story_arc2_s08",
     ]);
     expect(Object.keys(data.runRelics)).toHaveLength(10);
     expect(Object.keys(data.augments)).toHaveLength(16);
@@ -297,8 +305,13 @@ describe("parseGameData validation", () => {
 
   it("T157: rejects card-only keywords in enemy intents and relic hooks, and unknown card keywords", () => {
     const intent = rawData();
-    intent.enemies[0].intents[0].effects.push({ type: "drainMoonPower", amount: 1, to: "chosen" });
+    intent.enemies[0].intents[0].effects.push({ type: "gainMoonPowerPerTurn", amount: 1 });
     expect(() => parseGameData(intent)).toThrowError(/card-only keyword/);
+
+    // GĐ7c: drainMoonPower is allowed in enemy intents (`01` §9.3.2).
+    const drained = rawData();
+    drained.enemies[0].intents[0].effects.push({ type: "drainMoonPower", amount: 1, to: "allEnemies" });
+    expect(() => parseGameData(drained)).not.toThrowError();
 
     const hook = rawData();
     hook.runRelics[0].hooks[0].effects.push({ type: "missingHpDamage", ratio: 1, to: "allEnemies" });
@@ -371,17 +384,38 @@ describe("economyConfig", () => {
 
 
 describe("weapons, moon relics and second level-up forms", () => {
-  it("loads 10 weapons with 4 refinements and 8 relics with 5 resonance levels; every hero has a second form", () => {
+  it("loads 25 weapons with 4 refinements and 16 relics with 5 resonance levels; every hero has a second form", () => {
     const data = loadGameData();
-    expect(Object.keys(data.weapons)).toHaveLength(10);
-    expect(Object.keys(data.relics)).toHaveLength(8);
+    expect(Object.keys(data.weapons)).toHaveLength(25);
+    expect(Object.keys(data.relics)).toHaveLength(16);
     expect(Object.values(data.weapons).every((weapon) => weapon.refinement.length === 4)).toBe(true);
     expect(Object.values(data.relics).every((relic) => relic.resonance.length === 5)).toBe(true);
     expect(Object.values(data.heroes).every((hero) => hero.altLevelUp.name.length > 0)).toBe(true);
     expect(data.metaConfig.maxRelics).toBe(2);
     expect(data.economyConfig.gearDupeMoonStar).toEqual({ legendary: 10, epic: 4, rare: 1, common: 1 });
     const count = (rarity: string) => Object.values(data.weapons).filter((weapon) => weapon.rarity === rarity).length;
-    expect([count("legendary"), count("epic"), count("rare")]).toEqual([2, 4, 4]);
+    expect([count("legendary"), count("epic"), count("rare")]).toEqual([7, 8, 10]);
+  });
+
+  it("T313: 25 weapons with one signature weapon per hero at the hero's rarity; 16 relics; banners list every item", () => {
+    const data = loadGameData();
+    expect(Object.keys(data.weapons)).toHaveLength(25);
+    expect(Object.keys(data.relics)).toHaveLength(16);
+    for (const hero of Object.values(data.heroes)) {
+      const signature = Object.values(data.weapons).filter((weapon) => weapon.signatureHeroId === hero.id);
+      expect(signature, hero.id).toHaveLength(1);
+      expect(signature[0]!.rarity, hero.id).toBe(hero.rarity === "common" ? "rare" : hero.rarity);
+    }
+    const pooled = (bannerId: string) => new Set(Object.values(data.banners[bannerId]!.pool).flat());
+    expect(pooled("banner_weapons")).toEqual(new Set(Object.keys(data.weapons)));
+    expect(pooled("banner_relics")).toEqual(new Set(Object.keys(data.relics)));
+    // Every item sits in the pool row of its own rarity.
+    for (const [rarity, ids] of Object.entries(data.banners["banner_weapons"]!.pool)) {
+      for (const id of ids) expect(data.weapons[id]!.rarity, id).toBe(rarity);
+    }
+    for (const [rarity, ids] of Object.entries(data.banners["banner_relics"]!.pool)) {
+      for (const id of ids) expect(data.relics[id]!.rarity, id).toBe(rarity);
+    }
   });
 
   it("T212: rejects wearer outside weapon hooks, forbidden hook effects, wrong level counts and colliding ids", () => {
@@ -551,6 +585,18 @@ describe("co-op data", () => {
     const unknown = rawData();
     unknown.cards[0].effects = [{ type: "summon", summonId: "s_nope" }];
     expect(() => parseGameData(unknown)).toThrow(/summon references missing summon "s_nope"/);
+
+    // Weapon cards and hooks may summon (§6 [GĐ7d]) — their ids must resolve too.
+    const weaponCard = rawData();
+    const thoBoi = weaponCard.weapons.find((weapon: any) => weapon.id === "w_ngoc_tho_boi");
+    thoBoi.card.effects = [{ type: "summon", summonId: "s_nope" }];
+    expect(() => parseGameData(weaponCard)).toThrow(/weapon "w_ngoc_tho_boi" R1: summon references missing summon "s_nope"/);
+
+    const weaponHook = rawData();
+    weaponHook.weapons.find((weapon: any) => weapon.id === "w_ngoc_tho_boi").hooks = [
+      { on: { type: "combatStart" }, actor: "each", effects: [{ type: "summon", summonId: "s_nope" }] },
+    ];
+    expect(() => parseGameData(weaponHook)).toThrow(/weapon "w_ngoc_tho_boi" R1 hook: summon references missing summon "s_nope"/);
   });
 
   it("T295b: fallenAlly cards must revive; revive only on fallenAlly cards or onLevelUp", () => {

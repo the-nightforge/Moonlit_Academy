@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, getValidTargets } from "../src/index";
+import type { CombatEvent, IntentDef } from "../src/index";
+import { resolveEffects } from "../src/effects";
 import { healFiveCard, idleIntent, stealthOneCard, strike9Intent } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setHand, setIntent } from "./helpers";
+import { injectCard, instanceIdOf, makeTestCombat, p0, setHand, setIntent } from "./helpers";
 
 describe("enemy turn", () => {
   it("T15: weak reduces enemy damage dealt to 75%", () => {
@@ -179,5 +181,57 @@ describe("enemy turn", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.enemies[0]?.armor).toBe(8);
+  });
+
+  it("drainMoonPower intent drains the player's moon reserve once (01 §9.3.2)", () => {
+    const { data, state } = makeTestCombat();
+    p0(state).moonPower = 6; // banks moonReserveMax (3) at seat turn end
+    const drain: IntentDef = {
+      id: "test_drain_hero",
+      name: "Test Drain",
+      kind: "debuff",
+      targeting: "front",
+      effects: [{ type: "drainMoonPower", amount: 2, to: "chosen" }],
+    };
+    setIntent(state, 0, drain, "hero:m05");
+    setIntent(state, 1, idleIntent, null);
+
+    const result = applyAction(data, state, { type: "endTurn" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // The seat reserve drops from the banked 3 to 1 and the event reports it.
+    expect(result.state.players[0]!.moonReserve).toBe(1);
+    expect(result.events).toContainEqual({
+      type: "moonReserveChanged",
+      side: "hero",
+      value: 1,
+      player: 0,
+    });
+    // Next turn's fund is round-2 base (4) + the drained reserve, not +3.
+    expect(result.state.players[0]!.moonPower).toBe(5);
+  });
+
+  it("drainMoonPower intent with steal feeds the executing enemy's fund (01 §9.3.2)", () => {
+    const { data, state } = makeTestCombat();
+    p0(state).moonReserve = 2;
+    const enemy = state.enemies[0]!;
+    const fund = enemy.moonPower;
+    const events: CombatEvent[] = [];
+
+    resolveEffects(
+      data,
+      state,
+      [{ type: "drainMoonPower", amount: 5, to: "chosen", steal: true }],
+      { source: enemy, intentKind: "debuff", chosenId: "hero:m05" },
+      events,
+    );
+    expect(p0(state).moonReserve).toBe(0);
+    expect(enemy.moonPower).toBe(fund + 2);
+    expect(events).toContainEqual({
+      type: "moonReserveChanged",
+      side: "hero",
+      value: 0,
+      player: 0,
+    });
   });
 });

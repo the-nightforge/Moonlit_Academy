@@ -325,7 +325,11 @@ export class RunScene extends Phaser.Scene {
     const rewards = session.lastRewards;
     if (rewards) {
       const firstWin = rewards.firstWinOfDay ? "  ·  gồm thưởng thắng đầu ngày" : "";
-      const lines = [`+${rewards.moonJade} ${CURRENCY_LABELS.moonJade}${firstWin}`, ...achievementNotices(rewards.achievements)];
+      const lines = [
+        `+${rewards.moonJade} ${CURRENCY_LABELS.moonJade}${firstWin}`,
+        ...(rewards.darkIron > 0 ? [`+${rewards.darkIron} Huyền Thiết`] : []),
+        ...achievementNotices(rewards.achievements),
+      ];
       this.text(WIDTH / 2, 356 + gains.length * 24, lines.join("\n"), 15, COLORS.gold).setOrigin(0.5, 0).setAlign("center");
     }
     const canUnlock = session.heroIds.some((id) => pendingUnlocks(session.data, session.profile, id) > 0);

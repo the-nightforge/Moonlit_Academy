@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import {
   checkAchievements, claimMission, deleteDeck, mergeImportedProfile, parseProfile, recordProgress, saveDeck, setLevelUpForm,
-  unlockCard,
+  unlockCard, upgradeItem,
 } from "rules";
 import { z } from "zod";
 import { HttpError, type AppContext } from "../context";
@@ -68,4 +68,12 @@ export function registerProfileRoutes(app: FastifyInstance, ctx: AppContext): vo
     const imported = parsed.profile;
     return ctx.mutateProfile(accountId, request, (profile) => mergeImportedProfile(data, profile, imported));
   });
+
+  // Gear upgrades (`16` §4.3): `mutateProfile` adds `level`/`spent` to the response.
+  for (const [path, kind] of [["weapons", "weapon"], ["relics", "relic"]] as const) {
+    app.post<{ Params: { id: string } }>(`/api/profile/${path}/:id/upgrade`, async (request) => {
+      const accountId = await ctx.requireAccount(request);
+      return ctx.mutateProfile(accountId, request, (profile) => upgradeItem(data, profile, kind, request.params.id));
+    });
+  }
 }

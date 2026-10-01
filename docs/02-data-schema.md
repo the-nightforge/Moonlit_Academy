@@ -149,7 +149,7 @@ export type Effect = (
   | { type: "cleanse"; to: TargetRef }                                   // gỡ mọi debuff
   | { type: "chooseCard"; look: number }                                 // GĐ4a: Chiêm Bài, look ≥ 1; thay "draw"
   | { type: "gainMoonPower"; amount: number }                            // cộng thẳng vào quỹ lượt
-  | { type: "drainMoonPower"; amount: number; to: TargetRef; steal?: true }   // GĐ4b: Tỏa / Đoạt Nguyệt; to chỉ "chosen" | "allEnemies"; chỉ lá bài
+  | { type: "drainMoonPower"; amount: number; to: TargetRef; steal?: true }   // GĐ4b: Tỏa / Đoạt Nguyệt; to chỉ "chosen" | "allEnemies"; lá bài; GĐ7c: cả chiêu địch (01 §9.3.2)
   | { type: "gainMoonPowerPerTurn"; amount: number }                     // GĐ4b: Dưỡng Nguyệt; chỉ lá bài
   | { type: "missingHpDamage"; ratio: number; to: TargetRef; hits?: number }  // GĐ4b: Phẫn Huyết; lá bài và chiêu địch
   | { type: "scaledDamage"; per: "cardsPlayedThisTurn" | "selfArmor" | "moonPower" | "alliesAtFullHp" | "targetDebuffs" | "alliesArmor" | "alliesRegen";
@@ -160,10 +160,10 @@ export type Effect = (
   | { type: "bloodMoon"; rounds: number }                                // GĐ2
   | { type: "createCard"; cardId: string }                               // GĐ7: tạo lá token vào tay (01 §4.6); chỉ lá bài / levelUp.onLevelUp
   | { type: "drawCards"; amount: number }                                 // GĐ7: rút mù lá đầu chồng; thừa `handLimit` vào chồng bỏ (01 §4.2)
-  | { type: "summon"; summonId: string }                                  // GĐ7b: triệu hồi/triệu hồi lại Linh Thú (01 §17.1); chỉ lá bài
-  | { type: "sealIntent"; to: TargetRef }                                 // GĐ7b: Phong Ấn (01 §5.6); chỉ lá bài
-  | { type: "revive"; ratio: number; to: "chosen" | "lastFallen" }        // GĐ7b: Hồi Hồn (01 §5.6); to "chosen" chỉ trên lá `target: "fallenAlly"`, "lastFallen" chỉ trong onLevelUp
-  | { type: "extendDebuffs"; amount: number; to: TargetRef }              // GĐ7b: kéo dài debuff có thời hạn (01 §5.6); chỉ lá bài
+  | { type: "summon"; summonId: string }                                  // GĐ7b: triệu hồi/triệu hồi lại Linh Thú (01 §17.1); chỉ lá bài + hook vũ khí [GĐ7d]
+  | { type: "sealIntent"; to: TargetRef }                                 // GĐ7b: Phong Ấn (01 §5.6); chỉ lá bài + hook vũ khí [GĐ7d]
+  | { type: "revive"; ratio: number; to: "chosen" | "lastFallen" }        // GĐ7b: Hồi Hồn (01 §5.6); to "chosen" chỉ trên lá `target: "fallenAlly"`, "lastFallen" chỉ trong onLevelUp / hook vũ khí [GĐ7d]
+  | { type: "extendDebuffs"; amount: number; to: TargetRef }              // GĐ7b: kéo dài debuff có thời hạn (01 §5.6); chỉ lá bài + hook vũ khí [GĐ7d]
   | { type: "conditional"; condition: Condition; then: Effect[]; else?: Effect[] }
   | { type: "execute"; threshold: number; to: TargetRef; elseEffects?: Effect[] }
       // GĐ6: chỉ trong effects của Hợp Kích (01 §16.4) — kẻ địch trong `to` có
@@ -234,7 +234,7 @@ export interface EncounterDef {
   id: string;
   name: string;
   enemyIds: string[];       // 1–3, theo vị trí
-  tier: "normal" | "elite" | "boss" | "coop";  // GĐ3; GĐ6: "coop" không vào bản đồ lượt chơi
+  tier: "normal" | "elite" | "boss" | "coop" | "story";  // GĐ3; GĐ6: "coop" không vào bản đồ lượt chơi; GĐ7c: "story" chỉ cho màn Cốt truyện (§1.16) — không vào bản đồ, bị Trận lẻ lọc bỏ như "coop"
   minFloor?: number;                  // GĐ3, mặc định 1
 }
 ```
@@ -333,7 +333,7 @@ Luật đầy đủ ở `14-meta-rules.md` §1, §5–§11.
 
 | File | Kiểu | `GameData` |
 |---|---|---|
-| `economy-config.json` | `EconomyConfig` (`14` §1): `starterHeroIds` (4c); `starterGift`, `pullCost`, `runRewards`, `resetUtcHour`, `gacha`, `dupeMoonStar`, `moonStarShop` (4d) | `economyConfig` |
+| `economy-config.json` | `EconomyConfig` (`14` §1): `starterHeroIds` (4c); `starterGift`, `pullCost`, `runRewards`, `resetUtcHour`, `gacha`, `dupeMoonStar`, `moonStarShop` (4d); `runRewards.darkIronWin` / `darkIronLoss` / `darkIronLossMinFloor`, `upgradeCost` (7d) | `economyConfig` |
 | `missions.json` | `MissionDef[]` (`14` §7) | `missions: Record<id, MissionDef>` |
 | `achievements.json` | `AchievementDef[]` (`14` §8) | `achievements: Record<id, AchievementDef>` |
 | `banners.json` | `BannerDef[]` (`14` §9) | `banners: Record<id, BannerDef>` |
@@ -388,7 +388,8 @@ altLevelUp: { name: string; description: string; passive: LevelUpPassive; onLeve
 //                      | firstHitVulnerable(rounds) | bloodMoonOwnCardDiscount(amount)
 // MoonModifier costModifierForTag thêm: while?: "bloodMoon"
 // HookTrigger: cardPlayed thêm owner?: "wearer"; enemyKilled thêm killer?: "wearer" (chỉ trong WeaponHook)
-// banners.json: kind "weapon" | "relic"; economy-config: gearDupeMoonStar; meta-config: maxRelics
+// banners.json: kind "weapon" | "relic"; economy-config: gearDupeMoonStar,
+//                                            upgradeCost (GĐ7d); meta-config: maxRelics
 ```
 
 Kiểm tra khi nạp thêm: id vũ khí / Nguyệt Bảo duy nhất và không trùng id lá, Kỳ Vật, Lõi,
@@ -397,6 +398,11 @@ Hero; `signatureHeroId` là Hero có thật; `signatureHooks` chỉ khi có `sig
 `refinement` đúng 4 mục, `resonance` đúng 5 cấp; hook vũ khí / Nguyệt Bảo theo ràng buộc
 của Lõi (`11` §3.3); `actor` / `owner` / `killer` `"wearer"` chỉ trong hook vũ khí;
 `onLevelUp` theo ràng buộc effect của lá không có mục tiêu chọn (`to` ≠ `"chosen"`).
+
+**[GĐ7d]** Bất biến nội dung (kiểm bởi test T313, không phải schema): mỗi Hero có đúng
+một vũ khí bản mệnh (`signatureHeroId` = Hero đó) và `weapon.rarity` = `hero.rarity`,
+riêng Hero `common` → vũ khí `rare`; `banner_weapons` / `banner_relics` liệt kê mọi vũ
+khí / Nguyệt Bảo có trong data, mỗi món đúng hàng độ hiếm của nó.
 
 ### 1.13 Cấu hình PvP — `pvp-config.json` [GĐ5]
 
@@ -505,6 +511,48 @@ hoặc `bond` (lá Hero / Song Hành), không trong `SummonDef.action`, ý đị
 `moonOverrides` / `bloodMoonOverride`, hook Kỳ Vật / vũ khí / Nguyệt Bảo, hay `effects`
 của Hợp Kích. `summon`, `sealIntent`, `revive`, `extendDebuffs` bị cấm ở mọi chỗ cấm
 `createCard` (§6).
+
+### 1.16 Cốt truyện — `story.json` [GĐ7c]
+
+Luật: `14` §16; đặc tả: `18` §4. `story.json` là object `{ arcs, stages }`; **thứ tự arc
+theo thứ tự trong file** (`arcs[0]` là Arc 1).
+
+```ts
+export interface StoryArcDef {
+  id: string;                    // "arc1"
+  name: string;                  // tên hiển thị, ví dụ "Vọng Nguyệt"
+  stageIds: string[];            // ≥ 1, theo thứ tự màn trong arc
+  rewardHeroId: string;          // Hero tặng khi qua màn cuối của arc (`14` §16)
+}
+
+export interface StoryStageDef {
+  id: string;                    // "arc1_s01"
+  arcId: string;                 // arc chứa màn — khớp `stageIds` của arc đó
+  name: string;
+  encounterId: string;           // encounter `tier: "story"` của màn
+  start?: CombatStart;           // pha trăng / Huyết Nguyệt đầu trận (mục 4, `01` §2)
+  before: DialogueLine[];        // lời thoại trước trận (rỗng được phép)
+  after: DialogueLine[];         // lời thoại sau khi thắng (rỗng được phép)
+  firstClear: {                  // Thưởng Lần Đầu của màn (`14` §16)
+    moonJade?: number;
+    darkIron?: number;
+    masteryXp?: number;          // XP Tu Luyện cho từng Hero sở hữu trong đội
+  };
+}
+
+export interface DialogueLine {
+  speaker: string;               // heroId | enemyId | "narrator"
+  text: string;
+}
+
+export interface CombatStart {   // cũng là CombatSetup.start (mục 4)
+  moonIndex?: number;            // 0–7
+  bloodMoonRounds?: number;      // số nguyên ≥ 1
+}
+```
+
+`GameData.storyArcs: Record<string, StoryArcDef>` và `GameData.storyStages:
+Record<string, StoryStageDef>` (mục 4). Kiểm tra khi nạp ở mục 6.
 
 ---
 
@@ -679,7 +727,7 @@ export type CombatEvent =
   | { type: "statusRemoved"; targetId: string; status: StatusId }
   | { type: "moonPowerChanged"; value: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
-  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" }   // GĐ2; rounds 0 = hết
+  | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" | "boss" | "start" }   // GĐ2; rounds 0 = hết; "boss" = giai đoạn boss co-op (01 §16.5); GĐ7c: "start" = Huyết Nguyệt đầu trận (CombatSetup.start)
   | { type: "intentsRevealed"; enemyId: string; moonPower: number; intents: { intentId: string; cost: number; targetId: string | null }[] }  // GĐ4a: một event cho cả chuỗi mỗi địch (thay intentRevealed); chuỗi rỗng = Tụ Lực
   | { type: "intentsCancelled"; enemyId: string; intentIds: string[] }   // GĐ4b: Tỏa/Đoạt Nguyệt hủy chiêu cuối chuỗi, theo thứ tự bị bỏ (01 §9.5)
   | { type: "sealStripped"; unitId: string; refId: string }                                   // GĐ7b: chiêu/lá/hành động của đơn vị mang dấu Phong Ấn bị tước mọi effect không-damage; refId = intentId / instanceId / summonId (01 §5.6)
@@ -725,6 +773,8 @@ export interface GameData {
   keywords: Record<string, KeywordDef>;    // GĐ4b (mục 1.9)
   metaConfig: MetaConfig;                  // GĐ4b (mục 1.10)
   summons: Record<string, SummonDef>;      // GĐ7b (mục 1.15)
+  storyArcs: Record<string, StoryArcDef>;    // GĐ7c (mục 1.16)
+  storyStages: Record<string, StoryStageDef>; // GĐ7c (mục 1.16)
 }
 
 export interface CombatSetup {
@@ -734,6 +784,7 @@ export interface CombatSetup {
   deckCardIds?: string[];                    // mặc định: cardIds của 3 Hero
   heroes?: { hp: number; maxHp: number }[];  // mặc định: hp = maxHp của HeroDef
   runRelicIds?: string[];                    // mặc định: []
+  start?: CombatStart;                       // GĐ7c: pha trăng / Huyết Nguyệt đầu trận (01 §2; màn Cốt truyện)
 }
 
 export type ActionResult =
@@ -797,13 +848,30 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
 - **[GĐ6]** `execute` chỉ xuất hiện trong `effects` của `coop-combos.json` (không lá bài, không chiêu địch, không hook). `CardMatcher`: `ownerId` trỏ Hero tồn tại; `appliesStatus`, `effect`, `moonPhaseAfter` tham chiếu id có thật. `BossPhaseDef.phases`: `hpBelow` giai đoạn 1 = 1, các giai đoạn sau giảm dần trong (0, 1]; `reviveAfterRounds` chỉ ở giai đoạn cuối; `bloodMoonWhileActive`, `alwaysPlan` là cờ boolean. Encounter `tier: "coop"` không xuất hiện trên bản đồ lượt chơi; `enemyIds` của nó trỏ địch có `phases` hợp lệ. `coopConfig.encounterId` trỏ encounter có `tier: "coop"`; `reconnectSeconds > turnSeconds`; các `reward`/`rewardedMatchesPerDay` không âm.
 - **[GĐ7]** `createCard` (kể cả lồng trong `conditional` và trong `levelUp.onLevelUp` / `altLevelUp.onLevelUp`) phải trỏ tới lá `token` của **đúng Hero** tạo (`ownerId` = chủ lá / Hero đó); trên lá không có `ownerId` → lỗi. `token` không được nằm trong pool Hero nào (`cardIds` / `lockedCardIds` / `branches`), không được là lá "+" (`plusOf`) hay lá Song Hành (`bond`). `createCard` bị cấm ở mọi chỗ cấm `chooseCard`: chiêu địch, `moonOverrides` / `bloodMoonOverride`, hook Kỳ Vật / vũ khí / Nguyệt Bảo, `effects` của Hợp Kích. `combatConfig.levelUpRandomBuffs` ≥ 1 phần tử, `status` hợp lệ, `amount` nguyên dương.
 - **[GĐ7b]** `summons.json` (`SummonDef`): kiểm chéo ở mục 1.15. `summon`, `sealIntent`,
-  `revive`, `extendDebuffs` bị cấm ở mọi chỗ cấm `createCard` (dòng trên), cộng thêm
+  `revive`, `extendDebuffs` bị cấm ở mọi chỗ cấm `createCard` (dòng trên) — **trừ lá và
+  hook vũ khí [GĐ7d]**: vũ khí bản mệnh được dùng bốn effect này (`03` §7.3.1); cộng thêm
   `SummonDef.action` (mục 1.15) — Linh Thú không tự triệu hồi Linh Thú khác, không Phong
   Ấn, không Hồi Hồn, không kéo dài debuff. Lá có `target: "fallenAlly"` phải có đúng một
   effect `revive` với `to: "chosen"`; effect `revive` với `to: "chosen"` chỉ xuất hiện
   trên lá có `target: "fallenAlly"`; `revive` với `to: "lastFallen"` chỉ xuất hiện trong
-  `levelUp.onLevelUp` / `altLevelUp.onLevelUp`, không trên lá bài. `to: "owner"` chỉ
-  trong `SummonDef.action`; `to: "summon"` chỉ trên lá có `ownerId` hoặc `bond`.
+  `levelUp.onLevelUp` / `altLevelUp.onLevelUp` / hook vũ khí [GĐ7d], không trên lá bài.
+  `to: "owner"` chỉ trong `SummonDef.action`; `to: "summon"` chỉ trên lá có `ownerId`
+  hoặc `bond` hoặc lá/hook vũ khí [GĐ7d].
+- **[GĐ7c]** `story.json` (mục 1.16): `arcs` và `stages` được phép rỗng (file khởi tạo
+  rỗng; nội dung vào 7c.4 / 7c.5), id duy nhất; mọi `arc.stageIds` trỏ tới màn có sẵn;
+  mỗi màn thuộc đúng **một** arc và `stage.arcId` khớp arc liệt kê nó (arc liệt kê màn ↔
+  màn trỏ arc); `stage.encounterId` trỏ encounter có `tier: "story"`; `arc.rewardHeroId`
+  trỏ Hero có sẵn; `speaker` của `DialogueLine` là `"narrator"` hoặc id Hero / kẻ địch có
+  sẵn; `start.moonIndex` nguyên 0–7, `start.bloodMoonRounds` nguyên ≥ 1; `firstClear` các
+  số nguyên ≥ 0. `drainMoonPower` nới luật "chỉ lá bài" của dòng [GĐ4b]: được phép cả
+  trong chiêu địch của kẻ địch (`intents`, `moonOverrides`, `bloodMoonOverride`) — nghĩa
+  `01` §9.3.2; vẫn cấm trong hook Kỳ Vật / Nguyệt Bảo và `SummonDef.action` (hook vũ khí
+  đã cho phép sẵn, `01` §14.3).
+- **[GĐ7d]** `economyConfig.upgradeCost`: cả `weapon` và `relic` có đủ `rare` / `epic` /
+  `legendary`, mỗi hàng đúng 4 số nguyên dương; `runRewards.darkIronWin`, `darkIronLoss`
+  nguyên ≥ 0, `darkIronLossMinFloor` nguyên ≥ 1. Bất biến nội dung trang bị (mỗi Hero
+  đúng một vũ khí bản mệnh đúng độ hiếm, banner liệt kê mọi món) kiểm bởi test T313,
+  không phải schema — mục 1.12.
 
 Dữ liệu sai → báo lỗi rõ ràng ngay khi khởi động, không chạy game với dữ liệu lỗi.
 

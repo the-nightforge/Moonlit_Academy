@@ -7,5 +7,21 @@
   { "id": "enc_06", "name": "Mê Cung Sách Cấm", "enemyIds": ["book_wraith", "book_wraith", "shadow_fox"], "tier": "normal", "minFloor": 5 },
   { "id": "enc_elite_01", "name": "Cổng Hắc Giáp", "enemyIds": ["black_guard"], "tier": "elite", "minFloor": 5 },
   { "id": "enc_elite_02", "name": "Hang Hồ Vương", "enemyIds": ["fox_king", "shadow_fox"], "tier": "elite", "minFloor": 5 },
-  { "id": "enc_coop_01", "name": "Đại Nghiễn Nguyệt Thực", "enemyIds": ["eclipse_lord"], "tier": "coop" }
+  { "id": "enc_coop_01", "name": "Đại Nghiễn Nguyệt Thực", "enemyIds": ["eclipse_lord"], "tier": "coop" },
+  { "id": "story_arc1_s01", "name": "Nhập Học", "enemyIds": ["puppet_guard"], "tier": "story" },
+  { "id": "story_arc1_s02", "name": "Thanh Loan Thí Luận", "enemyIds": ["thanh_loan_thi_quan"], "tier": "story" },
+  { "id": "story_arc1_s03", "name": "Huyền Vũ Thí Võ", "enemyIds": ["huyen_vu_thi_quan"], "tier": "story" },
+  { "id": "story_arc1_s04", "name": "Bạch Lộ Thí Y", "enemyIds": ["shadow_fox", "bach_lo_thi_quan"], "tier": "story" },
+  { "id": "story_arc1_s05", "name": "Cấm Địa Xích Diên", "enemyIds": ["book_wraith", "shadow_fox"], "tier": "story" },
+  { "id": "story_arc1_s06", "name": "Tàng Thư Các Có Ma", "enemyIds": ["book_wraith", "book_wraith"], "tier": "story" },
+  { "id": "story_arc1_s07", "name": "Dạ Tập", "enemyIds": ["shadow_fox", "shadow_fox", "shadow_fox"], "tier": "story" },
+  { "id": "story_arc1_s08", "name": "Khảo Hạch Chi Linh", "enemyIds": ["khao_hach_chi_linh"], "tier": "story" },
+  { "id": "story_arc2_s01", "name": "Thư Tín Mất Tích", "enemyIds": ["hac_y_mat_tham", "shadow_fox", "shadow_fox"], "tier": "story" },
+  { "id": "story_arc2_s02", "name": "Mật Thám", "enemyIds": ["hac_y_mat_tham", "hac_y_mat_tham", "shadow_fox"], "tier": "story" },
+  { "id": "story_arc2_s03", "name": "Vô Nguyệt Ám Sát", "enemyIds": ["vo_nguyet_am_sat", "vo_nguyet_am_sat", "vo_nguyet_am_sat"], "tier": "story" },
+  { "id": "story_arc2_s04", "name": "Tô Dạ Dao Động", "enemyIds": ["vo_nguyet_nghi_si", "vo_nguyet_am_sat", "vo_nguyet_am_sat"], "tier": "story" },
+  { "id": "story_arc2_s05", "name": "Chợ Đêm Tin Tức", "enemyIds": ["fox_king", "hac_y_mat_tham", "shadow_fox"], "tier": "story" },
+  { "id": "story_arc2_s06", "name": "Quan Tinh Đài", "enemyIds": ["vo_nguyet_nghi_si", "vo_nguyet_am_sat", "vo_nguyet_am_sat"], "tier": "story" },
+  { "id": "story_arc2_s07", "name": "Hắc Vệ", "enemyIds": ["black_guard", "vo_nguyet_am_sat"], "tier": "story" },
+  { "id": "story_arc2_s08", "name": "Vô Nguyệt Ảnh Chủ", "enemyIds": ["vo_nguyet_anh_chu"], "tier": "story" }
 ]

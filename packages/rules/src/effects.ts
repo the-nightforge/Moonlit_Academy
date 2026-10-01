@@ -567,6 +567,19 @@ export function resolveEffect(
         }
         return;
       }
+      // Story intents (`01` §9.3.2): an enemy drain pulls the player seat's
+      // reserve once — `to` only picks the aimed hero; players have no intent
+      // chain to cancel. `steal` feeds the executing enemy's fund.
+      if (ctx.source.side === "enemy") {
+        const seat = (ctx.chosenId !== undefined ? playerOf(state, ctx.chosenId) : undefined) ?? state.players[0]!;
+        const drained = Math.min(effect.amount, seat.moonReserve);
+        seat.moonReserve -= drained;
+        if (drained > 0) {
+          events.push({ type: "moonReserveChanged", side: "hero", value: seat.moonReserve, player: seat.index });
+        }
+        if (effect.steal === true) (ctx.source as EnemyState).moonPower += drained;
+        return;
+      }
       let drained = 0;
       for (const target of resolveTargets(state, effect.to, ctx)) {
         if (target.side !== "enemy") continue;

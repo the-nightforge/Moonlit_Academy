@@ -188,10 +188,11 @@
 | Vũ khí chung | `archetype` | Không có bản mệnh |
 | Nội tại vũ khí | `WeaponHook` | Chạy trên máy hook Kỳ Vật |
 | Nguyệt Bảo | `relic`, `RelicDef` | Tối đa 2 mỗi deck; nằm cả đời tài khoản (khác Kỳ Vật của lượt chơi) |
-| Tinh Luyện | `refinement` | R1–R5, tăng khi quay trùng vũ khí |
-| Cộng Minh | `resonance` | 1–5, tăng khi quay trùng Nguyệt Bảo |
-| Huyền Thiết | `darkIron` | Từ vũ khí trùng khi R5; GĐ 4 chỉ tích trữ |
-| Nguyệt Trần | `moonDust` | Từ Nguyệt Bảo trùng khi Cộng Minh 5; GĐ 4 chỉ tích trữ |
+| Tinh Luyện | `refinement` | R1–R5, tăng khi quay trùng vũ khí hoặc Nâng Cấp |
+| Cộng Minh | `resonance` | 1–5, tăng khi quay trùng Nguyệt Bảo hoặc Nâng Cấp |
+| Nâng Cấp | `upgrade`, `upgradeItem`, `upgradeCost` | GĐ7d: tiêu vật liệu đổi +1 cấp trang bị (`14` §13.3) |
+| Huyền Thiết | `darkIron` | Từ vũ khí trùng khi R5 và thưởng Lượt chơi (GĐ7d); tiêu ở Nâng Cấp vũ khí |
+| Nguyệt Trần | `moonDust` | Từ Nguyệt Bảo trùng khi Cộng Minh 5; tiêu ở Nâng Cấp Nguyệt Bảo (GĐ7d) |
 | Binh Khí Các / Nguyệt Bảo Các | `banner_weapons`, `banner_relics` | Banner trang bị |
 
 ## Đấu Trường — PvP [GĐ5]
@@ -226,6 +227,17 @@
 | Boss Nguyệt Thực | `eclipse_lord` | Boss co-op *Nguyệt Thực Ma Quân*, 4 giai đoạn (`01` §16.5) |
 | Giai đoạn boss | `boss.phase` | 1 Trăng Khuyết · 2 Huyết Nguyệt · 3 Nguyệt Ấn · 4 Nguyệt Thực |
 | Đếm ngược hồi sinh | `reviveCountdown` | Giai đoạn 4: về 0 khi boss còn sống → hồi 50% HP một lần |
+
+## Cốt Truyện [GĐ7c]
+
+| Tiếng Việt | Code | Ghi chú |
+|---|---|---|
+| Cốt Truyện | `story` | Chế độ màn tuyến tính theo arc (`18` §4); tiến độ `profile.story.cleared` |
+| Arc | `arc`, `StoryArcDef` | Chương Cốt Truyện gồm các màn theo thứ tự; `arcs[0]` của `story.json` là Arc 1 |
+| Màn | `stage`, `StoryStageDef` | Một trận trong arc; `encounterId` trỏ encounter `tier: "story"`; màn *n* mở khi *n−1* đã qua (`14` §16) |
+| Thưởng Lần Đầu | `firstClear` | Thưởng của màn chỉ trao ở lần qua đầu tiên; thắng lại / thua không thưởng |
+| Phiếu Cốt Truyện | `story_tickets`, `ticketId` | Phiếu server cấp cho một màn, chạy lại bằng `replayStoryCombat` để xác nhận (`16` §9) |
+| Lời thoại | `DialogueLine`, `before` / `after` | `{ speaker, text }`; `speaker` là id Hero, id kẻ địch hoặc `narrator` |
 
 ## Hero GĐ7a
 

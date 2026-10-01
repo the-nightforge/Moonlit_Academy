@@ -182,6 +182,11 @@ export const API_ERROR_TEXT: Record<string, string> = {
   "ticket expired": "Lượt chơi quá 7 ngày, không nhận kết quả",
   "replay failed": "Server không công nhận lượt chơi (dữ liệu không khớp)",
   "run not finished": "Lượt chơi chưa kết thúc",
+  "unknown stage": "Không tìm thấy màn Cốt Truyện",
+  "stage locked": "Màn này chưa mở",
+  "unknown ticket": "Không tìm thấy phiếu Cốt Truyện",
+  "ticket closed": "Phiếu Cốt Truyện đã đóng",
+  "combat not finished": "Trận chưa kết thúc",
   "bad request": "Yêu cầu không hợp lệ",
   "not enough moonJade": "Không đủ Nguyệt Ngọc",
   "not enough moonStar": "Không đủ Nguyệt Tinh",
@@ -204,6 +209,10 @@ export const API_ERROR_TEXT: Record<string, string> = {
   "weapon not owned": "Chưa sở hữu vũ khí này",
   "relic not owned": "Chưa sở hữu Nguyệt Bảo này",
   "constellation too low": "Cần Tinh Hồn 5 để chọn dạng thăng cấp thứ hai",
+  // upgradeItem errors (`16` §4.3)
+  "not owned": "Chưa sở hữu vật phẩm này",
+  "maxed": "Đã đạt cấp tối đa",
+  "not enough": "Không đủ vật liệu",
 };
 
 export const CURRENCY_LABELS = { moonJade: "Nguyệt Ngọc", moonStar: "Nguyệt Tinh", honor: "Vinh Dự" } as const;

@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { Loadout, RunAction, RunSetup, SavedDeck } from "rules";
+import type { GameData, Loadout, Profile, RunAction, RunSetup, SavedDeck } from "rules";
 import { applyRunResult, applyRunRewards, buildLoadout, replayRun, starterDeck, summarizeRun, validateDeck } from "rules";
 import { z } from "zod";
 import { HttpError, type AppContext } from "../context";
@@ -10,7 +10,7 @@ export const MAX_RUN_ACTIONS = 20000;
 
 const id = z.string().max(64);
 
-const combatActionSchema = z.union([
+export const combatActionSchema = z.union([
   z.object({ type: z.literal("playCard"), instanceId: id, targetId: id.optional() }),
   z.object({ type: z.literal("mulligan"), instanceIds: z.array(id).max(16) }),
   z.object({ type: z.literal("chooseCard"), instanceId: id }),
@@ -28,11 +28,23 @@ export const runActionSchema: z.ZodType<RunAction> = z.union([
   z.object({ type: z.literal("continue") }),
 ]);
 
-const startBody = z.union([
+export const startBody = z.union([
   z.object({ deckId: z.literal("starter"), heroIds: z.tuple([id, id, id]) }),
   z.object({ deckId: id }),
 ]);
 const finishBody = z.object({ actions: z.array(runActionSchema).max(MAX_RUN_ACTIONS) });
+
+/** The deck a `startBody` picks: a fresh starter deck, or a saved one by id. */
+export function resolveDeck(
+  data: GameData,
+  profile: Profile,
+  body: { deckId: string; heroIds?: [string, string, string] },
+): SavedDeck | Omit<SavedDeck, "id" | "name"> {
+  if (body.heroIds) return { heroIds: body.heroIds, cardIds: starterDeck(data, body.heroIds) };
+  const saved = profile.decks.find((candidate) => candidate.id === body.deckId);
+  if (!saved) throw new HttpError(404, "unknown deck");
+  return saved;
+}
 
 interface RunRow {
   id: string;
@@ -69,14 +81,7 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
     const accountId = await ctx.requireAccount(request);
     const body = ctx.parseBody(startBody, request.body);
     const { profile } = await ctx.readProfile(accountId);
-    let deck: SavedDeck | Omit<SavedDeck, "id" | "name">;
-    if ("heroIds" in body) {
-      deck = { heroIds: body.heroIds, cardIds: starterDeck(data, body.heroIds) };
-    } else {
-      const saved = profile.decks.find((candidate) => candidate.id === body.deckId);
-      if (!saved) throw new HttpError(404, "unknown deck");
-      deck = saved;
-    }
+    const deck = resolveDeck(data, profile, body);
     const errors = validateDeck(data, profile, deck);
     if (errors.length > 0) throw new HttpError(400, "invalid deck", { errors });
     // Constellations and gear are snapshotted now: later changes do not affect this run (T195, T205).

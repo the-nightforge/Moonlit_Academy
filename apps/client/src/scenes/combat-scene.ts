@@ -19,11 +19,13 @@ import type {
   StatusInstance,
   SummonState,
 } from "rules";
-import { resumeSession } from "../account";
+import { errorText, resumeSession } from "../account";
 import { applyRecordedRunAction } from "../run-session";
+import { recordStoryAction, startStoryTicket, submitStory } from "../story-session";
 import type { NetMatch } from "../net/match";
 import type { ServerMessage } from "../net/protocol";
 import { cycleEncounter, restartSession, session } from "../session";
+import type { Team } from "../session";
 import {
   debugAddMoonPower,
   debugAdjustHeroHp,
@@ -105,6 +107,10 @@ export class CombatScene extends Phaser.Scene {
   private comboHints = new Map<string, string>();
   /** Queue of banners to flash after the next event batch (Hợp Kích, phase). */
   private bannerQueue: { text: string; color: string }[] = [];
+  /** Story mode (`18` §4.4): the ticket's stage + deck while the combat runs. */
+  private storyStageId: string | null = null;
+  private storyDeck: { id: string; heroIds: Team } | null = null;
+  private storyFinishing = false;
 
   constructor() {
     super("combat");
@@ -112,6 +118,11 @@ export class CombatScene extends Phaser.Scene {
 
   private get isCoop(): boolean {
     return this.state.mode === "coop";
+  }
+
+  /** This combat belongs to a story ticket (`18` §4.4). */
+  private get isStory(): boolean {
+    return this.storyStageId !== null;
   }
 
   private get mySeatState() {
@@ -138,6 +149,9 @@ export class CombatScene extends Phaser.Scene {
     this.validTargetIds.clear();
     this.mulliganPicks.clear();
     this.inputLocked = false;
+    this.storyStageId = session.story?.setup.stageId ?? null;
+    this.storyDeck = session.story?.deck ?? null;
+    this.storyFinishing = false;
     if (this.netMatch) this.bindNet(this.netMatch);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.unbindNet());
     useDesignCamera(this);
@@ -290,6 +304,8 @@ export class CombatScene extends Phaser.Scene {
       this.showError(result.error);
       return false;
     }
+    // Story combats record every accepted action for the server's replay (`18` §4.4).
+    if (!run && session.story) recordStoryAction(action);
     let newState: CombatState = this.state;
     let backToRun = false;
     if ("run" in result) {
@@ -310,10 +326,59 @@ export class CombatScene extends Phaser.Scene {
         return;
       }
       this.state = newState;
+      // A story combat that just ended goes to the server for verification (`18` §4.4).
+      if (this.isStory && session.story !== null && (newState.status === "won" || newState.status === "lost")) {
+        this.finishStory();
+      }
       this.renderAll();
-      this.inputLocked = false;
+      this.inputLocked = this.storyFinishing;
     });
     return true;
+  }
+
+  /** Sends the finished story combat; win → after-dialogue, loss → retry panel, error → back to Cốt Truyện. */
+  private finishStory(): void {
+    if (this.storyFinishing || session.story === null) return;
+    this.storyFinishing = true;
+    this.inputLocked = true;
+    submitStory().then(
+      () => {
+        if (session.lastStory?.won === true && this.storyStageId !== null) {
+          session.pendingStageId = null;
+          this.scene.start("dialogue", { stageId: this.storyStageId, part: "after" });
+          return;
+        }
+        this.storyFinishing = false;
+        this.inputLocked = false;
+        this.renderAll();
+      },
+      (error: unknown) => {
+        session.pendingStageId = null;
+        session.notices.push(errorText(error));
+        this.scene.start("story");
+      },
+    );
+  }
+
+  /** Loss: a fresh ticket for the same stage + deck, then a clean combat (`18` §4.4). */
+  private retryStory(): void {
+    const stageId = this.storyStageId;
+    const deck = this.storyDeck;
+    if (this.storyFinishing) return;
+    if (stageId === null || deck === null) {
+      session.pendingStageId = null;
+      this.scene.start("story");
+      return;
+    }
+    this.storyFinishing = true;
+    startStoryTicket(stageId, deck).then(
+      () => this.scene.restart(),
+      (error: unknown) => {
+        session.pendingStageId = null;
+        session.notices.push(errorText(error));
+        this.scene.start("story");
+      },
+    );
   }
 
   private playEvents(events: CombatEvent[]): Promise<void> {
@@ -1452,6 +1517,30 @@ export class CombatScene extends Phaser.Scene {
       });
       return;
     }
+    if (this.isStory) {
+      const won = this.state.status === "won";
+      const stage = this.storyStageId !== null ? this.gameData.storyStages[this.storyStageId] : undefined;
+      this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.65));
+      this.text(
+        WIDTH / 2,
+        HEIGHT / 2 - 40,
+        won ? "THẮNG" : "THUA",
+        56,
+        won ? COLORS.gold : "#cc5555",
+      ).setOrigin(0.5);
+      if (stage) this.text(WIDTH / 2, HEIGHT / 2 + 12, `Cốt Truyện — ${stage.name}`, 15, COLORS.dimText).setOrigin(0.5);
+      if (this.storyFinishing || session.story !== null) {
+        this.text(WIDTH / 2, HEIGHT / 2 + 56, "Đang gửi kết quả lên server…", 15, COLORS.dimText).setOrigin(0.5);
+      } else {
+        // A loss leaves the ticket closed; a win already moved on to the after-dialogue.
+        this.endScreenButton(WIDTH / 2 - 100, HEIGHT / 2 + 96, "Thử Lại", () => this.retryStory());
+        this.endScreenButton(WIDTH / 2 + 100, HEIGHT / 2 + 96, "Về Cốt Truyện", () => {
+          session.pendingStageId = null;
+          this.scene.start("story");
+        });
+      }
+      return;
+    }
     const won = this.state.status === "won";
     this.root.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.65));
     this.text(
@@ -1516,7 +1605,8 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderDebugPanel(): void {
-    if (!this.debugVisible || this.netMatch) return;
+    // Story combats are replayed by the server — no local editing like netMatch.
+    if (!this.debugVisible || this.netMatch || this.isStory) return;
     const x = WIDTH - 336;
     this.root.add(
       this.add

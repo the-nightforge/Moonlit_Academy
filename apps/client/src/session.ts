@@ -1,9 +1,10 @@
 import { loadGameData } from "data";
 import { createCombat, createProfile, starterDeck } from "rules";
-import type { CombatEvent, CombatState, GameData, Loadout, MasteryGain, Profile, RunRewards, RunState, SavedDeck } from "rules";
+import type { CombatEvent, CombatState, GameData, Loadout, MasteryGain, Profile, RunRewards, RunState, SavedDeck, StoryRewards } from "rules";
 import type { NetMatch } from "./net/match";
 import type { NetSocket } from "./net/socket";
 import type { RunTicket } from "./run-session";
+import { abandonStory, type StoryTicket } from "./story-session";
 
 export type Team = [string, string, string];
 
@@ -26,6 +27,12 @@ export interface CombatSession {
   online: boolean;
   /** Server ticket of the run in progress. */
   ticket: RunTicket | null;
+  /** Server ticket of the story stage combat in progress (`18` §4.4). */
+  story: StoryTicket | null;
+  /** Stage whose before-dialogue / deck select is in progress (story mode). */
+  pendingStageId: string | null;
+  /** Verified result of the last story stage (drives the rewards toast). */
+  lastStory: { won: boolean; rewards: StoryRewards } | null;
   editingDeck: SavedDeck | null;
   lastGains: MasteryGain[] | null;
   /** Moon jade and achievements from the last accepted run. */
@@ -58,7 +65,8 @@ export function newCombatSession(
   const { state, events } = createCombat(data, { heroIds, encounterId, seed, deckCardIds: deck }, loadout);
   return {
     data, state, events, seed, encounterId, heroIds, deckCardIds: deck, run: null,
-    profile: createProfile(data), rev: 0, online: false, ticket: null, editingDeck: null, lastGains: null,
+    profile: createProfile(data), rev: 0, online: false, ticket: null, story: null, pendingStageId: null,
+    lastStory: null, editingDeck: null, lastGains: null,
     lastRewards: null, notices: [], runSubmitted: false, loadout,
     net: null, match: null, roomCode: null, emotesMuted: false,
   };
@@ -81,6 +89,8 @@ export function restartSession(
   session.deckCardIds = fresh.deckCardIds;
   session.state = fresh.state;
   session.run = null;
+  // A rebuilt single combat drops any story ticket; close it on the server (fire-and-forget).
+  void abandonStory();
   session.events.push(...fresh.events);
 }
 

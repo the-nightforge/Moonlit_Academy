@@ -329,7 +329,75 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 > bot 40–60% / 8–12 vòng; gói chỉnh số (duyệt).
 
 ### Phần 7c — Cốt truyện Arc 1–2
-> Theo `18` §4: `story.json`, `createStoryCombat`/`replayStoryCombat`/`applyStoryResult`, phiếu + route, ~16 màn + 2 boss arc. Kế hoạch riêng khi bắt đầu.
+
+Đặc tả: `18-phase7-spec.md` §4. Kế hoạch chi tiết:
+`docs/superpowers/plans/2026-09-30-phase7c-story.md` (9 Task).
+
+### Bước 7c.1 — Tài liệu 7c *(Task 1)*
+> Chốt các điểm làm rõ spec trong `18` §4 (tier `story`, `CombatSetup.start`,
+> `applyStoryResult(setup)`, lỗi route, thưởng lần đầu, `drainMoonPower` trong chiêu
+> địch, mục tiêu độ khó); cập nhật `01`, `02`, `03`, `04`, `06`, `07`, `14`, `16`,
+> `CLAUDE.md`. *(Đã xong.)*
+
+### Bước 7c.2 — Schema + luật thuần + hồ sơ *(Task 2–4)*
+> `story.json` (`StoryArcDef` / `StoryStageDef` / `DialogueLine`, kiểm chéo T300);
+> `CombatSetup.start` + `createStoryCombat` / `replayStoryCombat` (T301–T302);
+> `profile.story`, `storyStageUnlocked` / `unlockedStageIds`, `applyStoryResult` +
+> `StoryRewards` (T303–T304, T307).
+
+### Bước 7c.3 — Server *(Task 5)*
+> Migration 4 (`story_tickets`); 4 route `/api/story` (xem `16` §9), `MAX_STORY_ACTIONS
+> = 2000`. T305–T306.
+
+### Bước 7c.4 — Nội dung Arc 1 *(Task 6)*
+> Kẻ địch mới + boss *Khảo Hạch Chi Linh*, 8 encounter `tier: "story"`, lời thoại
+> `before` / `after`, `firstClear` — duyệt bảng trước khi viết JSON.
+
+### Bước 7c.5 — Nội dung Arc 2 *(Task 7)*
+> Tương tự Arc 1 + boss *Vô Nguyệt Ảnh Chủ* (duyệt).
+
+### Bước 7c.6 — Client Cốt truyện *(Task 8)*
+> Màn Cốt Truyện (arc → màn → thưởng lần đầu), màn Hội Thoại, phiếu + ghi action trên
+> client, nối `CombatScene`.
+
+### Bước 7c.7 — Chơi thử và chỉnh độ khó *(Task 9)*
+> Bot + tay theo mục tiêu `18` §4.5 (Arc 1 ≥ 80% / boss ≥ 60%; Arc 2 55–75% / boss
+> 40–60%; mỗi màn Arc 2 ≥ 60% với đội tốt nhất trong 3 đội mẫu). *(Đã xong —
+> phần chơi tay treo, xem `docs/playtest-notes.md` Phase 7c.)*
 
 ### Phần 7d — Trang bị bản mệnh + nâng cấp vật liệu
-> Theo `18` §5: 15 vũ khí bản mệnh + 8 Nguyệt Bảo, `upgradeItem`/`upgradeCost`, nguồn Huyền Thiết. Kế hoạch riêng khi bắt đầu.
+
+**Giai đoạn hiện tại: 7 xong — `docs/18-phase7-spec.md` đã hoàn thành**
+
+Đặc tả: `18-phase7-spec.md` §5. Kế hoạch chi tiết:
+`docs/superpowers/plans/2026-09-30-phase7d-gear-materials.md` (7 Task).
+
+### Bước 7d.1 — Tài liệu 7d *(Task 1)*
+> Chốt các điểm làm rõ spec trong `18` §5 (`upgradeCost[kind][rarity][level − 1]`,
+> `upgradeItem` trả `{ ok, profile, level, spent }` / mã lỗi, `runRewards.darkIron*`,
+> route trả `{ profile, rev, level, spent }`, vũ khí F09 Rare); cập nhật `02`, `03`,
+> `04`, `06`, `07`, `14`, `16`, `18`, `CLAUDE.md`. *(Đã xong.)*
+
+### Bước 7d.2 — `upgradeItem`, giá nâng cấp, Huyền Thiết từ Lượt chơi, route *(Task 2–3)*
+> `rules/src/meta/upgrade.ts` (`upgradeCost`, `upgradeItem`, `UpgradeKind`);
+> `economy-config.json` (`upgradeCost`, `runRewards.darkIron*`); `RunRewards.darkIron`;
+> `POST /api/profile/weapons/:id/upgrade` và `POST /api/profile/relics/:id/upgrade` qua
+> `mutateProfile` (`If-Match` / 428 / 409 / 400). T308–T312.
+
+### Bước 7d.3 — 15 vũ khí bản mệnh *(Task 4)*
+> Đề xuất trong `03` §7 trước (duyệt), rồi `weapons.json`: một vũ khí bản mệnh cho mỗi
+> Hero 7a/7b, độ hiếm = Hero (F09 → Rare); có *Ngọc Bút* của M01.
+
+### Bước 7d.4 — 8 Nguyệt Bảo + banner *(Task 5)*
+> Đề xuất trước (duyệt), rồi `relics.json` + `banners.json` (pool đủ 25 vũ khí / 16
+> Nguyệt Bảo). T313.
+
+### Bước 7d.5 — Client nâng cấp *(Task 6)*
+> Nút Nâng Cấp trong Kho đồ (`ArmoryScene`): hiện giá, vật liệu đang có, cấp sau nâng;
+> chữ lỗi trong `theme.ts`; hiện Huyền Thiết thưởng Lượt chơi.
+
+### Bước 7d.6 — Mô phỏng, chỉnh số, đóng GĐ 7 *(Task 7)*
+> `run-playtest` có trang bị (R1 ≤ +10 điểm thắng); `economy-sim` vật liệu + Cốt truyện
+> (Epic R1→R5 ~3–4 tuần, Legendary ~6–8 tuần — `18` §5.5); gói chỉnh (duyệt);
+> `playtest-notes.md` mục Phase 7d; đóng GĐ 7. *(Đã xong — kết quả và điểm mở xem
+> `docs/playtest-notes.md` Phase 7d.)*

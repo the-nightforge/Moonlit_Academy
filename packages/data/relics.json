@@ -256,6 +256,275 @@
   ]
  },
  {
+  "id": "r_can_khon_ban",
+  "name": "Càn Khôn Bàn",
+  "rarity": "legendary",
+  "resonance": [
+   {
+    "text": "Mỗi 3 lượt, đầu lượt người chơi: Đổi Vận tiến 1 pha.",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnStart"
+      },
+      "actor": "front",
+      "every": 3,
+      "effects": [
+       {
+        "type": "shiftMoon",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi 2 lượt, đầu lượt người chơi: Đổi Vận tiến 1 pha.",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnStart"
+      },
+      "actor": "front",
+      "every": 2,
+      "effects": [
+       {
+        "type": "shiftMoon",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi 2 lượt, đầu lượt người chơi: Đổi Vận tiến 1 pha. Đầu trận: Đổi Vận tiến 1 pha.",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnStart"
+      },
+      "actor": "front",
+      "every": 2,
+      "effects": [
+       {
+        "type": "shiftMoon",
+        "amount": 1
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "shiftMoon",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi 2 lượt, đầu lượt người chơi: Đổi Vận tiến 1 pha. Đầu trận: Đổi Vận tiến 1 pha và +2 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnStart"
+      },
+      "actor": "front",
+      "every": 2,
+      "effects": [
+       {
+        "type": "shiftMoon",
+        "amount": 1
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "shiftMoon",
+        "amount": 1
+       },
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi 2 lượt, đầu lượt người chơi: Đổi Vận tiến 1 pha. Đầu trận: Đổi Vận tiến 2 pha và +2 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnStart"
+      },
+      "actor": "front",
+      "every": 2,
+      "effects": [
+       {
+        "type": "shiftMoon",
+        "amount": 1
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "shiftMoon",
+        "amount": 2
+       },
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_ngu_linh_chuong",
+  "name": "Ngự Linh Chuông",
+  "rarity": "legendary",
+  "resonance": [
+   {
+    "text": "Cuối mỗi lượt người chơi: mọi đồng đội (gồm Linh Thú) +1 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnEnd"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 1,
+        "to": "allAllies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Cuối mỗi lượt người chơi: mọi đồng đội (gồm Linh Thú) +2 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnEnd"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "allAllies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Cuối mỗi lượt người chơi: mọi đồng đội (gồm Linh Thú) +2 giáp và Hồi Phục 1.",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnEnd"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "allAllies"
+       },
+       {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 1,
+        "to": "allAllies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Cuối mỗi lượt người chơi: mọi đồng đội (gồm Linh Thú) +3 giáp và Hồi Phục 1.",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnEnd"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "allAllies"
+       },
+       {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 1,
+        "to": "allAllies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Cuối mỗi lượt người chơi: mọi đồng đội (gồm Linh Thú) +3 giáp và Hồi Phục 1. Đầu trận: mọi đồng đội +3 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "playerTurnEnd"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "allAllies"
+       },
+       {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 1,
+        "to": "allAllies"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "allAllies"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
   "id": "r_huyet_ngoc_boi",
   "name": "Huyết Ngọc Bội",
   "rarity": "epic",
@@ -589,6 +858,505 @@
         "status": "strength",
         "amount": 1,
         "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_ho_tam_chau",
+  "name": "Hồ Tâm Châu",
+  "rarity": "epic",
+  "resonance": [
+   {
+    "text": "Khi vào Trăng Non: mọi kẻ địch Mê Hoặc 1.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "new"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Non hoặc đầu trận: mọi kẻ địch Mê Hoặc 1.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "new"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Non hoặc đầu trận: mọi kẻ địch Mê Hoặc 2.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "new"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 2,
+        "to": "allEnemies"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 2,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Non hoặc đầu trận: mọi kẻ địch Mê Hoặc 2. Khi vào Lưỡi Liềm Cuối: mọi kẻ địch Mê Hoặc 1.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "new"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 2,
+        "to": "allEnemies"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 2,
+        "to": "allEnemies"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "waningCrescent"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Khi vào Trăng Non hoặc đầu trận: mọi kẻ địch Mê Hoặc 2. Khi vào Lưỡi Liềm Cuối hoặc Huyết Nguyệt bắt đầu: mọi kẻ địch Mê Hoặc 1.",
+    "hooks": [
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "new"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 2,
+        "to": "allEnemies"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 2,
+        "to": "allEnemies"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "moonPhaseEntered",
+       "phase": "waningCrescent"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "charm",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_bat_dong_an",
+  "name": "Bất Động Ấn",
+  "rarity": "epic",
+  "resonance": [
+   {
+    "text": "Đầu trận: Hero đầu hàng +3 giáp và Hộ Vệ mọi đồng đội 1 vòng.",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "guard",
+        "amount": 1,
+        "to": "allAllies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Đầu trận: Hero đầu hàng +3 giáp và Hộ Vệ mọi đồng đội 2 vòng.",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "guard",
+        "amount": 2,
+        "to": "allAllies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Đầu trận: Hero đầu hàng +5 giáp và Hộ Vệ mọi đồng đội 2 vòng.",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 5,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "guard",
+        "amount": 2,
+        "to": "allAllies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Đầu trận: Hero đầu hàng +5 giáp và Hộ Vệ mọi đồng đội 2 vòng. Mỗi 3 lượt, đầu lượt người chơi: Hero đầu hàng +2 giáp và Hộ Vệ mọi đồng đội 1 vòng.",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 5,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "guard",
+        "amount": 2,
+        "to": "allAllies"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "playerTurnStart"
+      },
+      "actor": "front",
+      "every": 3,
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "guard",
+        "amount": 1,
+        "to": "allAllies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Đầu trận: Hero đầu hàng +6 giáp và Hộ Vệ mọi đồng đội 2 vòng. Mỗi 2 lượt, đầu lượt người chơi: Hero đầu hàng +2 giáp và Hộ Vệ mọi đồng đội 1 vòng.",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "front",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 6,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "guard",
+        "amount": 2,
+        "to": "allAllies"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "playerTurnStart"
+      },
+      "actor": "front",
+      "every": 2,
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "self"
+       },
+       {
+        "type": "applyStatus",
+        "status": "guard",
+        "amount": 1,
+        "to": "allAllies"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_phong_toa_an",
+  "name": "Phong Tỏa Ấn",
+  "rarity": "epic",
+  "resonance": [
+   {
+    "text": "Mỗi lá khống chế thứ 4 trong trận: Tỏa Nguyệt 1 lên mọi kẻ địch.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "control"
+      },
+      "actor": "front",
+      "every": 4,
+      "effects": [
+       {
+        "type": "drainMoonPower",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá khống chế thứ 3 trong trận: Tỏa Nguyệt 1 lên mọi kẻ địch.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "control"
+      },
+      "actor": "front",
+      "every": 3,
+      "effects": [
+       {
+        "type": "drainMoonPower",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá khống chế thứ 3 trong trận: Tỏa Nguyệt 1 và Suy Yếu 1 vòng lên mọi kẻ địch.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "control"
+      },
+      "actor": "front",
+      "every": 3,
+      "effects": [
+       {
+        "type": "drainMoonPower",
+        "amount": 1,
+        "to": "allEnemies"
+       },
+       {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá khống chế thứ 3 trong trận: Tỏa Nguyệt 2 và Suy Yếu 1 vòng lên mọi kẻ địch.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "control"
+      },
+      "actor": "front",
+      "every": 3,
+      "effects": [
+       {
+        "type": "drainMoonPower",
+        "amount": 2,
+        "to": "allEnemies"
+       },
+       {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá khống chế thứ 2 trong trận: Tỏa Nguyệt 2 và Suy Yếu 1 vòng lên mọi kẻ địch.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "control"
+      },
+      "actor": "front",
+      "every": 2,
+      "effects": [
+       {
+        "type": "drainMoonPower",
+        "amount": 2,
+        "to": "allEnemies"
+       },
+       {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "allEnemies"
        }
       ]
      }
@@ -962,6 +1730,364 @@
         "type": "heal",
         "amount": 5,
         "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_kim_cang_phu",
+  "name": "Kim Cang Phù",
+  "rarity": "rare",
+  "resonance": [
+   {
+    "text": "Mỗi lá Hộ Thể thứ 3 trong trận: mọi Hero +2 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "ward"
+      },
+      "actor": "each",
+      "every": 3,
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá Hộ Thể thứ 3 trong trận: mọi Hero +3 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "ward"
+      },
+      "actor": "each",
+      "every": 3,
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá Hộ Thể thứ 3 trong trận: mọi Hero +3 giáp. Đầu trận: mọi Hero +2 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "ward"
+      },
+      "actor": "each",
+      "every": 3,
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá Hộ Thể thứ 2 trong trận: mọi Hero +3 giáp. Đầu trận: mọi Hero +2 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "ward"
+      },
+      "actor": "each",
+      "every": 2,
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá Hộ Thể thứ 2 trong trận: mọi Hero +4 giáp. Đầu trận: mọi Hero +3 giáp.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "ward"
+      },
+      "actor": "each",
+      "every": 2,
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "self"
+       }
+      ]
+     },
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_huyet_luyen_dinh",
+  "name": "Huyết Luyện Đỉnh",
+  "rarity": "rare",
+  "resonance": [
+   {
+    "text": "Lá Cấm Thuật gây ×1.1 sát thương.",
+    "modifiers": [
+     {
+      "type": "damageMultiplierForTag",
+      "tag": "forbidden",
+      "multiplier": 1.1
+     }
+    ]
+   },
+   {
+    "text": "Lá Cấm Thuật gây ×1.2 sát thương.",
+    "modifiers": [
+     {
+      "type": "damageMultiplierForTag",
+      "tag": "forbidden",
+      "multiplier": 1.2
+     }
+    ]
+   },
+   {
+    "text": "Lá Cấm Thuật gây ×1.3 sát thương. Huyết Nguyệt bắt đầu: mọi Hero +2 giáp.",
+    "modifiers": [
+     {
+      "type": "damageMultiplierForTag",
+      "tag": "forbidden",
+      "multiplier": 1.3
+     }
+    ],
+    "hooks": [
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Lá Cấm Thuật gây ×1.4 sát thương. Huyết Nguyệt bắt đầu: mọi Hero +2 giáp.",
+    "modifiers": [
+     {
+      "type": "damageMultiplierForTag",
+      "tag": "forbidden",
+      "multiplier": 1.4
+     }
+    ],
+    "hooks": [
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Lá Cấm Thuật gây ×1.5 sát thương. Huyết Nguyệt bắt đầu: mọi Hero +3 giáp.",
+    "modifiers": [
+     {
+      "type": "damageMultiplierForTag",
+      "tag": "forbidden",
+      "multiplier": 1.5
+     }
+    ],
+    "hooks": [
+     {
+      "on": {
+       "type": "bloodMoonStarted"
+      },
+      "actor": "each",
+      "effects": [
+       {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "r_han_lam_an",
+  "name": "Hàn Lâm Ấn",
+  "rarity": "rare",
+  "resonance": [
+   {
+    "text": "Mỗi lá Mưu Lược thứ 4 trong trận: +1 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "scheme"
+      },
+      "actor": "trigger",
+      "every": 4,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá Mưu Lược thứ 4 trong trận: +2 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "scheme"
+      },
+      "actor": "trigger",
+      "every": 4,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá Mưu Lược thứ 3 trong trận: +2 Nguyệt Lực.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "scheme"
+      },
+      "actor": "trigger",
+      "every": 3,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá Mưu Lược thứ 3 trong trận: +2 Nguyệt Lực và rút 1 lá.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "scheme"
+      },
+      "actor": "trigger",
+      "every": 3,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       },
+       {
+        "type": "drawCards",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "text": "Mỗi lá Mưu Lược thứ 2 trong trận: +2 Nguyệt Lực và rút 1 lá.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "scheme"
+      },
+      "actor": "trigger",
+      "every": 2,
+      "effects": [
+       {
+        "type": "gainMoonPower",
+        "amount": 2
+       },
+       {
+        "type": "drawCards",
+        "amount": 1
        }
       ]
      }

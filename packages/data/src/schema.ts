@@ -233,7 +233,7 @@ export const encounterDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
   enemyIds: z.array(idSchema).min(1).max(3),
-  tier: z.enum(["normal", "elite", "boss", "coop"]),
+  tier: z.enum(["normal", "elite", "boss", "coop", "story"]),
   minFloor: z.number().int().positive().optional(),
 });
 
@@ -410,11 +410,21 @@ export const shopItemDefSchema = z.object({
   item: shopItemSchema,
 });
 
+const upgradeRow = z.array(z.number().int().positive()).length(4);
+const upgradeTable = z.object({ rare: upgradeRow, epic: upgradeRow, legendary: upgradeRow });
+
 export const economyConfigSchema = z.object({
   starterHeroIds: z.array(idSchema).length(3),
   starterGift: z.object({ moonJade: nonNegativeInt }),
   pullCost: z.number().int().positive(),
-  runRewards: z.object({ moonJadePerFloor: nonNegativeInt, moonJadeWin: nonNegativeInt, firstWinOfDay: nonNegativeInt }),
+  runRewards: z.object({
+    moonJadePerFloor: nonNegativeInt,
+    moonJadeWin: nonNegativeInt,
+    firstWinOfDay: nonNegativeInt,
+    darkIronWin: nonNegativeInt,
+    darkIronLoss: nonNegativeInt,
+    darkIronLossMinFloor: z.number().int().positive(),
+  }),
   resetUtcHour: z.number().int().min(0).max(23),
   gacha: z.object({
     rates: z.object({ legendary: probability, epic: probability }),
@@ -427,6 +437,7 @@ export const economyConfigSchema = z.object({
   dupeMoonStar: z.object({ common: nonNegativeInt, rare: nonNegativeInt, epic: nonNegativeInt, legendary: nonNegativeInt }),
   gearDupeMoonStar: z.object({ common: nonNegativeInt, rare: nonNegativeInt, epic: nonNegativeInt, legendary: nonNegativeInt }),
   moonStarShop: z.array(shopItemDefSchema),
+  upgradeCost: z.object({ weapon: upgradeTable, relic: upgradeTable }),
 });
 
 export const missionDefSchema = z.object({
@@ -548,6 +559,27 @@ export const summonDefSchema = z.object({
   awakenedId: idSchema.optional(),
 });
 
+const dialogueLineSchema = z.object({ speaker: idSchema, text: z.string().min(1) });
+export const storySchema = z.object({
+  arcs: z.array(z.object({
+    id: idSchema, name: z.string().min(1), stageIds: z.array(idSchema).min(1), rewardHeroId: idSchema,
+  })),
+  stages: z.array(z.object({
+    id: idSchema, arcId: idSchema, name: z.string().min(1), encounterId: idSchema,
+    start: z.object({
+      moonIndex: z.number().int().min(0).max(7).optional(),
+      bloodMoonRounds: z.number().int().positive().optional(),
+    }).optional(),
+    before: z.array(dialogueLineSchema),
+    after: z.array(dialogueLineSchema),
+    firstClear: z.object({
+      moonJade: z.number().int().nonnegative().optional(),
+      darkIron: z.number().int().nonnegative().optional(),
+      masteryXp: z.number().int().nonnegative().optional(),
+    }),
+  })),
+});
+
 export const rawGameDataSchema = z.object({
   heroes: z.array(heroDefSchema),
   cards: z.array(cardDefSchema),
@@ -570,4 +602,5 @@ export const rawGameDataSchema = z.object({
   coopConfig: coopConfigSchema,
   coopCombos: z.array(coopComboDefSchema),
   summons: z.array(summonDefSchema),
+  story: storySchema,
 });

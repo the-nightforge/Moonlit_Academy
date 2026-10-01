@@ -77,4 +77,33 @@ describe("gear routes", () => {
     expect(owned.every((id) => server.data.weapons[id])).toBe(true);
     expect(pulled.body.profile.pity).toHaveProperty("banner_weapons");
   });
+
+  it("T311: upgrade routes spend materials through If-Match; rule errors are 400", async () => {
+    const server = await testServer();
+    const { token } = await register(server);
+    // Post-sim tuned `upgradeCost` (7d.6): read the epic R1→R2 price from config.
+    const price = server.data.economyConfig.upgradeCost.weapon.epic[0]!;
+    await editProfile(server, (profile) => {
+      profile.weapons = { w_anh_nguyet_chuy: { refinement: 1 } }; // epic
+      profile.relics = { r_huyet_ngoc_boi: { resonance: 5 } }; // epic, already maxed
+      profile.currencies.darkIron = price + 1;
+      profile.currencies.moonDust = 50;
+    });
+    const url = "/api/profile/weapons/w_anh_nguyet_chuy/upgrade";
+    expect((await call(server, "POST", url, { token })).status).toBe(428);
+    expect((await call(server, "POST", url, { token, rev: 99 })).status).toBe(409);
+
+    const ok = await call(server, "POST", url, { token, rev: 1 });
+    expect(ok.status).toBe(200);
+    expect(ok.body).toMatchObject({ rev: 2, level: 2, spent: price });
+    expect(ok.body.profile.weapons["w_anh_nguyet_chuy"]).toEqual({ refinement: 2 });
+    expect(ok.body.profile.currencies.darkIron).toBe(1);
+
+    const poor = await call(server, "POST", url, { token, rev: 2 });
+    expect([poor.status, poor.body]).toEqual([400, { error: "not enough" }]);
+    const maxed = await call(server, "POST", "/api/profile/relics/r_huyet_ngoc_boi/upgrade", { token, rev: 2 });
+    expect([maxed.status, maxed.body]).toEqual([400, { error: "maxed" }]);
+    const missing = await call(server, "POST", "/api/profile/relics/nope/upgrade", { token, rev: 2 });
+    expect([missing.status, missing.body]).toEqual([400, { error: "not owned" }]);
+  });
 });
