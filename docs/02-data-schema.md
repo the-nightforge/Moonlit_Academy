@@ -211,7 +211,7 @@ export interface EnemyDef {
   maxHp: number;
   intents: EnemyIntentDef[];        // GĐ4a: ≥ 1 (thay intentPattern)
   moonPower: { start: number; cap: number };   // GĐ4a: start ≤ cap; perRound dùng chung của CombatConfig
-  moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];   // intent không có cost
+  moonOverrides?: { phase: MoonPhaseId; intent: IntentDef }[];   // Nguyệt tính (01 §9.1): chiêu trăng công khai; intent không có cost
   bloodMoonOverride?: IntentDef;  // GĐ2: ưu tiên hơn moonOverrides khi đang Huyết Nguyệt; không có cost
   phases?: BossPhaseDef[];        // GĐ6: boss nhiều giai đoạn (co-op); thiếu → địch thường
   art: { portrait: string };
@@ -239,23 +239,59 @@ export interface EncounterDef {
 }
 ```
 
-### 1.7 Pha trăng — `moon-phases.json`
+### 1.7 Pha trăng — `moon-phases.json` [Nguyệt Luân mới]
 ```ts
 export type MoonModifier =
+  // Dùng được ở mọi nơi (tagBonus, lệnh, Kỳ Vật / Nguyệt Bảo):
   | { type: "damageMultiplierForTag"; tag: CardTag; multiplier: number }
   | { type: "stealthDurationBonus"; amount: number }
-  | { type: "costModifierForTag"; tag: CardTag; amount: number; min: number }
+  | { type: "costModifierForTag"; tag: CardTag; amount: number; min: number; while?: "bloodMoon" }
   | { type: "healMultiplier"; multiplier: number }
-  | { type: "armorMultiplier"; multiplier: number };
+  | { type: "armorMultiplier"; multiplier: number }
+  // Chỉ trong `decrees` của pha (DECREE_ONLY_MODIFIERS — `01` §7.5):
+  | { type: "firstHitBonus"; amount: number }                  // Tập Kích
+  | { type: "turnMoonPowerBonus"; amount: number }             // Nguyệt Sinh
+  | { type: "turnStartDraw"; amount: number }                  // Khai Trí
+  | { type: "turnStartHeal"; amount: number; target: "all" | "lowestRatio" }   // Mầm Sống / Đoàn Viên
+  | { type: "debuffDurationBonus"; amount: number }            // Thiên Bình
+  | { type: "turnStartStatusOnHighestHp"; status: StatusId; amount: number }   // Thế Cân
+  | { type: "firstSingleHitReduction"; amount: number }        // Thế Thủ
+  | { type: "attackChainBonus"; amount: number }               // Liên Kích
+  | { type: "buffMultiplier"; statuses: StatusId[]; multiplier: number }       // Cuồng Nguyệt
+  | { type: "stealthSuppressed" }                              // Nguyệt Chiếu
+  | { type: "discardForMoonPower"; perTurn: number; moonPower: number }        // Xả Thân → mở action discardCard
+  | { type: "discardDamage"; amount: number }                  // Đoạn Tuyệt
+  | { type: "bloodPact"; hp: number; draw: number }            // Huyết Tế → mở action bloodPact
+  | { type: "reflectMultiplier"; multiplier: number }          // Phản Chấn
+  | { type: "keepArmor" }                                      // Giữ Giáp
+  | { type: "chooseCardExtraLook"; amount: number }            // Chiêm Tinh
+  | { type: "freeChooseCard"; look: number }                   // Bói Nguyệt
+  | { type: "recycleDiscard"; count: number };                 // Luân Hồi
+
+/** Modifier chỉ Nguyệt Lệnh được mang — không hợp lệ trong tagBonus, runRelics,
+    runAugments hay relics (kiểm chéo khi nạp, mục 6). */
+export const DECREE_ONLY_MODIFIERS: ReadonlySet<MoonModifier["type"]>;
+
+export interface MoonDecreeDef {
+  id: string;             // snake_case, duy nhất toàn file (24 lệnh)
+  name: string;           // tiếng Việt, hiển thị trong tooltip
+  text: string;           // mô tả hiệu ứng cho người chơi
+  modifiers: MoonModifier[];
+}
 
 export interface MoonPhaseDef {
   index: number;            // 0–7
   id: MoonPhaseId;
   name: string;
   icon: string;             // emoji tạm thời
-  modifiers: MoonModifier[];
+  tagBonus: MoonModifier[];     // ưu đãi cố định của pha (`01` §7.1)
+  tagBonusText: string;         // chữ hiển thị của ưu đãi
+  decrees: MoonDecreeDef[];     // đúng 3 lệnh; mỗi trận bốc 1 (rollMoon, `01` §7.6)
 }
 ```
+Trường `modifiers` cũ của pha bị bỏ. Kiểm khi nạp: `moonPhases` đúng 8 phần tử
+theo `index`; `decrees` đúng 3 phần tử; id lệnh duy nhất toàn file;
+`DECREE_ONLY_MODIFIERS` không xuất hiện ngoài `decrees` (T314).
 
 ### 1.8 Cấu hình trận đấu — `combat-config.json` [GĐ4a]
 ```json
@@ -546,7 +582,8 @@ export interface DialogueLine {
 }
 
 export interface CombatStart {   // cũng là CombatSetup.start (mục 4)
-  moonIndex?: number;            // 0–7
+  moonIndex?: number;            // 0–7 — ghi đè pha khởi đầu SAU khi rollMoon đã bốc (01 §7.6)
+  decrees?: Partial<Record<MoonPhaseId, string>>;   // [Nguyệt Luân mới] ghi đè lệnh của các pha nêu tên
   bloodMoonRounds?: number;      // số nguyên ≥ 1
 }
 ```
@@ -576,6 +613,7 @@ export interface UnitState {
   statuses: StatusInstance[];
   alive: boolean;
   sealedBy?: string;         // GĐ7b: id Hero đặt Phong Ấn — intent/lá/hành động lượt sau của đơn vị chỉ còn effect damage (01 §5.6), hết sau lượt đó
+  shieldUsed?: true;         // [Nguyệt Luân mới] Thế Thủ (01 §7.5): đã giảm hit đơn mục tiêu đầu tiên của vòng; xóa ở cuối vòng
 }
 
 export interface HeroState extends UnitState {
@@ -632,6 +670,10 @@ export interface PlayerState {
   cardsPlayedThisTurn: number;
   pendingChoice: PendingChoice | null;
   moonChoicePending?: true; // GĐ7: nợ Chọn Pha lượt này (Hero `chooseMoon` đã thăng cấp lúc đầu lượt)
+  omenPending?: true;       // [Nguyệt Luân mới] Bói Nguyệt: nợ Chiêm Bài miễn phí, mở sau Vạn Kim / trước Chọn Pha (01 §3.1 bước 12)
+  attackCardsThisTurn?: number;  // [Nguyệt Luân mới] Liên Kích: số lá attack đã giải quyết trong lượt (01 §5.2)
+  discardsThisTurn?: number;     // [Nguyệt Luân mới] Xả Thân: số lá đã Hủy Bài trong lượt (01 §5.8)
+  bloodPactUsed?: true;          // [Nguyệt Luân mới] Huyết Tế: đã dùng trong lượt (01 §5.9)
   createdCards?: number;    // GĐ7: số lá đã tạo trong trận (`createCard`) — đặt tên instance `t<n>` kế tiếp
   purged?: Record<string, string[]>;   // GĐ7b: unit id Hero → instanceId lá bị Tán Chiêu lúc ngã, để Hồi Hồn xáo lại (01 §5.6)
   fallenOrder?: string[];   // GĐ7b: unit id Hero theo thứ tự ngã, dùng cho revive `to: "lastFallen"` (01 §5.6)
@@ -647,7 +689,9 @@ export interface CombatState {
   status: CombatStatus;
   activePlayer: number;     // [GĐ5] PvP: người đang có lượt; PvE / co-op: 0
   round: number;
-  moonIndex: number;        // 0–7
+  moonIndex: number;        // 0–7 — pha khởi đầu do rollMoon bốc (01 §7.6)
+  moonDecrees: string[];    // [Nguyệt Luân mới] 8 id Nguyệt Lệnh đã bốc, theo chỉ số pha (01 §7.5–7.6); bắt buộc với trận mới; công khai — `viewFor` giữ nguyên, không che
+  firstHitKeys?: string[];  // [Nguyệt Luân mới] Tập Kích: "p<seat>" / "enemy" — bên đã có hit đầu lượt (01 §7.5)
   bloodMoonRounds: number;  // > 0 = đang Huyết Nguyệt (01 mục 7.4)
   players: PlayerState[];   // [GĐ5] PvE: 1; PvP, co-op: 2
   heroes: HeroState[];      // HeroState thêm `player: number` (chỉ số trong players)
@@ -678,6 +722,8 @@ cũ chạy lại được. Truy cập thành phần theo người chơi qua `pla
 export type Action =
   | { type: "mulligan"; instanceIds: string[]; player?: number }   // GĐ4a; [GĐ5] PvP: seat nào đổi
   | { type: "playCard"; instanceId: string; targetId?: string; player?: number }   // [GĐ5] seat thực hiện
+  | { type: "discardCard"; instanceId: string; player?: number }   // [Nguyệt Luân mới] Hủy Bài — chỉ khi lệnh có discardForMoonPower (01 §5.8)
+  | { type: "bloodPact"; heroId: string; player?: number }         // [Nguyệt Luân mới] Huyết Tế — chỉ khi lệnh có bloodPact (01 §5.9)
   | { type: "chooseCard"; instanceId: string; player?: number }    // GĐ4a: Chiêm Bài (01 §3.2)
   | { type: "chooseMoon"; offset: 0 | 1 | 2; player?: number }     // GĐ7: Chọn Pha (01 §5.5)
   | { type: "endTurn"; player?: number }
@@ -694,13 +740,14 @@ Action hợp lệ theo `status` **[GĐ4a]**:
 | `status` | Action hợp lệ | Lỗi khác |
 |---|---|---|
 | `mulligan` | `mulligan` | `"mulligan pending"` |
-| `playerTurn` | `playCard`, `endTurn` | `mulligan` → `"mulligan already done"`; `chooseCard` / `chooseMoon` → `"no pending choice"` |
+| `playerTurn` | `playCard`, `discardCard`, `bloodPact`, `endTurn` | `mulligan` → `"mulligan already done"`; `chooseCard` / `chooseMoon` → `"no pending choice"`; `discardCard` / `bloodPact` không đúng lệnh / điều kiện → từ chối (01 §5.8–5.9) |
 | `choosing` | `chooseCard` / `chooseMoon` (theo `pendingChoice.kind`) | `"choice pending"` |
 | `enemyTurn` / `won` / `lost` | — | như hiện tại |
 
 ```ts
 export type CombatEvent =
   | { type: "combatStarted" }
+  | { type: "moonDecreesRolled"; moonIndex: number; decrees: string[] }   // [Nguyệt Luân mới] rollMoon (01 §7.6) — pha khởi đầu + 8 lệnh sau ghi đè
   | { type: "turnStarted"; side: "hero" | "enemy"; round: number; player?: number }   // [GĐ5] PvP: seat có lượt (side luôn "hero")
   | { type: "cardsDrawn"; instanceIds: string[] }
   | { type: "deckShuffled" }                       // GĐ4a: chỉ khi xáo lúc tạo trận và sau Đổi Bài (không còn xáo chồng bỏ)
@@ -717,9 +764,10 @@ export type CombatEvent =
   | { type: "cardsPurged"; heroId: string; instanceIds: string[] } // GĐ4a: Tán Chiêu
   | { type: "moonReserveChanged"; side: "hero" | "enemy"; enemyId?: string; value: number }  // GĐ4a
   | { type: "cardPlayed"; instanceId: string; targetId?: string; cost: number }
-  | { type: "cardDiscarded"; instanceIds: string[] }
+  | { type: "cardDiscarded"; instanceIds: string[]; player?: number }     // không có trường `reason`; gồm Hủy Bài (01 §5.8), Tàn Chiêu, tràn handLimit
+  | { type: "cardsRecycled"; instanceIds: string[]; player?: number }     // [Nguyệt Luân mới] Luân Hồi: lá mới nhất trong chồng bỏ về đáy chồng rút (01 §3.3)
   | { type: "damageDealt"; sourceId: string; targetId: string; amount: number; blocked: number; hpLost: number }
-  | { type: "hpLost"; targetId: string; amount: number; cause: "loseHp" | "burn" | "reflect" | "bloodMoon" }
+  | { type: "hpLost"; targetId: string; amount: number; cause: "loseHp" | "burn" | "reflect" | "bloodMoon" | "decree" | "bloodPact" }   // [Nguyệt Luân mới] "decree" = Đoạn Tuyệt, "bloodPact" = Huyết Tế (01 §10.3)
   | { type: "healed"; targetId: string; amount: number }
   | { type: "armorGained"; targetId: string; amount: number }
   | { type: "armorRemoved"; targetId: string }
@@ -750,7 +798,7 @@ export type CombatEvent =
 `turnStarted`, `cardsDrawn`, `deckShuffled`, `mulliganed`, `choiceOpened`, `cardChosen`,
 `deckedOut`, `cardsPurged`, `moonReserveChanged`, `cardPlayed`, `cardDiscarded`,
 `moonPowerChanged`, `runRelicTriggered`, `relicTriggered`; **[GĐ7]** `moonChoiceOpened`,
-`cardCreated`; **[GĐ7b]** `summoned`, `heroRevived`. PvE giữ event cũ không trường
+`cardCreated`; **[GĐ7b]** `summoned`, `heroRevived`; **[Nguyệt Luân mới]** `cardsRecycled`. PvE giữ event cũ không trường
 `player` để nhật ký / bản ghi vàng khớp. Client PvP không nhận state thô — nhận gói
 `{ events, view }` đã qua `viewFor` / `redactEvents` (`01` §15.7).
 
@@ -784,7 +832,7 @@ export interface CombatSetup {
   deckCardIds?: string[];                    // mặc định: cardIds của 3 Hero
   heroes?: { hp: number; maxHp: number }[];  // mặc định: hp = maxHp của HeroDef
   runRelicIds?: string[];                    // mặc định: []
-  start?: CombatStart;                       // GĐ7c: pha trăng / Huyết Nguyệt đầu trận (01 §2; màn Cốt truyện)
+  start?: CombatStart;                       // GĐ7c: pha trăng / lệnh / Huyết Nguyệt đầu trận, ghi đè sau rollMoon (01 §2, §7.6; màn Cốt truyện)
 }
 
 export type ActionResult =
@@ -809,6 +857,11 @@ export function coopBot(data: GameData, view: CombatState, player: number): Acti
 export function getEffectiveCost(data: GameData, state: CombatState, instanceId: string): number;
 export function getValidTargets(data: GameData, state: CombatState, instanceId: string): string[];
 export function isCardPlayable(data: GameData, state: CombatState, instanceId: string): boolean;
+
+// [Nguyệt Luân mới] Tra cứu pha / lệnh (01 §7.6) — trong moon.ts, export qua index
+export function currentDecree(data: GameData, state: CombatState, index?: number): MoonDecreeDef | undefined;
+export function phaseModifiers(data: GameData, state: CombatState, index?: number): MoonModifier[];
+export function decreeModifier<T extends MoonModifier["type"]>(data: GameData, state: CombatState, type: T): Extract<MoonModifier, { type: T }> | undefined;
 ```
 
 - `applyAction(endTurn)` chạy hết lượt kẻ địch và cuối vòng, trả về state đã ở **lượt người chơi kế tiếp** (hoặc trận đã kết thúc) cùng toàn bộ event.
@@ -835,7 +888,7 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
 - **[GĐ2]** `requiresBloodMoon: true` chỉ hợp lệ khi `tags` có `"forbidden"`.
 - Lá có `target` khác `"none"` (`"enemy"`, `"ally"`, `"fallenAlly"` **[GĐ7b]**) phải có ít nhất một effect `to: "chosen"`; lá `target: "none"` không được có `to: "chosen"`.
 - Ý định có effect `to: "chosen"` phải có `targeting`.
-- `moonPhases` đủ 8 phần tử, `index` 0–7 không trùng.
+- `moonPhases` đủ 8 phần tử, `index` 0–7 không trùng. **[Nguyệt Luân mới]** Mỗi pha có đúng 3 `decrees`, id lệnh duy nhất toàn file; modifier thuộc `DECREE_ONLY_MODIFIERS` không xuất hiện trong `tagBonus` của pha hay trong `modifiers` của `runRelics` / `runAugments` / `relics` (T314).
 - `enemyIds` của encounter trỏ tới kẻ địch tồn tại, 1–3 phần tử.
 - **[GĐ4b]** `lockedCardIds` (thay `rewardCardIds` của GĐ3) trỏ tới lá tồn tại, `ownerId` = Hero đó, không trùng `cardIds`; `branches` chia đúng pool 12 lá (`cardIds + lockedCardIds`, không trùng); mỗi Hero có ≥ 2 lá miễn phí cost ≤ 3.
 - **[GĐ3]** Đúng 1 trận `boss`; ≥1 trận `normal` có `minFloor` ≤ 1; ≥1 trận `elite`.
@@ -862,7 +915,8 @@ Viết schema zod cho mọi kiểu ở mục 1 và các kiểm tra chéo:
   mỗi màn thuộc đúng **một** arc và `stage.arcId` khớp arc liệt kê nó (arc liệt kê màn ↔
   màn trỏ arc); `stage.encounterId` trỏ encounter có `tier: "story"`; `arc.rewardHeroId`
   trỏ Hero có sẵn; `speaker` của `DialogueLine` là `"narrator"` hoặc id Hero / kẻ địch có
-  sẵn; `start.moonIndex` nguyên 0–7, `start.bloodMoonRounds` nguyên ≥ 1; `firstClear` các
+  sẵn; `start.moonIndex` nguyên 0–7, `start.decrees` (nếu có) chỉ chứa id lệnh thuộc
+  `decrees` của đúng pha được khóa, `start.bloodMoonRounds` nguyên ≥ 1; `firstClear` các
   số nguyên ≥ 0. `drainMoonPower` nới luật "chỉ lá bài" của dòng [GĐ4b]: được phép cả
   trong chiêu địch của kẻ địch (`intents`, `moonOverrides`, `bloodMoonOverride`) — nghĩa
   `01` §9.3.2; vẫn cấm trong hook Kỳ Vật / Nguyệt Bảo và `SummonDef.action` (hook vũ khí

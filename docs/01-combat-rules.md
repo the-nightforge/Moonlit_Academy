@@ -15,7 +15,7 @@ Phạm vi: giai đoạn 1–4b (PvE offline). Các mục đánh dấu **[GĐ2]**
 | **Deck** | Các lá độc nhất theo `cardId` (khởi đầu 6 lá/Hero) + 1 lá Song Hành cho mỗi cặp đủ mặt trong đội **[GĐ2]** (mục 4.4). Mỗi lá sinh `copies` bản; mỗi bản trong trận là một **card instance** có `instanceId` riêng |
 | **Chồng bài** | `drawPile` (rút), `hand` (trên tay), `discardPile` (bỏ — không bao giờ xáo lại vào chồng rút) |
 | **Nguyệt Lực** | Tài nguyên để đánh bài: `min(8, 2 + vòng)` mỗi lượt cộng Dự Trữ (tối đa 3) — `12` §3.1 |
-| **Nguyệt Luân** | Chỉ số pha trăng 0–7 (xem mục 7) |
+| **Nguyệt Luân** | Chỉ số pha trăng 0–7 + `moonDecrees` (lệnh đã bốc của mỗi pha) — xem mục 7 |
 | **RNG** | Trạng thái bộ sinh số ngẫu nhiên có seed, lưu trong state |
 
 **[GĐ5]** Từ giai đoạn 5, các thành phần gắn với người chơi (deck, chồng bài, tay, Nguyệt
@@ -31,7 +31,7 @@ tài liệu này không đổi. Luật PvP ở §15, co-op ở §16; đặc tả
 
 1. Tạo chồng bài: mỗi lá trong deck (kể cả lá Song Hành tự thêm, mục 4.4) sinh `copies` bản, mỗi bản một card instance có `instanceId` riêng, theo thứ tự deck; xếp vào `drawPile`, **xáo bằng RNG** (`deckShuffled`). **[GĐ3]** Nếu `CombatSetup.deckCardIds` có: dùng danh sách đó thay cho `cardIds` của 3 Hero (chủ lá = `ownerId`, phải thuộc đội).
 2. Mọi Hero và kẻ địch: `hp = maxHp`, `armor = 0`, không trạng thái. **[GĐ3]** Nếu `CombatSetup.heroes` có: `hp`/`maxHp` của Hero lấy từ đó.
-3. Nguyệt Luân bắt đầu ở **pha 1 (Lưỡi Liềm Đầu)**; `round = 1`. **[GĐ7c]** `CombatSetup.start?: { moonIndex?: number; bloodMoonRounds?: number }` (Cốt truyện, `18` §4): nếu có, đặt `moonIndex` (0–7) và/hoặc `bloodMoonRounds` **ngay sau bước này** — trước khi lên chuỗi vòng 1, nên `moonOverrides` / `bloodMoonOverride` của vòng 1 theo pha đã đặt. `start.bloodMoonRounds > 0` phát `bloodMoonChanged { rounds, cause: "start" }` ngay khi tạo trận; hook Kỳ Vật `bloodMoonStarted` **không** chạy (trận Cốt truyện không có Kỳ Vật). Vắng `start` thì `createCombat` giữ nguyên y hệt hành vi cũ (T213).
+3. `round = 1`. **`rollMoon`** (mục 7.6) bốc **pha khởi đầu** ngẫu nhiên tất định theo seed (không còn cố định ở pha 1) và **một Nguyệt Lệnh cho mỗi pha** → `state.moonDecrees`, phát `moonDecreesRolled`; bốc bằng luồng RNG phụ nên không đổi `rngState` (mục 7.6). Nếu pha khởi đầu là Trăng Tròn, `enterPhase` của `rollMoon` chạy ngay (mục 7.5 — Nguyệt Chiếu). **[GĐ7c]** `CombatSetup.start?: { moonIndex?: number; decrees?: …; bloodMoonRounds?: number }` (Cốt truyện, `18` §4): `start.moonIndex` (0–7) và `start.decrees` **ghi đè sau khi đã bốc đủ** (không đổi RNG), trước khi lên chuỗi vòng 1, nên `moonOverrides` / `bloodMoonOverride` của vòng 1 theo pha đã đặt. `start.bloodMoonRounds > 0` phát `bloodMoonChanged { rounds, cause: "start" }` ngay khi tạo trận; hook Kỳ Vật `bloodMoonStarted` **không** chạy (trận Cốt truyện không có Kỳ Vật).
 4. **Kẻ địch lên chuỗi vòng 1** (mục 9.2), theo vị trí 0 → n.
 5. Rút tay đầu `handSize` lá (`cardsDrawn`).
 6. `status = "mulligan"`.
@@ -52,20 +52,22 @@ Action `{ type: "mulligan", instanceIds }`:
 ## 3. Lượt người chơi
 
 ### 3.1 Đầu lượt (theo thứ tự)
-1. **Xóa giáp** của mọi Hero (`armor = 0`) và gỡ **Phản Đòn** (`reflect`) của mọi Hero **[GĐ2]**.
-2. **Bộ đếm thăng cấp đầu lượt** (F04, mục 8), tính **trước** khi trạng thái kích hoạt. **[GĐ7]** Cùng vòng này, với từng Hero còn sống: nhận giáp nội tại `armorPerTurn`; bốc 1 buff `randomBuffPerTurn` trong `combatConfig.levelUpRandomBuffs` bằng RNG; +1 bộ đếm `turnsSurvived` (từ vòng 2 trở đi), `studyPoints`, `fullMoonsSeen` (nếu pha hiện tại là `full`); đặt lại `firstSchemeUsedThisTurn` (mục 8).
+1. **Xóa giáp** của mọi Hero (`armor = 0`) và gỡ **Phản Đòn** (`reflect`) của mọi Hero **[GĐ2]**. **[Nguyệt Lệnh]** Bỏ qua cả bước này khi lệnh **Giữ Giáp** (`keepArmor`) đang có hiệu lực (mục 7.5).
+2. **Bộ đếm thăng cấp đầu lượt** (F04, mục 8), tính **trước** khi trạng thái kích hoạt. **[GĐ7]** Cùng vòng này, với từng Hero còn sống: nhận giáp nội tại `armorPerTurn`; bốc 1 buff `randomBuffPerTurn` trong `combatConfig.levelUpRandomBuffs` bằng RNG; +1 bộ đếm `turnsSurvived` (từ vòng 2 trở đi), `studyPoints`, `fullMoonsSeen` (nếu pha hiện tại là `full`); đặt lại `firstSchemeUsedThisTurn` (mục 8). **[Nguyệt Lệnh]** Bỏ khóa `p<seat>` của người đang có lượt trong `firstHitKeys` (Tập Kích, mục 7.5).
 3. **Kích hoạt trạng thái đầu lượt** của từng Hero theo vị trí 0 → 2: Thiêu Đốt, rồi Hồi Phục (mục 6).
 4. **Huyết Nguyệt [GĐ2]:** nếu `bloodMoonRounds > 0`, từng Hero còn sống (vị trí 0 → 2) mất `bloodMoonHpLoss` HP (`combatConfig`, mặc định 2; mục 7.4); xử lý ngã và thăng cấp như tick Thiêu Đốt.
-5. Kiểm tra thắng/thua (mục 11).
-6. `cardsPlayedThisTurn = 0` (Liên Hoàn, mục 5.3) **[GĐ4b]**. `moonPower = base(round) + moonReserve + moonPowerBonus`; event `moonPowerChanged`. **Gốc của vòng** `r`: `base(r) = min(cap, start + (r − 1) × perRound)` theo `combatConfig.moonPower`; quỹ lượt **được vượt** `cap` (`cap + moonReserveMax`, cộng thêm `moonPowerBonus` không trần); `gainMoonPower` cộng thẳng vào quỹ. `moonPowerBonus` là quỹ cộng thêm mỗi đầu lượt từ Dưỡng Nguyệt (xem dưới) **[GĐ4b]**.
-7. **Rút bù:** rút tới khi tay có `handSize` lá hoặc chồng rỗng (mục 4.2, `cardsDrawn`).
-8. **Cạn Bài:** nếu tay rỗng **và** chồng rỗng → event `deckedOut`, thua (mục 11).
-9. Hero đang **Đóng Băng**: các lá của Hero đó (kể cả lá Song Hành có Hero đó là owner) không đánh được trong lượt này.
-10. **[GĐ3]** Kích hoạt hook Kỳ Vật `playerTurnStart` (§13).
-11. **[GĐ7] Nội tại đầu lượt của cả người chơi**, đúng thứ tự (mục 8):
+5. **[Nguyệt Lệnh]** Hiệu ứng lệnh đầu lượt của người chơi (mục 7.5), theo thứ tự: **Mầm Sống / Đoàn Viên** (`turnStartHeal`: hồi phẳng, không hệ số hồi, gồm Linh Thú); **Thế Cân** (`turnStartStatusOnHighestHp`: PvE một lần mỗi vòng tại ghế 0 — Hero HP cao nhất của mỗi ghế và kẻ địch HP cao nhất nhận Suy Yếu; PvP theo ghế đang tới lượt — mục 15.2).
+6. Kiểm tra thắng/thua (mục 11).
+7. `cardsPlayedThisTurn = 0` (Liên Hoàn, mục 5.3) **[GĐ4b]**; **[Nguyệt Lệnh]** đặt lại `attackCardsThisTurn` (Liên Kích), `discardsThisTurn` (Xả Thân), `bloodPactUsed` (Huyết Tế). `moonPower = base(round) + moonReserve + moonPowerBonus` + **Nguyệt Sinh** (`turnMoonPowerBonus`) nếu lệnh đang có hiệu lực; event `moonPowerChanged`. **Gốc của vòng** `r`: `base(r) = min(cap, start + (r − 1) × perRound)` theo `combatConfig.moonPower`; quỹ lượt **được vượt** `cap` (`cap + moonReserveMax`, cộng thêm `moonPowerBonus` và phần lệnh không trần); `gainMoonPower` cộng thẳng vào quỹ. `moonPowerBonus` là quỹ cộng thêm mỗi đầu lượt từ Dưỡng Nguyệt (xem dưới) **[GĐ4b]**.
+8. **Rút bù:** rút tới khi tay có `handSize` lá hoặc chồng rỗng (mục 4.2, `cardsDrawn`). **[Nguyệt Lệnh]** Sau đó **Khai Trí** (`turnStartDraw`): rút thêm `amount` lá (tuân `handLimit` — lá tràn vào chồng bỏ, mục 4.2).
+9. **Cạn Bài:** nếu tay rỗng **và** chồng rỗng → event `deckedOut`, thua (mục 11).
+10. Hero đang **Đóng Băng**: các lá của Hero đó (kể cả lá Song Hành có Hero đó là owner) không đánh được trong lượt này.
+11. **[GĐ3]** Kích hoạt hook Kỳ Vật `playerTurnStart` (§13).
+12. **[GĐ7] Nội tại đầu lượt của cả người chơi** và **[Nguyệt Lệnh]** lệnh Chiêm Bài, đúng thứ tự (mục 8):
     1. **Thiên Cơ** (`cheapestCardDiscount`): gắn `turnDiscount` lên lá rẻ nhất trên tay — chỉ trong lượt này, xóa ở cuối lượt (mục 3.3).
     2. **Vạn Kim** (`freeChooseCardPerTurn`): mở Chiêm Bài miễn phí (`chooseCard` với `look`).
-    3. **Quan Tinh** (`chooseMoon`): mở **Chọn Pha** (mục 5.5) — chỉ **sau khi** Chiêm Bài (nếu có) đã được trả lời, và chỉ khi Hero đã thăng cấp **lúc đầu lượt**; Hero thăng cấp giữa lượt thì Chọn Pha mở từ lượt sau (`moonChoicePending`).
+    3. **Bói Nguyệt** (lệnh `freeChooseCard`): mở Chiêm Bài `look` miễn phí **sau** Vạn Kim; nếu đang có `pendingChoice` (Vạn Kim chưa trả lời) → đặt cờ `omenPending`, mở ngay sau khi Chiêm Bài đó được trả lời và **trước** Chọn Pha.
+    4. **Quan Tinh** (`chooseMoon`): mở **Chọn Pha** (mục 5.5) — chỉ **sau khi** mọi Chiêm Bài (kể cả Bói Nguyệt) đã được trả lời, và chỉ khi Hero đã thăng cấp **lúc đầu lượt**; Hero thăng cấp giữa lượt thì Chọn Pha mở từ lượt sau (`moonChoicePending`).
 
 Vòng 1 đi qua đủ các bước (bước 7 thường không rút gì vì tay đã đủ `handSize` lá sau Đổi Bài).
 
@@ -74,6 +76,8 @@ Vòng 1 đi qua đủ các bước (bước 7 thường không rút gì vì tay 
 ### 3.2 Trong lượt
 Người chơi thực hiện bất kỳ số lượng hành động nào:
 - `playCard(instanceId, targetId?)`: đánh 1 lá (mục 5).
+- `discardCard(instanceId)` **[Nguyệt Lệnh]**: Hủy Bài — chỉ hợp lệ khi lệnh đang có `discardForMoonPower` (Xả Thân; mục 5.8).
+- `bloodPact(heroId)` **[Nguyệt Lệnh]**: Huyết Tế — chỉ hợp lệ khi lệnh đang có `bloodPact` (mục 5.9).
 - `endTurn`: kết thúc lượt.
 - `chooseCard(instanceId)`: chỉ khi `status = "choosing"` (Chiêm Bài, xem dưới); trong khi `choosing`, mọi Action khác bị từ chối (`"choice pending"`).
 - `chooseMoon(offset)` **[GĐ7]**: chỉ khi `pendingChoice.kind = "chooseMoon"` (Chọn Pha, mục 5.5).
@@ -90,7 +94,7 @@ Người chơi thực hiện bất kỳ số lượng hành động nào:
 
 ### 3.3 Cuối lượt người chơi (theo thứ tự)
 0. **[GĐ3]** Kích hoạt hook Kỳ Vật `playerTurnEnd` (§13). Nếu trận kết thúc: dừng.
-1. **Không bỏ tay.** Chỉ bỏ các lá **Tàn Chiêu** (có owner đã ngã) vào `discardPile` → `cardDiscarded`. Lá cần Huyết Nguyệt và lá của Hero bị Đóng Băng ở lại tay.
+1. **Không bỏ tay.** Chỉ bỏ các lá **Tàn Chiêu** (có owner đã ngã) vào `discardPile` → `cardDiscarded`. Lá cần Huyết Nguyệt và lá của Hero bị Đóng Băng ở lại tay. **[Nguyệt Lệnh]** Khi lệnh **Đoạn Tuyệt** (`discardDamage`) có hiệu lực: với mỗi lá vừa bỏ, đơn vị đối phương còn sống HP thấp nhất của chủ lá mất `amount` HP (`hpLost` cause `"decree"`, mục 7.5). **[Nguyệt Lệnh]** Khi lệnh **Luân Hồi** (`recycleDiscard`) có hiệu lực: chuyển tối đa `count` lá **mới nhất** trong chồng bỏ về **đáy** chồng rút (lá mới nhất nằm dưới cùng) → event `cardsRecycled`, sau đó mới qua bước 2.
 2. Mọi lá còn trên tay: `heldTurns += 1` (Tích Tụ, mục 4.1) **[GĐ4b]**. Xóa mọi dấu `chosenThisTurn` (Chiêm Bài, mục 3.2) và `turnDiscount` (Thiên Cơ, mục 3.1) **[GĐ7]**.
 3. `moonReserve = min(moonReserveMax, moonPower)`; event `moonReserveChanged`.
 4. Hero bị Đóng Băng trong lượt này: gỡ trạng thái Đóng Băng.
@@ -126,9 +130,7 @@ Người chơi thực hiện bất kỳ số lượng hành động nào:
 chiPhíThựcTế = max(0, cost + các điều chỉnh)
 ```
 Các điều chỉnh (cộng dồn):
-- Pha Bán Nguyệt: lá có tag `control` **−2** (tối thiểu 0). *Ghi chú: GDD ghi "tối thiểu 1"; prototype dùng tối thiểu 0.*
-- Pha Trăng Tròn: lá có tag `harmony` **−2** (tối thiểu 0) **[GĐ2]**.
-- Pha Hạ Huyền: lá có tag `ward` **−2** (tối thiểu 0) **[GĐ2]**.
+- **[Nguyệt Luân mới]** Ưu Đãi Pha: lá mang `tag` được ưu đãi của pha hiện tại **−1** Nguyệt Lực (tối thiểu 0) — bảy pha giảm giá, pha Trăng Non không có ưu đãi giá (mục 7.1). Modifier lệnh `costModifierForTag` (nếu lệnh đang có hiệu lực) cộng dồn theo cùng quy tắc.
 - Sau các điều chỉnh theo pha: M06 dạng thăng cấp *Vô Nguyệt* (`firstOwnCardDiscount`) — lá riêng **đầu tiên của Tô Dạ** đánh trong mỗi lượt giảm thêm `amount` (tối thiểu 0, xem mục 8). Không áp cho lá Song Hành.
 - **[GĐ7]** `turnDiscount` (Thiên Cơ): cộng thêm vào phần giảm sau cùng, chỉ trong lượt (mục 3.1 bước 11). `tagDiscountOwnCards` (Tự Do): lá của Hero có nội tại đó và mang `tag` khớp −`amount` (tối thiểu 0).
 
@@ -168,7 +170,7 @@ Hành động `playCard` bị **từ chối** (trả về lỗi, state không đ
    - Lá Song Hành: "chủ lá" ở bước này là mọi owner làm đơn vị hành động của ít nhất một effect `damage` trong định nghĩa lá (kể cả trong nhánh `conditional`), xác định từ dữ liệu, không phụ thuộc nhánh đã chạy.
 4b. **[GĐ3]** Kích hoạt hook Kỳ Vật `cardPlayed` (§13).
 5. Chuyển lá vào `discardPile`.
-6. `cardsPlayedThisTurn += 1` (Liên Hoàn, mục 5.3) **[GĐ4b]** — sau hook `cardPlayed`, nên lá đang đánh không tự đếm mình.
+6. `cardsPlayedThisTurn += 1` (Liên Hoàn, mục 5.3) **[GĐ4b]** — sau hook `cardPlayed`, nên lá đang đánh không tự đếm mình. **[Nguyệt Lệnh]** Nếu lá `type: "attack"` thì `attackCardsThisTurn += 1` (Liên Kích, mục 7.5) — lá đang đánh cũng được đếm, nên hit của lá tấn công **thứ nhất** trong lượt không được cộng bonus.
 
 ### 5.3 Tham chiếu mục tiêu trong effect
 **Đơn vị hành động** của một effect: chủ lá (Hero), chính kẻ địch đang thực hiện chiêu, hoặc với lá Song Hành là `owners[actor]` (mục 5.4).
@@ -200,7 +202,7 @@ Condition `selfHpBelow`, `selfHasStatus` xét đơn vị hành động của eff
 - Khi người chơi "nợ" Chọn Pha (mục 3.1 bước 11): `pendingChoice = { kind: "chooseMoon", options: [0, 1, 2] }` (giữ pha, tiến 1, tiến 2), event `moonChoiceOpened { options }`, `status = "choosing"`. Co-op: `status` giữ `playerTurn` — lượt đồng đội không bị khóa (mục 16.2); nếu cả hai người đều nợ, chỉ người 0 chọn.
 - Action `{ type: "chooseMoon", offset }`: hợp lệ khi `pendingChoice.kind = "chooseMoon"` và `offset` thuộc `options`; `offset` ngoài `options` → `"not a choice option"`; không có lựa chọn đang chờ → `"no pending choice"`; trong khi `choosing`, Action khác bị từ chối (`"choice pending"`).
 - Trả lời: `pendingChoice` và `moonChoicePending` được xóa, `status` về `playerTurn`. `offset > 0` chạy `shiftMoon(offset)` với nguồn là Hero có nội tại `chooseMoon` (`moonShifted` cause `"card"`); `offset = 0` giữ nguyên pha, không event.
-- Trả lời Chiêm Bài cuối cùng cũng kiểm lại `moonChoicePending` và mở Chọn Pha nếu còn nợ (mục 3.1 bước 11.3).
+- Trả lời Chiêm Bài cuối cùng cũng kiểm lại `moonChoicePending` và mở Chọn Pha nếu còn nợ (mục 3.1 bước 12).
 - Hết giờ / bot: trả lời mặc định `offset: 0` (`autoChoiceAction`, `02` §3).
 
 ### 5.6 Phong Ấn, Hồi Hồn, Kéo Dài Debuff, Xuyên mục tiêu [GĐ7]
@@ -283,6 +285,39 @@ thiếu damage).
 - Condition `targetSealed`: đúng khi mục tiêu đã chọn còn sống và đang mang dấu Phong Ấn
   (`sealedBy`, mục 5.6).
 
+### 5.8 Hủy Bài — `discardCard` [Nguyệt Lệnh]
+
+Action `{ type: "discardCard", instanceId }` — bỏ một lá trên tay mà không đánh
+để đổi lấy Nguyệt Lực.
+
+- **Chỉ hợp lệ** khi `status = "playerTurn"`, lệnh đang có hiệu lực có
+  `discardForMoonPower` (Xả Thân, mục 7.5), lá nằm trên tay người chơi đó, và
+  `PlayerState.discardsThisTurn < perTurn` của lệnh. Ngược lại: từ chối, state
+  không đổi.
+- Kết quả: lá vào `discardPile` → `cardDiscarded { instanceIds; player? }`
+  (không có trường `reason`); rồi `moonPower += moonPower` của lệnh →
+  `moonPowerChanged`; `discardsThisTurn += 1` (đặt lại đầu lượt, mục 3.1).
+- Lá Tàn Chiêu cũng hủy được (nó vẫn chiếm tay, mục 4.3). Xả Thân và Đoạn
+  Tuyệt thuộc cùng bể lệnh của pha 5 nên **không bao giờ** đồng thời có hiệu
+  lực — mỗi pha chỉ có một lệnh được bốc (mục 7.5).
+- PvP / co-op: `discardCard` là hành động của **ghế đang tới lượt** (mục 15.6,
+  16.2); lá phải nằm trên tay ghế đó.
+
+### 5.9 Huyết Tế — `bloodPact` [Nguyệt Lệnh]
+
+Action `{ type: "bloodPact", heroId }` — một lần mỗi lượt, đổi HP lấy lá.
+
+- **Chỉ hợp lệ** khi `status = "playerTurn"`, lệnh đang có hiệu lực có
+  `bloodPact { hp, draw }` (Huyết Tế, mục 7.5), `PlayerState.bloodPactUsed`
+  chưa được đặt trong lượt này, `heroId` là Hero **của người chơi đó**, còn
+  sống, và `hp > hp` của lệnh. Ngược lại: từ chối, state không đổi.
+- Kết quả: Hero đó **mất `hp` HP** — `hpLost { cause: "bloodPact" }`: không qua
+  giáp, không phải đòn tấn công, không có đơn vị nguồn (mục 10.3); rồi
+  `drawCards draw` (tuân `handLimit`, mục 4.2) → `cardsDrawn`; đặt
+  `bloodPactUsed` (đặt lại đầu lượt, mục 3.1).
+- HP mất tính vào bộ đếm thăng cấp `damageTaken` của Hero đó (mục 8), như mọi
+  mất HP khác.
+
 ## 6. Trạng thái
 
 ### 6.1 Danh sách
@@ -295,7 +330,7 @@ thiếu damage).
 | `vulnerable` | Dễ Vỡ | Thời hạn | Damage nhận vào ×1.5 | Cộng thời hạn |
 | `mark` | Đánh Dấu | Thời hạn | Nhận thêm **+3** damage từ đòn tấn công của **Hero đã đánh dấu** (`sourceId`) | Cộng thời hạn, cập nhật `sourceId` |
 | `burn` | Thiêu Đốt | Cộng dồn | Đầu lượt phe mình: mất HP = số tầng (**bỏ qua giáp**), rồi −1 tầng | Cộng tầng |
-| `regen` | Hồi Phục | Cộng dồn | Đầu lượt phe mình: hồi HP = số tầng (áp hệ số hồi máu của pha trăng), rồi −1 tầng | Cộng tầng |
+| `regen` | Hồi Phục | Cộng dồn | Đầu lượt phe mình: hồi HP = số tầng (áp hệ số hồi máu của lệnh đang có hiệu lực, mục 7.5), rồi −1 tầng | Cộng tầng |
 | `strength` | Sức Mạnh | Giá trị vĩnh viễn | +N damage cho mọi đòn tấn công | Cộng giá trị |
 | `empower` | Tích Lực | Dùng một lần | +N damage cho **mỗi lượt damage** của lá tấn công kế tiếp của chủ; gỡ sau khi lá đó giải quyết xong | Cộng giá trị |
 | `freeze` | Đóng Băng | Dùng một lần | Hero: không đánh được lá của mình trong lượt người chơi kế tiếp. Kẻ địch: bỏ qua cả chuỗi chiêu trong lượt kẻ địch kế tiếp và Dự Trữ về 0 (mục 9.3) | Không có tác dụng nếu đang Đóng Băng |
@@ -316,41 +351,56 @@ Trạng thái bị gỡ khi thời hạn/số tầng/giá trị về 0.
 ### 6.4 Giáp
 - `armor` là số, không phải trạng thái.
 - Giáp của Hero bị xóa ở **đầu lượt người chơi**; giáp của kẻ địch bị xóa ở **đầu lượt kẻ địch**. Phản Đòn bị gỡ cùng lúc **[GĐ2]**.
-- Nhận giáp: `armor += floor(amount × hệ số giáp của pha trăng)`.
+- Nhận giáp: `armor += floor(amount × hệ số giáp của lệnh đang có hiệu lực)` (lệnh Huyền Giáp, mục 7.5); không có lệnh → hệ số 1.
+- **[Nguyệt Lệnh]** Lệnh **Giữ Giáp** (`keepArmor`): bỏ qua bước xóa giáp / gỡ Phản Đòn ở đầu lượt của **cả hai phe** (mục 3.1 bước 1, mục 9.3).
 
 ### 6.5 Cướp buff (`stealBuff`) [GĐ2]
 - Effect `stealBuff { count }`: chuyển tối đa `count` **buff** từ mục tiêu `chosen` sang đơn vị hành động, lấy theo thứ tự trong `statuses[]` của mục tiêu.
-- Với mỗi buff: gỡ khỏi mục tiêu (`statusRemoved`), rồi áp cho đơn vị hành động với cùng giá trị theo cột "Khi áp thêm" (**không** cộng thưởng Ẩn Thân của Trăng Non) → `statusApplied` với giá trị sau khi gộp.
+- Với mỗi buff: gỡ khỏi mục tiêu (`statusRemoved`), rồi áp cho đơn vị hành động với cùng giá trị theo cột "Khi áp thêm" (**không** cộng thêm `stealthExtraRounds` của lệnh Bóng Mờ, mục 7.5) → `statusApplied` với giá trị sau khi gộp.
 - Mục tiêu không có buff: không làm gì, không phát event.
 
 ---
 
-## 7. Nguyệt Luân
+## 7. Nguyệt Luân [Nguyệt Luân mới]
 
-### 7.1 Các pha
+Mỗi trận có một **lịch trăng riêng**: pha khởi đầu được bốc ngẫu nhiên tất định
+theo seed và mỗi pha mang **một Nguyệt Lệnh** được bốc trong 3 lệnh của pha đó
+(mục 7.6) — không còn pha trống và không đoán trước được "vòng nào là trăng gì".
 
-| Chỉ số | ID | Tên | Hiệu ứng |
+Hiệu ứng pha (ưu đãi tag + lệnh đang được bốc) áp cho **cả hai phe**, trừ khi
+hiệu ứng chỉ nói về tag lá bài (vốn chỉ người chơi có). "Mỗi bên" nghĩa là: PvE /
+co-op gồm người chơi (mọi ghế) và phe kẻ địch; PvP gồm từng người chơi (mục 15).
+
+### 7.1 Các pha và Ưu Đãi Pha
+
+| Chỉ số | ID | Tên | Ưu đãi tag (`tagBonus`, cố định) |
 |---|---|---|---|
-| 0 | `new` | 🌑 Trăng Non | Lá có tag `assassin`: damage **×1.5**. Ẩn Thân được áp: **+1** thời hạn |
-| 1 | `waxingCrescent` | 🌒 Lưỡi Liềm Đầu | — |
-| 2 | `firstQuarter` | 🌓 Bán Nguyệt | Lá có tag `control`: chi phí **−2** (tối thiểu 0) |
-| 3 | `waxingGibbous` | 🌔 Trăng Khuyết Đầu | — |
-| 4 | `full` | 🌕 Trăng Tròn | Mọi hồi máu (kể cả Hồi Phục) **×2**. Lá có tag `harmony`: chi phí **−2** (tối thiểu 0) **[GĐ2]** |
-| 5 | `waningGibbous` | 🌖 Trăng Khuyết Cuối | — |
-| 6 | `lastQuarter` | 🌗 Hạ Huyền | Giáp nhận được **×1.5**. Lá có tag `ward`: chi phí **−2** (tối thiểu 0) **[GĐ2]** |
-| 7 | `waningCrescent` | 🌘 Lưỡi Liềm Cuối | — |
+| 0 | `new` | 🌑 Trăng Non | Lá tag `assassin`: damage **×1.5** |
+| 1 | `waxingCrescent` | 🌒 Lưỡi Liềm Đầu | Lá tag `scheme`: chi phí **−1** (tối thiểu 0) |
+| 2 | `firstQuarter` | 🌓 Bán Nguyệt | Lá tag `control`: chi phí **−1** (tối thiểu 0) |
+| 3 | `waxingGibbous` | 🌔 Trăng Khuyết Đầu | Lá tag `attack`: chi phí **−1** (tối thiểu 0) |
+| 4 | `full` | 🌕 Trăng Tròn | Lá tag `harmony`: chi phí **−1** (tối thiểu 0) |
+| 5 | `waningGibbous` | 🌖 Trăng Khuyết Cuối | Lá tag `forbidden`: chi phí **−1** (tối thiểu 0) |
+| 6 | `lastQuarter` | 🌗 Hạ Huyền | Lá tag `ward`: chi phí **−1** (tối thiểu 0) |
+| 7 | `waningCrescent` | 🌘 Lưỡi Liềm Cuối | Lá tag `moon`: chi phí **−1** (tối thiểu 0) |
 
-**[GĐ3]** Modifier của Kỳ Vật đang có cộng thêm vào modifier của pha hiện tại (§13).
-
-Hiệu ứng pha áp dụng cho **cả hai phe** (trừ khi hiệu ứng chỉ nói về tag lá bài, vốn chỉ có ở Hero).
+- Ưu đãi tag là modifier cố định của pha (`tagBonus` trong `moon-phases.json`,
+  `02` §1.7); **không còn** modifier `healMultiplier` / `armorMultiplier` /
+  `stealthDurationBonus` cố định — các hiệu ứng đó chuyển thành lệnh (mục 7.5).
+- Tag `heal` không có ưu đãi riêng.
+- **[GĐ3]** `activeModifiers` = `phaseModifiers` (ưu đãi tag + modifier của lệnh
+  đang bốc của pha hiện tại) + modifier của mọi Kỳ Vật / Nguyệt Bảo đang có
+  (mục 13.4). Tra cứu qua `phaseModifiers` / `decreeModifier` / `currentDecree`
+  (mục 7.6).
 
 ### 7.2 Tiến pha
-- Cuối mỗi vòng: `moonIndex = (moonIndex + 1) mod 8`.
-- Trận bắt đầu ở pha 1, nên vòng 4 là Trăng Tròn, vòng 8 là Trăng Non.
+- Cuối mỗi vòng: `moonIndex = (moonIndex + 1) mod 8`, rồi `enterPhase` chạy cho
+  pha mới (mục 7.6 — Nguyệt Chiếu gỡ Ẩn Thân nếu vào Trăng Tròn).
+- Pha khởi đầu do `rollMoon` bốc (mục 7.6), không còn cố định.
 
 ### 7.3 Đổi Vận
 - Effect `shiftMoon(amount)`: `moonIndex = (moonIndex + amount) mod 8` (xử lý số âm đúng: `((i + a) % 8 + 8) % 8`).
-- Có tác dụng **ngay lập tức**: các effect và lá đánh sau đó trong lượt dùng pha mới.
+- Có tác dụng **ngay lập tức**: các effect và lá đánh sau đó trong lượt dùng pha mới; `enterPhase` chạy cho pha mới (Nguyệt Chiếu, mục 7.5).
 - Không ảnh hưởng chuỗi chiêu kẻ địch đã lên.
 
 ### 7.4 Huyết Nguyệt [GĐ2]
@@ -371,55 +421,73 @@ Ví dụ — `bloodMoon(2)` đánh trong lượt người chơi vòng N:
 | Đầu lượt vòng N+1 | 1 — mỗi Hero còn sống mất 2 HP |
 | Cuối vòng N+1 | 0 — hết |
 
-### 7.5 Nguyệt Lệnh — quy ước làm rõ [Nguyệt Luân mới]
+### 7.5 Nguyệt Lệnh
 
-*Các điểm luật đã làm rõ cho Nguyệt Luân mới (spec
-`superpowers/specs/2026-09-30-nguyet-luan-redesign-design.md` §4). §7.1–7.2 còn
-mô tả hệ cũ; sẽ được viết lại đầy đủ (ưu đãi tag, bảng lệnh, pha khởi đầu) ở
-bước tài liệu kế tiếp.*
+Mỗi pha có **đúng 3 lệnh** trong dữ liệu; lúc tạo trận `rollMoon` bốc 1 lệnh cho
+mỗi pha, lưu vào `CombatState.moonDecrees` (mục 7.6). Lệnh của pha `i` có hiệu
+lực khi `moonIndex = i`; các lệnh "đầu lượt" xét pha **tại thời điểm** đầu lượt
+đó. Lệnh áp cho cả hai phe; mất HP do lệnh (`hpLost` cause `"decree"` /
+`"bloodPact"`) không qua giáp, không phải đòn tấn công, không có đơn vị nguồn
+(mục 10.3). Các loại modifier chỉ hợp lệ trong `decrees` nằm trong
+`DECREE_ONLY_MODIFIERS` (`02` §1.7).
 
-- **Bốc lệnh (`rollMoon`).** Pha khởi đầu và một lệnh cho mỗi pha được bốc từ
-  một **luồng RNG phụ**: `seed = (rngState ^ 0x6d2b79f5) >>> 0`, lấy `rngState`
-  lúc gọi, rồi lặp `nextRandom` trên luồng phụ. Luồng phụ **không** đổi
-  `state.rngState`, nên thứ tự xáo bài và lên chuỗi kẻ địch không bị ảnh hưởng;
-  kết quả vẫn tất định theo seed của trận.
-- **Đoạn Tuyệt.** Mỗi lá rời tay vào chồng bỏ mà không được đánh làm đơn vị
-  đối phương còn sống HP thấp nhất của chủ lá **mất HP** (`hpLost` cause
-  `"decree"`): không qua giáp, không phải đòn tấn công, không có đơn vị nguồn
-  (lá Tàn Chiêu có chủ đã ngã).
-- **Mốc theo lượt / vòng:**
-  - **Tập Kích:** "đầu tiên mỗi lượt của mỗi bên" theo dõi bằng
-    `CombatState.firstHitKeys?: string[]` — khóa `"p<seat>"` cho ghế người
-    chơi, `"enemy"` cho phe kẻ địch. Xóa khóa của một bên khi bắt đầu lượt
-    của bên đó. Hit của Linh Thú tính vào khóa ghế chủ.
-  - **Thế Thủ:** theo dõi bằng `UnitState.shieldUsed?: true`, xóa ở
-    `advanceRound`.
-- **Liên Kích:**
-  - Lá: `PlayerState.attackCardsThisTurn?` +1 sau khi một lá `type: "attack"`
-    giải quyết xong, đặt lại đầu lượt người chơi; lá đang đánh được +2 mỗi
-    hit nếu số đếm ≥ 1 lúc bắt đầu giải quyết.
-  - Kẻ địch: trong `runEnemyTurn`, chiêu `kind` `attack` / `attackDefend`
-    được +2 mỗi hit nếu **trước nó** trong cùng chuỗi của kẻ địch đó đã thi
-    hành một chiêu `attack` / `attackDefend`.
-- **Thế Cân:**
-  - PvE / co-op: chạy **một lần mỗi vòng**, ở đầu lượt người chơi của ghế 0 —
-    Hero còn sống HP cao nhất của **mỗi ghế** và kẻ địch còn sống HP cao nhất
-    bị Suy Yếu 1.
-  - PvP: đầu lượt mỗi ghế, Hero còn sống HP cao nhất **của ghế đó** bị Suy
-    Yếu 2 (thời hạn PvP ×2).
-  - Hòa HP → vị trí nhỏ nhất.
-- **Mầm Sống / Đoàn Viên:**
-  - Hồi phẳng, **không** nhân hệ số hồi (pha của hai lệnh này không có lệnh
-    hồi ×).
-  - Người chơi: sau bước Huyết Nguyệt (mục 3.1 bước 4). Kẻ địch: sau tick
-    trạng thái đầu lượt địch.
-  - "Mọi đơn vị" gồm Linh Thú.
-- **Nguyệt Chiếu:** gỡ Ẩn Thân của mọi đơn vị khi `moonIndex` đổi **thành**
-  Trăng Tròn (cuối vòng, `shiftMoon`, Chọn Pha) và khi trận bắt đầu ở Trăng
-  Tròn (`enterPhase` từ `rollMoon`).
-- **Thiên Bình:** chỉ cộng cho debuff có thời hạn: `weak`, `vulnerable`,
-  `mark` (giao của `DEBUFF_STATUSES` và `DURATION_STATUSES`). PvP cộng
-  `+1 × 2`.
+| Pha | Id | Tên | Hiệu ứng | Modifier |
+|---|---|---|---|---|
+| 0 Trăng Non | `am_da` | Ám Dạ | Mọi hồi máu (kể cả Hồi Phục) **×0.5**, làm tròn xuống | `healMultiplier 0.5` |
+| | `bong_mo` | Bóng Mờ | Ẩn Thân được áp **+1** thời hạn | `stealthDurationBonus 1` |
+| | `tap_kich` | Tập Kích | Hit damage **đầu tiên** mỗi lượt của mỗi bên **+3** (tính cả lá bài lẫn chiêu địch; đòn nhiều hit chỉ hit đầu được cộng; hit của Linh Thú tính cho ghế chủ). Theo dõi bằng `CombatState.firstHitKeys`: khóa `"p<seat>"` / `"enemy"`, xóa khóa của một bên khi bắt đầu lượt bên đó | `firstHitBonus { amount: 3 }` |
+| 1 Lưỡi Liềm Đầu | `nguyet_sinh` | Nguyệt Sinh | Người chơi: quỹ đầu lượt **+1** Nguyệt Lực (mục 3.1 bước 7). Kẻ địch: chuỗi lên trong pha này có quỹ **+1** (mục 9.2) | `turnMoonPowerBonus { amount: 1 }` |
+| | `khai_tri` | Khai Trí | Đầu lượt người chơi, sau rút bù: rút thêm **1** lá (tuân `handLimit`, mục 4.2) | `turnStartDraw { amount: 1 }` |
+| | `mam_song` | Mầm Sống | Đầu lượt mỗi bên: mọi đơn vị còn sống bên đó (kể cả Linh Thú) hồi **2** HP — hồi phẳng, **không** nhân hệ số hồi. Người chơi: mục 3.1 bước 5; kẻ địch: mục 9.3 | `turnStartHeal { amount: 2, target: "all" }` |
+| 2 Bán Nguyệt | `thien_binh` | Thiên Bình | Debuff **có thời hạn** mới được áp **+1** thời hạn (mọi nguồn) — chỉ `weak`, `vulnerable`, `mark`; PvP cộng `+1 × 2` (mục 15.3) | `debuffDurationBonus { amount: 1 }` |
+| | `the_can` | Thế Cân | PvE / co-op: **một lần mỗi vòng**, đầu lượt người chơi ghế 0 — Hero còn sống HP cao nhất của **mỗi ghế** và kẻ địch còn sống HP cao nhất bị Suy Yếu 1. PvP: đầu lượt mỗi ghế, Hero HP cao nhất **của ghế đó** bị Suy Yếu 2. Hòa HP → vị trí nhỏ nhất | `turnStartStatusOnHighestHp { status: "weak", amount: 1 }` |
+| | `the_thu` | Thế Thủ | Mỗi đơn vị: hit damage **đơn mục tiêu** đầu tiên nó nhận trong mỗi vòng **−3** (tối thiểu 0; trừ trước giáp). Theo dõi `UnitState.shieldUsed`, xóa cuối vòng (mục 9.4) | `firstSingleHitReduction { amount: 3 }` |
+| 3 Trăng Khuyết Đầu | `lien_kich` | Liên Kích | Lá tấn công **từ lá thứ hai trở đi** trong lượt (đếm `PlayerState.attackCardsThisTurn`, mục 5.2 bước 6): mỗi hit **+2**. Kẻ địch: chiêu `attack` / `attackDefend` được **+2** mỗi hit nếu **trước nó** trong cùng chuỗi đã thi hành một chiêu `attack` / `attackDefend` (mục 9.3) | `attackChainBonus { amount: 2 }` |
+| | `cuong_nguyet` | Cuồng Nguyệt | Sức Mạnh và Tích Lực được áp **gấp đôi** giá trị | `buffMultiplier { statuses: ["strength","empower"], multiplier: 2 }` |
+| | `pha_giap` | Phá Giáp | Giáp nhận được **×0.5**, làm tròn xuống | `armorMultiplier 0.5` |
+| 4 Trăng Tròn | `vien_nguyet` | Viên Nguyệt | Mọi hồi máu (kể cả Hồi Phục) **×2** | `healMultiplier 2` |
+| | `nguyet_chieu` | Nguyệt Chiếu | Khi `moonIndex` đổi **thành** Trăng Tròn (`enterPhase`: cuối vòng, `shiftMoon`, Chọn Pha, hoặc trận bắt đầu ở Trăng Tròn): gỡ Ẩn Thân của mọi đơn vị. Trong pha: áp Ẩn Thân không có tác dụng | `stealthSuppressed` |
+| | `doan_vien` | Đoàn Viên | Đầu lượt mỗi bên: đơn vị còn sống **tỉ lệ HP thấp nhất** bên đó (hòa → vị trí nhỏ nhất; tính cả Linh Thú) hồi **5** HP — hồi phẳng, không nhân hệ số hồi; cùng mốc với Mầm Sống | `turnStartHeal { amount: 5, target: "lowestRatio" }` |
+| 5 Trăng Khuyết Cuối | `xa_than` | Xả Thân | Người chơi được **Hủy Bài** tối đa **2** lá trên tay mỗi lượt (action `discardCard`, mục 5.8); mỗi lá hủy **+1** Nguyệt Lực | `discardForMoonPower { perTurn: 2, moonPower: 1 }` |
+| | `doan_tuyet` | Đoạn Tuyệt | Mỗi lá rời tay vào chồng bỏ **mà không được đánh** (Hủy Bài, Tàn Chiêu cuối lượt, lá tràn `handLimit`) làm đơn vị đối phương còn sống HP thấp nhất của chủ lá **mất 2 HP** (`hpLost` cause `"decree"`) | `discardDamage { amount: 2 }` |
+| | `huyet_te` | Huyết Tế | Mỗi lượt 1 lần, người chơi chọn một Hero còn sống của mình có HP > 3: Hero đó mất **3** HP, người chơi rút **2** lá (action `bloodPact`, mục 5.9) | `bloodPact { hp: 3, draw: 2 }` |
+| 6 Hạ Huyền | `huyen_giap` | Huyền Giáp | Giáp nhận được **×1.5** | `armorMultiplier 1.5` |
+| | `phan_chan` | Phản Chấn | Phản Đòn gây **gấp đôi** (mục 10.5) | `reflectMultiplier { multiplier: 2 }` |
+| | `giu_giap` | Giữ Giáp | Bước xóa giáp và gỡ Phản Đòn đầu lượt bị bỏ qua (mục 3.1 bước 1, mục 9.3) — **cả hai phe** | `keepArmor` |
+| 7 Lưỡi Liềm Cuối | `chiem_tinh` | Chiêm Tinh | Mọi Chiêm Bài của người chơi xem thêm **2** lá (cùng cơ chế `chooseCardExtraLook` của nội tại) | `chooseCardExtraLook { amount: 2 }` |
+| | `boi_nguyet` | Bói Nguyệt | Đầu lượt người chơi: Chiêm Bài **3** miễn phí — mở **sau** Vạn Kim và **trước** Chọn Pha (mục 3.1 bước 12, cờ `omenPending`) | `freeChooseCard { look: 3 }` |
+| | `luan_hoi` | Luân Hồi | Cuối lượt người chơi (sau khi bỏ Tàn Chiêu): tối đa **2** lá **mới nhất** trong chồng bỏ về **đáy** chồng rút — lá mới nhất nằm dưới cùng → `cardsRecycled` (mục 3.3 bước 1) | `recycleDiscard { count: 2 }` |
+
+### 7.6 Bốc lệnh và pha khởi đầu
+
+Lúc tạo trận (`createCombat` / `createCoopCombat` / `createPvpCombat`), ngay sau
+khi xáo chồng bài (`deckShuffled`), **`rollMoon`** bốc từ một **luồng RNG phụ**
+tính từ `rngState` lúc gọi: `seed = (rngState ^ 0x6d2b79f5) >>> 0`, rồi lặp
+`nextRandom` trên luồng phụ — mỗi lần bốc lấy `floor(value × n)`. Luồng phụ
+**không** đổi `state.rngState`, nên thứ tự xáo bài và lên chuỗi kẻ địch không bị
+ảnh hưởng; kết quả vẫn tất định theo seed của trận (T315).
+
+1. Bốc pha khởi đầu: `moonIndex` (n = 8) — không còn cố định ở Lưỡi Liềm Đầu.
+2. Với pha 0 → 7 theo thứ tự: bốc 1 trong 3 lệnh của pha → `state.moonDecrees`
+   (8 id, theo chỉ số pha).
+3. Phát event `moonDecreesRolled { moonIndex, decrees }`.
+4. `enterPhase` chạy cho pha khởi đầu (Nguyệt Chiếu gỡ Ẩn Thân nếu trận bắt đầu
+   ở Trăng Tròn).
+
+**Ghi đè (Cốt truyện):** `CombatSetup.start.moonIndex` thay pha khởi đầu;
+`start.decrees?: Partial<Record<MoonPhaseId, string>>` thay lệnh của các pha
+được nêu. **RNG vẫn bốc đủ** rồi mới ghi đè, để thứ tự RNG không phụ thuộc có
+`start` hay không.
+
+`enterPhase(data, state, events)` chạy mỗi khi `moonIndex` đổi **thành** một pha
+(cuối vòng, `shiftMoon`, Chọn Pha) hoặc ở pha khởi đầu; hiện chỉ lệnh
+`stealthSuppressed` (Nguyệt Chiếu) dùng điểm này — trong pha đó áp Ẩn Thân
+không có tác dụng.
+
+Tra cứu (trong `moon.ts`): `currentDecree` → lệnh đang bốc của pha;
+`phaseModifiers` → `tagBonus` của pha + `modifiers` của lệnh đó;
+`decreeModifier(type)` → modifier `type` của lệnh pha hiện tại (nếu có).
+`activeModifiers` (mục 13.4) đọc phần pha qua `phaseModifiers`.
 
 ---
 
@@ -437,7 +505,7 @@ bước tài liệu kế tiếp.*
 | F02 Diệp Linh Lung **[GĐ2]** | `buffsStolen` | +1 mỗi buff được chuyển bởi `stealBuff` có đơn vị hành động là F02; **[GĐ4b]** +1 mỗi effect Đoạt Nguyệt (`drainMoonPower` có `steal`) có đơn vị hành động là F02 lấy được ≥ 1 Nguyệt Lực (Tỏa Nguyệt không tính) | 3 | `stealBonus`: mỗi buff F02 cướp bằng lá của F02 được thêm **+1** giá trị | Ngay lập tức |
 | M01 Tạ Vân Chiêu **[GĐ7]** | `schemeCardsPlayed` | +1 mỗi lá `scheme` do **bất kỳ Hero nào của người chơi** đánh (bộ đếm cả người chơi) | 7 | `cheapestCardDiscount(2)` — *Thiên Cơ*: đầu lượt, lá rẻ nhất trên tay −2 Nguyệt Lực trong lượt đó (`turnDiscount`) | Đầu lượt người chơi kế tiếp |
 | M02 Lục Hàn Phong **[GĐ7]** | `hitsIntercepted` | +1 mỗi đòn đơn mục tiêu bị chuyển sang M02 qua `guard` (mục 9.3.1 bước 1b) | 3 | `armorPerTurn(4)` — *Thiết Bích*: đầu lượt nhận 4 giáp | Đầu lượt người chơi kế tiếp |
-| M03 Mặc Tử Du **[GĐ7]** | `cardsChosen` | +1 mỗi lá được chọn qua Chiêm Bài của **người chơi** (bộ đếm cả người chơi) | 4 | `freeChooseCardPerTurn(look 4)` — *Vạn Kim*: đầu lượt mở Chiêm Bài 4 miễn phí (mục 3.1 bước 11) | Đầu lượt người chơi kế tiếp |
+| M03 Mặc Tử Du **[GĐ7]** | `cardsChosen` | +1 mỗi lá được chọn qua Chiêm Bài của **người chơi** (bộ đếm cả người chơi) | 4 | `freeChooseCardPerTurn(look 4)` — *Vạn Kim*: đầu lượt mở Chiêm Bài 4 miễn phí (mục 3.1 bước 12) | Đầu lượt người chơi kế tiếp |
 | M04 Bùi Thanh Minh **[GĐ7]** | `hpHealed` | Cộng số HP **thực sự hồi** bởi lá của M04 | 20 | `healCleanses` — *Thần Y*: sau mỗi effect hồi máu của lá M04, Hero được hồi được giải trừ (dùng lại nội tại của F04 *Tĩnh Tâm*) | Ngay lập tức |
 | M07 Ninh An **[GĐ7]** | `turnsSurvived` | +1 đầu mỗi lượt người chơi khi M07 còn sống, **từ vòng 2** trở đi | 4 | `randomBuffPerTurn` — *Huyết Mạch*: đầu lượt nhận 1 buff ngẫu nhiên trong `combatConfig.levelUpRandomBuffs` (RNG có seed) | Đầu lượt người chơi kế tiếp |
 | M08 Khương Tịch **[GĐ7]** | `moonShifts` | +1 mỗi lá của M08 có effect `shiftMoon` | 3 | `chooseMoon` — *Quan Tinh*: đầu lượt mở **Chọn Pha** (mục 5.5) | Đầu lượt người chơi kế tiếp |
@@ -504,13 +572,13 @@ bước tài liệu kế tiếp.*
 
 ### 9.1 Bộ chiêu
 - Mỗi kẻ địch có `intents`: danh sách chiêu, mỗi chiêu là `IntentDef` kèm `cost` (số nguyên ≥ 0); và đường cong Nguyệt Lực riêng `moonPower: { start, cap }` (`perRound` dùng chung của `combatConfig`).
-- Có thể có `moonOverrides`: nếu **tại thời điểm lên chuỗi** pha trăng khớp, dùng chiêu thay thế (là `IntentDef`, không có `cost`).
+- **Nguyệt tính [Nguyệt Luân mới]:** có thể có `moonOverrides` — chiêu trăng của riêng loại địch đó, **thông tin công khai** (client hiển thị trong tooltip kẻ địch, `05` mục 3). Nếu **tại thời điểm lên chuỗi** pha trăng khớp, dùng chiêu thay thế (là `IntentDef`, không có `cost`).
 - Có thể có `bloodMoonOverride` **[GĐ2]**: chiêu thay thế khi **tại thời điểm lên chuỗi** đang Huyết Nguyệt; ưu tiên hơn `moonOverrides`. Chiêu override luôn có cost 0 và đứng đầu chuỗi (mục 9.2).
 
 ### 9.2 Lên chuỗi
 Nguyệt Lực của kẻ địch theo cùng đường cong với người chơi (`base(r)`, mục 3.1) nhưng dùng `start`/`cap` riêng của kẻ địch. Vòng 1: quỹ = `start` (chưa có Dự Trữ).
 
-Chạy lúc tạo trận (vòng 1) và ở cuối mỗi vòng (mục 9.4, sau khi tiến pha và giảm `bloodMoonRounds`), cho từng kẻ địch còn sống theo vị trí 0 → n. Với quỹ `P = base(r) + moonReserve`:
+Chạy lúc tạo trận (vòng 1) và ở cuối mỗi vòng (mục 9.4, sau khi tiến pha và giảm `bloodMoonRounds`), cho từng kẻ địch còn sống theo vị trí 0 → n. Với quỹ `P = base(r) + moonReserve` **[Nguyệt Lệnh]** `+ turnMoonPowerBonus` nếu lệnh **Nguyệt Sinh** đang có hiệu lực **lúc lên chuỗi** (mục 7.5):
 
 1. `chain = []`, `used = ∅`.
 2. **Override:** nếu `bloodMoonRounds > 0` và có `bloodMoonOverride` **[GĐ2]**, hoặc có override trong `moonOverrides` khớp pha hiện tại → thêm chiêu đó vào `chain` với cost 0.
@@ -534,11 +602,12 @@ Chạy lúc tạo trận (vòng 1) và ở cuối mỗi vòng (mục 9.4, sau kh
 Thứ tự RNG trong một lần lên chuỗi của một kẻ địch: các lần bốc chiêu, rồi chọn mục tiêu theo thứ tự chuỗi.
 
 ### 9.3 Thực hiện lượt kẻ địch (theo thứ tự)
-1. **Xóa giáp** và gỡ **Phản Đòn** **[GĐ2]** của mọi kẻ địch.
-2. Kích hoạt Thiêu Đốt, rồi Hồi Phục của từng kẻ địch (vị trí 0 → 2). Kiểm tra thắng/thua.
+1. **Xóa giáp** và gỡ **Phản Đòn** **[GĐ2]** của mọi kẻ địch. **[Nguyệt Lệnh]** Bỏ qua bước này khi lệnh **Giữ Giáp** (`keepArmor`) có hiệu lực (mục 7.5). **[Nguyệt Lệnh]** Xóa khóa `"enemy"` trong `firstHitKeys` (Tập Kích, mục 7.5).
+2. Kích hoạt Thiêu Đốt, rồi Hồi Phục của từng kẻ địch (vị trí 0 → 2). Kiểm tra thắng/thua. **[Nguyệt Lệnh]** Sau đó **Mầm Sống / Đoàn Viên** (`turnStartHeal`) cho bên kẻ địch — cùng quy tắc hồi phẳng của mục 3.1 bước 5 (gồm Linh Thú của kẻ địch nếu có).
 3. Lần lượt từng kẻ địch còn sống (vị trí 0 → 2), mỗi kẻ địch thi hành `plannedIntents`:
    - Đang Đóng Băng: phát `intentSkipped` (một event cho cả chuỗi), gỡ Đóng Băng, `moonReserve = 0` (`moonReserveChanged`), bỏ cả chuỗi.
    - Ngược lại: lần lượt từng chiêu trong chuỗi — **xác định lại mục tiêu** (9.3.1) rồi thực hiện các effect của chiêu, phát `intentExecuted` / `intentFizzled` cho từng chiêu. Kiểm tra thắng/thua sau mỗi effect. Nếu kẻ địch ngã giữa chừng (do Phản Đòn): các chiêu còn lại bị hủy.
+   - **[Nguyệt Lệnh]** **Liên Kích** (`attackChainBonus`): chiêu `kind` `attack` / `attackDefend` được `+amount` mỗi hit nếu **trước nó** trong cùng chuỗi của kẻ địch đó đã thi hành một chiêu `attack` / `attackDefend` (mục 7.5).
    - Kết thúc chuỗi: `lastIntentIds` = `id` các chiêu **đã lên chuỗi** (kể cả bị hủy). Trận kết thúc giữa chừng: dừng, bỏ qua phần còn lại.
 
 #### 9.3.1 Xác định lại mục tiêu khi thực hiện
@@ -569,8 +638,8 @@ người chơi không áp). Không có phần "hủy ý định" của §9.5 —
 định. Trên lá bài và trong PvP nghĩa giữ nguyên (§9.5, §15.5).
 
 ### 9.4 Cuối vòng (theo thứ tự)
-1. Giảm 1 thời hạn mọi trạng thái loại "Thời hạn" của cả hai phe; gỡ trạng thái về 0.
-2. Tiến Nguyệt Luân 1 pha (mục 7.2). Sau đó, nếu `bloodMoonRounds > 0`: giảm 1, phát `bloodMoonChanged` **[GĐ2]** (mục 7.4).
+1. Giảm 1 thời hạn mọi trạng thái loại "Thời hạn" của cả hai phe; gỡ trạng thái về 0. **[Nguyệt Lệnh]** Xóa `UnitState.shieldUsed` của mọi đơn vị (Thế Thủ, mục 7.5).
+2. Tiến Nguyệt Luân 1 pha (mục 7.2 — `enterPhase` chạy cho pha mới). Sau đó, nếu `bloodMoonRounds > 0`: giảm 1, phát `bloodMoonChanged` **[GĐ2]** (mục 7.4).
 3. `round += 1`.
 4. Kẻ địch lên chuỗi mới (mục 9.2).
 5. Bắt đầu lượt người chơi.
@@ -600,30 +669,42 @@ Tính riêng cho **mỗi lượt damage** (mỗi hit, mỗi mục tiêu):
          + empower của bên gây            (chỉ khi đến từ lá tấn công của chủ empower)
          + 3 nếu mục tiêu có mark từ đúng Hero gây damage (chỉ lá tấn công)
          + bonus nội tại thăng cấp          (ví dụ M05 Liệt Hỏa +3, chỉ lá tấn công)
+         + firstHitBonus của lệnh Tập Kích: hit damage đầu tiên của bên gây
+           trong lượt (khóa firstHitKeys, mục 7.5)                  [Nguyệt Lệnh]
+         + attackChainBonus của lệnh Liên Kích: lá tấn công khi
+           attackCardsThisTurn ≥ 1; chiêu địch attack/attackDefend đứng sau
+           chiêu đánh trong cùng chuỗi (mục 7.5)                    [Nguyệt Lệnh]
 3. mult  = 1
-         × 1.5 nếu pha Trăng Non và lá có tag assassin
+         × mọi damageMultiplierForTag có hiệu lực khớp tag của lá — chỉ damage
+           từ lá bài (ưu đãi pha: Trăng Non cho assassin ×1.5, mục 7.1)
          × 0.75 nếu bên gây có weak
          × 1.5 nếu mục tiêu có vulnerable
          × 2 nếu F03 đã thăng cấp, damage từ lá của F03 (không tính lá Song Hành)
              và mục tiêu có freeze                                   [GĐ2]
 4. final = floor(flat × mult), tối thiểu 0
+4b. Thế Thủ [Nguyệt Lệnh]: nếu hit này là **đơn mục tiêu** và mục tiêu chưa có
+    `shieldUsed` trong vòng → `final = max(0, final − amount)` rồi đặt
+    `shieldUsed` cho mục tiêu (mục 7.5).
 5. Giáp chặn trước: blocked = min(armor, final); armor −= blocked; hp −= (final − blocked)
 6. Nếu mục tiêu có reflect và final > 0: Phản Đòn (mục 10.5)       [GĐ2]
 ```
 
 "Bên gây" và "chủ lá" ở trên là đơn vị hành động của effect (mục 5.3).
 
-- Damage từ chiêu kẻ địch dùng cùng công thức (bên gây là kẻ địch; không có tag lá bài).
+- Damage từ chiêu kẻ địch dùng cùng công thức (bên gây là kẻ địch; không có tag lá bài — `damageMultiplierForTag` không áp).
 - Phát event `damageDealt` với `amount`, `blocked`, `hpLost`.
 
 ### 10.2 Hồi máu
 ```
-healed = min(maxHp − hp, floor(amount × hệ số hồi máu của pha))
+healed = min(maxHp − hp, floor(amount × hệ số hồi máu))
 ```
+- `hệ số hồi máu` = `healMultiplier` của lệnh đang có hiệu lực (Ám Dạ ×0.5, Viên Nguyệt ×2, mục 7.5); không có lệnh → 1. Modifier Kỳ Vật `healMultiplier` cộng dồn cùng cách (§13.4).
+- Hồi phẳng từ lệnh (`turnStartHeal`: Mầm Sống / Đoàn Viên) **không** nhân hệ số.
 - Không hồi cho đơn vị đã ngã. Áp cho cả effect `heal` và tick `regen`.
 
 ### 10.3 Mất HP (`loseHp`)
 - Trừ thẳng HP, **bỏ qua giáp và mọi hệ số**. Thiêu Đốt cũng tính như mất HP.
+- **[Nguyệt Lệnh]** `hpLost.cause` gồm: `"bloodMoon"` (mục 7.4), `"reflect"` (mục 10.5), `"decree"` (Đoạn Tuyệt — mất HP do lệnh, không có đơn vị nguồn, không phải đòn tấn công), `"bloodPact"` (Huyết Tế, mục 5.9).
 
 ### 10.4 Ngã
 - `hp ≤ 0` → `hp = 0`, đơn vị **ngã**: gỡ mọi trạng thái, `armor = 0`, phát event `unitDied`.
@@ -632,7 +713,7 @@ healed = min(maxHp − hp, floor(amount × hệ số hồi máu của pha))
 
 ### 10.5 Phản Đòn [GĐ2]
 - Kích hoạt ở **mỗi lượt damage** (mỗi hit, mỗi mục tiêu) có `final > 0` lên đơn vị có `reflect` — **kể cả khi giáp chặn hết**.
-- Nguồn gây damage mất HP = giá trị `reflect` (như `loseHp`: bỏ qua giáp và mọi hệ số). Phát `hpLost { targetId: <nguồn>, cause: "reflect" }` ngay sau `damageDealt` của hit đó.
+- Nguồn gây damage mất HP = giá trị `reflect` (như `loseHp`: bỏ qua giáp và mọi hệ số) **[Nguyệt Lệnh]** — nhân `reflectMultiplier` của lệnh **Phản Chấn** khi có hiệu lực (mục 7.5). Phát `hpLost { targetId: <nguồn>, cause: "reflect" }` ngay sau `damageDealt` của hit đó.
 - Không kích hoạt bởi `loseHp`, Thiêu Đốt, Huyết Nguyệt hay chính Phản Đòn (không đệ quy).
 - Xử lý ngã ngay sau hit đó (10.4). Nếu nguồn ngã: dừng lá (5.2 bước 3) hoặc chiêu (9.3 bước 3). Kiểm tra thắng/thua như thường.
 - Hero mất HP do Phản Đòn: tính vào `damageTaken` như mọi lần mất HP.
@@ -641,7 +722,7 @@ healed = min(maxHp − hp, floor(amount × hệ số hồi máu của pha))
 - Effect `missingHpDamage { ratio, to, hits? }`: mỗi hit, damage gốc `floor((source.maxHp − source.hp) × ratio)` tính **lúc hit**, rồi qua công thức damage bình thường (mục 10.1: Sức Mạnh, Cường Hóa, Đánh Dấu, nội tại, pha trăng, Suy Yếu, Dễ Vỡ). Được dùng trong chiêu địch.
 
 ### 10.7 Dư Sinh [GĐ4b]
-- Effect `heal` có `overflow: "armor"` (chỉ trên lá bài): `raw = floor(amount × hệ số hồi)`, `healed = min(maxHp − hp, raw)`, `overflow = raw − healed`; nếu `overflow > 0`: mục tiêu nhận `floor(overflow × hệ số giáp)` giáp (`armorGained`).
+- Effect `heal` có `overflow: "armor"` (chỉ trên lá bài): `raw = floor(amount × hệ số hồi)` (mục 10.2), `healed = min(maxHp − hp, raw)`, `overflow = raw − healed`; nếu `overflow > 0`: mục tiêu nhận `floor(overflow × hệ số giáp)` giáp (`armorGained`) — hệ số giáp từ lệnh như mục 6.4.
 
 ### 10.8 Tụ Dược [GĐ4b]
 - Effect `burstRegen { multiplier, to }` (chỉ trên lá bài): với mỗi mục tiêu có Hồi Phục `v`: hồi `floor(v × multiplier × hệ số hồi)` (không Dư Sinh), rồi gỡ Hồi Phục (`statusRemoved`). Không có Hồi Phục → không tác dụng.
@@ -739,9 +820,10 @@ Hook `combatStart` chạy ở lượt 1 nên giáp nhận được còn tới h�
   hook nào.
 - Sau mỗi effect vẫn xử lý ngã, thăng cấp, thắng/thua như `01` §5.2. Trận kết
   thúc → dừng ngay, bỏ qua hook còn lại.
-- **Modifier:** `activeMoonModifiers` đổi thành `activeModifiers` = modifier của
-  pha trăng + modifier của mọi Kỳ Vật đang có. Chi phí theo tag, damage theo tag,
-  hệ số hồi / giáp, thưởng Ẩn Thân tự áp dụng; các hệ số nhân với nhau.
+- **Modifier:** `activeModifiers` = `phaseModifiers` của pha hiện tại (ưu đãi
+  tag + modifier của Nguyệt Lệnh đang bốc, mục 7.5–7.6) + modifier của mọi Kỳ
+  Vật đang có. Chi phí theo tag, damage theo tag, hệ số hồi / giáp, thưởng Ẩn
+  Thân tự áp dụng; các hệ số nhân với nhau.
 
 ---
 
@@ -827,7 +909,8 @@ Hành đủ cặp của đội và lá Binh Khí như §2/§14.2. Thứ tự RNG
 1. Bốc `firstPlayer` (0/1) một lần.
 2. Với từng seat theo chỉ số 0 → 1: dựng chồng bài, xáo, Hero `hp = maxHp` theo
    `pvp-config.heroStats`.
-3. Nguyệt Luân pha 1, `round = 1`, `bloodMoonRounds = 0`.
+3. `round = 1`, `bloodMoonRounds = 0`; `rollMoon` bốc pha khởi đầu và 8 Nguyệt
+   Lệnh bằng luồng RNG phụ (mục 7.6 — không có `start`, không ghi đè).
 4. Mỗi seat rút `handSize` lá, seat 0 trước.
 5. `status = "mulligan"`: **cả hai** Đổi Bài song song (Action `mulligan` có `player`).
    Xáo lại dùng chung `rngState` theo thứ tự server nhận — thứ tự đó ghi vào nhật ký.
@@ -847,9 +930,14 @@ Hành đủ cặp của đội và lá Binh Khí như §2/§14.2. Thứ tự RNG
 - **Cuối lượt** của P: như §3.3 bước 0–4 cho P (hook `playerTurnEnd` của P, Tàn Chiêu,
   Tích Tụ, Dự Trữ, gỡ Đóng Băng trên Hero P). P đi trước → đầu lượt người đi sau; ngược
   lại → cuối vòng.
-- **Cuối vòng:** tiến Nguyệt Luân, giảm `bloodMoonRounds` (§9.4 bước 2–3). Không có bước
-  lên chuỗi địch. Rồi đầu lượt người đi trước.
-- Pha trăng và Huyết Nguyệt dùng chung cho cả hai seat.
+- **Cuối vòng:** tiến Nguyệt Luân (`enterPhase` chạy cho pha mới), giảm
+  `bloodMoonRounds` (§9.4 bước 2–3). Không có bước lên chuỗi địch. Rồi đầu lượt
+  người đi trước.
+- Pha trăng, `moonDecrees` và Huyết Nguyệt dùng chung cho cả hai seat; lệnh "mỗi
+  bên" / "đầu lượt" áp **theo ghế đang tới lượt**: quỹ đầu lượt (Nguyệt Sinh),
+  rút thêm (Khai Trí), Chiêm Bài (Chiêm Tinh, Bói Nguyệt), Thế Cân (mục 7.5),
+  Hủy Bài / Huyết Tế đều xét và tính cho ghế P. Khóa Tập Kích là `"p<seat>"`
+  riêng từng ghế.
 
 ### 15.3 Thời hạn trạng thái
 
@@ -869,7 +957,8 @@ Hành đủ cặp của đội và lá Binh Khí như §2/§14.2. Thứ tự RNG
 - **[GĐ7]** `target: "enemy"` cũng nhận Linh Thú còn sống của đối thủ làm mục tiêu hợp lệ,
   như một Hero (mục 17.3); Linh Thú đối thủ đang Khiêu Khích ép chọn nó theo cùng thứ tự
   Hero trước / Linh Thú sau của §9.3.1 bước 1.
-- Hiệu ứng pha "cho cả hai phe" (Trăng Tròn hồi ×2, Hạ Huyền giáp ×1.5…) áp cho cả hai.
+- Hiệu ứng pha và lệnh "cho cả hai phe" (Viên Nguyệt hồi ×2, Huyền Giáp giáp
+  ×1.5, Thế Thủ…) áp cho cả hai người chơi.
 
 ### 15.5 Effect có nghĩa riêng trong PvP
 
@@ -904,6 +993,7 @@ Trữ của người chơi) — mục 9.3.2.
 | Tay đối thủ | Số lá; instance id `hidden_<n>` |
 | Chồng rút của cả hai | Chỉ số lá (id giả `hidden_…`) |
 | Chồng bỏ của cả hai | Đầy đủ |
+| Pha trăng, `moonDecrees` (Nguyệt Lệnh đã bốc của mọi pha) **[Nguyệt Luân mới]** | Đầy đủ — lịch trăng là thông tin chung của trận |
 | Hero, trạng thái, giáp, Nguyệt Lực, Dự Trữ | Đầy đủ |
 | Trang bị, Nguyệt Bảo của đối thủ | Đầy đủ |
 | `rngState` | `0` |
@@ -927,7 +1017,9 @@ lượt chơi roguelike co-op. HP Hero theo `heroes.json`.
 
 `CoopSide = { heroIds, deckCardIds, loadout }` (như `PvpSide` nhưng loadout PvE). Mỗi
 người: chồng bài + Nguyệt Lực + tay riêng; `done: false` trên `players[i]` — "đã Xong
-lượt này". Thứ tự RNG: dựng/xáo/rút từng seat theo chỉ số, boss lên chuỗi đầu. State
+lượt này". Thứ tự RNG: dựng/xáo/rút từng seat theo chỉ số; **[Nguyệt Luân mới]**
+`rollMoon` bốc pha khởi đầu và 8 Nguyệt Lệnh bằng luồng RNG phụ **trước** khi boss
+lên chuỗi đầu (lệnh Nguyệt Sinh ảnh hưởng quỹ lên chuỗi, mục 9.2). State
 riêng co-op (`02` §2): `comboUsed`, `playedThisTurn`, `boss { phase, reviveCountdown,
 revived }`. Cả hai Đổi Bài song song như §15.1.5.
 
@@ -936,8 +1028,11 @@ revived }`. Cả hai Đổi Bài song song như §15.1.5.
 Một vòng = **lượt đồng đội** (cả hai cùng đánh) → lượt kẻ địch → cuối vòng.
 
 1. **Đầu lượt đồng đội:** §3.1 cho **cả 6 Hero** theo vị trí 0 → 5 (xóa giáp, bộ đếm,
-   Thiêu Đốt / Hồi Phục, Huyết Nguyệt); kiểm thắng/thua; rồi với từng người 0 → 1:
-   Nguyệt Lực, rút bù, Cạn Bài (§16.6), hook `playerTurnStart` của người đó. Đặt
+   Thiêu Đốt / Hồi Phục, Huyết Nguyệt); **[Nguyệt Lệnh]** lệnh hồi "mỗi bên" (Mầm Sống /
+   Đoàn Viên) và Thế Cân chạy **một lần** cho bên người chơi tại mốc ghế 0 — heal áp lên
+   cả 6 Hero và Linh Thú của hai người; kiểm thắng/thua; rồi với từng người 0 → 1:
+   Nguyệt Lực (gồm Nguyệt Sinh), rút bù, Khai Trí, Cạn Bài (§16.6), hook
+   `playerTurnStart` và Chiêm Bài lệnh (Bói Nguyệt) của người đó. Đặt
    `done = false` cả hai; `playedThisTurn = []`.
 2. **Trong lượt:** **cả hai** gửi Action bất kỳ lúc nào; áp **theo thứ tự nhận**, mỗi
    Action nguyên tử (Chiêm Bài chỉ khóa người đang chọn). `endTurn` của một người =
@@ -962,7 +1057,9 @@ thứ tự áp nên chạy lại vẫn tất định. Mỗi người nhận even
 | Bộ đếm của Hero (vd. F04 `turnsWithAllyRegen`, `regenSpreadsToAllAllies`) | Theo 3 Hero của người sở hữu Hero đó |
 | Tay, Nguyệt Lực, Dự Trữ, Dưỡng Nguyệt, Liên Hoàn, Tích Tụ | Riêng mỗi người |
 | Tỏa / Đoạt Nguyệt | Như PvE; Đoạt → quỹ của người đánh |
-| Pha trăng, Huyết Nguyệt, Đổi Vận | **Dùng chung** — Đổi Vận của một người đổi pha cho cả hai ngay trong lượt |
+| Pha trăng, `moonDecrees`, Huyết Nguyệt, Đổi Vận | **Dùng chung** — Đổi Vận của một người đổi pha cho cả hai ngay trong lượt |
+| Lệnh "đầu lượt" gắn tài nguyên riêng (Nguyệt Sinh, Khai Trí, Chiêm Tinh, Bói Nguyệt, Xả Thân, Huyết Tế, Liên Kích của lá, Đoạn Tuyệt, Luân Hồi) | Theo **ghế** — quỹ / tay / chồng bỏ của người đó |
+| Lệnh "mỗi bên" gắn đơn vị (Mầm Sống, Đoàn Viên, Thế Cân, Thế Thủ, Tập Kích, Giữ Giáp, Ám Dạ, Phản Chấn…) | Bên người chơi = **cả 6 Hero** + Linh Thú; khóa Tập Kích `"p<seat>"` riêng từng ghế |
 | Hook trang bị / Nguyệt Bảo | Của người sở hữu; trigger theo sự kiện của người đó (`enemyKilled`: người có Hero kết liễu) |
 
 Chiêu địch chọn mục tiêu trong 6 Hero (§9.3.1); Khiêu Khích của Hero người B đổi mục
@@ -1061,7 +1158,10 @@ Kiểm tra thắng/thua sau mỗi effect. Event `summonActed { unitId }` trướ
 giải quyết.
 
 Đòn của Linh Thú (`action`) là **đòn tấn công**: Sức Mạnh và Suy Yếu của Linh Thú áp dụng
-như đòn thường (mục 10.1); **không có** hệ số pha trăng (hệ số đó chỉ dành cho lá bài).
+như đòn thường (mục 10.1); **không có** `damageMultiplierForTag` của pha (ưu đãi đó chỉ
+dành cho lá bài). **[Nguyệt Lệnh]** Hit của Linh Thú vẫn nhận thưởng lệnh theo hit như
+thường và tính vào `firstHitKeys` của **ghế chủ** (Tập Kích), `attackCardsThisTurn` của
+lá thì không liên quan — Liên Kích chỉ xét lá `type: "attack"`.
 Linh Thú bị giết (bởi `action` hay bất kỳ nguồn nào) **không** tính vào `enemiesKilled`
 trong PvP.
 

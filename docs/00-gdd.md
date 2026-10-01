@@ -66,23 +66,44 @@ Vương quốc **Hằng Châu** thờ mặt trăng như thần linh. Mỗi 100 n
 
 ### 3.3 Nguyệt Luân
 
-Thanh 8 pha, tự tiến 1 pha mỗi lượt, luôn hiện pha kế tiếp.
+Thanh 8 pha, tự tiến 1 pha cuối mỗi vòng. **Pha khởi đầu bốc ngẫu nhiên** khi tạo
+trận (tất định theo seed, `01` §7.6) — không còn "trận nào cũng Trăng Tròn ở vòng
+4"; lịch trăng của từng trận là khác nhau.
 
 ```
 🌑 Trăng Non → 🌒 → 🌓 Bán Nguyệt → 🌔 → 🌕 Trăng Tròn → 🌖 → 🌗 Hạ Huyền → 🌘
 ```
 
-| Pha | Hiệu ứng mẫu |
-|---|---|
-| 🌑 Trăng Non | Lá sát thủ +50% damage, ẩn thân kéo dài thêm 1 lượt |
-| 🌓 Bán Nguyệt | Lá khống chế tốn ít hơn 1 Nguyệt Lực (tối thiểu 1) |
-| 🌕 Trăng Tròn | Hồi máu x2 |
-| 🌗 Hạ Huyền | Giáp nhận được +50% |
-| 🔴 **Huyết Nguyệt** (pha đặc biệt) | Mở khóa lá Cấm Thuật mạnh nhất; mọi Hero mất 2 HP mỗi lượt |
+**Ưu đãi tag** — mỗi pha ưu đãi cố định một loại lá (`01` §7.1):
 
-- **Đổi Vận:** một số lá đẩy trăng tiến/lùi 1–2 pha, hoặc (hiếm) kích hoạt Huyết Nguyệt trong 2 lượt.
-- **Boss** hành động khác nhau theo pha.
-- Các pha trung gian (🌒🌔🌖🌘) không có hiệu ứng chung nhưng có thể là điều kiện của lá bài cụ thể.
+| Pha | Ưu đãi |
+|---|---|
+| 🌑 Trăng Non | Lá sát thủ (`assassin`): +50% damage |
+| 🌒 Lưỡi Liềm Đầu | Lá Mưu Lược (`scheme`): −1 Nguyệt Lực |
+| 🌓 Bán Nguyệt | Lá khống chế (`control`): −1 Nguyệt Lực |
+| 🌔 Trăng Khuyết Đầu | Lá tấn công (`attack`): −1 Nguyệt Lực |
+| 🌕 Trăng Tròn | Lá Điều Hòa (`harmony`): −1 Nguyệt Lực |
+| 🌖 Trăng Khuyết Cuối | Lá Cấm Thuật (`forbidden`): −1 Nguyệt Lực |
+| 🌗 Hạ Huyền | Lá Hộ Thể (`ward`): −1 Nguyệt Lực |
+| 🌘 Lưỡi Liềm Cuối | Lá nguyệt thuật (`moon`): −1 Nguyệt Lực |
+| 🔴 **Huyết Nguyệt** (trạng thái chồng lên, không phải pha) | Mở khóa lá Cấm Thuật mạnh nhất; mọi Hero mất 2 HP mỗi đầu lượt |
+
+**Nguyệt Lệnh** — mỗi pha có sẵn **3 lệnh** (luật phụ); lúc tạo trận bốc **đúng 1
+lệnh cho mỗi pha** → lịch trăng mỗi trận một khác. Lệnh áp cho **cả hai phe**
+(người chơi lẫn kẻ địch). Ví dụ: Trăng Tròn có thể mang *Viên Nguyệt* (mọi hồi máu
+×2), *Nguyệt Chiếu* (ánh trăng phá mọi Ẩn Thân) hay *Đoàn Viên* (đầu lượt, đơn vị
+yếu nhất của mỗi bên hồi 5 HP). Đủ 24 lệnh ở `01` §7.5.
+
+- **Đổi Vận:** một số lá đẩy trăng tiến/lùi 1–2 pha, hoặc (hiếm) kích hoạt Huyết
+  Nguyệt trong 2 lượt. Vì mọi pha giờ đều có lệnh đang hoạt động, đổi pha là một
+  quyết định có giá: đánh ngay hay chờ, đẩy trăng qua pha có Nguyệt tính của địch.
+- **Hủy Bài / Huyết Tế:** hai hành động mới chỉ mở khi lệnh tương ứng có hiệu lực
+  (`01` §5.8–5.9) — hủy lá trên tay lấy Nguyệt Lực (*Xả Thân*); hiến 3 HP của một
+  Hero để rút 2 lá (*Huyết Tế*).
+- **Nguyệt tính:** kẻ địch có chiêu trăng riêng kích hoạt theo pha — thông tin
+  **công khai** (xem được trong tooltip kẻ địch, `01` §9.1). Boss hành động khác
+  nhau theo pha.
+- Các pha đều có ý nghĩa chiến thuật: không còn "pha trống".
 
 ### 3.4 Hero thăng cấp trong trận
 

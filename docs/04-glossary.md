@@ -115,7 +115,14 @@
 | Lá cần Huyết Nguyệt | `requiresBloodMoon` |
 | Ý định Huyết Nguyệt | `bloodMoonOverride` |
 | Đổi Vận | `shiftMoon` |
-| Hiệu ứng của pha | `moonModifier` |
+| Ưu Đãi Pha [Nguyệt Luân mới] | `tagBonus`, `tagBonusText` (trên `MoonPhaseDef`) |
+| Nguyệt Lệnh | `decree`, `MoonDecreeDef`; lệnh đã bốc của mỗi pha: `moonDecrees` (trên `CombatState`) |
+| Nguyệt tính (chiêu trăng công khai của kẻ địch) | `moonOverrides` (trên `EnemyDef`) |
+| Hiệu ứng của pha | `MoonModifier`; tra cứu: `phaseModifiers` (ưu đãi + lệnh), `decreeModifier` (một loại của lệnh hiện tại), `currentDecree` |
+| Bốc pha khởi đầu và lệnh | `rollMoon`; hook vào pha: `enterPhase` |
+| Modifier chỉ dành cho lệnh | `DECREE_ONLY_MODIFIERS` |
+| Hủy Bài | action `discardCard` (khi lệnh Xả Thân có hiệu lực) |
+| Huyết Tế | action `bloodPact` (khi lệnh Huyết Tế có hiệu lực) |
 
 ## Hero và phát triển
 

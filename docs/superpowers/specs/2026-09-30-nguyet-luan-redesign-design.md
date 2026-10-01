@@ -95,7 +95,7 @@ Dữ liệu cũ (golden T213, phiếu cũ) sẽ khác kết quả. Chấp nhận
 
 - `discardCard { instanceId; player? }`:
   - Hợp lệ khi `status = playerTurn`, lệnh hiện tại là `xa_than`, lá nằm trên tay người chơi đó, và số lần hủy trong lượt < `perTurn`.
-  - Kết quả: lá vào chồng bỏ (event `cardDiscarded { reason: "discard" }`), rồi `moonPower += moonPower` (của modifier).
+  - Kết quả: lá vào chồng bỏ (event `cardDiscarded { instanceIds; player? }` — không có trường `reason`), rồi `moonPower += moonPower` (của modifier).
   - Đếm bằng `PlayerState.discardsThisTurn`, đặt lại đầu lượt.
 - `bloodPact { heroId; player? }`:
   - Hợp lệ khi lệnh hiện tại là `huyet_te`, chưa dùng trong lượt (`PlayerState.bloodPactUsed`), Hero thuộc người chơi, còn sống, `hp > hp của modifier`.
@@ -168,7 +168,7 @@ Dùng `moonOverrides` sẵn có: khi địch lên chuỗi trong pha đó, chiêu
 - `moonModifierSchema` thêm các loại ở §4 (cột Modifier). Mỗi loại chỉ hợp lệ trong `decrees`, trừ các loại sẵn có (vẫn dùng được cho Kỳ Vật như trước).
 - `CombatState.moonDecrees: string[]` (8 id), bắt buộc với trận mới.
 - `PlayerState.discardsThisTurn?`, `bloodPactUsed?`: optional, chỉ gán khi dùng.
-- Hàm tra cứu duy nhất `activeMoonModifiers(data, state, player)` trả `tagBonus` + `modifiers` của lệnh pha hiện tại + modifier Kỳ Vật. Mọi hàm `moon*` trong `moon.ts` đọc qua hàm này.
+- Tra cứu qua `moon.ts`: `currentDecree(data, state, index?)` → `MoonDecreeDef` đang bốc của pha; `phaseModifiers(data, state, index?)` → `tagBonus` của pha + `modifiers` của lệnh đó; `decreeModifier(data, state, type)` → modifier `type` của lệnh pha hiện tại (nếu có). `activeModifiers` (tổng hợp modifier pha + Kỳ Vật / Nguyệt Bảo, `01` §13.4) đọc phần pha qua `phaseModifiers`. Mọi hàm `moon*` trong `moon.ts` đọc qua các hàm này.
 
 ## 8. Ảnh hưởng và tài liệu
 
@@ -222,7 +222,7 @@ T213 ghi lại **một lần** sau khi mọi cơ chế xong (có duyệt).
 ## 11. Thứ tự làm (sẽ thành kế hoạch riêng)
 
 1. Tài liệu luật (§8).
-2. Dữ liệu + schema + `activeMoonModifiers`, chuyển 3 modifier cũ thành lệnh, bốc lệnh / pha khởi đầu (T314–T316).
+2. Dữ liệu + schema + `phaseModifiers` / `decreeModifier` / `currentDecree`, chuyển 3 modifier cũ thành lệnh, bốc lệnh / pha khởi đầu (T314–T316).
 3. Lệnh modifier số học và đầu lượt (T317–T320).
 4. Hủy Bài, Huyết Tế, Đoạn Tuyệt, Luân Hồi, Chiêm Tinh, Bói Nguyệt; server / realtime (T321–T323, T325).
 5. Nguyệt tính kẻ địch + bot (T324).
