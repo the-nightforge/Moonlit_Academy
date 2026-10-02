@@ -224,7 +224,7 @@ export function chooseCombatAction(data: GameData, state: CombatState, seat: num
   const pactRule = decreeModifier(data, state, "bloodPact");
   if (pactRule !== undefined && player.bloodPactUsed !== true && player.hand.length < 5) {
     const offering = heroesOf(state, seat)
-      .filter((hero) => hero.alive && hero.hp / hero.maxHp >= 0.6)
+      .filter((hero) => hero.alive && hero.hp / hero.maxHp >= 0.6 && hero.hp > pactRule.hp)
       .sort((a, b) => b.hp - a.hp)[0];
     if (offering !== undefined) return { type: "bloodPact", heroId: offering.id };
   }
