@@ -28,9 +28,23 @@ export const RENDER_SCALE = Math.min(
 /** Base style for every Text object: rasterized at RENDER_SCALE so it stays crisp. */
 export const TEXT_BASE = { fontFamily: FONT, resolution: RENDER_SCALE } as const;
 
-/** Lets a scene keep using design-pixel coordinates on the high-resolution canvas. */
+/**
+ * Lets a scene keep using design-pixel coordinates on the high-resolution canvas.
+ * The design area stays centered when the window (EXPAND scale mode) resizes.
+ */
 export function useDesignCamera(scene: Phaser.Scene): void {
-  scene.cameras.main.setZoom(RENDER_SCALE).centerOn(DESIGN_WIDTH / 2, DESIGN_HEIGHT / 2);
+  const center = () => scene.cameras.main.setZoom(RENDER_SCALE).centerOn(DESIGN_WIDTH / 2, DESIGN_HEIGHT / 2);
+  center();
+  scene.scale.on("resize", center);
+  scene.events.once("shutdown", () => scene.scale.off("resize", center));
+}
+
+/** The world rect the main camera shows: the design area plus whatever a wider/taller window adds. */
+export function visibleWorld(scene: Phaser.Scene): { x: number; y: number; w: number; h: number } {
+  const cam = scene.cameras.main;
+  const w = cam.width / cam.zoom;
+  const h = cam.height / cam.zoom;
+  return { x: DESIGN_WIDTH / 2 - w / 2, y: DESIGN_HEIGHT / 2 - h / 2, w, h };
 }
 
 export const COLORS = {
@@ -75,6 +89,44 @@ export const STATUS_LABELS: Record<StatusId, string> = {
   guard: "Hộ",
   charm: "Mê",
 };
+
+/**
+ * In-card status icon: glyph, ring color and the `keywords.json` entry whose
+ * name/text the hover tooltip shows (the rules text lives in data).
+ */
+export const STATUS_ICONS: Record<StatusId, { glyph: string; color: number; keywordId: string }> = {
+  stealth: { glyph: "◌", color: 0x8899ff, keywordId: "an_than" },
+  taunt: { glyph: "!", color: 0xe0a040, keywordId: "khieu_khich" },
+  weak: { glyph: "↓", color: 0x9a7fd0, keywordId: "suy_yeu" },
+  vulnerable: { glyph: "✖", color: 0xd06060, keywordId: "de_vo" },
+  mark: { glyph: "◎", color: 0xe06080, keywordId: "danh_dau" },
+  burn: { glyph: "♨", color: 0xe07030, keywordId: "thieu_dot" },
+  regen: { glyph: "✚", color: 0x58b368, keywordId: "hoi_phuc" },
+  strength: { glyph: "↑", color: 0xd05454, keywordId: "suc_manh" },
+  empower: { glyph: "✦", color: 0xf4d35e, keywordId: "cuong_hoa" },
+  freeze: { glyph: "❄", color: 0x7fc8e8, keywordId: "dong_bang" },
+  reflect: { glyph: "⟲", color: 0xb0b0c0, keywordId: "phan_don" },
+  guard: { glyph: "⛉", color: 0x9fd4ff, keywordId: "ho_ve" },
+  charm: { glyph: "♥", color: 0xe080c0, keywordId: "me_hoac" },
+};
+
+/** Phong Ấn (`01` §5.6) is not a status but shows as one more in-card icon. */
+export const SEAL_ICON = { glyph: "⛨", color: 0xb9a8ff, keywordId: "phong_an" } as const;
+
+/** Combat screen anchors the scene and the event animator share (design px). */
+export const COMBAT_LAYOUT = {
+  moon: { x: 640, y: 40 },
+  /** The Nguyệt Lực orb and the end-turn medallion share one column. */
+  moonPower: { x: 1206, y: 104 },
+  endTurn: { x: 1206, y: 648 },
+  /** Own draw pile; an opponent's / partner's sits at the top row's height. */
+  pile: { x: 14, y: 456 },
+  /** Hand cards peek from the bottom edge; hovering lifts one fully. */
+  handY: 680,
+  /** Floating combat text between the two rows. */
+  midY: 313,
+  unitFlash: { w: 140, h: 200 },
+} as const;
 
 export const FACTION_LABELS: Record<Faction, string> = {
   thanhLoan: "Thanh Loan Viện",
@@ -124,7 +176,7 @@ export const NODE_LABELS: Record<NodeType, string> = {
   boss: "Boss",
 };
 
-const TAG_LABELS: Record<CardTag, string> = {
+export const TAG_LABELS: Record<CardTag, string> = {
   attack: "tấn công",
   control: "khống chế",
   assassin: "ám sát",

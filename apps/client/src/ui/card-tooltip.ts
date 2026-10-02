@@ -4,6 +4,20 @@ import { COLORS, TEXT_BASE } from "./theme";
 
 const WIDTH = 300;
 
+function tooltipBox(scene: Phaser.Scene, lines: string[], width: number) {
+  const text = scene.add.text(12, 10, lines.filter((line) => line.length > 0).join("\n"), {
+    ...TEXT_BASE,
+    fontSize: "12px",
+    color: COLORS.text,
+    wordWrap: { width: width - 24 },
+    lineSpacing: 4,
+  });
+  const height = text.height + 20;
+  const panel = scene.add.rectangle(0, 0, width, height, 0x0a0e20, 0.96).setOrigin(0, 0);
+  panel.setStrokeStyle(1, COLORS.goldFill);
+  return { height, parts: [panel, text] };
+}
+
 /** Large card view + keyword explanations; caller destroys it on pointerout. */
 export function showCardTooltip(
   scene: Phaser.Scene,
@@ -14,7 +28,7 @@ export function showCardTooltip(
   extraLines: string[] = [],
 ): Phaser.GameObjects.Container {
   const card = typeof cardOrId === "string" ? data.cards[cardOrId]! : cardOrId;
-  const lines = [
+  const { height, parts } = tooltipBox(scene, [
     `${card.name}  ·  ${card.cost} Nguyệt Lực  ·  ${card.copies} bản`,
     card.text,
     ...(card.keywords ?? []).map((id) => {
@@ -22,18 +36,22 @@ export function showCardTooltip(
       return keyword ? `• ${keyword.name}: ${keyword.text}` : "";
     }),
     ...extraLines,
-  ].filter((line) => line.length > 0);
-  const text = scene.add.text(12, 10, lines.join("\n"), {
-    ...TEXT_BASE,
-    fontSize: "12px",
-    color: COLORS.text,
-    wordWrap: { width: WIDTH - 24 },
-    lineSpacing: 4,
-  });
-  const height = text.height + 20;
+  ], WIDTH);
   const left = Math.min(Math.max(8, x), 1280 - WIDTH - 8);
   const top = Math.min(Math.max(8, y - height), 720 - height - 8);
-  const panel = scene.add.rectangle(0, 0, WIDTH, height, 0x0a0e20, 0.96).setOrigin(0, 0);
-  panel.setStrokeStyle(1, COLORS.goldFill);
-  return scene.add.container(left, top, [panel, text]).setDepth(200);
+  return scene.add.container(left, top, parts).setDepth(200);
+}
+
+/** Plain text tooltip whose top-left sits at (x, y), kept on screen; caller destroys it. */
+export function showTextTooltip(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  lines: string[],
+  width = 240,
+): Phaser.GameObjects.Container {
+  const { height, parts } = tooltipBox(scene, lines, width);
+  const left = Math.min(Math.max(8, x), 1280 - width - 8);
+  const top = Math.min(Math.max(8, y), 720 - height - 8);
+  return scene.add.container(left, top, parts).setDepth(200);
 }
