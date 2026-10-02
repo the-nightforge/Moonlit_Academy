@@ -1527,17 +1527,17 @@ export class CombatScene extends Phaser.Scene {
         broken ? COLORS.dead : isValidTarget || mulliganPicked ? COLORS.goldFill : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
       ),
     );
-    // Moon gate (center 0,-14): the card's own art if there is one, else its tag icon in a tag-colored sky.
-    const gateY = -14;
+    // Moon gate (center 0,-30): the card's own art if there is one, else its tag icon in a tag-colored sky.
+    const gateY = -30;
     const color = cardColorOf(card);
-    if (!this.coverImage(`cards:${instance.cardId}`, 0, gateY, 42, 42, container)) {
+    if (!this.coverImage(`cards:${instance.cardId}`, 0, gateY, 50, 50, container)) {
       ensureTextures(this);
-      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.55).setAlpha(broken ? 0.15 : 0.5));
-      for (const [sx, sy, r] of [[-12, -8, 0.9], [11, -12, 0.7], [14, 6, 0.6], [-14, 7, 0.5]] as const) {
+      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.66).setAlpha(broken ? 0.15 : 0.5));
+      for (const [sx, sy, r] of [[-15, -10, 0.9], [13, -15, 0.7], [17, 7, 0.6], [-17, 9, 0.5]] as const) {
         container.add(this.add.circle(sx, gateY + sy, r, 0xffffff, 0.7));
       }
       const iconKey = cardIconOf(card);
-      if (this.textures.exists(iconKey)) container.add(this.add.image(0, gateY, iconKey).setDisplaySize(30, 30).setAlpha(broken ? 0.5 : 1));
+      if (this.textures.exists(iconKey)) container.add(this.add.image(0, gateY, iconKey).setDisplaySize(36, 36).setAlpha(broken ? 0.5 : 1));
     }
     // Owner jewel on the bottom edge.
     container.add(
@@ -1546,39 +1546,21 @@ export class CombatScene extends Phaser.Scene {
         .setAngle(45)
         .setStrokeStyle(1, COLORS.goldFill),
     );
-    // Name banner (red lacquer: attack, blue: skill) right of the cost coin; long names take two lines.
-    const bannerX = 12;
-    const bannerY = -58;
-    container.add(grey(hudImage(this, card.type === "attack" ? HUD.bannerAttack : HUD.bannerSkill, bannerX, bannerY)));
+    // Title plate between the gate and the parchment (red lacquer: attack, blue: skill), the name on one line.
+    const titleY = 15;
+    container.add(grey(hudImage(this, card.type === "attack" ? HUD.bannerAttack : HUD.bannerSkill, 0, titleY)));
     const name = this.add
-      .text(bannerX + 2, bannerY, card.name, {
+      .text(0, titleY, card.name, {
         ...TEXT_BASE,
-        fontSize: "10px",
+        fontSize: "11px",
         fontStyle: "bold",
         color: "#fff1d0",
-        stroke: "#2a0a0a",
+        stroke: "#1a0608",
         strokeThickness: 2,
-        align: "center",
-        lineSpacing: -3,
       })
       .setOrigin(0.5);
-    // One line at 10px, else one at 9px, else two lines at 10px, else two at 9px (wider).
-    if (name.width > 54) name.setFontSize(9);
-    if (name.width > 54) name.setFontSize(10).setWordWrapWidth(52);
-    if (name.height > 25) name.setFontSize(9).setWordWrapWidth(60);
-    this.fitWidth(name, 60);
-    // A name that still wraps to three lines shrinks to the banner's height.
-    if (name.displayHeight > 25) name.setScale(name.scaleX * (25 / name.displayHeight));
-    container.add(name);
-    // Type plaque: the weapon or bond overrides the card type.
-    const plaque =
-      weapon !== undefined ? `⚔ ${weapon.name}` : partnerId !== undefined ? "Song Hành" : card.type === "attack" ? "Tấn Công" : "Kỹ Năng";
-    container.add(
-      this.fitWidth(
-        this.add.text(0, 19, plaque, { ...TEXT_BASE, fontSize: "9px", color: weapon !== undefined ? "#ffb080" : COLORS.gold }).setOrigin(0.5),
-        56,
-      ),
-    );
+    if (name.width > 80) name.setFontSize(10);
+    container.add(this.fitWidth(name, 82));
     if (weapon !== undefined) {
       // Weapon card (`01` §14.2): inner orange frame and the weapon's name.
       if (!broken && !isValidTarget) {
@@ -1639,7 +1621,7 @@ export class CombatScene extends Phaser.Scene {
     if (instance.heldTurns > 0 && card.keywords?.includes("tich_tu")) {
       container.add(
         this.add
-          .text(0, 8, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold, stroke: "#05070f", strokeThickness: 3 })
+          .text(0, gateY + 22, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold, stroke: "#05070f", strokeThickness: 3 })
           .setOrigin(0.5),
       );
     }
@@ -1659,11 +1641,11 @@ export class CombatScene extends Phaser.Scene {
     container.add(body);
 
     if (mulliganPicked) {
-      container.add(
-        this.add
-          .text(0, 0, "Đổi", { ...TEXT_BASE, fontSize: "16px", color: COLORS.gold })
-          .setOrigin(0.5),
-      );
+      ensureTextures(this);
+      container.add(this.roundBox(CARD_W - 4, CARD_H - 4, 0x05070f, 0.55, 0, 0, CARD_RADIUS - 1));
+      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e).setScale(0.7).setAlpha(0.6));
+      container.add(this.add.circle(0, gateY, 22, 0x0a0e26, 0.95).setStrokeStyle(1.5, COLORS.goldFill));
+      container.add(hudImage(this, HUD.swap, 0, gateY, 1.2));
     }
     if (broken) {
       container.add(
@@ -1727,19 +1709,42 @@ export class CombatScene extends Phaser.Scene {
     ).setOrigin(0.5);
   }
 
+  /**
+   * Đổi Bài: a lacquer plate over the hand (swap emblem, title, hint, one pip
+   * per pick) and the medallion where end turn sits. Once done, the plate
+   * says who is still choosing.
+   */
   private renderMulliganBar() {
-    if (this.state.players[this.mySeat]?.mulliganDone) {
-      this.text(WIDTH / 2, 578, this.isCoop ? "Chờ đồng đội Đổi Bài…" : "Chờ đối thủ Đổi Bài…", 14, COLORS.dimText).setOrigin(0.5);
-      return;
-    }
+    const done = this.state.players[this.mySeat]?.mulliganDone === true;
+    const max = this.gameData.combatConfig.maxMulligan;
     const picks = this.mulliganPicks.size;
-    this.text(WIDTH / 2, 578, `Đổi Bài: chọn tối đa ${this.gameData.combatConfig.maxMulligan} lá để đổi`, 14, COLORS.gold).setOrigin(0.5);
-    // Where the end-turn button sits: the phase's main action keeps one place.
-    this.endScreenButton(1180, COMBAT_LAYOUT.endTurn.y, picks > 0 ? `Đổi (${picks})` : "Giữ nguyên", () => {
+    const plate = this.add.container(WIDTH / 2, 574);
+    this.root.add(plate);
+    const w = done ? 250 : 320;
+    plate.add(this.roundBox(w, 34, 0x0a0e26, 0.92, 1.5, COLORS.goldFill, 17));
+    plate.add(hudImage(this, done ? HUD.hourglass : HUD.swap, -w / 2 + 22, 0, done ? 0.7 : 0.8).setAlpha(done ? 0.7 : 1));
+    const title = this.add.text(-w / 2 + 42, 0, "Đổi Bài", { ...TEXT_BASE, fontSize: "15px", fontStyle: "bold", color: COLORS.gold }).setOrigin(0, 0.5);
+    plate.add(title);
+    const hint = done ? (this.isCoop ? "chờ đồng đội…" : "chờ đối thủ…") : `chọn tối đa ${max} lá`;
+    plate.add(this.add.text(title.x + title.width + 10, 1, hint, { ...TEXT_BASE, fontSize: "12px", color: COLORS.dimText }).setOrigin(0, 0.5));
+    if (done) return;
+    for (let i = 0; i < max; i++) {
+      plate.add(
+        this.add
+          .rectangle(w / 2 - 22 - (max - 1 - i) * 16, 0, 9, 9, i < picks ? COLORS.goldFill : 0x0a0e26)
+          .setAngle(45)
+          .setStrokeStyle(1.2, COLORS.goldFill),
+      );
+    }
+    const { x, y } = COMBAT_LAYOUT.endTurn;
+    const btn = this.medallionButton(x, y, true, hudImage(this, HUD.swap, 0, -16), picks > 0 ? `Đổi ${picks} lá` : "Giữ nguyên", "Vào trận", () => {
       const instanceIds = [...this.mulliganPicks];
       this.mulliganPicks.clear();
       this.dispatch({ type: "mulligan", instanceIds });
     });
+    this.hoverTooltip(btn, () => ({ x: x - 290, y: y - 60 }), () => [
+      picks > 0 ? `Đổi ${picks} lá đã chọn rồi vào trận` : "Giữ nguyên tay bài rồi vào trận",
+    ]);
   }
 
   private renderChoiceOverlay() {
@@ -2105,33 +2110,12 @@ export class CombatScene extends Phaser.Scene {
     const canAct = this.state.status === "playerTurn" || (coop && this.state.status === "choosing");
     const myDone = coop && seat.done === true;
     const active = canAct && !myDone;
-    // A gold medallion: hourglass (✓ in co-op), the label, the round; it glows while it is your move.
-    const medal = this.add.container(x, y);
-    this.root.add(medal);
-    if (active) {
-      ensureTextures(this);
-      const glow = this.add.image(0, 0, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e).setScale(1.25).setAlpha(0.25);
-      medal.add(glow);
-      this.loopTween(glow, { alpha: 0.55, scale: 1.4, duration: 900 });
-    }
-    const face = hudImage(this, HUD.medallion, 0, 0);
-    if (!active) face.setTint(0x6a6f88);
-    medal.add(face);
-    if (coop) medal.add(this.add.text(0, -16, "✓", { ...TEXT_BASE, fontSize: "24px", color: active ? COLORS.gold : COLORS.dimText }).setOrigin(0.5));
-    else medal.add(hudImage(this, HUD.hourglass, 0, -16).setAlpha(active ? 1 : 0.45));
-    const label = coop ? "Xong lượt" : "Kết thúc";
-    medal.add(this.add.text(0, 6, label, { ...TEXT_BASE, fontSize: "12px", fontStyle: "bold", color: active ? COLORS.gold : COLORS.dimText }).setOrigin(0.5));
-    medal.add(this.add.text(0, 24, `Vòng ${this.state.round}`, { ...TEXT_BASE, fontSize: "10px", color: active ? COLORS.text : COLORS.dimText }).setOrigin(0.5));
-    const btn = this.add.circle(x, y, 52, 0x000000, 0.001);
-    this.root.add(btn);
-    btn.setInteractive({ useHandCursor: active });
-    if (active) {
-      btn.on("pointerover", () => medal.setScale(1.06));
-      btn.on("pointerout", () => medal.setScale(1));
-      btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        if (pointer.button === 0 && !this.inputLocked) this.dispatch({ type: "endTurn" });
-      });
-    }
+    const icon = coop
+      ? this.add.text(0, -16, "✓", { ...TEXT_BASE, fontSize: "24px", color: active ? COLORS.gold : COLORS.dimText }).setOrigin(0.5)
+      : hudImage(this, HUD.hourglass, 0, -16).setAlpha(active ? 1 : 0.45);
+    const btn = this.medallionButton(x, y, active, icon, coop ? "Xong lượt" : "Kết thúc", `Vòng ${this.state.round}`, () =>
+      this.dispatch({ type: "endTurn" }),
+    );
     const keep = Math.min(this.gameData.combatConfig.moonReserveMax, seat.moonPower);
     const partnerDone = this.state.players.find((p) => p.index !== this.mySeat)?.done === true;
     const waiting = myDone
@@ -2146,6 +2130,46 @@ export class CombatScene extends Phaser.Scene {
         ? [`${coop ? "Xong lượt" : "Kết thúc lượt"} (phím E) — vòng ${this.state.round}`, `Giữ ${keep} Nguyệt Lực sang lượt sau`]
         : [waiting, `Vòng ${this.state.round}`],
     );
+  }
+
+  /**
+   * The phase's main action (end turn, Đổi Bài): a gold medallion with an
+   * icon, a label and a small line under it; it glows while it can be pressed.
+   * Returns the hit circle for the tooltip.
+   */
+  private medallionButton(
+    x: number,
+    y: number,
+    active: boolean,
+    icon: Phaser.GameObjects.Image | Phaser.GameObjects.Text,
+    label: string,
+    sub: string,
+    onClick: () => void,
+  ): Phaser.GameObjects.Arc {
+    const medal = this.add.container(x, y);
+    this.root.add(medal);
+    if (active) {
+      ensureTextures(this);
+      const glow = this.add.image(0, 0, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e).setScale(1.25).setAlpha(0.25);
+      medal.add(glow);
+      this.loopTween(glow, { alpha: 0.55, scale: 1.4, duration: 900 });
+    }
+    const face = hudImage(this, HUD.medallion, 0, 0);
+    if (!active) face.setTint(0x6a6f88);
+    medal.add([face, icon]);
+    medal.add(this.add.text(0, 6, label, { ...TEXT_BASE, fontSize: "12px", fontStyle: "bold", color: active ? COLORS.gold : COLORS.dimText }).setOrigin(0.5));
+    medal.add(this.add.text(0, 24, sub, { ...TEXT_BASE, fontSize: "10px", color: active ? COLORS.text : COLORS.dimText }).setOrigin(0.5));
+    const btn = this.add.circle(x, y, 52, 0x000000, 0.001);
+    this.root.add(btn);
+    btn.setInteractive({ useHandCursor: active });
+    if (active) {
+      btn.on("pointerover", () => medal.setScale(1.06));
+      btn.on("pointerout", () => medal.setScale(1));
+      btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0 && !this.inputLocked) onClick();
+      });
+    }
+    return btn;
   }
 
 }

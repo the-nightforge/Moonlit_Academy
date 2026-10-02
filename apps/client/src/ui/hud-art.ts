@@ -19,6 +19,7 @@ export const HUD = {
   cardFace: "hud_card_face",
   bannerAttack: "hud_banner_attack",
   bannerSkill: "hud_banner_skill",
+  swap: "hud_swap",
 } as const;
 
 const SIZE: Record<string, [number, number]> = {
@@ -30,8 +31,9 @@ const SIZE: Record<string, [number, number]> = {
   [HUD.medallion]: [108, 108],
   [HUD.hourglass]: [22, 30],
   [HUD.cardFace]: [110, 160],
-  [HUD.bannerAttack]: [70, 26],
-  [HUD.bannerSkill]: [70, 26],
+  [HUD.bannerAttack]: [98, 20],
+  [HUD.bannerSkill]: [98, 20],
+  [HUD.swap]: [30, 30],
 };
 
 const GOLD: [number, string][] = [
@@ -203,10 +205,9 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
     highlight(ctx, c - 18, c - 22, 16, 7);
   },
   // Hand card frame (110×160): indigo lacquer, one gold line with corner
-  // studs, the round moon gate (center 55,66, r 25), the type plaque (55,99)
-  // and the parchment text panel (y 108–152). Nothing overlaps: the cost
-  // coin, name banner, emblem and owner jewel are added by the scene into
-  // the free header (y 8–37) and around.
+  // studs, the round moon gate (center 55,50, r 30) and the parchment text
+  // panel (y 108–152). The scene adds the cost coin (top-left corner, clear
+  // of the gate), the title plate (y 85–105) and the owner jewel.
   [HUD.cardFace]: (ctx, w, h) => {
     ctx.beginPath();
     ctx.roundRect(0, 0, w, h, 9);
@@ -238,8 +239,8 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
     }
     // Moon gate: night sky disc, gold ring, inner hairline, four studs.
     const gx = w / 2;
-    const gy = 66;
-    const gr = 25;
+    const gy = 50;
+    const gr = 30;
     ctx.fillStyle = radial(ctx, gx, gy, gr, [[0, "#2a3878"], [0.7, "#0e1438"], [1, "#060920"]]);
     ctx.beginPath();
     ctx.arc(gx, gy, gr, 0, Math.PI * 2);
@@ -259,14 +260,6 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
       ctx.arc(gx + gr * Math.cos(a), gy + gr * Math.sin(a), 2, 0, Math.PI * 2);
       ctx.fill();
     }
-    // Type plaque.
-    ctx.beginPath();
-    ctx.roundRect(gx - 31, 92.5, 62, 13, 6.5);
-    ctx.fillStyle = "#0a0e26";
-    ctx.fill();
-    ctx.strokeStyle = "rgba(232,196,90,0.9)";
-    ctx.lineWidth = 0.9;
-    ctx.stroke();
     // Parchment text panel.
     ctx.beginPath();
     ctx.roundRect(9, 108, w - 18, 44, 4);
@@ -281,8 +274,33 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
     ctx.lineTo(w - 12, 110.5);
     ctx.stroke();
   },
-  [HUD.bannerAttack]: (ctx, w, h) => banner(ctx, w, h, ["#e05a5a", "#a8202c", "#5a0c16"]),
-  [HUD.bannerSkill]: (ctx, w, h) => banner(ctx, w, h, ["#5a8ad8", "#1e4888", "#0c2048"]),
+  [HUD.bannerAttack]: (ctx, w, h) => banner(ctx, w, h, ["#c8424a", "#8a1a26", "#4a0a12"]),
+  [HUD.bannerSkill]: (ctx, w, h) => banner(ctx, w, h, ["#4a78c8", "#1c3f7c", "#0c1f44"]),
+  // Đổi Bài: two gold arrows chasing each other round a circle.
+  [HUD.swap]: (ctx, w) => {
+    const c = w / 2;
+    const r = c - 6;
+    ctx.strokeStyle = linear(ctx, 0, w, GOLD);
+    ctx.fillStyle = "#f4d35e";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    for (const start of [Math.PI * 0.12, Math.PI * 1.12]) {
+      const end = start + Math.PI * 0.68;
+      ctx.beginPath();
+      ctx.arc(c, c, r, start, end);
+      ctx.stroke();
+      // Arrowhead along the clockwise tangent at the arc's end.
+      const [px, py] = [c + r * Math.cos(end), c + r * Math.sin(end)];
+      const [tx, ty] = [-Math.sin(end), Math.cos(end)];
+      const [nx, ny] = [Math.cos(end), Math.sin(end)];
+      ctx.beginPath();
+      ctx.moveTo(px + tx * 5, py + ty * 5);
+      ctx.lineTo(px + nx * 5 - tx * 2, py + ny * 5 - ty * 2);
+      ctx.lineTo(px - nx * 5 - tx * 2, py - ny * 5 - ty * 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+  },
   [HUD.hourglass]: (ctx, w, h) => {
     ctx.fillStyle = linear(ctx, 0, h, GOLD);
     ctx.fillRect(1, 1, w - 2, 3);
@@ -312,29 +330,43 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
   },
 };
 
-/** Name banner: a lacquered ribbon with swallowtail ends and gold edges. */
+/**
+ * Title plate across the card: a lacquered bar with pointed ends, a gold rim,
+ * a gold hairline inside and a gold bead at each tip.
+ */
 function banner(ctx: CanvasRenderingContext2D, w: number, h: number, lacquer: [string, string, string]) {
-  const ribbon = (inset: number) => {
+  const plate = (inset: number) => {
+    const tip = 8;
     ctx.beginPath();
-    ctx.moveTo(inset, inset);
-    ctx.lineTo(w - inset, inset);
-    ctx.lineTo(w - 7 - inset * 0.5, h / 2);
-    ctx.lineTo(w - inset, h - inset);
-    ctx.lineTo(inset, h - inset);
-    ctx.lineTo(7 + inset * 0.5, h / 2);
+    ctx.moveTo(inset * 0.6, h / 2);
+    ctx.lineTo(tip, inset);
+    ctx.lineTo(w - tip, inset);
+    ctx.lineTo(w - inset * 0.6, h / 2);
+    ctx.lineTo(w - tip, h - inset);
+    ctx.lineTo(tip, h - inset);
     ctx.closePath();
   };
-  ribbon(0.6);
+  plate(0.8);
   ctx.fillStyle = linear(ctx, 0, h, GOLD);
   ctx.fill();
-  ribbon(2);
+  plate(2.2);
   ctx.fillStyle = linear(ctx, 0, h, [[0, lacquer[0]], [0.5, lacquer[1]], [1, lacquer[2]]]);
   ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.28)";
+  plate(4);
+  ctx.strokeStyle = "rgba(244,211,94,0.45)";
+  ctx.lineWidth = 0.6;
+  ctx.stroke();
+  ctx.fillStyle = "#f4d35e";
+  for (const x of [3.2, w - 3.2]) {
+    ctx.beginPath();
+    ctx.arc(x, h / 2, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.strokeStyle = "rgba(255,255,255,0.22)";
   ctx.lineWidth = 0.8;
   ctx.beginPath();
-  ctx.moveTo(9, 4);
-  ctx.lineTo(w - 9, 4);
+  ctx.moveTo(10, 3.6);
+  ctx.lineTo(w - 10, 3.6);
   ctx.stroke();
 }
 
