@@ -115,8 +115,9 @@ export const SEAL_ICON = { glyph: "⛨", color: 0xb9a8ff, keywordId: "phong_an" 
 /** Combat screen anchors the scene and the event animator share (design px). */
 export const COMBAT_LAYOUT = {
   moon: { x: 640, y: 40 },
-  moonPower: { x: 1232, y: 104 },
-  endTurn: { x: 1200, y: 648 },
+  /** The Nguyệt Lực orb and the end-turn medallion share one column. */
+  moonPower: { x: 1206, y: 104 },
+  endTurn: { x: 1206, y: 648 },
   /** Own draw pile; an opponent's / partner's sits at the top row's height. */
   pile: { x: 14, y: 456 },
   /** Hand cards peek from the bottom edge; hovering lifts one fully. */
@@ -174,7 +175,7 @@ export const NODE_LABELS: Record<NodeType, string> = {
   boss: "Boss",
 };
 
-const TAG_LABELS: Record<CardTag, string> = {
+export const TAG_LABELS: Record<CardTag, string> = {
   attack: "tấn công",
   control: "khống chế",
   assassin: "ám sát",

@@ -45,6 +45,7 @@ import { confirmModal, isModalOpen } from "../ui/widgets";
 import { playEventQueue } from "../ui/event-animator";
 import { GLOW as VFX_GLOW, STAR as VFX_STAR, ensureTextures } from "../ui/vfx";
 import { HUD, hudImage } from "../ui/hud-art";
+import { cardColorOf, cardIconOf } from "../ui/attack-style";
 import {
   BLOOD_MOON_BG,
   COLORS,
@@ -866,6 +867,69 @@ export class CombatScene extends Phaser.Scene {
     }
   }
 
+  /** Point at distance `d` along a w×h card's border, clockwise from the top center. */
+  private framePoint(w: number, h: number, d: number): { x: number; y: number } {
+    const per = 2 * (w + h);
+    let t = ((d % per) + per) % per;
+    const legs: [number, (t: number) => { x: number; y: number }][] = [
+      [w / 2, (t) => ({ x: t, y: -h / 2 })],
+      [h, (t) => ({ x: w / 2, y: -h / 2 + t })],
+      [w, (t) => ({ x: w / 2 - t, y: h / 2 })],
+      [h, (t) => ({ x: -w / 2, y: h / 2 - t })],
+      [w / 2, (t) => ({ x: -w / 2 + t, y: -h / 2 })],
+    ];
+    for (const [len, at] of legs) {
+      if (t <= len) return at(t);
+      t -= len;
+    }
+    return { x: 0, y: -h / 2 };
+  }
+
+  /** Thức Tỉnh progress: the frame is traced in gold from the top center, clockwise. */
+  private frameTrace(c: Phaser.GameObjects.Container, w: number, h: number, progress: number) {
+    if (progress <= 0) return;
+    const g = this.add.graphics().lineStyle(2.5, COLORS.goldFill, 0.9);
+    const total = 2 * (w + h) * progress;
+    g.beginPath();
+    const start = this.framePoint(w, h, 0);
+    g.moveTo(start.x, start.y);
+    for (let d = 4; d <= total; d += 4) {
+      const p = this.framePoint(w, h, d);
+      g.lineTo(p.x, p.y);
+    }
+    g.strokePath();
+    c.add(g);
+  }
+
+  /** Thức Tỉnh: two moonlit neon comets run around the frame forever over a soft gold rim. */
+  private neonFrame(c: Phaser.GameObjects.Container, w: number, h: number) {
+    c.add(this.roundBox(w + 2, h + 2, null, 0, 2, 0xffe9a0, CARD_RADIUS + 1).setAlpha(0.55));
+    const g = this.add.graphics().setBlendMode("ADD");
+    c.add(g);
+    const per = 2 * (w + h);
+    const tail = per * 0.22;
+    const run = { d: 0 };
+    const draw = () => {
+      g.clear();
+      for (const offset of [0, per / 2]) {
+        for (let i = 0; i < 18; i++) {
+          const a = this.framePoint(w, h, run.d + offset - (tail * i) / 18);
+          const b = this.framePoint(w, h, run.d + offset - (tail * (i + 1)) / 18);
+          const fade = 1 - i / 18;
+          // Moonlit neon: a wide cyan glow with a white-hot core, distinct from the gold frame.
+          g.lineStyle(4 + 8 * fade, 0x4fc8ff, 0.5 * fade).lineBetween(a.x, a.y, b.x, b.y);
+          g.lineStyle(2.5, 0xe8fbff, fade).lineBetween(a.x, a.y, b.x, b.y);
+        }
+        const head = this.framePoint(w, h, run.d + offset);
+        g.fillStyle(0x4fc8ff, 0.45).fillCircle(head.x, head.y, 7);
+        g.fillStyle(0xffffff, 1).fillCircle(head.x, head.y, 3);
+      }
+    };
+    draw();
+    const tween = this.tweens.add({ targets: run, d: per, duration: 2600, repeat: -1, ease: "Linear", onUpdate: draw });
+    g.once("destroy", () => tween.remove());
+  }
+
   /** A looping tween on a card part; it dies with the part when `renderAll` rebuilds the card. */
   private loopTween(target: Phaser.GameObjects.GameObject, config: Omit<Phaser.Types.Tweens.TweenBuilderConfig, "targets">) {
     const tween = this.tweens.add({ targets: target, yoyo: true, repeat: -1, ease: "Sine.easeInOut", ...config });
@@ -1051,7 +1115,8 @@ export class CombatScene extends Phaser.Scene {
     const perRow = Math.max(1, Math.floor((spec.w - 8) / step));
     icons.forEach((icon, index) => {
       const ix = -spec.w / 2 + 6 + r + (index % perRow) * step;
-      const iy = spec.h / 2 - 30 - r - Math.floor(index / perRow) * step;
+      // Clear of the HP bar (h/2 - 32 … h/2 - 26).
+      const iy = spec.h / 2 - 37 - r - Math.floor(index / perRow) * step;
       const hasIcon = this.textures.exists(icon.iconKey);
       const circle = this.badge(ix, iy, r, hasIcon ? "" : icon.glyph, icon.color, c, 0x0a0e20, 12);
       if (hasIcon) c.add(this.add.image(ix, iy, icon.iconKey).setDisplaySize(2 * r - 1, 2 * r - 1));
@@ -1363,15 +1428,9 @@ export class CombatScene extends Phaser.Scene {
         hero.sealedBy !== undefined ? "Phong Ấn: lá lượt tới chỉ còn damage" : "",
       ],
     });
-    const bx = w / 2 - 16;
-    const by = -h / 2 + 16;
-    this.badge(bx, by, 13, "★", COLORS.goldFill, c, hero.leveledUp ? COLORS.goldFill : 0x0a0e20, 13, hero.leveledUp ? "#0a0e20" : COLORS.dimText);
-    const progress = hero.leveledUp ? 0 : Math.min(1, hero.levelUpCounter / threshold);
-    if (progress > 0) {
-      const arc = this.add.graphics();
-      arc.lineStyle(3, COLORS.goldFill).beginPath().arc(bx, by, 13, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2).strokePath();
-      c.add(arc);
-    }
+    if (!hero.alive) return;
+    if (hero.leveledUp) this.neonFrame(c, w, h);
+    else this.frameTrace(c, w, h, Math.min(1, hero.levelUpCounter / threshold));
   }
 
   private renderHeroes() {
@@ -1455,72 +1514,87 @@ export class CombatScene extends Phaser.Scene {
 
     const isValidTarget = this.targeting === instanceId;
     const mulliganPicked = this.mulliganPicks.has(instanceId);
+    // Frame: lacquer, gold double line, moon gate, plaque, parchment; the owner's color is the border.
+    const grey = (img: Phaser.GameObjects.Image) => (broken ? img.setTint(0x80808a) : img);
+    container.add(grey(hudImage(this, HUD.cardFace, 0, 0)));
     container.add(
       this.roundBox(
         CARD_W,
         CARD_H,
-        broken ? 0x30303a : 0x141b33,
-        1,
+        null,
+        0,
         isValidTarget || mulliganPicked ? 3 : 2,
         broken ? COLORS.dead : isValidTarget || mulliganPicked ? COLORS.goldFill : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
       ),
     );
-    const cardArt =
-      this.coverImage(`cards:${instance.cardId}`, 0, 0, CARD_W - 6, CARD_H - 6, container) ??
-      this.coverImage(`heroes:${ownerId}`, 0, 0, CARD_W - 6, CARD_H - 6, container);
-    if (cardArt) {
-      container.add(this.roundBox(CARD_W - 6, CARD_H - 6, 0x0a0e20, 0.5, 0, 0, CARD_RADIUS - 2));
+    // Moon gate (center 0,-30): the card's own art if there is one, else its tag icon in a tag-colored sky.
+    const gateY = -30;
+    const color = cardColorOf(card);
+    if (!this.coverImage(`cards:${instance.cardId}`, 0, gateY, 50, 50, container)) {
+      ensureTextures(this);
+      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.66).setAlpha(broken ? 0.15 : 0.5));
+      for (const [sx, sy, r] of [[-15, -10, 0.9], [13, -15, 0.7], [17, 7, 0.6], [-17, 9, 0.5]] as const) {
+        container.add(this.add.circle(sx, gateY + sy, r, 0xffffff, 0.7));
+      }
+      const iconKey = cardIconOf(card);
+      if (this.textures.exists(iconKey)) container.add(this.add.image(0, gateY, iconKey).setDisplaySize(36, 36).setAlpha(broken ? 0.5 : 1));
     }
+    // Owner jewel on the bottom edge.
+    container.add(
+      this.add
+        .rectangle(0, CARD_H / 2 - 4, 7, 7, OWNER_COLORS[ownerId] ?? COLORS.panelBorder)
+        .setAngle(45)
+        .setStrokeStyle(1, COLORS.goldFill),
+    );
+    // Title plate between the gate and the parchment (red lacquer: attack, blue: skill), the name on one line.
+    const titleY = 15;
+    container.add(grey(hudImage(this, card.type === "attack" ? HUD.bannerAttack : HUD.bannerSkill, 0, titleY)));
+    const name = this.add
+      .text(0, titleY, card.name, {
+        ...TEXT_BASE,
+        fontSize: "11px",
+        fontStyle: "bold",
+        color: "#fff1d0",
+        stroke: "#1a0608",
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5);
+    if (name.width > 80) name.setFontSize(10);
+    container.add(this.fitWidth(name, 82));
     if (weapon !== undefined) {
       // Weapon card (`01` §14.2): inner orange frame and the weapon's name.
       if (!broken && !isValidTarget) {
         container.add(this.roundBox(CARD_W - 8, CARD_H - 8, null, 0, 2, 0xe08a3c, CARD_RADIUS - 2));
       }
-      container.add(
-        this.add
-          .text(CARD_W / 2 - 8, -CARD_H / 2 + 10, `⚔ ${weapon.name}`, { ...TEXT_BASE, fontSize: "10px", color: "#ffb080" })
-          .setOrigin(1, 0.5),
-      );
     }
     if (partnerId !== undefined) {
       // Bond card: second owner's color as an inner border.
       if (!broken && !isValidTarget) {
-        container.add(
-          this.add
-            .rectangle(0, 0, CARD_W - 8, CARD_H - 8)
-            .setStrokeStyle(2, OWNER_COLORS[partnerId] ?? COLORS.panelBorder),
-        );
+        container.add(this.roundBox(CARD_W - 8, CARD_H - 8, null, 0, 2, OWNER_COLORS[partnerId] ?? COLORS.panelBorder, CARD_RADIUS - 2));
       }
-      container.add(
-        this.add
-          .text(CARD_W / 2 - 8, -CARD_H / 2 + 10, "Song Hành", {
-            ...TEXT_BASE,
-            fontSize: "11px",
-            color: COLORS.gold,
-          })
-          .setOrigin(1, 0.5),
-      );
     }
 
     const hintComboId = this.comboHints.get(instanceId);
     if (hintComboId !== undefined) {
       // Hợp Kích hint (`17` §9.3): bright frame marks a card whose other half
       // the partner already played this turn.
-      container.add(
-        this.add.rectangle(0, 0, CARD_W - 4, CARD_H - 4).setStrokeStyle(2, 0xffe080),
-      );
+      container.add(this.roundBox(CARD_W - 4, CARD_H - 4, null, 0, 2, 0xffe080, CARD_RADIUS - 1));
       container.add(
         this.add
-          .text(0, CARD_H / 2 - 12, "⚡ Hợp Kích", { ...TEXT_BASE, fontSize: "10px", color: "#ffe080" })
+          .text(0, CARD_H / 2 - 14, "⚡ Hợp Kích", { ...TEXT_BASE, fontSize: "10px", color: "#ffe080", stroke: "#2a1a04", strokeThickness: 3 })
           .setOrigin(0.5),
       );
     }
 
     const effectiveCost = getEffectiveCost(this.gameData, this.state, instanceId);
-    container.add(hudImage(this, HUD.cost, -CARD_W / 2 + 14, -CARD_H / 2 + 14, 0.95));
+    // Inset so the coin's rim sits clear of the card border.
+    // Its own corner: clear of the gold line (≥ 3.5 px) and of the banner.
+    const coinX = -CARD_W / 2 + 19;
+    const coinY = -58;
+    container.add(hudImage(this, HUD.cost, coinX, coinY, 0.78));
     container.add(
       this.add
-        .text(-CARD_W / 2 + 14, -CARD_H / 2 + 14, `${effectiveCost}`, {
+        .text(coinX, coinY, `${effectiveCost}`, {
           ...TEXT_BASE,
           fontSize: "15px",
           fontStyle: "bold",
@@ -1533,54 +1607,45 @@ export class CombatScene extends Phaser.Scene {
     if (effectiveCost < card.cost) {
       container.add(
         this.add
-          .text(-CARD_W / 2 + 30, -CARD_H / 2 + 14, `${card.cost}`, {
+          .text(coinX, coinY + 17, `${card.cost}`, {
             ...TEXT_BASE,
             fontSize: "10px",
             color: COLORS.dimText,
           })
-          .setOrigin(0, 0.5),
+          .setOrigin(0.5),
       );
       container.add(
-        this.add.rectangle(-CARD_W / 2 + 34, -CARD_H / 2 + 14, 10, 1, 0xffffff, 0.7),
+        this.add.rectangle(coinX, coinY + 17, 9, 1, 0xffffff, 0.8),
       );
     }
     if (instance.heldTurns > 0 && card.keywords?.includes("tich_tu")) {
       container.add(
         this.add
-          .text(0, -CARD_H / 2 + 34, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold })
+          .text(0, gateY + 22, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold, stroke: "#05070f", strokeThickness: 3 })
           .setOrigin(0.5),
       );
     }
 
-    container.add(
-      this.add
-        .text(0, -20, card.name, {
-          ...TEXT_BASE,
-          fontSize: "13px",
-          color: COLORS.text,
-          align: "center",
-          wordWrap: { width: CARD_W - 14 },
-        })
-        .setOrigin(0.5),
-    );
-    container.add(
-      this.add
-        .text(0, 42, card.text, {
-          ...TEXT_BASE,
-          fontSize: "9px",
-          color: COLORS.dimText,
-          align: "center",
-          wordWrap: { width: CARD_W - 12 },
-        })
-        .setOrigin(0.5, 0),
-    );
+    const body = this.add
+      .text(0, 31, card.text, {
+        ...TEXT_BASE,
+        fontSize: "9px",
+        color: "#3a2810",
+        align: "center",
+        lineSpacing: -1,
+        wordWrap: { width: CARD_W - 24 },
+      })
+      .setOrigin(0.5, 0);
+    // Long texts shrink until they fit the parchment (the tooltip has them full size).
+    for (let size = 8.5; body.height > 41 && size >= 6.5; size -= 0.5) body.setFontSize(size);
+    container.add(body);
 
     if (mulliganPicked) {
-      container.add(
-        this.add
-          .text(0, 0, "Đổi", { ...TEXT_BASE, fontSize: "16px", color: COLORS.gold })
-          .setOrigin(0.5),
-      );
+      ensureTextures(this);
+      container.add(this.roundBox(CARD_W - 4, CARD_H - 4, 0x05070f, 0.55, 0, 0, CARD_RADIUS - 1));
+      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e).setScale(0.7).setAlpha(0.6));
+      container.add(this.add.circle(0, gateY, 22, 0x0a0e26, 0.95).setStrokeStyle(1.5, COLORS.goldFill));
+      container.add(hudImage(this, HUD.swap, 0, gateY, 1.2));
     }
     if (broken) {
       container.add(
@@ -1644,19 +1709,42 @@ export class CombatScene extends Phaser.Scene {
     ).setOrigin(0.5);
   }
 
+  /**
+   * Đổi Bài: a lacquer plate over the hand (swap emblem, title, hint, one pip
+   * per pick) and the medallion where end turn sits. Once done, the plate
+   * says who is still choosing.
+   */
   private renderMulliganBar() {
-    if (this.state.players[this.mySeat]?.mulliganDone) {
-      this.text(WIDTH / 2, 578, this.isCoop ? "Chờ đồng đội Đổi Bài…" : "Chờ đối thủ Đổi Bài…", 14, COLORS.dimText).setOrigin(0.5);
-      return;
-    }
+    const done = this.state.players[this.mySeat]?.mulliganDone === true;
+    const max = this.gameData.combatConfig.maxMulligan;
     const picks = this.mulliganPicks.size;
-    this.text(WIDTH / 2, 578, `Đổi Bài: chọn tối đa ${this.gameData.combatConfig.maxMulligan} lá để đổi`, 14, COLORS.gold).setOrigin(0.5);
-    // Where the end-turn button sits: the phase's main action keeps one place.
-    this.endScreenButton(1180, COMBAT_LAYOUT.endTurn.y, picks > 0 ? `Đổi (${picks})` : "Giữ nguyên", () => {
+    const plate = this.add.container(WIDTH / 2, 574);
+    this.root.add(plate);
+    const w = done ? 250 : 320;
+    plate.add(this.roundBox(w, 34, 0x0a0e26, 0.92, 1.5, COLORS.goldFill, 17));
+    plate.add(hudImage(this, done ? HUD.hourglass : HUD.swap, -w / 2 + 22, 0, done ? 0.7 : 0.8).setAlpha(done ? 0.7 : 1));
+    const title = this.add.text(-w / 2 + 42, 0, "Đổi Bài", { ...TEXT_BASE, fontSize: "15px", fontStyle: "bold", color: COLORS.gold }).setOrigin(0, 0.5);
+    plate.add(title);
+    const hint = done ? (this.isCoop ? "chờ đồng đội…" : "chờ đối thủ…") : `chọn tối đa ${max} lá`;
+    plate.add(this.add.text(title.x + title.width + 10, 1, hint, { ...TEXT_BASE, fontSize: "12px", color: COLORS.dimText }).setOrigin(0, 0.5));
+    if (done) return;
+    for (let i = 0; i < max; i++) {
+      plate.add(
+        this.add
+          .rectangle(w / 2 - 22 - (max - 1 - i) * 16, 0, 9, 9, i < picks ? COLORS.goldFill : 0x0a0e26)
+          .setAngle(45)
+          .setStrokeStyle(1.2, COLORS.goldFill),
+      );
+    }
+    const { x, y } = COMBAT_LAYOUT.endTurn;
+    const btn = this.medallionButton(x, y, true, hudImage(this, HUD.swap, 0, -16), picks > 0 ? `Đổi ${picks} lá` : "Giữ nguyên", "Vào trận", () => {
       const instanceIds = [...this.mulliganPicks];
       this.mulliganPicks.clear();
       this.dispatch({ type: "mulligan", instanceIds });
     });
+    this.hoverTooltip(btn, () => ({ x: x - 290, y: y - 60 }), () => [
+      picks > 0 ? `Đổi ${picks} lá đã chọn rồi vào trận` : "Giữ nguyên tay bài rồi vào trận",
+    ]);
   }
 
   private renderChoiceOverlay() {
@@ -2022,33 +2110,12 @@ export class CombatScene extends Phaser.Scene {
     const canAct = this.state.status === "playerTurn" || (coop && this.state.status === "choosing");
     const myDone = coop && seat.done === true;
     const active = canAct && !myDone;
-    // A gold medallion: hourglass (✓ in co-op), the label, the round; it glows while it is your move.
-    const medal = this.add.container(x, y);
-    this.root.add(medal);
-    if (active) {
-      ensureTextures(this);
-      const glow = this.add.image(0, 0, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e).setScale(1.25).setAlpha(0.25);
-      medal.add(glow);
-      this.loopTween(glow, { alpha: 0.55, scale: 1.4, duration: 900 });
-    }
-    const face = hudImage(this, HUD.medallion, 0, 0);
-    if (!active) face.setTint(0x6a6f88);
-    medal.add(face);
-    if (coop) medal.add(this.add.text(0, -16, "✓", { ...TEXT_BASE, fontSize: "24px", color: active ? COLORS.gold : COLORS.dimText }).setOrigin(0.5));
-    else medal.add(hudImage(this, HUD.hourglass, 0, -16).setAlpha(active ? 1 : 0.45));
-    const label = coop ? "Xong lượt" : "Kết thúc";
-    medal.add(this.add.text(0, 6, label, { ...TEXT_BASE, fontSize: "12px", fontStyle: "bold", color: active ? COLORS.gold : COLORS.dimText }).setOrigin(0.5));
-    medal.add(this.add.text(0, 24, `Vòng ${this.state.round}`, { ...TEXT_BASE, fontSize: "10px", color: active ? COLORS.text : COLORS.dimText }).setOrigin(0.5));
-    const btn = this.add.circle(x, y, 52, 0x000000, 0.001);
-    this.root.add(btn);
-    btn.setInteractive({ useHandCursor: active });
-    if (active) {
-      btn.on("pointerover", () => medal.setScale(1.06));
-      btn.on("pointerout", () => medal.setScale(1));
-      btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        if (pointer.button === 0 && !this.inputLocked) this.dispatch({ type: "endTurn" });
-      });
-    }
+    const icon = coop
+      ? this.add.text(0, -16, "✓", { ...TEXT_BASE, fontSize: "24px", color: active ? COLORS.gold : COLORS.dimText }).setOrigin(0.5)
+      : hudImage(this, HUD.hourglass, 0, -16).setAlpha(active ? 1 : 0.45);
+    const btn = this.medallionButton(x, y, active, icon, coop ? "Xong lượt" : "Kết thúc", `Vòng ${this.state.round}`, () =>
+      this.dispatch({ type: "endTurn" }),
+    );
     const keep = Math.min(this.gameData.combatConfig.moonReserveMax, seat.moonPower);
     const partnerDone = this.state.players.find((p) => p.index !== this.mySeat)?.done === true;
     const waiting = myDone
@@ -2063,6 +2130,46 @@ export class CombatScene extends Phaser.Scene {
         ? [`${coop ? "Xong lượt" : "Kết thúc lượt"} (phím E) — vòng ${this.state.round}`, `Giữ ${keep} Nguyệt Lực sang lượt sau`]
         : [waiting, `Vòng ${this.state.round}`],
     );
+  }
+
+  /**
+   * The phase's main action (end turn, Đổi Bài): a gold medallion with an
+   * icon, a label and a small line under it; it glows while it can be pressed.
+   * Returns the hit circle for the tooltip.
+   */
+  private medallionButton(
+    x: number,
+    y: number,
+    active: boolean,
+    icon: Phaser.GameObjects.Image | Phaser.GameObjects.Text,
+    label: string,
+    sub: string,
+    onClick: () => void,
+  ): Phaser.GameObjects.Arc {
+    const medal = this.add.container(x, y);
+    this.root.add(medal);
+    if (active) {
+      ensureTextures(this);
+      const glow = this.add.image(0, 0, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e).setScale(1.25).setAlpha(0.25);
+      medal.add(glow);
+      this.loopTween(glow, { alpha: 0.55, scale: 1.4, duration: 900 });
+    }
+    const face = hudImage(this, HUD.medallion, 0, 0);
+    if (!active) face.setTint(0x6a6f88);
+    medal.add([face, icon]);
+    medal.add(this.add.text(0, 6, label, { ...TEXT_BASE, fontSize: "12px", fontStyle: "bold", color: active ? COLORS.gold : COLORS.dimText }).setOrigin(0.5));
+    medal.add(this.add.text(0, 24, sub, { ...TEXT_BASE, fontSize: "10px", color: active ? COLORS.text : COLORS.dimText }).setOrigin(0.5));
+    const btn = this.add.circle(x, y, 52, 0x000000, 0.001);
+    this.root.add(btn);
+    btn.setInteractive({ useHandCursor: active });
+    if (active) {
+      btn.on("pointerover", () => medal.setScale(1.06));
+      btn.on("pointerout", () => medal.setScale(1));
+      btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0 && !this.inputLocked) onClick();
+      });
+    }
+    return btn;
   }
 
 }
