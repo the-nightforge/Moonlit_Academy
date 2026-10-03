@@ -44,6 +44,8 @@ import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
 import { confirmModal, isModalOpen } from "../ui/widgets";
 import { playEventQueue } from "../ui/event-animator";
 import { GLOW as VFX_GLOW, STAR as VFX_STAR, ensureTextures } from "../ui/vfx";
+import { CombatPlayback, type PlaybackBatch } from "../ui/combat-playback";
+import { createAnimationRuntime } from "../ui/animation-runtime";
 import { HUD, hudImage } from "../ui/hud-art";
 import { cardColorOf, cardIconOf } from "../ui/attack-style";
 import {
@@ -173,6 +175,15 @@ export class CombatScene extends Phaser.Scene {
   private storyStageId: string | null = null;
   private storyDeck: { id: string; heroIds: Team } | null = null;
   private storyFinishing = false;
+  /** Serial playback of event batches: local actions and server pushes queue here. */
+  private playback!: CombatPlayback;
+  /** The newest state the pipeline has seen; the next batch animates from it. */
+  private latestState!: CombatState;
+  /** Online: an action was sent and no server answer (events or rejection) came back yet. */
+  private netActionPending = false;
+  private renderQueued = false;
+  /** Post-commit follow-ups keyed by their batch (run transition, story finish). */
+  private commitWork = new Map<PlaybackBatch, () => void>();
 
   constructor() {
     super("combat");
@@ -216,10 +227,22 @@ export class CombatScene extends Phaser.Scene {
     this.storyStageId = session.story?.setup.stageId ?? null;
     this.storyDeck = session.story?.deck ?? null;
     this.storyFinishing = false;
+    this.latestState = this.state;
+    this.netActionPending = false;
+    this.renderQueued = false;
+    this.commitWork.clear();
+    this.playback = new CombatPlayback({
+      play: (batch, signal) => this.playBatch(batch, signal),
+      commit: (batch) => this.commitBatch(batch),
+      busy: () => this.syncInputLock(),
+      failed: (error, latest) => this.playFailed(error, latest),
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.playback.dispose());
     if (this.netMatch) this.bindNet(this.netMatch);
+    this.syncInputLock();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.unbindNet());
     // The background covers the visible window, so a resize redraws the screen.
-    const onResize = () => this.renderAll();
+    const onResize = () => this.requestRender();
     this.scale.on("resize", onResize);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off("resize", onResize));
     useDesignCamera(this);
@@ -242,7 +265,7 @@ export class CombatScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
       if (event.code === "Backquote") {
         this.debugVisible = !this.debugVisible;
-        this.renderAll();
+        this.requestRender();
       }
     });
     this.renderAll();
@@ -259,27 +282,38 @@ export class CombatScene extends Phaser.Scene {
     };
     net.onStatus = (connected) => {
       this.netDown = !connected;
-      if (this.scene.isActive()) this.renderAll();
+      if (this.scene.isActive()) this.requestRender();
     };
     net.onRejoin = (snapshot) => {
       match.rejoin(snapshot);
+      // The rejoin's snapshot replaces everything: abort in-flight/queued
+      // playback before rebuilding the UI from the authoritative view.
+      this.playback.reset();
       this.state = match.view;
+      this.latestState = match.view;
+      this.netActionPending = false;
       this.targeting = null;
       this.mulliganPicks.clear();
-      this.inputLocked = false;
+      this.bannerQueue = [];
+      this.syncInputLock();
       if (this.scene.isActive()) this.renderAll();
     };
     match.onPush = (events, view) => this.onNetPush(events, view);
     match.onEnd = () => {
       this.inputLocked = true;
-      this.renderAll();
+      // Terminal screen after the queued beats have played out.
+      this.playback.whenIdle(() => {
+        this.syncInputLock();
+        if (this.scene.isActive()) this.renderAll();
+      });
       // Ranked matches settle server-side; pull the fresh profile (rating, Vinh Dự).
       if (match.ended?.profileRev !== undefined && match.ended.profileRev !== session.rev) {
         void resumeSession().catch(() => {});
       }
     };
     match.onRejected = (reason) => {
-      this.inputLocked = false;
+      this.netActionPending = false;
+      this.syncInputLock();
       this.showError(reason);
     };
     match.onEmote = (from, emoteId) => this.showEmote(from, emoteId);
@@ -304,14 +338,14 @@ export class CombatScene extends Phaser.Scene {
     this.tweens.add({ targets: text, alpha: 0, delay: 2400, duration: 600, onComplete: () => text.destroy() });
   }
 
-  /** A `match.events` push: animate the events, then render the new view. */
+  /** A `match.events` push: queue the batch; its `after` view commits once the events played. */
   private onNetPush(events: CombatEvent[], view: CombatState): void {
     if (!this.scene.isActive()) {
       this.state = view;
+      this.latestState = view;
       return;
     }
     this.targeting = null;
-    this.inputLocked = true;
     // Co-op banners queue on the event stream (`17` §9.3).
     for (const event of events) {
       if (event.type === "coopComboTriggered") {
@@ -322,12 +356,8 @@ export class CombatScene extends Phaser.Scene {
         this.bannerQueue.push({ text: `Nguyệt Thực Ma Quân — Giai đoạn ${event.phase}`, color: "#ff8090" });
       }
     }
-    void this.playEvents(events).then(() => {
-      this.state = view;
-      this.renderAll();
-      this.inputLocked = this.netMatch?.ended !== null;
-      this.playBanners();
-    });
+    this.playback.enqueue({ before: this.latestState, after: view, events });
+    this.latestState = view;
   }
 
   /** Fades a queued banner at screen center, one every beat. */
@@ -361,7 +391,8 @@ export class CombatScene extends Phaser.Scene {
     if (this.netMatch) {
       // The server validates; rejected actions come back as match.rejected.
       this.netMatch.sendAction(action);
-      this.inputLocked = true;
+      this.netActionPending = true;
+      this.syncInputLock();
       return true;
     }
     const run = session.run;
@@ -386,21 +417,19 @@ export class CombatScene extends Phaser.Scene {
     session.state = newState;
     session.events.push(...result.events);
     this.targeting = null;
-    this.inputLocked = true;
-    const events = result.events;
-    void this.playEvents(events).then(() => {
+    const batch: PlaybackBatch = { before: this.latestState, after: newState, events: result.events };
+    this.latestState = newState;
+    // Post-commit: run graph transition or story verification (`18` §4.4).
+    this.commitWork.set(batch, () => {
       if (backToRun) {
         this.scene.start("run");
         return;
       }
-      this.state = newState;
-      // A story combat that just ended goes to the server for verification (`18` §4.4).
       if (this.isStory && session.story !== null && (newState.status === "won" || newState.status === "lost")) {
         this.finishStory();
       }
-      this.renderAll();
-      this.inputLocked = this.storyFinishing;
     });
+    this.playback.enqueue(batch);
     return true;
   }
 
@@ -449,15 +478,59 @@ export class CombatScene extends Phaser.Scene {
     );
   }
 
-  private playEvents(events: CombatEvent[]): Promise<void> {
-    return playEventQueue(this, events, {
+  /** One batch's beat: all FX owned by a per-batch runtime the queue can abort. */
+  private playBatch(batch: PlaybackBatch, signal: AbortSignal): Promise<void> {
+    const runtime = createAnimationRuntime(this, signal);
+    return playEventQueue(runtime, batch.events, {
       gameData: this.gameData,
-      state: this.state,
+      state: batch.before,
       unitAnchors: this.unitAnchors,
       unitViews: this.unitViews,
       cardViews: this.cardViews,
       moonAnchor: this.moonAnchor,
       mySeat: this.mySeat,
+      runtime,
+    })
+      .then(() => runtime.drain())
+      .finally(() => runtime.dispose());
+  }
+
+  /** The batch finished its beat: commit its state and redraw. */
+  private commitBatch(batch: PlaybackBatch): void {
+    this.state = batch.after;
+    this.netActionPending = false;
+    this.renderAll();
+    this.playBanners();
+    const work = this.commitWork.get(batch);
+    if (work !== undefined) {
+      this.commitWork.delete(batch);
+      work();
+    }
+  }
+
+  /** A batch failed mid-beat (not an abort — a real bug): resync to its `after`. */
+  private playFailed(error: unknown, latest: CombatState): void {
+    console.error("combat playback failed:", error);
+    this.state = latest;
+    this.latestState = latest;
+    this.netActionPending = false;
+    this.showError("Có lỗi khi hiển thị — đã đồng bộ lại trạng thái");
+    this.renderAll();
+  }
+
+  /** The single source of truth for the input lock. */
+  private syncInputLock(): void {
+    this.inputLocked =
+      this.playback.busy || this.netActionPending || this.netMatch?.ended != null || this.storyFinishing;
+  }
+
+  /** Redraws once the queue drains — immediately when it is already idle. */
+  private requestRender(): void {
+    if (this.renderQueued) return;
+    this.renderQueued = true;
+    this.playback.whenIdle(() => {
+      this.renderQueued = false;
+      if (this.scene.isActive()) this.renderAll();
     });
   }
 
@@ -466,7 +539,7 @@ export class CombatScene extends Phaser.Scene {
       if (this.inputLocked) return;
       if (this.mulliganPicks.has(instanceId)) this.mulliganPicks.delete(instanceId);
       else if (this.mulliganPicks.size < this.gameData.combatConfig.maxMulligan) this.mulliganPicks.add(instanceId);
-      this.renderAll();
+      this.requestRender();
       return;
     }
     if (this.inputLocked || this.state.status !== "playerTurn") return;
@@ -496,7 +569,7 @@ export class CombatScene extends Phaser.Scene {
     }
     this.targeting = instanceId;
     this.validTargetIds = new Set(getValidTargets(this.gameData, this.state, instanceId));
-    this.renderAll();
+    this.requestRender();
   }
 
   private onUnitClicked(unitId: string) {
@@ -513,7 +586,7 @@ export class CombatScene extends Phaser.Scene {
     if (this.inputLocked || this.targeting === null) return;
     this.targeting = null;
     this.validTargetIds.clear();
-    this.renderAll();
+    this.requestRender();
   }
 
   private shakeCard(instanceId: string) {
@@ -601,11 +674,15 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private syncFromSession(): void {
+    // A rebuilt combat supersedes any in-flight beat: abort, then render.
+    this.playback.reset();
     this.state = session.state;
+    this.latestState = session.state;
     this.targeting = null;
     this.validTargetIds.clear();
     this.mulliganPicks.clear();
-    this.inputLocked = false;
+    this.netActionPending = false;
+    this.syncInputLock();
     this.renderAll();
   }
 
@@ -1347,7 +1424,7 @@ export class CombatScene extends Phaser.Scene {
     btn.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (pointer.button === 0) {
         this.emotePanel = !this.emotePanel;
-        this.renderAll();
+        this.requestRender();
       }
     });
     if (!this.emotePanel) return;
@@ -1369,7 +1446,7 @@ export class CombatScene extends Phaser.Scene {
         this.lastEmoteAt = now;
         this.netMatch!.sendEmote(emote);
         this.emotePanel = false;
-        this.renderAll();
+        this.requestRender();
       });
       layer.add(row);
       layer.add(this.add.text(1120, y, emote, { ...TEXT_BASE, fontSize: "13px", color: COLORS.text }).setOrigin(0.5));
@@ -1379,7 +1456,7 @@ export class CombatScene extends Phaser.Scene {
     mute.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (pointer.button === 0) {
         session.emotesMuted = !session.emotesMuted;
-        this.renderAll();
+        this.requestRender();
       }
     });
     layer.add(mute);
@@ -1987,24 +2064,24 @@ export class CombatScene extends Phaser.Scene {
     [0, 1, 2, 3].forEach((rounds, index) => {
       this.debugButton(x + 214 + index * 28, y + 10, 24, `${rounds}`, () => {
         debugSetBloodMoon(rounds);
-        this.renderAll();
+        this.requestRender();
       });
     });
     y += 36;
     this.debugButton(x + 14, y + 10, 110, "+3 Nguyệt Lực", () => {
       debugAddMoonPower();
-      this.renderAll();
+      this.requestRender();
     });
     this.debugButton(x + 134, y + 10, 80, "Rút 1 lá", () => {
       debugDrawCards(1);
-      this.renderAll();
+      this.requestRender();
     });
     y += 36;
     line("Đặt pha:");
     this.gameData.moonPhases.forEach((phase, index) => {
       this.debugButton(x + 14 + index * 38, y + 8, 32, phase.icon, () => {
         debugSetMoon(index);
-        this.renderAll();
+        this.requestRender();
       });
     });
     y += 32;
@@ -2014,15 +2091,15 @@ export class CombatScene extends Phaser.Scene {
       this.text(x + 14, y + 8, `${hero.leveledUp ? "★ " : ""}${def.name} ${hero.hp}/${hero.maxHp}`, 11);
       this.debugButton(x + 200, y + 8, 44, "-5", () => {
         debugAdjustHeroHp(index, -5);
-        this.renderAll();
+        this.requestRender();
       });
       this.debugButton(x + 250, y + 8, 44, "+5", () => {
         debugAdjustHeroHp(index, 5);
-        this.renderAll();
+        this.requestRender();
       });
       this.debugButton(x + 300, y + 8, 24, "★", () => {
         debugSetLeveledUp(index);
-        this.renderAll();
+        this.requestRender();
       });
       y += 28;
     });
@@ -2031,7 +2108,7 @@ export class CombatScene extends Phaser.Scene {
       const def = this.gameData.enemies[enemy.defId]!;
       this.debugButton(x + 14, y + 8, 180, `Giết: ${def.name}`, () => {
         debugKillEnemy(index);
-        this.renderAll();
+        this.requestRender();
       }, 10);
       y += 28;
     });
