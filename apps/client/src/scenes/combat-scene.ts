@@ -21,6 +21,7 @@ import type {
   StatusId,
   StatusInstance,
   SummonState,
+  UnitState,
 } from "rules";
 import { errorText, resumeSession } from "../account";
 import { applyRecordedRunAction } from "../run-session";
@@ -54,7 +55,7 @@ import type { AnimationRuntime } from "../ui/animation-runtime";
 import { createPresentation } from "../ui/combat-presentation";
 import { HUD, hudImage } from "../ui/hud-art";
 import { cardColorOf, cardIconOf } from "../ui/attack-style";
-import { displayStatuses } from "../ui/combat-display";
+import { displayStatuses, heroProgressLabel, statusBadgeModels, unitAt } from "../ui/combat-display";
 import type { SeatAnchors } from "../ui/combat-display";
 import { computeCombatLayout, endTurnAnchor, fitChoicePanel, handSlots } from "../ui/combat-layout";
 import type { CombatLayout } from "../ui/combat-layout";
@@ -95,6 +96,10 @@ const BOSS_W = 144;
 const BOSS_H = 204;
 const SUMMON_W = 80;
 const SUMMON_H = 108;
+// Co-op group labels sit just above each seat's 148-tall hero row (y424).
+const OWN_ROW_TOP_LABEL = 424 - 74 - 14;
+const GROUP_LABEL_X_OWN = 412; // center of own slots 300/412/524
+const GROUP_LABEL_X_PARTNER = 772; // center of partner slots 660/772/884
 
 interface UnitCardSpec {
   id: string;
@@ -115,6 +120,10 @@ interface UnitCardSpec {
   frame: number;
   alive: boolean;
   stealth?: boolean;
+  /** The unit this spec was built from — badge models read raw status state. */
+  unit?: UnitState;
+  /** Short Thức Tỉnh counter for the reserved footer (heroes only). */
+  progress?: string;
   tooltip: () => string[];
 }
 
@@ -146,6 +155,8 @@ export class CombatScene extends Phaser.Scene {
   private validTargetIds = new Set<string>();
   /** The aim line from the selected card to the hovered valid target. */
   private aimLine?: Phaser.GameObjects.Graphics;
+  /** The hover-only link from a Hộ Vệ badge to its guardian. */
+  private guardTether?: Phaser.GameObjects.Graphics;
   private cardViews = new Map<string, Phaser.GameObjects.Container>();
   /** The shared geometry — recomputed per render so new units get anchors. */
   private layout!: CombatLayout;
@@ -856,6 +867,7 @@ export class CombatScene extends Phaser.Scene {
       this.choiceWheel = undefined;
     }
     this.aimLine = undefined; // the graphics die with root's rebuild
+    this.guardTether = undefined;
     this.cardViews.clear();
     this.castingIds.clear();
     this.seatLayers.clear();
@@ -1176,7 +1188,10 @@ export class CombatScene extends Phaser.Scene {
     c.add(this.roundBox(w, h, spec.hostile ? COLORS.panelEnemy : COLORS.panelHero, 1, isValidTarget ? 3 : 2, isValidTarget ? COLORS.goldFill : spec.frame));
     const panel = this.add.rectangle(0, 0, w, h, 0x000000, 0.001);
     c.add(panel);
-    this.coverImage(spec.artKey, 0, 0, w - 6, h - 6, c);
+    // Missing art leaves a readable silhouette — never an empty frame.
+    if (this.coverImage(spec.artKey, 0, 0, w - 6, h - 6, c) === null) {
+      this.unitSilhouette(c, w, h, spec.hostile);
+    }
     c.add(this.add.rectangle(0, h / 2 - 15, w - 6, 24, 0x0a0e20, 0.8));
     this.fitWidth(this.text(0, h / 2 - 15, spec.name, 12, spec.nameColor ?? COLORS.text, c).setOrigin(0.5), w - 14);
     this.hpPlate(c, spec, w, h);
@@ -1191,7 +1206,33 @@ export class CombatScene extends Phaser.Scene {
     this.unitPanelHit(panel, w, h, id);
     this.hoverTooltip(panel, () => ({ x: x + w / 2 + 8, y: y - h / 2 }), spec.tooltip);
     this.statusIcons(spec, c);
+    // Thức Tỉnh counter in the reserved bottom-right footer (`01` §8).
+    if (spec.progress !== undefined && spec.alive) {
+      c.add(
+        this.add
+          .text(w / 2 - 8, h / 2 - 5, spec.progress, {
+            ...TEXT_BASE,
+            fontSize: "10px",
+            color: COLORS.gold,
+            stroke: "#05070f",
+            strokeThickness: 3,
+          })
+          .setOrigin(1, 1),
+      );
+    }
     if (this.targeting !== null && !isValidTarget) c.setAlpha(0.4);
+  }
+
+  /** A faceless figure when the portrait texture is absent — unit stays identified by its name strip. */
+  private unitSilhouette(c: Phaser.GameObjects.Container, w: number, h: number, hostile: boolean): void {
+    const tint = hostile ? 0x4a3055 : 0x2c3d63;
+    const g = this.add.graphics();
+    g.fillStyle(tint, 0.9).fillCircle(0, -h * 0.16, w * 0.2);
+    g.fillStyle(tint, 0.9).fillEllipse(0, h * 0.18, w * 0.62, h * 0.44);
+    g.lineStyle(1.5, 0x8a90a8, 0.5);
+    g.strokeCircle(0, -h * 0.16, w * 0.2);
+    g.strokeEllipse(0, h * 0.18, w * 0.62, h * 0.44);
+    c.add(g);
   }
 
   /**
@@ -1216,6 +1257,20 @@ export class CombatScene extends Phaser.Scene {
     if (ratio > 0) {
       c.add(this.add.rectangle(-barW / 2, barY, barW * ratio, 4, fill).setOrigin(0, 0.5));
       c.add(this.add.rectangle(-barW / 2, barY - 1, barW * ratio, 1, 0xffffff, 0.35).setOrigin(0, 0.5));
+    }
+    // Compact `current/max` on the bar when the card is wide enough to read it.
+    if (w >= 100) {
+      c.add(
+        this.add
+          .text(0, barY - 1, `${spec.hp}/${spec.maxHp}`, {
+            ...TEXT_BASE,
+            fontSize: "10px",
+            color: "#e8f0ff",
+            stroke: "#05070f",
+            strokeThickness: 2,
+          })
+          .setOrigin(0.5),
+      );
     }
   }
 
@@ -1357,7 +1412,15 @@ export class CombatScene extends Phaser.Scene {
         this.drift(c, w, h, { from: "bottom", speedY: [-30, -14], tint: [0xffffff], scale: 14 / (48 * RENDER_SCALE), frequency: 260, texture: "ui:status_charm", add: false });
       },
     };
-    for (const status of statuses) looks[status.id]?.();
+    // At most three ambient looks per unit (`05` review) — freeze, burn and
+    // guard win slots, then whatever remains in state order. Every status
+    // still carries a badge; the looks are ambience, not information.
+    const AMBIENT_PRIORITY: readonly StatusId[] = ["freeze", "burn", "guard"];
+    const ordered = [
+      ...AMBIENT_PRIORITY.filter((id) => statuses.some((status) => status.id === id)),
+      ...statuses.map((status) => status.id).filter((id) => !AMBIENT_PRIORITY.includes(id)),
+    ];
+    for (const id of ordered.slice(0, 3)) looks[id]?.();
   }
 
   /** A soft colored glow breathing along the card's bottom edge. */
@@ -1460,22 +1523,37 @@ export class CombatScene extends Phaser.Scene {
 
   /** In-card status icons, bottom-up rows above the name strip; each explains itself on hover. */
   private statusIcons(spec: UnitCardSpec, c: Phaser.GameObjects.Container) {
-    const icons = spec.statuses.map((status) => ({ ...STATUS_ICONS[status.id], value: status.value, iconKey: `ui:status_${status.id}` }));
-    if (spec.sealed) icons.push({ ...SEAL_ICON, value: 0, iconKey: "ui:seal" });
+    // Two rows max (`05` review); the `+N` marker keeps the rest a hover away.
+    const badges =
+      spec.unit !== undefined
+        ? statusBadgeModels(this.state, spec.unit, spec.w)
+        : spec.statuses.map((status) => ({ id: status.id as StatusId | "seal" | "overflow", label: status.id, value: status.value }));
     const r = 10;
     const step = 2 * r + 4;
-    const perRow = Math.max(1, Math.floor((spec.w - 8) / step));
-    icons.forEach((icon, index) => {
-      const ix = -spec.w / 2 + 6 + r + (index % perRow) * step;
+    const perRow = Math.max(1, Math.floor((spec.w - 16) / step));
+    badges.forEach((badge, index) => {
+      const ix = -spec.w / 2 + 8 + r + (index % perRow) * step;
       // Clear of the HP bar (h/2 - 32 … h/2 - 26).
       const iy = spec.h / 2 - 37 - r - Math.floor(index / perRow) * step;
+      if (badge.id === "overflow") {
+        const circle = this.badge(ix, iy, r, badge.label, 0x8a90a8, c, 0x0a0e20, 10);
+        this.hoverTooltip(circle, () => ({ x: spec.x + spec.w / 2 + 8, y: spec.y + iy }), () =>
+          this.fullStatusLines(spec),
+        );
+        return;
+      }
+      const icon =
+        badge.id === "seal"
+          ? { ...SEAL_ICON, iconKey: "ui:seal" }
+          : { ...STATUS_ICONS[badge.id as StatusId], iconKey: `ui:status_${badge.id}` };
+      const value = badge.value ?? 0;
       const hasIcon = this.textures.exists(icon.iconKey);
       const circle = this.badge(ix, iy, r, hasIcon ? "" : icon.glyph, icon.color, c, 0x0a0e20, 12);
       if (hasIcon) c.add(this.add.image(ix, iy, icon.iconKey).setDisplaySize(2 * r - 1, 2 * r - 1));
-      if (icon.value > 0) {
+      if (value > 0) {
         c.add(
           this.add
-            .text(ix + r + 1, iy + r + 1, `${icon.value}`, { ...TEXT_BASE, fontSize: "10px", color: "#ffffff", stroke: "#000000", strokeThickness: 3 })
+            .text(ix + r + 1, iy + r + 1, `${value}`, { ...TEXT_BASE, fontSize: "10px", color: "#ffffff", stroke: "#000000", strokeThickness: 3 })
             .setOrigin(1, 1),
         );
       }
@@ -1485,10 +1563,70 @@ export class CombatScene extends Phaser.Scene {
         if (pointer.button === 0) this.onUnitClicked(spec.id);
       });
       this.hoverTooltip(circle, () => ({ x: spec.x + spec.w / 2 + 8, y: spec.y + iy }), () => [
-        `${keyword?.name ?? icon.keywordId}${icon.value > 0 ? ` ${icon.value}` : ""}`,
+        `${keyword?.name ?? icon.keywordId}${value > 0 ? ` ${value}` : ""}`,
         keyword?.text ?? "",
+        badge.id === "seal" ? this.sealSourceLine(spec) : this.statusSourceLine(spec, badge.id),
       ]);
+      // Hộ Vệ (`18` §2.2): the tether to the guardian shows on hover only —
+      // drawing every link always turned dense boards into spaghetti.
+      const sourceId =
+        badge.id === "guard" ? spec.unit?.statuses.find((status) => status.id === "guard")?.sourceId : undefined;
+      if (sourceId !== undefined) {
+        circle.on("pointerover", () => this.drawGuardTether(spec, ix, iy, sourceId));
+        circle.on("pointerout", () => this.clearGuardTether());
+      }
     });
+  }
+
+  /** Every status + seal with its source — the `+N` marker's full list. */
+  private fullStatusLines(spec: UnitCardSpec): string[] {
+    const lines: string[] = [];
+    for (const status of spec.statuses) {
+      const icon = STATUS_ICONS[status.id];
+      const keyword = icon !== undefined ? this.gameData.keywords[icon.keywordId] : undefined;
+      lines.push(
+        `${keyword?.name ?? status.id}${status.value > 0 ? ` ${status.value}` : ""}${this.statusSourceLine(spec, status.id)}`,
+      );
+    }
+    if (spec.sealed) lines.push(`${this.gameData.keywords[SEAL_ICON.keywordId]?.name ?? "Phong Ấn"}${this.sealSourceLine(spec)}`);
+    return lines;
+  }
+
+  /** ` (từ <source>)` when the status carries a known caster — e.g. the guardian hero. */
+  private statusSourceLine(spec: UnitCardSpec, statusId: StatusId | "seal" | "overflow"): string {
+    const sourceId = spec.unit?.statuses.find((status) => status.id === statusId)?.sourceId;
+    if (sourceId === undefined) return "";
+    return ` — từ ${this.unitDisplayName(sourceId)}`;
+  }
+
+  private sealSourceLine(spec: UnitCardSpec): string {
+    const sourceId = spec.unit?.sealedBy;
+    return sourceId === undefined ? "" : ` — từ ${this.unitDisplayName(sourceId)}`;
+  }
+
+  /** A unit's display name for status sources, whichever side it sits on. */
+  private unitDisplayName(unitId: string): string {
+    const unit = unitAt(this.state, unitId);
+    if (unit === undefined) return unitId;
+    const summon = this.state.summons?.find((s) => s.id === unitId);
+    if (summon !== undefined) return this.gameData.summons[summon.summonId]?.name ?? "Linh Thú";
+    return this.gameData.heroes[unit.defId]?.name ?? this.gameData.enemies[unit.defId]?.name ?? unitId;
+  }
+
+  /** The gold tether from a hovered Hộ Vệ badge to its guardian (`18` §2.2). */
+  private drawGuardTether(spec: UnitCardSpec, ix: number, iy: number, sourceId: string): void {
+    this.clearGuardTether();
+    const to = this.unitAnchors.get(sourceId);
+    if (to === undefined) return;
+    const g = this.add.graphics().setDepth(39);
+    g.lineStyle(2.5, COLORS.goldFill, 0.9).lineBetween(spec.x + ix, spec.y + iy, to.x, to.y);
+    this.root.add(g);
+    this.guardTether = g;
+  }
+
+  private clearGuardTether(): void {
+    this.guardTether?.destroy();
+    this.guardTether = undefined;
   }
 
   // Draws a texture cover-fitted into a w×h box centered at (x, y).
@@ -1570,6 +1708,7 @@ export class CombatScene extends Phaser.Scene {
       sealed: summon.sealedBy !== undefined,
       frame: COLORS.panelBorder,
       alive: true,
+      unit: summon,
       tooltip: () => [name, `HP ${summon.hp}/${summon.maxHp}${summon.armor > 0 ? ` · Giáp ${summon.armor}` : ""}`],
     };
   }
@@ -1615,6 +1754,7 @@ export class CombatScene extends Phaser.Scene {
         frame: COLORS.panelBorder,
         alive: enemy.alive,
         stealth: enemy.statuses.some((s: StatusInstance) => s.id === "stealth"),
+        unit: enemy,
         tooltip: () => this.enemyTooltip(enemy, def, state),
       },
     };
@@ -1781,7 +1921,7 @@ export class CombatScene extends Phaser.Scene {
     const upKey = `heroes:${hero.defId}_up`;
     // Shown from state: the second form's name, the Tinh Hồn 2 threshold (`01` §8).
     const passiveName = hero.levelUpForm === "alt" ? def.altLevelUp.name : def.levelUp.name;
-    const threshold = hero.constellation >= 2 ? def.levelUp.constellationThreshold : def.levelUp.threshold;
+    const progress = heroProgressLabel(this.gameData, state, hero);
     return {
       id: hero.id,
       x,
@@ -1800,10 +1940,12 @@ export class CombatScene extends Phaser.Scene {
       frame: hero.leveledUp ? COLORS.goldFill : frame,
       alive: hero.alive,
       stealth: hero.statuses.some((s) => s.id === "stealth"),
+      unit: hero,
+      progress: progress ?? undefined,
       tooltip: () => [
         `${def.name}${hero.leveledUp ? " ★" : ""}`,
         `HP ${hero.hp}/${hero.maxHp}${hero.armor > 0 ? ` · Giáp ${hero.armor}` : ""}`,
-        hero.leveledUp ? `${passiveName} — đã Thức Tỉnh` : `${passiveName}: ${hero.levelUpCounter}/${threshold}`,
+        hero.leveledUp ? `${passiveName} — đã Thức Tỉnh` : `${passiveName}: ${progress ?? ""}`,
         hero.sealedBy !== undefined ? "Phong Ấn: lá lượt tới chỉ còn damage" : "",
       ],
     };
@@ -1814,7 +1956,8 @@ export class CombatScene extends Phaser.Scene {
     const c = this.renderUnitCard(spec);
     if (!hero.alive) return;
     const def = this.gameData.heroes[hero.defId]!;
-    const threshold = hero.constellation >= 2 ? def.levelUp.constellationThreshold : def.levelUp.threshold;
+    // Same threshold the rules roll for (`17` §3.2): Tinh Hồn perks stay off in Fair Arena.
+    const threshold = hero.constellation >= 2 && !hero.pvp ? def.levelUp.constellationThreshold : def.levelUp.threshold;
     if (hero.leveledUp) this.neonFrame(c, w, h);
     else this.frameTrace(c, w, h, Math.min(1, hero.levelUpCounter / threshold));
   }
@@ -1832,21 +1975,15 @@ export class CombatScene extends Phaser.Scene {
       this.renderHeroCard(hero, rect.x + rect.w / 2, rect.y + rect.h / 2, rect.w, rect.h, false, frame);
     });
     this.renderSummonRow(heroes, false);
-    // Hộ Vệ (`18` §2.2): a thin gold link from each guarded hero to its guardian.
-    // Anchors for both rows (opponent row renders before this) already exist.
-    const links = this.add.graphics();
-    let drewLink = false;
-    for (const hero of this.state.heroes) {
-      const guard = hero.statuses.find((status) => status.id === "guard");
-      if (guard?.sourceId === undefined) continue;
-      const from = this.unitAnchors.get(hero.id);
-      const to = this.unitAnchors.get(guard.sourceId);
-      if (from === undefined || to === undefined) continue;
-      links.lineStyle(2, COLORS.goldFill, 0.5).lineBetween(from.x, from.y, to.x, to.y);
-      drewLink = true;
+    // Co-op group titles over each seat's hero row (`17` §9.3); the partner's
+    // ready state rides along so `done` never needs a console read.
+    if (coop) {
+      const rowTop = OWN_ROW_TOP_LABEL;
+      this.text(GROUP_LABEL_X_OWN, rowTop, "Đội của bạn", 12, COLORS.dimText, this.root).setOrigin(0.5);
+      const partnerSeat = this.state.players.find((player) => player.index !== this.mySeat);
+      const partnerLabel = partnerSeat?.done === true ? "Đồng đội · Đã Xong" : "Đồng đội";
+      this.text(GROUP_LABEL_X_PARTNER, rowTop, partnerLabel, 12, "#8fb8ff", this.root).setOrigin(0.5);
     }
-    if (drewLink) this.root.add(links);
-    else links.destroy();
   }
 
   /**

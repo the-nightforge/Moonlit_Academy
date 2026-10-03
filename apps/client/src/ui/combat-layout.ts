@@ -83,6 +83,11 @@ function cardRect(cx: number, cy: number, w: number, h: number): Rect {
   return { x: cx - w / 2, y: cy - h / 2, w, h };
 }
 
+/** Strict rectangle intersection — touching edges do not count as overlap. */
+export function overlap(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}
+
 /** Evenly spaced centers inside a band; n=1 lands on the band's middle. */
 function bandXs(count: number, band: { left: number; right: number }): number[] {
   const span = band.right - band.left;
@@ -136,13 +141,16 @@ export function computeCombatLayout(state: CombatState, mySeat: number): CombatL
     units.set(enemy.id, cardRect(enemyXs[i] ?? ENEMY_BAND.left, FOE_ROW_Y, w, h));
   });
 
-  (state.summons ?? []).forEach((summon, i) => {
-    const hostile = summon.player !== mySeat;
-    units.set(
-      summon.id,
-      cardRect(SUMMON_XS[i % SUMMON_XS.length]!, hostile ? FOE_ROW_Y : SUMMON_OWN_Y, SUMMON_W, SUMMON_H),
-    );
-  });
+  // Summons get per-seat slot pairs — a seat's extra summons wrap downward in
+  // pairs instead of piling onto the first slot or drifting into controls.
+  const summonCounts = new Map<number, number>();
+  for (const summon of state.summons ?? []) {
+    const i = summonCounts.get(summon.player) ?? 0;
+    summonCounts.set(summon.player, i + 1);
+    const baseY = summon.player === mySeat ? SUMMON_OWN_Y : FOE_ROW_Y;
+    const slotY = baseY + Math.floor(i / SUMMON_XS.length) * (SUMMON_H + 8);
+    units.set(summon.id, cardRect(SUMMON_XS[i % SUMMON_XS.length]!, slotY, SUMMON_W, SUMMON_H));
+  }
 
   const seats = new Map<number, SeatAnchors>();
   for (const seat of state.players) {

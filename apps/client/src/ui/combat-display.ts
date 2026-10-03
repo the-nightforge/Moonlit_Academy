@@ -1,7 +1,7 @@
 import { cardDefOf, displayDuration, DURATION_STATUSES, getStatus } from "rules";
-import type { CardDef, CardInstance, CombatState, GameData, StatusId, UnitState } from "rules";
+import type { CardDef, CardInstance, CombatState, GameData, HeroState, StatusId, UnitState } from "rules";
 import type { PublicPlayedCard } from "../net/protocol";
-import { STATUS_ICONS, STATUS_LABELS } from "./theme";
+import { SEAL_ICON, STATUS_ICONS, STATUS_LABELS } from "./theme";
 import { seatAnchorsFor } from "./combat-layout";
 
 export interface Point {
@@ -43,6 +43,61 @@ export function statusDisplayValue(state: CombatState, unit: UnitState, status: 
 /** `unit.statuses` with display values — for badges and tooltips. */
 export function displayStatuses(state: CombatState, unit: UnitState): UnitState["statuses"] {
   return unit.statuses.map((entry) => ({ ...entry, value: statusDisplayValue(state, unit, entry.id) }));
+}
+
+/** One in-card status badge — a status, the seal, or the `+N` overflow marker. */
+export interface StatusBadgeModel {
+  id: StatusId | "seal" | "overflow";
+  label: string;
+  value?: number;
+  hiddenCount?: number;
+}
+
+/**
+ * The badges a `width`-wide unit card shows in at most two rows
+ * (`05` review). Entries keep state order — never re-sorted, so a wrong
+ * processing order can't masquerade as intent — with the seal last. Beyond
+ * capacity the last slot becomes an overflow marker carrying `hiddenCount`;
+ * the full list still lands in the badge tooltip via `statusTooltipNames`.
+ */
+export function statusBadgeModels(state: CombatState, unit: UnitState, width: number): StatusBadgeModel[] {
+  const perRow = Math.max(1, Math.floor((width - 16) / 24));
+  const capacity = perRow * 2;
+  const entries: StatusBadgeModel[] = displayStatuses(state, unit).map((entry) => ({
+    id: entry.id,
+    label: STATUS_LABELS[entry.id] ?? entry.id,
+    value: entry.value,
+  }));
+  if (unit.sealedBy !== undefined) entries.push({ id: "seal", label: "Ấn" });
+  if (entries.length <= capacity) return entries;
+  const shown = capacity - 1;
+  return [
+    ...entries.slice(0, shown),
+    { id: "overflow", label: `+${entries.length - shown}`, hiddenCount: entries.length - shown },
+  ];
+}
+
+/** Every status + seal as keyword names, in state order — the overflow tooltip's full list. */
+export function statusTooltipNames(data: GameData, unit: UnitState): string[] {
+  const names = unit.statuses.map(
+    (entry) => data.keywords[STATUS_ICONS[entry.id]?.keywordId ?? ""]?.name ?? STATUS_LABELS[entry.id] ?? entry.id,
+  );
+  if (unit.sealedBy !== undefined) names.push(data.keywords[SEAL_ICON.keywordId]?.name ?? "Phong Ấn");
+  return names;
+}
+
+/**
+ * The Thức Tỉnh counter label (`counter/threshold`) with the rules' own
+ * formula — constellation ≥2 swaps thresholds except for a Fair-Arena hero
+ * (`17` §3.2). `null` once the hero is Thức Tỉnh — the star marks it instead.
+ */
+export function heroProgressLabel(data: GameData, _state: CombatState, hero: HeroState): string | null {
+  if (hero.leveledUp) return null;
+  const def = data.heroes[hero.defId];
+  if (def === undefined) return null;
+  const threshold =
+    hero.constellation >= 2 && !hero.pvp ? def.levelUp.constellationThreshold : def.levelUp.threshold;
+  return `${hero.levelUpCounter}/${threshold}`;
 }
 
 /**

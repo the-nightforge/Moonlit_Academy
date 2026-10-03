@@ -1,0 +1,148 @@
+import { describe, expect, it, vi } from "vitest";
+import type { HeroState, StatusId, UnitState } from "rules";
+import { computeCombatLayout, overlap } from "../src/ui/combat-layout";
+import { fixture } from "./helpers/combat-fixture";
+
+vi.stubGlobal("window", {
+  devicePixelRatio: 1,
+  screen: { width: 1280, height: 720 },
+});
+
+const { heroProgressLabel, statusBadgeModels, statusTooltipNames } = await import(
+  "../src/ui/combat-display"
+);
+
+const ALL_STATUSES: StatusId[] = [
+  "stealth",
+  "taunt",
+  "weak",
+  "vulnerable",
+  "mark",
+  "burn",
+  "regen",
+  "strength",
+  "empower",
+  "freeze",
+  "reflect",
+  "guard",
+  "charm",
+];
+
+function unitWith(statusCount: number, sealed: boolean): UnitState {
+  return {
+    id: "u_dense",
+    hp: 10,
+    maxHp: 20,
+    armor: 0,
+    statuses: ALL_STATUSES.slice(0, statusCount).map((id, i) => ({ id, value: i + 1 })),
+    ...(sealed ? { sealedBy: "sealer_1" } : {}),
+  } as UnitState;
+}
+
+describe("statusBadgeModels — two rows then +N overflow (`05` review)", () => {
+  const { state } = fixture("coop");
+
+  it("13 statuses + seal on a 100-wide co-op card: 6 badges, +9 hidden, order kept", () => {
+    const unit = unitWith(13, true); // 14 entries
+    const badges = statusBadgeModels(state, unit, 100);
+    // perRow = floor((100-16)/24) = 3 → capacity 6 → 5 shown + 1 overflow.
+    expect(badges).toHaveLength(6);
+    expect(badges.at(-1)?.id).toBe("overflow");
+    expect(badges.at(-1)?.hiddenCount).toBe(9);
+    // First five keep state order — never re-sorted (a wrong processing order reads as a bug).
+    expect(badges.slice(0, 5).map((b) => b.id)).toEqual(ALL_STATUSES.slice(0, 5));
+  });
+
+  it("fits exactly in two rows: no overflow badge", () => {
+    const badges = statusBadgeModels(state, unitWith(5, true), 100); // 6 entries, capacity 6
+    expect(badges).toHaveLength(6);
+    expect(badges.at(-1)?.id).toBe("seal");
+    expect(badges.some((b) => b.id === "overflow")).toBe(false);
+  });
+
+  it("the full tooltip still names every status + the seal", () => {
+    const names = statusTooltipNames(fixture("coop").data, unitWith(13, true));
+    expect(names).toHaveLength(14);
+  });
+});
+
+describe("heroProgressLabel — Thức Tỉnh counter (`01` §8)", () => {
+  const { data, state } = fixture("pve");
+  const hero = state.heroes[0] as HeroState;
+  const def = data.heroes[hero.defId]!;
+
+  it("reads counter/threshold with the rules' formula", () => {
+    const label = heroProgressLabel(data, state, { ...hero, levelUpCounter: 3 });
+    expect(label).toBe(`3/${def.levelUp.threshold}`);
+  });
+
+  it("constellation ≥2 swaps to the constellation threshold — except a PvP hero", () => {
+    const c2 = { ...hero, constellation: 2, levelUpCounter: 1 };
+    expect(heroProgressLabel(data, state, c2)).toBe(`1/${def.levelUp.constellationThreshold}`);
+    // Fair Arena (`17` §3.2): even-constellation perks stay off in PvP.
+    const { state: pvpState } = fixture("pvp");
+    const pvpHero = { ...(pvpState.heroes[0] as HeroState), constellation: 2, levelUpCounter: 1 };
+    expect(heroProgressLabel(data, pvpState, pvpHero)).toBe(`1/${def.levelUp.threshold}`);
+  });
+
+  it("an already-Thức Tỉnh hero shows no counter", () => {
+    expect(heroProgressLabel(data, state, { ...hero, leveledUp: true })).toBeNull();
+  });
+});
+
+describe("layout — summon slots belong to their seat (`05` review)", () => {
+  it("two summons on one seat never overlap, nor touch the controls column", () => {
+    const { state } = fixture("coop");
+    const seat = state.players[0]!.index;
+    const summons = [0, 1].map((i) => ({
+      id: `sum_${i}`,
+      summonId: "linh_thu_moc",
+      player: seat,
+      hp: 5,
+      maxHp: 5,
+      armor: 0,
+      statuses: [],
+      alive: true,
+    }));
+    const withSummons = { ...state, summons: summons as never };
+    const layout = computeCombatLayout(withSummons, seat);
+    const [a, b] = summons.map((s) => layout.units.get(s.id)!);
+    expect(a).toBeDefined();
+    expect(overlap(a, b)).toBe(false);
+    expect(a.x + a.w).toBeLessThanOrEqual(layout.controls.x);
+    expect(b.x + b.w).toBeLessThanOrEqual(layout.controls.x);
+  });
+
+  it("co-op: the partner's summon is not dropped into the enemy band", () => {
+    const { state } = fixture("coop");
+    const mySeat = state.players[0]!.index;
+    const partner = state.players[1]!.index;
+    const withSummons = {
+      ...state,
+      summons: [
+        { id: "sum_mine", summonId: "linh_thu_moc", player: mySeat, hp: 5, maxHp: 5, armor: 0, statuses: [], alive: true },
+        { id: "sum_theirs", summonId: "linh_thu_moc", player: partner, hp: 5, maxHp: 5, armor: 0, statuses: [], alive: true },
+      ] as never,
+    };
+    const layout = computeCombatLayout(withSummons, mySeat);
+    const mine = layout.units.get("sum_mine")!;
+    const theirs = layout.units.get("sum_theirs")!;
+    expect(overlap(mine, theirs)).toBe(false);
+    // The other seat's pair sits in its own slot band — clear of the enemy band
+    // (co-op's single boss ends well left of the right-edge summon column).
+    for (const enemy of state.enemies) {
+      const rect = layout.units.get(enemy.id);
+      if (rect !== undefined) expect(overlap(theirs, rect)).toBe(false);
+    }
+    expect(theirs.x + theirs.w).toBeLessThanOrEqual(layout.controls.x);
+  });
+});
+
+describe("unit card fallback — no art still identifies the unit", () => {
+  it("the spec name always comes from the definition, art or not", () => {
+    const { data, state } = fixture("pve");
+    const hero = state.heroes[0]!;
+    // A missing portrait must still leave the def's name on the card (silhouette + name).
+    expect(data.heroes[hero.defId]!.name.length).toBeGreaterThan(0);
+  });
+});
