@@ -95,7 +95,45 @@ function instant(): Promise<void> {
 }
 
 type HpLostEvent = Extract<CombatEvent, { type: "hpLost" }>;
-type DamageEvent = Extract<CombatEvent, { type: "damageDealt" }>;
+export type DamageEvent = Extract<CombatEvent, { type: "damageDealt" }>;
+
+/**
+ * Groups consecutive `damageDealt` events for parallel playback. A group takes
+ * hits from one source on distinct targets; a repeated target, a different
+ * source, or any non-damage event closes it — so repeated hits on one unit
+ * still play one after another. This is an animation grouping only, not a
+ * rules-level hit id. `groups.flat()` always equals `events`.
+ */
+export function groupDamageEvents(events: readonly CombatEvent[]): CombatEvent[][] {
+  const groups: CombatEvent[][] = [];
+  let open: DamageEvent[] = [];
+  const seen = new Set<string>();
+  const flush = () => {
+    if (open.length === 0) return;
+    groups.push(open);
+    open = [];
+    seen.clear();
+  };
+  for (const event of events) {
+    if (event.type !== "damageDealt") {
+      flush();
+      groups.push([event]);
+      continue;
+    }
+    const hit = event as DamageEvent;
+    const sameSource = open.length === 0 || open[0]!.sourceId === hit.sourceId;
+    if (sameSource && !seen.has(hit.targetId)) {
+      open.push(hit);
+      seen.add(hit.targetId);
+      continue;
+    }
+    flush();
+    open = [hit];
+    seen.add(hit.targetId);
+  }
+  flush();
+  return groups;
+}
 
 /** Events after which damage no longer comes from the last played card. */
 const CARDLESS_SOURCES = new Set<CombatEvent["type"]>([
@@ -176,21 +214,31 @@ export async function playEventQueue(
 ): Promise<void> {
   /** The card whose effects are resolving: its hits take the card's look. */
   let card: CardDef | undefined;
-  for (let i = 0; i < events.length; i++) {
-    const event = events[i]!;
-    const next = events[i + 1];
+  /** Repeated hits on one target shift their floats so the numbers never stack. */
+  const hitCounts = new Map<string, number>();
+  let previous: CombatEvent | undefined;
+  const groups = groupDamageEvents(events);
+  for (let g = 0; g < groups.length; g++) {
+    const group = groups[g]!;
+    const event = group[0]!;
+    const next = groups[g + 1]?.[0];
     if (event.type === "cardPlayed") {
       card = resolvePlayedCard(ctx.gameData, ctx.state, ctx.after, event.instanceId, ctx.revealedCards)?.definition;
     } else if (CARDLESS_SOURCES.has(event.type)) {
       card = undefined;
     }
-    if (event.type === "damageDealt") {
-      // Hits of one source in a row (area attacks) land together.
-      const group: DamageEvent[] = [event];
-      while (events[i + 1]?.type === "damageDealt" && (events[i + 1] as DamageEvent).sourceId === event.sourceId) {
-        group.push(events[++i] as DamageEvent);
-      }
-      await Promise.all(group.map((hit) => animateEvent(rt, hit, ctx, card)));
+    if (group.every((member) => member.type === "damageDealt")) {
+      // Distinct targets of one source land together; the next group waits for
+      // the decisive impacts plus a short beat so each hit stays readable.
+      await Promise.all(
+        (group as DamageEvent[]).map((hit) => {
+          const index = hitCounts.get(hit.targetId) ?? 0;
+          hitCounts.set(hit.targetId, index + 1);
+          return animateEvent(rt, hit, ctx, card, index);
+        }),
+      );
+      previous = group[group.length - 1];
+      if (g + 1 < groups.length) await rt.wait(90);
       continue;
     }
     if (
@@ -208,26 +256,33 @@ export async function playEventQueue(
           next.status,
         );
         await flyLabel(rt, from, to, `${STATUS_LABELS[next.status]} ${shown}`);
-        i++;
+        previous = next;
+        g++;
         continue;
       }
     }
     if (isBloodMoonLoss(event)) {
-      const group: HpLostEvent[] = [event];
-      while (isBloodMoonLoss(events[i + 1])) group.push(events[++i] as HpLostEvent);
-      await Promise.all(group.map((loss) => animateEvent(rt, loss, ctx)));
+      // Consecutive blood moon losses are their own singleton groups — gather them.
+      const losses: HpLostEvent[] = [event];
+      while (isBloodMoonLoss(groups[g + 1]?.[0])) {
+        losses.push(groups[g + 1]![0] as HpLostEvent);
+        g++;
+      }
+      await Promise.all(losses.map((loss) => animateEvent(rt, loss, ctx)));
+      previous = losses[losses.length - 1];
       continue;
     }
-    const previous = events[i - 1];
     if (event.type === "hpLost" && event.cause === "reflect" && previous?.type === "damageDealt") {
       const from = ctx.unitAnchors.get(previous.targetId);
       const to = ctx.unitAnchors.get(event.targetId);
       if (from && to) {
         await Promise.all([beam(rt, from, to), animateEvent(rt, event, ctx)]);
+        previous = event;
         continue;
       }
     }
     await animateEvent(rt, event, ctx, card);
+    previous = event;
   }
 }
 
@@ -236,6 +291,7 @@ function animateEvent(
   event: CombatEvent,
   ctx: AnimContext,
   card?: CardDef,
+  hitIndex = 0,
 ): Promise<void> {
   const anchorOf = (unitId: string) => ctx.unitAnchors.get(unitId);
 
@@ -333,20 +389,31 @@ function animateEvent(
       const from = anchorOf(event.sourceId) ?? { x: anchor.x, y: anchor.y + 200 };
       const fromHero = ctx.state.heroes.some((hero) => hero.id === event.sourceId);
       const look = attackLookOf(ctx.gameData, ctx.state, event.sourceId, card);
-      // The number pops and the card shakes when the hit lands, not when it is thrown.
-      return playAttack(rt, look, from, anchor, {
+      let seen!: () => void;
+      const impactSeen = new Promise<void>((resolve) => (seen = resolve));
+      // The number pops and the unit flinches at the decisive impact; the
+      // attack's tail (ribbon retraction, trail fade) keeps running under the
+      // runtime and drains before the batch commits.
+      const attack = playAttack(look, from, anchor, {
         blocked: event.hpLost === 0,
+        runtime: rt,
         ...(fromHero ? { attackerView: ctx.unitViews.get(event.sourceId) } : {}),
-      }).then(() => {
-        const view = ctx.unitViews.get(event.targetId);
-        if (view) void rt.tween({ targets: view, x: view.x + 6, duration: 45, yoyo: true, repeat: 3 });
-        const jobs = [
-          floatText(rt, anchor.x, anchor.y - 50, event.hpLost > 0 ? `-${event.hpLost}` : "Chặn",
-            event.hpLost > 0 ? "#ff6b6b" : "#9aa3c0", 20, 350),
-        ];
-        if (event.blocked > 0) jobs.push(floatText(rt, anchor.x, anchor.y - 24, `🛡 ${event.blocked}`, "#9fd4ff", 13, 300));
-        return Promise.all(jobs).then(() => undefined);
+        onImpact: () => {
+          seen();
+          const view = ctx.unitViews.get(event.targetId);
+          if (view) void rt.tween({ targets: view, x: view.x + 6, duration: 45, yoyo: true, repeat: 3 });
+          const offset = hitIndex * 14;
+          const jobs = [
+            floatText(rt, anchor.x + offset, anchor.y - 50 - offset, event.hpLost > 0 ? `-${event.hpLost}` : "Chặn",
+              event.hpLost > 0 ? "#ff6b6b" : "#9aa3c0", 20, 350),
+          ];
+          if (event.blocked > 0) jobs.push(floatText(rt, anchor.x + offset, anchor.y - 24 - offset, `🛡 ${event.blocked}`, "#9fd4ff", 13, 300));
+          void Promise.all(jobs).catch(() => {});
+        },
       });
+      // An abort mid-flight rejects the attack before the impact — unblock the queue.
+      void attack.then(() => seen(), () => seen());
+      return impactSeen;
     }
     case "hpLost": {
       const anchor = anchorOf(event.targetId);
