@@ -3,6 +3,10 @@ import { addToHand, drawCards } from "./draw";
 import { drainEnemyMoonPower } from "./intent";
 import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "./levelup";
 import {
+  applyStatusDecreed,
+  decreeModifier,
+  decreeStatusAmount,
+  enterPhase,
   moonArmorMultiplier,
   moonCardDamageMultiplier,
   moonHealMultiplier,
@@ -58,6 +62,8 @@ export interface EffectContext {
   summonAction?: true;
   /** Kinh Hồng Vũ: a charmed intent's damage multiplier (`01` §9.3.1). */
   damageMultiplier?: number;
+  /** Liên Kích (`01` §7.5): this attack follows an earlier attack card / attack intent of the same side this turn. */
+  attackChain?: true;
 }
 
 function findUnit(state: CombatState, unitId: string | undefined): UnitState | undefined {
@@ -111,6 +117,13 @@ function markFromSource(target: UnitState, sourceId: string): boolean {
   );
 }
 
+/** Tập Kích key of `unit`'s side (`01` §7.5): `"enemy"`, or `p<seat>` — a Linh Thú hits for its owner's seat. */
+export function hitKey(state: CombatState, unit: UnitState): string {
+  if (unit.side === "enemy") return "enemy";
+  const seat = isSummon(unit) ? (ownerOf(state, unit) ?? unit).player : (unit as HeroState).player;
+  return `p${seat}`;
+}
+
 /** Level-up passive of the acting hero for this card; never applies to bond cards. */
 function cardPassive(data: GameData, ctx: EffectContext): LevelUpPassive | undefined {
   if (ctx.card === undefined || ctx.card.bond || ctx.source.side !== "hero") return undefined;
@@ -131,6 +144,7 @@ export function computeDamageAmount(
   ctx: EffectContext,
   target: UnitState,
   base: number,
+  consume = true,
 ): number {
   const attack = isAttackSource(ctx);
   const passive = cardPassive(data, ctx);
@@ -150,6 +164,20 @@ export function computeDamageAmount(
       if (passive?.type === "bonusVsDebuffed" && target.statuses.filter((st) => DEBUFF_STATUSES.has(st.id)).length >= passive.minDebuffs) flat += passive.amount;
     }
   }
+  // Liên Kích (`01` §7.5): chained attack cards / attack intents hit harder.
+  const chain = decreeModifier(data, state, "attackChainBonus");
+  if (chain && ctx.attackChain) flat += chain.amount;
+  // Tập Kích (`01` §7.5): the side's first damage hit of its turn. `consume`
+  // marks the key — previews compute the bonus without spending it.
+  const first = decreeModifier(data, state, "firstHitBonus");
+  if (first) {
+    const key = hitKey(state, ctx.source);
+    state.firstHitKeys ??= [];
+    if (!state.firstHitKeys.includes(key)) {
+      if (consume) state.firstHitKeys.push(key);
+      flat += first.amount;
+    }
+  }
   let multiplier = 1;
   multiplier *= ctx.damageMultiplier ?? 1;
   if (ctx.card !== undefined) {
@@ -161,12 +189,12 @@ export function computeDamageAmount(
   return Math.max(0, Math.floor(flat * multiplier));
 }
 
-/** HP loss that ignores armor and multipliers (loseHp, burn, reflect, blood moon). */
+/** HP loss that ignores armor and multipliers (loseHp, burn, reflect, blood moon, decrees). */
 export function loseHp(
   data: GameData,
   unit: UnitState,
   amount: number,
-  cause: "loseHp" | "burn" | "reflect" | "bloodMoon",
+  cause: Extract<CombatEvent, { type: "hpLost" }>["cause"],
   events: CombatEvent[],
 ): number {
   const lost = Math.min(unit.hp, amount);
@@ -203,21 +231,30 @@ function dealDamage(
   target: UnitState,
   base: number,
   events: CombatEvent[],
+  single = false,
 ): void {
   const backRow =
     ctx.card !== undefined && ctx.card.type === "attack" && ctx.card.bond === undefined &&
     ctx.source.side === "hero" && isBackRow(state, target);
   const amount = computeDamageAmount(data, state, ctx, target, base);
-  const blocked = Math.min(target.armor, amount);
+  // Thế Thủ (`01` §10.1 step 4b): the first single-target hit a unit takes each
+  // round is reduced before armor.
+  let final = amount;
+  const shield = decreeModifier(data, state, "firstSingleHitReduction");
+  if (shield && single && !target.shieldUsed) {
+    target.shieldUsed = true;
+    final = Math.max(0, final - shield.amount);
+  }
+  const blocked = Math.min(target.armor, final);
   target.armor -= blocked;
-  const hpLost = Math.min(target.hp, amount - blocked);
+  const hpLost = Math.min(target.hp, final - blocked);
   target.hp -= hpLost;
   if (target.side === "hero") bumpCounter(data, target as HeroState, "damageTaken", hpLost);
   events.push({
     type: "damageDealt",
     sourceId: ctx.source.id,
     targetId: target.id,
-    amount,
+    amount: final,
     blocked,
     hpLost,
   });
@@ -229,7 +266,7 @@ function dealDamage(
     const hero = ctx.source as HeroState;
     if (!hero.firstHitUsedThisTurn) {
       hero.firstHitUsedThisTurn = true;
-      if (target.alive && target.hp > 0) applyStatus(target, "vulnerable", passive.rounds, hero.id, events);
+      if (target.alive && target.hp > 0) applyStatusDecreed(data, state, target, "vulnerable", passive.rounds, hero.id, events);
     }
   }
   // Biên Tái: the first hit each turn from the hero's attack cards marks the opposing target.
@@ -238,13 +275,14 @@ function dealDamage(
     if (!hero.firstHitUsedThisTurn) {
       hero.firstHitUsedThisTurn = true;
       const factor = state.mode === "pvp" ? 2 : 1;
-      if (target.alive && target.hp > 0) applyStatus(target, "mark", passive.rounds * factor, hero.id, events);
+      if (target.alive && target.hp > 0) applyStatusDecreed(data, state, target, "mark", passive.rounds * factor, hero.id, events);
     }
   }
 
   const reflect = statusValue(target, "reflect");
-  if (amount <= 0 || reflect <= 0) return;
-  loseHp(data, ctx.source, reflect, "reflect", events);
+  if (final <= 0 || reflect <= 0) return;
+  // Phản Chấn (`01` §10.5): the decree multiplies Phản Đòn.
+  loseHp(data, ctx.source, reflect * (decreeModifier(data, state, "reflectMultiplier")?.multiplier ?? 1), "reflect", events);
   if (ctx.source.hp > 0) return;
   // Both deaths resolve right after this hit, each credited to its own killer.
   if (target.alive && target.hp <= 0) {
@@ -329,10 +367,10 @@ export function resolveEffect(
           // Compute `behind` before the main hit: the main target dying must
           // not make the unit behind it step forward (`18` §3.2).
           const behind = pierce ? nextBehind(state, target) : undefined;
-          dealDamage(data, state, ctx, target, effect.amount, events);
+          dealDamage(data, state, ctx, target, effect.amount, events, effect.to === "chosen");
           if (!ctx.source.alive) return;
           if (behind?.alive && behind.hp > 0) {
-            dealDamage(data, state, ctx, behind, effect.amount, events);
+            dealDamage(data, state, ctx, behind, effect.amount, events, effect.to === "chosen");
             if (!ctx.source.alive) return;
           }
         }
@@ -394,7 +432,9 @@ export function resolveEffect(
     case "chooseCard": {
       const seat = playerOf(state, ctx.source.id);
       if (!seat) return;
-      const extra = heroesOf(state, seat.index).reduce((sum, hero) => { const p = hero.alive && hero.leveledUp ? levelUpPassive(data, hero) : undefined; return sum + (p?.type === "chooseCardExtraLook" ? p.amount : 0); }, 0);
+      // Chiêm Tinh (`01` §7.5): the decree stacks with Định Cục's passive.
+      const extra = heroesOf(state, seat.index).reduce((sum, hero) => { const p = hero.alive && hero.leveledUp ? levelUpPassive(data, hero) : undefined; return sum + (p?.type === "chooseCardExtraLook" ? p.amount : 0); }, 0)
+        + (decreeModifier(data, state, "chooseCardExtraLook")?.amount ?? 0);
       const options = seat.drawPile.splice(0, Math.min(effect.look + extra, seat.drawPile.length));
       if (options.length === 0) return;
       if (options.length === 1) {
@@ -439,6 +479,12 @@ export function resolveEffect(
       if (passive?.type === "debuffDurationBonus" && debuff && DURATION_STATUSES.has(effect.status)) amount += passive.amount * durationFactor;
       // Kinh Hồng Vũ: each charm the hero applies carries extra charges (`18` §3.3).
       if (passive?.type === "charmMastery" && effect.status === "charm") amount += passive.extraCharges;
+      // Nguyệt Chiếu / Cuồng Nguyệt / Thiên Bình (`01` §7.5): the same
+      // adjustments direct `applyStatusDecreed` applications get — suppression
+      // skips target resolution and counters entirely.
+      const adjusted = decreeStatusAmount(data, state, effect.status, amount);
+      if (adjusted === null) return;
+      amount = adjusted;
       let targets = resolveTargets(state, effect.to, ctx);
       if (
         effect.status === "regen" &&
@@ -461,7 +507,7 @@ export function resolveEffect(
         if (effect.status === "charm" && ctx.source.side === "hero" && opponentsOf(state, ctx.source).includes(target)) {
           bumpCounter(data, ctx.source as HeroState, "charmsApplied", 1);
           // Vũ Y: charming an enemy hides the charmer (`18` §3.3).
-          if (passive?.type === "stealthOnCharm") applyStatus(ctx.source, "stealth", passive.rounds * durationFactor, ctx.source.id, events);
+          if (passive?.type === "stealthOnCharm") applyStatusDecreed(data, state, ctx.source, "stealth", passive.rounds * durationFactor, ctx.source.id, events);
         }
         if (effect.status === "regen") cleanseIfHealer(data, ctx, target, events);
       }
@@ -479,6 +525,7 @@ export function resolveEffect(
         (((state.moonIndex + effect.amount) % data.moonPhases.length) + data.moonPhases.length) %
         data.moonPhases.length;
       events.push({ type: "moonShifted", from, to: state.moonIndex, cause: "card" });
+      enterPhase(data, state, events);
       if (ctx.card !== undefined && ctx.source.side === "hero") bumpCounter(data, ctx.source as HeroState, "moonShifts", 1);
       const weakens = cardPassive(data, ctx);
       if (weakens?.type === "moonShiftWeakensEnemies") {
@@ -495,7 +542,11 @@ export function resolveEffect(
       const bonus = cardPassive(data, ctx)?.type === "stealBonus" ? 1 : 0;
       for (const entry of stolen) {
         removeStatus(target, entry.id, events);
-        applyStatus(ctx.source, entry.id, entry.value + bonus, ctx.source.id, events);
+        // "Cùng giá trị" (`01` §6.5): a transfer is not a fresh application —
+        // no decree multiplier; under Nguyệt Chiếu stolen Ẩn Thân simply ends.
+        if (!(entry.id === "stealth" && decreeModifier(data, state, "stealthSuppressed"))) {
+          applyStatus(ctx.source, entry.id, entry.value + bonus, ctx.source.id, events);
+        }
         if (ctx.source.side === "hero") {
           bumpCounter(data, ctx.source as HeroState, "buffsStolen", 1);
         }
@@ -534,7 +585,7 @@ export function resolveEffect(
       for (const target of resolveTargets(state, effect.to, ctx)) {
         for (let hit = 0; hit < hits && target.alive && target.hp > 0; hit++) {
           const base = Math.floor((ctx.source.maxHp - ctx.source.hp) * effect.ratio);
-          dealDamage(data, state, ctx, target, base, events);
+          dealDamage(data, state, ctx, target, base, events, effect.to === "chosen");
           if (!ctx.source.alive) return;
         }
       }
@@ -544,7 +595,7 @@ export function resolveEffect(
       for (const target of resolveTargets(state, effect.to, ctx)) {
         if (!target.alive || target.hp <= 0) continue;
         const scaled = (effect.base ?? 0) + Math.floor((damageScale(state, effect.per, ctx, target) * effect.amount) / (effect.divisor ?? 1));
-        dealDamage(data, state, ctx, target, Math.min(effect.max ?? scaled, scaled), events);
+        dealDamage(data, state, ctx, target, Math.min(effect.max ?? scaled, scaled), events, effect.to === "chosen");
         if (!ctx.source.alive) return;
       }
       return;
@@ -660,7 +711,7 @@ export function resolveEffect(
         }
         if (passive?.type === "sealWeakens") {
           const factor = state.mode === "pvp" ? 2 : 1;
-          applyStatus(target, "weak", passive.amount * factor, ctx.source.id, events);
+          applyStatusDecreed(data, state, target, "weak", passive.amount * factor, ctx.source.id, events);
         }
       }
       return;

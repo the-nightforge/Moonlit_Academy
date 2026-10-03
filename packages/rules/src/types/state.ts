@@ -18,6 +18,8 @@ export interface UnitState {
   alive: boolean;
   /** Phong Ấn (`01` §5.6): hero id that sealed this unit; its next-turn intents/cards keep damage but lose every other effect. Cleared after that unit's side next turn, used or not. */
   sealedBy?: string;
+  /** Thế Thủ (`01` §7.5): this unit's first single-target hit of the round was already reduced. Cleared at round end. */
+  shieldUsed?: true;
 }
 
 export interface HeroState extends UnitState {
@@ -119,12 +121,20 @@ export interface PlayerState {
   moonPowerBonus: number;
   /** Cards already played this player's turn (Liên Hoàn). */
   cardsPlayedThisTurn: number;
+  /** Attack cards already resolved this turn (Liên Kích, `01` §7.5) — the count at resolve time gates the chain bonus. */
+  attackCardsThisTurn?: number;
+  /** Xả Thân (`01` §5.8): cards this seat already discarded via `discardCard` this turn; reset at turn start. */
+  discardsThisTurn?: number;
+  /** Huyết Tế (`01` §5.9): the seat already paid blood this turn; reset at turn start. */
+  bloodPactUsed?: true;
   /** Cards created this combat (`createCard`); names the next `t<n>` instance. */
   createdCards?: number;
   /** A pending Chiêm Bài pick or Chọn Pha; Chiêm Bài option instance ids are out of the draw pile until resolved. */
   pendingChoice: PendingChoice | null;
   /** Chọn Pha owed this turn (a hero was leveled with `chooseMoon` at turn start). */
   moonChoicePending?: true;
+  /** Bói Nguyệt (`01` §3.1 step 12): the decree's free Chiêm Bài is queued behind an already-open choice; stores its `look` so the reopen is guaranteed even if the phase shifts meanwhile. */
+  omenPending?: number;
   /**
    * Per-combat hook counters, keyed "<relicId>#<hookIndex>" (run relics, augments,
    * moon relics) or "<weaponId>@<heroId>#<hookIndex>" (weapons).
@@ -164,6 +174,10 @@ export interface CombatState {
   activePlayer: number;
   round: number;
   moonIndex: number;
+  /** Nguyệt Lệnh id per phase index (`01` §7.3). */
+  moonDecrees: string[];
+  /** Tập Kích (`01` §7.5): sides whose first damage hit of their turn already took the bonus — keys `p<seat>` / `"enemy"`, cleared when that side's turn starts. */
+  firstHitKeys?: string[];
   bloodMoonRounds: number;
   players: PlayerState[];
   heroes: HeroState[];

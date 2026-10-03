@@ -1,13 +1,14 @@
-import { addToHand, refillHand } from "../draw";
+import { addToHand, drawCards, refillHand } from "../draw";
 import { checkCombatEnd, loseHp, processDeaths, tickUnitStatuses } from "../effects";
 import { runEnemyTurn } from "../enemy-turn";
 import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive } from "../levelup";
+import { decreeModifier } from "../moon";
 import { baseMoonPower } from "../moon-power";
 import { heroesOf, summonsOf } from "../players";
 import { fireEventHooks, runRelicHooks } from "../run-relic-hooks";
 import { hasStatus, removeStatus } from "../statuses";
 import { runSummonActions } from "../summons";
-import { endRound, endSeatTurn } from "../turn";
+import { decreeTurnHeal, decreeWeakHighest, endRound, endSeatTurn } from "../turn";
 import { heroTurnStart, passiveOf, seatTurnStart } from "../turn-passives";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "../types/index";
 
@@ -21,16 +22,26 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
   events.push({ type: "turnStarted", side: "hero", round: state.round });
   for (const seat of state.players) {
     seat.cardsPlayedThisTurn = 0;
+    delete seat.attackCardsThisTurn;
+    delete seat.discardsThisTurn;
+    delete seat.bloodPactUsed;
     seat.done = false;
   }
+  // Tập Kích (`01` §7.5): both seats' first-hit keys reset with the shared turn.
+  state.firstHitKeys = (state.firstHitKeys ?? []).filter(
+    (key) => !state.players.some((seat) => key === `p${seat.index}`),
+  );
   state.playedThisTurn = [];
 
-  for (const unit of [...state.heroes, ...summonsOf(state)]) {
-    if (unit.armor > 0) {
-      unit.armor = 0;
-      events.push({ type: "armorRemoved", targetId: unit.id });
+  // Giữ Giáp (`01` §3.1 step 1): the decree skips the armor wipe / reflect strip.
+  if (!decreeModifier(data, state, "keepArmor")) {
+    for (const unit of [...state.heroes, ...summonsOf(state)]) {
+      if (unit.armor > 0) {
+        unit.armor = 0;
+        events.push({ type: "armorRemoved", targetId: unit.id });
+      }
+      removeStatus(unit, "reflect", events);
     }
-    removeStatus(unit, "reflect", events);
   }
   for (const seat of state.players) {
     const mine = heroesOf(state, seat.index);
@@ -68,12 +79,22 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
       if (checkCombatEnd(state, events)) return;
     }
   }
+  // Decree turn-start effects (`01` §3.1 step 5): the shared turn starts for
+  // both seats at once — one heal pass over the whole side, one Thế Cân pass.
+  decreeTurnHeal(data, state, [...state.heroes, ...summonsOf(state)], events);
+  decreeWeakHighest(data, state, events);
   if (checkCombatEnd(state, events)) return;
   for (const seat of state.players) {
     const curve = data.combatConfig.moonPower;
-    seat.moonPower = baseMoonPower(curve, curve.perRound, state.round) + seat.moonReserve + seat.moonPowerBonus;
+    // Nguyệt Sinh (`01` §7.5) tops up each seat's fund.
+    seat.moonPower =
+      baseMoonPower(curve, curve.perRound, state.round) + seat.moonReserve + seat.moonPowerBonus +
+      (decreeModifier(data, state, "turnMoonPowerBonus")?.amount ?? 0);
     events.push({ type: "moonPowerChanged", value: seat.moonPower, player: seat.index });
     refillHand(data, state, seat, events);
+    // Khai Trí (`01` §3.1 step 8): one extra draw after the refill.
+    const decreeDraw = decreeModifier(data, state, "turnStartDraw");
+    if (decreeDraw) drawCards(data, state, seat, decreeDraw.amount, events);
     if (seat.hand.length === 0 && seat.drawPile.length === 0) {
       // §16.6: one seat decked out loses only its own heroes; the partner fights on.
       events.push({ type: "deckedOut", player: seat.index });
@@ -115,8 +136,9 @@ export function coopEndTurn(
     addToHand(data, state, seat, instanceId, events);
     seat.drawPile.push(...bottomed);
     seat.pendingChoice = null;
-    // A Chọn Pha queued behind the Chiêm Bài lapses with the turn.
+    // A Chọn Pha or Bói Nguyệt queued behind the Chiêm Bài lapses with the turn.
     delete seat.moonChoicePending;
+    delete seat.omenPending;
     events.push({ type: "cardChosen", instanceId, bottomed, player: seat.index });
     bumpSeat(data, state, seat.index, "cardsChosen", 1);
   }

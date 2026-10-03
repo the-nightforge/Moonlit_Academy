@@ -142,6 +142,8 @@ describe("run relic hooks", () => {
   it("T121: moonPhaseEntered fires on round end and on a moon shift card", () => {
     const roundEnd = makeTestCombat({
       runRelicIds: ["bach_lo_huong_tui"],
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { full: "vien_nguyet" } },
       mutateData: makeEnemiesIdle,
       setup: (s) => {
         idleEnemies(s);
@@ -157,6 +159,8 @@ describe("run relic hooks", () => {
 
     const shifted = makeTestCombat({
       runRelicIds: ["bach_lo_huong_tui"],
+      decrees: "real",
+      start: { moonIndex: 1, decrees: { full: "vien_nguyet" } },
       setup: (s) => {
         s.moonIndex = 3;
         p0(s).moonPower = 11;

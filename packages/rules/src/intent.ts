@@ -1,4 +1,5 @@
 import { bossPhaseOf } from "./coop/boss";
+import { decreeModifier } from "./moon";
 import { baseMoonPower } from "./moon-power";
 import { nextRandom } from "./rng";
 import { hasStatus } from "./statuses";
@@ -94,7 +95,10 @@ export function planEnemyIntents(data: GameData, state: CombatState, events: Com
     const phase = bossPhaseOf(data, state, enemy, def);
     const intents = phase?.intents ?? def.intents;
     const maxIntents = phase?.maxIntentsPerRound ?? maxIntentsPerRound;
-    const fund = baseMoonPower(def.moonPower, moonPower.perRound, state.round) + enemy.moonReserve;
+    // Nguyệt Sinh (`01` §9.2): the decree adds to the fund at plan time.
+    const fund =
+      baseMoonPower(def.moonPower, moonPower.perRound, state.round) + enemy.moonReserve +
+      (decreeModifier(data, state, "turnMoonPowerBonus")?.amount ?? 0);
     let left = fund;
     const chain: PlannedIntent[] = [];
     const override =

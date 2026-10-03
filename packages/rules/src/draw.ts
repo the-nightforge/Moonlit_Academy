@@ -1,5 +1,46 @@
+import { checkBossPhase } from "./coop/boss";
+import { checkCombatEnd, loseHp, processDeaths } from "./effects";
+import { checkLevelUps } from "./levelup";
+import { decreeModifier } from "./moon";
 import { seatTag } from "./players";
+import { fireEventHooks } from "./run-relic-hooks";
 import type { CombatEvent, CombatState, GameData, PlayerState } from "./types/index";
+
+/**
+ * Cards leaving the hand unplayed — Hủy Bài, Tàn Chiêu at turn end, hand
+ * overflow (`01` §3.3, §4.2, §5.8). They land on the discard pile, then Đoạn
+ * Tuyệt (`discardDamage`, `01` §7.5) hits the lowest-HP living opposing unit
+ * of the seat once per card (HP ties break to the lower position).
+ */
+export function discardUnplayed(
+  data: GameData,
+  state: CombatState,
+  player: PlayerState,
+  instanceIds: string[],
+  events: CombatEvent[],
+): void {
+  if (instanceIds.length === 0) return;
+  player.discardPile.push(...instanceIds);
+  events.push({ type: "cardDiscarded", instanceIds, ...seatTag(state, player.index) });
+  const cut = decreeModifier(data, state, "discardDamage");
+  if (!cut) return;
+  for (let i = 0; i < instanceIds.length; i++) {
+    const foes = (state.mode === "pvp"
+      ? state.heroes.filter((hero) => hero.player !== player.index)
+      : state.enemies
+    ).filter((unit) => unit.alive && unit.hp > 0);
+    const victim = foes.sort((a, b) => a.hp - b.hp || a.position - b.position)[0];
+    if (!victim) return;
+    const start = events.length;
+    loseHp(data, victim, cut.amount, "decree", events);
+    processDeaths(data, state, events, undefined);
+    checkLevelUps(data, state, events);
+    checkBossPhase(data, state, events);
+    if (checkCombatEnd(state, events)) return;
+    fireEventHooks(data, state, events, start, state.bloodMoonRounds, player.index);
+    if (checkCombatEnd(state, events)) return;
+  }
+}
 
 /** Draws from the top of `player`'s draw pile; stops when it is empty (never
  *  reshuffles). Cards past `handLimit` spill to the discard pile (`01` §4.2). */
@@ -17,9 +58,8 @@ export function drawCards(
   const spilled = drawn.slice(room);
   for (const id of kept) state.cards[id]!.heldTurns = 0;
   player.hand.push(...kept);
-  player.discardPile.push(...spilled);
   if (kept.length > 0) events.push({ type: "cardsDrawn", instanceIds: kept, ...seatTag(state, player.index) });
-  if (spilled.length > 0) events.push({ type: "cardDiscarded", instanceIds: spilled, ...seatTag(state, player.index) });
+  discardUnplayed(data, state, player, spilled, events);
 }
 
 /** Draws until `player`'s hand holds `handSize` cards or the draw pile is empty. */
@@ -42,8 +82,7 @@ export function addToHand(
   events: CombatEvent[],
 ): void {
   if (player.hand.length >= data.combatConfig.handLimit) {
-    player.discardPile.push(instanceId);
-    events.push({ type: "cardDiscarded", instanceIds: [instanceId], ...seatTag(state, player.index) });
+    discardUnplayed(data, state, player, [instanceId], events);
     return;
   }
   player.hand.push(instanceId);

@@ -1,9 +1,9 @@
 import { resolveEffects } from "./effects";
 import { bumpCounter, levelUpPassive } from "./levelup";
+import { applyStatusDecreed, decreeModifier } from "./moon";
 import { heroesOf, seatTag } from "./players";
 import { getEffectiveCost } from "./queries";
 import { nextRandom } from "./rng";
-import { applyStatus } from "./statuses";
 import type { CombatEvent, CombatState, GameData, HeroState, LevelUpPassive, PlayerState } from "./types/index";
 
 /** The hero's level-up passive while it is in effect: alive and leveled up (`01` §8). */
@@ -42,7 +42,7 @@ export function heroTurnStart(data: GameData, state: CombatState, hero: HeroStat
     const roll = nextRandom(state.rngState);
     state.rngState = roll.rngState;
     const buff = table[Math.floor(roll.value * table.length)]!;
-    applyStatus(hero, buff.status, buff.amount, hero.id, events);
+    applyStatusDecreed(data, state, hero, buff.status, buff.amount, hero.id, events);
   }
 }
 
@@ -76,6 +76,19 @@ export function seatTurnStart(data: GameData, state: CombatState, player: Player
     const passive = passiveOf(data, hero);
     if (passive?.type !== "freeChooseCardPerTurn" || player.pendingChoice !== null) continue;
     resolveEffects(data, state, [{ type: "chooseCard", look: passive.look }], { source: hero, noHooks: true }, events);
+  }
+  // Bói Nguyệt (`01` §3.1 step 12): the decree's free Chiêm Bài opens after Vạn
+  // Kim — when a choice is already open it queues on `omenPending` and fires
+  // once that choice is answered (`applyAction` chooseCard), still before Chọn Pha.
+  delete player.omenPending;
+  const omen = decreeModifier(data, state, "freeChooseCard");
+  const seer = heroes.find((hero) => hero.alive);
+  if (omen !== undefined && seer !== undefined) {
+    if (player.pendingChoice === null) {
+      resolveEffects(data, state, [{ type: "chooseCard", look: omen.look }], { source: seer, noHooks: true }, events);
+    } else {
+      player.omenPending = omen.look;
+    }
   }
   const owes = heroes.some((hero) => passiveOf(data, hero)?.type === "chooseMoon");
   // Co-op: one shared moon — when both seats owe, seat 0 chooses (`18` §2.2).

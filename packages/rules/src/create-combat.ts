@@ -1,5 +1,6 @@
 import { drawCards } from "./draw";
 import { planEnemyIntents } from "./intent";
+import { rollMoon } from "./moon";
 import { shuffle } from "./rng";
 import type {
   CardDef,
@@ -144,6 +145,7 @@ export function createCombat(
     activePlayer: 0,
     round: 1,
     moonIndex: 1,
+    moonDecrees: [],
     bloodMoonRounds: 0,
     players: [
       {
@@ -171,8 +173,8 @@ export function createCombat(
     rngState,
   };
 
-  // Story stages (`01` §2): the moon is set before round 1 is planned.
-  if (setup.start?.moonIndex !== undefined) state.moonIndex = setup.start.moonIndex;
+  // Story stages (`01` §2, §7.6): the moon is set before round 1 is planned.
+  rollMoon(data, state, setup.start, events);
   if (setup.start?.bloodMoonRounds !== undefined) {
     state.bloodMoonRounds = setup.start.bloodMoonRounds;
     events.push({ type: "bloodMoonChanged", rounds: state.bloodMoonRounds, cause: "start" });

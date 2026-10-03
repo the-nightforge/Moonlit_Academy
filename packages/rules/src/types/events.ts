@@ -5,6 +5,10 @@ export type Action =
   | { type: "mulligan"; instanceIds: string[]; player?: number }
   | { type: "chooseCard"; instanceId: string; player?: number }
   | { type: "chooseMoon"; offset: 0 | 1 | 2; player?: number }
+  /** Hủy Bài (`01` §5.8): discard a hand card unplayed for moon power — Xả Thân only. */
+  | { type: "discardCard"; instanceId: string; player?: number }
+  /** Huyết Tế (`01` §5.9): a living hero of the seat loses `hp` HP; the seat draws `draw` — once per turn. */
+  | { type: "bloodPact"; heroId: string; player?: number }
   /** `system` marks a server-forced end turn (co-op turn timer, `17` §8.3). */
   | { type: "endTurn"; player?: number; system?: true }
   /**
@@ -20,10 +24,12 @@ export type CombatEvent =
   | { type: "deckShuffled"; player?: number }
   | { type: "cardPlayed"; instanceId: string; targetId?: string; cost: number; player?: number }
   | { type: "cardDiscarded"; instanceIds: string[]; player?: number }
+  /** Luân Hồi (`01` §3.3): the newest discards went to the bottom of the draw pile (last id = deepest). */
+  | { type: "cardsRecycled"; instanceIds: string[]; player?: number }
   /** [GĐ7] `createCard` put a token in hand; `instanceId: null` when the hand was full (`01` §4.6). */
   | { type: "cardCreated"; cardId: string; instanceId: string | null; player?: number }
   | { type: "damageDealt"; sourceId: string; targetId: string; amount: number; blocked: number; hpLost: number }
-  | { type: "hpLost"; targetId: string; amount: number; cause: "loseHp" | "burn" | "reflect" | "bloodMoon" }
+  | { type: "hpLost"; targetId: string; amount: number; cause: "loseHp" | "burn" | "reflect" | "bloodMoon" | "decree" | "bloodPact" }
   | { type: "healed"; targetId: string; amount: number }
   | { type: "armorGained"; targetId: string; amount: number }
   | { type: "armorRemoved"; targetId: string }
@@ -38,6 +44,8 @@ export type CombatEvent =
   | { type: "cardChosen"; instanceId: string; bottomed: string[]; player?: number }
   | { type: "moonChoiceOpened"; options: number[]; player?: number }
   | { type: "moonShifted"; from: number; to: number; cause: "roundEnd" | "card" }
+  /** `01` §7.6 — `rollMoon`: the start phase and the rolled decree ids after `start` overrides. */
+  | { type: "moonDecreesRolled"; moonIndex: number; decrees: string[] }
   | { type: "bloodMoonChanged"; rounds: number; cause: "roundEnd" | "card" | "boss" | "start" }
   | {
       type: "intentsRevealed";

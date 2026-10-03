@@ -25,7 +25,14 @@ describe("boss and blood moon intents", () => {
   });
 
   it("T92: the boss's Hạ Huyền reflect lasts through the player turn, then is removed", () => {
-    const { data, state } = makeTestCombat({ heroIds: ["m05", "f03", "f02"], encounterId: "enc_04" });
+    const { data, state } = makeTestCombat({
+      heroIds: ["m05", "f03", "f02"],
+      encounterId: "enc_04",
+      decrees: "real",
+      // `waningCrescent` pinned off Bói Nguyệt so no free Chiêm Bài blocks the
+      // round-3 play; `chiem_tinh` is inert here (no Chiêm Bài is resolved).
+      start: { moonIndex: 1, decrees: { lastQuarter: "huyen_giap", waningCrescent: "chiem_tinh" } },
+    });
     state.moonIndex = 5;
     setIntent(state, 0, idleIntent, null);
 
@@ -70,11 +77,11 @@ describe("boss and blood moon intents", () => {
     const cost = (cardId: string) => getEffectiveCost(data, state, instanceIdOf(state, cardId));
 
     state.moonIndex = 6;
-    expect(cost("m05_ho_gam")).toBe(0);
-    expect(getEffectiveCost(data, state, wardCard)).toBe(2);
+    expect(cost("m05_ho_gam")).toBe(1);
+    expect(getEffectiveCost(data, state, wardCard)).toBe(3);
 
     state.moonIndex = 4;
-    expect(getEffectiveCost(data, state, harmonyCard)).toBe(0);
+    expect(getEffectiveCost(data, state, harmonyCard)).toBe(1);
     expect(cost("m05_ho_gam")).toBe(2);
   });
 });

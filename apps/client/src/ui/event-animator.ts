@@ -108,6 +108,8 @@ const HP_LOSS_LABELS: Record<HpLostEvent["cause"], string> = {
   burn: "Đốt ",
   reflect: "Phản ",
   bloodMoon: "Huyết ",
+  decree: "Lệnh ",
+  bloodPact: "Tế ",
 };
 
 function isBloodMoonLoss(
@@ -289,6 +291,8 @@ function animateEvent(
       return floatText(scene, WIDTH / 2, midY, `◆ ${card?.name ?? ""}`, "#f4d35e", 22, 300);
     }
     case "cardDiscarded":
+    // Luân Hồi (`01` §3.3): reuse the discard beat until the real animation lands.
+    case "cardsRecycled":
       return instant();
     case "cardCreated": {
       // `18` §2.2: the token flies from its owner hero's panel into the hand;
@@ -428,6 +432,13 @@ function animateEvent(
       return moonWheel(scene, { x: WIDTH / 2, y: midY }, at, phaseIds, event.from, event.to).then(() =>
         floatText(scene, at.x, at.y + 46, phase?.name ?? "", "#f4d35e", 15, 400),
       );
+    }
+    case "moonDecreesRolled": {
+      // `01` §7.6 — minimal banner: start phase + its decree. Full Nguyệt Lệnh UI is Task 7.
+      const phase = ctx.gameData.moonPhases[event.moonIndex];
+      const decree = phase?.decrees.find((d) => d.id === event.decrees[event.moonIndex]);
+      const label = phase ? `${phase.icon} ${phase.name} · ${decree?.name ?? "—"}` : "Nguyệt Luân";
+      return floatText(scene, WIDTH / 2, 300, label, "#f4d35e", 22, 600);
     }
     case "intentsRevealed":
       // Enemies no longer telegraph their chain (`01` §9.2) — nothing to show.

@@ -12,8 +12,8 @@ Prototype dùng **art tạm**: hình chữ nhật màu + tên. Mục tiêu là �
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
-│ Vòng 3                    ( 🌔 Trăng Khuyết Đầu )                  [⚙]     │  ← Thanh trên
-│                    🌒 🌓 [🌔] 🌕 🌖 🌗 🌘 🌑   → kế tiếp: 🌕 hồi ×2          │  ← Nguyệt Luân
+│ Vòng 3            ( 🌔 Trăng Khuyết Đầu · Lệnh: Liên Kích )        [⚙]     │  ← Thanh trên
+│                    🌒 🌓 [🌔] 🌕 🌖 🌗 🌘 🌑                                  │  ← Nguyệt Luân
 ├────────────────────────────────────────────────────────────────────────────┤
 │                                                                            │
 │          ⚔ 9 → Tô Dạ                    ✦ Suy Yếu → Hoắc Liệt              │  ← Ý định
@@ -57,6 +57,10 @@ Prototype dùng **art tạm**: hình chữ nhật màu + tên. Mục tiêu là �
 - Hero: dòng tiến độ thăng cấp (`Liệt Hỏa 12/15`). Đã thăng cấp → dấu ★ và viền vàng.
 - Hero ngã: xám, chữ "Ngã".
 - Kẻ địch Ẩn Thân: bán trong suốt.
+- **[Nguyệt Luân mới]** Tooltip kẻ địch thêm phần **Nguyệt tính**: với mỗi
+  `moonOverride` / `bloodMoonOverride` của loại địch đó — dòng
+  "Nguyệt tính: <tên pha> — <tên chiêu>: <text>". Đây là thông tin công khai
+  (`01` §9.1).
 
 ### Ý định
 - Phía trên mỗi kẻ địch: biểu tượng theo `kind` (⚔ attack, 🛡 defend, ⚔🛡 attackDefend, ✦ debuff, ⬆ buff, ★ special) + **con số damage đã tính theo công thức hiện tại** (đã gồm Suy Yếu, Dễ Vỡ…) + tên Hero mục tiêu.
@@ -65,8 +69,13 @@ Prototype dùng **art tạm**: hình chữ nhật màu + tên. Mục tiêu là �
 
 ### Nguyệt Luân
 - Dãy 8 biểu tượng, pha hiện tại phóng to và sáng.
-- Dòng "kế tiếp: [pha] [hiệu ứng]" để người chơi lên kế hoạch.
-- Hover một pha → hiện hiệu ứng của pha đó.
+- **[Nguyệt Luân mới]** Cạnh thanh trăng: **tên pha hiện tại + tên Nguyệt Lệnh** của
+  pha đó trong trận này (từ `moonDecrees` trong state — `01` §7.6). **Bỏ** dòng
+  "kế tiếp: …" (pha đích giờ luôn có lệnh, không cần gợi ý riêng).
+- Hover / chạm một pha → **tooltip** (cùng kiểu `card-tooltip`): tên pha, chữ ưu
+  đãi (`tagBonusText`), tên + mô tả Nguyệt Lệnh của pha trong trận này
+  (`currentDecree` → `name` + `text`), dòng "Đang diễn ra" nếu là pha hiện tại.
+  Client chỉ đọc dữ liệu + state — không tự tính luật.
 - **Huyết Nguyệt [GĐ2]:** khi `bloodMoonRounds > 0`: nền đỏ tối, icon 🔴 **cạnh** bánh xe kèm số lượt còn lại. Pha hiện tại vẫn hiển thị và vẫn tiến bình thường.
 
 ### Màn chọn đội [GĐ2]
@@ -81,10 +90,14 @@ Prototype dùng **art tạm**: hình chữ nhật màu + tên. Mục tiêu là �
 | Click lá `target: enemy / ally` | Vào chế độ chọn mục tiêu: mục tiêu hợp lệ sáng lên (lấy từ `getValidTargets`), mục tiêu không hợp lệ mờ đi. Click mục tiêu để đánh |
 | Kéo lá lên mục tiêu | Tương đương (làm sau, không bắt buộc ở prototype) |
 | Chuột phải / Esc | Hủy chọn mục tiêu |
+| **Chuột phải lá trên tay [Nguyệt Luân mới]** | `discardCard(instanceId)` — chỉ khi lệnh **Xả Thân** có hiệu lực; lá vào chồng bỏ, `moonPower` tăng theo lệnh |
+| **Nút "Huyết Tế" [Nguyệt Luân mới]** | `bloodPact` — chỉ khi lệnh **Huyết Tế** có hiệu lực; click nút → chế độ chọn Hero sống, click Hero để xác nhận |
 | Nút Kết Thúc Lượt / phím `E` | `endTurn` |
 | Trong lúc phát animation | Khóa input |
 
 Hành động bị `rules` từ chối → rung nhẹ lá bài + hiện lý do (từ `error`).
+Hủy Bài / Huyết Tế bị từ chối → rung nút/lá kèm lý do ("Lệnh không có hiệu lực",
+"Đã đạt giới hạn", "Đã dùng lượt này", "HP không đủ"…).
 
 ## 5. Phát animation từ event
 
@@ -95,7 +108,10 @@ Client giữ một **hàng đợi event**, phát lần lượt, mỗi event mộ
 | `cardsDrawn` | Lá bay từ chồng rút vào tay, lệch nhau | 80 ms/lá |
 | `cardPlayed` | Lá bay lên giữa màn hình, phóng to, rồi mờ dần | 300 ms |
 | `damageDealt` | Mục tiêu rung + chớp đỏ, số damage bay lên (hiện phần bị giáp chặn màu xám) | 350 ms |
-| `hpLost` | Chớp tím, số bay lên. `cause: "reflect"`: tia phản từ mục tiêu về nguồn; `cause: "bloodMoon"`: chớp đỏ trên mọi Hero cùng lúc | 250 ms |
+| `hpLost` | Chớp tím, số bay lên. `cause: "reflect"`: tia phản từ mục tiêu về nguồn; `cause: "bloodMoon"`: chớp đỏ trên mọi Hero cùng lúc; `cause: "decree"` **[Nguyệt Luân mới]**: chớp trắng trăng (Đoạn Tuyệt); `cause: "bloodPact"` **[Nguyệt Luân mới]**: chớp đỏ tự gây | 250 ms |
+| `moonDecreesRolled` **[Nguyệt Luân mới]** | Chỉ ở đầu trận: 8 tên lệnh rớt nhẹ vào các pha trên bánh xe rồi mờ, để lại tên lệnh của pha hiện tại trên thanh trên | 800 ms |
+| `cardDiscarded` **[Nguyệt Luân mới]** | Lá được `discardCard` chọn tan ra (vào chồng bỏ) | 300 ms |
+| `cardsRecycled` **[Nguyệt Luân mới]** | Lá cuối chồng bỏ trượt về đáy chồng rút | 250 ms |
 | `healed` | Chớp xanh lá, số `+N` bay lên | 300 ms |
 | `armorGained` | Biểu tượng khiên phóng to | 200 ms |
 | `statusApplied` / `statusRemoved` | Nhãn trạng thái bật ra / mờ đi. Cướp buff (`statusRemoved` rồi `statusApplied` cùng status, liên tiếp): nhãn bay từ mục tiêu sang người cướp | 150 ms |
@@ -115,6 +131,7 @@ Bảng ẩn/hiện bằng phím `` ` ``:
 - Seed hiện tại + nút chơi lại với cùng seed.
 - Chọn encounter.
 - Nút: +3 Nguyệt Lực, rút 1 lá, đặt pha trăng bất kỳ, giết kẻ địch, đặt HP Hero, đặt `bloodMoonRounds` **[GĐ2]**.
+- **[Nguyệt Luân mới]** Dòng liệt kê `moonDecrees` (8 lệnh đã bốc theo pha) + nút đặt lệnh của một pha bất kỳ.
 - Log event dạng chữ.
 
 Các nút debug gọi hàm debug riêng trong client (thao tác state trực tiếp), **không** thêm vào `Action` chính thức.

@@ -1,11 +1,12 @@
 import { cloneState } from "./clone";
 import { fireCoopCombos } from "./coop/combos";
 import { coopEndTurn, startCoopTurn } from "./coop/turn";
-import { addToHand } from "./draw";
-import { checkCombatEnd, processDeaths, resolveEffects } from "./effects";
+import { addToHand, discardUnplayed, drawCards } from "./draw";
+import { checkCombatEnd, loseHp, processDeaths, resolveEffects } from "./effects";
 import { guardianOf } from "./enemy-turn";
 import { cardDefOf } from "./gear";
 import { bumpCounter, bumpSeat, checkLevelUps, levelUpPassive, sealFilteredEffects } from "./levelup";
+import { decreeModifier } from "./moon";
 import { activePlayerState, heroesOf, seatTag } from "./players";
 import { pvpEndTurn } from "./pvp/turn";
 import { cardOwners, firstCardDiscount, getEffectiveCost, getValidTargets, ownerError } from "./queries";
@@ -124,7 +125,18 @@ function playCard(
     }
   }
 
-  const ctx = { source: owner, actors: owners, card, chosenId, instanceId: instance.instanceId, comboBonus };
+  // Liên Kích (`01` §7.5): the count at the start of resolution decides the
+  // chain bonus — the attack card being played only counts afterward.
+  const attackChain = card.type === "attack" && (player.attackCardsThisTurn ?? 0) > 0;
+  const ctx = {
+    source: owner,
+    actors: owners,
+    card,
+    chosenId,
+    instanceId: instance.instanceId,
+    comboBonus,
+    ...(attackChain ? { attackChain: true as const } : {}),
+  };
   // Phong Ấn (`01` §5.6): a card owned by a sealed hero keeps damage only —
   // the mark covers the whole seat turn, like an enemy's intent chain.
   const sealedOwner = owners.find((hero) => hero.sealedBy !== undefined);
@@ -167,6 +179,7 @@ function playCard(
   }
   player.discardPile.push(instance.instanceId);
   player.cardsPlayedThisTurn += 1;
+  if (card.type === "attack") player.attackCardsThisTurn = (player.attackCardsThisTurn ?? 0) + 1;
 }
 
 /** Owner(s) losing empower/stealth after an attack card: a bond card's damage actors. */
@@ -334,6 +347,7 @@ function forfeit(data: GameData, state: CombatState, action: Extract<Action, { t
       seat.pendingChoice = null;
       delete seat.moonChoicePending;
     }
+    delete seat.omenPending;
     for (const hero of heroesOf(next, seat.index)) {
       if (hero.alive) hero.hp = 0;
     }
@@ -387,6 +401,39 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
       playCard(data, next, next.players[seat.index]!, action, events);
       return { ok: true, state: next, events };
     }
+    case "discardCard": {
+      // Hủy Bài (`01` §5.8): only while a Xả Thân decree is up, per-turn cap.
+      const rule = decreeModifier(data, state, "discardForMoonPower");
+      if (!rule) return { ok: false, error: "no discard decree" };
+      if (!seat.hand.includes(action.instanceId)) return { ok: false, error: "card not in hand" };
+      if ((seat.discardsThisTurn ?? 0) >= rule.perTurn) return { ok: false, error: "discard limit" };
+      const next = cloneState(state);
+      const events: CombatEvent[] = [];
+      const nextSeat = next.players[seat.index]!;
+      nextSeat.hand = nextSeat.hand.filter((id) => id !== action.instanceId);
+      discardUnplayed(data, next, nextSeat, [action.instanceId], events);
+      nextSeat.discardsThisTurn = (nextSeat.discardsThisTurn ?? 0) + 1;
+      nextSeat.moonPower += rule.moonPower;
+      events.push({ type: "moonPowerChanged", value: nextSeat.moonPower, ...seatTag(next, seat.index) });
+      return { ok: true, state: next, events };
+    }
+    case "bloodPact": {
+      // Huyết Tế (`01` §5.9): once per turn, a living hero of the seat pays
+      // `hp` HP (cause "bloodPact") for `draw` cards.
+      const rule = decreeModifier(data, state, "bloodPact");
+      if (!rule) return { ok: false, error: "no blood pact decree" };
+      if (seat.bloodPactUsed) return { ok: false, error: "blood pact used" };
+      const hero = heroesOf(state, seat.index).find((h) => h.id === action.heroId);
+      if (!hero?.alive || hero.hp <= rule.hp) return { ok: false, error: "invalid hero" };
+      const next = cloneState(state);
+      const events: CombatEvent[] = [];
+      const nextSeat = next.players[seat.index]!;
+      nextSeat.bloodPactUsed = true;
+      loseHp(data, next.heroes.find((h) => h.id === hero.id)!, rule.hp, "bloodPact", events);
+      checkLevelUps(data, next, events);
+      drawCards(data, next, nextSeat, rule.draw, events);
+      return { ok: true, state: next, events };
+    }
     case "chooseCard": {
       const pending = seat.pendingChoice;
       if (pending?.kind !== "chooseCard") return { ok: false, error: "no pending choice" };
@@ -397,6 +444,17 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
       chooseCard(data, next, nextSeat, action.instanceId, pending.options, events);
       bumpSeat(data, next, seat.index, "cardsChosen", 1);
       checkLevelUps(data, next, events);
+      // Bói Nguyệt (`01` §3.1 step 12): a Chiêm Bài queued behind an earlier
+      // choice opens now — ahead of Chọn Pha (openMoonChoice waits while a
+      // choice is pending).
+      if (nextSeat.omenPending !== undefined) {
+        const look = nextSeat.omenPending;
+        delete nextSeat.omenPending;
+        const seer = heroesOf(next, nextSeat.index).find((hero) => hero.alive);
+        if (seer !== undefined) {
+          resolveEffects(data, next, [{ type: "chooseCard", look }], { source: seer, noHooks: true }, events);
+        }
+      }
       openMoonChoice(next, nextSeat, events);
       return { ok: true, state: next, events };
     }

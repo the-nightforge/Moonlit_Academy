@@ -12,7 +12,7 @@ Quy ước trong bảng: kẻ địch "Khôi Lỗi" = `puppet_guard` (HP 42), "�
 
 | Mã | Thiết lập | Hành động | Kết quả mong đợi |
 |---|---|---|---|
-| T01 | `createCombat` với M05, F04, M06, `enc_01`, seed 42 | — | `status = playerTurn`, `round = 1`, `moonIndex = 1`, `moonPower = 3`, 5 lá trên tay, 10 lá chồng rút, 0 lá chồng bỏ, cả 2 kẻ địch có `currentIntent` |
+| T01 | `createCombat` với M05, F04, M06, `enc_01`, seed 42, `start.moonIndex: 1` | — | `status = playerTurn`, `round = 1`, `moonIndex = 1`, `moonPower = 3`, `moonDecrees` có 8 id hợp lệ (event `moonDecreesRolled`), 5 lá trên tay, 10 lá chồng rút, 0 lá chồng bỏ, cả 2 kẻ địch có `currentIntent` |
 | T02 | Như T01 | Tạo lại với seed 42 | Thứ tự `drawPile` và `hand` giống hệt lần đầu |
 | T03 | Hai trận cùng seed | Cùng một chuỗi 10 hành động | State cuối **bằng nhau hoàn toàn** (deep equal) và cùng danh sách event |
 | T04 | `moonPower = 1`, Liệt Hỏa Xung Phong (giá 2) trên tay | `playCard` | Bị từ chối, state không đổi |
@@ -40,16 +40,24 @@ Quy ước trong bảng: kẻ địch "Khôi Lỗi" = `puppet_guard` (HP 42), "�
 
 ## C. Trăng
 
+*Quy ước [Nguyệt Luân mới]:* pha ghi ở cột Thiết lập nghĩa là đặt
+`CombatSetup.start.moonIndex` tương ứng (và `start.decrees` nếu test cần một lệnh
+cụ thể); bỏ `start` → pha khởi đầu và lệnh bốc tất định theo seed. Test không
+phụ thuộc pha (đa số bộ test) nên kèm `start.moonIndex` cố định để giữ kết quả
+ổn định qua mọi seed. Helper `makeTestCombat` **mặc định tắt mọi lệnh** (rỗng
+`modifiers` của từng lệnh) — test chỉ định pha mà không định lệnh vẫn tất định;
+test cần lệnh thật truyền `decrees: "real"` kèm `start.decrees`.
+
 | Mã | Thiết lập | Hành động | Kết quả mong đợi |
 |---|---|---|---|
-| T21 | Pha Trăng Non | Ám Tiễn (không Ẩn Thân) | Gây floor(6 × 1.5) = **9** |
+| T21 | Pha Trăng Non | Ám Tiễn (không Ẩn Thân) | Gây floor(6 × 1.5) = **9** (ưu đãi assassin ×1.5) |
 | T22 | Pha Trăng Non, M06 Ẩn Thân | Ám Tiễn | Gây **15**, sau đó M06 hết Ẩn Thân |
-| T23 | Pha Trăng Non | Ảnh Bộ | M06 Ẩn Thân thời hạn **2** |
-| T24 | Pha Bán Nguyệt | `getEffectiveCost` Nguyệt Ảnh Ấn và Hổ Gầm | Cả hai = **0**; Liệt Hỏa Xung Phong vẫn = 2 |
-| T25 | Pha Trăng Tròn, F04 HP 20/30 | Thảo Dược → F04 | HP **30** (hồi 10) |
-| T26 | Pha Trăng Tròn, F04 HP 25/30 | Thảo Dược → F04 | HP 30, event `healed` có `amount 5` |
-| T27 | Pha Hạ Huyền | Linh Chi Hộ Thể → M06; Hổ Gầm | M06 giáp **9**; M05 giáp **7** |
-| T28 | Pha Trăng Khuyết Đầu (3), F04 HP 20 | Nguyệt Quang Dẫn, rồi Thảo Dược → F04 | `moonIndex = 4`, event `moonShifted` cause `card`; F04 HP 30 |
+| T23 | Pha Trăng Non, `start.decrees.new = "bong_mo"` | Ảnh Bộ | M06 Ẩn Thân thời hạn **2** |
+| T24 | Pha Bán Nguyệt (ưu đãi `control` −1) | `getEffectiveCost` Nguyệt Ảnh Ấn (control, giá 2) và Hổ Gầm (control + ward, giá 2) | Cả hai = **1**; Liệt Hỏa Xung Phong (attack) vẫn = 2 |
+| T25 | Pha Trăng Tròn, `start.decrees.full = "vien_nguyet"`, F04 HP 20/30 | Thảo Dược → F04 | HP **30** (hồi 10 — ×2 của Viên Nguyệt) |
+| T26 | Pha Trăng Tròn, `start.decrees.full = "vien_nguyet"`, F04 HP 25/30 | Thảo Dược → F04 | HP 30, event `healed` có `amount 5` |
+| T27 | Pha Hạ Huyền (ưu đãi `ward` −1) | `getEffectiveCost` Phong Tuyết Chướng (ward, giá 4); Linh Chi Hộ Thể (heal) → M06 | Phong Tuyết Chướng = **3**; Linh Chi Hộ Thể không giảm; giáp M06 tăng đúng bằng lá (không còn hệ số giáp theo pha) |
+| T28 | Pha Trăng Khuyết Đầu (3), F04 HP 20, `start.decrees.full = "vien_nguyet"` | Nguyệt Quang Dẫn, rồi Thảo Dược → F04 | `moonIndex = 4`, event `moonShifted` cause `card`; F04 HP 30 |
 | T29 | Pha Lưỡi Liềm Cuối (7) | Nguyệt Quang Dẫn | `moonIndex = 0` |
 | T30 | Effect `shiftMoon -1` ở pha 0 (dùng lá test) | Giải quyết | `moonIndex = 7` |
 | T31 | Pha Trăng Khuyết Đầu (3) | `endTurn` | Pha tiến lên 4; ý định mới của Ảnh Hồ là **Huyễn Nguyệt**; `patternIndex` của Ảnh Hồ vẫn tăng 1 |
@@ -66,8 +74,8 @@ Quy ước trong bảng: kẻ địch "Khôi Lỗi" = `puppet_guard` (HP 42), "�
 | T37 | Khôi Lỗi bị Đánh Dấu bởi M06 | Ám Tiễn; rồi Thương Phá của M05 | Ám Tiễn gây **9**; Thương Phá gây **5** (Đánh Dấu chỉ tính cho M06) |
 | T38 | Áp Nguyệt Ảnh Ấn ở vòng 1 | `endTurn` hai lần | Còn Đánh Dấu (1) trong vòng 2; bị gỡ ở cuối vòng 2 |
 | T39 | M05 có `burn 3`, giáp 5 (dựng thẳng) | Bắt đầu lượt người chơi | Giáp bị xóa trước; M05 mất 3 HP; `burn` còn 2 |
-| T40 | M05 HP 30, `regen 3`, pha Hạ Huyền (để không gặp Trăng Tròn), kẻ địch bị vô hiệu | Bắt đầu 3 lượt người chơi liên tiếp | HP 33 → 35 → 36; `regen` hết sau lượt thứ ba |
-| T41 | Pha Trăng Tròn khi bắt đầu lượt, M05 HP 30, `regen 3` | Bắt đầu lượt | Hồi **6** |
+| T40 | M05 HP 30, `regen 3`, pha Hạ Huyền (lệnh của Hạ Huyền không nhân hồi — tránh Viên Nguyệt của Trăng Tròn), kẻ địch bị vô hiệu | Bắt đầu 3 lượt người chơi liên tiếp | HP 33 → 35 → 36; `regen` hết sau lượt thứ ba |
+| T41 | Pha Trăng Tròn, `start.decrees.full = "vien_nguyet"`, M05 HP 30, `regen 3` | Bắt đầu lượt | Hồi **6** (regen nhân hệ số lệnh ×2) |
 | T42 | M06 HP 20, có `weak 2`, `mark` (dựng thẳng), `stealth 1`, `regen 2` | Tịnh Tâm Trà → M06 | Hết `weak` và `mark`; vẫn còn `stealth`, `regen`; hồi 2 |
 | T43 | Khôi Lỗi `freeze` | `endTurn` | Khôi Lỗi phát `intentSkipped`, không gây damage; hết `freeze` |
 | T44 | Hero giáp 6 cuối lượt kẻ địch | Bắt đầu lượt người chơi | Giáp = 0 |
@@ -166,7 +174,7 @@ Quy ước thêm: "Boss" = `moon_ape` (HP 110, `enc_04`). F03 = Tần Sương, F
 |---|---|---|---|
 | T91 | `enc_04`, `bloodMoonRounds 2`, pha kế là `full` | `endTurn` | Boss công bố `bloodMoonOverride` (không phải override `full`); `patternIndex +1` |
 | T92 | `enc_04`, boss công bố override `lastQuarter` | `endTurn`, rồi Sương Trảm → Boss | Boss có `reflect 3` trong lượt người chơi; F03 mất 3 HP; đầu lượt kẻ địch kế tiếp `reflect` bị gỡ |
-| T93 | Pha Hạ Huyền; rồi pha Trăng Tròn | `getEffectiveCost` | Hạ Huyền: Hổ Gầm 0, Phong Tuyết Chướng 1. Trăng Tròn: Thảo Dược 0 |
+| T93 | Pha Hạ Huyền; rồi pha Trăng Tròn | `getEffectiveCost` | Hạ Huyền (ward −1): Hổ Gầm 1, Phong Tuyết Chướng 3. Trăng Tròn (harmony −1): Thảo Dược 1 |
 | T94 | Dữ liệu lá có cả `ownerId` và `bond`; lá thường có `actor`; `requiresBloodMoon` trên lá không `forbidden` | Nạp dữ liệu | Mỗi trường hợp báo lỗi schema |
 
 ---
@@ -214,7 +222,7 @@ Quy ước thêm: test bản đồ kiểm tra **tính chất** trên seed 1–50
 | T118 | Hàn Ngọc | Đánh Nguyệt Ảnh Ấn (`control`) → M06 +3 giáp; lá Song Hành `control` → `owners[0]` nhận giáp |
 | T119 | Huyết Ấn | Hero kết liễu bằng lá hồi 4; kẻ địch ngã vì Thiêu Đốt → không ai hồi |
 | T120 | Tàn Hồn Đăng | Một Hero ngã → hai Hero còn lại hồi 6 |
-| T121 | Bạch Lộ Hương Túi | Vào Trăng Tròn qua cuối vòng **và** qua Đổi Vận: Hero máu thấp nhất hồi 6 (×2 nhờ Trăng Tròn = 12) |
+| T121 | Bạch Lộ Hương Túi; `start.decrees.full = "vien_nguyet"` | Vào Trăng Tròn qua cuối vòng **và** qua Đổi Vận: Hero máu thấp nhất hồi 6 (×2 nhờ lệnh Viên Nguyệt = 12) |
 | T122 | Huyết Nguyệt Phù | Đổi Vận Chú: mọi Hero `strength 1`; gia hạn Huyết Nguyệt đang bật: không kích hoạt |
 | T123 | Ảnh Nguyệt Châu | Ám Tiễn ở Trăng Non: floor(6 × 1.5 × 1.25) = 11 |
 | T124 | Kỳ Vật test: `combatStart`, `front`: 5 damage `allEnemies` | Hero có `strength 3`: mỗi kẻ địch mất 5 (không cộng Sức Mạnh) |
@@ -266,7 +274,7 @@ Bối cảnh thiết kế: `13-phase4b-spec.md`. Luật từ khóa: `01`; luật
 | T152 | Đoạt Nguyệt: người chơi nhận đúng tổng thực rút |
 | T153 | Dưỡng Nguyệt: +n từ lượt sau, cộng dồn, vượt trần |
 | T154 | Phẫn Huyết: gốc = floor(HP mất × ratio) lúc hit, qua Sức Mạnh / Suy Yếu / Dễ Vỡ; dùng được trong chiêu địch |
-| T155 | Dư Sinh: phần dư thành giáp × hệ số giáp pha trăng |
+| T155 | Dư Sinh: phần dư thành giáp × hệ số giáp đang có (lệnh Phá Giáp / Huyền Giáp nếu là pha của nó, Kỳ Vật — `01` §10.2) |
 | T156 | Tụ Dược: hồi = Hồi Phục × hệ số × hệ số hồi, gỡ Hồi Phục; không có Hồi Phục → không gì |
 | T157 | Schema: ràng buộc §2.3; `keywords` trỏ id có thật |
 | T158 | Data: 6 miễn phí + 6 khóa/Hero, không trùng, đúng chủ; ≥ 2 lá miễn phí cost ≤ 3; `copies` 1–3; `meta-config` hợp lệ (`masteryLevels` tăng dần, dài 6) |
@@ -387,7 +395,7 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 | T251 | **[GĐ6]** Hợp Kích *Băng Nguyệt Kế*: A đánh lá `scheme`, B đánh lá F03 áp `freeze` → mọi kẻ địch Đóng Băng; lần 2 trong trận không kích hoạt |
 | T252 | **[GĐ6]** Hợp Kích không kích hoạt khi cả hai lá cùng một người; mỗi lá chỉ dùng cho một Hợp Kích |
 | T253 | **[GĐ6]** *Ám Ảnh Tuyệt Sát*: địch ≤ 25% HP ngã (`execute`), không ai đủ ngưỡng → `elseEffects` (8 damage mọi kẻ địch) |
-| T254 | **[GĐ6]** *Nguyệt Quang Phổ Chiếu*: hồi cho cả 6 Hero, Trăng Tròn ×2 |
+| T254 | **[GĐ6]** *Nguyệt Quang Phổ Chiếu*: hồi cho cả 6 Hero; `start.decrees.full = "vien_nguyet"` → lệnh Viên Nguyệt ×2 |
 | T255 | **[GĐ6]** Boss: vào giai đoạn 2 ở 75% (`onEnter` Sức Mạnh, Huyết Nguyệt không giảm dưới 1); rời giai đoạn 2 → Huyết Nguyệt giảm bình thường |
 | T256 | **[GĐ6]** Boss: một đòn vượt hai ngưỡng → vào lần lượt, `onEnter` đúng thứ tự; chuỗi đã lên không đổi |
 | T257 | **[GĐ6]** Boss giai đoạn 4: sau 2 vòng còn sống → hồi 50%, gỡ debuff, về giai đoạn 3; lần sau ≤ 25% không đếm ngược |
@@ -464,9 +472,9 @@ dùng `buildApp` với DB trong bộ nhớ, đồng hồ và nguồn ngẫu nhi�
 
 | Mã | Kịch bản |
 |---|---|
-| T300 | **[GĐ7c]** Kiểm chéo `story.json` khi nạp: arc trỏ màn không tồn tại; màn thuộc hai arc; `arcId` của màn lệch arc liệt kê nó; `encounterId` trỏ encounter không phải `tier: "story"`; `rewardHeroId` không tồn tại; `speaker` không phải `narrator` / Hero / kẻ địch có sẵn; `start.moonIndex` ngoài 0–7 — mỗi trường hợp báo lỗi |
+| T300 | **[GĐ7c]** Kiểm chéo `story.json` khi nạp: arc trỏ màn không tồn tại; màn thuộc hai arc; `arcId` của màn lệch arc liệt kê nó; `encounterId` trỏ encounter không phải `tier: "story"`; `rewardHeroId` không tồn tại; `speaker` không phải `narrator` / Hero / kẻ địch có sẵn; `start.moonIndex` ngoài 0–7; `start.decrees` trỏ id lệnh không có trong pha tương ứng hoặc bỏ sót pha — mỗi trường hợp báo lỗi |
 | T301 | **[GĐ7c]** `replayStoryCombat` tất định: cùng `StorySetup` + cùng chuỗi Action → cùng state; Action bị từ chối → `{ ok: false, step, reason }`; Action sau khi trận `won`/`lost` → `{ ok: false, step, reason: "actions after end" }` |
-| T302 | **[GĐ7c]** `CombatSetup.start`: `start.moonIndex` và `start.bloodMoonRounds` áp **trước** khi lên chuỗi vòng 1 — chiêu `moonOverrides` của pha được đặt xuất hiện ngay ở vòng 1, `bloodMoonChanged` phát với `cause: "start"`; vắng `start` → state giống hệt `createCombat` cũ (T213) |
+| T302 | **[GĐ7c]** `CombatSetup.start`: `start.moonIndex`, `start.decrees` và `start.bloodMoonRounds` áp **sau khi bốc, trước** khi lên chuỗi vòng 1 — chiêu `moonOverrides` của pha được đặt xuất hiện ngay ở vòng 1, lệnh của pha đã đặt có hiệu lực ngay, `bloodMoonChanged` phát với `cause: "start"`; vắng `start` → giống `createCombat` thuần (bốc bằng luồng RNG phụ, `rngState` không đổi — T315) |
 | T303 | **[GĐ7c]** `storyStageUnlocked` / `unlockedStageIds`: màn 1 Arc 1 luôn mở; màn *n* cần đã qua màn *n−1* của cùng arc; màn 1 của arc sau cần qua hết màn arc trước; id màn lạ → `false` |
 | T304 | **[GĐ7c]** `applyStoryResult`: thắng lần đầu trao `firstClear` (Ngọc, Huyền Thiết vào `currencies`) + đúng một `MasteryGain` cho mỗi Hero **sở hữu** trong đội; thắng lại màn đã qua hoặc thua → `rewards` rỗng, không cộng nhiệm vụ / `stats` Lượt chơi; màn cuối arc gọi `grantHeroItem` — Hero chưa có → sở hữu, đã có → +1 Tinh Hồn như gacha |
 | T305 | **[GĐ7c]** Route: màn khóa → `403 "stage locked"`; màn lạ → `404 "unknown stage"`; nộp chuỗi action đúng → hồ sơ + `rewards`, phiếu `finished`; action bị sửa → `422 "replay failed"` và phiếu `rejected`; nộp khi trận chưa kết thúc → `422 "combat not finished"`, phiếu vẫn `open` |
@@ -490,3 +498,29 @@ bằng. Test route dùng `buildApp` với DB trong bộ nhớ như GĐ 4c.
 | T311 | **[GĐ7d]** Route nâng cấp: thành công trả `{ profile, rev + 1, level, spent }`; thiếu `If-Match` → `428`; `rev` cũ → `409 stale profile`; lỗi luật → `400` mã lỗi của `upgradeItem` |
 | T312 | **[GĐ7d]** `applyRunRewards`: thắng +3 Huyền Thiết (`darkIronWin`); thua ở tầng ≥ `darkIronLossMinFloor` (2) +1 (`darkIronLoss`); thua tầng 1 +0; Bộ cơ bản cũng nhận; `rewards.darkIron` khớp số đã cộng |
 | T313 | **[GĐ7d]** Nạp dữ liệu: 25 vũ khí; mỗi Hero có đúng 1 vũ khí bản mệnh (`signatureHeroId`) đúng độ hiếm (`weapon.rarity === hero.rarity`, Hero `common` → `rare`); 16 Nguyệt Bảo; `banner_weapons` / `banner_relics` liệt kê mọi món, mỗi món đúng hàng độ hiếm |
+
+---
+
+## Nguyệt Luân mới
+
+Bối cảnh: spec Nguyệt Luân mới (`docs/superpowers/specs/2026-09-30-nguyet-luan-redesign-design.md`);
+luật `01` §7 (ưu đãi tag, Nguyệt Lệnh, `rollMoon`, `enterPhase`), §5.8–5.9 (Hủy Bài,
+Huyết Tế); dữ liệu `02` (`moon-phases.json`: `tagBonus` + `decrees`,
+`CombatState.moonDecrees`, `CombatStart.decrees`, `DECREE_ONLY_MODIFIERS`).
+Test luật phụ thuộc pha đặt `CombatSetup.start.moonIndex` / `start.decrees` (quy ước
+mục C). T213 ghi lại **một lần** sau khi đổi xong (golden có duyệt).
+
+| Mã | Kịch bản |
+|---|---|
+| T314 | **[Nhập liệu]** `moon-phases.json`: mỗi pha đúng 3 lệnh, id lệnh duy nhất toàn file; modifier thuộc `DECREE_ONLY_MODIFIERS` chỉ xuất hiện trong `decrees` (Kỳ Vật / Nguyệt Bảo chỉ dùng loại sẵn có) — vi phạm → báo lỗi nạp |
+| T315 | **[Tạo trận]** Cùng seed → cùng `moonIndex` khởi đầu và `moonDecrees`; `rngState` sau `createCombat` bằng trường hợp có và không có bốc (luồng phụ không đổi RNG chính); `start.moonIndex` / `start.decrees` ghi đè **sau khi bốc đủ** — state chỉ khác ở pha / lệnh được đặt |
+| T316 | **[Ưu đãi]** Mỗi pha trừ cost đúng tag −1 (sàn 0); Trăng Non `assassin` ×1.5; lệnh cộng thêm vào modifier Kỳ Vật (`activeModifiers` = `phaseModifiers` + relic), không đè lẫn nhau |
+| T317 | **[Lệnh số học]** Ám Dạ hồi ×0.5 (floor), Viên Nguyệt ×2, Phá Giáp giáp ×0.5, Huyền Giáp ×1.5, Bóng Mờ +1 thời hạn Ẩn Thân, Phản Chấn reflect ×2 — mỗi lệnh chỉ có hiệu lực đúng pha của nó |
+| T318 | **[Đòn]** Tập Kích: hit đầu mỗi lượt của mỗi bên +3, đòn nhiều hit chỉ hit đầu được cộng, khóa riêng `p<seat>` / `"enemy"`, hit Linh Thú tính khóa ghế chủ. Thế Thủ: hit đơn mục tiêu đầu mỗi đơn vị mỗi vòng −3 (sàn 0, trước giáp), đặt lại ở `advanceRound`. Liên Kích: lá `attack` thứ nhất không cộng, từ lá thứ hai +2/hit; chuỗi địch: chiêu attack đứng sau chiêu attack khác trong cùng chuỗi được +2/hit |
+| T319 | **[Đầu lượt]** Nguyệt Sinh: người chơi +1 Nguyệt Lực quỹ lượt, kẻ địch lên chuỗi trong pha với quỹ +1. Khai Trí rút thêm 1 (tuân `handLimit`). Mầm Sống hồi phẳng 2 mọi đơn vị bên đang đầu lượt (gồm Linh Thú, không hệ số hồi); Đoàn Viên hồi phẳng 5 cho đơn vị tỉ lệ HP thấp nhất. Thế Cân: PvE một lần/vòng tại ghế 0 — Hero HP cao nhất **mỗi ghế** + địch HP cao nhất bị Suy Yếu 1; PvP theo ghế, Suy Yếu 2 |
+| T320 | **[Thời hạn / ẩn]** Thiên Bình: debuff có thời hạn mới áp +1 thời hạn (chỉ `weak` / `vulnerable` / `mark`), PvP ×2. Cuồng Nguyệt: Sức Mạnh / Cường Hóa được áp ×2. Nguyệt Chiếu: vào Trăng Tròn (mọi cách, gồm pha khởi đầu) gỡ Ẩn Thân mọi đơn vị; trong pha áp Ẩn Thân vô hiệu |
+| T321 | **[Hủy Bài]** `discardCard`: hợp lệ khi Xả Thân có hiệu lực, `status = playerTurn`, lá trên tay; → `cardDiscarded { instanceIds; player }` + `moonPower += 1`; sai pha / hết 2 lần / lá không trên tay → từ chối. Đoạn Tuyệt: lá rời tay không được đánh (hủy, Tàn Chiêu cuối lượt, vượt `handLimit`) → địch HP thấp nhất của chủ lá `hpLost` 2, cause `"decree"`, không qua giáp |
+| T322 | **[Huyết Tế]** `bloodPact`: hợp lệ khi lệnh có hiệu lực, chưa dùng trong lượt, Hero của người chơi còn sống HP > 3 → `hpLost` 3 cause `"bloodPact"` + rút 2; đã dùng / HP ≤ 3 / Hero đối phương → từ chối. Giữ Giáp: bỏ bước xóa giáp + gỡ Phản Đòn đầu lượt cả hai phe. Luân Hồi: cuối lượt tối đa 2 lá mới nhất chồng bỏ về đáy chồng rút (đúng thứ tự), `cardsRecycled` |
+| T323 | **[Chiêm Bài]** Chiêm Tinh: `chooseCard` của người chơi xem thêm 2 lá. Bói Nguyệt: đầu lượt Chiêm Bài 3 miễn phí tại bước Chiêm Bài; có cả Vạn Kim → Vạn Kim mở trước, Bói Nguyệt sau |
+| T324 | **[Nguyệt tính]** `moonOverrides` của kẻ địch: chiêu trăng mới đứng **đầu chuỗi**, miễn phí, đúng pha; bot / `knownIntents` (công khai) gộp chiêu trăng của pha kế tiếp |
+| T325 | **[Nhiều ghế]** PvP / co-op: lệnh đầu lượt và ưu đãi áp theo ghế đang tới lượt; `viewFor` có `moonDecrees` (công khai, không lọc); server replay chấp nhận `discardCard` / `bloodPact` hợp lệ và từ chối (`409`/`422`) action gian lận hoặc sai lệnh |

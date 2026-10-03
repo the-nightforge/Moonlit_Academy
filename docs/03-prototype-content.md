@@ -54,8 +54,8 @@ Ba Hero được chọn vì thử được hầu hết cơ chế: khiêu khích,
 - **Ảnh Bộ → Ám Tiễn:** 2 Nguyệt Lực, 10 damage (Trăng Non: 15), và Tô Dạ an toàn đến khi ra đòn.
 - **Nguyệt Ảnh Ấn → Đoạt Mệnh:** đánh dấu rồi kết liễu, dễ đạt thăng cấp Vô Nguyệt.
 - **Trấn Bắc Huyết Tính → Liệt Hỏa Xung Phong:** 2 Nguyệt Lực cho 12 damage, đồng thời đẩy M05 gần thăng cấp và gần ngưỡng 50% HP.
-- **Nguyệt Quang Dẫn ở Trăng Khuyết Đầu → Trăng Tròn:** mọi hồi máu còn lại trong lượt ×2.
-- **Hổ Gầm ở Hạ Huyền:** 7 giáp thay vì 5, kéo đòn khỏi Tô Dạ và Ôn Như Ý.
+- **Nguyệt Quang Dẫn ở Trăng Khuyết Đầu → Trăng Tròn:** nếu trận bốc lệnh **Viên Nguyệt** cho `full`, mọi hồi máu còn lại trong lượt ×2 (`01` §7.5).
+- **Hổ Gầm ở Hạ Huyền:** ưu đãi `ward` −1 → chỉ 1 Nguyệt Lực cho Khiêu Khích + 5 giáp, kéo đòn khỏi Tô Dạ và Ôn Như Ý.
 
 ---
 
@@ -82,7 +82,7 @@ Nhanh, săn Hero yếu, đặc biệt nguy hiểm vào Trăng Tròn.
 | → lặp lại | | | |
 | **Trăng Tròn** (thay thế) | Huyễn Nguyệt | HP thấp nhất | Gây 12 |
 
-Ảnh Hồ tạo một lựa chọn thú vị: Trăng Tròn giúp hồi máu ×2 nhưng cũng là lúc Ảnh Hồ đánh mạnh nhất. Người chơi có thể dùng Nguyệt Quang Dẫn để "vượt qua" Trăng Tròn trước khi Ảnh Hồ công bố ý định.
+Ảnh Hồ tạo một lựa chọn thú vị: Nguyệt tính Trăng Tròn của Ảnh Hồ (`moonOverrides`, công khai trên tooltip) là lúc nó đánh mạnh nhất — trong khi lệnh của Trăng Tròn có thể là lệnh hồi (Viên Nguyệt) có lợi cho người chơi. Người chơi có thể dùng Nguyệt Quang Dẫn để "vượt qua" Trăng Tròn trước khi Ảnh Hồ lên chuỗi.
 
 ---
 
@@ -98,14 +98,24 @@ Nhanh, săn Hero yếu, đặc biệt nguy hiểm vào Trăng Tròn.
 
 ## 5. Nguyệt Luân
 
-Trận bắt đầu ở **Lưỡi Liềm Đầu**, tiến 1 pha mỗi vòng:
+**[Nguyệt Luân mới]** Lúc tạo trận, `rollMoon` bốc **pha khởi đầu ngẫu nhiên**
+(tất định theo seed) và **một Nguyệt Lệnh cho mỗi pha** trong 3 lệnh của pha đó
+(`01` §7.5–7.6) — không còn bắt đầu cố định ở Lưỡi Liềm Đầu. Mỗi pha còn có
+**Ưu Đãi tag** cố định (`01` §7.1): pha giảm 1 Nguyệt Lực cho tag tương ứng
+(scheme / control / attack / harmony / forbidden / ward / moon), riêng Trăng Non
+cho lá `assassin` ×1.5 damage.
 
-| Vòng | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
-|---|---|---|---|---|---|---|---|---|---|
-| Pha | 🌒 | 🌓 | 🌔 | 🌕 | 🌖 | 🌗 | 🌘 | 🌑 | 🌒 |
-| Hiệu ứng | — | control −1 | — | hồi ×2 | — | giáp ×1.5 | — | sát thủ ×1.5 | — |
+Ví dụ một lịch trăng (pha khởi đầu bốc ra `waxingGibbous`):
 
-(Chưa tính Đổi Vận.)
+| Vòng | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| Pha | 🌔 | 🌕 | 🌖 | 🌗 | 🌘 |
+| Ưu đãi | attack −1 | harmony −1 | forbidden −1 | ward −1 | moon −1 |
+| Lệnh (ví dụ) | Liên Kích | Viên Nguyệt | Xả Thân | Huyền Giáp | Chiêm Tinh |
+
+(Chưa tính Đổi Vận; lệnh trong bảng chỉ là một khả năng — 1 trong 3 của mỗi pha.)
+Kẻ địch cũng hưởng / chịu lệnh và có **Nguyệt tính** riêng (chiêu trăng công
+khai, `01` §9.1).
 
 ---
 
@@ -314,11 +324,11 @@ Nguyên tắc đề xuất:
 
 - Chỉ dùng `MoonModifier` (5 loại: `damageMultiplierForTag`,
   `stealthDurationBonus`, `costModifierForTag`, `healMultiplier`,
-  `armorMultiplier`), `HookTrigger` và `Effect` đã có (`static.ts`). Kế hoạch
-  Nguyệt Luân mới (`2026-09-30-nguyet-luan-redesign.md`) **chưa được cài** —
-  `DECREE_ONLY_MODIFIERS` không tồn tại trong code; 5 loại modifier hiện có đều
-  nằm ngoài danh sách chỉ-dành-cho-lệnh dự kiến nên không cần đổi khi bản
-  Nguyệt Luân mới vào.
+  `armorMultiplier`), `HookTrigger` và `Effect` đã có (`static.ts`). Nguyệt Luân
+  mới (`2026-09-30-nguyet-luan-redesign.md`) đã có spec + tài liệu luật nhưng
+  **chưa được cài** — `DECREE_ONLY_MODIFIERS` (`02` §1.7) chỉ tồn tại trong tài
+  liệu; 5 loại modifier hiện có đều nằm ngoài danh sách chỉ-dành-cho-lệnh nên
+  không cần đổi khi bản Nguyệt Luân mới vào.
 - Ràng buộc hook Nguyệt Bảo (`01` §13.4 / §14.4; kiểm chéo `checkHooks` với
   `allowCardOnly` trong `load-game-data.ts`): **cấm** `to: "chosen"`,
   `stealBuff`, `actor` trên effect, `chooseCard`, `createCard`, `execute`,
@@ -493,7 +503,7 @@ Ba đòn theo spec `17` §8.5; `CardMatcher` khớp một lá mỗi người (`0
 |---|---|---|---|---|---|
 | `combo_bang_nguyet_ke` | Băng Nguyệt Kế | lá `tag: scheme` | lá của `f03` áp `freeze` | `applyStatus freeze 1` lên `allEnemies` (boss bỏ cả chuỗi vòng này) | 1/vòng, 1/trận |
 | `combo_am_anh_tuyet_sat` | Ám Ảnh Tuyệt Sát | lá của `m06` áp `stealth` | lá của `f02` có effect `loseHp` (Đoạt Mệnh) | `execute threshold 0.25 allEnemies`; không ai ngã → `damage 8 allEnemies` | 1/vòng |
-| `combo_nguyet_quang_pho_chieu` | Nguyệt Quang Phổ Chiếu | lá `shiftMoon` kết thúc ở pha `full` | lá có effect `heal` | `heal 6 allAllies` (6 Hero; Trăng Tròn ×2 → 12) | 1/vòng |
+| `combo_nguyet_quang_pho_chieu` | Nguyệt Quang Phổ Chiếu | lá `shiftMoon` kết thúc ở pha `full` | lá có effect `heal` | `heal 6 allAllies` (6 Hero; lệnh Viên Nguyệt ×2 → 12) | 1/vòng |
 
 *Ruling:* spec ghi người B của *Ám Ảnh Tuyệt Sát* là "lá của F02 áp debuff", nhưng F02
 không có lá nào áp trạng thái — đặc trưng của F02 là Đoạt Mệnh (`loseHp`, 6 lá). Đổi
@@ -673,7 +683,8 @@ lan `allAllies` đếm từng Hero nên ngưỡng 20 đạt được trong 1–2
 Nhánh A **Nguyệt Quang**: tag `moon`, chủ đề Trăng Tròn (`moonPhaseIs "full"`,
 `shiftMoon`). Nhánh B **Thiên Mệnh**: Dưỡng Nguyệt, lá Nguyệt Lực lớn (cost 5+). 12/12
 lá tag `moon` — dạng Tự Do giảm giá cả pool; Hô Nguyệt/Tinh Dịch/Nguyệt Lệnh đẩy
-trăng tới Trăng Tròn sớm để `fullMoonsSeen` bật ngay vòng 2–3.
+trăng tới Trăng Tròn chủ động (pha khởi đầu giờ ngẫu nhiên, `01` §7.6) để
+`fullMoonsSeen` bật sớm.
 
 - Thăng cấp: `fullMoonsSeen` ≥ 1 (Tinh Hồn 2: 1) → **Nguyệt Chủ** `passive: none` + `onLevelUp: [createCard "f01_nguyet_hoa_chieu_the"]` — khi thăng cấp nhận *Nguyệt Hoa Chiếu Thế* vào tay.
 - Dạng hai **Tự Do**: `tagDiscountOwnCards { tag: "moon", amount: 1 }` — lá tag `moon` của Thẩm Nguyệt Hoa giảm 1 Nguyệt Lực.
@@ -685,7 +696,7 @@ trăng tới Trăng Tròn sớm để `fullMoonsSeen` bật ngay vòng 2–3.
 | `f01_tinh_dich` | Tinh Dịch | 2 | 2 | skill / moon / none | `shiftMoon 2` | A | Mở sẵn |
 | `f01_nguyet_quang` | Nguyệt Quang | 3 | 2 | skill / moon / none | `shiftMoon 1` + `chooseCard 2` | A | Mở sẵn — **signature** |
 | `f01_nguyet_hon` | Nguyệt Hồn | 4 | 2 | skill / moon, heal / none | `heal 4 allAllies` + `conditional(moonPhaseIs "full" → gainMoonPower 2)` | A | Khóa |
-| `f01_nguyet_lenh` | Nguyệt Lệnh | 4 | 2 | skill / moon / none | `conditional(moonPhaseIs "full" → gainMoonPower 3; else shiftMoon 1)` | A | Khóa |
+| `f01_nguyet_lenh` | Nguyệt Lệnh¹ | 4 | 2 | skill / moon / none | `conditional(moonPhaseIs "full" → gainMoonPower 3; else shiftMoon 1)` | A | Khóa |
 | `f01_tu_nguyet` | Tụ Nguyệt | 1 | 3 | skill / moon / none | `gainMoonPower 2` | B | Mở sẵn |
 | `f01_hung_nguyet` | Hưng Nguyệt | 2 | 2 | skill / moon / none | `conditional(moonPhaseIs "full" → gainMoonPowerPerTurn 1; else gainMoonPower 2)` | B | Mở sẵn |
 | `f01_duong_nguyet_quyet` | Dưỡng Nguyệt Quyết | 3 | 2 | skill / moon / none | `gainMoonPowerPerTurn 1` | B | Khóa |
@@ -694,11 +705,14 @@ trăng tới Trăng Tròn sớm để `fullMoonsSeen` bật ngay vòng 2–3.
 | `f01_tue_nguyet` | Tuế Nguyệt | 7 | 1 | skill / moon, heal / none | `heal 7 allAllies overflow:"armor"` + `gainMoonPowerPerTurn 1` | B | Khóa |
 | `f01_nguyet_quang_plus` | Nguyệt Quang+ | 3 | 2 | skill / moon / none | `shiftMoon 1` + `chooseCard 3` | — | (lá +) |
 
+¹*Tên hiển thị "Nguyệt Lệnh" trùng với thuật ngữ Nguyệt Lệnh (lệnh pha, `01` §7.5) —
+khi triển khai đổi tên lá này (gợi ý **Thiên Dụ**), giữ `id` và hiệu ứng.*
+
 ### 10.6 Lá token (không nằm trong pool)
 
 | Id | Tên | Cost | Copies | Loại / Tag / Target | Hiệu ứng | Ghi chú |
 |---|---|---|---|---|---|---|
-| `f01_nguyet_hoa_chieu_the` | Nguyệt Hoa Chiếu Thế | 5 | 1 | attack / attack, moon / none | `conditional(moonPhaseIs "full" → damage 10 allEnemies; else damage 6 allEnemies)` + `heal 4 allAllies` | `ownerId: "f01"`, `token: true`; vào tay khi F01 thăng cấp. Trăng Tròn hồi ×2 → 8 HP mỗi Hero. |
+| `f01_nguyet_hoa_chieu_the` | Nguyệt Hoa Chiếu Thế | 5 | 1 | attack / attack, moon / none | `conditional(moonPhaseIs "full" → damage 10 allEnemies; else damage 6 allEnemies)` + `heal 4 allAllies` | `ownerId: "f01"`, `token: true`; vào tay khi F01 thăng cấp. Lệnh Viên Nguyệt (hồi ×2) → 8 HP mỗi Hero. |
 
 ---
 
@@ -1046,7 +1060,8 @@ Mỗi **Màn** (`stage`) là một trận cố định: `encounterId` trỏ enco
 (không vào bản đồ Lượt chơi, Trận lẻ lọc bỏ như `coop`), lời thoại `before` / `after`
 (dòng `{ speaker, text }` — `speaker` là id Hero, id kẻ địch hoặc `narrator`), thưởng
 `firstClear` (Nguyệt Ngọc, Huyền Thiết, XP Tu Luyện) chỉ trao ở lần qua đầu, và có thể
-đặt `start` (pha trăng `moonIndex` / `bloodMoonRounds` đầu trận, `01` §2). Người chơi
+đặt `start` (pha trăng `moonIndex` / Nguyệt Lệnh `decrees` / `bloodMoonRounds` đầu
+trận — ghi đè sau `rollMoon`, `01` §2 và §7.6). Người chơi
 tự chọn đội và deck; kết quả được server chạy lại xác nhận (`18` §4.3).
 
 ### 13.1 Arc 1 — Vọng Nguyệt (dễ, dạy dần luật)
@@ -1139,8 +1154,8 @@ Hero trong `setup.heroIds`, `14` §16.3). Qua màn 8 tặng `m10` Chu Quyết.
 
 Ba "Thí Quan" là linh thể khảo thí do các Viện dựng lên — mỗi con một Viện, một bài
 học. Theo tinh thần Nguyệt tính (luật mới), mỗi kẻ địch mới có đúng **1 `moonOverride`**
-ở pha hợp viện; boss có **4** cho 4 pha từng có hiệu ứng (`new`, `firstQuarter`,
-`full`, `lastQuarter`). `art.portrait` để `""`.
+ở pha hợp viện; boss có **4** cho 4 pha trụ cột (`new`, `firstQuarter`, `full`,
+`lastQuarter`) — Nguyệt tính của boss phủ nửa lịch trăng. `art.portrait` để `""`.
 
 **`thanh_loan_thi_quan` — Thanh Loan Thí Quan** — `maxHp: 38`, `moonPower { start: 1, cap: 4 }`
 
@@ -1343,24 +1358,23 @@ giả định** Hero nào có trong đội ra trận.
   `duong_sinh` regen 2→1, `hoi_xuan` 8→5, `nguyet_duoc` 6→4) và `khao_hach_chi_linh`
   (HP 90→80, `lac_an`/`vo_nguyet_tram` 12→10, `vong_nguyet_nghi` hồi 6→5) → s04 85%,
   s08 72.5%; màn còn lại ≥ 92.5%.
-- **Nguyệt Luân mới (đã duyệt, chưa cài):** spec
-  `superpowers/specs/2026-09-30-nguyet-luan-redesign` sẽ đổi pha khởi đầu thành ngẫu
-  nhiên, mỗi pha một Ưu Đãi tag −1 cộng một Nguyệt Lệnh bốc theo trận, và quy ước
-  1–2 Nguyệt tính công khai mỗi kẻ địch. **Nội dung Arc 1 ở đây viết theo luật hiện
-  tại** — `moon-phases.json` cũ, pha đầu luôn là index 1 trừ khi `start` ghi đè —
-  nên 4 override của boss đặt đúng 4 pha có hiệu ứng hiện nay. Thiết kế cũng đi trước
-  tương thích: 3 Thí Quan mỗi con 1 `moonOverride` đúng pha hợp viện, sẵn làm Nguyệt
-  tính khi redesign chạy. Khi đó nếu lệnh `healMultiplier`/`armorMultiplier` không
-  được bốc thì hiệu ứng nhân của `full`/`lastQuarter` mất (chấp nhận — chiêu trăng
-  vẫn kích); có thể ghim `CombatStart.decrees` khi schema có sẵn nếu cần.
+- **Nguyệt Luân mới (đã duyệt spec + tài liệu luật, chưa cài code):** spec
+  `superpowers/specs/2026-09-30-nguyet-luan-redesign` đổi pha khởi đầu thành ngẫu
+  nhiên, mỗi pha một Ưu Đãi tag −1 cộng một Nguyệt Lệnh bốc theo trận (`01` §7),
+  và quy ước 1–2 Nguyệt tính công khai mỗi kẻ địch. Khi đó nếu lệnh `healMultiplier`
+  (Viên Nguyệt) / `armorMultiplier` (Huyền Giáp) không được bốc thì hiệu ứng nhân
+  của `full`/`lastQuarter` không có (chấp nhận — chiêu trăng vẫn kích); màn nào cần
+  lệnh cố định ghim `start.decrees` (`02` §1.7 / `01` §7.6 — schema đã định nghĩa).
+  Thiết kế đã đi trước tương thích: 3 Thí Quan mỗi con 1 `moonOverride` đúng pha hợp
+  viện, sẵn làm Nguyệt tính; boss 4 override phủ nửa lịch trăng.
 - **Huyết Nguyệt màn 5:** `bloodMoonRounds: 3` → mỗi Hero mất ~6 HP trải 3 vòng đầu;
   gặp kẻ địch `start: 0` nên vòng 1 tương đối nhẹ.
 - **Kẻ địch cũ không đổi số liệu** trong bản này (giữ golden T213); khi redesign thêm
   Nguyệt tính cho kẻ địch cũ, các màn 5–7 sẽ nhận thêm chiêu trăng — đo lại lúc đó.
 - **Quyết định đã chốt (duyệt 7c.4):**
   1. Màn 4 **giữ** cặp `shadow_fox` + Thí Quan Y (bài học "hạ bên hồi trước").
-  2. Màn 8 **không** ghim `start.moonIndex` — pha đầu theo luật hiện hành (index 1;
-     khi redesign chạy sẽ là ngẫu nhiên), khuyến khích đọc Nguyệt tính.
+  2. Màn 8 **không** ghim `start.moonIndex` — pha đầu do `rollMoon` bốc ngẫu nhiên
+     theo seed (`01` §7.6), khuyến khích đọc Nguyệt tính.
   3. Màn 5 giữ `bloodMoonRounds: 3` như đề xuất.
 
 ---
@@ -1414,11 +1428,13 @@ tặng `f02` Diệp Linh Lung.
   `weak` toàn đội; kẻ ít hơn nhưng trận kéo dài.
 - **s05:** `fox_king` (elite tầng 5+) cầm chợ đêm — stealth của Vương + hút Dự Trữ
   của mật thám + hồi 8; trận dài nhất arc ngoài boss.
-- **s06:** `start.moonIndex: 0` — Vô Nguyệt đánh đúng đêm của nó: `stealth` địch áp
-  trong Trăng Non được **+1 thời hạn** (`01` §7.1) → `stealth 2` thành 3, che 2 lượt
+- **s06:** `start.moonIndex: 0` **+ `start.decrees: { new: "bong_mo" }`** — Vô
+  Nguyệt đánh đúng đêm của nó, với lệnh Bóng Mờ: `stealth` địch áp trong Trăng Non
+  được **+1 thời hạn** (`01` §7.5) → `stealth 2` thành 3, che 2 lượt
   người chơi; override `new` của cả ba kẻ địch mới đều kích ở vòng 1 (nghi sĩ phủ
   `stealth 2` toàn đội địch lượt đầu). Ngược lại lá `assassin` của người chơi cũng
-  ×1.5 — hai phe dùng chung một pha, đúng "hiệu ứng pha áp cho cả hai phe".
+  ×1.5 (ưu đãi cố định của Trăng Non) — hai phe dùng chung một pha, đúng "hiệu ứng
+  pha áp cho cả hai phe".
 - **s07:** `black_guard` (đòn 14 + quét `allEnemies` + Suy Yếu) hộ tống một sát thủ
   — áp lực damage cao nhất arc ngoài boss; dạy giữ Hero yếu trên ngưỡng an toàn.
 - **s08:** boss cướp buff + Ẩn Thân + Đoạt Nguyệt — phạt deck dựng buff trâu (Sức
@@ -1429,7 +1445,8 @@ tặng `f02` Diệp Linh Lung.
 Ba kẻ địch thường đều thuộc tổ chức Vô Nguyệt — mật thám (hút/cướp), sát thủ (Ẩn
 Thân), nghi sĩ (nghi lễ Trăng Non). Theo tinh thần Nguyệt tính như Arc 1: mỗi con
 đúng **1 `moonOverride` ở `new`** (Vô Nguyệt = "không trăng"); boss **4** override
-cho 4 pha có hiệu ứng. `art.portrait` để `""`.
+cho 4 pha trụ cột (`new`, `firstQuarter`, `full`, `lastQuarter`) — Nguyệt tính của
+boss phủ nửa lịch trăng. `art.portrait` để `""`.
 
 **`hac_y_mat_tham` — Hắc Y Mật Thám** — `maxHp: 10`, `moonPower { start: 1, cap: 4 }`
 
@@ -1455,7 +1472,8 @@ random): `drainMoonPower 3 chosen steal` + `stealBuff 1`.
 | `vas_vo_thanh` | Vô Thanh | buff | 4 | — | `applyStatus stealth 2 self` + `applyStatus strength 1 self` |
 
 `moonOverrides`: `new` → `vas_tan_nguyet_sat` "Tân Nguyệt Sát" (attack, lowestHp):
-`damage 3 chosen` + `applyStatus stealth 1 self` (ở Trăng Non thành 2 — che 1 lượt).
+`damage 3 chosen` + `applyStatus stealth 1 self` (khi lệnh Trăng Non là Bóng Mờ —
+như s06 ghim — thành 2, che 1 lượt).
 
 **`vo_nguyet_nghi_si` — Vô Nguyệt Nghi Sĩ** — `maxHp: 22`, `moonPower { start: 1, cap: 4 }`
 
@@ -1468,8 +1486,8 @@ random): `drainMoonPower 3 chosen steal` + `stealBuff 1`.
 | `vns_tan_nguyet` | Tàn Nguyệt | buff | 4 | — | `heal 2 allAllies` + `applyStatus regen 1 allAllies` |
 
 `moonOverrides`: `new` → `vns_vo_nguyet_te` "Vô Nguyệt Tế" (buff):
-`applyStatus strength 1 allAllies` + `applyStatus stealth 1 allAllies` (ở Trăng Non
-thành stealth 2 — che cả đội 1 lượt người chơi).
+`applyStatus strength 1 allAllies` + `applyStatus stealth 1 allAllies` (khi lệnh
+Trăng Non là Bóng Mờ thành stealth 2 — che cả đội 1 lượt người chơi).
 
 **`vo_nguyet_anh_chu` — Vô Nguyệt Ảnh Chủ (boss)** — `maxHp: 75`,
 `moonPower { start: 2, cap: 8 }`. Đầu não Vô Nguyệt đứng sau đợt trộm thư — cướp
@@ -1662,11 +1680,12 @@ với tư cách người trong câu chuyện.
 - **`drainMoonPower … steal`:** cộng quỹ `moonPower` của kẻ địch đang thi hành
   (`01` §9.3.2) — vòng sau vẫn tính `base(r) + moonReserve`, nên phần "cướp" chủ yếu
   là nghĩa (Đoạt Nguyệt), không kỳ vọng lợi thế lớn; phần rút Dự Trữ mới là áp lực.
-- **Tương thích redesign Nguyệt Luân (đã duyệt, chưa cài):** mỗi kẻ địch mới đúng 1
-  `moonOverride` ở `new` — Nguyệt tính "Vô Nguyệt" tự nhiên; boss 4 override cho 4
-  pha hiệu ứng như khuôn boss Arc 1. Khi redesign chạy (pha đầu ngẫu nhiên + Nguyệt
-  Lệnh), `start.moonIndex` của s06 đè lên pha ngẫu nhiên — giữ ý đồ "đêm của Vô
-  Nguyệt" nhưng cần xem lại cùng redesign.
+- **Tương thích redesign Nguyệt Luân (đã duyệt spec + tài liệu, chưa cài code):**
+  mỗi kẻ địch mới đúng 1 `moonOverride` ở `new` — Nguyệt tính "Vô Nguyệt" tự
+  nhiên; boss 4 override phủ nửa lịch trăng như khuôn boss Arc 1. Khi redesign
+  chạy (pha đầu ngẫu nhiên + Nguyệt Lệnh), `start.moonIndex` của s06 đè lên pha
+  ngẫu nhiên **và `start.decrees { new: "bong_mo" }` giữ lệnh Bóng Mờ** — ý đồ
+  "đêm của Vô Nguyệt" (tường Ẩn Thân dài hơn) được bảo toàn đúng như thiết kế.
 - **Đã chỉnh theo mô phỏng** (80 seed × 3 đội mẫu, bot + Bộ cơ bản; chỉ đụng số
   kẻ địch mới, không đổi kẻ địch cũ / đội hình màn — T213). Bản đầu (HP 34/30/38/105)
   quá khắc nghiệt từ s03 trở đi (s04 8.8%, s06 1.3%, boss 5% với `m05+f04+m06`).

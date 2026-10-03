@@ -87,6 +87,14 @@ client`), rồi body (Action sai cấu trúc → `400 bad request`, phiếu vẫ
 lại (`422`), rồi `If-Match` và ghi hồ sơ. Ghi hồ sơ và đóng phiếu (`finished`) nằm trong
 cùng một transaction; `409 stale profile` để phiếu `open` cho client gửi lại.
 
+**[Nguyệt Luân mới]** `combatActionSchema` (schema zod của từng Action trong `actions`)
+thêm `discardCard { instanceId, player? }` và `bloodPact { heroId, player? }` (`02` §3).
+Replay từ chối action đúng cấu trúc nhưng sai luật — ví dụ Hủy Bài / Huyết Tế khi lệnh
+tương ứng (`xa_than` / `huyet_te`) không có hiệu lực, hoặc quá giới hạn lượt — theo
+`{ step, reason }` của `replayRun` → `422 "replay failed"`. `moonDecrees` của
+`CombatState` là **công khai**: nằm trong `view` trả về client, không bị `viewFor` /
+`redactEvents` che (T325).
+
 ### 4.1 Thay đổi và route mới (GĐ 4d)
 
 - **Quà tài khoản:** `register` và `login` gọi `grantStarterGift` (`14` §5) trong cùng
@@ -325,6 +333,11 @@ reason }`, `match.end { matchId, result, reason, rating?, rewards?, profileRev? 
   `applyAction`. Lỗi luật → `match.rejected`. Thành công → ghi nhật ký, gửi mỗi
   người `redactEvents(events, i)` + `viewFor(state, i)`, đặt lại đồng hồ khi đổi
   lượt.
+- Schema action của `match.action` (realtime) gồm mọi loại của `02` §3, kể cả
+  **[Nguyệt Luân mới]** `discardCard` / `bloodPact`; trường `player` trong action
+  **không tin client** — server gắn theo seat của kết nối trước khi `applyAction`.
+  Lệnh `xa_than` / `huyet_te` chỉ có hiệu lực đúng pha của nó (`01` §7.5), nên
+  action gửi sai pha → `match.rejected` (T325).
 - Trận kết thúc → ghi bản ghi + cập nhật hồ sơ (Elo, Vinh Dự, thưởng co-op) trong
   **một transaction** → `match.end` → xóa phòng khỏi bộ nhớ sau 60 giây.
 

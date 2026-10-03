@@ -8,6 +8,9 @@ const combatAction = z.union([
   z.object({ type: z.literal("mulligan"), instanceIds: z.array(id).max(16) }),
   z.object({ type: z.literal("chooseCard"), instanceId: id }),
   z.object({ type: z.literal("chooseMoon"), offset: z.union([z.literal(0), z.literal(1), z.literal(2)]) }),
+  // `01` §5.8–5.9: decree actions — legality (phase, limits) is the replay's job.
+  z.object({ type: z.literal("discardCard"), instanceId: id }),
+  z.object({ type: z.literal("bloodPact"), heroId: id }),
   z.object({ type: z.literal("endTurn") }),
 ]);
 

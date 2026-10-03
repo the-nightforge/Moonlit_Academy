@@ -367,7 +367,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ### Phần 7d — Trang bị bản mệnh + nâng cấp vật liệu
 
-**Giai đoạn hiện tại: 7 xong — `docs/18-phase7-spec.md` đã hoàn thành**
+**Giai đoạn 7 đã xong — `docs/18-phase7-spec.md` đã hoàn thành.**
 
 Đặc tả: `18-phase7-spec.md` §5. Kế hoạch chi tiết:
 `docs/superpowers/plans/2026-09-30-phase7d-gear-materials.md` (7 Task).
@@ -401,3 +401,56 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 > (Epic R1→R5 ~3–4 tuần, Legendary ~6–8 tuần — `18` §5.5); gói chỉnh (duyệt);
 > `playtest-notes.md` mục Phase 7d; đóng GĐ 7. *(Đã xong — kết quả và điểm mở xem
 > `docs/playtest-notes.md` Phase 7d.)*
+
+---
+
+## Nguyệt Luân mới — Nguyệt Lệnh, pha khởi đầu ngẫu nhiên, Nguyệt tính
+
+**Giai đoạn hiện tại.** Đặc tả:
+`docs/superpowers/specs/2026-09-30-nguyet-luan-redesign-design.md`; kế hoạch chi tiết:
+`docs/superpowers/plans/2026-09-30-nguyet-luan-redesign.md`. Đứng sau 7c Task 5
+(server Cốt truyện), trước nội dung Arc 1–2 (7c.4–7c.5) — pha đầu màn và Nguyệt tính
+kẻ địch Cốt truyện viết theo luật mới.
+
+**Tóm tắt:** pha khởi đầu ngẫu nhiên tất định theo seed (không còn cố định pha 1);
+mỗi pha một Ưu Đãi Pha cố định (tag −1, Trăng Non `assassin` ×1.5) + đúng **một
+Nguyệt Lệnh** bốc trong 3 lệnh của pha bằng luồng RNG phụ (không đổi `rngState`,
+`01` §7.6); `CombatSetup.start.moonIndex` / `start.decrees` ghi đè **sau khi đã bốc
+đủ**; Nguyệt tính kẻ địch công khai; hai action mới Hủy Bài / Huyết Tế.
+
+### Bước M.1 — Tài liệu luật
+> Viết lại `01` §7 (Nguyệt Luân) + các mục liên quan (§2, §3, §5.8–5.9, §9, §10,
+> §15, §16); `02` (schema pha + lệnh, `moonDecrees`, action/event mới); `00` §3.3;
+> `03` (Nguyệt tính); `04`, `05`, `06` (T314–T325), `16`, `CLAUDE.md`. *(Đã xong —
+> commit tài liệu luật.)*
+
+### Bước M.2 — Dữ liệu + schema + tra cứu
+> `moon-phases.json`: `tagBonus` + `decrees` (3 lệnh/pha, id duy nhất); bỏ
+> `modifiers` cũ của pha; `moonModifierSchema` thêm loại lệnh +
+> `DECREE_ONLY_MODIFIERS`; `rollMoon` (luồng RNG phụ), `enterPhase`,
+> `currentDecree` / `phaseModifiers` / `decreeModifier`; `CombatState.moonDecrees`,
+> `CombatStart.decrees`. T314–T316.
+
+### Bước M.3 — Lệnh modifier số học và đầu lượt
+> Ám Dạ, Viên Nguyệt, Phá Giáp, Huyền Giáp, Bóng Mờ, Phản Chấn, Tập Kích
+> (`firstHitKeys`), Thế Thủ (`shieldUsed`), Liên Kích (`attackCardsThisTurn` +
+> neo chuỗi địch), Nguyệt Sinh, Khai Trí, Mầm Sống, Đoàn Viên, Thế Cân, Thiên
+> Bình, Cuồng Nguyệt, Nguyệt Chiếu, Giữ Giáp. T317–T320.
+
+### Bước M.4 — Action mới + server
+> `discardCard` / `bloodPact` trong `rules`; Đoạn Tuyệt (`discardDamage`), Luân
+> Hồi (`recycleDiscard`), Chiêm Tinh, Bói Nguyệt; schema `combatActionSchema` và
+> realtime (`16` §); `viewFor` giữ `moonDecrees`. T321–T323, T325.
+
+### Bước M.5 — Nguyệt tính kẻ địch + bot
+> `moonOverrides` mới theo bảng spec §5; `knownIntents` gộp chiêu trăng pha kế
+> tiếp; bot: Xả Thân, Huyết Tế, Đổi Vận né pha mạnh của địch. T324.
+
+### Bước M.6 — Client
+> Tooltip pha (ưu đãi + lệnh của trận), bỏ dòng "kế tiếp", tooltip kẻ địch có
+> Nguyệt tính, nút Hủy Bài / Huyết Tế theo lệnh có hiệu lực (`05`).
+
+### Bước M.7 — Golden, mô phỏng, chỉnh số
+> Ghi lại golden T213 một lần (có duyệt — kết quả cũ đổi vì pha khởi đầu ngẫu
+> nhiên); phiếu cũ từ chối bằng `409 outdated client` (`dataVersion` đổi);
+> mô phỏng lại PvE / PvP / co-op theo mục tiêu spec §10; `playtest-notes.md`.

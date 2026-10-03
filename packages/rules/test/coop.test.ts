@@ -308,6 +308,7 @@ describe("co-op combat", () => {
       setup: (state) => {
         state.players[0]!.moonPower = 20;
         state.players[1]!.moonPower = 20;
+        state.moonIndex = 1; // round 2 lands on Bán Nguyệt (control −1) as before the seeded roll
       },
     });
     let state = created;
@@ -493,6 +494,8 @@ describe("co-op combat", () => {
       side1: coopSide(["f02", "m06", "f03"]),
       setup: (state) => {
         for (const hero of state.heroes) hero.hp = hero.maxHp - 20;
+        state.moonIndex = 1; // shift +2 → Khuyết Đầu, +1 → Trăng Tròn (as before the seeded roll)
+        state.moonDecrees[4] = "vien_nguyet"; // pin Viên Nguyệt so Trăng Tròn heals ×2
       },
     });
     let state = created;

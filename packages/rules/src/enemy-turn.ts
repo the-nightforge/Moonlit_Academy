@@ -1,9 +1,11 @@
 import { checkCombatEnd, resolveEffects, tickUnitStatuses } from "./effects";
 import { chooseHeroTarget } from "./intent";
 import { checkLevelUps, sealFilteredEffects } from "./levelup";
+import { decreeModifier } from "./moon";
 import { summonsOf } from "./players";
 import { fireEventHooks } from "./run-relic-hooks";
 import { getStatus, hasStatus, removeStatus } from "./statuses";
+import { decreeTurnHeal } from "./turn";
 import { interceptHit, passiveOf } from "./turn-passives";
 import type { CombatEvent, CombatState, EnemyState, GameData, HeroState, Targeting } from "./types/index";
 
@@ -44,13 +46,18 @@ export function guardianOf(state: CombatState, targetId: string): HeroState | un
 export function runEnemyTurn(data: GameData, state: CombatState, events: CombatEvent[]): void {
   state.status = "enemyTurn";
   events.push({ type: "turnStarted", side: "enemy", round: state.round });
-  for (const enemy of state.enemies) {
-    if (enemy.armor > 0) {
-      enemy.armor = 0;
-      events.push({ type: "armorRemoved", targetId: enemy.id });
+  // Giữ Giáp (`01` §9.3 step 1): the decree skips the enemy side's armor wipe too.
+  if (!decreeModifier(data, state, "keepArmor")) {
+    for (const enemy of state.enemies) {
+      if (enemy.armor > 0) {
+        enemy.armor = 0;
+        events.push({ type: "armorRemoved", targetId: enemy.id });
+      }
+      removeStatus(enemy, "reflect", events);
     }
-    removeStatus(enemy, "reflect", events);
   }
+  // Tập Kích (`01` §7.5): the enemy side's first-hit key resets with its turn.
+  state.firstHitKeys = (state.firstHitKeys ?? []).filter((key) => key !== "enemy");
   for (const enemy of state.enemies) {
     if (!enemy.alive) continue;
     const start = events.length;
@@ -59,6 +66,8 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
     fireEventHooks(data, state, events, start, state.bloodMoonRounds);
     if (checkCombatEnd(state, events)) return;
   }
+  // Mầm Sống / Đoàn Viên (`01` §9.3): the enemy side's turn-start heal.
+  decreeTurnHeal(data, state, state.enemies, events);
   for (const enemy of state.enemies) {
     // Phong Ấn (`01` §5.6): the mark covers this enemy's whole turn — frozen or
     // dead enemies lose it unused.
@@ -75,9 +84,13 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
       }
       continue;
     }
+    // Liên Kích (`01` §7.5): an attack/attackDefend intent behind an earlier
+    // executed attack/attackDefend of this same chain hits harder.
+    let attacked = false;
     for (const planned of enemy.plannedIntents) {
       if (!enemy.alive) break;
       const intent = planned.intent;
+      const attackChain = attacked && (intent.kind === "attack" || intent.kind === "attackDefend");
       let targetId: string | null = null;
       let damageMultiplier: number | undefined;
       if (intent.targeting !== undefined) {
@@ -122,9 +135,11 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
           intentKind: intent.kind,
           ...(targetId !== null ? { chosenId: targetId } : {}),
           ...(damageMultiplier !== undefined ? { damageMultiplier } : {}),
+          ...(attackChain ? { attackChain: true as const } : {}),
         },
         events,
       );
+      if (intent.kind === "attack" || intent.kind === "attackDefend") attacked = true;
       if (state.status !== "enemyTurn") return;
     }
   }

@@ -1,5 +1,6 @@
 import type Phaser from "phaser";
-import type { CardTag, Faction, IntentKind, MoonModifier, MoonPhaseDef, MoonPhaseId, NodeType, Rarity, StatusId } from "rules";
+import { currentDecree } from "rules";
+import type { CardTag, CombatState, Faction, GameData, IntentKind, MoonModifier, MoonPhaseId, NodeType, Rarity, StatusId } from "rules";
 
 export const FONT = '"Segoe UI", "Noto Sans", Arial, sans-serif';
 
@@ -199,12 +200,18 @@ export function describeModifier(modifier: MoonModifier): string {
       return `hồi ×${modifier.multiplier}`;
     case "armorMultiplier":
       return `giáp ×${modifier.multiplier}`;
+    default:
+      // Nguyệt Lệnh modifiers carry their own `text` in the decree def (`01` §7.5).
+      return "—";
   }
 }
 
-/** One line of phase modifiers — shared by the moon wheel and Chọn Pha (`18` §2.2). */
-export function describePhase(phase: MoonPhaseDef): string {
-  return phase.modifiers.map(describeModifier).join(", ") || "—";
+/** One line — the phase's rolled Nguyệt Lệnh + tag bonus — shared by the moon wheel and Chọn Pha (`01` §7, `18` §2.2). */
+export function describePhase(data: GameData, state: CombatState, index: number): string {
+  const phase = data.moonPhases[index];
+  if (!phase) return "—";
+  const decree = currentDecree(data, state, index);
+  return decree ? `${decree.name}: ${decree.text} · ${phase.tagBonusText}` : phase.tagBonusText;
 }
 
 /** Vietnamese text for API error codes (`16`). */

@@ -149,12 +149,21 @@ export async function accountIdOf(server: TestServer, token: string): Promise<nu
   return row.account_id;
 }
 
-/** Plays a run to the end with the simplest legal policy; returns the actions sent. */
-export function playRun(data: GameData, setup: RunSetup, loadout?: Loadout): { run: RunState; actions: RunAction[] } {
+/**
+ * Plays a run to the end with the simplest legal policy; returns the actions
+ * sent. `inject` may return an action to send instead of the bot's pick (e.g.
+ * to slip a decree action into the log — T325 server part).
+ */
+export function playRun(
+  data: GameData,
+  setup: RunSetup,
+  loadout?: Loadout,
+  inject?: (run: RunState) => RunAction | null,
+): { run: RunState; actions: RunAction[] } {
   let run = createRun(data, setup, loadout).run;
   const actions: RunAction[] = [];
   while (run.status !== "won" && run.status !== "lost") {
-    const action = botAction(data, run);
+    const action = inject?.(run) ?? botAction(data, run);
     const result = applyRunAction(data, run, action);
     if (!result.ok) throw new Error(result.error);
     actions.push(action);

@@ -86,6 +86,58 @@ describe("run tickets", () => {
       .toBe(409);
   });
 
+  it("T325 (phần server): a legal discardCard replays; out-of-decree decree actions are rejected", async () => {
+    const { server, token } = await signedIn();
+    // Every decree of every phase carries Xả Thân — the legal discard never
+    // depends on the seed's decree roll, and Huyết Tế can never be active.
+    for (const phase of server.data.moonPhases) {
+      for (const decree of phase.decrees) {
+        decree.modifiers = [{ type: "discardForMoonPower", perTurn: 2, moonPower: 1 }];
+      }
+    }
+
+    const ticket = await call(server, "POST", "/api/runs", { token, body: { deckId: "starter", heroIds: TEAM } });
+    expect(ticket.status).toBe(201);
+    let injected = false;
+    const { actions } = playRun(server.data, ticket.body.setup as RunSetup, undefined, (run) => {
+      if (injected || run.status !== "combat" || run.combat!.status !== "playerTurn") return null;
+      const instanceId = run.combat!.players[0]!.hand[0];
+      if (instanceId === undefined) return null;
+      injected = true;
+      return { type: "combat", action: { type: "discardCard", instanceId } };
+    });
+    expect(injected).toBe(true);
+    const finished = await call(server, "POST", `/api/runs/${ticket.body.runId}/finish`, { token, rev: 1, body: { actions } });
+    expect(finished.status).toBe(200);
+    expect(await runStatus(server, ticket.body.runId)).toBe("finished");
+
+    // A discard of a card not in hand fails replay → 422 + rejected ticket.
+    const cheat = await call(server, "POST", "/api/runs", { token, body: { deckId: "starter", heroIds: TEAM } });
+    // Malformed shape (missing instanceId) fails the schema → 400, run stays open.
+    const malformed = await call(server, "POST", `/api/runs/${cheat.body.runId}/finish`, { token, rev: 1, body: { actions: [{ type: "combat", action: { type: "discardCard" } }] } });
+    expect(malformed.status).toBe(400);
+    expect(await runStatus(server, cheat.body.runId)).toBe("open");
+    const replayed = playRun(server.data, cheat.body.setup as RunSetup).actions;
+    const mulliganAt = replayed.findIndex((a) => a.type === "combat" && a.action.type === "mulligan");
+    const tampered = [...replayed];
+    tampered.splice(mulliganAt + 1, 0, { type: "combat", action: { type: "discardCard", instanceId: "not_in_hand" } });
+    const refused = await call(server, "POST", `/api/runs/${cheat.body.runId}/finish`, { token, rev: 2, body: { actions: tampered } });
+    expect(refused.status).toBe(422);
+    expect(refused.body).toMatchObject({ error: "replay failed", step: mulliganAt + 1 });
+    expect(await runStatus(server, cheat.body.runId)).toBe("rejected");
+
+    // bloodPact with no huyet_te decree possible → rejected the same way.
+    const cheat2 = await call(server, "POST", "/api/runs", { token, body: { deckId: "starter", heroIds: TEAM } });
+    const replayed2 = playRun(server.data, cheat2.body.setup as RunSetup).actions;
+    const mulliganAt2 = replayed2.findIndex((a) => a.type === "combat" && a.action.type === "mulligan");
+    const tampered2 = [...replayed2];
+    tampered2.splice(mulliganAt2 + 1, 0, { type: "combat", action: { type: "bloodPact", heroId: "hero:m05" } });
+    const refused2 = await call(server, "POST", `/api/runs/${cheat2.body.runId}/finish`, { token, rev: 2, body: { actions: tampered2 } });
+    expect(refused2.status).toBe(422);
+    expect(refused2.body).toMatchObject({ error: "replay failed", step: mulliganAt2 + 1 });
+    expect(await runStatus(server, cheat2.body.runId)).toBe("rejected");
+  });
+
   it("refuses a ticket for an invalid deck and actions of the wrong shape", async () => {
     const { server, token } = await signedIn();
     const refused = await call(server, "POST", "/api/runs", { token, body: { deckId: "starter", heroIds: ["m05", "f04", "f03"] } });
