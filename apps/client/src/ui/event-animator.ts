@@ -2,7 +2,10 @@ import type Phaser from "phaser";
 import { cardDefOf } from "rules";
 import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, UnitState } from "rules";
 import { attackLookOf, cardColorOf } from "./attack-style";
+import { applyPresentationEvent } from "./combat-presentation";
+import type { PresentationBindings } from "./combat-presentation";
 import { resolvePlayedCard, seatAnchors, statusAppliedLabel, statusDisplayValue, unitAt } from "./combat-display";
+import type { SeatAnchors } from "./combat-display";
 import type { PublicPlayedCard } from "../net/protocol";
 import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
 import { castCard, deathBurn, moonWheel, playAttack, statusPop } from "./vfx";
@@ -13,16 +16,22 @@ const { moon, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
 
 export interface AnimContext {
   gameData: GameData;
-  /** The batch's pre-action state — positions, HP and hands as the beat starts. */
-  state: CombatState;
-  /** The batch's post-action state — card metadata resolves against it too. */
+  /** The batch's working copy — every visible value moves off it mid-beat. */
+  presentation: CombatState;
+  /** The batch's post-action state — metadata the events don't carry resolves against it. */
   after: CombatState;
+  /** Scene hooks that patch rendered objects as the presentation moves. */
+  bindings: PresentationBindings;
   /** Cast-time records of the batch's `cardPlayed` events (`16` §8.2). */
   revealedCards?: Record<string, PublicPlayedCard>;
   unitAnchors: Map<string, { x: number; y: number }>;
   unitViews: Map<string, Phaser.GameObjects.Container>;
   /** The local player's hand cards: a played card flies out of its slot. */
   cardViews?: Map<string, Phaser.GameObjects.Container>;
+  /** Per-seat zone anchors (draw/discard/hand/resource/reserve). */
+  seatAnchors: Map<number, SeatAnchors>;
+  /** Builds a detached, runtime-tracked clone of a hand card for the cast beat. */
+  castView?: (instanceId: string) => Phaser.GameObjects.Container | undefined;
   /** Where the moon icon sits (follows the background art); defaults to the layout spot. */
   moonAnchor?: { x: number; y: number };
   /** The local player's seat in a PvP view (`17` §4.8); 0 in PvE. */
@@ -32,7 +41,7 @@ export interface AnimContext {
 }
 
 function anchorsFor(ctx: AnimContext, player?: number) {
-  return seatAnchors(player ?? 0, ctx.mySeat ?? 0, ctx.state.mode);
+  return ctx.seatAnchors.get(player ?? 0) ?? seatAnchors(player ?? 0, ctx.mySeat ?? 0, ctx.presentation.mode);
 }
 
 function floatText(
@@ -80,7 +89,7 @@ function flash(
 
 /** Looks up an intent of an enemy by id, including moon/blood moon overrides. */
 function findIntent(ctx: AnimContext, enemyId: string, intentId: string): IntentDef | undefined {
-  const defId = ctx.state.enemies.find((enemy) => enemy.id === enemyId)?.defId;
+  const defId = ctx.presentation.enemies.find((enemy) => enemy.id === enemyId)?.defId;
   const def = defId !== undefined ? ctx.gameData.enemies[defId] : undefined;
   if (!def) return undefined;
   return [
@@ -207,6 +216,80 @@ function flyLabel(
  * statusRemoved + statusApplied of the same status on another unit (a steal),
  * consecutive blood moon HP losses (together), and reflect after its hit.
  */
+/**
+ * Moves the presentation one event forward and refreshes the views it touched:
+ * unit badges at the unit's own beat, seat chrome (hand, piles, resources) per
+ * seat event, the moon badge on phase/decrees. No `renderAll` mid-batch.
+ */
+function applyBeat(ctx: AnimContext, event: CombatEvent): void {
+  applyPresentationEvent(ctx.gameData, ctx.presentation, event, ctx.after);
+  const presentation = ctx.presentation;
+  const unit = (id: string) => ctx.bindings.updateUnit(id, presentation);
+  const seat = (player?: number) => ctx.bindings.updateSeat(player ?? 0, presentation);
+  switch (event.type) {
+    case "damageDealt":
+    case "hpLost":
+    case "healed":
+    case "armorGained":
+    case "armorRemoved":
+    case "statusApplied":
+    case "statusRemoved":
+      unit(event.targetId);
+      return;
+    case "unitDied":
+    case "summonDismissed":
+    case "summonActed":
+    case "sealStripped":
+      unit(event.unitId);
+      return;
+    case "heroRevived":
+    case "heroLeveledUp":
+      unit(event.heroId);
+      return;
+    case "summoned":
+      ctx.bindings.ensureSummon(event.unitId, presentation);
+      return;
+    case "bossPhaseChanged":
+    case "intentsRevealed":
+    case "intentsCancelled":
+    case "intentExecuted":
+    case "intentSkipped":
+    case "intentFizzled":
+      unit(event.enemyId);
+      return;
+    case "moonReserveChanged":
+      if (event.side === "enemy" && event.enemyId !== undefined) unit(event.enemyId);
+      else seat(event.player);
+      return;
+    case "moonPowerChanged":
+    case "cardsDrawn":
+    case "cardPlayed":
+    case "cardDiscarded":
+    case "cardsRecycled":
+    case "cardCreated":
+    case "cardsPurged":
+    case "mulliganed":
+    case "cardChosen":
+    case "choiceOpened":
+    case "moonChoiceOpened":
+    case "turnStarted":
+      seat(event.player);
+      return;
+    case "moonShifted":
+    case "moonDecreesRolled":
+    case "bloodMoonChanged":
+      ctx.bindings.updateMoon(presentation);
+      return;
+    default:
+      return;
+  }
+}
+
+/**
+ * Plays events in order. A few sequences read as one beat:
+ * statusRemoved + statusApplied of the same status on another unit (a steal),
+ * consecutive blood moon HP losses (together), and reflect after its hit.
+ */
 export async function playEventQueue(
   rt: AnimationRuntime,
   events: CombatEvent[],
@@ -223,8 +306,16 @@ export async function playEventQueue(
     const event = group[0]!;
     const next = groups[g + 1]?.[0];
     if (event.type === "cardPlayed") {
-      card = resolvePlayedCard(ctx.gameData, ctx.state, ctx.after, event.instanceId, ctx.revealedCards)?.definition;
-    } else if (CARDLESS_SOURCES.has(event.type)) {
+      card = resolvePlayedCard(ctx.gameData, ctx.presentation, ctx.after, event.instanceId, ctx.revealedCards)?.definition;
+      // The clone must exist before the seat refresh rebuilds the hand — the
+      // real card view is hidden by `castView` and dies with the rebuild.
+      const cast = ctx.castView?.(event.instanceId);
+      applyBeat(ctx, event);
+      await animateEvent(rt, event, ctx, card, 0, cast);
+      previous = event;
+      continue;
+    }
+    if (CARDLESS_SOURCES.has(event.type)) {
       card = undefined;
     }
     if (group.every((member) => member.type === "damageDealt")) {
@@ -251,10 +342,12 @@ export async function playEventQueue(
       const to = ctx.unitAnchors.get(next.targetId);
       if (from && to) {
         const shown = statusDisplayValue(
-          ctx.state,
+          ctx.presentation,
           { statuses: [{ id: next.status, value: next.value }] } as UnitState,
           next.status,
         );
+        applyBeat(ctx, event);
+        applyBeat(ctx, next);
         await flyLabel(rt, from, to, `${STATUS_LABELS[next.status]} ${shown}`);
         previous = next;
         g++;
@@ -268,6 +361,7 @@ export async function playEventQueue(
         losses.push(groups[g + 1]![0] as HpLostEvent);
         g++;
       }
+      for (const loss of losses) applyBeat(ctx, loss);
       await Promise.all(losses.map((loss) => animateEvent(rt, loss, ctx)));
       previous = losses[losses.length - 1];
       continue;
@@ -276,11 +370,13 @@ export async function playEventQueue(
       const from = ctx.unitAnchors.get(previous.targetId);
       const to = ctx.unitAnchors.get(event.targetId);
       if (from && to) {
+        applyBeat(ctx, event);
         await Promise.all([beam(rt, from, to), animateEvent(rt, event, ctx)]);
         previous = event;
         continue;
       }
     }
+    applyBeat(ctx, event);
     await animateEvent(rt, event, ctx, card);
     previous = event;
   }
@@ -292,6 +388,7 @@ function animateEvent(
   ctx: AnimContext,
   card?: CardDef,
   hitIndex = 0,
+  cast?: Phaser.GameObjects.Container,
 ): Promise<void> {
   const anchorOf = (unitId: string) => ctx.unitAnchors.get(unitId);
 
@@ -312,7 +409,7 @@ function animateEvent(
       if (ids.length === 0) return instant();
       const anchors = anchorsFor(ctx, event.player);
       const mine = (event.player ?? 0) === (ctx.mySeat ?? 0);
-      const spacing = mine ? 70 : ctx.state.mode === "coop" ? 34 : 26;
+      const spacing = mine ? 70 : ctx.presentation.mode === "coop" ? 34 : 26;
       return Promise.all(
         ids.map((id, i) => {
           // The remote seat's draws stay face-down backs — count only, no card identity.
@@ -336,9 +433,9 @@ function animateEvent(
     case "deckShuffled":
       return floatText(rt, pile.x + 60, pile.y - 70, "Xáo lại chồng bỏ", "#cfd6f0", 12, 300);
     case "cardPlayed": {
-      const resolved = resolvePlayedCard(ctx.gameData, ctx.state, ctx.after, event.instanceId, ctx.revealedCards);
+      const resolved = resolvePlayedCard(ctx.gameData, ctx.presentation, ctx.after, event.instanceId, ctx.revealedCards);
       const card = resolved?.definition;
-      const view = ctx.cardViews?.get(event.instanceId);
+      const view = cast ?? ctx.cardViews?.get(event.instanceId);
       if (card && view) {
         const target = event.targetId !== undefined ? anchorOf(event.targetId) : undefined;
         return castCard(rt, view, { x: WIDTH / 2, y: midY }, cardColorOf(card), target);
@@ -357,7 +454,7 @@ function animateEvent(
       const owner =
         card?.ownerId === undefined
           ? undefined
-          : ctx.state.heroes.find(
+          : ctx.presentation.heroes.find(
               (hero) => hero.defId === card.ownerId && hero.player === (event.player ?? 0),
             );
       const anchor = owner === undefined ? undefined : anchorOf(owner.id);
@@ -385,21 +482,25 @@ function animateEvent(
     }
     case "damageDealt": {
       const anchor = anchorOf(event.targetId);
-      if (!anchor) return instant();
+      if (!anchor) {
+        applyBeat(ctx, event);
+        return instant();
+      }
       const from = anchorOf(event.sourceId) ?? { x: anchor.x, y: anchor.y + 200 };
-      const fromHero = ctx.state.heroes.some((hero) => hero.id === event.sourceId);
-      const look = attackLookOf(ctx.gameData, ctx.state, event.sourceId, card);
+      const fromHero = ctx.presentation.heroes.some((hero) => hero.id === event.sourceId);
+      const look = attackLookOf(ctx.gameData, ctx.presentation, event.sourceId, card);
       let seen!: () => void;
       const impactSeen = new Promise<void>((resolve) => (seen = resolve));
-      // The number pops and the unit flinches at the decisive impact; the
-      // attack's tail (ribbon retraction, trail fade) keeps running under the
-      // runtime and drains before the batch commits.
+      // The badge, the number and the flinch all land at the decisive impact;
+      // the attack's tail (ribbon retraction, trail fade) keeps running under
+      // the runtime and drains before the batch commits.
       const attack = playAttack(look, from, anchor, {
         blocked: event.hpLost === 0,
         runtime: rt,
         ...(fromHero ? { attackerView: ctx.unitViews.get(event.sourceId) } : {}),
         onImpact: () => {
           seen();
+          applyBeat(ctx, event);
           const view = ctx.unitViews.get(event.targetId);
           if (view) void rt.tween({ targets: view, x: view.x + 6, duration: 45, yoyo: true, repeat: 3 });
           const offset = hitIndex * 14;
@@ -463,12 +564,12 @@ function animateEvent(
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
       void statusPop(rt, anchor, `ui:status_${event.status}`, STATUS_ICONS[event.status].color).catch(() => {});
-      const unit = unitAt(ctx.state, event.targetId) ?? ({ statuses: [] } as unknown as UnitState);
+      const unit = unitAt(ctx.presentation, event.targetId) ?? ({ statuses: [] } as unknown as UnitState);
       return floatText(
         rt,
         anchor.x,
         anchor.y - 62,
-        statusAppliedLabel(ctx.state, unit, event.status, event.value, ctx.gameData),
+        statusAppliedLabel(ctx.presentation, unit, event.status, event.value, ctx.gameData),
         "#ffd97f",
         13,
         150,
@@ -520,12 +621,12 @@ function animateEvent(
       const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
       // refId is an intentId for enemies, a card instanceId for hero cards, a summonId for Linh Thú.
-      const instance = ctx.state.cards[event.refId];
-      const ref = ctx.state.enemies.some((enemy) => enemy.id === event.unitId)
+      const instance = ctx.presentation.cards[event.refId];
+      const ref = ctx.presentation.enemies.some((enemy) => enemy.id === event.unitId)
         ? findIntent(ctx, event.unitId, event.refId)?.name
-        : ctx.state.summons?.some((summon) => summon.id === event.unitId)
+        : ctx.presentation.summons?.some((summon) => summon.id === event.unitId)
           ? ctx.gameData.summons[event.refId]?.name
-          : instance ? cardDefOf(ctx.gameData, ctx.state, instance)?.name : undefined;
+          : instance ? cardDefOf(ctx.gameData, ctx.presentation, instance)?.name : undefined;
       return floatText(rt, anchor.x, anchor.y - 110, `Phong Ấn: ${ref ?? ""} mất hiệu ứng`, "#b9a8ff", 13, 450);
     }
     case "intentExecuted": {
@@ -538,7 +639,7 @@ function animateEvent(
       const aimed = target
         ? [target]
         : intent?.kind === "attack"
-          ? ctx.state.heroes.filter((hero) => hero.alive).flatMap((hero) => anchorOf(hero.id) ?? [])
+          ? ctx.presentation.heroes.filter((hero) => hero.alive).flatMap((hero) => anchorOf(hero.id) ?? [])
           : [];
       const dx = target ? (target.x - anchor.x) * 0.18 : 0;
       const dy = target ? (target.y - anchor.y) * 0.18 : (aimed.length > 0 ? 20 : 0);
@@ -576,7 +677,7 @@ function animateEvent(
     case "unitDied": {
       const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
-      const boss = ctx.state.boss?.enemyId === event.unitId;
+      const boss = ctx.presentation.boss?.enemyId === event.unitId;
       return deathBurn(rt, ctx.unitViews.get(event.unitId), anchor, boss);
     }
     case "runRelicTriggered": {
@@ -664,7 +765,7 @@ function animateEvent(
     case "summonActed": {
       const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
-      const summon = ctx.state.summons?.find((unit) => unit.id === event.unitId);
+      const summon = ctx.presentation.summons?.find((unit) => unit.id === event.unitId);
       const name = (summon && ctx.gameData.summons[summon.summonId]?.name) ?? "Linh Thú";
       return floatText(rt, anchor.x, anchor.y - 44, name, "#9fd4ff", 14, 300);
     }

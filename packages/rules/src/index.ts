@@ -1,4 +1,5 @@
 export type * from "./types/index";
+export { cloneState } from "./clone";
 export { nextRandom, shuffle } from "./rng";
 export {
   activePlayerState,

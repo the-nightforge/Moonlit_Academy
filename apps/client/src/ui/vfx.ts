@@ -902,6 +902,9 @@ export async function castCard(
   target?: Point,
 ): Promise<void> {
   ensureTextures(rt.scene);
+  // `view` is a detached clone of the hand card — tracking it means an abort
+  // destroys the clone while the interactive source stays untouched.
+  rt.track(view);
   view.parentContainer?.bringToTop(view);
   await rt.tween({ targets: view, x: stage.x, y: stage.y, scale: 1.15, angle: 0, duration: 220, ease: "Cubic.easeOut" });
   const halo = addFx(rt, stage, GLOW).setTint(color).setScale(0.6 * S).setAlpha(0.9);
