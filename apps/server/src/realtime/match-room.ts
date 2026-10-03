@@ -5,6 +5,7 @@ import {
   applyCoopResult,
   applyPvpResult,
   autoChoiceAction,
+  cardDefOf,
   coopRedactEvents,
   coopViewFor,
   createCoopCombat,
@@ -14,7 +15,7 @@ import {
   viewFor,
 } from "rules";
 import type { AppContext } from "../context";
-import type { MatchSettlement, MatchSnapshot, SettlementState } from "./protocol";
+import type { MatchSettlement, MatchSnapshot, PublicPlayedCard, SettlementState } from "./protocol";
 
 export type MatchMode = "ranked" | "private" | "practice" | "coop" | "coop_private" | "coop_practice";
 
@@ -363,6 +364,18 @@ export class MatchRoom {
   /** Sends every seated human the redacted events + their own seat view. */
   private push(events: CombatEvent[]): void {
     this.eventSeq += 1;
+    // Cast-time metadata for the batch's `cardPlayed` events, captured from the
+    // full state — the redacted view may drop the instance again (Luân Hồi
+    // recycles it out of the public discard within the same batch).
+    const revealedCards: Record<string, PublicPlayedCard> = {};
+    for (const event of events) {
+      if (event.type !== "cardPlayed") continue;
+      const instance = this.state.cards[event.instanceId];
+      const definition = instance === undefined ? undefined : cardDefOf(this.ctx.data, this.state, instance);
+      if (instance !== undefined && definition !== undefined) {
+        revealedCards[event.instanceId] = { instance, definition };
+      }
+    }
     for (const seat of this.seats) {
       send(seat.socket, {
         type: "match.events",
@@ -372,6 +385,7 @@ export class MatchRoom {
         events: this.redact(events, seat.seat),
         view: this.viewFor(seat.seat),
         deadline: this.deadline,
+        ...(Object.keys(revealedCards).length > 0 ? { revealedCards } : {}),
       });
     }
     this.onPushed?.();

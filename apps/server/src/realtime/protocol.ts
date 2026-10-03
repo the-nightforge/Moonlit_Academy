@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { CombatEvent, CombatState } from "rules";
+import type { CardDef, CardInstance, CombatEvent, CombatState } from "rules";
 
 /** `16` §8.2 — messages the client may send. `forfeit` is system-only (`01` §15.6). */
 const id = z.string().max(64);
@@ -49,6 +49,17 @@ export type SettlementState =
   | { status: "complete"; end: MatchSettlement }
   | { status: "failed"; error: string };
 
+/**
+ * Public record of a card just played (`16` §8.2): the instance and its
+ * definition as they stood at cast time. Both seats may see it — a played
+ * card is public even when it leaves the discard pile within the same batch
+ * (Luân Hồi) and the redacted view drops it again.
+ */
+export interface PublicPlayedCard {
+  instance: CardInstance;
+  definition: CardDef;
+}
+
 /** The per-seat snapshot of a live match (`17` §5.2). */
 export interface MatchSnapshot {
   matchId: string;
@@ -82,6 +93,8 @@ export type ServerMessage =
       events: CombatEvent[];
       view: CombatState;
       deadline: number | null;
+      /** Cast-time metadata of every `cardPlayed` in this batch, keyed by instanceId. */
+      revealedCards?: Record<string, PublicPlayedCard>;
     }
   | { type: "match.rejected"; matchId: string; seq: number; nextActionSeq: number; reason: string }
   | ({ type: "match.end"; matchId: string } & MatchSettlement & {

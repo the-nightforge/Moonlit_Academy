@@ -1,17 +1,24 @@
 import type Phaser from "phaser";
 import { cardDefOf } from "rules";
-import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "rules";
+import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, UnitState } from "rules";
 import { attackLookOf, cardColorOf } from "./attack-style";
+import { resolvePlayedCard, seatAnchors, statusAppliedLabel, statusDisplayValue, unitAt } from "./combat-display";
+import type { PublicPlayedCard } from "../net/protocol";
 import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
 import { castCard, deathBurn, moonWheel, playAttack, statusPop } from "./vfx";
 import type { AnimationRuntime } from "./animation-runtime";
 
 const WIDTH = 1280;
-const { moon, moonPower, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
+const { moon, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
 
 export interface AnimContext {
   gameData: GameData;
+  /** The batch's pre-action state — positions, HP and hands as the beat starts. */
   state: CombatState;
+  /** The batch's post-action state — card metadata resolves against it too. */
+  after: CombatState;
+  /** Cast-time records of the batch's `cardPlayed` events (`16` §8.2). */
+  revealedCards?: Record<string, PublicPlayedCard>;
   unitAnchors: Map<string, { x: number; y: number }>;
   unitViews: Map<string, Phaser.GameObjects.Container>;
   /** The local player's hand cards: a played card flies out of its slot. */
@@ -22,6 +29,10 @@ export interface AnimContext {
   mySeat?: number;
   /** Per-batch animation scope: every timed/tweened FX goes through it. */
   runtime: AnimationRuntime;
+}
+
+function anchorsFor(ctx: AnimContext, player?: number) {
+  return seatAnchors(player ?? 0, ctx.mySeat ?? 0, ctx.state.mode);
 }
 
 function floatText(
@@ -169,8 +180,7 @@ export async function playEventQueue(
     const event = events[i]!;
     const next = events[i + 1];
     if (event.type === "cardPlayed") {
-      const instance = ctx.state.cards[event.instanceId];
-      card = instance ? cardDefOf(ctx.gameData, ctx.state, instance) : undefined;
+      card = resolvePlayedCard(ctx.gameData, ctx.state, ctx.after, event.instanceId, ctx.revealedCards)?.definition;
     } else if (CARDLESS_SOURCES.has(event.type)) {
       card = undefined;
     }
@@ -192,7 +202,12 @@ export async function playEventQueue(
       const from = ctx.unitAnchors.get(event.targetId);
       const to = ctx.unitAnchors.get(next.targetId);
       if (from && to) {
-        await flyLabel(rt, from, to, `${STATUS_LABELS[next.status]} ${next.value}`);
+        const shown = statusDisplayValue(
+          ctx.state,
+          { statuses: [{ id: next.status, value: next.value }] } as UnitState,
+          next.status,
+        );
+        await flyLabel(rt, from, to, `${STATUS_LABELS[next.status]} ${shown}`);
         i++;
         continue;
       }
@@ -239,18 +254,22 @@ function animateEvent(
     case "cardsDrawn": {
       const ids = event.instanceIds;
       if (ids.length === 0) return instant();
+      const anchors = anchorsFor(ctx, event.player);
+      const mine = (event.player ?? 0) === (ctx.mySeat ?? 0);
+      const spacing = mine ? 70 : ctx.state.mode === "coop" ? 34 : 26;
       return Promise.all(
         ids.map((id, i) => {
+          // The remote seat's draws stay face-down backs — count only, no card identity.
           const rect = rt.track(
             rt.scene.add
-              .rectangle(pile.x + 40, pile.y, 30, 44, 0x2c3e6e)
+              .rectangle(anchors.draw.x + 6, anchors.draw.y, 30, 44, 0x2c3e6e)
               .setStrokeStyle(1, 0xf4d35e)
               .setDepth(100),
           );
           return rt.tween({
             targets: rect,
-            x: WIDTH / 2 + (i - (ids.length - 1) / 2) * 70,
-            y: handY,
+            x: mine ? WIDTH / 2 + (i - (ids.length - 1) / 2) * spacing : anchors.hand.x + i * spacing,
+            y: anchors.hand.y,
             delay: i * 60,
             duration: 120,
             onComplete: () => rect.destroy(),
@@ -261,15 +280,15 @@ function animateEvent(
     case "deckShuffled":
       return floatText(rt, pile.x + 60, pile.y - 70, "Xáo lại chồng bỏ", "#cfd6f0", 12, 300);
     case "cardPlayed": {
-      const instance = ctx.state.cards[event.instanceId];
-      const card = instance ? cardDefOf(ctx.gameData, ctx.state, instance) : undefined;
+      const resolved = resolvePlayedCard(ctx.gameData, ctx.state, ctx.after, event.instanceId, ctx.revealedCards);
+      const card = resolved?.definition;
       const view = ctx.cardViews?.get(event.instanceId);
       if (card && view) {
         const target = event.targetId !== undefined ? anchorOf(event.targetId) : undefined;
         return castCard(rt, view, { x: WIDTH / 2, y: midY }, cardColorOf(card), target);
       }
       // Another seat's card (co-op partner, PvP opponent): no hand view to fly.
-      return floatText(rt, WIDTH / 2, midY, `◆ ${card?.name ?? ""}`, "#f4d35e", 22, 300);
+      return floatText(rt, WIDTH / 2, midY, `◆ ${card?.name ?? "Lá bài"}`, "#f4d35e", 22, 300);
     }
     case "cardDiscarded":
     // Luân Hồi (`01` §3.3): reuse the discard beat until the real animation lands.
@@ -290,7 +309,8 @@ function animateEvent(
         if (!anchor) return instant();
         return floatText(rt, anchor.x, anchor.y - 62, "Tay đầy", "#ff8080", 14, 350);
       }
-      const from = anchor ?? { x: pile.x + 40, y: pile.y };
+      const anchors = anchorsFor(ctx, event.player);
+      const from = anchor ?? { x: anchors.draw.x + 6, y: anchors.draw.y };
       const mine = (event.player ?? 0) === (ctx.mySeat ?? 0);
       const rect = rt.track(
         rt.scene.add
@@ -300,9 +320,9 @@ function animateEvent(
       );
       return rt.tween({
         targets: rect,
-        x: mine ? WIDTH / 2 : from.x,
-        y: mine ? handY : from.y,
-        alpha: mine ? 1 : 0,
+        x: mine ? WIDTH / 2 : anchors.hand.x,
+        y: mine ? handY : anchors.hand.y,
+        alpha: mine ? 1 : 0.6,
         duration: 180,
         onComplete: () => rect.destroy(),
       });
@@ -376,11 +396,12 @@ function animateEvent(
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
       void statusPop(rt, anchor, `ui:status_${event.status}`, STATUS_ICONS[event.status].color).catch(() => {});
+      const unit = unitAt(ctx.state, event.targetId) ?? ({ statuses: [] } as unknown as UnitState);
       return floatText(
         rt,
         anchor.x,
         anchor.y - 62,
-        `+${STATUS_LABELS[event.status]} ${event.value}`,
+        statusAppliedLabel(ctx.state, unit, event.status, event.value, ctx.gameData),
         "#ffd97f",
         13,
         150,
@@ -400,8 +421,10 @@ function animateEvent(
         150,
       );
     }
-    case "moonPowerChanged":
-      return floatText(rt, moonPower.x - 60, moonPower.y, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 200);
+    case "moonPowerChanged": {
+      const at = anchorsFor(ctx, event.player).resource;
+      return floatText(rt, at.x - 60, at.y, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 200);
+    }
     case "moonShifted": {
       // The Nguyệt Luân turns at center stage and settles into the moon badge; the new phase's name floats down.
       const phase = ctx.gameData.moonPhases[event.to];
@@ -538,7 +561,8 @@ function animateEvent(
       return floatText(rt, pile.x + 90, pile.y - 70, `-${event.instanceIds.length} lá (Tán Chiêu)`, "#8b93b8", 12, 300);
     case "moonReserveChanged": {
       if (event.side === "hero") {
-        return floatText(rt, moonPower.x - 60, moonPower.y + 46, `Dự Trữ ${event.value}`, "#7fd4ff", 13, 250);
+        const at = anchorsFor(ctx, event.player).reserve;
+        return floatText(rt, at.x - 60, at.y, `Dự Trữ ${event.value}`, "#7fd4ff", 13, 250);
       }
       const anchor = event.enemyId !== undefined ? anchorOf(event.enemyId) : undefined;
       if (!anchor) return instant();

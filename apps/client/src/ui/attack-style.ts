@@ -39,6 +39,12 @@ const ARCHETYPE_KIND: Record<Archetype, AttackKind> = {
   specialist: "spell",
 };
 
+/** Linh Thú hit styles — summons carry no `attackStyle` field (`01` §17). */
+const SUMMON_STYLE: Record<string, AttackKind> = {
+  tho_ngoc: "moon",
+  tho_ngoc_thuc_tinh: "moon",
+};
+
 /** First matching tag colors a spell; order = which tag wins on multi-tag cards. */
 const TAG_COLOR: [CardTag, number][] = [
   ["forbidden", 0xd03a4a],
@@ -62,6 +68,11 @@ const TAG_COLOR: [CardTag, number][] = [
 export function attackLookOf(data: GameData, state: CombatState, sourceId: string, card?: CardDef): AttackLook {
   const enemy = state.enemies.find((unit) => unit.id === sourceId);
   if (enemy) return { kind: data.enemies[enemy.defId]?.attackStyle ?? "slash", color: ENEMY_COLOR };
+  const summon = state.summons?.find((unit) => unit.id === sourceId);
+  if (summon) {
+    const kind = SUMMON_STYLE[summon.summonId] ?? "slash";
+    return { kind, color: STYLE_COLOR[kind] };
+  }
   const hero = state.heroes.find((unit) => unit.id === sourceId);
   if (!hero) return { kind: "slash", color: STYLE_COLOR.slash };
   const def = data.heroes[hero.defId];

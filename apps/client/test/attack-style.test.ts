@@ -64,4 +64,16 @@ describe("attackLookOf", () => {
     expect(attackLookOf(data, stateWith(), "enemy:0")).toEqual({ kind: "darts", color: 0xff5a40 });
     expect(attackLookOf(data, stateWith(), "enemy:1").kind).toBe("slash");
   });
+
+  it("Linh Thú hits use their kind's style — Thỏ Ngọc is a moon hit", () => {
+    const state = {
+      ...stateWith(),
+      summons: [
+        { id: "summon:0", summonId: "tho_ngoc" },
+        { id: "summon:1", summonId: "tho_ngoc_thuc_tinh" },
+      ],
+    } as unknown as CombatState;
+    expect(attackLookOf(data, state, "summon:0")).toEqual({ kind: "moon", color: 0xf4d35e });
+    expect(attackLookOf(data, state, "summon:1")).toEqual({ kind: "moon", color: 0xf4d35e });
+  });
 });

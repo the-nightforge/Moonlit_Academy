@@ -3,6 +3,7 @@ import {
   activePlayerState,
   applyAction,
   cardDefOf,
+  cardOwners,
   comboHintFor,
   getEffectiveCost,
   getPlayCardError,
@@ -26,6 +27,7 @@ import { errorText, resumeSession } from "../account";
 import { applyRecordedRunAction } from "../run-session";
 import { recordStoryAction, startStoryTicket, submitStory } from "../story-session";
 import { NetMatch } from "../net/match";
+import type { PushMetadata } from "../net/match";
 import type { ServerMessage } from "../net/protocol";
 import { cycleEncounter, recoverMatchGone, restartSession, session } from "../session";
 import type { Team } from "../session";
@@ -48,6 +50,7 @@ import { CombatPlayback, type PlaybackBatch } from "../ui/combat-playback";
 import { createAnimationRuntime } from "../ui/animation-runtime";
 import { HUD, hudImage } from "../ui/hud-art";
 import { cardColorOf, cardIconOf } from "../ui/attack-style";
+import { displayStatuses } from "../ui/combat-display";
 import {
   BLOOD_MOON_BG,
   COLORS,
@@ -315,7 +318,7 @@ export class CombatScene extends Phaser.Scene {
     };
     // A `match.sync` answer resyncs the seat the same way a welcome rejoin does.
     match.onRejoin = (_snapshot, lostPending) => this.applyNetRejoin(lostPending);
-    match.onPush = (events, view) => this.onNetPush(events, view);
+    match.onPush = (events, view, metadata) => this.onNetPush(events, view, metadata);
     match.onEnd = () => {
       this.inputLocked = true;
       // Terminal screen after the queued beats have played out.
@@ -369,7 +372,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /** A `match.events` push: queue the batch; its `after` view commits once the events played. */
-  private onNetPush(events: CombatEvent[], view: CombatState): void {
+  private onNetPush(events: CombatEvent[], view: CombatState, metadata?: PushMetadata): void {
     if (!this.scene.isActive()) {
       this.state = view;
       this.latestState = view;
@@ -386,7 +389,12 @@ export class CombatScene extends Phaser.Scene {
         this.bannerQueue.push({ text: `Nguyệt Thực Ma Quân — Giai đoạn ${event.phase}`, color: "#ff8090" });
       }
     }
-    this.playback.enqueue({ before: this.latestState, after: view, events });
+    this.playback.enqueue({
+      before: this.latestState,
+      after: view,
+      events,
+      revealedCards: metadata?.revealedCards,
+    });
     this.latestState = view;
   }
 
@@ -519,6 +527,8 @@ export class CombatScene extends Phaser.Scene {
     return playEventQueue(runtime, batch.events, {
       gameData: this.gameData,
       state: batch.before,
+      after: batch.after,
+      revealedCards: batch.revealedCards,
       unitAnchors: this.unitAnchors,
       unitViews: this.unitViews,
       cardViews: this.cardViews,
@@ -1327,7 +1337,7 @@ export class CombatScene extends Phaser.Scene {
       maxHp: summon.maxHp,
       hostile,
       armor: summon.armor,
-      statuses: summon.statuses,
+      statuses: displayStatuses(this.state, summon),
       sealed: summon.sealedBy !== undefined,
       frame: COLORS.panelBorder,
       alive: true,
@@ -1363,7 +1373,7 @@ export class CombatScene extends Phaser.Scene {
         maxHp: enemy.maxHp,
         hostile: true,
         armor: enemy.armor,
-        statuses: enemy.statuses,
+        statuses: displayStatuses(this.state, enemy),
         sealed: enemy.sealedBy !== undefined,
         frame: COLORS.panelBorder,
         alive: enemy.alive,
@@ -1529,7 +1539,7 @@ export class CombatScene extends Phaser.Scene {
       maxHp: hero.maxHp,
       hostile,
       armor: hero.armor,
-      statuses: hero.statuses,
+      statuses: displayStatuses(this.state, hero),
       sealed: hero.sealedBy !== undefined,
       frame: hero.leveledUp ? COLORS.goldFill : frame,
       alive: hero.alive,
@@ -1617,9 +1627,8 @@ export class CombatScene extends Phaser.Scene {
     const card = cardDefOf(this.gameData, this.state, instance)!;
     const weapon = this.gameData.weapons[instance.cardId];
     const [ownerId, partnerId] = instance.ownerIds as [string, string | undefined];
-    const broken = instance.ownerIds.some(
-      (id) => !this.state.heroes.find((hero) => hero.defId === id)?.alive,
-    );
+    // Owners resolve by seat+defId (`17` §2.1) — a same-defId hero of the other seat is not the owner.
+    const broken = cardOwners(this.state, instance).some((owner) => !owner?.alive);
     const playable = isCardPlayable(this.gameData, this.state, instanceId);
     const container = this.add.container(x, y);
     this.root.add(container);

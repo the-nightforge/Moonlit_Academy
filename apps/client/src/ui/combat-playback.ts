@@ -1,4 +1,5 @@
 import type { CombatEvent, CombatState } from "rules";
+import type { PublicPlayedCard } from "../net/protocol";
 
 /** One event batch to animate: the state it renders from and to, plus its events. */
 export interface PlaybackBatch {
@@ -6,6 +7,8 @@ export interface PlaybackBatch {
   after: CombatState;
   events: CombatEvent[];
   eventSeq?: number;
+  /** Cast-time card metadata from the server (`16` §8.2) — online batches only. */
+  revealedCards?: Record<string, PublicPlayedCard>;
 }
 
 export interface PlaybackHooks {

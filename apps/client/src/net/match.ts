@@ -1,6 +1,18 @@
 import type { Action, CombatEvent, CombatState } from "rules";
 import type { NetSocket } from "./socket";
-import type { MatchSettlement, MatchSnapshot, ServerMessage, SettlementState } from "./protocol";
+import type {
+  MatchSettlement,
+  MatchSnapshot,
+  PublicPlayedCard,
+  ServerMessage,
+  SettlementState,
+} from "./protocol";
+
+/** Per-push batch metadata riding with the events + view (`16` §8.2). */
+export interface PushMetadata {
+  eventSeq: number;
+  revealedCards?: Record<string, PublicPlayedCard>;
+}
 
 /**
  * One network match (`16` §8.2/§8.3): the seat's action `seq`, the latest
@@ -24,7 +36,7 @@ export class NetMatch {
   /** The action `seq` in flight — at most one (`16` §8.3). */
   private pendingSeq: number | null = null;
   /** Scene hooks — set while the combat scene is active. */
-  onPush: (events: CombatEvent[], view: CombatState) => void = () => {};
+  onPush: (events: CombatEvent[], view: CombatState, metadata?: PushMetadata) => void = () => {};
   onEnd: (result: "won" | "lost" | "draw", reason: string) => void = () => {};
   onRejected: (reason: string) => void = () => {};
   onEmote: (from: number, emoteId: string) => void = () => {};
@@ -102,7 +114,10 @@ export class NetMatch {
         this.lastEventSeq = message.eventSeq;
         this.deadline = message.deadline;
         this.view = message.view;
-        this.onPush(message.events, message.view);
+        this.onPush(message.events, message.view, {
+          eventSeq: message.eventSeq,
+          revealedCards: message.revealedCards,
+        });
         return true;
       case "match.rejected":
         // The server never consumed this seq — `nextActionSeq` is where to retry.
