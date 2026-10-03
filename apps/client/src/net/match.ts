@@ -1,6 +1,18 @@
 import type { Action, CombatEvent, CombatState } from "rules";
 import type { NetSocket } from "./socket";
-import type { MatchSettlement, MatchSnapshot, ServerMessage, SettlementState } from "./protocol";
+import type {
+  MatchSettlement,
+  MatchSnapshot,
+  PublicPlayedCard,
+  ServerMessage,
+  SettlementState,
+} from "./protocol";
+
+/** Per-push batch metadata riding with the events + view (`16` §8.2). */
+export interface PushMetadata {
+  eventSeq: number;
+  revealedCards?: Record<string, PublicPlayedCard>;
+}
 
 /**
  * One network match (`16` §8.2/§8.3): the seat's action `seq`, the latest
@@ -14,6 +26,10 @@ export class NetMatch {
   readonly others: { seat: number; username: string; connected: boolean }[];
   view: CombatState;
   deadline: number | null;
+  /** `match.start`-born matches get the intro reveal; rejoin/sync snapshots do not. */
+  readonly fresh: boolean;
+  /** The match's seat-redacted setup events, when the server sends them. */
+  readonly initialEvents: readonly CombatEvent[];
   /** The settled outcome once it arrives — from `match.end` or a terminal snapshot (`16` §8.4). */
   ended: MatchSettlement | null = null;
   /** Settlement lifecycle as last reported by a snapshot (`16` §8.4). */
@@ -24,7 +40,7 @@ export class NetMatch {
   /** The action `seq` in flight — at most one (`16` §8.3). */
   private pendingSeq: number | null = null;
   /** Scene hooks — set while the combat scene is active. */
-  onPush: (events: CombatEvent[], view: CombatState) => void = () => {};
+  onPush: (events: CombatEvent[], view: CombatState, metadata?: PushMetadata) => void = () => {};
   onEnd: (result: "won" | "lost" | "draw", reason: string) => void = () => {};
   onRejected: (reason: string) => void = () => {};
   onEmote: (from: number, emoteId: string) => void = () => {};
@@ -44,6 +60,8 @@ export class NetMatch {
     this.lastEventSeq = snapshot.eventSeq;
     this.seq = snapshot.nextActionSeq;
     this.settlement = snapshot.settlement;
+    this.fresh = (snapshot as MatchSnapshot & { type?: string }).type === "match.start";
+    this.initialEvents = snapshot.initialEvents ?? [];
     if (snapshot.settlement.status === "complete") this.ended = snapshot.settlement.end;
   }
 
@@ -102,7 +120,10 @@ export class NetMatch {
         this.lastEventSeq = message.eventSeq;
         this.deadline = message.deadline;
         this.view = message.view;
-        this.onPush(message.events, message.view);
+        this.onPush(message.events, message.view, {
+          eventSeq: message.eventSeq,
+          revealedCards: message.revealedCards,
+        });
         return true;
       case "match.rejected":
         // The server never consumed this seq — `nextActionSeq` is where to retry.

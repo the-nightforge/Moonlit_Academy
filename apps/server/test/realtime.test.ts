@@ -503,6 +503,91 @@ describe("realtime", () => {
     expect(wsA2.last<{ settlement: { status: string } }>("match.snapshot")!.settlement.status).toBe("complete");
   }, 60_000);
 
+  it("A1 revealedCards: frame chứa cardPlayed mang instance+definition của lá đã public", async () => {
+    const server = await testServer();
+    const { wsA, wsB, matchId } = await startPrivateMatch(server);
+    const a = new SeatDriver(wsA, matchId, 0);
+    const b = new SeatDriver(wsB, matchId, 1);
+
+    type Frame = {
+      events: { type: string; instanceId?: string }[];
+      revealedCards?: Record<string, { instance: { cardId: string }; definition: { name: string } }>;
+    };
+    const frameWithCard = (ws: Ws) =>
+      ws.inbox.find(
+        (m) =>
+          m.type === "match.events" &&
+          (m.events as { type: string }[]).some((e) => e.type === "cardPlayed"),
+      ) as Frame | undefined;
+
+    // Đấu tới khi một lá được đánh — bot lá mỗi lượt nên xuất hiện sớm.
+    let frame: Frame | undefined;
+    for (let i = 0; i < 20 && !frame; i++) {
+      await a.refresh();
+      await b.refresh();
+      const viewA = a.view as { status: string; activePlayer?: number } | undefined;
+      if (viewA?.status === "mulligan") {
+        a.sendAction({ type: "mulligan", instanceIds: [] });
+        b.sendAction({ type: "mulligan", instanceIds: [] });
+        await a.accepted();
+        await b.accepted();
+        continue;
+      }
+      const active = viewA?.status === "playerTurn" ? (viewA.activePlayer ?? 0) : -1;
+      if (active === 0) {
+        a.sendAction(pvpBot(server.data, a.view as never, 0));
+        await a.accepted();
+      } else if (active === 1) {
+        b.sendAction(pvpBot(server.data, b.view as never, 1));
+        await b.accepted();
+      }
+      frame = frameWithCard(wsA);
+    }
+    expect(frame).toBeDefined();
+
+    // Mỗi cardPlayed trong frame phải có metadata công khai — chỉ cardPlayed IDs.
+    const playedIds = frame!.events.filter((e) => e.type === "cardPlayed").map((e) => e.instanceId!);
+    expect(playedIds.length).toBeGreaterThan(0);
+    expect(Object.keys(frame!.revealedCards ?? {})).toEqual(playedIds);
+    for (const id of playedIds) {
+      const revealed = frame!.revealedCards![id]!;
+      expect(revealed.instance.cardId).toBeTruthy();
+      expect(revealed.definition.name).toBeTruthy();
+    }
+    // Ghế đối diện nhận cùng metadata trên frame events tương ứng.
+    const frameB = frameWithCard(wsB);
+    expect(Object.keys(frameB?.revealedCards ?? {})).toEqual(playedIds);
+
+    // Không rò instance kín: id tay đối thủ (hidden_* trong view của A) không lọt vào metadata.
+    const viewA = a.view as { players: { hand: string[] }[] };
+    const hiddenIds = viewA.players[1]!.hand;
+    expect(hiddenIds.every((id) => id.startsWith("hidden_"))).toBe(true);
+    for (const id of hiddenIds) {
+      expect(frame!.revealedCards?.[id]).toBeUndefined();
+      expect(JSON.stringify(frame!.revealedCards)).not.toContain(`"${id}"`);
+    }
+  }, 60_000);
+
+  it("A4 match.start mang initialEvents riêng từng ghế; snapshot rejoin không", async () => {
+    const server = await testServer();
+    const { wsA, wsB, matchId } = await startPrivateMatch(server);
+    type Start = { initialEvents?: { type: string; instanceIds?: string[]; player?: number }[] };
+    const startA = wsA.last<Start>("match.start")!;
+    const startB = wsB.last<Start>("match.start")!;
+    expect(startA.initialEvents?.some((event) => event.type === "combatStarted")).toBe(true);
+    const drawsA = startA.initialEvents!.filter((event) => event.type === "cardsDrawn");
+    expect(drawsA.length).toBe(2);
+    // Own draws keep real ids; the remote seat's draws are placeholder counts.
+    expect(drawsA.find((event) => event.player === 0)!.instanceIds!.every((id) => !id.startsWith("hidden_"))).toBe(true);
+    expect(drawsA.find((event) => event.player === 1)!.instanceIds!.every((id) => id.startsWith("hidden_"))).toBe(true);
+    const drawsB = startB.initialEvents!.filter((event) => event.type === "cardsDrawn");
+    expect(drawsB.find((event) => event.player === 1)!.instanceIds!.every((id) => !id.startsWith("hidden_"))).toBe(true);
+    // Rejoin frames never replay the intro.
+    wsA.send({ type: "match.sync", matchId });
+    await wsA.settle();
+    expect(wsA.last<Start>("match.snapshot")!.initialEvents).toBeUndefined();
+  }, 60_000);
+
   it("T235 sau mỗi Action mỗi người nhận góc nhìn riêng: tay đối thủ chỉ còn số lượng", async () => {
     const server = await testServer();
     const { wsA, wsB, matchId } = await startPrivateMatch(server);

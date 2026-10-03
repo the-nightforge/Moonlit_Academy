@@ -39,6 +39,12 @@ const ARCHETYPE_KIND: Record<Archetype, AttackKind> = {
   specialist: "spell",
 };
 
+/** Linh Thú hit styles — summons carry no `attackStyle` field (`01` §17). */
+const SUMMON_STYLE: Record<string, AttackKind> = {
+  tho_ngoc: "moon",
+  tho_ngoc_thuc_tinh: "moon",
+};
+
 /** First matching tag colors a spell; order = which tag wins on multi-tag cards. */
 const TAG_COLOR: [CardTag, number][] = [
   ["forbidden", 0xd03a4a],
@@ -62,6 +68,11 @@ const TAG_COLOR: [CardTag, number][] = [
 export function attackLookOf(data: GameData, state: CombatState, sourceId: string, card?: CardDef): AttackLook {
   const enemy = state.enemies.find((unit) => unit.id === sourceId);
   if (enemy) return { kind: data.enemies[enemy.defId]?.attackStyle ?? "slash", color: ENEMY_COLOR };
+  const summon = state.summons?.find((unit) => unit.id === sourceId);
+  if (summon) {
+    const kind = SUMMON_STYLE[summon.summonId] ?? "slash";
+    return { kind, color: STYLE_COLOR[kind] };
+  }
   const hero = state.heroes.find((unit) => unit.id === sourceId);
   if (!hero) return { kind: "slash", color: STYLE_COLOR.slash };
   const def = data.heroes[hero.defId];
@@ -94,4 +105,28 @@ export function cardIconOf(card: CardDef): string {
 /** Glow of a card: its first tag's color (see TAG_COLOR order), else moon gold. */
 export function cardColorOf(card: CardDef): number {
   return TAG_COLOR.find(([tag]) => card.tags.includes(tag))?.[1] ?? STYLE_COLOR.spell;
+}
+
+/** What an hpLost beat looks like — flash tint plus its cause's glossary label. */
+export interface HpLossLook {
+  color: number;
+  label: string;
+}
+
+const HP_LOSS_LOOKS: Record<"loseHp" | "burn" | "reflect" | "bloodMoon" | "decree" | "bloodPact", HpLossLook> = {
+  burn: { color: 0xff8a3c, label: "Đốt" },
+  reflect: { color: 0x7fb4ff, label: "Phản" },
+  bloodMoon: { color: 0xd03a4a, label: "Huyết" },
+  bloodPact: { color: 0xd03a4a, label: "Tế" },
+  decree: { color: 0xf4ead0, label: "Lệnh" },
+  loseHp: { color: 0xb070e0, label: "Mất" },
+};
+
+/**
+ * The hp-loss cause's look: burn orange, reflect blue, Huyết Nguyệt/Huyết Tế
+ * red, decree moon-white, plain HP loss purple. The label always shows so the
+ * number never lands unexplained.
+ */
+export function hpLossLook(cause: keyof typeof HP_LOSS_LOOKS): HpLossLook {
+  return HP_LOSS_LOOKS[cause];
 }

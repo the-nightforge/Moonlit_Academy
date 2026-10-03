@@ -5,6 +5,7 @@ import {
   applyCoopResult,
   applyPvpResult,
   autoChoiceAction,
+  cardDefOf,
   coopRedactEvents,
   coopViewFor,
   createCoopCombat,
@@ -14,7 +15,7 @@ import {
   viewFor,
 } from "rules";
 import type { AppContext } from "../context";
-import type { MatchSettlement, MatchSnapshot, SettlementState } from "./protocol";
+import type { MatchSettlement, MatchSnapshot, PublicPlayedCard, SettlementState } from "./protocol";
 
 export type MatchMode = "ranked" | "private" | "practice" | "coop" | "coop_private" | "coop_practice";
 
@@ -73,6 +74,7 @@ export class MatchRoom {
     readonly seats: MatchSeat[],
     private state: CombatState,
     private readonly setupJson: string,
+    private readonly setupEvents: CombatEvent[],
     private readonly drop: (room: MatchRoom) => void,
   ) {
     this.armClock();
@@ -124,6 +126,14 @@ export class MatchRoom {
       nextActionSeq: this.seats[seat]!.nextSeq,
       settlement: this.settlementFor(seat),
     };
+  }
+
+  /**
+   * `match.start` also carries the seat-redacted setup stream — the client's
+   * intro reveal plays it once; rejoin/sync snapshots never get it (`16` §8.2).
+   */
+  startFrameFor(seat: number): MatchSnapshot {
+    return { ...this.snapshotFor(seat), initialEvents: this.redact(this.setupEvents, seat) };
   }
 
   /** Per-seat settlement state for snapshots (`16` §8.4). */
@@ -363,6 +373,18 @@ export class MatchRoom {
   /** Sends every seated human the redacted events + their own seat view. */
   private push(events: CombatEvent[]): void {
     this.eventSeq += 1;
+    // Cast-time metadata for the batch's `cardPlayed` events, captured from the
+    // full state — the redacted view may drop the instance again (Luân Hồi
+    // recycles it out of the public discard within the same batch).
+    const revealedCards: Record<string, PublicPlayedCard> = {};
+    for (const event of events) {
+      if (event.type !== "cardPlayed") continue;
+      const instance = this.state.cards[event.instanceId];
+      const definition = instance === undefined ? undefined : cardDefOf(this.ctx.data, this.state, instance);
+      if (instance !== undefined && definition !== undefined) {
+        revealedCards[event.instanceId] = { instance, definition };
+      }
+    }
     for (const seat of this.seats) {
       send(seat.socket, {
         type: "match.events",
@@ -372,6 +394,7 @@ export class MatchRoom {
         events: this.redact(events, seat.seat),
         view: this.viewFor(seat.seat),
         deadline: this.deadline,
+        ...(Object.keys(revealedCards).length > 0 ? { revealedCards } : {}),
       });
     }
     this.onPushed?.();
@@ -520,13 +543,13 @@ export async function startPvpMatch(
   matchId: string,
   drop: (room: MatchRoom) => void,
 ): Promise<MatchRoom> {
-  const { state } = createPvpCombat(ctx.data, { seed, players: [players[0].side, players[1].side] });
+  const { state, events } = createPvpCombat(ctx.data, { seed, players: [players[0].side, players[1].side] });
   const seats: MatchSeat[] = players.map((p, seat) => ({
     seat, accountId: p.accountId, username: p.username, rating: p.rating, nextSeq: 1,
     connected: p.accountId === null, consecutiveTimeouts: 0,
   }));
   const setupJson = JSON.stringify({ players: [players[0].side, players[1].side] });
-  const room = new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, drop);
+  const room = new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, events, drop);
   await room.persist();
   return room;
 }
@@ -547,7 +570,7 @@ export async function startCoopMatch(
   drop: (room: MatchRoom) => void,
 ): Promise<MatchRoom> {
   const encounterId = ctx.data.coopConfig.encounterId;
-  const { state } = createCoopCombat(ctx.data, {
+  const { state, events } = createCoopCombat(ctx.data, {
     seed,
     players: [players[0].side, players[1].side],
     encounterId,
@@ -557,7 +580,7 @@ export async function startCoopMatch(
     connected: p.accountId === null, consecutiveTimeouts: 0,
   }));
   const setupJson = JSON.stringify({ mode: "coop", encounterId, players: [players[0].side, players[1].side] });
-  const room = new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, drop);
+  const room = new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, events, drop);
   await room.persist();
   return room;
 }

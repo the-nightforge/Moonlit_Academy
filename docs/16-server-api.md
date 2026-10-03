@@ -315,9 +315,21 @@ Client → server: `hello`, `queue.join`, `queue.leave`, `room.create`, `room.jo
 Server → client: `welcome { account, activeMatch?, serverTime }`, `queue.status`,
 `room.created` / `room.updated`, `match.start` (MatchSnapshot), `match.snapshot`
 (MatchSnapshot, trả lời `match.sync` hoặc action trùng seq), `match.events
-{ matchId, eventSeq, nextActionSeq, events, view, deadline }`, `match.rejected
-{ matchId, seq, nextActionSeq, reason }`, `match.end { matchId, result, reason,
-rating?, rewards?, profileRev?, settlementError? }`, `match.emote`, `error`, `ping`.
+{ matchId, eventSeq, nextActionSeq, events, view, deadline, revealedCards? }`,
+`match.rejected { matchId, seq, nextActionSeq, reason }`, `match.end { matchId,
+result, reason, rating?, rewards?, profileRev?, settlementError? }`, `match.emote`,
+`error`, `ping`.
+
+`match.events.revealedCards`: `Record<instanceId, { instance, definition }>` —
+metadata thời điểm đánh của mỗi `cardPlayed` trong batch (lá đã đánh là thông
+tin công khai; kể cả khi sau đó nó rời khỏi chồng bỏ ngay trong batch — ví dụ
+Luân Hồi — làm view redacted lại mất nó). Chỉ key của cardPlayed; frame không
+có cardPlayed thì field vắng mặt.
+
+`match.start` kèm thêm `initialEvents`: stream setup của trận đã redact theo
+ghế nhận (draw của đối thủ chỉ là placeholder). Client phát intro reveal một
+lần khi vào trận mới; `match.snapshot` và `welcome.activeMatch` không mang
+field này nên rejoin không replay intro.
 
 `MatchSnapshot` luôn kèm `settlement: SettlementState` — `playing` | `pending`
 (trận đã chốt kết quả, transaction thưởng đang chạy) | `complete { end }` (payload

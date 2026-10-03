@@ -3,6 +3,7 @@ import {
   activePlayerState,
   applyAction,
   cardDefOf,
+  cardOwners,
   comboHintFor,
   getEffectiveCost,
   getPlayCardError,
@@ -26,6 +27,7 @@ import { errorText, resumeSession } from "../account";
 import { applyRecordedRunAction } from "../run-session";
 import { recordStoryAction, startStoryTicket, submitStory } from "../story-session";
 import { NetMatch } from "../net/match";
+import type { PushMetadata } from "../net/match";
 import type { ServerMessage } from "../net/protocol";
 import { cycleEncounter, recoverMatchGone, restartSession, session } from "../session";
 import type { Team } from "../session";
@@ -41,13 +43,20 @@ import {
 } from "../debug";
 import manifest from "virtual:assets-manifest";
 import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
-import { confirmModal, isModalOpen } from "../ui/widgets";
-import { playEventQueue } from "../ui/event-animator";
+import { confirmModal, isModalOpen, showModal } from "../ui/widgets";
+import { CombatAudio } from "../ui/combat-audio";
+import { loadCombatSettings, saveCombatSettings, DEFAULT_COMBAT_SETTINGS } from "../ui/combat-settings";
+import type { CombatSettings } from "../ui/combat-settings";
+import { buildIntroEvents, playEventQueue } from "../ui/event-animator";
 import { GLOW as VFX_GLOW, STAR as VFX_STAR, ensureTextures } from "../ui/vfx";
 import { CombatPlayback, type PlaybackBatch } from "../ui/combat-playback";
 import { createAnimationRuntime } from "../ui/animation-runtime";
+import type { AnimationRuntime } from "../ui/animation-runtime";
+import { createPresentation } from "../ui/combat-presentation";
 import { HUD, hudImage } from "../ui/hud-art";
 import { cardColorOf, cardIconOf } from "../ui/attack-style";
+import { displayStatuses, seatAnchors } from "../ui/combat-display";
+import type { SeatAnchors } from "../ui/combat-display";
 import {
   BLOOD_MOON_BG,
   COLORS,
@@ -155,6 +164,16 @@ export class CombatScene extends Phaser.Scene {
   private moonAnchor: { x: number; y: number; size: number } = { ...COMBAT_LAYOUT.moon, size: 46 };
   private unitAnchors = new Map<string, { x: number; y: number }>();
   private unitViews = new Map<string, Phaser.GameObjects.Container>();
+  /** The spec each unit card was last rendered with — `refreshUnit` rebuilds from its geometry. */
+  private unitSpecs = new Map<string, UnitCardSpec>();
+  /** Per-seat chrome (hand, piles, moon power) the batch bindings rebuild surgically. */
+  private seatLayers = new Map<number, Phaser.GameObjects.Container>();
+  /** Holds the moon badge so `updateMoon` can repaint it mid-batch. */
+  private moonLayer?: Phaser.GameObjects.Container;
+  /** Next free x slot per summon row (hostile = top row), set while rendering. */
+  private summonSlots = new Map<boolean, number>();
+  /** Hand cards currently flying their cast clone — hover/click ignores them. */
+  private castingIds = new Set<string>();
   private errorText?: Phaser.GameObjects.Text;
   private inputLocked = false;
   private debugVisible = false;
@@ -169,8 +188,7 @@ export class CombatScene extends Phaser.Scene {
   private lastEmoteAt = 0;
   /** Co-op: own hand cards that complete a partner's Hợp Kích half → combo id. */
   private comboHints = new Map<string, string>();
-  /** Queue of banners to flash after the next event batch (Hợp Kích, phase). */
-  private bannerQueue: { text: string; color: string }[] = [];
+
   /** Story mode (`18` §4.4): the ticket's stage + deck while the combat runs. */
   private storyStageId: string | null = null;
   private storyDeck: { id: string; heroIds: Team } | null = null;
@@ -182,6 +200,9 @@ export class CombatScene extends Phaser.Scene {
   private renderQueued = false;
   /** Post-commit follow-ups keyed by their batch (run transition, story finish). */
   private commitWork = new Map<PlaybackBatch, () => void>();
+  /** Local presentation preferences — each playback batch snapshots them. */
+  private settings: CombatSettings = DEFAULT_COMBAT_SETTINGS;
+  private audio: CombatAudio = new CombatAudio(this.settings);
 
   constructor() {
     super("combat");
@@ -245,10 +266,23 @@ export class CombatScene extends Phaser.Scene {
     useDesignCamera(this);
     this.root = this.add.container(0, 0);
     this.input.mouse?.disableContextMenu();
+    // Preferences are local-only; the audio context waits for the first gesture.
+    this.settings = loadCombatSettings(
+      localStorage,
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
+    );
+    this.audio = new CombatAudio(this.settings);
+    const unlock = () => void this.audio.unlock();
+    this.input.once("pointerdown", unlock);
+    this.input.keyboard?.once("keydown", unlock);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.audio.dispose());
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       if (pointer.rightButtonDown()) this.cancelTargeting();
     });
-    this.input.keyboard?.on("keydown-ESC", () => this.cancelTargeting());
+    // A modal (settings, confirm) owns Esc — combat targeting yields to it.
+    this.input.keyboard?.on("keydown-ESC", () => {
+      if (!isModalOpen()) this.cancelTargeting();
+    });
     this.input.keyboard?.on("keydown-E", () => {
       if (
         !this.inputLocked &&
@@ -266,6 +300,13 @@ export class CombatScene extends Phaser.Scene {
       }
     });
     this.renderAll();
+    // A fresh match opens with the intro reveal; a rejoin renders settled
+    // state. Local combats are always fresh — their snapshot synthesizes the
+    // cosmetic stream (`16` §8.2).
+    if (this.netMatch === null || this.netMatch.fresh) {
+      const intro = buildIntroEvents(this.state, this.netMatch?.initialEvents ?? []);
+      if (intro.length > 0) this.playback.enqueue({ before: this.state, after: this.state, events: intro });
+    }
   }
 
   // ---- action pipeline ----
@@ -315,7 +356,7 @@ export class CombatScene extends Phaser.Scene {
     };
     // A `match.sync` answer resyncs the seat the same way a welcome rejoin does.
     match.onRejoin = (_snapshot, lostPending) => this.applyNetRejoin(lostPending);
-    match.onPush = (events, view) => this.onNetPush(events, view);
+    match.onPush = (events, view, metadata) => this.onNetPush(events, view, metadata);
     match.onEnd = () => {
       this.inputLocked = true;
       // Terminal screen after the queued beats have played out.
@@ -338,11 +379,11 @@ export class CombatScene extends Phaser.Scene {
     // The rejoin's snapshot replaces everything: abort in-flight/queued
     // playback before rebuilding the UI from the authoritative view.
     this.playback.reset();
+    this.commitWork.clear();
     this.state = match.view;
     this.latestState = match.view;
     this.targeting = null;
     this.mulliganPicks.clear();
-    this.bannerQueue = [];
     this.syncInputLock();
     if (this.scene.isActive()) this.renderAll();
     if (lostPending) this.showError("Thao tác chưa được xác nhận, hãy thử lại.");
@@ -369,51 +410,21 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /** A `match.events` push: queue the batch; its `after` view commits once the events played. */
-  private onNetPush(events: CombatEvent[], view: CombatState): void {
+  private onNetPush(events: CombatEvent[], view: CombatState, metadata?: PushMetadata): void {
     if (!this.scene.isActive()) {
       this.state = view;
       this.latestState = view;
       return;
     }
     this.targeting = null;
-    // Co-op banners queue on the event stream (`17` §9.3).
-    for (const event of events) {
-      if (event.type === "coopComboTriggered") {
-        const name = this.gameData.coopCombos[event.comboId]?.name ?? event.comboId;
-        this.bannerQueue.push({ text: `HỢP KÍCH — ${name}!`, color: COLORS.gold });
-      }
-      if (event.type === "bossPhaseChanged") {
-        this.bannerQueue.push({ text: `Nguyệt Thực Ma Quân — Giai đoạn ${event.phase}`, color: "#ff8090" });
-      }
-    }
-    this.playback.enqueue({ before: this.latestState, after: view, events });
-    this.latestState = view;
-  }
-
-  /** Fades a queued banner at screen center, one every beat. */
-  private playBanners(): void {
-    const banner = this.bannerQueue.shift();
-    if (banner === undefined || !this.scene.isActive()) {
-      this.bannerQueue = [];
-      return;
-    }
-    const text = this.add
-      .text(WIDTH / 2, COMBAT_LAYOUT.midY, banner.text, { ...TEXT_BASE, fontSize: "30px", color: banner.color })
-      .setOrigin(0.5)
-      .setDepth(180)
-      .setScale(0.6)
-      .setAlpha(0);
-    this.tweens.add({ targets: text, alpha: 1, scale: 1, duration: 220 });
-    this.tweens.add({
-      targets: text,
-      alpha: 0,
-      delay: 1400,
-      duration: 500,
-      onComplete: () => {
-        text.destroy();
-        this.playBanners();
-      },
+    // Combo/phase banners are queue beats inside the event stream (`17` §9.3).
+    this.playback.enqueue({
+      before: this.latestState,
+      after: view,
+      events,
+      revealedCards: metadata?.revealedCards,
     });
+    this.latestState = view;
   }
 
   private dispatch(action: Action): boolean {
@@ -515,26 +526,160 @@ export class CombatScene extends Phaser.Scene {
 
   /** One batch's beat: all FX owned by a per-batch runtime the queue can abort. */
   private playBatch(batch: PlaybackBatch, signal: AbortSignal): Promise<void> {
-    const runtime = createAnimationRuntime(this, signal);
+    // The batch snapshots the current preferences — a mid-batch change waits
+    // for the next batch's runtime (`16` §8.3).
+    const runtime = createAnimationRuntime(this, signal, this.settings);
+    const mode = this.state.mode;
     return playEventQueue(runtime, batch.events, {
       gameData: this.gameData,
-      state: batch.before,
+      presentation: createPresentation(batch.before),
+      after: batch.after,
+      before: batch.before,
+      bindings: {
+        updateUnit: (unitId, visual) => this.refreshUnit(unitId, visual),
+        updateSeat: (player, visual) => this.refreshSeat(player, visual),
+        ensureSummon: (unitId, visual) => this.ensureSummonView(unitId, visual),
+        updateMoon: (visual) => this.refreshMoon(visual),
+      },
+      revealedCards: batch.revealedCards,
       unitAnchors: this.unitAnchors,
       unitViews: this.unitViews,
       cardViews: this.cardViews,
+      seatAnchors: new Map<number, SeatAnchors>(
+        this.state.players.map((player) => [player.index, seatAnchors(player.index, this.mySeat, mode)]),
+      ),
+      castView: (instanceId) => this.makeCastView(instanceId),
       moonAnchor: this.moonAnchor,
       mySeat: this.mySeat,
       runtime,
+      audio: this.audio,
     })
       .then(() => runtime.drain())
-      .finally(() => runtime.dispose());
+      .finally(() => {
+        runtime.dispose();
+        // An abort leaves the source card dimmed+deafened — restore it; the
+        // commit render rebuilds everything anyway. The source may already be
+        // destroyed (a mid-batch seat refresh rebuilds the hand), so only a
+        // still-live view gets its interactivity back.
+        for (const id of this.castingIds) {
+          const view = this.cardViews.get(id);
+          if (view === undefined || view.scene === undefined) continue;
+          view.setAlpha(1);
+          view.setInteractive({
+            hitArea: new Phaser.Geom.Rectangle(-CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H),
+            hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+            useHandCursor: true,
+          });
+        }
+        this.castingIds.clear();
+      });
+  }
+
+  /** A detached clone of a hand card for the cast beat; the source sleeps meanwhile. */
+  private makeCastView(instanceId: string): Phaser.GameObjects.Container | undefined {
+    const source = this.cardViews.get(instanceId);
+    if (source === undefined) return undefined;
+    const clone = this.renderCard(instanceId, source.x, source.y, { register: false, interactive: false });
+    source.setAlpha(0);
+    source.disableInteractive();
+    this.castingIds.add(instanceId);
+    return clone;
+  }
+
+  private seatLayerOf(playerIndex: number): Phaser.GameObjects.Container {
+    return this.seatLayers.get(playerIndex) ?? this.root;
+  }
+
+  // ---- presentation bindings ----
+
+  /**
+   * One unit's card refilled from the visual state in place — the container
+   * (and its anchor) survives so in-flight shakes keep their target. Specs
+   * rebuild from the unit's stored geometry plus `visual`'s live fields.
+   */
+  private refreshUnit(unitId: string, visual: CombatState): void {
+    const view = this.unitViews.get(unitId);
+    const prev = this.unitSpecs.get(unitId);
+    if (view === undefined || prev === undefined) return;
+    const { x, y, w, h, hostile, frame } = prev;
+    const hero = visual.heroes.find((u) => u.id === unitId);
+    const enemy = hero === undefined ? visual.enemies.find((u) => u.id === unitId) : undefined;
+    const summon = hero === undefined && enemy === undefined ? visual.summons?.find((u) => u.id === unitId) : undefined;
+    let spec: UnitCardSpec | undefined;
+    let boss = false;
+    if (hero !== undefined) spec = this.heroSpecOf(hero, x, y, w, h, hostile, frame, visual);
+    else if (enemy !== undefined) ({ spec, boss } = this.enemySpecOf(enemy, x, y, visual));
+    else if (summon !== undefined) spec = this.summonSpecOf(summon, x, y, hostile, visual);
+    if (spec === undefined) return;
+    // The container itself may carry a stale alpha/transform from a lunged
+    // attack, a targeting dim or a cleared Ẩn Thân veil — reset before refill.
+    view.setPosition(spec.x, spec.y).setAlpha(1).setScale(1).setAngle(0);
+    view.removeAll(true);
+    this.fillUnitCard(view, spec);
+    if (boss) this.renderBossBadges(view, spec.w, spec.h, visual);
+    if (hero !== undefined && hero.alive) {
+      // The Thức Tỉnh ring/neon lives outside the card fill — re-lay it.
+      const def = this.gameData.heroes[hero.defId]!;
+      const threshold = hero.constellation >= 2 ? def.levelUp.constellationThreshold : def.levelUp.threshold;
+      if (hero.leveledUp) this.neonFrame(view, spec.w, spec.h);
+      else this.frameTrace(view, spec.w, spec.h, Math.min(1, hero.levelUpCounter / threshold));
+    }
+    this.unitSpecs.set(unitId, spec);
+  }
+
+  /** One seat's hand/pile/orb re-rendered from the visual state; the layer itself is wiped first. */
+  private refreshSeat(playerIndex: number, visual: CombatState): void {
+    const layer = this.seatLayers.get(playerIndex);
+    const seat = visual.players.find((p) => p.index === playerIndex);
+    if (layer === undefined || seat === undefined) return;
+    layer.removeAll(true);
+    // Card views the wipe destroyed must not linger as live references —
+    // casts, shakes and the abort-restore all reach for this map.
+    for (const [id, view] of this.cardViews) {
+      if (view.scene === undefined) this.cardViews.delete(id);
+    }
+    if (playerIndex === this.mySeat) {
+      if (visual.status !== "mulligan") this.renderMoonPower(seat, layer);
+      this.renderSeatHand(seat, visual, layer);
+      this.renderPile(seat, COMBAT_LAYOUT.pile.y, 0x3f7fd0, "của bạn", layer);
+    } else {
+      this.renderPile(seat, TOP_ROW_Y, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ", layer);
+      if (this.state.mode === "pvp") this.renderOpponentHand(seat, layer);
+      else if (this.isCoop) this.renderPartnerHand(seat, layer, visual);
+    }
+  }
+
+  /**
+   * A summon that appeared mid-batch (`summoned`): build its card immediately
+   * in the next free slot of its side's summon zone so a following
+   * `summonActed`/damage event already finds its anchor.
+   */
+  private ensureSummonView(unitId: string, visual: CombatState): void {
+    if (this.unitViews.has(unitId)) {
+      this.refreshUnit(unitId, visual);
+      return;
+    }
+    const summon = visual.summons?.find((s) => s.id === unitId);
+    if (summon === undefined) return;
+    const hostile = this.state.mode === "pvp" && summon.player !== this.mySeat;
+    const x = this.summonSlots.get(hostile) ?? WIDTH / 2 + 4 * (SUMMON_W + 12);
+    const y = hostile ? TOP_ROW_Y : HERO_ROW_Y;
+    this.renderSummonPanel(summon, x, y, hostile, visual);
+    this.summonSlots.set(hostile, x + SUMMON_W + 12);
+  }
+
+  /** The moon medallion re-rendered from the visual state (phase turn, Huyết Nguyệt). */
+  private refreshMoon(visual: CombatState): void {
+    const layer = this.moonLayer;
+    if (layer === undefined) return;
+    layer.removeAll(true);
+    this.renderMoon(visual);
   }
 
   /** The batch finished its beat: commit its state and redraw. */
   private commitBatch(batch: PlaybackBatch): void {
     this.state = batch.after;
     this.renderAll();
-    this.playBanners();
     const work = this.commitWork.get(batch);
     if (work !== undefined) {
       this.commitWork.delete(batch);
@@ -545,6 +690,10 @@ export class CombatScene extends Phaser.Scene {
   /** A batch failed mid-beat (not an abort — a real bug): resync to its `after`. */
   private playFailed(error: unknown, latest: CombatState): void {
     console.error("combat playback failed:", error);
+    // The failed batch's post-commit follow-up can never run — don't retain it.
+    for (const [batch] of this.commitWork) {
+      if (batch.after === latest) this.commitWork.delete(batch);
+    }
     this.state = latest;
     this.latestState = latest;
     this.showError("Có lỗi khi hiển thị — đã đồng bộ lại trạng thái");
@@ -658,23 +807,35 @@ export class CombatScene extends Phaser.Scene {
     this.tooltip?.destroy();
     this.tooltip = null;
     this.cardViews.clear();
+    this.castingIds.clear();
+    this.seatLayers.clear();
+    this.summonSlots.clear();
     this.renderBackground();
     this.unitAnchors.clear();
     this.unitViews.clear();
+    this.unitSpecs.clear();
     this.errorText = undefined;
     this.timerText = null;
+    for (const player of this.state.players) {
+      const layer = this.add.container(0, 0);
+      this.root.add(layer);
+      this.seatLayers.set(player.index, layer);
+    }
+    this.moonLayer = this.add.container(0, 0);
+    this.root.add(this.moonLayer);
     this.comboHints =
       this.isCoop && this.state.status === "playerTurn" && this.mySeatState !== undefined && !this.mySeatState.done
         ? comboHintFor(this.gameData, this.state, this.mySeat)
         : new Map();
     this.renderTopBar();
+    const otherSeat = this.state.players.find((p) => p.index !== this.mySeat);
     if (this.state.mode === "pvp") {
       this.renderOpponentRow();
-      this.renderOpponentHand();
+      this.renderOpponentHand(otherSeat, this.seatLayerOf(otherSeat?.index ?? -1));
     } else {
       this.renderEnemies();
     }
-    if (this.isCoop) this.renderPartnerHand();
+    if (this.isCoop) this.renderPartnerHand(otherSeat, this.seatLayerOf(otherSeat?.index ?? -1), this.state);
     this.renderHeroes();
     // After the units: a centered top-row card reaches up to the frame socket.
     this.renderMoon();
@@ -713,6 +874,7 @@ export class CombatScene extends Phaser.Scene {
   private syncFromSession(): void {
     // A rebuilt combat supersedes any in-flight beat: abort, then render.
     this.playback.reset();
+    this.commitWork.clear();
     this.state = session.state;
     this.latestState = session.state;
     this.targeting = null;
@@ -883,8 +1045,13 @@ export class CombatScene extends Phaser.Scene {
       return [name, relics.length > 0 ? `Kỳ Vật · Lõi: ${relics.join(" · ")}` : ""];
     });
     // The other seat's draw pile sits at the top row's height (`17` §7.3 piles).
-    if (other) this.renderPile(other, TOP_ROW_Y, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ");
-    this.text(WIDTH - 40, 36, "⚙", 18, COLORS.dimText).setOrigin(0.5);
+    if (other) this.renderPile(other, TOP_ROW_Y, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ", this.seatLayers.get(other.index));
+    const gear = this.badge(WIDTH - 40, 36, 16, "⚙", COLORS.panelBorder, this.root, COLORS.button, 15, COLORS.dimText);
+    gear.setInteractive({ useHandCursor: true });
+    gear.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) this.openSettings();
+    });
+    this.hoverTooltip(gear, () => ({ x: WIDTH - 260, y: 64 }), () => ["Thiết lập"]);
     if (match && !match.ended) {
       const flag = this.badge(WIDTH - 136, 36, 16, "⚑", 0x884455, this.root, 0x40202a, 14, "#ff9090");
       flag.setInteractive({ useHandCursor: true });
@@ -904,20 +1071,21 @@ export class CombatScene extends Phaser.Scene {
 
   /** Current moon phase only, in the artwork's top ornament; rules in the tooltip. */
   /** The current phase's icon, sitting bare in the background art's moon socket. */
-  private renderMoon() {
+  private renderMoon(state: CombatState = this.state) {
     const { x, y, size } = this.moonAnchor;
-    const phase = this.gameData.moonPhases[this.state.moonIndex]!;
-    const bloodMoon = this.state.bloodMoonRounds > 0;
+    const phase = this.gameData.moonPhases[state.moonIndex]!;
+    const bloodMoon = state.bloodMoonRounds > 0;
     const iconKey = `ui:moon_${bloodMoon ? "blood" : phase.id}`;
+    const layer = this.moonLayer ?? this.root;
     const moon = this.textures.exists(iconKey)
       ? this.add.image(x, y, iconKey).setDisplaySize(size, size)
-      : this.text(x, y, phase.icon, Math.round(size * 0.6), COLORS.gold).setOrigin(0.5);
-    this.root.add(moon);
+      : this.add.text(x, y, phase.icon, { ...TEXT_BASE, fontSize: `${Math.round(size * 0.6)}px`, color: COLORS.gold }).setOrigin(0.5);
+    layer.add(moon);
     moon.setInteractive();
     this.hoverTooltip(moon, () => ({ x: x + size / 2 + 8, y: y - 10 }), () => [
       phase.name,
-      describePhase(this.gameData, this.state, this.state.moonIndex),
-      bloodMoon ? `Huyết Nguyệt — còn ${this.state.bloodMoonRounds} vòng` : "",
+      describePhase(this.gameData, state, state.moonIndex),
+      bloodMoon ? `Huyết Nguyệt — còn ${state.bloodMoonRounds} vòng` : "",
     ]);
   }
 
@@ -927,11 +1095,18 @@ export class CombatScene extends Phaser.Scene {
    * in the hover tooltip. Registered for targeting and animations.
    */
   private renderUnitCard(spec: UnitCardSpec): Phaser.GameObjects.Container {
-    const { id, x, y, w, h } = spec;
-    const c = this.add.container(x, y);
+    const c = this.add.container(spec.x, spec.y);
     this.root.add(c);
-    this.unitAnchors.set(id, { x, y });
-    this.unitViews.set(id, c);
+    this.unitAnchors.set(spec.id, { x: spec.x, y: spec.y });
+    this.unitViews.set(spec.id, c);
+    this.fillUnitCard(c, spec);
+    this.unitSpecs.set(spec.id, spec);
+    return c;
+  }
+
+  /** (Re)fills a unit card's contents from its spec — the container survives, so in-flight shakes keep their target. */
+  private fillUnitCard(c: Phaser.GameObjects.Container, spec: UnitCardSpec): void {
+    const { id, x, y, w, h } = spec;
     const isValidTarget = this.targeting !== null && this.validTargetIds.has(id);
     c.add(this.roundBox(w, h, spec.hostile ? COLORS.panelEnemy : COLORS.panelHero, 1, isValidTarget ? 3 : 2, isValidTarget ? COLORS.goldFill : spec.frame));
     const panel = this.add.rectangle(0, 0, w, h, 0x000000, 0.001);
@@ -952,7 +1127,6 @@ export class CombatScene extends Phaser.Scene {
     this.hoverTooltip(panel, () => ({ x: x + w / 2 + 8, y: y - h / 2 }), spec.tooltip);
     this.statusIcons(spec, c);
     if (this.targeting !== null && !isValidTarget) c.setAlpha(0.4);
-    return c;
   }
 
   /**
@@ -1308,13 +1482,9 @@ export class CombatScene extends Phaser.Scene {
     return summon?.alive === true ? summon : undefined;
   }
 
-  /**
-   * Linh Thú (`01` §17): a small portrait card in its side's summon zone, right
-   * of the row. Valid `ally` picks, and `enemy` picks for the opposing seat in PvP.
-   */
-  private renderSummonPanel(summon: SummonState, cx: number, cy: number, hostile: boolean): void {
+  private summonSpecOf(summon: SummonState, cx: number, cy: number, hostile: boolean, state = this.state): UnitCardSpec {
     const name = this.gameData.summons[summon.summonId]?.name ?? "Linh Thú";
-    this.renderUnitCard({
+    return {
       id: summon.id,
       x: cx,
       y: cy,
@@ -1327,34 +1497,41 @@ export class CombatScene extends Phaser.Scene {
       maxHp: summon.maxHp,
       hostile,
       armor: summon.armor,
-      statuses: summon.statuses,
+      statuses: displayStatuses(state, summon),
       sealed: summon.sealedBy !== undefined,
       frame: COLORS.panelBorder,
       alive: true,
       tooltip: () => [name, `HP ${summon.hp}/${summon.maxHp}${summon.armor > 0 ? ` · Giáp ${summon.armor}` : ""}`],
-    });
+    };
+  }
+
+  /**
+   * Linh Thú (`01` §17): a small portrait card in its side's summon zone, right
+   * of the row. Valid `ally` picks, and `enemy` picks for the opposing seat in PvP.
+   */
+  private renderSummonPanel(summon: SummonState, cx: number, cy: number, hostile: boolean, state = this.state): void {
+    this.renderUnitCard(this.summonSpecOf(summon, cx, cy, hostile, state));
   }
 
   /** The living Linh Thú of `heroes`, left to right from `startX` (the row's summon zone). */
   private renderSummonRow(heroes: HeroState[], y: number, startX: number, hostile: boolean) {
-    heroes
-      .flatMap((hero) => this.summonOfHero(hero.id) ?? [])
-      .forEach((summon, index) => this.renderSummonPanel(summon, startX + index * (SUMMON_W + 12), y, hostile));
+    const summons = heroes.flatMap((hero) => this.summonOfHero(hero.id) ?? []);
+    summons.forEach((summon, index) => this.renderSummonPanel(summon, startX + index * (SUMMON_W + 12), y, hostile));
+    // `ensureSummonView` places mid-batch summons in the next free slot.
+    this.summonSlots.set(hostile, startX + summons.length * (SUMMON_W + 12));
   }
 
-  private renderEnemies() {
-    const enemies = this.state.enemies;
-    const bossId = this.state.boss?.enemyId;
-    const xs = rowXs(enemies.length, (bossId !== undefined ? BOSS_W : UNIT_W) + 42);
-    enemies.forEach((enemy, index) => {
-      const def = this.gameData.enemies[enemy.defId]!;
-      const boss = enemy.id === bossId && def.phases !== undefined;
-      const w = boss ? BOSS_W : UNIT_W;
-      const h = boss ? BOSS_H : UNIT_H;
-      const c = this.renderUnitCard({
+  private enemySpecOf(enemy: EnemyState, x: number, y: number, state = this.state): { spec: UnitCardSpec; boss: boolean } {
+    const def = this.gameData.enemies[enemy.defId]!;
+    const boss = enemy.id === state.boss?.enemyId && def.phases !== undefined;
+    const w = boss ? BOSS_W : UNIT_W;
+    const h = boss ? BOSS_H : UNIT_H;
+    return {
+      boss,
+      spec: {
         id: enemy.id,
-        x: xs[index]!,
-        y: TOP_ROW_Y,
+        x,
+        y,
         w,
         h,
         artKey: `enemies:${enemy.defId}`,
@@ -1363,20 +1540,29 @@ export class CombatScene extends Phaser.Scene {
         maxHp: enemy.maxHp,
         hostile: true,
         armor: enemy.armor,
-        statuses: enemy.statuses,
+        statuses: displayStatuses(state, enemy),
         sealed: enemy.sealedBy !== undefined,
         frame: COLORS.panelBorder,
         alive: enemy.alive,
         stealth: enemy.statuses.some((s: StatusInstance) => s.id === "stealth"),
-        tooltip: () => this.enemyTooltip(enemy, def),
-      });
-      if (boss) this.renderBossBadges(c, w, h);
+        tooltip: () => this.enemyTooltip(enemy, def, state),
+      },
+    };
+  }
+
+  private renderEnemies() {
+    const enemies = this.state.enemies;
+    const xs = rowXs(enemies.length, (this.state.boss !== undefined ? BOSS_W : UNIT_W) + 42);
+    enemies.forEach((enemy, index) => {
+      const { spec, boss } = this.enemySpecOf(enemy, xs[index]!, TOP_ROW_Y);
+      const c = this.renderUnitCard(spec);
+      if (boss) this.renderBossBadges(c, spec.w, spec.h);
     });
   }
 
   /** Nguyệt Lực stays public (`01` §9.2) but off the card: the enemy's hover tooltip. */
-  private enemyTooltip(enemy: EnemyState, def: { name: string; phases?: { hpBelow: number }[] }): string[] {
-    const boss = this.state.boss;
+  private enemyTooltip(enemy: EnemyState, def: { name: string; phases?: { hpBelow: number }[] }, state = this.state): string[] {
+    const boss = state.boss;
     const phases = def.phases;
     const bossLines =
       boss !== undefined && boss.enemyId === enemy.id && phases !== undefined
@@ -1396,9 +1582,9 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /** Co-op boss (`17` §9.3): phase badge top-right, revive countdown under it. */
-  private renderBossBadges(c: Phaser.GameObjects.Container, w: number, h: number): void {
-    const boss = this.state.boss!;
-    const phases = this.gameData.enemies[this.state.enemies.find((e) => e.id === boss.enemyId)!.defId]!.phases!;
+  private renderBossBadges(c: Phaser.GameObjects.Container, w: number, h: number, state = this.state): void {
+    const boss = state.boss!;
+    const phases = this.gameData.enemies[state.enemies.find((e) => e.id === boss.enemyId)!.defId]!.phases!;
     this.badge(w / 2 - 18, -h / 2 + 18, 16, `${boss.phase}/${phases.length}`, COLORS.goldFill, c, 0x0a0e20, 11, COLORS.gold);
     if (boss.reviveCountdown !== null) {
       this.badge(w / 2 - 18, -h / 2 + 52, 14, `☾${boss.reviveCountdown}`, 0xff8090, c, 0x3a1020, 11, "#ff8090");
@@ -1409,18 +1595,18 @@ export class CombatScene extends Phaser.Scene {
    * Co-op (`17` §9.3): the partner's hand as small cost tiles under the top-left
    * plate — visible but not playable; hover shows the card.
    */
-  private renderPartnerHand(): void {
-    const partner = this.state.players.find((p) => p.index !== this.mySeat);
+  private renderPartnerHand(partner?: PlayerState, parent = this.root, state = this.state): void {
+    partner ??= state.players.find((p) => p.index !== this.mySeat);
     if (!partner) return;
     partner.hand.forEach((instanceId, index) => {
       const x = 34 + index * 34;
       const y = 86;
-      const instance = this.state.cards[instanceId];
-      const card = instance ? cardDefOf(this.gameData, this.state, instance) : undefined;
+      const instance = state.cards[instanceId];
+      const card = instance ? cardDefOf(this.gameData, state, instance) : undefined;
       if (instance === undefined || card === undefined) return;
       const tile = this.add.rectangle(x, y, 30, 40, 0x141b33).setStrokeStyle(1, OWNER_COLORS[instance.ownerIds[0]!] ?? 0x5f8fdd);
-      this.root.add(tile);
-      this.text(x, y, `${card.cost}`, 12).setOrigin(0.5);
+      parent.add(tile);
+      this.text(x, y, `${card.cost}`, 12, COLORS.text, parent).setOrigin(0.5);
       tile.setInteractive();
       tile.on("pointerover", () => {
         this.tooltip?.destroy();
@@ -1445,11 +1631,11 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /** The opponent's hand — face-down card backs under the top-left plate (`17` §4.8). */
-  private renderOpponentHand() {
-    const oppSeat = this.state.players.find((p) => p.index !== this.mySeat);
+  private renderOpponentHand(oppSeat?: PlayerState, parent = this.root) {
+    oppSeat ??= this.state.players.find((p) => p.index !== this.mySeat);
     if (!oppSeat) return;
     for (let i = 0; i < oppSeat.hand.length; i++) {
-      this.root.add(this.add.rectangle(30 + i * 26, 84, 22, 32, 0x2c3e6e).setStrokeStyle(1, COLORS.panelBorder));
+      parent.add(this.add.rectangle(30 + i * 26, 84, 22, 32, 0x2c3e6e).setStrokeStyle(1, COLORS.panelBorder));
     }
   }
 
@@ -1510,13 +1696,13 @@ export class CombatScene extends Phaser.Scene {
    * A hero's portrait card: HP / armor badges, status icons, and top-right the
    * Thức Tỉnh badge — a ★ ringed by its progress, solid gold once awakened.
    */
-  private renderHeroCard(hero: HeroState, x: number, y: number, w: number, h: number, hostile: boolean, frame: number) {
+  private heroSpecOf(hero: HeroState, x: number, y: number, w: number, h: number, hostile: boolean, frame: number, state = this.state): UnitCardSpec {
     const def = this.gameData.heroes[hero.defId]!;
     const upKey = `heroes:${hero.defId}_up`;
     // Shown from state: the second form's name, the Tinh Hồn 2 threshold (`01` §8).
     const passiveName = hero.levelUpForm === "alt" ? def.altLevelUp.name : def.levelUp.name;
     const threshold = hero.constellation >= 2 ? def.levelUp.constellationThreshold : def.levelUp.threshold;
-    const c = this.renderUnitCard({
+    return {
       id: hero.id,
       x,
       y,
@@ -1529,7 +1715,7 @@ export class CombatScene extends Phaser.Scene {
       maxHp: hero.maxHp,
       hostile,
       armor: hero.armor,
-      statuses: hero.statuses,
+      statuses: displayStatuses(state, hero),
       sealed: hero.sealedBy !== undefined,
       frame: hero.leveledUp ? COLORS.goldFill : frame,
       alive: hero.alive,
@@ -1540,8 +1726,15 @@ export class CombatScene extends Phaser.Scene {
         hero.leveledUp ? `${passiveName} — đã Thức Tỉnh` : `${passiveName}: ${hero.levelUpCounter}/${threshold}`,
         hero.sealedBy !== undefined ? "Phong Ấn: lá lượt tới chỉ còn damage" : "",
       ],
-    });
+    };
+  }
+
+  private renderHeroCard(hero: HeroState, x: number, y: number, w: number, h: number, hostile: boolean, frame: number, state = this.state) {
+    const spec = this.heroSpecOf(hero, x, y, w, h, hostile, frame, state);
+    const c = this.renderUnitCard(spec);
     if (!hero.alive) return;
+    const def = this.gameData.heroes[hero.defId]!;
+    const threshold = hero.constellation >= 2 ? def.levelUp.constellationThreshold : def.levelUp.threshold;
     if (hero.leveledUp) this.neonFrame(c, w, h);
     else this.frameTrace(c, w, h, Math.min(1, hero.levelUpCounter / threshold));
   }
@@ -1588,42 +1781,48 @@ export class CombatScene extends Phaser.Scene {
    * with a count lozenge; the discard pile as a small greyed back beside it.
    * `color` tints the backs of another seat's pile.
    */
-  private renderPile(seat: PlayerState, y: number, color: number, owner: string) {
+  private renderPile(seat: PlayerState, y: number, color: number, owner: string, parent = this.root) {
     const x = COMBAT_LAYOUT.pile.x + 34;
     const left = seat.drawPile.length;
     const low = left <= 6;
     const tint = owner === "của bạn" ? 0xffffff : color;
     const layers = left === 0 ? 0 : Math.min(3, 1 + Math.floor(left / 10));
     for (let i = layers - 1; i >= 0; i--) {
-      this.root.add(hudImage(this, HUD.cardBack, x + i * 4, y - i * 4, 0.82).setTint(tint).setAlpha(i === 0 ? 1 : 0.85));
+      parent.add(hudImage(this, HUD.cardBack, x + i * 4, y - i * 4, 0.82).setTint(tint).setAlpha(i === 0 ? 1 : 0.85));
     }
-    if (layers === 0) this.root.add(this.add.rectangle(x, y, 66, 95).setStrokeStyle(1, COLORS.panelBorder, 0.8));
-    this.root.add(hudImage(this, HUD.count, x, y + 50));
-    this.text(x, y + 50, `${left}`, 13, low ? "#ff8a8a" : COLORS.gold).setOrigin(0.5).setStroke("#05070f", 3);
+    if (layers === 0) parent.add(this.add.rectangle(x, y, 66, 95).setStrokeStyle(1, COLORS.panelBorder, 0.8));
+    parent.add(hudImage(this, HUD.count, x, y + 50));
+    this.text(x, y + 50, `${left}`, 13, low ? "#ff8a8a" : COLORS.gold, parent).setOrigin(0.5).setStroke("#05070f", 3);
     const discard = this.add.container(x + 52, y + 34);
     discard.add(hudImage(this, HUD.cardBack, 0, 0, 0.42).setTint(0x8890a8).setAlpha(0.8));
     discard.add(this.add.text(0, 0, `${seat.discardPile.length}`, { ...TEXT_BASE, fontSize: "12px", color: COLORS.text, stroke: "#05070f", strokeThickness: 3 }).setOrigin(0.5));
-    this.root.add(discard);
+    parent.add(discard);
     const hit = this.add.zone(x + 10, y, 110, 140).setInteractive();
-    this.root.add(hit);
+    parent.add(hit);
     this.hoverTooltip(hit, () => ({ x: x + 80, y: y - 40 }), () => [
       `Chồng bài ${owner}`,
       `Còn ${left} lá · Bỏ ${seat.discardPile.length} lá`,
     ]);
   }
 
-  private renderCard(instanceId: string, x: number, y: number) {
-    const instance = this.state.cards[instanceId]!;
-    const card = cardDefOf(this.gameData, this.state, instance)!;
+  private renderCard(
+    instanceId: string,
+    x: number,
+    y: number,
+    opts: { state?: CombatState; parent?: Phaser.GameObjects.Container; register?: boolean; interactive?: boolean } = {},
+  ) {
+    const state = opts.state ?? this.state;
+    const parent = opts.parent ?? this.root;
+    const instance = state.cards[instanceId]!;
+    const card = cardDefOf(this.gameData, state, instance)!;
     const weapon = this.gameData.weapons[instance.cardId];
     const [ownerId, partnerId] = instance.ownerIds as [string, string | undefined];
-    const broken = instance.ownerIds.some(
-      (id) => !this.state.heroes.find((hero) => hero.defId === id)?.alive,
-    );
-    const playable = isCardPlayable(this.gameData, this.state, instanceId);
+    // Owners resolve by seat+defId (`17` §2.1) — a same-defId hero of the other seat is not the owner.
+    const broken = cardOwners(state, instance).some((owner) => !owner?.alive);
+    const playable = isCardPlayable(this.gameData, state, instanceId);
     const container = this.add.container(x, y);
-    this.root.add(container);
-    this.cardViews.set(instanceId, container);
+    parent.add(container);
+    if (opts.register !== false) this.cardViews.set(instanceId, container);
 
     const isValidTarget = this.targeting === instanceId;
     const mulliganPicked = this.mulliganPicks.has(instanceId);
@@ -1699,7 +1898,7 @@ export class CombatScene extends Phaser.Scene {
       );
     }
 
-    const effectiveCost = getEffectiveCost(this.gameData, this.state, instanceId);
+    const effectiveCost = getEffectiveCost(this.gameData, state, instanceId);
     // Inset so the coin's rim sits clear of the card border.
     // Its own corner: clear of the gold line (≥ 3.5 px) and of the banner.
     const coinX = -CARD_W / 2 + 19;
@@ -1766,16 +1965,19 @@ export class CombatScene extends Phaser.Scene {
           .text(0, 0, "Tàn Chiêu", { ...TEXT_BASE, fontSize: "14px", color: "#bbbbbb" })
           .setOrigin(0.5),
       );
-    } else if (!playable && !isValidTarget && this.state.status !== "mulligan") {
+    } else if (!playable && !isValidTarget && state.status !== "mulligan") {
       container.setAlpha(0.5);
     }
 
+    if (opts.interactive === false) return container;
     container.setInteractive({
       hitArea: new Phaser.Geom.Rectangle(-CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H),
       hitAreaCallback: Phaser.Geom.Rectangle.Contains,
       useHandCursor: true,
     });
     container.on("pointerover", () => {
+      // A card whose clone is mid-cast is asleep — no hover, no lift.
+      if (this.castingIds.has(instanceId)) return;
       this.tooltip?.destroy();
       const hintName =
         hintComboId !== undefined ? this.gameData.coopCombos[hintComboId]?.name : undefined;
@@ -1787,18 +1989,19 @@ export class CombatScene extends Phaser.Scene {
         x + CARD_W / 2 + 10,
         liftY - 40,
         this.gameData,
-        cardDefOf(this.gameData, this.state, instance)!,
+        cardDefOf(this.gameData, state, instance)!,
         hintName !== undefined ? [`⚡ ${hintName} — đồng đội đã đánh nửa kia`] : [],
       );
-      if (!broken && (inHand || this.state.status === "playerTurn" || this.state.status === "mulligan")) {
+      if (!broken && (inHand || state.status === "playerTurn" || state.status === "mulligan")) {
         container.setScale(1.15);
         container.y = liftY;
         container.setDepth(10);
         // Depth does not reorder a container's children: lift the card over its neighbours.
-        this.root.bringToTop(container);
+        parent.bringToTop(container);
       }
     });
     container.on("pointerout", () => {
+      if (this.castingIds.has(instanceId)) return;
       this.tooltip?.destroy();
       this.tooltip = null;
       container.setScale(1);
@@ -1933,6 +2136,9 @@ export class CombatScene extends Phaser.Scene {
       const end = this.netMatch.ended;
       const won = end ? end.result === "won" : this.state.winner === this.mySeat;
       const draw = end?.result === "draw";
+      // Terminal recovery lands here without a combatEnded beat — the audio
+      // instance dedupes so an earlier beat's sting never repeats (`16` §8.3).
+      this.audio.play(draw ? "draw" : won ? "victory" : "defeat");
       const reasons: Record<string, string> = {
         resign: "Đối thủ bỏ cuộc",
         timeout: "Đối thủ hết giờ quá nhiều lần",
@@ -1999,6 +2205,7 @@ export class CombatScene extends Phaser.Scene {
     }
     if (this.isStory) {
       const won = this.state.status === "won";
+      this.audio.play(won ? "victory" : "defeat");
       const stage = this.storyStageId !== null ? this.gameData.storyStages[this.storyStageId] : undefined;
       this.root.add(this.screenDim(0.65));
       this.text(
@@ -2022,6 +2229,7 @@ export class CombatScene extends Phaser.Scene {
       return;
     }
     const won = this.state.status === "won";
+    this.audio.play(won ? "victory" : "defeat");
     this.root.add(this.screenDim(0.65));
     this.text(
       WIDTH / 2,
@@ -2045,6 +2253,47 @@ export class CombatScene extends Phaser.Scene {
     this.endScreenButton(WIDTH / 2 + 180, HEIGHT / 2 + 90, "Chọn deck", () =>
       this.scene.start("deck-select"),
     );
+  }
+
+  /**
+   * The ⚙ modal: speed, reduced motion, volume. Purely local presentation —
+   * the server deadline keeps running while it is open, and a running batch
+   * keeps the settings it started with (`16` §8.3). Esc/Enter dismiss it via
+   * the modal's own handlers; each option re-opens the modal so the labels
+   * reflect the new value.
+   */
+  private openSettings(): void {
+    if (isModalOpen()) return;
+    const s = this.settings;
+    void showModal(this, {
+      title: "Thiết Lập",
+      message: "Nhịp độ và âm thanh của trận — chỉ lưu trên máy này.",
+      actions: [
+        { label: `Tốc độ: ×${s.speed}` },
+        { label: `Giảm chuyển động: ${s.reducedMotion ? "Bật" : "Tắt"}` },
+        { label: s.volume <= 0 ? "Âm thanh: Tắt" : `Âm thanh: ${Math.round(s.volume * 100)}%` },
+        { label: "Đóng", variant: "primary" },
+      ],
+    }).then((result) => {
+      if (result.action === -1 || result.action === 3) return;
+      const next = { ...this.settings };
+      if (result.action === 0) next.speed = next.speed === 1 ? 2 : 1;
+      else if (result.action === 1) next.reducedMotion = !next.reducedMotion;
+      else if (result.action === 2) next.volume = next.volume >= 1 ? 0 : Math.min(1, next.volume + 0.25);
+      this.applySettings(next);
+      this.openSettings();
+    });
+  }
+
+  /** Applies new preferences to audio immediately and to the next batch's runtime. */
+  private applySettings(next: CombatSettings): void {
+    this.settings = next;
+    this.audio.configure(next);
+    try {
+      saveCombatSettings(localStorage, next);
+    } catch {
+      // Storage denied (private mode) — preferences simply won't persist.
+    }
   }
 
   private endScreenButton(
@@ -2169,9 +2418,18 @@ export class CombatScene extends Phaser.Scene {
 
   private renderBottomBar() {
     const seat = this.state.players[this.mySeat] ?? activePlayerState(this.state);
+    const layer = this.seatLayerOf(seat.index);
     // Nothing to spend while Đổi Bài is open.
-    if (this.state.status !== "mulligan") this.renderMoonPower(seat);
+    if (this.state.status !== "mulligan") this.renderMoonPower(seat, layer);
+    this.renderSeatHand(seat, this.state, layer);
+    this.renderPile(seat, COMBAT_LAYOUT.pile.y, 0x3f7fd0, "của bạn", layer);
+    if (this.state.status !== "mulligan" && this.state.status !== "won" && this.state.status !== "lost") {
+      this.renderEndTurn(seat);
+    }
+  }
 
+  /** A seat's hand row — my seat's interactive cards in the bottom bar. */
+  private renderSeatHand(seat: PlayerState, state: CombatState, parent: Phaser.GameObjects.Container): void {
     // A full hand (up to `handLimit`) squeezes its cards to stay inside the zone;
     // the hovered card is lifted above its neighbours in renderCard.
     const hand = seat.hand;
@@ -2179,13 +2437,8 @@ export class CombatScene extends Phaser.Scene {
     const handWidth = (hand.length - 1) * spacing + CARD_W;
     const left = Phaser.Math.Clamp(WIDTH / 2 - handWidth / 2, HAND_LEFT, HAND_RIGHT - handWidth);
     hand.forEach((instanceId, index) => {
-      this.renderCard(instanceId, left + CARD_W / 2 + index * spacing, COMBAT_LAYOUT.handY);
+      this.renderCard(instanceId, left + CARD_W / 2 + index * spacing, COMBAT_LAYOUT.handY, { state, parent });
     });
-
-    this.renderPile(seat, COMBAT_LAYOUT.pile.y, 0x3f7fd0, "của bạn");
-    if (this.state.status !== "mulligan" && this.state.status !== "won" && this.state.status !== "lost") {
-      this.renderEndTurn(seat);
-    }
   }
 
   /** Top-right, under the settings icon: Nguyệt Lực, Dự Trữ as a green badge when kept. */
@@ -2194,7 +2447,7 @@ export class CombatScene extends Phaser.Scene {
    * arc per point up to the cap (gold; the kept Dự Trữ points green), the
    * number in the middle and the label underneath.
    */
-  private renderMoonPower(seat: PlayerState) {
+  private renderMoonPower(seat: PlayerState, parent = this.root) {
     const { x, y } = COMBAT_LAYOUT.moonPower;
     const power = seat.moonPower;
     const reserve = Math.min(seat.moonReserve, power);
@@ -2210,9 +2463,9 @@ export class CombatScene extends Phaser.Scene {
       const color = i < reserve ? 0x7fe07f : i < power ? 0xf4d35e : 0x3a3524;
       arcs.lineStyle(5, color, i < power ? 1 : 0.9).beginPath().arc(x, y, 34, start, start + step - 0.14).strokePath();
     }
-    this.root.add([glow, core, arcs]);
-    this.text(x, y - 1, `${power}`, 24, COLORS.gold).setOrigin(0.5);
-    this.text(x, y + 50, seat.moonPowerBonus > 0 ? `Nguyệt Lực +${seat.moonPowerBonus}` : "Nguyệt Lực", 11, COLORS.gold)
+    parent.add([glow, core, arcs]);
+    this.text(x, y - 1, `${power}`, 24, COLORS.gold, parent).setOrigin(0.5);
+    this.text(x, y + 50, seat.moonPowerBonus > 0 ? `Nguyệt Lực +${seat.moonPowerBonus}` : "Nguyệt Lực", 11, COLORS.gold, parent)
       .setOrigin(0.5)
       .setStroke("#05070f", 4);
     const orb = core;

@@ -1,4 +1,4 @@
-import type { CombatEvent, CombatState } from "rules";
+import type { CardDef, CardInstance, CombatEvent, CombatState } from "rules";
 
 /** The settled outcome of a match (`16` §8.3) — the `match.end` payload. */
 export interface MatchSettlement {
@@ -18,6 +18,17 @@ export type SettlementState =
   | { status: "complete"; end: MatchSettlement }
   | { status: "failed"; error: string };
 
+/**
+ * Public record of a card just played (`16` §8.2): the instance and its
+ * definition as they stood at cast time. Both seats may see it — a played
+ * card is public even when it leaves the discard pile within the same batch
+ * (Luân Hồi) and the redacted view drops it again.
+ */
+export interface PublicPlayedCard {
+  instance: CardInstance;
+  definition: CardDef;
+}
+
 /** `16` §8.2 — client mirror of the realtime protocol (`apps/server/src/realtime/protocol.ts`). */
 export interface MatchSnapshot {
   matchId: string;
@@ -30,6 +41,8 @@ export interface MatchSnapshot {
   /** Next action `seq` the server accepts from this seat — each receiver sees its own. */
   nextActionSeq: number;
   settlement: SettlementState;
+  /** The match's seat-redacted setup events — `match.start` uses them for the intro reveal. */
+  initialEvents?: CombatEvent[];
 }
 
 export type ServerMessage =
@@ -48,6 +61,8 @@ export type ServerMessage =
       events: CombatEvent[];
       view: CombatState;
       deadline: number | null;
+      /** Cast-time metadata of every `cardPlayed` in this batch, keyed by instanceId. */
+      revealedCards?: Record<string, PublicPlayedCard>;
     }
   | { type: "match.rejected"; matchId: string; seq: number; nextActionSeq: number; reason: string }
   | ({ type: "match.end"; matchId: string } & MatchSettlement & {

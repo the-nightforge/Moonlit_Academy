@@ -1,27 +1,52 @@
 import type Phaser from "phaser";
 import { cardDefOf } from "rules";
-import type { CardDef, CombatEvent, CombatState, GameData, IntentDef } from "rules";
-import { attackLookOf, cardColorOf } from "./attack-style";
+import type { CardDef, CombatEvent, CombatState, GameData, IntentDef, UnitState } from "rules";
+import { attackLookOf, cardColorOf, hpLossLook } from "./attack-style";
+import { applyPresentationEvent } from "./combat-presentation";
+import type { PresentationBindings } from "./combat-presentation";
+import { resolvePlayedCard, seatAnchors, statusAppliedLabel, statusDisplayValue, unitAt } from "./combat-display";
+import type { Point, SeatAnchors } from "./combat-display";
+import type { PublicPlayedCard } from "../net/protocol";
 import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
 import { castCard, deathBurn, moonWheel, playAttack, statusPop } from "./vfx";
 import type { AnimationRuntime } from "./animation-runtime";
+import type { CombatAudio } from "./combat-audio";
 
 const WIDTH = 1280;
-const { moon, moonPower, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
+const { moon, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
 
 export interface AnimContext {
   gameData: GameData;
-  state: CombatState;
+  /** The batch's working copy — every visible value moves off it mid-beat. */
+  presentation: CombatState;
+  /** The batch's post-action state — metadata the events don't carry resolves against it. */
+  after: CombatState;
+  /** The batch's pre-action state; `before === after` marks the intro reveal stream. */
+  before?: CombatState;
+  /** Scene hooks that patch rendered objects as the presentation moves. */
+  bindings: PresentationBindings;
+  /** Cast-time records of the batch's `cardPlayed` events (`16` §8.2). */
+  revealedCards?: Record<string, PublicPlayedCard>;
   unitAnchors: Map<string, { x: number; y: number }>;
   unitViews: Map<string, Phaser.GameObjects.Container>;
   /** The local player's hand cards: a played card flies out of its slot. */
   cardViews?: Map<string, Phaser.GameObjects.Container>;
+  /** Per-seat zone anchors (draw/discard/hand/resource/reserve). */
+  seatAnchors: Map<number, SeatAnchors>;
+  /** Builds a detached, runtime-tracked clone of a hand card for the cast beat. */
+  castView?: (instanceId: string) => Phaser.GameObjects.Container | undefined;
   /** Where the moon icon sits (follows the background art); defaults to the layout spot. */
   moonAnchor?: { x: number; y: number };
   /** The local player's seat in a PvP view (`17` §4.8); 0 in PvE. */
   mySeat?: number;
   /** Per-batch animation scope: every timed/tweened FX goes through it. */
   runtime: AnimationRuntime;
+  /** Procedural cue player — silent until unlocked and muted under volume 0. */
+  audio?: CombatAudio;
+}
+
+function anchorsFor(ctx: AnimContext, player?: number) {
+  return ctx.seatAnchors.get(player ?? 0) ?? seatAnchors(player ?? 0, ctx.mySeat ?? 0, ctx.presentation.mode);
 }
 
 function floatText(
@@ -69,7 +94,7 @@ function flash(
 
 /** Looks up an intent of an enemy by id, including moon/blood moon overrides. */
 function findIntent(ctx: AnimContext, enemyId: string, intentId: string): IntentDef | undefined {
-  const defId = ctx.state.enemies.find((enemy) => enemy.id === enemyId)?.defId;
+  const defId = ctx.presentation.enemies.find((enemy) => enemy.id === enemyId)?.defId;
   const def = defId !== undefined ? ctx.gameData.enemies[defId] : undefined;
   if (!def) return undefined;
   return [
@@ -83,8 +108,97 @@ function instant(): Promise<void> {
   return Promise.resolve();
 }
 
+/**
+ * Routine feedback that must not stall the queue: the cosmetic tween fires
+ * detached under the runtime while the beat holds only `hold` ms — the fade
+ * keeps playing underneath the next beat and drains before the batch commits.
+ */
+function held(rt: AnimationRuntime, hold: number, ...cosmetics: Promise<void>[]): Promise<void> {
+  for (const cosmetic of cosmetics) void cosmetic.catch(() => {});
+  return rt.wait(hold);
+}
+
+/** A float text that reads for `hold` ms; its fade continues detached. */
+function floatHeld(
+  rt: AnimationRuntime,
+  x: number,
+  y: number,
+  content: string,
+  color: string,
+  size: number,
+  fade: number,
+  hold: number,
+): Promise<void> {
+  return held(rt, hold, floatText(rt, x, y, content, color, size, fade));
+}
+
 type HpLostEvent = Extract<CombatEvent, { type: "hpLost" }>;
-type DamageEvent = Extract<CombatEvent, { type: "damageDealt" }>;
+export type DamageEvent = Extract<CombatEvent, { type: "damageDealt" }>;
+
+/** The reveal beats a fresh match opens with (`16` §8.2). */
+const INTRO_TYPES = new Set<CombatEvent["type"]>(["combatStarted", "moonDecreesRolled", "turnStarted", "cardsDrawn"]);
+
+/**
+ * The intro reveal played once per scene on a fresh match start (`16` §8.2):
+ * the real setup stream filtered to its four reveal beats, or — when no
+ * stream traveled (local combat, older server) — a cosmetic stand-in built
+ * from the public snapshot. Never a `createCombat` re-run, never a fake draw:
+ * each `cardsDrawn` reveals the ids the seat's hand already holds.
+ */
+export function buildIntroEvents(state: CombatState, initialEvents: readonly CombatEvent[]): CombatEvent[] {
+  const real = initialEvents.filter((event) => INTRO_TYPES.has(event.type));
+  if (real.length > 0) return real;
+  const intro: CombatEvent[] = [
+    { type: "combatStarted" },
+    { type: "moonDecreesRolled", moonIndex: state.moonIndex, decrees: [...state.moonDecrees] },
+    ...state.players.map(
+      (seat): CombatEvent => ({ type: "cardsDrawn", player: seat.index, instanceIds: [...seat.hand] }),
+    ),
+  ];
+  // A snapshot still in mulligan has no turn to announce yet.
+  if (state.status !== "mulligan") {
+    intro.push({ type: "turnStarted", side: "hero", round: state.round, player: state.activePlayer });
+  }
+  return intro;
+}
+
+/**
+ * Groups consecutive `damageDealt` events for parallel playback. A group takes
+ * hits from one source on distinct targets; a repeated target, a different
+ * source, or any non-damage event closes it — so repeated hits on one unit
+ * still play one after another. This is an animation grouping only, not a
+ * rules-level hit id. `groups.flat()` always equals `events`.
+ */
+export function groupDamageEvents(events: readonly CombatEvent[]): CombatEvent[][] {
+  const groups: CombatEvent[][] = [];
+  let open: DamageEvent[] = [];
+  const seen = new Set<string>();
+  const flush = () => {
+    if (open.length === 0) return;
+    groups.push(open);
+    open = [];
+    seen.clear();
+  };
+  for (const event of events) {
+    if (event.type !== "damageDealt") {
+      flush();
+      groups.push([event]);
+      continue;
+    }
+    const hit = event as DamageEvent;
+    const sameSource = open.length === 0 || open[0]!.sourceId === hit.sourceId;
+    if (sameSource && !seen.has(hit.targetId)) {
+      open.push(hit);
+      seen.add(hit.targetId);
+      continue;
+    }
+    flush();
+    open = [hit];
+    seen.add(hit.targetId);
+  }
+  flush();
+  return groups;
+}
 
 /** Events after which damage no longer comes from the last played card. */
 const CARDLESS_SOURCES = new Set<CombatEvent["type"]>([
@@ -96,14 +210,61 @@ const CARDLESS_SOURCES = new Set<CombatEvent["type"]>([
   "runRelicTriggered",
 ]);
 
-const HP_LOSS_LABELS: Record<HpLostEvent["cause"], string> = {
-  loseHp: "",
-  burn: "Đốt ",
-  reflect: "Phản ",
-  bloodMoon: "Huyết ",
-  decree: "Lệnh ",
-  bloodPact: "Tế ",
-};
+const css = (color: number) => `#${color.toString(16).padStart(6, "0")}`;
+
+/** The unit view's real bounds for flash sizing; undefined without a measurable view. */
+function unitBounds(ctx: AnimContext, unitId: string): { x: number; y: number; w: number; h: number } | undefined {
+  const bounds = ctx.unitViews.get(unitId)?.getBounds();
+  if (bounds === undefined || typeof bounds.width !== "number") return undefined;
+  return { x: bounds.centerX, y: bounds.centerY, w: bounds.width, h: bounds.height };
+}
+
+/** Flash covering `unitId`'s view bounds — or the layout flash at its anchor. */
+function unitFlashAt(rt: AnimationRuntime, ctx: AnimContext, unitId: string, color: number, duration: number): Promise<void> {
+  const anchor = ctx.unitAnchors.get(unitId);
+  const bounds = unitBounds(ctx, unitId);
+  return flash(rt, bounds?.x ?? anchor?.x ?? 0, bounds?.y ?? anchor?.y ?? 0, bounds?.w ?? unitFlash.w, bounds?.h ?? unitFlash.h, color, duration);
+}
+
+/** Card backs traveling between two seat-zone anchors (discard, Luân Hồi). */
+function zoneFlight(rt: AnimationRuntime, from: Point, to: Point, count: number): Promise<void> {
+  const jobs = Array.from({ length: Math.max(1, count) }, (_, i) => {
+    const back = rt.track(
+      rt.scene.add
+        .rectangle(from.x, from.y, 30, 44, 0x2c3e6e)
+        .setStrokeStyle(1, 0xf4d35e)
+        .setDepth(100),
+    );
+    return rt.tween({
+      targets: back,
+      x: to.x,
+      y: to.y,
+      alpha: 0.5,
+      delay: i * 50,
+      duration: 200,
+      ease: "Sine.easeIn",
+      onComplete: () => back.destroy(),
+    });
+  });
+  return Promise.all(jobs).then(() => undefined);
+}
+
+// Mirrors renderSeatHand in the scene: a full hand squeezes into the zone.
+const HAND_L = 130;
+const HAND_R = 1140;
+const HAND_CARD_W = 110;
+
+/** The x a `instanceId` lands at in `seat`'s fanned hand row (its real slot). */
+function handSlotX(ctx: AnimContext, player: number | undefined, instanceId: string): number | undefined {
+  const seat = ctx.presentation.players[player ?? 0];
+  const index = seat?.hand.indexOf(instanceId) ?? -1;
+  if (seat === undefined || index < 0) return undefined;
+  const n = seat.hand.length;
+  const spacing = n < 2 ? 0 : Math.min(HAND_CARD_W + 10, (HAND_R - HAND_L - HAND_CARD_W) / (n - 1));
+  const width = (n - 1) * spacing + HAND_CARD_W;
+  const left = Math.min(Math.max(WIDTH / 2 - width / 2, HAND_L), HAND_R - width);
+  return left + HAND_CARD_W / 2 + index * spacing;
+}
 
 function isBloodMoonLoss(
   event: CombatEvent | undefined,
@@ -158,6 +319,80 @@ function flyLabel(
  * statusRemoved + statusApplied of the same status on another unit (a steal),
  * consecutive blood moon HP losses (together), and reflect after its hit.
  */
+/**
+ * Moves the presentation one event forward and refreshes the views it touched:
+ * unit badges at the unit's own beat, seat chrome (hand, piles, resources) per
+ * seat event, the moon badge on phase/decrees. No `renderAll` mid-batch.
+ */
+function applyBeat(ctx: AnimContext, event: CombatEvent): void {
+  applyPresentationEvent(ctx.gameData, ctx.presentation, event, ctx.after, ctx.before);
+  const presentation = ctx.presentation;
+  const unit = (id: string) => ctx.bindings.updateUnit(id, presentation);
+  const seat = (player?: number) => ctx.bindings.updateSeat(player ?? 0, presentation);
+  switch (event.type) {
+    case "damageDealt":
+    case "hpLost":
+    case "healed":
+    case "armorGained":
+    case "armorRemoved":
+    case "statusApplied":
+    case "statusRemoved":
+      unit(event.targetId);
+      return;
+    case "unitDied":
+    case "summonDismissed":
+    case "summonActed":
+    case "sealStripped":
+      unit(event.unitId);
+      return;
+    case "heroRevived":
+    case "heroLeveledUp":
+      unit(event.heroId);
+      return;
+    case "summoned":
+      ctx.bindings.ensureSummon(event.unitId, presentation);
+      return;
+    case "bossPhaseChanged":
+    case "intentsRevealed":
+    case "intentsCancelled":
+    case "intentExecuted":
+    case "intentSkipped":
+    case "intentFizzled":
+      unit(event.enemyId);
+      return;
+    case "moonReserveChanged":
+      if (event.side === "enemy" && event.enemyId !== undefined) unit(event.enemyId);
+      else seat(event.player);
+      return;
+    case "moonPowerChanged":
+    case "cardsDrawn":
+    case "cardPlayed":
+    case "cardDiscarded":
+    case "cardsRecycled":
+    case "cardCreated":
+    case "cardsPurged":
+    case "mulliganed":
+    case "cardChosen":
+    case "choiceOpened":
+    case "moonChoiceOpened":
+    case "turnStarted":
+      seat(event.player);
+      return;
+    case "moonShifted":
+    case "moonDecreesRolled":
+    case "bloodMoonChanged":
+      ctx.bindings.updateMoon(presentation);
+      return;
+    default:
+      return;
+  }
+}
+
+/**
+ * Plays events in order. A few sequences read as one beat:
+ * statusRemoved + statusApplied of the same status on another unit (a steal),
+ * consecutive blood moon HP losses (together), and reflect after its hit.
+ */
 export async function playEventQueue(
   rt: AnimationRuntime,
   events: CombatEvent[],
@@ -165,22 +400,42 @@ export async function playEventQueue(
 ): Promise<void> {
   /** The card whose effects are resolving: its hits take the card's look. */
   let card: CardDef | undefined;
-  for (let i = 0; i < events.length; i++) {
-    const event = events[i]!;
-    const next = events[i + 1];
+  /** Repeated hits on one target shift their floats so the numbers never stack. */
+  const hitCounts = new Map<string, number>();
+  let previous: CombatEvent | undefined;
+  const groups = groupDamageEvents(events);
+  for (let g = 0; g < groups.length; g++) {
+    // An abort between beats exits here — before applyBeat can repaint views
+    // a rejoin just rebuilt, or a beat can spawn an untracked object (`16` §8.5).
+    rt.assertActive();
+    const group = groups[g]!;
+    const event = group[0]!;
+    const next = groups[g + 1]?.[0];
     if (event.type === "cardPlayed") {
-      const instance = ctx.state.cards[event.instanceId];
-      card = instance ? cardDefOf(ctx.gameData, ctx.state, instance) : undefined;
-    } else if (CARDLESS_SOURCES.has(event.type)) {
+      card = resolvePlayedCard(ctx.gameData, ctx.presentation, ctx.after, event.instanceId, ctx.revealedCards)?.definition;
+      // The clone must exist before the seat refresh rebuilds the hand — the
+      // real card view is hidden by `castView` and dies with the rebuild.
+      const cast = ctx.castView?.(event.instanceId);
+      applyBeat(ctx, event);
+      await animateEvent(rt, event, ctx, card, 0, cast);
+      previous = event;
+      continue;
+    }
+    if (CARDLESS_SOURCES.has(event.type)) {
       card = undefined;
     }
-    if (event.type === "damageDealt") {
-      // Hits of one source in a row (area attacks) land together.
-      const group: DamageEvent[] = [event];
-      while (events[i + 1]?.type === "damageDealt" && (events[i + 1] as DamageEvent).sourceId === event.sourceId) {
-        group.push(events[++i] as DamageEvent);
-      }
-      await Promise.all(group.map((hit) => animateEvent(rt, hit, ctx, card)));
+    if (group.every((member) => member.type === "damageDealt")) {
+      // Distinct targets of one source land together; the next group waits for
+      // the decisive impacts plus a short beat so each hit stays readable.
+      await Promise.all(
+        (group as DamageEvent[]).map((hit) => {
+          const index = hitCounts.get(hit.targetId) ?? 0;
+          hitCounts.set(hit.targetId, index + 1);
+          return animateEvent(rt, hit, ctx, card, index);
+        }),
+      );
+      previous = group[group.length - 1];
+      if (g + 1 < groups.length) await rt.wait(90);
       continue;
     }
     if (
@@ -192,27 +447,44 @@ export async function playEventQueue(
       const from = ctx.unitAnchors.get(event.targetId);
       const to = ctx.unitAnchors.get(next.targetId);
       if (from && to) {
-        await flyLabel(rt, from, to, `${STATUS_LABELS[next.status]} ${next.value}`);
-        i++;
+        const shown = statusDisplayValue(
+          ctx.presentation,
+          { statuses: [{ id: next.status, value: next.value }] } as UnitState,
+          next.status,
+        );
+        applyBeat(ctx, event);
+        applyBeat(ctx, next);
+        await flyLabel(rt, from, to, `${STATUS_LABELS[next.status]} ${shown}`);
+        previous = next;
+        g++;
         continue;
       }
     }
     if (isBloodMoonLoss(event)) {
-      const group: HpLostEvent[] = [event];
-      while (isBloodMoonLoss(events[i + 1])) group.push(events[++i] as HpLostEvent);
-      await Promise.all(group.map((loss) => animateEvent(rt, loss, ctx)));
+      // Consecutive blood moon losses are their own singleton groups — gather them.
+      const losses: HpLostEvent[] = [event];
+      while (isBloodMoonLoss(groups[g + 1]?.[0])) {
+        losses.push(groups[g + 1]![0] as HpLostEvent);
+        g++;
+      }
+      for (const loss of losses) applyBeat(ctx, loss);
+      await Promise.all(losses.map((loss) => animateEvent(rt, loss, ctx)));
+      previous = losses[losses.length - 1];
       continue;
     }
-    const previous = events[i - 1];
     if (event.type === "hpLost" && event.cause === "reflect" && previous?.type === "damageDealt") {
       const from = ctx.unitAnchors.get(previous.targetId);
       const to = ctx.unitAnchors.get(event.targetId);
       if (from && to) {
+        applyBeat(ctx, event);
         await Promise.all([beam(rt, from, to), animateEvent(rt, event, ctx)]);
+        previous = event;
         continue;
       }
     }
+    applyBeat(ctx, event);
     await animateEvent(rt, event, ctx, card);
+    previous = event;
   }
 }
 
@@ -221,6 +493,8 @@ function animateEvent(
   event: CombatEvent,
   ctx: AnimContext,
   card?: CardDef,
+  hitIndex = 0,
+  cast?: Phaser.GameObjects.Container,
 ): Promise<void> {
   const anchorOf = (unitId: string) => ctx.unitAnchors.get(unitId);
 
@@ -234,23 +508,30 @@ function animateEvent(
           : event.side === "hero"
             ? "— Lượt người chơi —"
             : "— Lượt kẻ địch —";
-      return floatText(rt, WIDTH / 2, midY, label, "#cfd6f0", 16, 350);
+      return floatHeld(rt, WIDTH / 2, midY, label, "#cfd6f0", 16, 350, 200);
     }
     case "cardsDrawn": {
       const ids = event.instanceIds;
       if (ids.length === 0) return instant();
+      ctx.audio?.play("draw");
+      const anchors = anchorsFor(ctx, event.player);
+      const mine = (event.player ?? 0) === (ctx.mySeat ?? 0);
+      const spacing = mine ? 70 : ctx.presentation.mode === "coop" ? 34 : 26;
       return Promise.all(
         ids.map((id, i) => {
+          // The remote seat's draws stay face-down backs — count only, no card identity.
           const rect = rt.track(
             rt.scene.add
-              .rectangle(pile.x + 40, pile.y, 30, 44, 0x2c3e6e)
+              .rectangle(anchors.draw.x + 6, anchors.draw.y, 30, 44, 0x2c3e6e)
               .setStrokeStyle(1, 0xf4d35e)
               .setDepth(100),
           );
+          // Own-seat backs land on the slot the id already holds in the hand.
+          const toX = mine ? (handSlotX(ctx, event.player, id) ?? WIDTH / 2 + (i - (ids.length - 1) / 2) * spacing) : anchors.hand.x + i * spacing;
           return rt.tween({
             targets: rect,
-            x: WIDTH / 2 + (i - (ids.length - 1) / 2) * 70,
-            y: handY,
+            x: toX,
+            y: anchors.hand.y,
             delay: i * 60,
             duration: 120,
             onComplete: () => rect.destroy(),
@@ -259,30 +540,39 @@ function animateEvent(
       ).then(() => undefined);
     }
     case "deckShuffled":
-      return floatText(rt, pile.x + 60, pile.y - 70, "Xáo lại chồng bỏ", "#cfd6f0", 12, 300);
+      return floatHeld(rt, pile.x + 60, pile.y - 70, "Xáo lại chồng bỏ", "#cfd6f0", 12, 300, 150);
     case "cardPlayed": {
-      const instance = ctx.state.cards[event.instanceId];
-      const card = instance ? cardDefOf(ctx.gameData, ctx.state, instance) : undefined;
-      const view = ctx.cardViews?.get(event.instanceId);
+      ctx.audio?.play("cast");
+      const resolved = resolvePlayedCard(ctx.gameData, ctx.presentation, ctx.after, event.instanceId, ctx.revealedCards);
+      const card = resolved?.definition;
+      const view = cast ?? ctx.cardViews?.get(event.instanceId);
       if (card && view) {
         const target = event.targetId !== undefined ? anchorOf(event.targetId) : undefined;
         return castCard(rt, view, { x: WIDTH / 2, y: midY }, cardColorOf(card), target);
       }
       // Another seat's card (co-op partner, PvP opponent): no hand view to fly.
-      return floatText(rt, WIDTH / 2, midY, `◆ ${card?.name ?? ""}`, "#f4d35e", 22, 300);
+      return floatHeld(rt, WIDTH / 2, midY, `◆ ${card?.name ?? "Lá bài"}`, "#f4d35e", 22, 300, 200);
     }
-    case "cardDiscarded":
-    // Luân Hồi (`01` §3.3): reuse the discard beat until the real animation lands.
-    case "cardsRecycled":
-      return instant();
+    case "cardDiscarded": {
+      ctx.audio?.play("draw");
+      const anchors = anchorsFor(ctx, event.player);
+      return zoneFlight(rt, anchors.hand, anchors.discard, event.instanceIds.length);
+    }
+    case "cardsRecycled": {
+      // Luân Hồi (`01` §3.3): card backs travel discard → draw.
+      ctx.audio?.play("draw");
+      const anchors = anchorsFor(ctx, event.player);
+      return zoneFlight(rt, anchors.discard, anchors.draw, event.instanceIds.length);
+    }
     case "cardCreated": {
+      ctx.audio?.play("draw");
       // `18` §2.2: the token flies from its owner hero's panel into the hand;
       // a full hand leaves only a "Tay đầy" note over the hero.
       const card = ctx.gameData.cards[event.cardId];
       const owner =
         card?.ownerId === undefined
           ? undefined
-          : ctx.state.heroes.find(
+          : ctx.presentation.heroes.find(
               (hero) => hero.defId === card.ownerId && hero.player === (event.player ?? 0),
             );
       const anchor = owner === undefined ? undefined : anchorOf(owner.id);
@@ -290,7 +580,8 @@ function animateEvent(
         if (!anchor) return instant();
         return floatText(rt, anchor.x, anchor.y - 62, "Tay đầy", "#ff8080", 14, 350);
       }
-      const from = anchor ?? { x: pile.x + 40, y: pile.y };
+      const anchors = anchorsFor(ctx, event.player);
+      const from = anchor ?? { x: anchors.draw.x + 6, y: anchors.draw.y };
       const mine = (event.player ?? 0) === (ctx.mySeat ?? 0);
       const rect = rt.track(
         rt.scene.add
@@ -300,123 +591,173 @@ function animateEvent(
       );
       return rt.tween({
         targets: rect,
-        x: mine ? WIDTH / 2 : from.x,
-        y: mine ? handY : from.y,
-        alpha: mine ? 1 : 0,
+        x: mine ? WIDTH / 2 : anchors.hand.x,
+        y: mine ? handY : anchors.hand.y,
+        alpha: mine ? 1 : 0.6,
         duration: 180,
         onComplete: () => rect.destroy(),
       });
     }
     case "damageDealt": {
       const anchor = anchorOf(event.targetId);
-      if (!anchor) return instant();
+      if (!anchor) {
+        applyBeat(ctx, event);
+        return instant();
+      }
       const from = anchorOf(event.sourceId) ?? { x: anchor.x, y: anchor.y + 200 };
-      const fromHero = ctx.state.heroes.some((hero) => hero.id === event.sourceId);
-      const look = attackLookOf(ctx.gameData, ctx.state, event.sourceId, card);
-      // The number pops and the card shakes when the hit lands, not when it is thrown.
-      return playAttack(rt, look, from, anchor, {
+      const fromHero = ctx.presentation.heroes.some((hero) => hero.id === event.sourceId);
+      const look = attackLookOf(ctx.gameData, ctx.presentation, event.sourceId, card);
+      let seen!: () => void;
+      const impactSeen = new Promise<void>((resolve) => (seen = resolve));
+      // The badge, the number and the flinch all land at the decisive impact;
+      // the attack's tail (ribbon retraction, trail fade) keeps running under
+      // the runtime and drains before the batch commits.
+      let impactError: unknown;
+      const attack = playAttack(look, from, anchor, {
         blocked: event.hpLost === 0,
+        runtime: rt,
         ...(fromHero ? { attackerView: ctx.unitViews.get(event.sourceId) } : {}),
-      }).then(() => {
-        const view = ctx.unitViews.get(event.targetId);
-        if (view) void rt.tween({ targets: view, x: view.x + 6, duration: 45, yoyo: true, repeat: 3 });
-        const jobs = [
-          floatText(rt, anchor.x, anchor.y - 50, event.hpLost > 0 ? `-${event.hpLost}` : "Chặn",
-            event.hpLost > 0 ? "#ff6b6b" : "#9aa3c0", 20, 350),
-        ];
-        if (event.blocked > 0) jobs.push(floatText(rt, anchor.x, anchor.y - 24, `🛡 ${event.blocked}`, "#9fd4ff", 13, 300));
-        return Promise.all(jobs).then(() => undefined);
+        onImpact: () => {
+          seen();
+          applyBeat(ctx, event);
+          ctx.audio?.play(event.hpLost > 0 ? "hit" : "block");
+          const view = ctx.unitViews.get(event.targetId);
+          if (view && rt.reducedMotion) {
+            void rt.tween({ targets: view, alpha: 0.55, duration: 80, yoyo: true });
+          } else if (view) {
+            void rt.tween({ targets: view, x: view.x + 6, duration: 45, yoyo: true, repeat: 3 });
+          }
+          const offset = hitIndex * 14;
+          const jobs = [
+            floatText(rt, anchor.x + offset, anchor.y - 50 - offset, event.hpLost > 0 ? `-${event.hpLost}` : "Chặn",
+              event.hpLost > 0 ? "#ff6b6b" : "#9aa3c0", 20, 350),
+          ];
+          if (event.blocked > 0) jobs.push(floatText(rt, anchor.x + offset, anchor.y - 24 - offset, `🛡 ${event.blocked}`, "#9fd4ff", 13, 300));
+          void Promise.all(jobs).catch(() => {});
+        },
+      });
+      // An abort mid-flight rejects the attack before the impact — unblock the
+      // queue, but a real failure inside onImpact must surface, not vanish.
+      void attack.then(
+        () => seen(),
+        (error) => {
+          impactError = error;
+          seen();
+        },
+      );
+      return impactSeen.then(() => {
+        if (impactError !== undefined) throw impactError;
       });
     }
     case "hpLost": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
-      const bloodMoon = event.cause === "bloodMoon";
-      return Promise.all([
-        flash(rt, anchor.x, anchor.y, unitFlash.w, unitFlash.h, bloodMoon ? 0xc01030 : 0x8a2be2, 200),
-        floatText(
-          rt,
-          anchor.x,
-          anchor.y - 50,
-          `${HP_LOSS_LABELS[event.cause]}-${event.amount}`,
-          bloodMoon ? "#ff5a5a" : "#c07fff",
-          18,
-          250,
-        ),
-      ]).then(() => undefined);
+      const look = hpLossLook(event.cause);
+      return held(
+        rt,
+        180,
+        unitFlashAt(rt, ctx, event.targetId, look.color, 200),
+        floatText(rt, anchor.x, anchor.y - 50, `${look.label} -${event.amount}`, css(look.color), 18, 250),
+      );
     }
     case "bloodMoonChanged": {
+      ctx.audio?.play("moon");
       if (event.rounds === 0) {
-        return floatText(rt, WIDTH / 2, midY, "Huyết Nguyệt tan", "#cfd6f0", 22, 500);
+        return floatHeld(rt, WIDTH / 2, midY, "Huyết Nguyệt tan", "#cfd6f0", 22, 500, 250);
       }
-      if (event.cause === "card") {
-        return Promise.all([
-          flash(rt, WIDTH / 2, 360, WIDTH, 720, 0x8b0000, 500),
-          floatText(rt, WIDTH / 2, midY, "🔴 Huyết Nguyệt!", "#ff5a5a", 30, 500),
-        ]).then(() => undefined);
-      }
-      return floatText(rt, WIDTH / 2, midY, `Huyết Nguyệt còn ${event.rounds} vòng`, "#ff5a5a", 18, 500);
+      // A light tint over the visible camera bounds — the base phase stays readable.
+      const view = rt.scene.cameras.main.worldView;
+      const overlay = rt.track(
+        rt.scene.add.rectangle(view.centerX, view.centerY, view.width, view.height, 0xc01030, 0.25).setDepth(88),
+      );
+      const fade = rt.tween({
+        targets: overlay,
+        alpha: 0,
+        duration: 600,
+        onComplete: () => overlay.destroy(),
+      });
+      const label =
+        event.cause === "card"
+          ? floatText(rt, WIDTH / 2, midY, "🔴 Huyết Nguyệt!", "#ff5a5a", 30, 500)
+          : floatText(rt, WIDTH / 2, midY, `Huyết Nguyệt còn ${event.rounds} vòng`, "#ff5a5a", 18, 500);
+      return held(rt, 400, fade, label);
     }
     case "healed": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
-      return Promise.all([
-        flash(rt, anchor.x, anchor.y, unitFlash.w, unitFlash.h, 0x2e8b57, 250),
+      ctx.audio?.play("heal");
+      return held(
+        rt,
+        200,
+        unitFlashAt(rt, ctx, event.targetId, 0x2e8b57, 250),
         floatText(rt, anchor.x, anchor.y - 50, `+${event.amount}`, "#7fe07f", 18, 300),
-      ]).then(() => undefined);
+      );
     }
     case "armorGained": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
-      return floatText(rt, anchor.x, anchor.y - 40, `🛡 +${event.amount}`, "#9fd4ff", 15, 200);
+      return floatHeld(rt, anchor.x, anchor.y - 40, `🛡 +${event.amount}`, "#9fd4ff", 15, 200, 150);
     }
-    case "armorRemoved":
-      return instant();
+    case "armorRemoved": {
+      const anchor = anchorOf(event.targetId);
+      if (!anchor) return instant();
+      // The badge shatters at the unit — a ring pop plus the labeled beat.
+      const ring = rt.track(
+        rt.scene.add.circle(anchor.x, anchor.y - 32, 14).setStrokeStyle(2, 0x9fd4ff).setDepth(95),
+      );
+      const shatter = rt.tween({
+        targets: ring,
+        scale: 2,
+        alpha: 0,
+        duration: 280,
+        ease: "Sine.easeOut",
+        onComplete: () => ring.destroy(),
+      });
+      return held(rt, 250, shatter, floatText(rt, anchor.x, anchor.y - 50, "🛡 Vỡ Giáp", "#9fd4ff", 15, 350));
+    }
     case "statusApplied": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
       void statusPop(rt, anchor, `ui:status_${event.status}`, STATUS_ICONS[event.status].color).catch(() => {});
-      return floatText(
+      const unit = unitAt(ctx.presentation, event.targetId) ?? ({ statuses: [] } as unknown as UnitState);
+      return floatHeld(
         rt,
         anchor.x,
         anchor.y - 62,
-        `+${STATUS_LABELS[event.status]} ${event.value}`,
+        statusAppliedLabel(ctx.presentation, unit, event.status, event.value, ctx.gameData),
         "#ffd97f",
         13,
         150,
+        120,
       );
     }
     case "statusRemoved": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
       void statusPop(rt, anchor, `ui:status_${event.status}`, STATUS_ICONS[event.status].color, true).catch(() => {});
-      return floatText(
-        rt,
-        anchor.x,
-        anchor.y - 62,
-        `-${STATUS_LABELS[event.status]}`,
-        "#8b93b8",
-        12,
-        150,
-      );
+      return floatHeld(rt, anchor.x, anchor.y - 62, `-${STATUS_LABELS[event.status]}`, "#8b93b8", 12, 150, 120);
     }
-    case "moonPowerChanged":
-      return floatText(rt, moonPower.x - 60, moonPower.y, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 200);
+    case "moonPowerChanged": {
+      const at = anchorsFor(ctx, event.player).resource;
+      return floatHeld(rt, at.x - 60, at.y, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 200, 120);
+    }
     case "moonShifted": {
       // The Nguyệt Luân turns at center stage and settles into the moon badge; the new phase's name floats down.
       const phase = ctx.gameData.moonPhases[event.to];
       const phaseIds = ctx.gameData.moonPhases.map((entry) => entry.id);
       const at = ctx.moonAnchor ?? moon;
-      return moonWheel(rt, { x: WIDTH / 2, y: midY }, at, phaseIds, event.from, event.to).then(() =>
-        floatText(rt, at.x, at.y + 46, phase?.name ?? "", "#f4d35e", 15, 400),
-      );
+      // Routine shifts take ~550 ms; a card-forced shift lingers ~900 ms (`01` §7.4).
+      ctx.audio?.play("moon");
+      void floatText(rt, at.x, at.y + 46, phase?.name ?? "", "#f4d35e", 15, 400).catch(() => {});
+      return moonWheel(rt, { x: WIDTH / 2, y: midY }, at, phaseIds, event.from, event.to, 0xf4d35e, event.cause === "card" ? 900 : 550);
     }
     case "moonDecreesRolled": {
       // `01` §7.6 — minimal banner: start phase + its decree. Full Nguyệt Lệnh UI is Task 7.
+      ctx.audio?.play("moon");
       const phase = ctx.gameData.moonPhases[event.moonIndex];
       const decree = phase?.decrees.find((d) => d.id === event.decrees[event.moonIndex]);
       const label = phase ? `${phase.icon} ${phase.name} · ${decree?.name ?? "—"}` : "Nguyệt Luân";
-      return floatText(rt, WIDTH / 2, 300, label, "#f4d35e", 22, 600);
+      return floatHeld(rt, WIDTH / 2, 300, label, "#f4d35e", 22, 600, 400);
     }
     case "intentsRevealed":
       // Enemies no longer telegraph their chain (`01` §9.2) — nothing to show.
@@ -424,19 +765,19 @@ function animateEvent(
     case "intentsCancelled": {
       const anchor = anchorOf(event.enemyId);
       if (!anchor) return instant();
-      return floatText(rt, anchor.x, anchor.y - 110, `Tỏa Nguyệt hủy ${event.intentIds.length} chiêu`, "#9fd4ff", 13, 450);
+      return floatHeld(rt, anchor.x, anchor.y - 110, `Tỏa Nguyệt hủy ${event.intentIds.length} chiêu`, "#9fd4ff", 13, 450, 150);
     }
     case "sealStripped": {
       const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
       // refId is an intentId for enemies, a card instanceId for hero cards, a summonId for Linh Thú.
-      const instance = ctx.state.cards[event.refId];
-      const ref = ctx.state.enemies.some((enemy) => enemy.id === event.unitId)
+      const instance = ctx.presentation.cards[event.refId];
+      const ref = ctx.presentation.enemies.some((enemy) => enemy.id === event.unitId)
         ? findIntent(ctx, event.unitId, event.refId)?.name
-        : ctx.state.summons?.some((summon) => summon.id === event.unitId)
+        : ctx.presentation.summons?.some((summon) => summon.id === event.unitId)
           ? ctx.gameData.summons[event.refId]?.name
-          : instance ? cardDefOf(ctx.gameData, ctx.state, instance)?.name : undefined;
-      return floatText(rt, anchor.x, anchor.y - 110, `Phong Ấn: ${ref ?? ""} mất hiệu ứng`, "#b9a8ff", 13, 450);
+          : instance ? cardDefOf(ctx.gameData, ctx.presentation, instance)?.name : undefined;
+      return floatHeld(rt, anchor.x, anchor.y - 110, `Phong Ấn: ${ref ?? ""} mất hiệu ứng`, "#b9a8ff", 13, 450, 150);
     }
     case "intentExecuted": {
       const anchor = anchorOf(event.enemyId);
@@ -448,63 +789,68 @@ function animateEvent(
       const aimed = target
         ? [target]
         : intent?.kind === "attack"
-          ? ctx.state.heroes.filter((hero) => hero.alive).flatMap((hero) => anchorOf(hero.id) ?? [])
+          ? ctx.presentation.heroes.filter((hero) => hero.alive).flatMap((hero) => anchorOf(hero.id) ?? [])
           : [];
       const dx = target ? (target.x - anchor.x) * 0.18 : 0;
       const dy = target ? (target.y - anchor.y) * 0.18 : (aimed.length > 0 ? 20 : 0);
-      const lunge = rt.tween({
-        targets: view,
-        x: anchor.x + dx,
-        y: anchor.y + dy,
-        duration: 125,
-        yoyo: true,
-      });
-      return Promise.all([
-        lunge,
-        floatText(rt, anchor.x, anchor.y + 90, intent?.name ?? "", "#ffb070", 18, 550),
-        ...(intent?.kind === "attack" || intent?.kind === "attackDefend" ? [] : aimed.map((to) => beam(rt, anchor, to, 0xff7050, 550, 5))),
-      ]).then(() => undefined);
+      // Reduced motion trades the lunge for an alpha pulse — same 120 ms beat.
+      const signal = rt.reducedMotion
+        ? rt.tween({ targets: view, alpha: 0.45, duration: 60, yoyo: true })
+        : rt.tween({ targets: view, x: anchor.x + dx, y: anchor.y + dy, duration: 60, yoyo: true });
+      void floatText(rt, anchor.x, anchor.y + 90, intent?.name ?? "", "#ffb070", 18, 400).catch(() => {});
+      if (intent?.kind !== "attack" && intent?.kind !== "attackDefend") {
+        for (const to of aimed) void beam(rt, anchor, to, 0xff7050, 350, 5).catch(() => {});
+      }
+      return Promise.all([signal, rt.wait(120)]).then(() => undefined);
     }
     case "intentSkipped": {
       const anchor = anchorOf(event.enemyId);
       if (!anchor) return instant();
-      return floatText(rt, anchor.x, anchor.y - 80, "Đóng Băng — bỏ qua", "#9fd4ff", 13, 300);
+      return floatHeld(rt, anchor.x, anchor.y - 80, "Đóng Băng — bỏ qua", "#9fd4ff", 13, 300, 120);
     }
     case "intentFizzled": {
       const anchor = anchorOf(event.enemyId);
       if (!anchor) return instant();
-      return floatText(rt, anchor.x, anchor.y - 80, "Hụt", "#8b93b8", 13, 250);
+      return floatHeld(rt, anchor.x, anchor.y - 80, "Hụt", "#8b93b8", 13, 250, 120);
     }
     case "heroLeveledUp": {
+      ctx.audio?.play("levelUp");
       const anchor = anchorOf(event.heroId);
       const jobs: Promise<void>[] = [
         floatText(rt, WIDTH / 2, midY, `★ ${event.name} ★`, "#f4d35e", 26, 900),
       ];
-      if (anchor) jobs.push(flash(rt, anchor.x, anchor.y, unitFlash.w, unitFlash.h, 0xf4d35e, 500));
-      return Promise.all(jobs).then(() => undefined);
+      if (anchor) jobs.push(unitFlashAt(rt, ctx, event.heroId, 0xf4d35e, 500));
+      return held(rt, 500, ...jobs);
     }
     case "unitDied": {
       const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
-      const boss = ctx.state.boss?.enemyId === event.unitId;
+      ctx.audio?.play("death");
+      const boss = ctx.presentation.boss?.enemyId === event.unitId;
       return deathBurn(rt, ctx.unitViews.get(event.unitId), anchor, boss);
     }
     case "runRelicTriggered": {
       const relic = ctx.gameData.runRelics[event.runRelicId];
       const name = relic?.name ?? ctx.gameData.augments[event.runRelicId]?.name ?? event.runRelicId;
       const color = relic === undefined ? "#e0b0ff" : "#9fd4ff";
-      return floatText(rt, WIDTH / 2, midY, `✦ ${name}`, color, 18, 400);
+      return floatHeld(rt, WIDTH / 2, midY, `✦ ${name}`, color, 18, 400, 200);
     }
     case "relicTriggered": {
       const name = ctx.gameData.relics[event.relicId]?.name ?? event.relicId;
-      return floatText(rt, WIDTH / 2, midY, `☾ ${name}`, "#f4d35e", 18, 400);
+      return floatHeld(rt, WIDTH / 2, midY, `☾ ${name}`, "#f4d35e", 18, 400, 200);
     }
     case "weaponTriggered": {
       const name = ctx.gameData.weapons[event.weaponId]?.name ?? event.weaponId;
-      return floatText(rt, WIDTH / 2, midY, `⚔ ${name}`, "#ffb080", 18, 400);
+      return floatHeld(rt, WIDTH / 2, midY, `⚔ ${name}`, "#ffb080", 18, 400, 200);
     }
-    case "combatEnded":
+    case "combatEnded": {
+      // Seat-relative win: PvP carries `winner`, PvE the viewer's `result` —
+      // the audio instance dedupes against a later terminal recovery frame.
+      const won =
+        event.winner === "draw" ? false : event.winner !== undefined ? event.winner === (ctx.mySeat ?? 0) : event.result === "won";
+      ctx.audio?.play(event.result === "draw" ? "draw" : won ? "victory" : "defeat");
       return instant();
+    }
     case "playerForfeited": {
       const reasons: Record<string, string> = {
         resign: "bỏ cuộc",
@@ -512,10 +858,10 @@ function animateEvent(
         disconnect: "mất kết nối",
       };
       const who = event.player === ctx.mySeat ? "Bạn" : "Đối thủ";
-      return floatText(rt, WIDTH / 2, midY, `${who} ${reasons[event.reason] ?? event.reason}`, "#ff8080", 22, 700);
+      return floatHeld(rt, WIDTH / 2, midY, `${who} ${reasons[event.reason] ?? event.reason}`, "#ff8080", 22, 700, 300);
     }
     case "playerDisconnected":
-      return floatText(
+      return floatHeld(
         rt,
         WIDTH / 2,
         300,
@@ -523,26 +869,28 @@ function animateEvent(
         "#8b93b8",
         16,
         600,
+        250,
       );
     case "mulliganed":
-      return floatText(rt, WIDTH / 2, 550, `Đổi ${event.returned.length} lá`, "#cfd6f0", 14, 250);
+      return floatHeld(rt, WIDTH / 2, 550, `Đổi ${event.returned.length} lá`, "#cfd6f0", 14, 250, 150);
     case "choiceOpened":
-      return floatText(rt, WIDTH / 2, 550, "Chiêm Bài", "#f4d35e", 16, 250);
+      return floatHeld(rt, WIDTH / 2, 550, "Chiêm Bài", "#f4d35e", 16, 250, 150);
     case "moonChoiceOpened":
-      return floatText(rt, WIDTH / 2, 550, "Chọn Pha", "#f4d35e", 16, 250);
+      return floatHeld(rt, WIDTH / 2, 550, "Chọn Pha", "#f4d35e", 16, 250, 150);
     case "cardChosen":
       return instant();
     case "deckedOut":
-      return floatText(rt, WIDTH / 2, midY, "CẠN BÀI", "#ff8080", 28, 700);
+      return floatHeld(rt, WIDTH / 2, midY, "CẠN BÀI", "#ff8080", 28, 700, 350);
     case "cardsPurged":
-      return floatText(rt, pile.x + 90, pile.y - 70, `-${event.instanceIds.length} lá (Tán Chiêu)`, "#8b93b8", 12, 300);
+      return floatHeld(rt, pile.x + 90, pile.y - 70, `-${event.instanceIds.length} lá (Tán Chiêu)`, "#8b93b8", 12, 300, 150);
     case "moonReserveChanged": {
       if (event.side === "hero") {
-        return floatText(rt, moonPower.x - 60, moonPower.y + 46, `Dự Trữ ${event.value}`, "#7fd4ff", 13, 250);
+        const at = anchorsFor(ctx, event.player).reserve;
+        return floatHeld(rt, at.x - 60, at.y, `Dự Trữ ${event.value}`, "#7fd4ff", 13, 250, 120);
       }
       const anchor = event.enemyId !== undefined ? anchorOf(event.enemyId) : undefined;
       if (!anchor) return instant();
-      return floatText(rt, anchor.x, anchor.y - 95, `Dự Trữ ${event.value}`, "#7fd4ff", 11, 150);
+      return floatHeld(rt, anchor.x, anchor.y - 95, `Dự Trữ ${event.value}`, "#7fd4ff", 11, 150, 120);
     }
     case "summoned": {
       // Linh Thú (`01` §17): its panel only exists after the next render, so
@@ -565,17 +913,14 @@ function animateEvent(
         onComplete: () => glow.destroy(),
       });
       const name = ctx.gameData.summons[event.summonId]?.name ?? "Linh Thú";
-      return Promise.all([
-        ring,
-        floatText(rt, anchor.x, anchor.y - 62, `Triệu hồi — ${name}`, "#f4d35e", 18, 500),
-      ]).then(() => undefined);
+      return held(rt, 300, ring, floatText(rt, anchor.x, anchor.y - 62, `Triệu hồi — ${name}`, "#f4d35e", 18, 500));
     }
     case "summonActed": {
       const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
-      const summon = ctx.state.summons?.find((unit) => unit.id === event.unitId);
+      const summon = ctx.presentation.summons?.find((unit) => unit.id === event.unitId);
       const name = (summon && ctx.gameData.summons[summon.summonId]?.name) ?? "Linh Thú";
-      return floatText(rt, anchor.x, anchor.y - 44, name, "#9fd4ff", 14, 300);
+      return floatHeld(rt, anchor.x, anchor.y - 44, name, "#9fd4ff", 14, 300, 120);
     }
     case "summonDismissed": {
       const anchor = anchorOf(event.unitId);
@@ -588,16 +933,31 @@ function animateEvent(
       if (anchor) {
         jobs.push(floatText(rt, anchor.x, anchor.y - 30, "Linh Thú biến mất", "#8b93b8", 13, 350));
       }
-      return Promise.all(jobs).then(() => undefined);
+      return held(rt, 300, ...jobs);
     }
     case "heroRevived": {
-      // Hồi Hồn (`18` §3.5): a fallen hero stands back up — gold flash + float.
+      // Hồi Hồn (`18` §3.5): the fallen card brightens back as it stands.
       const anchor = anchorOf(event.heroId);
+      const view = ctx.unitViews.get(event.heroId);
       const jobs: Promise<void>[] = [
         floatText(rt, anchor?.x ?? WIDTH / 2, (anchor?.y ?? 400) - 62, "Hồi Hồn", "#f4d35e", 20, 600),
       ];
-      if (anchor) jobs.push(flash(rt, anchor.x, anchor.y, unitFlash.w, unitFlash.h, 0xf4d35e, 500));
-      return Promise.all(jobs).then(() => undefined);
+      if (anchor) jobs.push(unitFlashAt(rt, ctx, event.heroId, 0xf4d35e, 500));
+      if (view && anchor) {
+        jobs.push(rt.tween({ targets: view, alpha: 1, scale: 1, y: anchor.y, duration: 420, ease: "Sine.easeOut" }));
+      }
+      return held(rt, 450, ...jobs);
+    }
+    case "coopComboTriggered": {
+      // Hợp Kích (`01` §16.4): the banner lands mid-queue, not after the batch commits.
+      const name = ctx.gameData.coopCombos[event.comboId]?.name ?? event.comboId;
+      return floatHeld(rt, WIDTH / 2, midY - 30, `HỢP KÍCH — ${name}!`, "#f4d35e", 28, 800, 400);
+    }
+    case "bossPhaseChanged": {
+      // `01` §16.5: the phase banner is a queue beat like any other.
+      const defId = ctx.presentation.enemies.find((enemy) => enemy.id === event.enemyId)?.defId;
+      const name = (defId !== undefined ? ctx.gameData.enemies[defId]?.name : undefined) ?? "Ma Quân";
+      return floatHeld(rt, WIDTH / 2, midY - 30, `${name} — Giai đoạn ${event.phase}`, "#ff8090", 26, 800, 400);
     }
     default:
       return instant();

@@ -64,6 +64,15 @@ export function redactEvents(events: CombatEvent[], player: number): CombatEvent
         return { ...event, options: hidden(event.options, "hidden_option_") };
       case "cardChosen":
         return { ...event, instanceId: "hidden_choice", bottomed: hidden(event.bottomed, "hidden_bottomed_") };
+      case "cardCreated":
+        // The created card lands in the opponent's hidden hand — neither its
+        // definition nor its real instance id may leak. The count is real
+        // though, so a placeholder keeps the viewer's hand-count tracking.
+        return {
+          ...event,
+          cardId: "hidden_card",
+          instanceId: event.instanceId === null ? null : "hidden_created_0",
+        };
       default:
         return event;
     }

@@ -1,4 +1,5 @@
 export type * from "./types/index";
+export { cloneState } from "./clone";
 export { nextRandom, shuffle } from "./rng";
 export {
   activePlayerState,
@@ -31,10 +32,10 @@ export { replayMatch } from "./pvp/replay";
 export { redactEvents, viewFor } from "./pvp/view";
 export { coopRedactEvents, coopViewFor } from "./coop/view";
 export { chooseCombatAction } from "./bot";
-export { displayDuration, getStatus, hasStatus } from "./statuses";
+export { displayDuration, DURATION_STATUSES, getStatus, hasStatus } from "./statuses";
 export { applyAction } from "./apply-action";
 export { autoChoiceAction } from "./choice";
-export { getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
+export { cardOwners, getEffectiveCost, getValidTargets, isCardPlayable } from "./queries";
 export { getMulliganError, getPlayCardError } from "./apply-action";
 export { previewEnemyIntent } from "./preview";
 export { planEnemyIntents } from "./intent";
