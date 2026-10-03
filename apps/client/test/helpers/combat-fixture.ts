@@ -50,7 +50,7 @@ export function fixture(mode: "pve" | "pvp" | "coop" = "pve"): { data: GameData;
 }
 
 /** A per-seat realtime snapshot the way the server sends it (`16` §8.2). */
-export function snapshot(state: CombatState, you = 0): MatchSnapshot {
+export function snapshot(state: CombatState, you = 0, overrides: Partial<MatchSnapshot> = {}): MatchSnapshot {
   return {
     matchId: "m_fixture",
     mode: state.mode,
@@ -61,6 +61,8 @@ export function snapshot(state: CombatState, you = 0): MatchSnapshot {
     view: state,
     deadline: null,
     eventSeq: 0,
+    nextActionSeq: 1,
+    ...overrides,
   };
 }
 

@@ -9,6 +9,8 @@ export interface MatchSnapshot {
   view: CombatState;
   deadline: number | null;
   eventSeq: number;
+  /** Next action `seq` the server accepts from this seat — each receiver sees its own. */
+  nextActionSeq: number;
 }
 
 export type ServerMessage =
@@ -18,8 +20,17 @@ export type ServerMessage =
   | { type: "room.updated"; code: string; mode: string; players: { username: string; ready: boolean }[] }
   | { type: "room.closed"; code: string }
   | ({ type: "match.start" } & MatchSnapshot)
-  | { type: "match.events"; matchId: string; eventSeq: number; events: CombatEvent[]; view: CombatState; deadline: number | null }
-  | { type: "match.rejected"; matchId: string; seq: number; reason: string }
+  | ({ type: "match.snapshot" } & MatchSnapshot)
+  | {
+      type: "match.events";
+      matchId: string;
+      eventSeq: number;
+      nextActionSeq: number;
+      events: CombatEvent[];
+      view: CombatState;
+      deadline: number | null;
+    }
+  | { type: "match.rejected"; matchId: string; seq: number; nextActionSeq: number; reason: string }
   | {
       type: "match.end";
       matchId: string;

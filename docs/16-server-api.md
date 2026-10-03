@@ -310,16 +310,22 @@ vụ `apps/client/dist` như static SPA: route không khớp file thật rơi v�
 
 Client → server: `hello`, `queue.join`, `queue.leave`, `room.create`, `room.join`,
 `room.leave`, `practice.start`, `match.action { matchId, seq, action }`,
-`match.resign`, `match.emote`, `pong`.
+`match.resign`, `match.emote`, `match.sync { matchId }`, `pong`.
 
 Server → client: `welcome { account, activeMatch?, serverTime }`, `queue.status`,
-`room.created` / `room.updated`, `match.start` (MatchSnapshot), `match.events
-{ matchId, eventSeq, events, view, deadline }`, `match.rejected { matchId, seq,
-reason }`, `match.end { matchId, result, reason, rating?, rewards?, profileRev? }`,
-`match.emote`, `error`, `ping`.
+`room.created` / `room.updated`, `match.start` (MatchSnapshot), `match.snapshot`
+(MatchSnapshot, trả lời `match.sync` hoặc action trùng seq), `match.events
+{ matchId, eventSeq, nextActionSeq, events, view, deadline }`, `match.rejected
+{ matchId, seq, nextActionSeq, reason }`, `match.end { matchId, result, reason,
+rating?, rewards?, profileRev? }`, `match.emote`, `error`, `ping`.
 
 - `seq` trong `match.action` = số Action của riêng người đó đã được chấp nhận + 1;
-  trùng → bỏ qua im lặng; nhảy cóc → `match.rejected "bad seq"`.
+  trùng (`seq < nextActionSeq`) → không áp lại, server trả `match.snapshot` hiện
+  tại; nhảy cóc → `match.rejected "bad seq"` kèm `nextActionSeq` mong đợi.
+- `nextActionSeq` trên MatchSnapshot / `match.events` / `match.rejected` là seq
+  kế tiếp server chấp nhận **của riêng người nhận** — mỗi client thấy seq của
+  chính mình; client coi action đang chờ đã được chấp nhận khi
+  `nextActionSeq > seq đang chờ`.
 - `eventSeq` tăng dần mỗi `match.events`; client thấy lỗ hổng → chờ snapshot kế
   hoặc kết nối lại.
 - `deadline` = thời điểm hết lượt (ms UTC server); client bù lệch giờ bằng
@@ -329,10 +335,17 @@ reason }`, `match.end { matchId, result, reason, rating?, rewards?, profileRev? 
 
 - Giữ `state` đầy đủ, nhật ký Action, đồng hồ, kết nối từng người. Mọi Action xử
   lý tuần tự trong phòng (Node đơn luồng; không `await` giữa đọc/ghi state).
+- Mọi frame `match.*` định tuyến theo `matchId` trên tin + tư cách ghế của tài
+  khoản — frame mang `matchId` cũ chỉ chạm vào phòng nó nêu tên (đã kết thúc →
+  bỏ qua), không bao giờ áp lên trận mới của account; `match.sync` cũng bị từ
+  chối (`error "no match"`) khi account không ngồi trong phòng đó.
 - `match.action`: kiểm `seq` → quyền (PvP: đúng lượt; co-op: chưa `done`) →
   `applyAction`. Lỗi luật → `match.rejected`. Thành công → ghi nhật ký, gửi mỗi
   người `redactEvents(events, i)` + `viewFor(state, i)`, đặt lại đồng hồ khi đổi
   lượt.
+- `match.sync`: trả `match.snapshot` của chính ghế đó — kể cả trên phòng đã kết
+  thúc còn giữ lại (~60 s), để client kết nối lại muộn vẫn lấy được trạng thái
+  chung kết.
 - Schema action của `match.action` (realtime) gồm mọi loại của `02` §3, kể cả
   **[Nguyệt Luân mới]** `discardCard` / `bloodPact`; trường `player` trong action
   **không tin client** — server gắn theo seat của kết nối trước khi `applyAction`.
@@ -346,7 +359,11 @@ reason }`, `match.end { matchId, result, reason, rating?, rewards?, profileRev? 
 - Mất kết nối giữa trận: phòng giữ nguyên, đồng hồ lượt **vẫn chạy**; người kia
   nhận `match.events` kèm `playerDisconnected`.
 - Kết nối lại trong `reconnectSeconds`: `welcome.activeMatch` mang snapshot đầy
-  đủ (góc nhìn + `eventSeq` + `deadline`); client dựng lại màn trận.
+  đủ (góc nhìn + `eventSeq` + `nextActionSeq` + `deadline`); client dựng lại màn
+  trận, đồng bộ lại seq action và bỏ action chưa được server chấp nhận (hiện
+  "Thao tác chưa được xác nhận, hãy thử lại."). Client chỉ giữ tối đa một action
+  chờ xác nhận; `seq` chỉ bị tiêu thụ khi frame thực sự rời socket — tin trận
+  đấu không bao giờ nằm trong outbox offline.
 - Quá hạn → Action hệ thống `forfeit { reason: "disconnect" }`. Tải lại trang =
   kết nối lại (token trong `localStorage`).
 

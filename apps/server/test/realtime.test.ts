@@ -283,11 +283,86 @@ describe("realtime", () => {
     waiting.sendAction({ type: "endTurn" });
     await waiting.ws.settle();
     expect(waiting.ws.last("match.rejected")).toMatchObject({ seq: waiting.seq });
-    // Trùng seq < nextSeq → im lặng (không rejected, không events mới).
-    const before = active.ws.inbox.length;
+    // Trùng seq < nextSeq → không áp lại; server trả snapshot hiện tại thay vì im lặng.
+    const eventsBefore = active.ws.inbox.filter((m) => m.type === "match.events").length;
     active.ws.send({ type: "match.action", matchId, seq: 1, action: { type: "endTurn" } });
     await active.ws.settle();
-    expect(active.ws.inbox.length).toBe(before);
+    expect(active.ws.inbox.filter((m) => m.type === "match.events")).toHaveLength(eventsBefore);
+    expect(active.ws.last("match.rejected")).toBeUndefined();
+    const dupSnap = active.ws.last<{ matchId: string; nextActionSeq: number }>("match.snapshot")!;
+    expect(dupSnap.matchId).toBe(matchId);
+    expect(dupSnap.nextActionSeq).toBe(2);
+  }, 60_000);
+
+  it("N2 seq recovery: nextActionSeq trên snapshot/push; duplicate → snapshot; bad seq → expected", async () => {
+    const server = await testServer();
+    const { wsA, wsB, matchId } = await startPrivateMatch(server);
+    const startA = wsA.last<{ nextActionSeq: number }>("match.start")!;
+    const startB = wsB.last<{ nextActionSeq: number }>("match.start")!;
+    expect(startA.nextActionSeq).toBe(1);
+    expect(startB.nextActionSeq).toBe(1);
+
+    // Chấp nhận seq 1: push tới A mang nextActionSeq=2; B vẫn ở 1 — seq là của từng ghế.
+    wsA.send({ type: "match.action", matchId, seq: 1, action: { type: "mulligan", instanceIds: [] } });
+    await wsA.settle();
+    await wsB.settle();
+    const eventsA = wsA.last<{ nextActionSeq: number }>("match.events")!;
+    const eventsB = wsB.last<{ nextActionSeq: number }>("match.events")!;
+    expect(eventsA.nextActionSeq).toBe(2);
+    expect(eventsB.nextActionSeq).toBe(1);
+
+    // Trùng seq 1 → không áp lại; server trả kèm snapshot.
+    const pushesBefore = wsA.inbox.filter((m) => m.type === "match.events").length;
+    wsA.send({ type: "match.action", matchId, seq: 1, action: { type: "mulligan", instanceIds: [] } });
+    await wsA.settle();
+    expect(wsA.inbox.filter((m) => m.type === "match.events")).toHaveLength(pushesBefore);
+    const dup = wsA.last<{ matchId: string; nextActionSeq: number }>("match.snapshot")!;
+    expect(dup.matchId).toBe(matchId);
+    expect(dup.nextActionSeq).toBe(2);
+
+    // Nhảy cóc seq → match.rejected mang expected seq.
+    wsA.send({ type: "match.action", matchId, seq: 9, action: { type: "endTurn" } });
+    await wsA.settle();
+    expect(wsA.last("match.rejected")).toMatchObject({ seq: 9, reason: "bad seq", nextActionSeq: 2 });
+
+    // match.sync trả snapshot của chính ghế mình.
+    wsB.send({ type: "match.sync", matchId });
+    await wsB.settle();
+    expect(wsB.last("match.snapshot")).toMatchObject({ matchId, nextActionSeq: 1 });
+    wsB.send({ type: "match.sync", matchId: "m_khong_ton_tai" });
+    await wsB.settle();
+    expect(wsB.last("error")).toMatchObject({ error: "no match" });
+  }, 60_000);
+
+  it("N2 matchId routing: frame matchId cũ không áp lên room mới; sync từ chối room người khác", async () => {
+    const server = await testServer();
+    const { wsA, wsB, matchId: oldMatchId } = await startPrivateMatch(server);
+    wsA.send({ type: "match.resign", matchId: oldMatchId });
+    await wsA.settle();
+    await wsB.settle();
+
+    // A vào trận mới (practice) trong khi room cũ còn được giữ lại.
+    wsA.send({ type: "practice.start", mode: "pvp", deckId: "d1" });
+    await wsA.settle();
+    const start2 = wsA.last<{ matchId: string }>("match.start")!;
+    expect(start2.matchId).not.toBe(oldMatchId);
+
+    // Action mang matchId cũ → rơi vào room đã kết thúc, không đụng room mới.
+    const eventsBefore = wsA.inbox.filter((m) => m.type === "match.events").length;
+    wsA.send({ type: "match.action", matchId: oldMatchId, seq: 1, action: { type: "mulligan", instanceIds: [] } });
+    await wsA.settle();
+    expect(wsA.inbox.filter((m) => m.type === "match.events")).toHaveLength(eventsBefore);
+
+    // match.sync được phép lên retained terminal room của chính account...
+    wsA.send({ type: "match.sync", matchId: oldMatchId });
+    await wsA.settle();
+    expect(wsA.last<{ matchId: string }>("match.snapshot")!.matchId).toBe(oldMatchId);
+
+    // ...nhưng không lên room mà account không ngồi.
+    wsB.send({ type: "match.sync", matchId: start2.matchId });
+    await wsB.settle();
+    expect(wsB.last("match.snapshot")).toBeUndefined();
+    expect(wsB.last("error")).toMatchObject({ error: "no match" });
   }, 60_000);
 
   it("T235 sau mỗi Action mỗi người nhận góc nhìn riêng: tay đối thủ chỉ còn số lượng", async () => {

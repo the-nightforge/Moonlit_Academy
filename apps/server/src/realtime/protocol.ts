@@ -25,6 +25,7 @@ export const clientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("match.action"), matchId: id, seq: z.number().int().nonnegative(), action: combatAction }),
   z.object({ type: z.literal("match.resign"), matchId: id }),
   z.object({ type: z.literal("match.emote"), matchId: id, emoteId: z.string().max(64) }),
+  z.object({ type: z.literal("match.sync"), matchId: id }),
   z.object({ type: z.literal("pong") }),
 ]);
 
@@ -42,6 +43,8 @@ export interface MatchSnapshot {
   /** Turn deadline in ms UTC; null until the turn clock is armed (5c.3). */
   deadline: number | null;
   eventSeq: number;
+  /** Next action `seq` the server accepts from this seat — each receiver sees its own (`16` §8.3). */
+  nextActionSeq: number;
 }
 
 export type ServerMessage =
@@ -51,8 +54,17 @@ export type ServerMessage =
   | { type: "room.updated"; code: string; mode: string; players: { username: string; ready: boolean }[] }
   | { type: "room.closed"; code: string }
   | ({ type: "match.start" } & MatchSnapshot)
-  | { type: "match.events"; matchId: string; eventSeq: number; events: CombatEvent[]; view: CombatState; deadline: number | null }
-  | { type: "match.rejected"; matchId: string; seq: number; reason: string }
+  | ({ type: "match.snapshot" } & MatchSnapshot)
+  | {
+      type: "match.events";
+      matchId: string;
+      eventSeq: number;
+      nextActionSeq: number;
+      events: CombatEvent[];
+      view: CombatState;
+      deadline: number | null;
+    }
+  | { type: "match.rejected"; matchId: string; seq: number; nextActionSeq: number; reason: string }
   | {
       type: "match.end";
       matchId: string;

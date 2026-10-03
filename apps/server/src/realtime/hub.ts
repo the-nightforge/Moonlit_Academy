@@ -223,26 +223,40 @@ export class RealtimeHub {
       case "room.leave":
         this.rooms.leave(accountId);
         return;
+      // Every match.* frame routes by its `matchId` + seat membership: a stale
+      // frame can only land on the room it names, never on the account's new
+      // match, and another account's room is unreachable (`16` §8.3).
       case "match.action": {
-        const room = this.matchByAccount.get(accountId);
-        const seat = room?.seatOf(accountId);
-        if (!room || !seat) {
+        const seat = this.matches.get(message.matchId)?.seatOf(accountId);
+        if (!seat) {
           this.reply(conn, { type: "error", error: "no match" });
           return;
         }
-        room.handleAction(seat, message.seq, message.action);
+        this.matches.get(message.matchId)!.handleAction(seat, message.seq, message.action);
         return;
       }
       case "match.resign": {
-        const room = this.matchByAccount.get(accountId);
+        const room = this.matches.get(message.matchId);
         const seat = room?.seatOf(accountId);
         if (room && seat) room.handleResign(seat);
         return;
       }
       case "match.emote": {
-        const room = this.matchByAccount.get(accountId);
+        const room = this.matches.get(message.matchId);
         const seat = room?.seatOf(accountId);
         if (room && seat) room.handleEmote(seat, message.emoteId);
+        return;
+      }
+      case "match.sync": {
+        // Own-seat recovery — also allowed on a retained terminal room so a
+        // late reconnect can still fetch the settled snapshot.
+        const room = this.matches.get(message.matchId);
+        const seat = room?.seatOf(accountId);
+        if (!room || !seat) {
+          this.reply(conn, { type: "error", error: "no match" });
+          return;
+        }
+        room.handleSync(seat);
         return;
       }
       case "practice.start": {

@@ -47,6 +47,20 @@ export class NetSocket {
     else this.outbox.push(text);
   }
 
+  /**
+   * Match frames never queue offline: a stale `match.action` landing after a
+   * reconnect could apply onto a new phase (`16` §8.3). Returns false when the
+   * frame could not leave — the caller keeps its action `seq` unconsumed.
+   */
+  sendMatch(message: {
+    type: "match.action" | "match.resign" | "match.emote" | "match.sync";
+    [key: string]: unknown;
+  }): boolean {
+    if (!this.connected || this.ws?.readyState !== WebSocket.OPEN) return false;
+    this.ws.send(JSON.stringify(message));
+    return true;
+  }
+
   close(): void {
     this.manualClose = true;
     window.clearTimeout(this.retryHandle);

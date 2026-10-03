@@ -117,6 +117,7 @@ export class MatchRoom {
       view: this.viewFor(seat),
       deadline: this.deadline,
       eventSeq: this.eventSeq,
+      nextActionSeq: this.seats[seat]!.nextSeq,
     };
   }
 
@@ -150,21 +151,43 @@ export class MatchRoom {
 
   handleAction(seat: MatchSeat, seq: number, action: Action): void {
     if (this.ended) return;
-    if (seq < seat.nextSeq) return; // duplicate — ignore silently (`16` §8.3)
+    // A duplicate is never applied twice — the seat gets its current snapshot
+    // back so a lost ack can reconcile (`16` §8.3).
+    if (seq < seat.nextSeq) {
+      this.handleSync(seat);
+      return;
+    }
     if (seq > seat.nextSeq) {
-      send(seat.socket, { type: "match.rejected", matchId: this.matchId, seq, reason: "bad seq" });
+      send(seat.socket, {
+        type: "match.rejected",
+        matchId: this.matchId,
+        seq,
+        nextActionSeq: seat.nextSeq,
+        reason: "bad seq",
+      });
       return;
     }
     // The server stamps the seat; a client cannot act for another player.
     const stamped = { ...action, player: seat.seat };
     const result = applyAction(this.ctx.data, this.state, stamped);
     if (!result.ok) {
-      send(seat.socket, { type: "match.rejected", matchId: this.matchId, seq, reason: result.error });
+      send(seat.socket, {
+        type: "match.rejected",
+        matchId: this.matchId,
+        seq,
+        nextActionSeq: seat.nextSeq,
+        reason: result.error,
+      });
       return;
     }
     seat.nextSeq += 1;
     seat.consecutiveTimeouts = 0; // an action of their own resets the clock count
     this.commit(seat, action, result.state, result.events);
+  }
+
+  /** `match.sync` — answers with this seat's snapshot (rejoin recovery). */
+  handleSync(seat: MatchSeat): void {
+    send(seat.socket, { type: "match.snapshot", ...this.snapshotFor(seat.seat) });
   }
 
   /** `match.resign` → the seat's own forfeit as a system action (`17` §4.6). */
@@ -321,6 +344,7 @@ export class MatchRoom {
         type: "match.events",
         matchId: this.matchId,
         eventSeq: this.eventSeq,
+        nextActionSeq: seat.nextSeq,
         events: this.redact(events, seat.seat),
         view: this.viewFor(seat.seat),
         deadline: this.deadline,

@@ -284,20 +284,9 @@ export class CombatScene extends Phaser.Scene {
       this.netDown = !connected;
       if (this.scene.isActive()) this.requestRender();
     };
-    net.onRejoin = (snapshot) => {
-      match.rejoin(snapshot);
-      // The rejoin's snapshot replaces everything: abort in-flight/queued
-      // playback before rebuilding the UI from the authoritative view.
-      this.playback.reset();
-      this.state = match.view;
-      this.latestState = match.view;
-      this.netActionPending = false;
-      this.targeting = null;
-      this.mulliganPicks.clear();
-      this.bannerQueue = [];
-      this.syncInputLock();
-      if (this.scene.isActive()) this.renderAll();
-    };
+    net.onRejoin = (snapshot) => this.applyNetRejoin(match.rejoin(snapshot));
+    // A `match.sync` answer resyncs the seat the same way a welcome rejoin does.
+    match.onRejoin = (_snapshot, lostPending) => this.applyNetRejoin(lostPending);
     match.onPush = (events, view) => this.onNetPush(events, view);
     match.onEnd = () => {
       this.inputLocked = true;
@@ -319,12 +308,30 @@ export class CombatScene extends Phaser.Scene {
     match.onEmote = (from, emoteId) => this.showEmote(from, emoteId);
   }
 
+  /** Rejoin/sync: rebuild everything from the authoritative view (`16` §8.5). */
+  private applyNetRejoin(lostPending: boolean): void {
+    const match = this.netMatch!;
+    // The rejoin's snapshot replaces everything: abort in-flight/queued
+    // playback before rebuilding the UI from the authoritative view.
+    this.playback.reset();
+    this.state = match.view;
+    this.latestState = match.view;
+    this.netActionPending = false;
+    this.targeting = null;
+    this.mulliganPicks.clear();
+    this.bannerQueue = [];
+    this.syncInputLock();
+    if (this.scene.isActive()) this.renderAll();
+    if (lostPending) this.showError("Thao tác chưa được xác nhận, hãy thử lại.");
+  }
+
   private unbindNet(): void {
     if (!this.netMatch) return;
     this.netMatch.onPush = () => {};
     this.netMatch.onEnd = () => {};
     this.netMatch.onRejected = () => {};
     this.netMatch.onEmote = () => {};
+    this.netMatch.onRejoin = () => {};
   }
 
   /** Incoming/own emote: a fading line under the opponent strip (`17` §7.3). */
@@ -390,7 +397,11 @@ export class CombatScene extends Phaser.Scene {
     if (this.inputLocked) return false;
     if (this.netMatch) {
       // The server validates; rejected actions come back as match.rejected.
-      this.netMatch.sendAction(action);
+      // A false return means the frame never left — nothing is pending.
+      if (!this.netMatch.sendAction(action)) {
+        this.showError("Mất kết nối — thao tác chưa gửi được.");
+        return false;
+      }
       this.netActionPending = true;
       this.syncInputLock();
       return true;

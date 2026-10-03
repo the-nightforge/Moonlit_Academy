@@ -23,13 +23,17 @@ export class NetMatch {
     profileRev?: number;
   } | null = null;
 
-  private seq = 1;
+  private seq: number;
   private lastEventSeq: number;
+  /** The action `seq` in flight — at most one (`16` §8.3). */
+  private pendingSeq: number | null = null;
   /** Scene hooks — set while the combat scene is active. */
   onPush: (events: CombatEvent[], view: CombatState) => void = () => {};
   onEnd: (result: "won" | "lost" | "draw", reason: string) => void = () => {};
   onRejected: (reason: string) => void = () => {};
   onEmote: (from: number, emoteId: string) => void = () => {};
+  /** A `match.snapshot` answer to `match.sync` resynced the seat like a rejoin. */
+  onRejoin: (snapshot: MatchSnapshot, lostPending: boolean) => void = () => {};
 
   constructor(
     private readonly net: NetSocket,
@@ -42,25 +46,34 @@ export class NetMatch {
     this.view = snapshot.view;
     this.deadline = snapshot.deadline;
     this.lastEventSeq = snapshot.eventSeq;
+    this.seq = snapshot.nextActionSeq;
   }
 
-  /** `seq` is only consumed on acceptance; a rejection rolls it back (`16` §8.3). */
-  sendAction(action: Action): void {
+  /**
+   * One pending action at a time (`16` §8.3). `seq` is only consumed when the
+   * frame actually leaves — offline sends return false and keep the seq.
+   */
+  sendAction(action: Action): boolean {
+    if (this.pendingSeq !== null) return false;
     const seq = this.seq;
+    if (!this.net.sendMatch({ type: "match.action", matchId: this.matchId, seq, action })) return false;
     this.seq += 1;
-    this.net.send({ type: "match.action", matchId: this.matchId, seq, action });
     this.pendingSeq = seq;
+    return true;
   }
 
-  private pendingSeq: number | null = null;
+  /** Asks the server for a fresh snapshot — recovery without waiting for `welcome`. */
+  requestSync(): boolean {
+    return this.net.sendMatch({ type: "match.sync", matchId: this.matchId });
+  }
 
   resign(): void {
-    this.net.send({ type: "match.resign", matchId: this.matchId });
+    this.net.sendMatch({ type: "match.resign", matchId: this.matchId });
   }
 
   /** Fixed chat emote (`17` §7.3); the client throttles to one per 3 s. */
   sendEmote(emoteId: string): void {
-    this.net.send({ type: "match.emote", matchId: this.matchId, emoteId });
+    this.net.sendMatch({ type: "match.emote", matchId: this.matchId, emoteId });
   }
 
   /** `true` while the seat may legally act from its own view. */
@@ -78,6 +91,10 @@ export class NetMatch {
     if (!("matchId" in message) || message.matchId !== this.matchId) return false;
     switch (message.type) {
       case "match.events":
+        // The server's next expected seq acknowledges our pending action and
+        // resyncs `seq` — even on a replayed push the ack must land.
+        if (this.pendingSeq !== null && message.nextActionSeq > this.pendingSeq) this.pendingSeq = null;
+        this.seq = Math.max(this.seq, message.nextActionSeq);
         if (message.eventSeq <= this.lastEventSeq) return true; // replay on rejoin
         this.lastEventSeq = message.eventSeq;
         this.deadline = message.deadline;
@@ -85,12 +102,16 @@ export class NetMatch {
         this.onPush(message.events, message.view);
         return true;
       case "match.rejected":
-        if (message.seq === this.pendingSeq) {
-          this.seq = this.pendingSeq; // never consumed — the client may resend
-          this.pendingSeq = null;
-        }
+        // The server never consumed this seq — `nextActionSeq` is where to retry.
+        if (message.seq === this.pendingSeq) this.pendingSeq = null;
+        this.seq = message.nextActionSeq;
         this.onRejected(message.reason);
         return true;
+      case "match.snapshot": {
+        const lostPending = this.rejoin(message);
+        this.onRejoin(message, lostPending);
+        return true;
+      }
       case "match.end":
         this.ended = {
           result: message.result,
@@ -109,14 +130,22 @@ export class NetMatch {
     }
   }
 
-  /** Reconnect: the server resent the whole snapshot — take its state. */
-  rejoin(snapshot: MatchSnapshot): void {
+  /**
+   * Reconnect/sync: the server resent the whole snapshot — take its state and
+   * its `nextActionSeq`. A pending the server never accepted is dropped, not
+   * replayed; returns true when such an unconfirmed action was discarded.
+   */
+  rejoin(snapshot: MatchSnapshot): boolean {
+    const lostPending = this.pendingSeq !== null && snapshot.nextActionSeq <= this.pendingSeq;
     this.view = snapshot.view;
     this.deadline = snapshot.deadline;
     this.lastEventSeq = snapshot.eventSeq;
+    this.seq = snapshot.nextActionSeq;
+    this.pendingSeq = null;
     for (const other of snapshot.others) {
       const known = this.others.find((o) => o.seat === other.seat);
       if (known) known.connected = other.connected;
     }
+    return lostPending;
   }
 }
