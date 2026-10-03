@@ -179,8 +179,6 @@ export class CombatScene extends Phaser.Scene {
   private playback!: CombatPlayback;
   /** The newest state the pipeline has seen; the next batch animates from it. */
   private latestState!: CombatState;
-  /** Online: an action was sent and no server answer (events or rejection) came back yet. */
-  private netActionPending = false;
   private renderQueued = false;
   /** Post-commit follow-ups keyed by their batch (run transition, story finish). */
   private commitWork = new Map<PlaybackBatch, () => void>();
@@ -228,7 +226,6 @@ export class CombatScene extends Phaser.Scene {
     this.storyDeck = session.story?.deck ?? null;
     this.storyFinishing = false;
     this.latestState = this.state;
-    this.netActionPending = false;
     this.renderQueued = false;
     this.commitWork.clear();
     this.playback = new CombatPlayback({
@@ -329,7 +326,6 @@ export class CombatScene extends Phaser.Scene {
       // Profile refresh and the settlement notice are the registry's job (`16` §8.4).
     };
     match.onRejected = (reason) => {
-      this.netActionPending = false;
       this.syncInputLock();
       this.showError(reason);
     };
@@ -344,7 +340,6 @@ export class CombatScene extends Phaser.Scene {
     this.playback.reset();
     this.state = match.view;
     this.latestState = match.view;
-    this.netActionPending = false;
     this.targeting = null;
     this.mulliganPicks.clear();
     this.bannerQueue = [];
@@ -425,12 +420,13 @@ export class CombatScene extends Phaser.Scene {
     if (this.inputLocked) return false;
     if (this.netMatch) {
       // The server validates; rejected actions come back as match.rejected.
-      // A false return means the frame never left — nothing is pending.
+      // A false return means the frame never left — nothing new is pending.
       if (!this.netMatch.sendAction(action)) {
-        this.showError("Mất kết nối — thao tác chưa gửi được.");
+        this.showError(
+          this.netMatch.pending ? "Đang chờ xác nhận thao tác trước…" : "Mất kết nối — thao tác chưa gửi được.",
+        );
         return false;
       }
-      this.netActionPending = true;
       this.syncInputLock();
       return true;
     }
@@ -537,7 +533,6 @@ export class CombatScene extends Phaser.Scene {
   /** The batch finished its beat: commit its state and redraw. */
   private commitBatch(batch: PlaybackBatch): void {
     this.state = batch.after;
-    this.netActionPending = false;
     this.renderAll();
     this.playBanners();
     const work = this.commitWork.get(batch);
@@ -552,7 +547,6 @@ export class CombatScene extends Phaser.Scene {
     console.error("combat playback failed:", error);
     this.state = latest;
     this.latestState = latest;
-    this.netActionPending = false;
     this.showError("Có lỗi khi hiển thị — đã đồng bộ lại trạng thái");
     this.renderAll();
   }
@@ -561,7 +555,7 @@ export class CombatScene extends Phaser.Scene {
   private syncInputLock(): void {
     this.inputLocked =
       this.playback.busy ||
-      this.netActionPending ||
+      (this.netMatch?.pending ?? false) ||
       this.netMatch?.ended != null ||
       this.storyFinishing ||
       (this.netMatch !== null && this.netDown);
@@ -724,7 +718,6 @@ export class CombatScene extends Phaser.Scene {
     this.targeting = null;
     this.validTargetIds.clear();
     this.mulliganPicks.clear();
-    this.netActionPending = false;
     this.syncInputLock();
     this.renderAll();
   }

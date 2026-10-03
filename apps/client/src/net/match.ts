@@ -60,6 +60,11 @@ export class NetMatch {
     return true;
   }
 
+  /** `true` while the sent action awaits the server's `nextActionSeq` ack (`16` §8.3). */
+  get pending(): boolean {
+    return this.pendingSeq !== null;
+  }
+
   /** Asks the server for a fresh snapshot — recovery without waiting for `welcome`. */
   requestSync(): boolean {
     return this.net.sendMatch({ type: "match.sync", matchId: this.matchId });

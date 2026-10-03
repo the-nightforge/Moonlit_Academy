@@ -43,6 +43,23 @@ const events = (match: MatchSnapshot, seqs: { eventSeq: number; nextActionSeq: n
   deadline: null,
 });
 
+describe("NetMatch pending gate", () => {
+  it("pending tracks the unacked action until the server acks it", () => {
+    const { match, start } = makeMatch();
+    expect(match.pending).toBe(false);
+    expect(match.sendAction({ type: "endTurn" })).toBe(true);
+    expect(match.pending).toBe(true);
+
+    // A partner push carries our unchanged seat seq — it does not ack ours.
+    match.handle(events(start, { eventSeq: 1, nextActionSeq: 1 }));
+    expect(match.pending).toBe(true);
+
+    // The server acking our seq opens it again.
+    match.handle(events(start, { eventSeq: 2, nextActionSeq: 2 }));
+    expect(match.pending).toBe(false);
+  });
+});
+
 describe("NetMatch action sequence", () => {
   it("rejoin resyncs the seq and drops a lost pending action", () => {
     const { match, net, start } = makeMatch();

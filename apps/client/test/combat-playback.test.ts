@@ -130,6 +130,31 @@ describe("CombatPlayback", () => {
     expect(hooks.busy.mock.calls.map(([value]) => value)).toEqual([true, false]);
   });
 
+  it("a batch enqueued while a reset pump unwinds is not orphaned", async () => {
+    const { state } = fixture();
+    const a = deferred<void>();
+    const b = deferred<void>();
+    const committed: number[] = [];
+    const hooks = hooksOf({
+      play: vi.fn().mockImplementationOnce(() => a.promise).mockImplementationOnce(() => b.promise),
+      commit: (batch: PlaybackBatch) => committed.push(batch.after.round),
+    });
+    const queue = new CombatPlayback(hooks);
+
+    queue.enqueue(batchOf(state, 1)); // pump starts, play #1 awaits `a`
+    queue.reset(); // epoch bump — pump will exit without draining
+    queue.enqueue(batchOf(state, 2)); // enqueue sees running === true: no new pump
+    a.resolve(); // play #1 settles → pump exits on the stale epoch
+    await flushMicrotasks();
+
+    // The post-reset batch is fresh work: it must play and commit, not wedge busy.
+    expect(hooks.play.mock.calls.map(([batch]) => batch.after.round)).toEqual([1, 2]);
+    b.resolve();
+    await flushMicrotasks();
+    expect(committed).toEqual([2]);
+    expect(queue.busy).toBe(false);
+  });
+
   it("dispose aborts the in-flight play and ignores later enqueues", async () => {
     const { state } = fixture();
     const signals: AbortSignal[] = [];

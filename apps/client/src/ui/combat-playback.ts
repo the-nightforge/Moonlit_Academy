@@ -95,6 +95,11 @@ export class CombatPlayback {
     } finally {
       this.controller = null;
       this.running = false;
+      // A batch enqueued while this pump unwound (post-reset) must not orphan.
+      if (this.queue.length > 0 && !this.disposed) {
+        void this.pump().catch((error) => console.error("combat playback pump:", error));
+        return;
+      }
       this.setBusy(false);
       const callbacks = this.idleCallbacks.splice(0);
       for (const callback of callbacks) callback();

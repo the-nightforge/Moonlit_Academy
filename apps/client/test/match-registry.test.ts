@@ -157,4 +157,29 @@ describe("MatchRegistry", () => {
     expect(settled).not.toHaveBeenCalled();
     expect(notices.filter((t) => t.includes("Không nhận được thông tin thưởng"))).toHaveLength(1);
   });
+
+  it("a failed settlement learned via snapshot notifies once and tombstones", async () => {
+    const notices: string[] = [];
+    const settled = vi.fn(async () => {});
+    const registry = new MatchRegistry(settled, (text) => notices.push(text));
+    const { match, net } = makeMatch("m_snapfail");
+    registry.retain(match);
+
+    // A match.sync answer carrying the failed settlement — no match.end ever arrives.
+    const snap = snapshot(match.view, 0, {
+      matchId: "m_snapfail",
+      settlement: { status: "failed", error: "db down" },
+    });
+    expect(registry.handle({ type: "match.snapshot", ...snap })).toBe(true);
+    await flush();
+    expect(settled).not.toHaveBeenCalled();
+    expect(notices.filter((t) => t.includes("Không nhận được thông tin thưởng"))).toHaveLength(1);
+
+    // Tombstoned: a second snapshot does not notify again, and recovery syncs nothing.
+    registry.handle({ type: "match.snapshot", ...snap });
+    await flush();
+    expect(notices.filter((t) => t.includes("Không nhận được thông tin thưởng"))).toHaveLength(1);
+    registry.recover(null);
+    expect(net.sent.filter((m) => m.type === "match.sync")).toHaveLength(0);
+  });
 });

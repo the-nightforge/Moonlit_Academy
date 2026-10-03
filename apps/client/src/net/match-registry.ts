@@ -43,7 +43,7 @@ export class MatchRegistry {
     }
     if (message.type === "match.start") return false; // lobby navigation owns it
     match.handle(message);
-    if (match.ended !== null) void this.settle(match);
+    if (MatchRegistry.decided(match)) void this.settle(match);
     return true;
   }
 
@@ -56,7 +56,7 @@ export class MatchRegistry {
     const match = snapshot === null || this.tombstones.has(snapshot.matchId) ? undefined : this.matches.get(snapshot.matchId);
     if (snapshot !== null && match !== undefined) {
       this.lostPending.set(match.matchId, match.rejoin(snapshot));
-      if (match.ended !== null) void this.settle(match);
+      if (MatchRegistry.decided(match)) void this.settle(match);
     }
     for (const retained of this.matches.values()) {
       if (retained.matchId !== snapshot?.matchId) retained.requestSync();
@@ -85,6 +85,11 @@ export class MatchRegistry {
     this.matches.clear();
     this.tombstones.clear();
     this.lostPending.clear();
+  }
+
+  /** The server's terminal word on a match: settled (`ended`) or a failed settlement. */
+  private static decided(match: NetMatch): boolean {
+    return match.ended !== null || match.settlement.status === "failed";
   }
 
   /**
