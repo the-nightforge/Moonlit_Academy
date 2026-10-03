@@ -462,6 +462,47 @@ describe("realtime", () => {
     expect(wsA3.last<{ activeMatch?: unknown }>("welcome")!.activeMatch).toBeUndefined();
   }, 60_000);
 
+  it("N4 settlement chậm >2s: snapshot báo pending, socket gắn lại nhận match.end khi xong", async () => {
+    const server = await testServer();
+    const { wsA, matchId, a } = await startPrivateMatch(server);
+
+    // Gate the settlement transaction — the match stays `pending` until released.
+    const realTx = server.db.transaction.bind(server.db);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.db.transaction = (async <T>(fn: () => Promise<T>) => {
+      await gate;
+      return realTx(fn);
+    }) as typeof server.db.transaction;
+
+    wsA.send({ type: "match.resign", matchId });
+    await wsA.settle();
+    wsA.close();
+    await wsA.waitForClose();
+
+    // Reconnect while settlement is pending: the room re-attaches and reports pending.
+    const wsA2 = await Ws.connect(server.app);
+    await hello(server, wsA2, a.token);
+    const welcome = wsA2.last<{ activeMatch?: { settlement: { status: string } } }>("welcome")!.activeMatch;
+    expect(welcome?.settlement.status).toBe("pending");
+
+    // >2 giây vẫn chưa xong — sync cũng trả pending, không rơi về failed/complete.
+    await new Promise((r) => setTimeout(r, 2100));
+    wsA2.send({ type: "match.sync", matchId });
+    await wsA2.settle();
+    expect(wsA2.last<{ settlement: { status: string } }>("match.snapshot")!.settlement.status).toBe("pending");
+
+    // Settlement lands on the already-attached socket — no second hello needed.
+    release();
+    await wsA2.settle();
+    expect(wsA2.last("match.end")).toMatchObject({ result: "lost", reason: "resign" });
+    wsA2.send({ type: "match.sync", matchId });
+    await wsA2.settle();
+    expect(wsA2.last<{ settlement: { status: string } }>("match.snapshot")!.settlement.status).toBe("complete");
+  }, 60_000);
+
   it("T235 sau mỗi Action mỗi người nhận góc nhìn riêng: tay đối thủ chỉ còn số lượng", async () => {
     const server = await testServer();
     const { wsA, wsB, matchId } = await startPrivateMatch(server);

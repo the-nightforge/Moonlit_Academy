@@ -184,7 +184,8 @@ test("7a: Chọn Pha mở khi M08 thăng cấp, chọn +2 đẩy Nguyệt Luân 
   });
 
   // The enemy turn + next player turn start resolve synchronously; the overlay
-  // shows once the event queue finishes animating.
+  // shows once the event queue finishes animating — serialized playback means
+  // the choice state commits only after every earlier beat has played.
   await expect
     .poll(
       async () => {
@@ -196,7 +197,7 @@ test("7a: Chọn Pha mở khi M08 thăng cấp, chọn +2 đẩy Nguyệt Luân 
     .toBe(true);
   await expect
     .poll(async () => (await sceneTexts(page, "combat")).some((t) => t.includes("Chọn Pha")), {
-      timeout: 15_000,
+      timeout: 60_000,
     })
     .toBe(true);
   expect((await probe(page)).eventTypes.some((e) => e.type === "moonChoiceOpened")).toBe(true);

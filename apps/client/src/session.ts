@@ -2,6 +2,7 @@ import { loadGameData } from "data";
 import { createCombat, createProfile, starterDeck } from "rules";
 import type { CombatEvent, CombatState, GameData, Loadout, MasteryGain, Profile, RunRewards, RunState, SavedDeck, StoryRewards } from "rules";
 import type { NetMatch } from "./net/match";
+import type { MatchRegistry } from "./net/match-registry";
 import type { NetSocket } from "./net/socket";
 import type { RunTicket } from "./run-session";
 import { abandonStory, type StoryTicket } from "./story-session";
@@ -45,6 +46,8 @@ export interface CombatSession {
   loadout: Loadout | undefined;
   /** The realtime socket (`16` §8); created on entering the arena. */
   net: NetSocket | null;
+  /** Retained network matches surviving scene changes (`16` §8.4); account-lifetime, disposed on logout. */
+  registry: MatchRegistry | null;
   /** The live network match the combat scene is bound to, if any. */
   match: NetMatch | null;
   /** Code of the private room the player is hosting/waiting in (arena). */
@@ -68,7 +71,7 @@ export function newCombatSession(
     profile: createProfile(data), rev: 0, online: false, ticket: null, story: null, pendingStageId: null,
     lastStory: null, editingDeck: null, lastGains: null,
     lastRewards: null, notices: [], runSubmitted: false, loadout,
-    net: null, match: null, roomCode: null, emotesMuted: false,
+    net: null, registry: null, match: null, roomCode: null, emotesMuted: false,
   };
 }
 
@@ -89,6 +92,7 @@ export function recoverMatchGone(
 ): void {
   deps.abortPlayback();
   session.match = null;
+  session.registry?.release(match.matchId);
   session.notices.push("Trận đã kết thúc.");
   void deps.refreshProfile().catch(() => {});
   deps.startScene(match.mode.startsWith("coop") ? "coop-lobby" : "arena");

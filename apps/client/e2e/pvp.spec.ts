@@ -126,10 +126,16 @@ async function enterArena(page: Page): Promise<void> {
 }
 
 async function sendMatchAction(page: Page, action: unknown): Promise<void> {
-  await page.evaluate((act) => {
-    const session = (window as unknown as { __vn: { session: { match: { sendAction: (a: unknown) => void } } } })
-      .__vn.session;
-    session.match.sendAction(act);
+  await page.evaluate(async (act) => {
+    const session = (window as unknown as {
+      __vn: { session: { match: { sendAction: (a: unknown) => boolean } | null } };
+    }).__vn.session;
+    // One pending action at a time (`16` §8.3) — wait for the server ack like
+    // the real UI's input lock does; a dropped send is retried, not lost.
+    for (let i = 0; i < 100; i++) {
+      if (session.match === null || session.match.sendAction(act)) return;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
   }, action);
 }
 

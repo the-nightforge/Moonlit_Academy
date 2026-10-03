@@ -1533,3 +1533,39 @@ cho `freeWeaponIds`/`freeRelicIds`; giữ nguyên, xem lại khi có data ngư�
 - **PvP band Hero 38–62%** (trần 40–61) — lệch nhẹ ±2 ngoài mục tiêu 40–60, đã
   ghi nhận từ 7b; xem lại bằng người chơi thật.
 - **Chơi tay Cốt truyện** treo từ 7c — bot không thay cảm nhận (xem mục trên).
+
+# Playtest Notes — Ổn định mạng combat (plan 2026-10-03)
+
+Bằng chứng kiểm chứng cho nhánh `feature/combat-network-stability` (không đổi
+luật, RNG, economy, replay):
+
+- **N1 queue + lifecycle**: `combat-playback`/`animation-runtime` unit tests —
+  batch xếp tuần tự, tween/timer/FX hủy sạch khi shutdown/rejoin; hook lỗi
+  không kẹt queue. Client suite 45/45.
+- **N2 seq/ack**: `nextActionSeq` trên snapshot/push/reject; duplicate seq →
+  snapshot; `match.sync` chỉ vào room có ghế; frame matchId cũ không đè room
+  mới. Client 26/26, server realtime 15/15.
+- **N3 terminal reconnect**: snapshot mang `settlement` (pending/complete/
+  failed); `match.end` có `settlementError`; hello/sync lần hai không trả
+  thưởng lại; phòng terminal giữ retention 60 s, `deadline=null`.
+- **N4 registry + e2e**: `match-registry.test` 7/7 (settle một lần sau rời
+  scene, tombstone nuốt frame lặp, recover rejoin đúng một lần + sync các
+  pending id khác, failed → notice không onSettled). Server test "settlement
+  chậm >2 s": snapshot báo pending, socket gắn lại nhận `match.end` khi xong.
+  e2e `settlement.spec.ts` (server build + Vite dev): đầu hàng → rời combat →
+  tombstone ghi nhận, hai `match.end` lặp bị nuốt, không notice thứ hai,
+  scene giữ "arena".
+- **Lock online hợp nhất**: pending action + `queue.busy` + terminal + mất
+  kết nối — nút kết thúc màn hình không khóa (đường thoát vẫn dùng được khi
+  rớt mạng).
+- Lệnh: `pnpm test` (data/rules/client/server), `pnpm typecheck`,
+  `pnpm --filter server build`, `npx playwright test`.
+- **Điểm mở**: e2e chạy 4 worker trên dev DB chịu tải nặng — vài spec timeout
+  khi tải trang; chạy `--workers=1` cho kết quả ổn định. `arena.spec.ts`
+  (xếp hạng + cửa hàng Vinh Dự) cần dev DB kiểu SQLite (`better-sqlite3`,
+  `data/vong-nguyet.db`) — server đang chạy Postgres/Supabase nên spec đó là
+  giới hạn môi trường, không phải hồi quy.
+- **Test-side fix**: `sendMatchAction` trong e2e giờ chờ ack (gate một pending
+  action của `16` §8.3) — trước đây send rơi lặng lẽ làm mất cửa sổ trăng
+  trong spec Liên Thủ. `phase7a` nới timeout text poll lên 60 s: playback nối
+  tiếp khiến overlay "Chọn Pha" chỉ hiện sau khi queue rút hết.

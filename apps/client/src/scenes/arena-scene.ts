@@ -8,7 +8,7 @@ import { NetSocket } from "../net/socket";
 import type { ServerMessage } from "../net/protocol";
 import { session } from "../session";
 import { COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
-import { addButton, addScreenHeader, addText, promptModal } from "../ui/widgets";
+import { addButton, addScreenHeader, addText, promptModal, showToast } from "../ui/widgets";
 import { describeDeckError } from "./deck-select-scene";
 
 const WIDTH = 1280;
@@ -91,8 +91,9 @@ export class ArenaScene extends Phaser.Scene {
     };
     net.onRecovery = (snapshot) => {
       if (snapshot === null) return; // no room — nothing to rejoin
-      session.match = session.match?.matchId === snapshot.matchId ? session.match : new NetMatch(net, snapshot);
-      session.match!.rejoin(snapshot);
+      // registry.recover already rejoined a known match — never twice (`16` §8.4).
+      if (session.match?.matchId !== snapshot.matchId) session.match = new NetMatch(net, snapshot);
+      session.registry?.retain(session.match!);
       this.scene.start("combat");
     };
     net.connect();
@@ -103,6 +104,7 @@ export class ArenaScene extends Phaser.Scene {
       if (this.queued) net.send({ type: "queue.leave" });
     });
     this.render();
+    showToast(this, session.notices.splice(0));
     this.refreshArena();
   }
 
@@ -163,6 +165,7 @@ export class ArenaScene extends Phaser.Scene {
         this.queued = false;
         session.roomCode = null;
         session.match = new NetMatch(session.net!, message);
+        session.registry?.retain(session.match);
         this.scene.start("combat");
         break;
       case "error":

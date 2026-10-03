@@ -94,8 +94,13 @@ export class NetSocket {
       this.connected = true;
       for (const queued of this.outbox.splice(0)) this.ws?.send(queued);
       this.onStatus(true);
+      // Retained matches reconcile before the scene sees the snapshot (`16` §8.4).
+      session.registry?.recover(message.activeMatch ?? null);
       this.onRecovery(message.activeMatch ?? null);
     }
+    // Match frames route through the registry first; handled frames never
+    // reach a scene handler, so no frame dispatches twice (`16` §8.4).
+    if (session.registry?.handle(message) === true) return;
     this.onMessage(message);
   }
 

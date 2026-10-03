@@ -25,7 +25,7 @@ import type {
 import { errorText, resumeSession } from "../account";
 import { applyRecordedRunAction } from "../run-session";
 import { recordStoryAction, startStoryTicket, submitStory } from "../story-session";
-import type { NetMatch } from "../net/match";
+import { NetMatch } from "../net/match";
 import type { ServerMessage } from "../net/protocol";
 import { cycleEncounter, recoverMatchGone, restartSession, session } from "../session";
 import type { Team } from "../session";
@@ -276,17 +276,35 @@ export class CombatScene extends Phaser.Scene {
   /** Routes `match.*` frames to the live match and wires socket status. */
   private bindNet(match: NetMatch): void {
     const net = session.net!;
+    // Retain for the account lifetime: frames keep landing if this scene exits (`16` §8.4).
+    session.registry?.retain(match);
     net.onMessage = (message: ServerMessage) => {
       if ("matchId" in message && match.handle(message)) return;
       if (message.type === "error") this.showError(message.error);
     };
     net.onStatus = (connected) => {
       this.netDown = !connected;
+      this.syncInputLock();
       if (this.scene.isActive()) this.requestRender();
     };
     net.onRecovery = (snapshot) => {
       if (snapshot !== null) {
-        this.applyNetRejoin(match.rejoin(snapshot));
+        if (snapshot.matchId !== match.matchId) {
+          // The server holds a different match — adopt it and rebind (`16` §8.4).
+          this.unbindNet();
+          const next = new NetMatch(net, snapshot);
+          session.match = next;
+          session.registry?.retain(next);
+          this.netMatch = next;
+          this.mySeat = next.you;
+          this.bindNet(next);
+          this.applyNetRejoin(session.registry?.consumeLostPending(next.matchId) ?? false);
+          return;
+        }
+        // registry.recover already rejoined — render the reconciled view.
+        const lostPending =
+          session.registry !== null ? session.registry.consumeLostPending(match.matchId) : match.rejoin(snapshot);
+        this.applyNetRejoin(lostPending);
         return;
       }
       // No room left — the match is gone; leave for the lobby (`16` §8.4).
@@ -308,10 +326,7 @@ export class CombatScene extends Phaser.Scene {
         this.syncInputLock();
         if (this.scene.isActive()) this.renderAll();
       });
-      // Ranked matches settle server-side; pull the fresh profile (rating, Vinh Dự).
-      if (match.ended?.profileRev !== undefined && match.ended.profileRev !== session.rev) {
-        void resumeSession().catch(() => {});
-      }
+      // Profile refresh and the settlement notice are the registry's job (`16` §8.4).
     };
     match.onRejected = (reason) => {
       this.netActionPending = false;
@@ -542,10 +557,14 @@ export class CombatScene extends Phaser.Scene {
     this.renderAll();
   }
 
-  /** The single source of truth for the input lock. */
+  /** The single source of truth for the input lock (`16` §8.4). */
   private syncInputLock(): void {
     this.inputLocked =
-      this.playback.busy || this.netActionPending || this.netMatch?.ended != null || this.storyFinishing;
+      this.playback.busy ||
+      this.netActionPending ||
+      this.netMatch?.ended != null ||
+      this.storyFinishing ||
+      (this.netMatch !== null && this.netDown);
   }
 
   /** Redraws once the queue drains — immediately when it is already idle. */
@@ -1965,6 +1984,10 @@ export class CombatScene extends Phaser.Scene {
         if (parts.length > 0) {
           this.text(WIDTH / 2, HEIGHT / 2 + 72, parts.join("   "), 14, COLORS.gold).setOrigin(0.5);
         }
+      }
+      // Result known, settlement still in flight — rewards land via the registry.
+      if (this.netMatch.settlement.status === "pending") {
+        this.text(WIDTH / 2, HEIGHT / 2 + 72, "Đang nhận kết quả thưởng…", 14, COLORS.dimText).setOrigin(0.5);
       }
       // Settlement write failed server-side: the result stands, rewards follow (`16` §8.4).
       if (this.netMatch.settlement.status === "failed") {
