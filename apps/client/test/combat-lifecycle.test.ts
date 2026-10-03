@@ -207,7 +207,7 @@ describe("zone flights", () => {
     await runToEnd(rt, playEventQueue(rt, [{ type: "cardDiscarded", instanceIds: [id], player: 0 }], context));
     const flight = rt.tweenConfigs.find((config) => {
       const at = config as unknown as { x?: number; y?: number };
-      return at.x === 100 && at.y === 490; // seatAnchors(0,0,pve).discard
+      return at.x === 54 && at.y === 504; // seatAnchors(0,0,pve).discard
     });
     expect(flight).toBeDefined();
   });
@@ -220,7 +220,7 @@ describe("zone flights", () => {
     await runToEnd(rt, playEventQueue(rt, [{ type: "cardsRecycled", instanceIds: ["cz1"], player: 0 }], context));
     const flight = rt.tweenConfigs.find((config) => {
       const at = config as unknown as { x?: number; y?: number };
-      return at.x === 48 && at.y === 456; // seatAnchors(0,0,pve).draw
+      return at.x === 54 && at.y === 424; // seatAnchors(0,0,pve).draw
     });
     expect(flight).toBeDefined();
   });

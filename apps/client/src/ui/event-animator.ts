@@ -9,11 +9,13 @@ import type { Point, SeatAnchors } from "./combat-display";
 import type { PublicPlayedCard } from "../net/protocol";
 import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
 import { castCard, deathBurn, moonWheel, playAttack, statusPop } from "./vfx";
+import { HAND_AREA, MOON, handSlots } from "./combat-layout";
+import type { CombatLayout } from "./combat-layout";
 import type { AnimationRuntime } from "./animation-runtime";
 import type { CombatAudio } from "./combat-audio";
 
 const WIDTH = 1280;
-const { moon, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
+const { midY, unitFlash } = COMBAT_LAYOUT;
 
 export interface AnimContext {
   gameData: GameData;
@@ -37,6 +39,8 @@ export interface AnimContext {
   castView?: (instanceId: string) => Phaser.GameObjects.Container | undefined;
   /** Where the moon icon sits (follows the background art); defaults to the layout spot. */
   moonAnchor?: { x: number; y: number };
+  /** The shared layout — the draw flight lands on real hand slots from it. */
+  layout?: CombatLayout;
   /** The local player's seat in a PvP view (`17` §4.8); 0 in PvE. */
   mySeat?: number;
   /** Per-batch animation scope: every timed/tweened FX goes through it. */
@@ -212,11 +216,15 @@ const CARDLESS_SOURCES = new Set<CombatEvent["type"]>([
 
 const css = (color: number) => `#${color.toString(16).padStart(6, "0")}`;
 
-/** The unit view's real bounds for flash sizing; undefined without a measurable view. */
+/** The unit's real bounds for flash sizing — its view first, then its layout rect. */
 function unitBounds(ctx: AnimContext, unitId: string): { x: number; y: number; w: number; h: number } | undefined {
   const bounds = ctx.unitViews.get(unitId)?.getBounds();
-  if (bounds === undefined || typeof bounds.width !== "number") return undefined;
-  return { x: bounds.centerX, y: bounds.centerY, w: bounds.width, h: bounds.height };
+  if (bounds !== undefined && typeof bounds.width === "number") {
+    return { x: bounds.centerX, y: bounds.centerY, w: bounds.width, h: bounds.height };
+  }
+  const rect = ctx.layout?.units.get(unitId);
+  if (rect === undefined) return undefined;
+  return { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2, w: rect.w, h: rect.h };
 }
 
 /** Flash covering `unitId`'s view bounds — or the layout flash at its anchor. */
@@ -249,21 +257,12 @@ function zoneFlight(rt: AnimationRuntime, from: Point, to: Point, count: number)
   return Promise.all(jobs).then(() => undefined);
 }
 
-// Mirrors renderSeatHand in the scene: a full hand squeezes into the zone.
-const HAND_L = 130;
-const HAND_R = 1140;
-const HAND_CARD_W = 110;
-
-/** The x a `instanceId` lands at in `seat`'s fanned hand row (its real slot). */
+/** The x a `instanceId` lands at in `seat`'s fanned hand row (its real slot — the shared layout math). */
 function handSlotX(ctx: AnimContext, player: number | undefined, instanceId: string): number | undefined {
   const seat = ctx.presentation.players[player ?? 0];
   const index = seat?.hand.indexOf(instanceId) ?? -1;
   if (seat === undefined || index < 0) return undefined;
-  const n = seat.hand.length;
-  const spacing = n < 2 ? 0 : Math.min(HAND_CARD_W + 10, (HAND_R - HAND_L - HAND_CARD_W) / (n - 1));
-  const width = (n - 1) * spacing + HAND_CARD_W;
-  const left = Math.min(Math.max(WIDTH / 2 - width / 2, HAND_L), HAND_R - width);
-  return left + HAND_CARD_W / 2 + index * spacing;
+  return handSlots(seat.hand.length, ctx.layout?.hand ?? HAND_AREA)[index]?.x;
 }
 
 function isBloodMoonLoss(
@@ -539,8 +538,10 @@ function animateEvent(
         }),
       ).then(() => undefined);
     }
-    case "deckShuffled":
-      return floatHeld(rt, pile.x + 60, pile.y - 70, "Xáo lại chồng bỏ", "#cfd6f0", 12, 300, 150);
+    case "deckShuffled": {
+      const draw = anchorsFor(ctx, event.player).draw;
+      return floatHeld(rt, draw.x + 60, draw.y - 70, "Xáo lại chồng bỏ", "#cfd6f0", 12, 300, 150);
+    }
     case "cardPlayed": {
       ctx.audio?.play("cast");
       const resolved = resolvePlayedCard(ctx.gameData, ctx.presentation, ctx.after, event.instanceId, ctx.revealedCards);
@@ -591,8 +592,8 @@ function animateEvent(
       );
       return rt.tween({
         targets: rect,
-        x: mine ? WIDTH / 2 : anchors.hand.x,
-        y: mine ? handY : anchors.hand.y,
+        x: anchors.hand.x,
+        y: anchors.hand.y,
         alpha: mine ? 1 : 0.6,
         duration: 180,
         onComplete: () => rect.destroy(),
@@ -745,7 +746,7 @@ function animateEvent(
       // The Nguyệt Luân turns at center stage and settles into the moon badge; the new phase's name floats down.
       const phase = ctx.gameData.moonPhases[event.to];
       const phaseIds = ctx.gameData.moonPhases.map((entry) => entry.id);
-      const at = ctx.moonAnchor ?? moon;
+      const at = ctx.moonAnchor ?? MOON;
       // Routine shifts take ~550 ms; a card-forced shift lingers ~900 ms (`01` §7.4).
       ctx.audio?.play("moon");
       void floatText(rt, at.x, at.y + 46, phase?.name ?? "", "#f4d35e", 15, 400).catch(() => {});
@@ -881,8 +882,10 @@ function animateEvent(
       return instant();
     case "deckedOut":
       return floatHeld(rt, WIDTH / 2, midY, "CẠN BÀI", "#ff8080", 28, 700, 350);
-    case "cardsPurged":
-      return floatHeld(rt, pile.x + 90, pile.y - 70, `-${event.instanceIds.length} lá (Tán Chiêu)`, "#8b93b8", 12, 300, 150);
+    case "cardsPurged": {
+      const draw = anchorsFor(ctx, event.player).draw;
+      return floatHeld(rt, draw.x + 90, draw.y - 70, `-${event.instanceIds.length} lá (Tán Chiêu)`, "#8b93b8", 12, 300, 150);
+    }
     case "moonReserveChanged": {
       if (event.side === "hero") {
         const at = anchorsFor(ctx, event.player).reserve;

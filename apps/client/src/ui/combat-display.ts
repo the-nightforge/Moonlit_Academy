@@ -1,7 +1,8 @@
 import { cardDefOf, displayDuration, DURATION_STATUSES, getStatus } from "rules";
 import type { CardDef, CardInstance, CombatState, GameData, StatusId, UnitState } from "rules";
 import type { PublicPlayedCard } from "../net/protocol";
-import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS } from "./theme";
+import { STATUS_ICONS, STATUS_LABELS } from "./theme";
+import { seatAnchorsFor } from "./combat-layout";
 
 export interface Point {
   x: number;
@@ -17,32 +18,12 @@ export interface SeatAnchors {
   reserve: Point;
 }
 
-/** The other seat's name plate — its resource/reserve labels float beside it. */
-const OTHER_PLATE = { x: 276, y: 36 };
-
 /**
- * The on-screen anchors of a seat (`17` §7.3): own seat at the bottom plate
- * and pile, the other seat at the top row, name plate and face-down hand.
+ * The on-screen anchors of a seat (`17` §7.3). Delegates to the shared layout
+ * tables — renderers, the animator and tests all read one coordinate system.
  */
 export function seatAnchors(player: number, mySeat: number, mode: CombatState["mode"]): SeatAnchors {
-  const drawX = COMBAT_LAYOUT.pile.x + 34;
-  if (player === mySeat) {
-    return {
-      draw: { x: drawX, y: COMBAT_LAYOUT.pile.y },
-      discard: { x: drawX + 52, y: COMBAT_LAYOUT.pile.y + 34 },
-      hand: { x: 640, y: COMBAT_LAYOUT.handY },
-      resource: { x: COMBAT_LAYOUT.moonPower.x, y: COMBAT_LAYOUT.moonPower.y },
-      reserve: { x: COMBAT_LAYOUT.moonPower.x, y: COMBAT_LAYOUT.moonPower.y + 46 },
-    };
-  }
-  return {
-    draw: { x: drawX, y: 170 },
-    discard: { x: drawX + 52, y: 204 },
-    // Opponent card backs vs the co-op partner's fanned tiles (`17` §4.8/§9.1).
-    hand: mode === "coop" ? { x: 34, y: 86 } : { x: 30, y: 84 },
-    resource: OTHER_PLATE,
-    reserve: { x: OTHER_PLATE.x, y: OTHER_PLATE.y + 22 },
-  };
+  return seatAnchorsFor(player, mySeat, mode);
 }
 
 /** Turn-measured statuses display in rounds: the rules' duration set plus freeze (until the owner's next turn, `01` §7.3). */

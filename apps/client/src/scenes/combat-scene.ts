@@ -55,8 +55,11 @@ import type { AnimationRuntime } from "../ui/animation-runtime";
 import { createPresentation } from "../ui/combat-presentation";
 import { HUD, hudImage } from "../ui/hud-art";
 import { cardColorOf, cardIconOf } from "../ui/attack-style";
-import { displayStatuses, seatAnchors } from "../ui/combat-display";
+import { displayStatuses } from "../ui/combat-display";
 import type { SeatAnchors } from "../ui/combat-display";
+import { computeCombatLayout, endTurnAnchor, fitChoicePanel, handSlots } from "../ui/combat-layout";
+import type { CombatLayout } from "../ui/combat-layout";
+import { moonHudModel, renderMoonHud } from "../ui/moon-hud";
 import {
   BLOOD_MOON_BG,
   COLORS,
@@ -83,33 +86,15 @@ const BG_MOON_SOCKET = { x: 836, y: 26, size: 52 };
 
 const CARD_W = 110;
 const CARD_H = 160;
-/** Hand zone: clear of the draw pile (left) and the end-turn button (right). */
-const HAND_LEFT = 130;
-const HAND_RIGHT = 1140;
-/** A hovered hand card is lifted (scaled 1.15) until its bottom edge shows. */
-const HAND_LIFT_Y = HEIGHT - (CARD_H * 1.15) / 2 - 6;
 /** Unit cards are portrait (2:3): enemies / opponents on the top row, own heroes below. */
-/** Both rows use one card size; the top row sits below the frame, clear of the moon socket. */
 const UNIT_W = 136;
 const UNIT_H = 196;
-const TOP_ROW_Y = 170;
-/** Own row: bottom edge ~46 px above the peeking hand (top ≈ 600), leaving the middle for the action. */
-const HERO_ROW_Y = 456;
 /** Corner radius of every card (units, hand, art). */
 const CARD_RADIUS = 9;
-const HERO_W = 136;
-const HERO_H = 196;
-const COOP_HERO_W = 112;
-const COOP_HERO_H = 162;
 const BOSS_W = 144;
 const BOSS_H = 204;
-const SUMMON_W = 88;
-const SUMMON_H = 124;
-
-/** Centers of `count` cards spread `step` apart around the screen's middle. */
-function rowXs(count: number, step: number): number[] {
-  return Array.from({ length: count }, (_, index) => WIDTH / 2 + (index - (count - 1) / 2) * step);
-}
+const SUMMON_W = 80;
+const SUMMON_H = 108;
 
 interface UnitCardSpec {
   id: string;
@@ -160,8 +145,10 @@ export class CombatScene extends Phaser.Scene {
   private targeting: string | null = null;
   private validTargetIds = new Set<string>();
   private cardViews = new Map<string, Phaser.GameObjects.Container>();
+  /** The shared geometry — recomputed per render so new units get anchors. */
+  private layout!: CombatLayout;
   /** Where the moon icon sits (the background art's socket); set by `renderBackground`. */
-  private moonAnchor: { x: number; y: number; size: number } = { ...COMBAT_LAYOUT.moon, size: 46 };
+  private moonAnchor: { x: number; y: number; size: number } = { x: 640, y: 40, size: 46 };
   private unitAnchors = new Map<string, { x: number; y: number }>();
   private unitViews = new Map<string, Phaser.GameObjects.Container>();
   /** The spec each unit card was last rendered with — `refreshUnit` rebuilds from its geometry. */
@@ -170,8 +157,6 @@ export class CombatScene extends Phaser.Scene {
   private seatLayers = new Map<number, Phaser.GameObjects.Container>();
   /** Holds the moon badge so `updateMoon` can repaint it mid-batch. */
   private moonLayer?: Phaser.GameObjects.Container;
-  /** Next free x slot per summon row (hostile = top row), set while rendering. */
-  private summonSlots = new Map<boolean, number>();
   /** Hand cards currently flying their cast clone — hover/click ignores them. */
   private castingIds = new Set<string>();
   private errorText?: Phaser.GameObjects.Text;
@@ -179,6 +164,11 @@ export class CombatScene extends Phaser.Scene {
   private debugVisible = false;
   private mulliganPicks = new Set<string>();
   private tooltip: Phaser.GameObjects.Container | null = null;
+  /** The pending choice can be collapsed to a banner so the board stays inspectable. */
+  private choiceCollapsed = false;
+  private lastPendingChoice: PlayerState["pendingChoice"] = null;
+  /** Wheel handler owned by the choice panel's scroll viewport (removed on rebuild). */
+  private choiceWheel?: (pointer: Phaser.Input.Pointer, over: unknown, dx: number, dy: number) => void;
   /** Network match binding (`16` §8); null in offline/PvE combats. */
   private netMatch: NetMatch | null = null;
   private mySeat = 0;
@@ -277,11 +267,16 @@ export class CombatScene extends Phaser.Scene {
     this.input.keyboard?.once("keydown", unlock);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.audio.dispose());
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      if (pointer.rightButtonDown()) this.cancelTargeting();
+      if (pointer.rightButtonDown()) {
+        if (this.collapseChoice()) return;
+        this.cancelTargeting();
+      }
     });
     // A modal (settings, confirm) owns Esc — combat targeting yields to it.
     this.input.keyboard?.on("keydown-ESC", () => {
-      if (!isModalOpen()) this.cancelTargeting();
+      if (isModalOpen()) return;
+      if (this.collapseChoice()) return;
+      this.cancelTargeting();
     });
     this.input.keyboard?.on("keydown-E", () => {
       if (
@@ -529,7 +524,6 @@ export class CombatScene extends Phaser.Scene {
     // The batch snapshots the current preferences — a mid-batch change waits
     // for the next batch's runtime (`16` §8.3).
     const runtime = createAnimationRuntime(this, signal, this.settings);
-    const mode = this.state.mode;
     return playEventQueue(runtime, batch.events, {
       gameData: this.gameData,
       presentation: createPresentation(batch.before),
@@ -545,11 +539,10 @@ export class CombatScene extends Phaser.Scene {
       unitAnchors: this.unitAnchors,
       unitViews: this.unitViews,
       cardViews: this.cardViews,
-      seatAnchors: new Map<number, SeatAnchors>(
-        this.state.players.map((player) => [player.index, seatAnchors(player.index, this.mySeat, mode)]),
-      ),
+      seatAnchors: this.layout.seats,
       castView: (instanceId) => this.makeCastView(instanceId),
       moonAnchor: this.moonAnchor,
+      layout: this.layout,
       mySeat: this.mySeat,
       runtime,
       audio: this.audio,
@@ -641,9 +634,9 @@ export class CombatScene extends Phaser.Scene {
     if (playerIndex === this.mySeat) {
       if (visual.status !== "mulligan") this.renderMoonPower(seat, layer);
       this.renderSeatHand(seat, visual, layer);
-      this.renderPile(seat, COMBAT_LAYOUT.pile.y, 0x3f7fd0, "của bạn", layer);
+      this.renderPile(seat, this.layout.seats.get(playerIndex)!, 0x3f7fd0, "của bạn", layer);
     } else {
-      this.renderPile(seat, TOP_ROW_Y, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ", layer);
+      this.renderPile(seat, this.layout.seats.get(playerIndex)!, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ", layer);
       if (this.state.mode === "pvp") this.renderOpponentHand(seat, layer);
       else if (this.isCoop) this.renderPartnerHand(seat, layer, visual);
     }
@@ -662,10 +655,16 @@ export class CombatScene extends Phaser.Scene {
     const summon = visual.summons?.find((s) => s.id === unitId);
     if (summon === undefined) return;
     const hostile = this.state.mode === "pvp" && summon.player !== this.mySeat;
-    const x = this.summonSlots.get(hostile) ?? WIDTH / 2 + 4 * (SUMMON_W + 12);
-    const y = hostile ? TOP_ROW_Y : HERO_ROW_Y;
-    this.renderSummonPanel(summon, x, y, hostile, visual);
-    this.summonSlots.set(hostile, x + SUMMON_W + 12);
+    // The layout slot the summon occupies in the visual state — the same math
+    // the full render uses, so a later renderAll lands on the same spot.
+    const rect = computeCombatLayout(visual, this.mySeat).units.get(unitId);
+    this.renderSummonPanel(
+      summon,
+      rect?.x !== undefined ? rect.x + rect.w / 2 : WIDTH / 2,
+      rect?.y !== undefined ? rect.y + rect.h / 2 : 410,
+      hostile,
+      visual,
+    );
   }
 
   /** The moon medallion re-rendered from the visual state (phase turn, Huyết Nguyệt). */
@@ -775,6 +774,25 @@ export class CombatScene extends Phaser.Scene {
     this.requestRender();
   }
 
+  /** Is a mandatory choice (Chọn Pha / Chiêm Bài) currently on screen expanded? */
+  private choiceOverlayOpen(): boolean {
+    if (this.choiceCollapsed || this.mySeatState?.pendingChoice === undefined || this.mySeatState.pendingChoice === null) {
+      return false;
+    }
+    return this.state.status === "choosing" || this.isCoop;
+  }
+
+  /**
+   * Esc/right-click on a choice panel folds it to a banner (the choice itself
+   * is mandatory — rules have no cancel). Returns true when it handled input.
+   */
+  private collapseChoice(): boolean {
+    if (this.inputLocked || !this.choiceOverlayOpen()) return false;
+    this.choiceCollapsed = true;
+    this.requestRender();
+    return true;
+  }
+
   private shakeCard(instanceId: string) {
     const view = this.cardViews.get(instanceId);
     if (!view) return;
@@ -803,13 +821,17 @@ export class CombatScene extends Phaser.Scene {
   // ---- rendering ----
 
   private renderAll() {
+    this.layout = computeCombatLayout(this.state, this.mySeat);
     this.root.removeAll(true);
     this.tooltip?.destroy();
     this.tooltip = null;
+    if (this.choiceWheel !== undefined) {
+      this.input.off("wheel", this.choiceWheel);
+      this.choiceWheel = undefined;
+    }
     this.cardViews.clear();
     this.castingIds.clear();
     this.seatLayers.clear();
-    this.summonSlots.clear();
     this.renderBackground();
     this.unitAnchors.clear();
     this.unitViews.clear();
@@ -945,7 +967,7 @@ export class CombatScene extends Phaser.Scene {
     const cx = view.x + view.w / 2;
     const cy = view.y + view.h / 2;
     const key = "backgrounds:background";
-    this.moonAnchor = { x: COMBAT_LAYOUT.moon.x, y: COMBAT_LAYOUT.moon.y, size: 46 };
+    this.moonAnchor = { x: this.layout.moon.x, y: this.layout.moon.y, size: 46 };
     if (!this.textures.exists(key)) {
       this.root.add(this.add.rectangle(cx, cy, view.w, view.h, bloodMoon ? BLOOD_MOON_BG : PHASE_BG[phase.id]));
       return;
@@ -1045,7 +1067,7 @@ export class CombatScene extends Phaser.Scene {
       return [name, relics.length > 0 ? `Kỳ Vật · Lõi: ${relics.join(" · ")}` : ""];
     });
     // The other seat's draw pile sits at the top row's height (`17` §7.3 piles).
-    if (other) this.renderPile(other, TOP_ROW_Y, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ", this.seatLayers.get(other.index));
+    if (other) this.renderPile(other, this.layout.seats.get(other.index)!, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ", this.seatLayers.get(other.index));
     const gear = this.badge(WIDTH - 40, 36, 16, "⚙", COLORS.panelBorder, this.root, COLORS.button, 15, COLORS.dimText);
     gear.setInteractive({ useHandCursor: true });
     gear.on("pointerup", (pointer: Phaser.Input.Pointer) => {
@@ -1064,19 +1086,35 @@ export class CombatScene extends Phaser.Scene {
       this.hoverTooltip(flag, () => ({ x: WIDTH - 300, y: 60 }), () => ["Bỏ cuộc"]);
     }
     if (match && match.deadline !== null) {
-      const { x, y } = COMBAT_LAYOUT.endTurn;
+      const { x, y } = endTurnAnchor(this.layout);
       this.timerText = this.text(x, y - 66, "", 15, COLORS.gold).setOrigin(0.5);
     }
   }
 
-  /** Current moon phase only, in the artwork's top ornament; rules in the tooltip. */
-  /** The current phase's icon, sitting bare in the background art's moon socket. */
+  /**
+   * The moon header: the current icon in the art's socket, the eight-phase
+   * schedule strip with per-phase tooltips, the decree label and the blood
+   * badge (`05` + review: the schedule was hidden before).
+   */
   private renderMoon(state: CombatState = this.state) {
     const { x, y, size } = this.moonAnchor;
     const phase = this.gameData.moonPhases[state.moonIndex]!;
     const bloodMoon = state.bloodMoonRounds > 0;
     const iconKey = `ui:moon_${bloodMoon ? "blood" : phase.id}`;
     const layer = this.moonLayer ?? this.root;
+    const model = moonHudModel(this.gameData, state);
+    const hud = renderMoonHud(this, model, this.layout, this.moonAnchor);
+    layer.add(hud);
+    // Per-phase schedule tooltips — phase name, its rolled decree and the full text.
+    for (const entry of model.phases) {
+      const icon = hud.getByName(`moon_phase_${entry.index}`);
+      if (icon === null) continue;
+      this.hoverTooltip(icon, () => ({ x: 700, y: 56 }), () => [
+        `${entry.name}${entry.index === model.current ? " — pha hiện tại" : ""}`,
+        entry.description,
+        bloodMoon ? `Huyết Nguyệt — còn ${model.bloodRounds} vòng` : "",
+      ]);
+    }
     const moon = this.textures.exists(iconKey)
       ? this.add.image(x, y, iconKey).setDisplaySize(size, size)
       : this.add.text(x, y, phase.icon, { ...TEXT_BASE, fontSize: `${Math.round(size * 0.6)}px`, color: COLORS.gold }).setOrigin(0.5);
@@ -1513,12 +1551,13 @@ export class CombatScene extends Phaser.Scene {
     this.renderUnitCard(this.summonSpecOf(summon, cx, cy, hostile, state));
   }
 
-  /** The living Linh Thú of `heroes`, left to right from `startX` (the row's summon zone). */
-  private renderSummonRow(heroes: HeroState[], y: number, startX: number, hostile: boolean) {
+  /** The living Linh Thú of `heroes`, each in its side's summon slot from the layout. */
+  private renderSummonRow(heroes: HeroState[], hostile: boolean) {
     const summons = heroes.flatMap((hero) => this.summonOfHero(hero.id) ?? []);
-    summons.forEach((summon, index) => this.renderSummonPanel(summon, startX + index * (SUMMON_W + 12), y, hostile));
-    // `ensureSummonView` places mid-batch summons in the next free slot.
-    this.summonSlots.set(hostile, startX + summons.length * (SUMMON_W + 12));
+    summons.forEach((summon) => {
+      const rect = this.layout.units.get(summon.id);
+      if (rect !== undefined) this.renderSummonPanel(summon, rect.x + rect.w / 2, rect.y + rect.h / 2, hostile);
+    });
   }
 
   private enemySpecOf(enemy: EnemyState, x: number, y: number, state = this.state): { spec: UnitCardSpec; boss: boolean } {
@@ -1551,13 +1590,13 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private renderEnemies() {
-    const enemies = this.state.enemies;
-    const xs = rowXs(enemies.length, (this.state.boss !== undefined ? BOSS_W : UNIT_W) + 42);
-    enemies.forEach((enemy, index) => {
-      const { spec, boss } = this.enemySpecOf(enemy, xs[index]!, TOP_ROW_Y);
+    for (const enemy of this.state.enemies) {
+      const rect = this.layout.units.get(enemy.id);
+      if (rect === undefined) continue;
+      const { spec, boss } = this.enemySpecOf(enemy, rect.x + rect.w / 2, rect.y + rect.h / 2);
       const c = this.renderUnitCard(spec);
       if (boss) this.renderBossBadges(c, spec.w, spec.h);
-    });
+    }
   }
 
   /** Nguyệt Lực stays public (`01` §9.2) but off the card: the enemy's hover tooltip. */
@@ -1598,19 +1637,23 @@ export class CombatScene extends Phaser.Scene {
   private renderPartnerHand(partner?: PlayerState, parent = this.root, state = this.state): void {
     partner ??= state.players.find((p) => p.index !== this.mySeat);
     if (!partner) return;
+    // Compact 24px tiles on the partner's hand anchor (`05`): 656..930 × y=532.
+    const anchor = this.layout.seats.get(partner.index)?.hand ?? { x: 790, y: 532 };
+    const count = partner.hand.length;
+    const gap = count > 1 ? Math.min(30, (274 - 24) / (count - 1)) : 0;
     partner.hand.forEach((instanceId, index) => {
-      const x = 34 + index * 34;
-      const y = 86;
+      const x = anchor.x - ((count - 1) * gap) / 2 + index * gap;
+      const y = anchor.y;
       const instance = state.cards[instanceId];
       const card = instance ? cardDefOf(this.gameData, state, instance) : undefined;
       if (instance === undefined || card === undefined) return;
-      const tile = this.add.rectangle(x, y, 30, 40, 0x141b33).setStrokeStyle(1, OWNER_COLORS[instance.ownerIds[0]!] ?? 0x5f8fdd);
+      const tile = this.add.rectangle(x, y, 24, 34, 0x141b33).setStrokeStyle(1, OWNER_COLORS[instance.ownerIds[0]!] ?? 0x5f8fdd);
       parent.add(tile);
       this.text(x, y, `${card.cost}`, 12, COLORS.text, parent).setOrigin(0.5);
       tile.setInteractive();
       tile.on("pointerover", () => {
         this.tooltip?.destroy();
-        this.tooltip = showCardTooltip(this, x + 20, y + 200, this.gameData, card);
+        this.tooltip = showCardTooltip(this, x, y - 120, this.gameData, card);
       });
       tile.on("pointerout", () => {
         this.tooltip?.destroy();
@@ -1622,20 +1665,24 @@ export class CombatScene extends Phaser.Scene {
   /** PvP (`17` §7.3): the opponent's heroes take the top row, intents hidden. */
   private renderOpponentRow() {
     const opponents = this.state.heroes.filter((hero) => hero.player !== this.mySeat);
-    const xs = rowXs(opponents.length, UNIT_W + 42);
-    opponents.forEach((hero, index) => {
-      this.renderHeroCard(hero, xs[index]!, TOP_ROW_Y, UNIT_W, UNIT_H, true, COLORS.panelBorder);
+    opponents.forEach((hero) => {
+      const rect = this.layout.units.get(hero.id);
+      if (rect !== undefined) {
+        this.renderHeroCard(hero, rect.x + rect.w / 2, rect.y + rect.h / 2, rect.w, rect.h, true, COLORS.panelBorder);
+      }
     });
     // Opposing Linh Thú are `enemy` targets (`01` §17.3).
-    this.renderSummonRow(opponents, TOP_ROW_Y, (xs.at(-1) ?? WIDTH / 2) + UNIT_W / 2 + 34 + SUMMON_W / 2, true);
+    this.renderSummonRow(opponents, true);
   }
 
-  /** The opponent's hand — face-down card backs under the top-left plate (`17` §4.8). */
+  /** The opponent's hand — face-down card backs at their seat's hand marker (`17` §4.8). */
   private renderOpponentHand(oppSeat?: PlayerState, parent = this.root) {
     oppSeat ??= this.state.players.find((p) => p.index !== this.mySeat);
     if (!oppSeat) return;
-    for (let i = 0; i < oppSeat.hand.length; i++) {
-      parent.add(this.add.rectangle(30 + i * 26, 84, 22, 32, 0x2c3e6e).setStrokeStyle(1, COLORS.panelBorder));
+    const anchor = this.layout.seats.get(oppSeat.index)?.hand ?? { x: 156, y: 168 };
+    const count = oppSeat.hand.length;
+    for (let i = 0; i < count; i++) {
+      parent.add(this.add.rectangle(anchor.x + (i - (count - 1) / 2) * 26, anchor.y, 22, 32, 0x2c3e6e).setStrokeStyle(1, COLORS.panelBorder));
     }
   }
 
@@ -1745,16 +1792,13 @@ export class CombatScene extends Phaser.Scene {
     // Co-op (`17` §9.3): all 6 heroes — own 3 left, partner's 3 right (blue frames).
     const partner = coop ? this.state.heroes.filter((hero) => hero.player !== this.mySeat) : [];
     const heroes = this.state.mode === "pvp" || coop ? [...own, ...partner] : this.state.heroes;
-    const w = coop ? COOP_HERO_W : HERO_W;
-    const h = coop ? COOP_HERO_H : HERO_H;
-    const xs = coop
-      ? heroes.map((_, index) => WIDTH / 2 + (index < 3 ? -1 : 1) * (18 + w / 2) + (index < 3 ? index - 2 : index - 3) * (w + 12))
-      : rowXs(heroes.length, w + 34);
-    heroes.forEach((hero, index) => {
+    heroes.forEach((hero) => {
+      const rect = this.layout.units.get(hero.id);
+      if (rect === undefined) return;
       const frame = coop && hero.player !== this.mySeat ? 0x5f8fdd : COLORS.panelBorder;
-      this.renderHeroCard(hero, xs[index]!, HERO_ROW_Y, w, h, false, frame);
+      this.renderHeroCard(hero, rect.x + rect.w / 2, rect.y + rect.h / 2, rect.w, rect.h, false, frame);
     });
-    this.renderSummonRow(heroes, HERO_ROW_Y, Math.max(...xs) + w / 2 + 34 + SUMMON_W / 2, false);
+    this.renderSummonRow(heroes, false);
     // Hộ Vệ (`18` §2.2): a thin gold link from each guarded hero to its guardian.
     // Anchors for both rows (opponent row renders before this) already exist.
     const links = this.add.graphics();
@@ -1781,8 +1825,8 @@ export class CombatScene extends Phaser.Scene {
    * with a count lozenge; the discard pile as a small greyed back beside it.
    * `color` tints the backs of another seat's pile.
    */
-  private renderPile(seat: PlayerState, y: number, color: number, owner: string, parent = this.root) {
-    const x = COMBAT_LAYOUT.pile.x + 34;
+  private renderPile(seat: PlayerState, anchors: SeatAnchors, color: number, owner: string, parent = this.root) {
+    const { x, y } = anchors.draw;
     const left = seat.drawPile.length;
     const low = left <= 6;
     const tint = owner === "của bạn" ? 0xffffff : color;
@@ -1793,13 +1837,16 @@ export class CombatScene extends Phaser.Scene {
     if (layers === 0) parent.add(this.add.rectangle(x, y, 66, 95).setStrokeStyle(1, COLORS.panelBorder, 0.8));
     parent.add(hudImage(this, HUD.count, x, y + 50));
     this.text(x, y + 50, `${left}`, 13, low ? "#ff8a8a" : COLORS.gold, parent).setOrigin(0.5).setStroke("#05070f", 3);
-    const discard = this.add.container(x + 52, y + 34);
+    const discard = this.add.container(anchors.discard.x, anchors.discard.y);
     discard.add(hudImage(this, HUD.cardBack, 0, 0, 0.42).setTint(0x8890a8).setAlpha(0.8));
     discard.add(this.add.text(0, 0, `${seat.discardPile.length}`, { ...TEXT_BASE, fontSize: "12px", color: COLORS.text, stroke: "#05070f", strokeThickness: 3 }).setOrigin(0.5));
     parent.add(discard);
-    const hit = this.add.zone(x + 10, y, 110, 140).setInteractive();
+    // The hover zone spans whichever way this seat's discard sits from its draw.
+    const midX = (anchors.draw.x + anchors.discard.x) / 2;
+    const midY = (anchors.draw.y + anchors.discard.y) / 2;
+    const hit = this.add.zone(midX, midY, Math.abs(anchors.discard.x - anchors.draw.x) + 110, Math.abs(anchors.discard.y - anchors.draw.y) + 140).setInteractive();
     parent.add(hit);
-    this.hoverTooltip(hit, () => ({ x: x + 80, y: y - 40 }), () => [
+    this.hoverTooltip(hit, () => ({ x: midX + 70, y: midY - 40 }), () => [
       `Chồng bài ${owner}`,
       `Còn ${left} lá · Bỏ ${seat.discardPile.length} lá`,
     ]);
@@ -1981,9 +2028,10 @@ export class CombatScene extends Phaser.Scene {
       this.tooltip?.destroy();
       const hintName =
         hintComboId !== undefined ? this.gameData.coopCombos[hintComboId]?.name : undefined;
-      // Hand cards peek from the bottom edge: hovering always lifts them into full view.
-      const inHand = y === COMBAT_LAYOUT.handY;
-      const liftY = inHand ? HAND_LIFT_Y : y - 18;
+      // Hand cards sit fully inside the hand area; hovering lifts to the
+      // raised read position (center y=600, `05` hand spec).
+      const inHand = y === this.layout.hand.y + this.layout.hand.h / 2;
+      const liftY = inHand ? this.layout.hand.y + 44 : y - 18;
       this.tooltip = showCardTooltip(
         this,
         x + CARD_W / 2 + 10,
@@ -2052,7 +2100,7 @@ export class CombatScene extends Phaser.Scene {
           .setStrokeStyle(1.2, COLORS.goldFill),
       );
     }
-    const { x, y } = COMBAT_LAYOUT.endTurn;
+    const { x, y } = endTurnAnchor(this.layout);
     const btn = this.medallionButton(x, y, true, hudImage(this, HUD.swap, 0, -16), picks > 0 ? `Đổi ${picks} lá` : "Giữ nguyên", "Vào trận", () => {
       const instanceIds = [...this.mulliganPicks];
       this.mulliganPicks.clear();
@@ -2065,6 +2113,29 @@ export class CombatScene extends Phaser.Scene {
 
   private renderChoiceOverlay() {
     const pending = this.state.players[this.mySeat]!.pendingChoice!;
+    // A new choice always opens expanded; the collapse survives re-renders of
+    // the same choice (e.g. resize) so inspecting the board isn't interrupted.
+    if (pending !== this.lastPendingChoice) {
+      this.lastPendingChoice = pending;
+      this.choiceCollapsed = false;
+    }
+    if (this.choiceCollapsed) {
+      const view = visibleWorld(this);
+      const banner = this.add.container(view.x + view.w / 2, view.y + 24);
+      banner.add(this.roundBox(320, 34, 0x0a0e26, 0.94, 1.5, COLORS.goldFill, 17));
+      const label = pending.kind === "chooseMoon" ? "Chờ chọn pha — bấm để mở lại" : "Chờ chọn bài — bấm để mở lại";
+      banner.add(this.add.text(0, 0, label, { ...TEXT_BASE, fontSize: "13px", color: COLORS.gold }).setOrigin(0.5));
+      const hit = this.add.rectangle(0, 0, 320, 34, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0) {
+          this.choiceCollapsed = false;
+          this.requestRender();
+        }
+      });
+      banner.add(hit);
+      this.root.add(banner);
+      return;
+    }
     if (pending.kind === "chooseMoon") {
       this.renderMoonChoice(pending.options);
       return;
@@ -2073,6 +2144,7 @@ export class CombatScene extends Phaser.Scene {
     const options = pending.options;
     this.root.add(this.screenDim(0.6));
     this.text(WIDTH / 2, 250, "Chiêm Bài — chọn 1 lá, các lá còn lại xuống đáy chồng", 16, COLORS.gold).setOrigin(0.5);
+    this.collapseButton(WIDTH / 2 + 320, 250);
     const spacing = CARD_W + 30;
     const startX = WIDTH / 2 - ((options.length - 1) * spacing) / 2;
     options.forEach((instanceId, index) => {
@@ -2086,49 +2158,126 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /**
-   * Chọn Pha (`18` §2.2): three horizontal options — keep the phase or push the
-   * wheel +1/+2. Each button previews the phase it would land on.
+   * Chọn Pha (`18` §2.2): a single panel listing the options vertically —
+   * keep the phase or push the wheel +1/+2. The panel fits the measured text
+   * (`fitChoicePanel`) and long decree texts scroll under a mask instead of
+   * shrinking the font. Esc / right-click / "Thu nhỏ" folds it to a banner.
    */
   private renderMoonChoice(options: number[]) {
     this.root.add(this.screenDim(0.6));
-    this.text(
-      WIDTH / 2,
-      250,
-      "Chọn Pha — chọn pha trăng cho lượt này",
-      16,
-      COLORS.gold,
-    ).setOrigin(0.5);
-    const spacing = 240;
-    const startX = WIDTH / 2 - ((options.length - 1) * spacing) / 2;
-    options.forEach((raw, index) => {
+    const view = visibleWorld(this);
+    const PANEL_W = 360;
+    const PAD = 18;
+    const TITLE_H = 44;
+    const cx = view.x + view.w / 2;
+    const textW = PANEL_W - PAD * 2;
+
+    // Measure every option row first — the panel fits the real text height.
+    const rows = options.map((raw) => {
       const offset = raw as 0 | 1 | 2;
-      const x = startX + index * spacing;
-      const y = 380;
       const phaseIndex = (this.state.moonIndex + offset) % this.gameData.moonPhases.length;
-      const phase = this.gameData.moonPhases[phaseIndex]!;
-      const panel = this.add.rectangle(x, y, 212, 116, 0x141b33);
-      panel.setStrokeStyle(1, COLORS.goldFill);
-      panel.setInteractive({ useHandCursor: true });
-      panel.on("pointerover", () => panel.setFillStyle(0x2a3a70));
-      panel.on("pointerout", () => panel.setFillStyle(0x141b33));
-      panel.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        if (pointer.button === 0) this.dispatch({ type: "chooseMoon", offset });
+      const desc = describePhase(this.gameData, this.state, phaseIndex);
+      const probe = this.add
+        .text(-2000, -2000, desc, { ...TEXT_BASE, fontSize: "11px", color: COLORS.dimText, wordWrap: { width: textW } });
+      const h = 26 + probe.height + 16;
+      probe.destroy();
+      return { offset, phaseIndex, desc, h };
+    });
+    // fitChoicePanel adds 96px of chrome (title strip + paddings) on top of the
+    // measured content height, then clamps the panel inside the visible world.
+    const panelRect = fitChoicePanel(
+      rows.reduce((sum, row) => sum + row.h, 0),
+      view,
+    );
+    const box = this.roundBox(panelRect.w, panelRect.h, 0x101830, 0.97, 1.5, COLORS.goldFill, CARD_RADIUS);
+    box.setPosition(cx, panelRect.y + panelRect.h / 2);
+    this.root.add(box);
+    this.text(cx, panelRect.y + 22, "Chọn Pha — chọn pha trăng cho lượt này", 15, COLORS.gold).setOrigin(0.5);
+    this.collapseButton(cx + panelRect.w / 2 - 26, panelRect.y + 20);
+
+    const regionTop = panelRect.y + TITLE_H;
+    const regionH = panelRect.y + panelRect.h - 14 - regionTop;
+    const bandTop = regionTop;
+    const bandBottom = regionTop + regionH;
+    const inBand = (pointer: Phaser.Input.Pointer) => {
+      const wp = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      return wp.y >= bandTop && wp.y <= bandBottom;
+    };
+
+    const content = this.add.container(0, 0);
+    let cy = regionTop;
+    for (const row of rows) {
+      const phase = this.gameData.moonPhases[row.phaseIndex]!;
+      const block = this.add
+        .rectangle(cx, cy + row.h / 2 - 4, PANEL_W - 14, row.h - 8, 0x141b33)
+        .setStrokeStyle(1, COLORS.goldFill)
+        .setInteractive({ useHandCursor: true });
+      block.on("pointerover", () => { block.setFillStyle(0x2a3a70); });
+      block.on("pointerout", () => { block.setFillStyle(0x141b33); });
+      block.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        // The mask clips pixels, not input — only honour clicks in the viewport.
+        if (pointer.button === 0 && inBand(pointer)) this.dispatch({ type: "chooseMoon", offset: row.offset });
       });
-      this.root.add(panel);
-      this.text(x, y - 42, offset === 0 ? "Giữ pha" : `+${offset}`, 12, COLORS.dimText).setOrigin(0.5);
-      this.text(x, y - 12, `${phase.icon} ${phase.name}`, 16, COLORS.gold).setOrigin(0.5);
-      this.root.add(
+      content.add(block);
+      content.add(
         this.add
-          .text(x, y + 18, describePhase(this.gameData, this.state, phaseIndex), {
+          .text(cx - textW / 2, cy + 2, `${row.offset === 0 ? "Giữ pha" : `+${row.offset}`} — ${phase.icon} ${phase.name}`, {
+            ...TEXT_BASE,
+            fontSize: "14px",
+            fontStyle: "bold",
+            color: COLORS.gold,
+          })
+          .setOrigin(0, 0),
+      );
+      content.add(
+        this.add
+          .text(cx - textW / 2, cy + 24, row.desc, {
             ...TEXT_BASE,
             fontSize: "11px",
             color: COLORS.dimText,
-            align: "center",
-            wordWrap: { width: 196 },
+            wordWrap: { width: textW },
           })
-          .setOrigin(0.5, 0),
+          .setOrigin(0, 0),
       );
+      cy += row.h;
+    }
+    const contentH = cy - regionTop;
+    this.root.add(content);
+
+    if (contentH > regionH) {
+      // Long decrees: clip to the region and wheel-scroll — never shrink font.
+      const veil = this.add.rectangle(cx, regionTop + regionH / 2, PANEL_W - 4, regionH).setVisible(false);
+      this.root.add(veil);
+      content.setMask(veil.createGeometryMask());
+      const scroll = (dy: number) => {
+        const min = -(contentH - regionH);
+        content.y = Phaser.Math.Clamp(content.y - dy, min, 0);
+      };
+      this.choiceWheel = (pointer, _over, _dx, dy) => {
+        const wp = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+        if (dy !== 0 && wp.x >= panelRect.x && wp.x <= panelRect.x + panelRect.w && wp.y >= bandTop && wp.y <= bandBottom) {
+          scroll(dy * 0.6);
+        }
+      };
+      this.input.on("wheel", this.choiceWheel);
+      this.text(cx, panelRect.y + panelRect.h - 12, "cuộn để xem thêm", 10, COLORS.dimText).setOrigin(0.5, 1);
+    }
+  }
+
+  /** The choice panel's clear close control — folds to the reopen banner. */
+  private collapseButton(x: number, y: number) {
+    const btn = this.add.container(x, y);
+    btn.add(this.roundBox(64, 22, 0x1a2440, 0.9, 1, COLORS.goldFill, 11));
+    btn.add(this.add.text(0, 0, "Thu nhỏ", { ...TEXT_BASE, fontSize: "11px", color: COLORS.dimText }).setOrigin(0.5));
+    const hit = this.add.rectangle(0, 0, 64, 22, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) {
+        this.choiceCollapsed = true;
+        this.requestRender();
+      }
     });
+    btn.add(hit);
+    this.root.add(btn);
   }
 
   private renderCombatEnd() {
@@ -2422,7 +2571,7 @@ export class CombatScene extends Phaser.Scene {
     // Nothing to spend while Đổi Bài is open.
     if (this.state.status !== "mulligan") this.renderMoonPower(seat, layer);
     this.renderSeatHand(seat, this.state, layer);
-    this.renderPile(seat, COMBAT_LAYOUT.pile.y, 0x3f7fd0, "của bạn", layer);
+    this.renderPile(seat, this.layout.seats.get(seat.index)!, 0x3f7fd0, "của bạn", layer);
     if (this.state.status !== "mulligan" && this.state.status !== "won" && this.state.status !== "lost") {
       this.renderEndTurn(seat);
     }
@@ -2430,14 +2579,12 @@ export class CombatScene extends Phaser.Scene {
 
   /** A seat's hand row — my seat's interactive cards in the bottom bar. */
   private renderSeatHand(seat: PlayerState, state: CombatState, parent: Phaser.GameObjects.Container): void {
-    // A full hand (up to `handLimit`) squeezes its cards to stay inside the zone;
-    // the hovered card is lifted above its neighbours in renderCard.
-    const hand = seat.hand;
-    const spacing = hand.length < 2 ? 0 : Math.min(CARD_W + 10, (HAND_RIGHT - HAND_LEFT - CARD_W) / (hand.length - 1));
-    const handWidth = (hand.length - 1) * spacing + CARD_W;
-    const left = Phaser.Math.Clamp(WIDTH / 2 - handWidth / 2, HAND_LEFT, HAND_RIGHT - handWidth);
-    hand.forEach((instanceId, index) => {
-      this.renderCard(instanceId, left + CARD_W / 2 + index * spacing, COMBAT_LAYOUT.handY, { state, parent });
+    // A full hand squeezes into the shared hand area; the hovered card lifts
+    // above its neighbours in renderCard.
+    const slots = handSlots(seat.hand.length, this.layout.hand);
+    seat.hand.forEach((instanceId, index) => {
+      const slot = slots[index];
+      if (slot !== undefined) this.renderCard(instanceId, slot.x, slot.y, { state, parent });
     });
   }
 
@@ -2448,7 +2595,7 @@ export class CombatScene extends Phaser.Scene {
    * number in the middle and the label underneath.
    */
   private renderMoonPower(seat: PlayerState, parent = this.root) {
-    const { x, y } = COMBAT_LAYOUT.moonPower;
+    const { x, y } = this.layout.seats.get(this.mySeat)?.resource ?? { x: 1206, y: 104 };
     const power = seat.moonPower;
     const reserve = Math.min(seat.moonReserve, power);
     const cap = this.gameData.combatConfig.moonPower.cap;
@@ -2483,7 +2630,7 @@ export class CombatScene extends Phaser.Scene {
    * tooltip says whose turn it is.
    */
   private renderEndTurn(seat: PlayerState) {
-    const { x, y } = COMBAT_LAYOUT.endTurn;
+    const { x, y } = endTurnAnchor(this.layout);
     const coop = this.isCoop;
     const canAct = this.state.status === "playerTurn" || (coop && this.state.status === "choosing");
     const myDone = coop && seat.done === true;

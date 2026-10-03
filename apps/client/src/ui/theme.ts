@@ -113,16 +113,12 @@ export const STATUS_ICONS: Record<StatusId, { glyph: string; color: number; keyw
 /** Phong Ấn (`01` §5.6) is not a status but shows as one more in-card icon. */
 export const SEAL_ICON = { glyph: "⛨", color: 0xb9a8ff, keywordId: "phong_an" } as const;
 
-/** Combat screen anchors the scene and the event animator share (design px). */
+/**
+ * Floating-combat-text constants shared by the scene and the event animator
+ * (design px). Positional geometry lives in `combat-layout.ts` — this keeps
+ * only what no anchor can express.
+ */
 export const COMBAT_LAYOUT = {
-  moon: { x: 640, y: 40 },
-  /** The Nguyệt Lực orb and the end-turn medallion share one column. */
-  moonPower: { x: 1206, y: 104 },
-  endTurn: { x: 1206, y: 648 },
-  /** Own draw pile; an opponent's / partner's sits at the top row's height. */
-  pile: { x: 14, y: 456 },
-  /** Hand cards peek from the bottom edge; hovering lifts one fully. */
-  handY: 680,
   /** Floating combat text between the two rows. */
   midY: 313,
   unitFlash: { w: 140, h: 200 },
