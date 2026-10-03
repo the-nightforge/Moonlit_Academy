@@ -51,27 +51,66 @@ function ownTagDiscount(data: GameData, state: CombatState, instance: CardInstan
   return passive?.type === "tagDiscountOwnCards" && tags.includes(passive.tag) ? passive.amount : 0;
 }
 
+/**
+ * Why a card costs what it does (`05` review): `base` the printed cost, one
+ * signed `modifiers` entry per applied rule (positive raises the cost,
+ * negative discounts it), `floor` the highest `min` a matching phase/decree
+ * set. `effective = max(0, max(0, floor, base + tag modifiers) − discounts)` —
+ * the floor clamps before discounts, so summing the modifiers does not always
+ * reproduce `effective`.
+ */
+export interface CardCostBreakdown {
+  base: number;
+  effective: number;
+  modifiers: {
+    kind: "phaseOrDecree" | "chosen" | "firstOwn" | "bloodMoon" | "ownTag" | "turnDiscount";
+    amount: number;
+  }[];
+  floor: number;
+}
+
+export function getCardCostBreakdown(
+  data: GameData,
+  state: CombatState,
+  instanceId: string,
+  player?: number,
+): CardCostBreakdown {
+  const instance = state.cards[instanceId];
+  const card = instance ? cardDefOf(data, state, instance) : undefined;
+  if (!card) throw new Error(`getCardCostBreakdown: unknown card instance "${instanceId}"`);
+  const seat = player ?? instance!.player;
+  let cost = card.cost;
+  let floor = 0;
+  const modifiers: CardCostBreakdown["modifiers"] = [];
+  for (const modifier of activeModifiers(data, state, seat)) {
+    if (modifier.type === "costModifierForTag" && card.tags.includes(modifier.tag)) {
+      cost += modifier.amount;
+      floor = Math.max(floor, modifier.min);
+      modifiers.push({ kind: "phaseOrDecree", amount: modifier.amount });
+    }
+  }
+  const chosen = instance!.chosenThisTurn ? data.combatConfig.chooseCardDiscount : 0;
+  if (chosen !== 0) modifiers.push({ kind: "chosen", amount: -chosen });
+  const discounts: [kind: CardCostBreakdown["modifiers"][number]["kind"], amount: number][] = [
+    ["firstOwn", firstCardDiscount(data, state, instanceId)],
+    ["bloodMoon", bloodMoonDiscount(data, state, instance!)],
+    ["ownTag", ownTagDiscount(data, state, instance!, card.tags)],
+    ["turnDiscount", instance!.turnDiscount ?? 0],
+  ];
+  for (const [kind, amount] of discounts) {
+    if (amount !== 0) modifiers.push({ kind, amount: -amount });
+  }
+  const effective = Math.max(0, Math.max(0, floor, cost) - chosen - discounts.reduce((sum, [, amount]) => sum + amount, 0));
+  return { base: card.cost, effective, modifiers, floor };
+}
+
 export function getEffectiveCost(
   data: GameData,
   state: CombatState,
   instanceId: string,
   player?: number,
 ): number {
-  const instance = state.cards[instanceId];
-  const card = instance ? cardDefOf(data, state, instance) : undefined;
-  if (!card) throw new Error(`getEffectiveCost: unknown card instance "${instanceId}"`);
-  const seat = player ?? instance!.player;
-  let cost = card.cost;
-  let floor = 0;
-  for (const modifier of activeModifiers(data, state, seat)) {
-    if (modifier.type === "costModifierForTag" && card.tags.includes(modifier.tag)) {
-      cost += modifier.amount;
-      floor = Math.max(floor, modifier.min);
-    }
-  }
-  const chosen = instance!.chosenThisTurn ? data.combatConfig.chooseCardDiscount : 0;
-  const passives = firstCardDiscount(data, state, instanceId) + bloodMoonDiscount(data, state, instance!) + ownTagDiscount(data, state, instance!, card.tags) + (instance!.turnDiscount ?? 0);
-  return Math.max(0, Math.max(0, floor, cost) - passives - chosen);
+  return getCardCostBreakdown(data, state, instanceId, player).effective;
 }
 
 export function getValidTargets(data: GameData, state: CombatState, instanceId: string): string[] {

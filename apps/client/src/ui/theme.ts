@@ -66,12 +66,28 @@ export const COLORS = {
   buttonText: "#e8e0c8",
 } as const;
 
+/** One owner color per hero id (`05` review) — card frames/labels name their owner. */
 export const OWNER_COLORS: Record<string, number> = {
+  m01: 0x4aa3d8,
+  m02: 0x6f7fd0,
+  m03: 0x3fbfa8,
+  m04: 0x8fc86f,
   m05: 0xd05454,
-  f04: 0x6fbf73,
   m06: 0x9a8fb8,
-  f03: 0x7fc8e8,
+  m07: 0xd0a44a,
+  m08: 0xd06a8f,
+  m09: 0x7a6ad0,
+  m10: 0x5fb8d0,
+  f01: 0xd08ad0,
   f02: 0xb04a8a,
+  f03: 0x7fc8e8,
+  f04: 0x6fbf73,
+  f05: 0xc8c04a,
+  f06: 0x68a0e0,
+  f07: 0xd07850,
+  f08: 0xe0b0b0,
+  f09: 0x9fd050,
+  f10: 0x8080e8,
 };
 
 export const STATUS_LABELS: Record<StatusId, string> = {

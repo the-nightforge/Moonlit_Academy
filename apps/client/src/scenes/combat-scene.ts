@@ -6,7 +6,6 @@ import {
   cardOwners,
   comboHintFor,
   getEffectiveCost,
-  getPlayCardError,
   getValidTargets,
   isCardPlayable,
   summonOf,
@@ -60,6 +59,7 @@ import type { SeatAnchors } from "../ui/combat-display";
 import { computeCombatLayout, endTurnAnchor, fitChoicePanel, handSlots } from "../ui/combat-layout";
 import type { CombatLayout } from "../ui/combat-layout";
 import { moonHudModel, renderMoonHud } from "../ui/moon-hud";
+import { COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES, combatCardModel, ellipsize } from "../ui/combat-card-view";
 import {
   BLOOD_MOON_BG,
   COLORS,
@@ -144,6 +144,8 @@ export class CombatScene extends Phaser.Scene {
   private root!: Phaser.GameObjects.Container;
   private targeting: string | null = null;
   private validTargetIds = new Set<string>();
+  /** The aim line from the selected card to the hovered valid target. */
+  private aimLine?: Phaser.GameObjects.Graphics;
   private cardViews = new Map<string, Phaser.GameObjects.Container>();
   /** The shared geometry — recomputed per render so new units get anchors. */
   private layout!: CombatLayout;
@@ -727,7 +729,7 @@ export class CombatScene extends Phaser.Scene {
       this.requestRender();
       return;
     }
-    if (this.inputLocked || this.state.status !== "playerTurn") return;
+    if (this.inputLocked || this.state.status !== "playerTurn" || this.castingIds.has(instanceId)) return;
     if (this.targeting === instanceId) {
       this.cancelTargeting();
       return;
@@ -735,17 +737,10 @@ export class CombatScene extends Phaser.Scene {
     const instance = this.state.cards[instanceId]!;
     const card = cardDefOf(this.gameData, this.state, instance)!;
     if (!isCardPlayable(this.gameData, this.state, instanceId)) {
-      const probeTarget =
-        card.target === "none"
-          ? undefined
-          : getValidTargets(this.gameData, this.state, instanceId)[0] ?? "enemy:0";
-      const error = getPlayCardError(this.gameData, this.state, {
-        type: "playCard",
-        instanceId,
-        ...(probeTarget !== undefined ? { targetId: probeTarget } : {}),
-      });
+      // The model's reason lands just above the hand — never an English rule string.
+      const reason = combatCardModel(this.gameData, this.state, instanceId, instance.player).disabledReason;
       this.shakeCard(instanceId);
-      this.showError(error ?? "Không đánh được");
+      this.showError(reason ?? "Không đánh được");
       return;
     }
     if (card.target === "none") {
@@ -771,7 +766,38 @@ export class CombatScene extends Phaser.Scene {
     if (this.inputLocked || this.targeting === null) return;
     this.targeting = null;
     this.validTargetIds.clear();
+    this.clearAimLine();
     this.requestRender();
+  }
+
+  /** A gold line from the selected card to the unit under the pointer (`05`). */
+  private drawAimLine(unitId: string): void {
+    this.clearAimLine();
+    if (this.targeting === null) return;
+    const cardView = this.cardViews.get(this.targeting);
+    const instance = this.state.cards[this.targeting];
+    const ownerAnchor = instance !== undefined ? this.unitAnchors.get(cardOwners(this.state, instance)[0]?.id ?? "") : undefined;
+    const from = cardView !== undefined ? { x: cardView.x, y: cardView.y } : ownerAnchor;
+    const to = this.unitAnchors.get(unitId) ?? this.unitViews.get(unitId);
+    if (from === undefined || to === undefined) return;
+    const g = this.add.graphics().setDepth(40);
+    g.lineStyle(2.5, COLORS.goldFill, 0.9).lineBetween(from.x, from.y, to.x, to.y);
+    const angle = Math.atan2(to.y - from.y, to.x - from.x);
+    g.fillStyle(COLORS.goldFill, 0.9).fillTriangle(
+      to.x,
+      to.y,
+      to.x - 14 * Math.cos(angle - 0.42),
+      to.y - 14 * Math.sin(angle - 0.42),
+      to.x - 14 * Math.cos(angle + 0.42),
+      to.y - 14 * Math.sin(angle + 0.42),
+    );
+    this.root.add(g);
+    this.aimLine = g;
+  }
+
+  private clearAimLine(): void {
+    this.aimLine?.destroy();
+    this.aimLine = undefined;
   }
 
   /** Is a mandatory choice (Chọn Pha / Chiêm Bài) currently on screen expanded? */
@@ -829,6 +855,7 @@ export class CombatScene extends Phaser.Scene {
       this.input.off("wheel", this.choiceWheel);
       this.choiceWheel = undefined;
     }
+    this.aimLine = undefined; // the graphics die with root's rebuild
     this.cardViews.clear();
     this.castingIds.clear();
     this.seatLayers.clear();
@@ -1512,6 +1539,10 @@ export class CombatScene extends Phaser.Scene {
     panel.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (pointer.button === 0) this.onUnitClicked(unitId);
     });
+    panel.on("pointerover", () => {
+      if (this.targeting !== null && this.validTargetIds.has(unitId)) this.drawAimLine(unitId);
+    });
+    panel.on("pointerout", () => this.clearAimLine());
   }
 
   /** The living Linh Thú belonging to hero `heroId` (`01` §17), if any. */
@@ -1649,7 +1680,9 @@ export class CombatScene extends Phaser.Scene {
       if (instance === undefined || card === undefined) return;
       const tile = this.add.rectangle(x, y, 24, 34, 0x141b33).setStrokeStyle(1, OWNER_COLORS[instance.ownerIds[0]!] ?? 0x5f8fdd);
       parent.add(tile);
-      this.text(x, y, `${card.cost}`, 12, COLORS.text, parent).setOrigin(0.5);
+      // The partner's cost, not ours — their seat's modifiers apply (`17` §16).
+      const partnerCost = getEffectiveCost(this.gameData, state, instanceId, partner.index);
+      this.text(x, y, `${partnerCost}`, 12, partnerCost < card.cost ? "#8fd08f" : COLORS.text, parent).setOrigin(0.5);
       tile.setInteractive();
       tile.on("pointerover", () => {
         this.tooltip?.destroy();
@@ -1864,9 +1897,10 @@ export class CombatScene extends Phaser.Scene {
     const card = cardDefOf(this.gameData, state, instance)!;
     const weapon = this.gameData.weapons[instance.cardId];
     const [ownerId, partnerId] = instance.ownerIds as [string, string | undefined];
+    const model = combatCardModel(this.gameData, state, instanceId, instance.player);
     // Owners resolve by seat+defId (`17` §2.1) — a same-defId hero of the other seat is not the owner.
     const broken = cardOwners(state, instance).some((owner) => !owner?.alive);
-    const playable = isCardPlayable(this.gameData, state, instanceId);
+    const playable = model.playable;
     const container = this.add.container(x, y);
     parent.add(container);
     if (opts.register !== false) this.cardViews.set(instanceId, container);
@@ -1898,27 +1932,20 @@ export class CombatScene extends Phaser.Scene {
       const iconKey = cardIconOf(card);
       if (this.textures.exists(iconKey)) container.add(this.add.image(0, gateY, iconKey).setDisplaySize(36, 36).setAlpha(broken ? 0.5 : 1));
     }
-    // Owner jewel on the bottom edge.
-    container.add(
-      this.add
-        .rectangle(0, CARD_H / 2 - 4, 7, 7, OWNER_COLORS[ownerId] ?? COLORS.panelBorder)
-        .setAngle(45)
-        .setStrokeStyle(1, COLORS.goldFill),
-    );
+    // Owner identity moved into the named strip along the bottom edge.
     // Title plate between the gate and the parchment (red lacquer: attack, blue: skill), the name on one line.
     const titleY = 15;
     container.add(grey(hudImage(this, card.type === "attack" ? HUD.bannerAttack : HUD.bannerSkill, 0, titleY)));
     const name = this.add
-      .text(0, titleY, card.name, {
+      .text(0, titleY, model.title, {
         ...TEXT_BASE,
-        fontSize: "11px",
+        fontSize: "12px",
         fontStyle: "bold",
         color: "#fff1d0",
         stroke: "#1a0608",
         strokeThickness: 2,
       })
       .setOrigin(0.5);
-    if (name.width > 80) name.setFontSize(10);
     container.add(this.fitWidth(name, 82));
     if (weapon !== undefined) {
       // Weapon card (`01` §14.2): inner orange frame and the weapon's name.
@@ -1940,12 +1967,12 @@ export class CombatScene extends Phaser.Scene {
       container.add(this.roundBox(CARD_W - 4, CARD_H - 4, null, 0, 2, 0xffe080, CARD_RADIUS - 1));
       container.add(
         this.add
-          .text(0, CARD_H / 2 - 14, "⚡ Hợp Kích", { ...TEXT_BASE, fontSize: "10px", color: "#ffe080", stroke: "#2a1a04", strokeThickness: 3 })
+          .text(CARD_W / 2 - 30, -CARD_H / 2 + 11, "⚡ Hợp Kích", { ...TEXT_BASE, fontSize: "10px", color: "#ffe080", stroke: "#2a1a04", strokeThickness: 3 })
           .setOrigin(0.5),
       );
     }
 
-    const effectiveCost = getEffectiveCost(this.gameData, state, instanceId);
+    const effectiveCost = model.effectiveCost;
     // Inset so the coin's rim sits clear of the card border.
     // Its own corner: clear of the gold line (≥ 3.5 px) and of the banner.
     const coinX = -CARD_W / 2 + 19;
@@ -1955,7 +1982,7 @@ export class CombatScene extends Phaser.Scene {
       this.add
         .text(coinX, coinY, `${effectiveCost}`, {
           ...TEXT_BASE,
-          fontSize: "15px",
+          fontSize: "16px",
           fontStyle: "bold",
           color: effectiveCost < card.cost ? COLORS.costCheap : COLORS.gold,
           stroke: "#05070f",
@@ -1985,19 +2012,45 @@ export class CombatScene extends Phaser.Scene {
       );
     }
 
+    // 11px body, four lines max with an ellipsis — never a smaller font; the
+    // hover preview carries the full text (`05` review: readable at 1024×576).
     const body = this.add
-      .text(0, 31, card.text, {
+      .text(0, 28, ellipsize(this, model.fullText, CARD_W - 24, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES), {
         ...TEXT_BASE,
-        fontSize: "9px",
+        fontSize: `${COMPACT_BODY_FONT}px`,
         color: "#3a2810",
         align: "center",
         lineSpacing: -1,
         wordWrap: { width: CARD_W - 24 },
       })
       .setOrigin(0.5, 0);
-    // Long texts shrink until they fit the parchment (the tooltip has them full size).
-    for (let size = 8.5; body.height > 41 && size >= 6.5; size -= 0.5) body.setFontSize(size);
     container.add(body);
+    // Owner strip along the bottom edge: the name(s) in owner color; Song
+    // Hành joins both and Binh Khí keeps its own label (`05` review).
+    const strip =
+      model.category === "weapon"
+        ? `Binh Khí${model.ownerNames.length > 0 ? ` · ${model.ownerNames[0]}` : ""}`
+        : model.category === "bond"
+          ? `Song Hành · ${model.ownerNames.join(" × ")}`
+          : (model.ownerNames[0] ?? "");
+    const stripColor =
+      model.category === "hero" && model.ownerColors[0] !== undefined
+        ? `#${model.ownerColors[0].toString(16).padStart(6, "0")}`
+        : "#d8cfae";
+    container.add(
+      this.fitWidth(
+        this.add
+          .text(0, CARD_H / 2 - 8, strip, {
+            ...TEXT_BASE,
+            fontSize: "10px",
+            color: stripColor,
+            stroke: "#05070f",
+            strokeThickness: 3,
+          })
+          .setOrigin(0.5),
+        CARD_W - 10,
+      ),
+    );
 
     if (mulliganPicked) {
       ensureTextures(this);
@@ -2014,6 +2067,15 @@ export class CombatScene extends Phaser.Scene {
       );
     } else if (!playable && !isValidTarget && state.status !== "mulligan") {
       container.setAlpha(0.5);
+    }
+
+    // The selected card keeps its lift until cancel/commit (`05` review).
+    if (this.targeting === instanceId) {
+      const inHand = y === this.layout.hand.y + this.layout.hand.h / 2;
+      container.setScale(1.15);
+      container.y = inHand ? this.layout.hand.y + 44 : y - 18;
+      container.setDepth(10);
+      parent.bringToTop(container);
     }
 
     if (opts.interactive === false) return container;
@@ -2039,6 +2101,11 @@ export class CombatScene extends Phaser.Scene {
         this.gameData,
         cardDefOf(this.gameData, state, instance)!,
         hintName !== undefined ? [`⚡ ${hintName} — đồng đội đã đánh nửa kia`] : [],
+        {
+          effectiveCost: model.effectiveCost,
+          costReasons: model.costReasons,
+          ...(model.disabledReason !== null ? { disabledReason: model.disabledReason } : {}),
+        },
       );
       if (!broken && (inHand || state.status === "playerTurn" || state.status === "mulligan")) {
         container.setScale(1.15);

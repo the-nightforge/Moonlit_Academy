@@ -1,13 +1,14 @@
 import Phaser from "phaser";
 import type { CardDef, GameData } from "rules";
-import { COLORS, TEXT_BASE } from "./theme";
+import { COLORS, TEXT_BASE, visibleWorld } from "./theme";
+import { PREVIEW_BODY_FONT } from "./combat-card-view";
 
-const WIDTH = 300;
+const WIDTH = 320;
 
-function tooltipBox(scene: Phaser.Scene, lines: string[], width: number) {
+function tooltipBox(scene: Phaser.Scene, lines: string[], width: number, fontSize = 12) {
   const text = scene.add.text(12, 10, lines.filter((line) => line.length > 0).join("\n"), {
     ...TEXT_BASE,
-    fontSize: "12px",
+    fontSize: `${fontSize}px`,
     color: COLORS.text,
     wordWrap: { width: width - 24 },
     lineSpacing: 4,
@@ -15,10 +16,22 @@ function tooltipBox(scene: Phaser.Scene, lines: string[], width: number) {
   const height = text.height + 20;
   const panel = scene.add.rectangle(0, 0, width, height, 0x0a0e20, 0.96).setOrigin(0, 0);
   panel.setStrokeStyle(1, COLORS.goldFill);
-  return { height, parts: [panel, text] };
+  return { height, parts: [panel, text], text };
 }
 
-/** Large card view + keyword explanations; caller destroys it on pointerout. */
+/** Authoritative cost context for the header line + reason rows (`05` review). */
+export interface CardTooltipPresentation {
+  effectiveCost: number;
+  costReasons: string[];
+  disabledReason?: string;
+}
+
+/**
+ * Large card view + keyword explanations; caller destroys it on pointerout.
+ * Header shows the effective cost with the printed cost in parens, then the
+ * signed reasons; `presentation` is optional so non-combat callers stay as-is.
+ * Content taller than the window scrolls under a mask (wheel) — never shrinks.
+ */
 export function showCardTooltip(
   scene: Phaser.Scene,
   x: number,
@@ -26,20 +39,61 @@ export function showCardTooltip(
   data: GameData,
   cardOrId: string | CardDef,
   extraLines: string[] = [],
+  presentation?: CardTooltipPresentation,
 ): Phaser.GameObjects.Container {
   const card = typeof cardOrId === "string" ? data.cards[cardOrId]! : cardOrId;
-  const { height, parts } = tooltipBox(scene, [
-    `${card.name}  ·  ${card.cost} Nguyệt Lực  ·  ${card.copies} bản`,
+  const costLine =
+    presentation !== undefined
+      ? `${card.name}  ·  ${presentation.effectiveCost} Nguyệt Lực (${card.cost})  ·  ${card.copies} bản`
+      : `${card.name}  ·  ${card.cost} Nguyệt Lực  ·  ${card.copies} bản`;
+  const { height, parts, text } = tooltipBox(scene, [
+    costLine,
+    ...(presentation?.disabledReason !== undefined ? [`⚠ ${presentation.disabledReason}`] : []),
     card.text,
     ...(card.keywords ?? []).map((id) => {
       const keyword = data.keywords[id];
       return keyword ? `• ${keyword.name}: ${keyword.text}` : "";
     }),
+    ...(presentation?.costReasons.map((reason) => `· ${reason}`) ?? []),
     ...extraLines,
-  ], WIDTH);
-  const left = Math.min(Math.max(8, x), 1280 - WIDTH - 8);
-  const top = Math.min(Math.max(8, y - height), 720 - height - 8);
-  return scene.add.container(left, top, parts).setDepth(200);
+  ], WIDTH, PREVIEW_BODY_FONT);
+  const view = visibleWorld(scene);
+  const maxHeight = view.h - 16;
+  const left = Phaser.Math.Clamp(x, view.x + 8, view.x + view.w - WIDTH - 8);
+  if (height <= maxHeight) {
+    const top = Phaser.Math.Clamp(y - height, view.y + 8, view.y + view.h - height - 8);
+    return scene.add.container(left, top, parts).setDepth(200);
+  }
+  // Overflow: clip the text to the window and let the wheel scroll it.
+  parts[0]!.destroy(); // the snug panel isn't used — the window replaces it
+  const top = view.y + 8;
+  const viewH = maxHeight;
+  const container = scene.add.container(left, top);
+  const panel = scene.add.rectangle(0, 0, WIDTH, viewH, 0x0a0e20, 0.96).setOrigin(0, 0);
+  panel.setStrokeStyle(1, COLORS.goldFill);
+  const content = scene.add.container(0, 0, [text]);
+  const veil = scene.add.rectangle(left + WIDTH / 2, top + viewH / 2, WIDTH, viewH).setVisible(false);
+  content.setMask(veil.createGeometryMask());
+  const scroll = (dy: number) => {
+    const min = -(text.height + 20 - viewH);
+    content.y = Phaser.Math.Clamp(content.y - dy, min, 0);
+  };
+  const onWheel = (pointer: Phaser.Input.Pointer, _over: unknown, _dx: number, dy: number) => {
+    const wp = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    if (dy !== 0 && wp.x >= left && wp.x <= left + WIDTH && wp.y >= top && wp.y <= top + viewH) {
+      scroll(dy * 0.6);
+    }
+  };
+  scene.input.on("wheel", onWheel);
+  container.on(Phaser.GameObjects.Events.DESTROY, () => {
+    scene.input.off("wheel", onWheel);
+    veil.destroy();
+  });
+  const hint = scene.add
+    .text(WIDTH - 10, viewH - 8, "▼", { ...TEXT_BASE, fontSize: "10px", color: COLORS.dimText })
+    .setOrigin(1, 1);
+  container.add([panel, content, hint]);
+  return container.setDepth(200);
 }
 
 /** Plain text tooltip whose top-left sits at (x, y), kept on screen; caller destroys it. */
@@ -51,7 +105,8 @@ export function showTextTooltip(
   width = 240,
 ): Phaser.GameObjects.Container {
   const { height, parts } = tooltipBox(scene, lines, width);
-  const left = Math.min(Math.max(8, x), 1280 - width - 8);
-  const top = Math.min(Math.max(8, y), 720 - height - 8);
+  const view = visibleWorld(scene);
+  const left = Phaser.Math.Clamp(x, view.x + 8, view.x + view.w - width - 8);
+  const top = Phaser.Math.Clamp(y, view.y + 8, view.y + view.h - height - 8);
   return scene.add.container(left, top, parts).setDepth(200);
 }
