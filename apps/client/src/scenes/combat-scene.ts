@@ -379,6 +379,7 @@ export class CombatScene extends Phaser.Scene {
     // The rejoin's snapshot replaces everything: abort in-flight/queued
     // playback before rebuilding the UI from the authoritative view.
     this.playback.reset();
+    this.commitWork.clear();
     this.state = match.view;
     this.latestState = match.view;
     this.targeting = null;
@@ -533,6 +534,7 @@ export class CombatScene extends Phaser.Scene {
       gameData: this.gameData,
       presentation: createPresentation(batch.before),
       after: batch.after,
+      before: batch.before,
       bindings: {
         updateUnit: (unitId, visual) => this.refreshUnit(unitId, visual),
         updateSeat: (player, visual) => this.refreshSeat(player, visual),
@@ -556,11 +558,14 @@ export class CombatScene extends Phaser.Scene {
       .finally(() => {
         runtime.dispose();
         // An abort leaves the source card dimmed+deafened — restore it; the
-        // commit render rebuilds everything anyway.
+        // commit render rebuilds everything anyway. The source may already be
+        // destroyed (a mid-batch seat refresh rebuilds the hand), so only a
+        // still-live view gets its interactivity back.
         for (const id of this.castingIds) {
           const view = this.cardViews.get(id);
-          view?.setAlpha(1);
-          view?.setInteractive({
+          if (view === undefined || view.scene === undefined) continue;
+          view.setAlpha(1);
+          view.setInteractive({
             hitArea: new Phaser.Geom.Rectangle(-CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H),
             hitAreaCallback: Phaser.Geom.Rectangle.Contains,
             useHandCursor: true,
@@ -606,6 +611,9 @@ export class CombatScene extends Phaser.Scene {
     else if (enemy !== undefined) ({ spec, boss } = this.enemySpecOf(enemy, x, y, visual));
     else if (summon !== undefined) spec = this.summonSpecOf(summon, x, y, hostile, visual);
     if (spec === undefined) return;
+    // The container itself may carry a stale alpha/transform from a lunged
+    // attack, a targeting dim or a cleared Ẩn Thân veil — reset before refill.
+    view.setPosition(spec.x, spec.y).setAlpha(1).setScale(1).setAngle(0);
     view.removeAll(true);
     this.fillUnitCard(view, spec);
     if (boss) this.renderBossBadges(view, spec.w, spec.h, visual);
@@ -625,6 +633,11 @@ export class CombatScene extends Phaser.Scene {
     const seat = visual.players.find((p) => p.index === playerIndex);
     if (layer === undefined || seat === undefined) return;
     layer.removeAll(true);
+    // Card views the wipe destroyed must not linger as live references —
+    // casts, shakes and the abort-restore all reach for this map.
+    for (const [id, view] of this.cardViews) {
+      if (view.scene === undefined) this.cardViews.delete(id);
+    }
     if (playerIndex === this.mySeat) {
       if (visual.status !== "mulligan") this.renderMoonPower(seat, layer);
       this.renderSeatHand(seat, visual, layer);
@@ -677,6 +690,10 @@ export class CombatScene extends Phaser.Scene {
   /** A batch failed mid-beat (not an abort — a real bug): resync to its `after`. */
   private playFailed(error: unknown, latest: CombatState): void {
     console.error("combat playback failed:", error);
+    // The failed batch's post-commit follow-up can never run — don't retain it.
+    for (const [batch] of this.commitWork) {
+      if (batch.after === latest) this.commitWork.delete(batch);
+    }
     this.state = latest;
     this.latestState = latest;
     this.showError("Có lỗi khi hiển thị — đã đồng bộ lại trạng thái");
@@ -857,6 +874,7 @@ export class CombatScene extends Phaser.Scene {
   private syncFromSession(): void {
     // A rebuilt combat supersedes any in-flight beat: abort, then render.
     this.playback.reset();
+    this.commitWork.clear();
     this.state = session.state;
     this.latestState = session.state;
     this.targeting = null;

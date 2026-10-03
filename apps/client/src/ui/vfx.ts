@@ -571,7 +571,7 @@ async function bow(rt: AnimationRuntime, from: Point, to: Point, color: number, 
   fadeOut(rt, bowImg, { delay: 140, duration: 220 });
   fadeOut(rt, glow, { scale: 1.2 * S, duration: 200 });
   const stop = trail(rt, arrow, color, 0.12);
-  const flight = Math.max(160, Math.hypot(to.x - at.x, to.y - at.y) * 0.75);
+  const flight = Math.min(240, Math.max(160, Math.hypot(to.x - at.x, to.y - at.y) * 0.75));
   await rt.tween({ targets: arrow, x: to.x, y: to.y, duration: flight, ease: "Quad.easeIn" });
   stop();
   impact(rt, to, hitColor, angle, 1.1);

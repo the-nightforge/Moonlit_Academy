@@ -568,6 +568,25 @@ describe("T229 redactEvents", () => {
     const mulligan = applyAction(data, current, { type: "mulligan", instanceIds: [], player: 1 });
     expect(mulligan).toEqual({ ok: false, error: "mulligan already done" });
   });
+
+  it("hides a card created into the opponent's hand but keeps the count", () => {
+    const events: CombatEvent[] = [
+      { type: "cardCreated", cardId: "m05_liet_hoa", instanceId: "p1_t1", player: 1 },
+      { type: "cardCreated", cardId: "m05_liet_hoa", instanceId: null, player: 1 },
+      { type: "cardCreated", cardId: "m05_liet_hoa", instanceId: "p0_t1", player: 0 },
+    ];
+    const redacted = redactEvents(events, 0);
+    const created = redacted[0]!;
+    // The opponent's gained card leaks neither its definition nor its real id.
+    expect(created.type === "cardCreated" && created.cardId === "hidden_card").toBe(true);
+    expect(created.type === "cardCreated" && created.instanceId === "hidden_created_0").toBe(true);
+    // A hand-full create stays a no-op for the viewer too.
+    const full = redacted[1]!;
+    expect(full.type === "cardCreated" && full.cardId === "hidden_card").toBe(true);
+    expect(full.type === "cardCreated" && full.instanceId === null).toBe(true);
+    // The viewer's own created card stays fully public.
+    expect(redacted[2]).toEqual(events[2]);
+  });
 });
 
 describe("T230 pvpBot + replayMatch", () => {

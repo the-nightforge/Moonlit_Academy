@@ -67,7 +67,13 @@ export class CombatAudio {
    * it; resolves even when the browser refuses (graceful silence).
    */
   async unlock(): Promise<void> {
-    if (this.disposed || this.ctx !== null) return;
+    if (this.disposed) return;
+    // A context that refused its first resume stays suspended — a later gesture
+    // retries it instead of never unlocking.
+    if (this.ctx !== null) {
+      if (this.ctx.state === "suspended") await this.ctx.resume().catch(() => {});
+      return;
+    }
     try {
       const ctx = this.makeContext !== undefined ? this.makeContext() : new AudioContext();
       const master = ctx.createGain();

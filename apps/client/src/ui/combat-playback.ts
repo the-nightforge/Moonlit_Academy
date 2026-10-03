@@ -6,7 +6,6 @@ export interface PlaybackBatch {
   before: CombatState;
   after: CombatState;
   events: CombatEvent[];
-  eventSeq?: number;
   /** Cast-time card metadata from the server (`16` §8.2) — online batches only. */
   revealedCards?: Record<string, PublicPlayedCard>;
 }

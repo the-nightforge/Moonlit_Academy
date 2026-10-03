@@ -202,6 +202,57 @@ describe("timeline budgets", () => {
   });
 });
 
+describe("abort and error discipline", () => {
+  it("an error inside onImpact rejects the queue instead of silently continuing", async () => {
+    const hero = base.heroes[0]!;
+    const enemy = base.enemies[0]!;
+    const rt = new FakeRuntime();
+    const boom = new Error("binding exploded");
+    const context = ctx(rt, [], {
+      bindings: {
+        updateUnit: () => {
+          throw boom;
+        },
+        updateSeat: () => {},
+        ensureSummon: () => {},
+        updateMoon: () => {},
+      },
+    });
+    const queue = playEventQueue(
+      rt,
+      [
+        { type: "damageDealt", sourceId: enemy.id, targetId: hero.id, amount: 4, blocked: 0, hpLost: 4 },
+        { type: "healed", targetId: hero.id, amount: 2 },
+      ],
+      context,
+    );
+    await expect(queue).rejects.toThrow("binding exploded");
+    rt.dispose();
+  });
+
+  it("an abort between beats never runs the next beat's applyBeat or leaks objects", async () => {
+    const rt = new FakeRuntime();
+    const trace: string[] = [];
+    const hero = base.heroes[0]!;
+    const context = ctx(rt, trace);
+    const queue = playEventQueue(
+      rt,
+      [
+        { type: "turnStarted", side: "hero", round: 1, player: 0 },
+        { type: "healed", targetId: hero.id, amount: 2 },
+      ],
+      context,
+    );
+    void queue.catch(() => {});
+    rt.step(); // resolve turnStarted's hold — the loop's next iteration is a pending microtask
+    const createdAtAbort = rt.created.length;
+    rt.dispose(); // abort before the continuation runs
+    await expect(queue).rejects.toThrow();
+    expect(trace.filter((entry) => entry.startsWith("unit:"))).toEqual([]);
+    expect(rt.created.length).toBe(createdAtAbort);
+  });
+});
+
 describe("audio cues in the queue", () => {
   function fakeAudio() {
     const played: string[] = [];

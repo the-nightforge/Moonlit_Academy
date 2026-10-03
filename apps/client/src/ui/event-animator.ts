@@ -21,6 +21,8 @@ export interface AnimContext {
   presentation: CombatState;
   /** The batch's post-action state — metadata the events don't carry resolves against it. */
   after: CombatState;
+  /** The batch's pre-action state; `before === after` marks the intro reveal stream. */
+  before?: CombatState;
   /** Scene hooks that patch rendered objects as the presentation moves. */
   bindings: PresentationBindings;
   /** Cast-time records of the batch's `cardPlayed` events (`16` §8.2). */
@@ -323,7 +325,7 @@ function flyLabel(
  * seat event, the moon badge on phase/decrees. No `renderAll` mid-batch.
  */
 function applyBeat(ctx: AnimContext, event: CombatEvent): void {
-  applyPresentationEvent(ctx.gameData, ctx.presentation, event, ctx.after);
+  applyPresentationEvent(ctx.gameData, ctx.presentation, event, ctx.after, ctx.before);
   const presentation = ctx.presentation;
   const unit = (id: string) => ctx.bindings.updateUnit(id, presentation);
   const seat = (player?: number) => ctx.bindings.updateSeat(player ?? 0, presentation);
@@ -403,6 +405,9 @@ export async function playEventQueue(
   let previous: CombatEvent | undefined;
   const groups = groupDamageEvents(events);
   for (let g = 0; g < groups.length; g++) {
+    // An abort between beats exits here — before applyBeat can repaint views
+    // a rejoin just rebuilt, or a beat can spawn an untracked object (`16` §8.5).
+    rt.assertActive();
     const group = groups[g]!;
     const event = group[0]!;
     const next = groups[g + 1]?.[0];
@@ -607,6 +612,7 @@ function animateEvent(
       // The badge, the number and the flinch all land at the decisive impact;
       // the attack's tail (ribbon retraction, trail fade) keeps running under
       // the runtime and drains before the batch commits.
+      let impactError: unknown;
       const attack = playAttack(look, from, anchor, {
         blocked: event.hpLost === 0,
         runtime: rt,
@@ -630,9 +636,18 @@ function animateEvent(
           void Promise.all(jobs).catch(() => {});
         },
       });
-      // An abort mid-flight rejects the attack before the impact — unblock the queue.
-      void attack.then(() => seen(), () => seen());
-      return impactSeen;
+      // An abort mid-flight rejects the attack before the impact — unblock the
+      // queue, but a real failure inside onImpact must surface, not vanish.
+      void attack.then(
+        () => seen(),
+        (error) => {
+          impactError = error;
+          seen();
+        },
+      );
+      return impactSeen.then(() => {
+        if (impactError !== undefined) throw impactError;
+      });
     }
     case "hpLost": {
       const anchor = anchorOf(event.targetId);

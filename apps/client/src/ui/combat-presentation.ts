@@ -56,6 +56,7 @@ export function applyPresentationEvent(
   visual: CombatState,
   event: CombatEvent,
   after: CombatState,
+  before?: CombatState,
 ): void {
   switch (event.type) {
     case "damageDealt": {
@@ -214,11 +215,15 @@ export function applyPresentationEvent(
     case "cardsDrawn": {
       const seat = seatOf(visual, event.player);
       if (!seat) return;
-      // Replay-safe: an id the hand already holds is a reveal (the intro on a
-      // dealt snapshot) — shown, not duplicated; the pile only loses the ids
-      // it actually held, or one placeholder per hidden draw.
+      // Replay-safe: an id the hand already holds is a reveal — shown, not
+      // duplicated; the pile only loses the ids it actually held, or one
+      // placeholder per hidden draw. `before === after` marks the intro
+      // stream, where every draw is already counted in the snapshot: remote
+      // `hidden_drawn_*` ids can never match `hidden_hand_*` placeholders, so
+      // identity-matching alone can't spot them — skip the whole event.
+      const reveal = before !== undefined && before === after;
       for (const id of event.instanceIds) {
-        if (seat.hand.includes(id)) continue;
+        if (reveal || seat.hand.includes(id)) continue;
         const index = seat.drawPile.indexOf(id);
         if (index >= 0) seat.drawPile.splice(index, 1);
         else if (seat.drawPile.length > 0) seat.drawPile.shift();

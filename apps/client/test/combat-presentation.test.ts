@@ -49,6 +49,43 @@ describe("applyPresentationEvent", () => {
     expect(JSON.stringify(after)).toBe(afterJson);
   });
 
+  it("a remote cardsDrawn reveal never grows a full placeholder hand", () => {
+    // PvP intro: the redacted stream's `hidden_drawn_*` ids can't match the
+    // snapshot's `hidden_hand_*` placeholders — showing them must not push.
+    const visual = createPresentation(base);
+    const seat = visual.players[0]!;
+    const dealt = seat.hand.length;
+    seat.hand = seat.hand.map((_id, i) => `hidden_hand_${i}`);
+    const after = cloneState(visual); // the snapshot: hand already full
+    applyPresentationEvent(
+      data,
+      visual,
+      {
+        type: "cardsDrawn",
+        player: 0,
+        instanceIds: Array.from({ length: dealt }, (_v, i) => `hidden_drawn_${i}`),
+      },
+      after,
+      after, // intro batch: before === after — the snapshot already counts the deal
+    );
+    expect(seat.hand.length).toBe(dealt);
+  });
+
+  it("a mid-batch remote cardsDrawn still grows the placeholder hand to the after count", () => {
+    const visual = createPresentation(base);
+    const seat = visual.players[0]!;
+    seat.hand = seat.hand.map((_id, i) => `hidden_hand_${i}`);
+    const after = cloneState(visual);
+    after.players[0]!.hand.push("hidden_hand_extra");
+    applyPresentationEvent(
+      data,
+      visual,
+      { type: "cardsDrawn", player: 0, instanceIds: ["hidden_drawn_0"] },
+      after,
+    );
+    expect(seat.hand.length).toBe(after.players[0]!.hand.length);
+  });
+
   it("heals clamp to maxHp; hpLost subtracts raw", () => {
     const visual = createPresentation(base);
     const unit = visual.heroes[0]!;
