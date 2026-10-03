@@ -214,10 +214,16 @@ export function applyPresentationEvent(
     case "cardsDrawn": {
       const seat = seatOf(visual, event.player);
       if (!seat) return;
-      // The draw pile's front is its top (`drawCards` splices index 0); only
-      // the count is public for hidden piles, so drop that many entries.
-      seat.drawPile.splice(0, Math.min(event.instanceIds.length, seat.drawPile.length));
-      seat.hand.push(...event.instanceIds);
+      // Replay-safe: an id the hand already holds is a reveal (the intro on a
+      // dealt snapshot) — shown, not duplicated; the pile only loses the ids
+      // it actually held, or one placeholder per hidden draw.
+      for (const id of event.instanceIds) {
+        if (seat.hand.includes(id)) continue;
+        const index = seat.drawPile.indexOf(id);
+        if (index >= 0) seat.drawPile.splice(index, 1);
+        else if (seat.drawPile.length > 0) seat.drawPile.shift();
+        seat.hand.push(id);
+      }
       return;
     }
     case "cardPlayed": {

@@ -44,7 +44,7 @@ import {
 import manifest from "virtual:assets-manifest";
 import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
 import { confirmModal, isModalOpen } from "../ui/widgets";
-import { playEventQueue } from "../ui/event-animator";
+import { buildIntroEvents, playEventQueue } from "../ui/event-animator";
 import { GLOW as VFX_GLOW, STAR as VFX_STAR, ensureTextures } from "../ui/vfx";
 import { CombatPlayback, type PlaybackBatch } from "../ui/combat-playback";
 import { createAnimationRuntime } from "../ui/animation-runtime";
@@ -185,8 +185,7 @@ export class CombatScene extends Phaser.Scene {
   private lastEmoteAt = 0;
   /** Co-op: own hand cards that complete a partner's Hợp Kích half → combo id. */
   private comboHints = new Map<string, string>();
-  /** Queue of banners to flash after the next event batch (Hợp Kích, phase). */
-  private bannerQueue: { text: string; color: string }[] = [];
+
   /** Story mode (`18` §4.4): the ticket's stage + deck while the combat runs. */
   private storyStageId: string | null = null;
   private storyDeck: { id: string; heroIds: Team } | null = null;
@@ -282,6 +281,13 @@ export class CombatScene extends Phaser.Scene {
       }
     });
     this.renderAll();
+    // A fresh match opens with the intro reveal; a rejoin renders settled
+    // state. Local combats are always fresh — their snapshot synthesizes the
+    // cosmetic stream (`16` §8.2).
+    if (this.netMatch === null || this.netMatch.fresh) {
+      const intro = buildIntroEvents(this.state, this.netMatch?.initialEvents ?? []);
+      if (intro.length > 0) this.playback.enqueue({ before: this.state, after: this.state, events: intro });
+    }
   }
 
   // ---- action pipeline ----
@@ -358,7 +364,6 @@ export class CombatScene extends Phaser.Scene {
     this.latestState = match.view;
     this.targeting = null;
     this.mulliganPicks.clear();
-    this.bannerQueue = [];
     this.syncInputLock();
     if (this.scene.isActive()) this.renderAll();
     if (lostPending) this.showError("Thao tác chưa được xác nhận, hãy thử lại.");
@@ -392,16 +397,7 @@ export class CombatScene extends Phaser.Scene {
       return;
     }
     this.targeting = null;
-    // Co-op banners queue on the event stream (`17` §9.3).
-    for (const event of events) {
-      if (event.type === "coopComboTriggered") {
-        const name = this.gameData.coopCombos[event.comboId]?.name ?? event.comboId;
-        this.bannerQueue.push({ text: `HỢP KÍCH — ${name}!`, color: COLORS.gold });
-      }
-      if (event.type === "bossPhaseChanged") {
-        this.bannerQueue.push({ text: `Nguyệt Thực Ma Quân — Giai đoạn ${event.phase}`, color: "#ff8090" });
-      }
-    }
+    // Combo/phase banners are queue beats inside the event stream (`17` §9.3).
     this.playback.enqueue({
       before: this.latestState,
       after: view,
@@ -409,32 +405,6 @@ export class CombatScene extends Phaser.Scene {
       revealedCards: metadata?.revealedCards,
     });
     this.latestState = view;
-  }
-
-  /** Fades a queued banner at screen center, one every beat. */
-  private playBanners(): void {
-    const banner = this.bannerQueue.shift();
-    if (banner === undefined || !this.scene.isActive()) {
-      this.bannerQueue = [];
-      return;
-    }
-    const text = this.add
-      .text(WIDTH / 2, COMBAT_LAYOUT.midY, banner.text, { ...TEXT_BASE, fontSize: "30px", color: banner.color })
-      .setOrigin(0.5)
-      .setDepth(180)
-      .setScale(0.6)
-      .setAlpha(0);
-    this.tweens.add({ targets: text, alpha: 1, scale: 1, duration: 220 });
-    this.tweens.add({
-      targets: text,
-      alpha: 0,
-      delay: 1400,
-      duration: 500,
-      onComplete: () => {
-        text.destroy();
-        this.playBanners();
-      },
-    });
   }
 
   private dispatch(action: Action): boolean {
@@ -675,7 +645,6 @@ export class CombatScene extends Phaser.Scene {
   private commitBatch(batch: PlaybackBatch): void {
     this.state = batch.after;
     this.renderAll();
-    this.playBanners();
     const work = this.commitWork.get(batch);
     if (work !== undefined) {
       this.commitWork.delete(batch);

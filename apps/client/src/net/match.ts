@@ -26,6 +26,10 @@ export class NetMatch {
   readonly others: { seat: number; username: string; connected: boolean }[];
   view: CombatState;
   deadline: number | null;
+  /** `match.start`-born matches get the intro reveal; rejoin/sync snapshots do not. */
+  readonly fresh: boolean;
+  /** The match's seat-redacted setup events, when the server sends them. */
+  readonly initialEvents: readonly CombatEvent[];
   /** The settled outcome once it arrives — from `match.end` or a terminal snapshot (`16` §8.4). */
   ended: MatchSettlement | null = null;
   /** Settlement lifecycle as last reported by a snapshot (`16` §8.4). */
@@ -56,6 +60,8 @@ export class NetMatch {
     this.lastEventSeq = snapshot.eventSeq;
     this.seq = snapshot.nextActionSeq;
     this.settlement = snapshot.settlement;
+    this.fresh = (snapshot as MatchSnapshot & { type?: string }).type === "match.start";
+    this.initialEvents = snapshot.initialEvents ?? [];
     if (snapshot.settlement.status === "complete") this.ended = snapshot.settlement.end;
   }
 

@@ -412,7 +412,7 @@ export class RealtimeHub {
       const conn = this.byAccount.get(seat.accountId);
       if (conn) {
         match.attach(seat, conn.socket);
-        this.reply(conn, { type: "match.start", ...match.snapshotFor(seat.seat) });
+        this.reply(conn, { type: "match.start", ...match.startFrameFor(seat.seat) });
       }
     }
     return match;

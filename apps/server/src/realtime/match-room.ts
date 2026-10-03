@@ -74,6 +74,7 @@ export class MatchRoom {
     readonly seats: MatchSeat[],
     private state: CombatState,
     private readonly setupJson: string,
+    private readonly setupEvents: CombatEvent[],
     private readonly drop: (room: MatchRoom) => void,
   ) {
     this.armClock();
@@ -125,6 +126,14 @@ export class MatchRoom {
       nextActionSeq: this.seats[seat]!.nextSeq,
       settlement: this.settlementFor(seat),
     };
+  }
+
+  /**
+   * `match.start` also carries the seat-redacted setup stream — the client's
+   * intro reveal plays it once; rejoin/sync snapshots never get it (`16` §8.2).
+   */
+  startFrameFor(seat: number): MatchSnapshot {
+    return { ...this.snapshotFor(seat), initialEvents: this.redact(this.setupEvents, seat) };
   }
 
   /** Per-seat settlement state for snapshots (`16` §8.4). */
@@ -534,13 +543,13 @@ export async function startPvpMatch(
   matchId: string,
   drop: (room: MatchRoom) => void,
 ): Promise<MatchRoom> {
-  const { state } = createPvpCombat(ctx.data, { seed, players: [players[0].side, players[1].side] });
+  const { state, events } = createPvpCombat(ctx.data, { seed, players: [players[0].side, players[1].side] });
   const seats: MatchSeat[] = players.map((p, seat) => ({
     seat, accountId: p.accountId, username: p.username, rating: p.rating, nextSeq: 1,
     connected: p.accountId === null, consecutiveTimeouts: 0,
   }));
   const setupJson = JSON.stringify({ players: [players[0].side, players[1].side] });
-  const room = new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, drop);
+  const room = new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, events, drop);
   await room.persist();
   return room;
 }
@@ -561,7 +570,7 @@ export async function startCoopMatch(
   drop: (room: MatchRoom) => void,
 ): Promise<MatchRoom> {
   const encounterId = ctx.data.coopConfig.encounterId;
-  const { state } = createCoopCombat(ctx.data, {
+  const { state, events } = createCoopCombat(ctx.data, {
     seed,
     players: [players[0].side, players[1].side],
     encounterId,
@@ -571,7 +580,7 @@ export async function startCoopMatch(
     connected: p.accountId === null, consecutiveTimeouts: 0,
   }));
   const setupJson = JSON.stringify({ mode: "coop", encounterId, players: [players[0].side, players[1].side] });
-  const room = new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, drop);
+  const room = new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, events, drop);
   await room.persist();
   return room;
 }

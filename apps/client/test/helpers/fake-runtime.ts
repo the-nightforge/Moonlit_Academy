@@ -29,19 +29,38 @@ export function stubObject(fields: Record<string, unknown> = {}): Record<string 
   return proxy;
 }
 
-export function fakeScene(shakeLog: number[]): Phaser.Scene {
+export function fakeScene(shakeLog: number[], created?: Record<string | symbol, unknown>[], texts?: string[]): Phaser.Scene {
   const textures = { exists: () => true, addCanvas: () => undefined, createCanvas: () => undefined, get: () => ({ getSourceImage: () => ({ width: 128, height: 128 }) }) };
-  const add = {
-    image: () => stubObject(),
-    rectangle: () => stubObject(),
-    circle: () => stubObject(),
-    text: () => stubObject(),
-    graphics: () => stubObject(),
-    particles: () => stubObject(),
-    container: () => stubObject(),
-    zone: () => stubObject(),
+  const spawn = () => () => {
+    const object = stubObject();
+    created?.push(object);
+    return object;
   };
-  const cameras = { main: { shake: () => shakeLog.push(1), flash: () => undefined, width: 1280, height: 720 } };
+  const add = {
+    image: spawn(),
+    rectangle: spawn(),
+    circle: spawn(),
+    text: (...args: unknown[]) => {
+      const object = stubObject();
+      created?.push(object);
+      texts?.push(String(args[2] ?? ""));
+      return object;
+    },
+    graphics: spawn(),
+    particles: spawn(),
+    container: spawn(),
+    zone: spawn(),
+  };
+  const cameras = {
+    main: {
+      shake: () => shakeLog.push(1),
+      flash: () => undefined,
+      width: 1280,
+      height: 720,
+      midPoint: { x: 640, y: 360 },
+      worldView: { x: 0, y: 0, width: 1280, height: 720, centerX: 640, centerY: 360 },
+    },
+  };
   return { textures, add, cameras, time: {}, tweens: {} } as unknown as Phaser.Scene;
 }
 
@@ -54,19 +73,34 @@ type PendingOp = { resolve: () => void; reject: (error: Error) => void };
 export class FakeRuntime implements AnimationRuntime {
   readonly scene: Phaser.Scene;
   readonly shakes: number[] = [];
+  /** Objects the fake scene created (for leak/destroy assertions). */
+  readonly created: Record<string | symbol, unknown>[] = [];
+  /** Text contents the fake scene received (banner/label assertions). */
+  readonly texts: string[] = [];
+  /** Rectangle spawn args `[x, y, w, h, color, alpha]` (bounds assertions). */
+  readonly rects: unknown[][] = [];
+  /** Tween configs the runtime was asked to run. */
+  readonly tweenConfigs: Phaser.Types.Tweens.TweenBuilderConfig[] = [];
   private readonly pending: PendingOp[] = [];
   private readonly tracked = new Set<Record<string | symbol, unknown>>();
   private dead = false;
 
   constructor() {
-    this.scene = fakeScene(this.shakes);
+    this.scene = fakeScene(this.shakes, this.created, this.texts);
+    const rects = this.rects;
+    const baseRect = this.scene.add.rectangle;
+    this.scene.add.rectangle = ((...args: unknown[]) => {
+      rects.push(args);
+      return baseRect(...args);
+    }) as typeof baseRect;
   }
 
   wait(_ms: number): Promise<void> {
     return this.enqueue();
   }
 
-  tween(_config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
+  tween(config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
+    this.tweenConfigs.push(config);
     return this.enqueue();
   }
 

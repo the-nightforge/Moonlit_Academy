@@ -568,6 +568,26 @@ describe("realtime", () => {
     }
   }, 60_000);
 
+  it("A4 match.start mang initialEvents riêng từng ghế; snapshot rejoin không", async () => {
+    const server = await testServer();
+    const { wsA, wsB, matchId } = await startPrivateMatch(server);
+    type Start = { initialEvents?: { type: string; instanceIds?: string[]; player?: number }[] };
+    const startA = wsA.last<Start>("match.start")!;
+    const startB = wsB.last<Start>("match.start")!;
+    expect(startA.initialEvents?.some((event) => event.type === "combatStarted")).toBe(true);
+    const drawsA = startA.initialEvents!.filter((event) => event.type === "cardsDrawn");
+    expect(drawsA.length).toBe(2);
+    // Own draws keep real ids; the remote seat's draws are placeholder counts.
+    expect(drawsA.find((event) => event.player === 0)!.instanceIds!.every((id) => !id.startsWith("hidden_"))).toBe(true);
+    expect(drawsA.find((event) => event.player === 1)!.instanceIds!.every((id) => id.startsWith("hidden_"))).toBe(true);
+    const drawsB = startB.initialEvents!.filter((event) => event.type === "cardsDrawn");
+    expect(drawsB.find((event) => event.player === 1)!.instanceIds!.every((id) => !id.startsWith("hidden_"))).toBe(true);
+    // Rejoin frames never replay the intro.
+    wsA.send({ type: "match.sync", matchId });
+    await wsA.settle();
+    expect(wsA.last<Start>("match.snapshot")!.initialEvents).toBeUndefined();
+  }, 60_000);
+
   it("T235 sau mỗi Action mỗi người nhận góc nhìn riêng: tay đối thủ chỉ còn số lượng", async () => {
     const server = await testServer();
     const { wsA, wsB, matchId } = await startPrivateMatch(server);

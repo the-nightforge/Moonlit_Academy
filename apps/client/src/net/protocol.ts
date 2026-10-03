@@ -41,6 +41,8 @@ export interface MatchSnapshot {
   /** Next action `seq` the server accepts from this seat — each receiver sees its own. */
   nextActionSeq: number;
   settlement: SettlementState;
+  /** The match's seat-redacted setup events — `match.start` uses them for the intro reveal. */
+  initialEvents?: CombatEvent[];
 }
 
 export type ServerMessage =

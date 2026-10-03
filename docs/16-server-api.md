@@ -326,6 +326,11 @@ tin công khai; kể cả khi sau đó nó rời khỏi chồng bỏ ngay trong 
 Luân Hồi — làm view redacted lại mất nó). Chỉ key của cardPlayed; frame không
 có cardPlayed thì field vắng mặt.
 
+`match.start` kèm thêm `initialEvents`: stream setup của trận đã redact theo
+ghế nhận (draw của đối thủ chỉ là placeholder). Client phát intro reveal một
+lần khi vào trận mới; `match.snapshot` và `welcome.activeMatch` không mang
+field này nên rejoin không replay intro.
+
 `MatchSnapshot` luôn kèm `settlement: SettlementState` — `playing` | `pending`
 (trận đã chốt kết quả, transaction thưởng đang chạy) | `complete { end }` (payload
 giống `match.end`) | `failed { error }`. `match.end` mang `settlementError` khi

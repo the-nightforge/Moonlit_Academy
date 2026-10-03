@@ -947,6 +947,7 @@ export async function moonWheel(
   from: number,
   to: number,
   color = 0xf4d35e,
+  ms = 550,
 ): Promise<void> {
   ensureTextures(rt.scene);
   const n = phaseIds.length;
@@ -954,26 +955,31 @@ export async function moonWheel(
   const step = 360 / n;
   // Shortest signed turn: +2 turns two notches, a wrap from 7 to 0 turns one.
   const notches = ((((to - from) % n) + n + n / 2) % n) - n / 2;
+  // The whole transition lands inside `ms` — the open/turn/settle/close beats scale together.
+  const scale = ms / (960 + 130 * Math.abs(notches));
   const wheel = rt.track(rt.scene.add.container(stage.x, stage.y).setDepth(DEPTH - 3).setScale(0.6).setAlpha(0));
-  wheel.add(rt.scene.add.image(0, 0, RING).setBlendMode("ADD").setTint(color).setScale((R / 27) * S));
-  wheel.add(rt.scene.add.image(0, 0, RUNE).setBlendMode("ADD").setTint(color).setAlpha(0.7).setScale(((R * 0.62) / 29) * S));
+  // Every child is tracked too: an abort must not leave wheel parts orphaned.
+  wheel.add(rt.track(rt.scene.add.image(0, 0, RING).setBlendMode("ADD").setTint(color).setScale((R / 27) * S)));
+  wheel.add(rt.track(rt.scene.add.image(0, 0, RUNE).setBlendMode("ADD").setTint(color).setAlpha(0.7).setScale(((R * 0.62) / 29) * S)));
   const icons = phaseIds.map((id, i) => {
     const deg = ((i - from) * step - 90) * (Math.PI / 180);
     const key = `ui:moon_${id}`;
-    const icon = rt.scene.textures.exists(key)
-      ? rt.scene.add.image(R * Math.cos(deg), R * Math.sin(deg), key).setDisplaySize(30, 30)
-      : rt.scene.add.image(R * Math.cos(deg), R * Math.sin(deg), GLOW).setTint(color).setScale(0.3 * S);
+    const icon = rt.track(
+      rt.scene.textures.exists(key)
+        ? rt.scene.add.image(R * Math.cos(deg), R * Math.sin(deg), key).setDisplaySize(30, 30)
+        : rt.scene.add.image(R * Math.cos(deg), R * Math.sin(deg), GLOW).setTint(color).setScale(0.3 * S),
+    );
     wheel.add(icon);
     return icon;
   });
-  await rt.tween({ targets: wheel, alpha: 1, scale: 1, duration: 200, ease: "Back.easeOut" });
+  await rt.tween({ targets: wheel, alpha: 1, scale: 1, duration: Math.round(200 * scale), ease: "Back.easeOut" });
   const top = { x: stage.x, y: stage.y - R };
   const marker = addFx(rt, top, GLOW).setTint(color).setScale(0.55 * S).setAlpha(0.8);
   const turn = { angle: 0 };
   await rt.tween({
     targets: turn,
     angle: -notches * step,
-    duration: 260 + 130 * Math.abs(notches),
+    duration: Math.round((260 + 130 * Math.abs(notches)) * scale),
     ease: "Cubic.easeInOut",
     onUpdate: () => {
       wheel.setAngle(turn.angle);
@@ -981,11 +987,11 @@ export async function moonWheel(
     },
   });
   const arrived = icons[to];
-  if (arrived) void rt.tween({ targets: arrived, scale: arrived.scale * 1.45, duration: 160, yoyo: true, ease: "Sine.easeOut" });
+  if (arrived) void rt.tween({ targets: arrived, scale: arrived.scale * 1.45, duration: Math.round(160 * scale), yoyo: true, ease: "Sine.easeOut" });
   impact(rt, top, color, -Math.PI / 2, 0.8);
-  await rt.wait(220);
-  fadeOut(rt, marker, { duration: 200 });
-  await rt.tween({ targets: wheel, x: badge.x, y: badge.y, scale: 0.25, alpha: 0, duration: 280, ease: "Cubic.easeIn" });
+  await rt.wait(Math.round(220 * scale));
+  fadeOut(rt, marker, { duration: Math.round(200 * scale) });
+  await rt.tween({ targets: wheel, x: badge.x, y: badge.y, scale: 0.25, alpha: 0, duration: Math.round(280 * scale), ease: "Cubic.easeIn" });
   wheel.destroy();
   const flare = addFx(rt, badge, GLOW).setTint(color).setScale(0.5 * S);
   fadeOut(rt, flare, { scale: 1.6 * S, duration: 300 });
@@ -1070,7 +1076,8 @@ export async function deathBurn(
     const scorch = rt.track(rt.scene.add.graphics().fillStyle(0x2a0a04, 1).fillRoundedRect(-sw / 2, -sh / 2, sw, sh, 9).setAlpha(0));
     view.add(scorch);
     void rt.tween({ targets: scorch, alpha: 0.7, duration: 260 });
-    await rt.tween({ targets: view, alpha: 0, y: at.y - 14, scale: 0.94, duration: 560, delay: 120, ease: "Sine.easeIn" });
+    // The card settles into its fallen look — dimmed and lifted, still recognizable.
+    await rt.tween({ targets: view, alpha: 0.55, y: at.y - 14, scale: 0.94, duration: 560, delay: 120, ease: "Sine.easeIn" });
   } else {
     await rt.wait(560);
   }

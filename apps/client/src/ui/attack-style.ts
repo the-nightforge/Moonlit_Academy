@@ -106,3 +106,27 @@ export function cardIconOf(card: CardDef): string {
 export function cardColorOf(card: CardDef): number {
   return TAG_COLOR.find(([tag]) => card.tags.includes(tag))?.[1] ?? STYLE_COLOR.spell;
 }
+
+/** What an hpLost beat looks like — flash tint plus its cause's glossary label. */
+export interface HpLossLook {
+  color: number;
+  label: string;
+}
+
+const HP_LOSS_LOOKS: Record<"loseHp" | "burn" | "reflect" | "bloodMoon" | "decree" | "bloodPact", HpLossLook> = {
+  burn: { color: 0xff8a3c, label: "Đốt" },
+  reflect: { color: 0x7fb4ff, label: "Phản" },
+  bloodMoon: { color: 0xd03a4a, label: "Huyết" },
+  bloodPact: { color: 0xd03a4a, label: "Tế" },
+  decree: { color: 0xf4ead0, label: "Lệnh" },
+  loseHp: { color: 0xb070e0, label: "Mất" },
+};
+
+/**
+ * The hp-loss cause's look: burn orange, reflect blue, Huyết Nguyệt/Huyết Tế
+ * red, decree moon-white, plain HP loss purple. The label always shows so the
+ * number never lands unexplained.
+ */
+export function hpLossLook(cause: keyof typeof HP_LOSS_LOOKS): HpLossLook {
+  return HP_LOSS_LOOKS[cause];
+}
