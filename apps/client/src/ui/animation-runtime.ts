@@ -1,4 +1,6 @@
 import type Phaser from "phaser";
+import { DEFAULT_COMBAT_SETTINGS, ShakeBudget } from "./combat-settings";
+import type { CombatSettings } from "./combat-settings";
 
 /** Rejects awaited runtime operations when their scope aborts (rejoin, reset, shutdown). */
 export class AnimationAbortedError extends Error {
@@ -18,7 +20,13 @@ export class AnimationAbortedError extends Error {
  */
 export interface AnimationRuntime {
   readonly scene: Phaser.Scene;
-  /** Resolves after `ms` on the scene clock; rejects on abort. */
+  /** Scales a base duration to this batch's speed — callers pass raw ms, never divide. */
+  duration(ms: number): number;
+  /** True when this batch prefers tints/short fades over lunges, shakes and dense motes. */
+  readonly reducedMotion: boolean;
+  /** Camera shake charged to the batch's budget — denied outright under reducedMotion. */
+  shake(durationMs: number, intensity: number): void;
+  /** Resolves after `ms` (scaled once internally) on the scene clock; rejects on abort. */
   wait(ms: number): Promise<void>;
   /** Resolves when the tween completes; abort removes the tween. */
   tween(config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void>;
@@ -32,8 +40,12 @@ export interface AnimationRuntime {
   dispose(): void;
 }
 
-export function createAnimationRuntime(scene: Phaser.Scene, signal: AbortSignal): AnimationRuntime {
-  return new SceneAnimationRuntime(scene, signal);
+export function createAnimationRuntime(
+  scene: Phaser.Scene,
+  signal: AbortSignal,
+  settings: CombatSettings = DEFAULT_COMBAT_SETTINGS,
+): AnimationRuntime {
+  return new SceneAnimationRuntime(scene, signal, settings);
 }
 
 class SceneAnimationRuntime implements AnimationRuntime {
@@ -41,11 +53,17 @@ class SceneAnimationRuntime implements AnimationRuntime {
   private readonly ops = new Map<Promise<unknown>, () => void>();
   private readonly tracked = new Set<Phaser.GameObjects.GameObject>();
   private disposed = false;
+  /** Copied at construction — a mid-batch settings change can't reach this batch. */
+  private readonly settings: CombatSettings;
+  private readonly shakeBudget: ShakeBudget;
 
   constructor(
     readonly scene: Phaser.Scene,
     private readonly signal: AbortSignal,
+    settings: CombatSettings,
   ) {
+    this.settings = { ...settings };
+    this.shakeBudget = new ShakeBudget(this.settings.reducedMotion);
     if (signal.aborted) {
       this.disposed = true;
     } else {
@@ -57,12 +75,26 @@ class SceneAnimationRuntime implements AnimationRuntime {
     if (this.disposed || this.signal.aborted) throw new AnimationAbortedError();
   }
 
+  duration(ms: number): number {
+    return Math.round(ms / this.settings.speed);
+  }
+
+  get reducedMotion(): boolean {
+    return this.settings.reducedMotion;
+  }
+
+  shake(durationMs: number, intensity: number): void {
+    if (this.disposed || this.signal.aborted) return;
+    if (!this.shakeBudget.allow(durationMs)) return;
+    this.scene.cameras.main.shake(durationMs, Math.min(intensity, 0.0025));
+  }
+
   wait(ms: number): Promise<void> {
     this.assertActive();
     let timer: Phaser.Time.TimerEvent | undefined;
     let cancel!: () => void;
     const op = new Promise<void>((resolve, reject) => {
-      timer = this.scene.time.delayedCall(ms, () => resolve());
+      timer = this.scene.time.delayedCall(this.duration(ms), () => resolve());
       cancel = () => {
         timer?.remove();
         reject(new AnimationAbortedError());
@@ -78,6 +110,9 @@ class SceneAnimationRuntime implements AnimationRuntime {
     const op = new Promise<void>((resolve, reject) => {
       tween = this.scene.tweens.add({
         ...config,
+        // Duration and delay scale exactly once here — callers pass base ms.
+        duration: typeof config.duration === "number" ? this.duration(config.duration) : config.duration,
+        delay: typeof config.delay === "number" ? this.duration(config.delay) : config.delay,
         onComplete: (t, targets, ...param) => {
           config.onComplete?.(t, targets, ...param);
           resolve();

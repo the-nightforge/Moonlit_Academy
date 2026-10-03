@@ -10,6 +10,7 @@ import type { PublicPlayedCard } from "../net/protocol";
 import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
 import { castCard, deathBurn, moonWheel, playAttack, statusPop } from "./vfx";
 import type { AnimationRuntime } from "./animation-runtime";
+import type { CombatAudio } from "./combat-audio";
 
 const WIDTH = 1280;
 const { moon, pile, handY, midY, unitFlash } = COMBAT_LAYOUT;
@@ -38,6 +39,8 @@ export interface AnimContext {
   mySeat?: number;
   /** Per-batch animation scope: every timed/tweened FX goes through it. */
   runtime: AnimationRuntime;
+  /** Procedural cue player — silent until unlocked and muted under volume 0. */
+  audio?: CombatAudio;
 }
 
 function anchorsFor(ctx: AnimContext, player?: number) {
@@ -101,6 +104,30 @@ function findIntent(ctx: AnimContext, enemyId: string, intentId: string): Intent
 
 function instant(): Promise<void> {
   return Promise.resolve();
+}
+
+/**
+ * Routine feedback that must not stall the queue: the cosmetic tween fires
+ * detached under the runtime while the beat holds only `hold` ms — the fade
+ * keeps playing underneath the next beat and drains before the batch commits.
+ */
+function held(rt: AnimationRuntime, hold: number, ...cosmetics: Promise<void>[]): Promise<void> {
+  for (const cosmetic of cosmetics) void cosmetic.catch(() => {});
+  return rt.wait(hold);
+}
+
+/** A float text that reads for `hold` ms; its fade continues detached. */
+function floatHeld(
+  rt: AnimationRuntime,
+  x: number,
+  y: number,
+  content: string,
+  color: string,
+  size: number,
+  fade: number,
+  hold: number,
+): Promise<void> {
+  return held(rt, hold, floatText(rt, x, y, content, color, size, fade));
 }
 
 type HpLostEvent = Extract<CombatEvent, { type: "hpLost" }>;
@@ -218,6 +245,23 @@ function zoneFlight(rt: AnimationRuntime, from: Point, to: Point, count: number)
     });
   });
   return Promise.all(jobs).then(() => undefined);
+}
+
+// Mirrors renderSeatHand in the scene: a full hand squeezes into the zone.
+const HAND_L = 130;
+const HAND_R = 1140;
+const HAND_CARD_W = 110;
+
+/** The x a `instanceId` lands at in `seat`'s fanned hand row (its real slot). */
+function handSlotX(ctx: AnimContext, player: number | undefined, instanceId: string): number | undefined {
+  const seat = ctx.presentation.players[player ?? 0];
+  const index = seat?.hand.indexOf(instanceId) ?? -1;
+  if (seat === undefined || index < 0) return undefined;
+  const n = seat.hand.length;
+  const spacing = n < 2 ? 0 : Math.min(HAND_CARD_W + 10, (HAND_R - HAND_L - HAND_CARD_W) / (n - 1));
+  const width = (n - 1) * spacing + HAND_CARD_W;
+  const left = Math.min(Math.max(WIDTH / 2 - width / 2, HAND_L), HAND_R - width);
+  return left + HAND_CARD_W / 2 + index * spacing;
 }
 
 function isBloodMoonLoss(
@@ -459,11 +503,12 @@ function animateEvent(
           : event.side === "hero"
             ? "— Lượt người chơi —"
             : "— Lượt kẻ địch —";
-      return floatText(rt, WIDTH / 2, midY, label, "#cfd6f0", 16, 350);
+      return floatHeld(rt, WIDTH / 2, midY, label, "#cfd6f0", 16, 350, 200);
     }
     case "cardsDrawn": {
       const ids = event.instanceIds;
       if (ids.length === 0) return instant();
+      ctx.audio?.play("draw");
       const anchors = anchorsFor(ctx, event.player);
       const mine = (event.player ?? 0) === (ctx.mySeat ?? 0);
       const spacing = mine ? 70 : ctx.presentation.mode === "coop" ? 34 : 26;
@@ -476,9 +521,11 @@ function animateEvent(
               .setStrokeStyle(1, 0xf4d35e)
               .setDepth(100),
           );
+          // Own-seat backs land on the slot the id already holds in the hand.
+          const toX = mine ? (handSlotX(ctx, event.player, id) ?? WIDTH / 2 + (i - (ids.length - 1) / 2) * spacing) : anchors.hand.x + i * spacing;
           return rt.tween({
             targets: rect,
-            x: mine ? WIDTH / 2 + (i - (ids.length - 1) / 2) * spacing : anchors.hand.x + i * spacing,
+            x: toX,
             y: anchors.hand.y,
             delay: i * 60,
             duration: 120,
@@ -488,8 +535,9 @@ function animateEvent(
       ).then(() => undefined);
     }
     case "deckShuffled":
-      return floatText(rt, pile.x + 60, pile.y - 70, "Xáo lại chồng bỏ", "#cfd6f0", 12, 300);
+      return floatHeld(rt, pile.x + 60, pile.y - 70, "Xáo lại chồng bỏ", "#cfd6f0", 12, 300, 150);
     case "cardPlayed": {
+      ctx.audio?.play("cast");
       const resolved = resolvePlayedCard(ctx.gameData, ctx.presentation, ctx.after, event.instanceId, ctx.revealedCards);
       const card = resolved?.definition;
       const view = cast ?? ctx.cardViews?.get(event.instanceId);
@@ -498,18 +546,21 @@ function animateEvent(
         return castCard(rt, view, { x: WIDTH / 2, y: midY }, cardColorOf(card), target);
       }
       // Another seat's card (co-op partner, PvP opponent): no hand view to fly.
-      return floatText(rt, WIDTH / 2, midY, `◆ ${card?.name ?? "Lá bài"}`, "#f4d35e", 22, 300);
+      return floatHeld(rt, WIDTH / 2, midY, `◆ ${card?.name ?? "Lá bài"}`, "#f4d35e", 22, 300, 200);
     }
     case "cardDiscarded": {
+      ctx.audio?.play("draw");
       const anchors = anchorsFor(ctx, event.player);
       return zoneFlight(rt, anchors.hand, anchors.discard, event.instanceIds.length);
     }
     case "cardsRecycled": {
       // Luân Hồi (`01` §3.3): card backs travel discard → draw.
+      ctx.audio?.play("draw");
       const anchors = anchorsFor(ctx, event.player);
       return zoneFlight(rt, anchors.discard, anchors.draw, event.instanceIds.length);
     }
     case "cardCreated": {
+      ctx.audio?.play("draw");
       // `18` §2.2: the token flies from its owner hero's panel into the hand;
       // a full hand leaves only a "Tay đầy" note over the hero.
       const card = ctx.gameData.cards[event.cardId];
@@ -563,8 +614,13 @@ function animateEvent(
         onImpact: () => {
           seen();
           applyBeat(ctx, event);
+          ctx.audio?.play(event.hpLost > 0 ? "hit" : "block");
           const view = ctx.unitViews.get(event.targetId);
-          if (view) void rt.tween({ targets: view, x: view.x + 6, duration: 45, yoyo: true, repeat: 3 });
+          if (view && rt.reducedMotion) {
+            void rt.tween({ targets: view, alpha: 0.55, duration: 80, yoyo: true });
+          } else if (view) {
+            void rt.tween({ targets: view, x: view.x + 6, duration: 45, yoyo: true, repeat: 3 });
+          }
           const offset = hitIndex * 14;
           const jobs = [
             floatText(rt, anchor.x + offset, anchor.y - 50 - offset, event.hpLost > 0 ? `-${event.hpLost}` : "Chặn",
@@ -582,14 +638,17 @@ function animateEvent(
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
       const look = hpLossLook(event.cause);
-      return Promise.all([
+      return held(
+        rt,
+        180,
         unitFlashAt(rt, ctx, event.targetId, look.color, 200),
         floatText(rt, anchor.x, anchor.y - 50, `${look.label} -${event.amount}`, css(look.color), 18, 250),
-      ]).then(() => undefined);
+      );
     }
     case "bloodMoonChanged": {
+      ctx.audio?.play("moon");
       if (event.rounds === 0) {
-        return floatText(rt, WIDTH / 2, midY, "Huyết Nguyệt tan", "#cfd6f0", 22, 500);
+        return floatHeld(rt, WIDTH / 2, midY, "Huyết Nguyệt tan", "#cfd6f0", 22, 500, 250);
       }
       // A light tint over the visible camera bounds — the base phase stays readable.
       const view = rt.scene.cameras.main.worldView;
@@ -606,20 +665,23 @@ function animateEvent(
         event.cause === "card"
           ? floatText(rt, WIDTH / 2, midY, "🔴 Huyết Nguyệt!", "#ff5a5a", 30, 500)
           : floatText(rt, WIDTH / 2, midY, `Huyết Nguyệt còn ${event.rounds} vòng`, "#ff5a5a", 18, 500);
-      return Promise.all([fade, label]).then(() => undefined);
+      return held(rt, 400, fade, label);
     }
     case "healed": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
-      return Promise.all([
+      ctx.audio?.play("heal");
+      return held(
+        rt,
+        200,
         unitFlashAt(rt, ctx, event.targetId, 0x2e8b57, 250),
         floatText(rt, anchor.x, anchor.y - 50, `+${event.amount}`, "#7fe07f", 18, 300),
-      ]).then(() => undefined);
+      );
     }
     case "armorGained": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
-      return floatText(rt, anchor.x, anchor.y - 40, `🛡 +${event.amount}`, "#9fd4ff", 15, 200);
+      return floatHeld(rt, anchor.x, anchor.y - 40, `🛡 +${event.amount}`, "#9fd4ff", 15, 200, 150);
     }
     case "armorRemoved": {
       const anchor = anchorOf(event.targetId);
@@ -636,17 +698,14 @@ function animateEvent(
         ease: "Sine.easeOut",
         onComplete: () => ring.destroy(),
       });
-      return Promise.all([
-        shatter,
-        floatText(rt, anchor.x, anchor.y - 50, "🛡 Vỡ Giáp", "#9fd4ff", 15, 350),
-      ]).then(() => undefined);
+      return held(rt, 250, shatter, floatText(rt, anchor.x, anchor.y - 50, "🛡 Vỡ Giáp", "#9fd4ff", 15, 350));
     }
     case "statusApplied": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
       void statusPop(rt, anchor, `ui:status_${event.status}`, STATUS_ICONS[event.status].color).catch(() => {});
       const unit = unitAt(ctx.presentation, event.targetId) ?? ({ statuses: [] } as unknown as UnitState);
-      return floatText(
+      return floatHeld(
         rt,
         anchor.x,
         anchor.y - 62,
@@ -654,25 +713,18 @@ function animateEvent(
         "#ffd97f",
         13,
         150,
+        120,
       );
     }
     case "statusRemoved": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
       void statusPop(rt, anchor, `ui:status_${event.status}`, STATUS_ICONS[event.status].color, true).catch(() => {});
-      return floatText(
-        rt,
-        anchor.x,
-        anchor.y - 62,
-        `-${STATUS_LABELS[event.status]}`,
-        "#8b93b8",
-        12,
-        150,
-      );
+      return floatHeld(rt, anchor.x, anchor.y - 62, `-${STATUS_LABELS[event.status]}`, "#8b93b8", 12, 150, 120);
     }
     case "moonPowerChanged": {
       const at = anchorsFor(ctx, event.player).resource;
-      return floatText(rt, at.x - 60, at.y, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 200);
+      return floatHeld(rt, at.x - 60, at.y, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 200, 120);
     }
     case "moonShifted": {
       // The Nguyệt Luân turns at center stage and settles into the moon badge; the new phase's name floats down.
@@ -680,16 +732,17 @@ function animateEvent(
       const phaseIds = ctx.gameData.moonPhases.map((entry) => entry.id);
       const at = ctx.moonAnchor ?? moon;
       // Routine shifts take ~550 ms; a card-forced shift lingers ~900 ms (`01` §7.4).
-      return moonWheel(rt, { x: WIDTH / 2, y: midY }, at, phaseIds, event.from, event.to, 0xf4d35e, event.cause === "card" ? 900 : 550).then(() =>
-        floatText(rt, at.x, at.y + 46, phase?.name ?? "", "#f4d35e", 15, 400),
-      );
+      ctx.audio?.play("moon");
+      void floatText(rt, at.x, at.y + 46, phase?.name ?? "", "#f4d35e", 15, 400).catch(() => {});
+      return moonWheel(rt, { x: WIDTH / 2, y: midY }, at, phaseIds, event.from, event.to, 0xf4d35e, event.cause === "card" ? 900 : 550);
     }
     case "moonDecreesRolled": {
       // `01` §7.6 — minimal banner: start phase + its decree. Full Nguyệt Lệnh UI is Task 7.
+      ctx.audio?.play("moon");
       const phase = ctx.gameData.moonPhases[event.moonIndex];
       const decree = phase?.decrees.find((d) => d.id === event.decrees[event.moonIndex]);
       const label = phase ? `${phase.icon} ${phase.name} · ${decree?.name ?? "—"}` : "Nguyệt Luân";
-      return floatText(rt, WIDTH / 2, 300, label, "#f4d35e", 22, 600);
+      return floatHeld(rt, WIDTH / 2, 300, label, "#f4d35e", 22, 600, 400);
     }
     case "intentsRevealed":
       // Enemies no longer telegraph their chain (`01` §9.2) — nothing to show.
@@ -697,7 +750,7 @@ function animateEvent(
     case "intentsCancelled": {
       const anchor = anchorOf(event.enemyId);
       if (!anchor) return instant();
-      return floatText(rt, anchor.x, anchor.y - 110, `Tỏa Nguyệt hủy ${event.intentIds.length} chiêu`, "#9fd4ff", 13, 450);
+      return floatHeld(rt, anchor.x, anchor.y - 110, `Tỏa Nguyệt hủy ${event.intentIds.length} chiêu`, "#9fd4ff", 13, 450, 150);
     }
     case "sealStripped": {
       const anchor = anchorOf(event.unitId);
@@ -709,7 +762,7 @@ function animateEvent(
         : ctx.presentation.summons?.some((summon) => summon.id === event.unitId)
           ? ctx.gameData.summons[event.refId]?.name
           : instance ? cardDefOf(ctx.gameData, ctx.presentation, instance)?.name : undefined;
-      return floatText(rt, anchor.x, anchor.y - 110, `Phong Ấn: ${ref ?? ""} mất hiệu ứng`, "#b9a8ff", 13, 450);
+      return floatHeld(rt, anchor.x, anchor.y - 110, `Phong Ấn: ${ref ?? ""} mất hiệu ứng`, "#b9a8ff", 13, 450, 150);
     }
     case "intentExecuted": {
       const anchor = anchorOf(event.enemyId);
@@ -725,40 +778,39 @@ function animateEvent(
           : [];
       const dx = target ? (target.x - anchor.x) * 0.18 : 0;
       const dy = target ? (target.y - anchor.y) * 0.18 : (aimed.length > 0 ? 20 : 0);
-      const lunge = rt.tween({
-        targets: view,
-        x: anchor.x + dx,
-        y: anchor.y + dy,
-        duration: 125,
-        yoyo: true,
-      });
-      return Promise.all([
-        lunge,
-        floatText(rt, anchor.x, anchor.y + 90, intent?.name ?? "", "#ffb070", 18, 550),
-        ...(intent?.kind === "attack" || intent?.kind === "attackDefend" ? [] : aimed.map((to) => beam(rt, anchor, to, 0xff7050, 550, 5))),
-      ]).then(() => undefined);
+      // Reduced motion trades the lunge for an alpha pulse — same 120 ms beat.
+      const signal = rt.reducedMotion
+        ? rt.tween({ targets: view, alpha: 0.45, duration: 60, yoyo: true })
+        : rt.tween({ targets: view, x: anchor.x + dx, y: anchor.y + dy, duration: 60, yoyo: true });
+      void floatText(rt, anchor.x, anchor.y + 90, intent?.name ?? "", "#ffb070", 18, 400).catch(() => {});
+      if (intent?.kind !== "attack" && intent?.kind !== "attackDefend") {
+        for (const to of aimed) void beam(rt, anchor, to, 0xff7050, 350, 5).catch(() => {});
+      }
+      return Promise.all([signal, rt.wait(120)]).then(() => undefined);
     }
     case "intentSkipped": {
       const anchor = anchorOf(event.enemyId);
       if (!anchor) return instant();
-      return floatText(rt, anchor.x, anchor.y - 80, "Đóng Băng — bỏ qua", "#9fd4ff", 13, 300);
+      return floatHeld(rt, anchor.x, anchor.y - 80, "Đóng Băng — bỏ qua", "#9fd4ff", 13, 300, 120);
     }
     case "intentFizzled": {
       const anchor = anchorOf(event.enemyId);
       if (!anchor) return instant();
-      return floatText(rt, anchor.x, anchor.y - 80, "Hụt", "#8b93b8", 13, 250);
+      return floatHeld(rt, anchor.x, anchor.y - 80, "Hụt", "#8b93b8", 13, 250, 120);
     }
     case "heroLeveledUp": {
+      ctx.audio?.play("levelUp");
       const anchor = anchorOf(event.heroId);
       const jobs: Promise<void>[] = [
         floatText(rt, WIDTH / 2, midY, `★ ${event.name} ★`, "#f4d35e", 26, 900),
       ];
       if (anchor) jobs.push(unitFlashAt(rt, ctx, event.heroId, 0xf4d35e, 500));
-      return Promise.all(jobs).then(() => undefined);
+      return held(rt, 500, ...jobs);
     }
     case "unitDied": {
       const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
+      ctx.audio?.play("death");
       const boss = ctx.presentation.boss?.enemyId === event.unitId;
       return deathBurn(rt, ctx.unitViews.get(event.unitId), anchor, boss);
     }
@@ -766,18 +818,24 @@ function animateEvent(
       const relic = ctx.gameData.runRelics[event.runRelicId];
       const name = relic?.name ?? ctx.gameData.augments[event.runRelicId]?.name ?? event.runRelicId;
       const color = relic === undefined ? "#e0b0ff" : "#9fd4ff";
-      return floatText(rt, WIDTH / 2, midY, `✦ ${name}`, color, 18, 400);
+      return floatHeld(rt, WIDTH / 2, midY, `✦ ${name}`, color, 18, 400, 200);
     }
     case "relicTriggered": {
       const name = ctx.gameData.relics[event.relicId]?.name ?? event.relicId;
-      return floatText(rt, WIDTH / 2, midY, `☾ ${name}`, "#f4d35e", 18, 400);
+      return floatHeld(rt, WIDTH / 2, midY, `☾ ${name}`, "#f4d35e", 18, 400, 200);
     }
     case "weaponTriggered": {
       const name = ctx.gameData.weapons[event.weaponId]?.name ?? event.weaponId;
-      return floatText(rt, WIDTH / 2, midY, `⚔ ${name}`, "#ffb080", 18, 400);
+      return floatHeld(rt, WIDTH / 2, midY, `⚔ ${name}`, "#ffb080", 18, 400, 200);
     }
-    case "combatEnded":
+    case "combatEnded": {
+      // Seat-relative win: PvP carries `winner`, PvE the viewer's `result` —
+      // the audio instance dedupes against a later terminal recovery frame.
+      const won =
+        event.winner === "draw" ? false : event.winner !== undefined ? event.winner === (ctx.mySeat ?? 0) : event.result === "won";
+      ctx.audio?.play(event.result === "draw" ? "draw" : won ? "victory" : "defeat");
       return instant();
+    }
     case "playerForfeited": {
       const reasons: Record<string, string> = {
         resign: "bỏ cuộc",
@@ -785,10 +843,10 @@ function animateEvent(
         disconnect: "mất kết nối",
       };
       const who = event.player === ctx.mySeat ? "Bạn" : "Đối thủ";
-      return floatText(rt, WIDTH / 2, midY, `${who} ${reasons[event.reason] ?? event.reason}`, "#ff8080", 22, 700);
+      return floatHeld(rt, WIDTH / 2, midY, `${who} ${reasons[event.reason] ?? event.reason}`, "#ff8080", 22, 700, 300);
     }
     case "playerDisconnected":
-      return floatText(
+      return floatHeld(
         rt,
         WIDTH / 2,
         300,
@@ -796,27 +854,28 @@ function animateEvent(
         "#8b93b8",
         16,
         600,
+        250,
       );
     case "mulliganed":
-      return floatText(rt, WIDTH / 2, 550, `Đổi ${event.returned.length} lá`, "#cfd6f0", 14, 250);
+      return floatHeld(rt, WIDTH / 2, 550, `Đổi ${event.returned.length} lá`, "#cfd6f0", 14, 250, 150);
     case "choiceOpened":
-      return floatText(rt, WIDTH / 2, 550, "Chiêm Bài", "#f4d35e", 16, 250);
+      return floatHeld(rt, WIDTH / 2, 550, "Chiêm Bài", "#f4d35e", 16, 250, 150);
     case "moonChoiceOpened":
-      return floatText(rt, WIDTH / 2, 550, "Chọn Pha", "#f4d35e", 16, 250);
+      return floatHeld(rt, WIDTH / 2, 550, "Chọn Pha", "#f4d35e", 16, 250, 150);
     case "cardChosen":
       return instant();
     case "deckedOut":
-      return floatText(rt, WIDTH / 2, midY, "CẠN BÀI", "#ff8080", 28, 700);
+      return floatHeld(rt, WIDTH / 2, midY, "CẠN BÀI", "#ff8080", 28, 700, 350);
     case "cardsPurged":
-      return floatText(rt, pile.x + 90, pile.y - 70, `-${event.instanceIds.length} lá (Tán Chiêu)`, "#8b93b8", 12, 300);
+      return floatHeld(rt, pile.x + 90, pile.y - 70, `-${event.instanceIds.length} lá (Tán Chiêu)`, "#8b93b8", 12, 300, 150);
     case "moonReserveChanged": {
       if (event.side === "hero") {
         const at = anchorsFor(ctx, event.player).reserve;
-        return floatText(rt, at.x - 60, at.y, `Dự Trữ ${event.value}`, "#7fd4ff", 13, 250);
+        return floatHeld(rt, at.x - 60, at.y, `Dự Trữ ${event.value}`, "#7fd4ff", 13, 250, 120);
       }
       const anchor = event.enemyId !== undefined ? anchorOf(event.enemyId) : undefined;
       if (!anchor) return instant();
-      return floatText(rt, anchor.x, anchor.y - 95, `Dự Trữ ${event.value}`, "#7fd4ff", 11, 150);
+      return floatHeld(rt, anchor.x, anchor.y - 95, `Dự Trữ ${event.value}`, "#7fd4ff", 11, 150, 120);
     }
     case "summoned": {
       // Linh Thú (`01` §17): its panel only exists after the next render, so
@@ -839,17 +898,14 @@ function animateEvent(
         onComplete: () => glow.destroy(),
       });
       const name = ctx.gameData.summons[event.summonId]?.name ?? "Linh Thú";
-      return Promise.all([
-        ring,
-        floatText(rt, anchor.x, anchor.y - 62, `Triệu hồi — ${name}`, "#f4d35e", 18, 500),
-      ]).then(() => undefined);
+      return held(rt, 300, ring, floatText(rt, anchor.x, anchor.y - 62, `Triệu hồi — ${name}`, "#f4d35e", 18, 500));
     }
     case "summonActed": {
       const anchor = anchorOf(event.unitId);
       if (!anchor) return instant();
       const summon = ctx.presentation.summons?.find((unit) => unit.id === event.unitId);
       const name = (summon && ctx.gameData.summons[summon.summonId]?.name) ?? "Linh Thú";
-      return floatText(rt, anchor.x, anchor.y - 44, name, "#9fd4ff", 14, 300);
+      return floatHeld(rt, anchor.x, anchor.y - 44, name, "#9fd4ff", 14, 300, 120);
     }
     case "summonDismissed": {
       const anchor = anchorOf(event.unitId);
@@ -862,7 +918,7 @@ function animateEvent(
       if (anchor) {
         jobs.push(floatText(rt, anchor.x, anchor.y - 30, "Linh Thú biến mất", "#8b93b8", 13, 350));
       }
-      return Promise.all(jobs).then(() => undefined);
+      return held(rt, 300, ...jobs);
     }
     case "heroRevived": {
       // Hồi Hồn (`18` §3.5): the fallen card brightens back as it stands.
@@ -875,18 +931,18 @@ function animateEvent(
       if (view && anchor) {
         jobs.push(rt.tween({ targets: view, alpha: 1, scale: 1, y: anchor.y, duration: 420, ease: "Sine.easeOut" }));
       }
-      return Promise.all(jobs).then(() => undefined);
+      return held(rt, 450, ...jobs);
     }
     case "coopComboTriggered": {
       // Hợp Kích (`01` §16.4): the banner lands mid-queue, not after the batch commits.
       const name = ctx.gameData.coopCombos[event.comboId]?.name ?? event.comboId;
-      return floatText(rt, WIDTH / 2, midY - 30, `HỢP KÍCH — ${name}!`, "#f4d35e", 28, 800);
+      return floatHeld(rt, WIDTH / 2, midY - 30, `HỢP KÍCH — ${name}!`, "#f4d35e", 28, 800, 400);
     }
     case "bossPhaseChanged": {
       // `01` §16.5: the phase banner is a queue beat like any other.
       const defId = ctx.presentation.enemies.find((enemy) => enemy.id === event.enemyId)?.defId;
       const name = (defId !== undefined ? ctx.gameData.enemies[defId]?.name : undefined) ?? "Ma Quân";
-      return floatText(rt, WIDTH / 2, midY - 30, `${name} — Giai đoạn ${event.phase}`, "#ff8090", 26, 800);
+      return floatHeld(rt, WIDTH / 2, midY - 30, `${name} — Giai đoạn ${event.phase}`, "#ff8090", 26, 800, 400);
     }
     default:
       return instant();

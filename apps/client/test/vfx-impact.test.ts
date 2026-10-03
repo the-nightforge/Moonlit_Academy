@@ -56,8 +56,9 @@ describe("playAttack onImpact", () => {
     });
     await runToEnd(rt, attack);
     expect(impacts).toBe(1);
-    expect(rt.shakes.length).toBe(3); // three visual impacts, one decisive callback
-    expect(shakesAtImpact).toBe(3);
+    // Three visual impacts still land — the shake budget caps the camera at two.
+    expect(rt.shakes.length).toBe(2);
+    expect(shakesAtImpact).toBe(2);
   });
 
   it("abort before impact never calls onImpact", async () => {

@@ -43,7 +43,10 @@ import {
 } from "../debug";
 import manifest from "virtual:assets-manifest";
 import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
-import { confirmModal, isModalOpen } from "../ui/widgets";
+import { confirmModal, isModalOpen, showModal } from "../ui/widgets";
+import { CombatAudio } from "../ui/combat-audio";
+import { loadCombatSettings, saveCombatSettings, DEFAULT_COMBAT_SETTINGS } from "../ui/combat-settings";
+import type { CombatSettings } from "../ui/combat-settings";
 import { buildIntroEvents, playEventQueue } from "../ui/event-animator";
 import { GLOW as VFX_GLOW, STAR as VFX_STAR, ensureTextures } from "../ui/vfx";
 import { CombatPlayback, type PlaybackBatch } from "../ui/combat-playback";
@@ -197,6 +200,9 @@ export class CombatScene extends Phaser.Scene {
   private renderQueued = false;
   /** Post-commit follow-ups keyed by their batch (run transition, story finish). */
   private commitWork = new Map<PlaybackBatch, () => void>();
+  /** Local presentation preferences — each playback batch snapshots them. */
+  private settings: CombatSettings = DEFAULT_COMBAT_SETTINGS;
+  private audio: CombatAudio = new CombatAudio(this.settings);
 
   constructor() {
     super("combat");
@@ -260,10 +266,23 @@ export class CombatScene extends Phaser.Scene {
     useDesignCamera(this);
     this.root = this.add.container(0, 0);
     this.input.mouse?.disableContextMenu();
+    // Preferences are local-only; the audio context waits for the first gesture.
+    this.settings = loadCombatSettings(
+      localStorage,
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
+    );
+    this.audio = new CombatAudio(this.settings);
+    const unlock = () => void this.audio.unlock();
+    this.input.once("pointerdown", unlock);
+    this.input.keyboard?.once("keydown", unlock);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.audio.dispose());
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       if (pointer.rightButtonDown()) this.cancelTargeting();
     });
-    this.input.keyboard?.on("keydown-ESC", () => this.cancelTargeting());
+    // A modal (settings, confirm) owns Esc — combat targeting yields to it.
+    this.input.keyboard?.on("keydown-ESC", () => {
+      if (!isModalOpen()) this.cancelTargeting();
+    });
     this.input.keyboard?.on("keydown-E", () => {
       if (
         !this.inputLocked &&
@@ -506,7 +525,9 @@ export class CombatScene extends Phaser.Scene {
 
   /** One batch's beat: all FX owned by a per-batch runtime the queue can abort. */
   private playBatch(batch: PlaybackBatch, signal: AbortSignal): Promise<void> {
-    const runtime = createAnimationRuntime(this, signal);
+    // The batch snapshots the current preferences — a mid-batch change waits
+    // for the next batch's runtime (`16` §8.3).
+    const runtime = createAnimationRuntime(this, signal, this.settings);
     const mode = this.state.mode;
     return playEventQueue(runtime, batch.events, {
       gameData: this.gameData,
@@ -529,6 +550,7 @@ export class CombatScene extends Phaser.Scene {
       moonAnchor: this.moonAnchor,
       mySeat: this.mySeat,
       runtime,
+      audio: this.audio,
     })
       .then(() => runtime.drain())
       .finally(() => {
@@ -1006,7 +1028,12 @@ export class CombatScene extends Phaser.Scene {
     });
     // The other seat's draw pile sits at the top row's height (`17` §7.3 piles).
     if (other) this.renderPile(other, TOP_ROW_Y, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ", this.seatLayers.get(other.index));
-    this.text(WIDTH - 40, 36, "⚙", 18, COLORS.dimText).setOrigin(0.5);
+    const gear = this.badge(WIDTH - 40, 36, 16, "⚙", COLORS.panelBorder, this.root, COLORS.button, 15, COLORS.dimText);
+    gear.setInteractive({ useHandCursor: true });
+    gear.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) this.openSettings();
+    });
+    this.hoverTooltip(gear, () => ({ x: WIDTH - 260, y: 64 }), () => ["Thiết lập"]);
     if (match && !match.ended) {
       const flag = this.badge(WIDTH - 136, 36, 16, "⚑", 0x884455, this.root, 0x40202a, 14, "#ff9090");
       flag.setInteractive({ useHandCursor: true });
@@ -2091,6 +2118,9 @@ export class CombatScene extends Phaser.Scene {
       const end = this.netMatch.ended;
       const won = end ? end.result === "won" : this.state.winner === this.mySeat;
       const draw = end?.result === "draw";
+      // Terminal recovery lands here without a combatEnded beat — the audio
+      // instance dedupes so an earlier beat's sting never repeats (`16` §8.3).
+      this.audio.play(draw ? "draw" : won ? "victory" : "defeat");
       const reasons: Record<string, string> = {
         resign: "Đối thủ bỏ cuộc",
         timeout: "Đối thủ hết giờ quá nhiều lần",
@@ -2157,6 +2187,7 @@ export class CombatScene extends Phaser.Scene {
     }
     if (this.isStory) {
       const won = this.state.status === "won";
+      this.audio.play(won ? "victory" : "defeat");
       const stage = this.storyStageId !== null ? this.gameData.storyStages[this.storyStageId] : undefined;
       this.root.add(this.screenDim(0.65));
       this.text(
@@ -2180,6 +2211,7 @@ export class CombatScene extends Phaser.Scene {
       return;
     }
     const won = this.state.status === "won";
+    this.audio.play(won ? "victory" : "defeat");
     this.root.add(this.screenDim(0.65));
     this.text(
       WIDTH / 2,
@@ -2203,6 +2235,47 @@ export class CombatScene extends Phaser.Scene {
     this.endScreenButton(WIDTH / 2 + 180, HEIGHT / 2 + 90, "Chọn deck", () =>
       this.scene.start("deck-select"),
     );
+  }
+
+  /**
+   * The ⚙ modal: speed, reduced motion, volume. Purely local presentation —
+   * the server deadline keeps running while it is open, and a running batch
+   * keeps the settings it started with (`16` §8.3). Esc/Enter dismiss it via
+   * the modal's own handlers; each option re-opens the modal so the labels
+   * reflect the new value.
+   */
+  private openSettings(): void {
+    if (isModalOpen()) return;
+    const s = this.settings;
+    void showModal(this, {
+      title: "Thiết Lập",
+      message: "Nhịp độ và âm thanh của trận — chỉ lưu trên máy này.",
+      actions: [
+        { label: `Tốc độ: ×${s.speed}` },
+        { label: `Giảm chuyển động: ${s.reducedMotion ? "Bật" : "Tắt"}` },
+        { label: s.volume <= 0 ? "Âm thanh: Tắt" : `Âm thanh: ${Math.round(s.volume * 100)}%` },
+        { label: "Đóng", variant: "primary" },
+      ],
+    }).then((result) => {
+      if (result.action === -1 || result.action === 3) return;
+      const next = { ...this.settings };
+      if (result.action === 0) next.speed = next.speed === 1 ? 2 : 1;
+      else if (result.action === 1) next.reducedMotion = !next.reducedMotion;
+      else if (result.action === 2) next.volume = next.volume >= 1 ? 0 : Math.min(1, next.volume + 0.25);
+      this.applySettings(next);
+      this.openSettings();
+    });
+  }
+
+  /** Applies new preferences to audio immediately and to the next batch's runtime. */
+  private applySettings(next: CombatSettings): void {
+    this.settings = next;
+    this.audio.configure(next);
+    try {
+      saveCombatSettings(localStorage, next);
+    } catch {
+      // Storage denied (private mode) — preferences simply won't persist.
+    }
   }
 
   private endScreenButton(

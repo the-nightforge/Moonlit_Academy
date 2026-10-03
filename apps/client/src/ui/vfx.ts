@@ -324,6 +324,10 @@ export function ensureTextures(scene: Phaser.Scene): void {
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
+/** Reduced motion thins particle showers — fewer motes, same silhouette. */
+const moteScale = (rt: AnimationRuntime): number => (rt.reducedMotion ? 0.4 : 1);
+const moteCount = (rt: AnimationRuntime, n: number): number => Math.max(1, Math.round(n * moteScale(rt)));
+
 /** Temporary FX sprite: the runtime destroys it when the batch aborts. */
 function addFx(rt: AnimationRuntime, at: Point, key: string): Phaser.GameObjects.Image {
   return rt.track(rt.scene.add.image(at.x, at.y, key).setBlendMode("ADD").setDepth(DEPTH));
@@ -353,7 +357,7 @@ function trail(rt: AnimationRuntime, follow: Phaser.GameObjects.Image, color: nu
     rt.scene.add
       .particles(0, 0, GLOW, {
         follow,
-        frequency: 14,
+        frequency: Math.round(14 / moteScale(rt)),
         lifespan: 180,
         scale: { start: size * S, end: 0 },
         alpha: { start: 0.8, end: 0 },
@@ -377,7 +381,7 @@ function impact(rt: AnimationRuntime, at: Point, color: number, angle: number, p
   const ring = addFx(rt, at, RING).setTint(color).setScale(0.3 * S).setAlpha(0.9);
   fadeOut(rt, ring, { scale: 1.9 * power * S, duration: 340, ease: "Cubic.easeOut" });
 
-  const count = Math.round(10 * power);
+  const count = moteCount(rt, Math.round(10 * power));
   for (let i = 0; i < count; i++) {
     const a = i < count * 0.6 ? angle + rand(-0.8, 0.8) : rand(0, Math.PI * 2);
     const dist = rand(36, 100) * power;
@@ -408,9 +412,10 @@ function impact(rt: AnimationRuntime, at: Point, color: number, angle: number, p
       })
       .setDepth(DEPTH),
   );
-  embers.explode(Math.round(8 * power));
+  embers.explode(moteCount(rt, Math.round(8 * power)));
   destroyLater(rt, embers, 800);
-  rt.scene.cameras.main.shake(80 + 40 * power, 0.0025 * power);
+  // 60 ms + 60 ms fits the batch's two-shake / 120 ms budget; reduced motion denies it.
+  rt.shake(40 + 20 * power, 0.0025 * power);
 }
 
 /** The attacker's card steps toward the target and back. */
@@ -769,7 +774,7 @@ async function fire(rt: AnimationRuntime, from: Point, to: Point, color: number,
     rt.scene.add
       .particles(0, 0, GLOW, {
         follow: ball,
-        frequency: 10,
+        frequency: Math.round(10 / moteScale(rt)),
         lifespan: { min: 220, max: 380 },
         speed: { min: 10, max: 40 },
         scale: { start: 0.34 * S, end: 0 },
@@ -883,7 +888,7 @@ async function blood(rt: AnimationRuntime, from: Point, to: Point, color: number
       })
       .setDepth(DEPTH),
   );
-  drops.explode(14);
+  drops.explode(moteCount(rt, 14));
   destroyLater(rt, drops, 900);
   impact(rt, to, hitColor, angle, 1.1);
   hit();
@@ -929,7 +934,7 @@ export async function castCard(
       })
       .setDepth(DEPTH),
   );
-  motes.explode(18);
+  motes.explode(moteCount(rt, 18));
   destroyLater(rt, motes, 450);
   await rt.wait(target ? 260 : 160);
 }
@@ -1064,8 +1069,8 @@ export async function deathBurn(
         alpha: { start: 0.9, end: 0 },
         tint: [0x8a8a9a, 0x5a5a66, 0xff8040, 0xffb060],
         blendMode: "ADD",
-        frequency: 10,
-        quantity: boss ? 3 : 2,
+        frequency: Math.round(10 / moteScale(rt)),
+        quantity: moteCount(rt, boss ? 3 : 2),
       })
       .setDepth(DEPTH),
   );

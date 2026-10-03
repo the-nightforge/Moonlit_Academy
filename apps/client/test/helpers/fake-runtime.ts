@@ -2,6 +2,8 @@ import { expect } from "vitest";
 import type Phaser from "phaser";
 import { AnimationAbortedError } from "../../src/ui/animation-runtime";
 import type { AnimationRuntime } from "../../src/ui/animation-runtime";
+import { ShakeBudget } from "../../src/ui/combat-settings";
+import type { CombatSettings } from "../../src/ui/combat-settings";
 
 /**
  * A chainable stand-in for any Phaser game object: unknown property reads
@@ -64,15 +66,19 @@ export function fakeScene(shakeLog: number[], created?: Record<string | symbol, 
   return { textures, add, cameras, time: {}, tweens: {} } as unknown as Phaser.Scene;
 }
 
-type PendingOp = { resolve: () => void; reject: (error: Error) => void };
+type PendingOp = { due: number; resolve: () => void; reject: (error: Error) => void };
 
 /**
- * Runtime with a manual clock: `step()` resolves every op queued so far,
- * `dispose()` rejects them like an abort and destroys tracked objects.
+ * Runtime with a manual virtual clock: `wait`/`tween` enqueue ops due at
+ * `clock + duration(ms)`, and `step()` advances the clock to the next due
+ * time and resolves everything reached. `dispose()` rejects them like an
+ * abort and destroys tracked objects.
  */
 export class FakeRuntime implements AnimationRuntime {
   readonly scene: Phaser.Scene;
   readonly shakes: number[] = [];
+  /** Virtual milliseconds elapsed — the queue's perceived wall time. */
+  clock = 0;
   /** Objects the fake scene created (for leak/destroy assertions). */
   readonly created: Record<string | symbol, unknown>[] = [];
   /** Text contents the fake scene received (banner/label assertions). */
@@ -81,11 +87,16 @@ export class FakeRuntime implements AnimationRuntime {
   readonly rects: unknown[][] = [];
   /** Tween configs the runtime was asked to run. */
   readonly tweenConfigs: Phaser.Types.Tweens.TweenBuilderConfig[] = [];
+  private readonly settings: CombatSettings;
+  private readonly budget: ShakeBudget;
   private readonly pending: PendingOp[] = [];
   private readonly tracked = new Set<Record<string | symbol, unknown>>();
   private dead = false;
 
-  constructor() {
+  constructor(settings: Partial<CombatSettings> = {}) {
+    // The runtime copies its batch's settings — a later change can't reach in.
+    this.settings = { speed: 1, reducedMotion: false, volume: 0.5, ...settings };
+    this.budget = new ShakeBudget(this.settings.reducedMotion);
     this.scene = fakeScene(this.shakes, this.created, this.texts);
     const rects = this.rects;
     const baseRect = this.scene.add.rectangle;
@@ -95,13 +106,29 @@ export class FakeRuntime implements AnimationRuntime {
     }) as typeof baseRect;
   }
 
-  wait(_ms: number): Promise<void> {
-    return this.enqueue();
+  duration(ms: number): number {
+    return Math.round(ms / this.settings.speed);
+  }
+
+  get reducedMotion(): boolean {
+    return this.settings.reducedMotion;
+  }
+
+  shake(durationMs: number, intensity: number): void {
+    if (!this.budget.allow(durationMs)) return;
+    this.scene.cameras.main.shake(durationMs, Math.min(intensity, 0.0025));
+  }
+
+  wait(ms: number): Promise<void> {
+    return this.enqueue(this.duration(ms));
   }
 
   tween(config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
     this.tweenConfigs.push(config);
-    return this.enqueue();
+    const delay = typeof config.delay === "number" ? config.delay : 0;
+    const base = (config.duration ?? 0) as number;
+    const total = delay + base * ((config.repeat ?? 0) + 1) * (config.yoyo === true ? 2 : 1);
+    return this.enqueue(this.duration(total));
   }
 
   track<T extends Phaser.GameObjects.GameObject>(object: T): T {
@@ -118,9 +145,14 @@ export class FakeRuntime implements AnimationRuntime {
     return this.pending.length;
   }
 
-  /** Resolves every op queued so far; continuations may enqueue more. */
+  /** Advances the clock to the earliest due op and resolves everything due. */
   step(): void {
-    for (const op of this.pending.splice(0)) op.resolve();
+    if (this.pending.length === 0) return;
+    const due = Math.min(...this.pending.map((op) => op.due));
+    this.clock = Math.max(this.clock, due);
+    const ready = this.pending.filter((op) => op.due <= this.clock);
+    this.pending.splice(0, this.pending.length, ...this.pending.filter((op) => op.due > this.clock));
+    for (const op of ready) op.resolve();
   }
 
   async drain(): Promise<void> {
@@ -139,7 +171,7 @@ export class FakeRuntime implements AnimationRuntime {
     this.tracked.clear();
   }
 
-  private enqueue(): Promise<void> {
+  private enqueue(ms: number): Promise<void> {
     this.assertActive();
     let resolve!: () => void;
     let reject!: (error: Error) => void;
@@ -149,7 +181,7 @@ export class FakeRuntime implements AnimationRuntime {
     });
     // The runtime owns the rejection, like SceneAnimationRuntime.register.
     void promise.catch(() => {});
-    this.pending.push({ resolve, reject });
+    this.pending.push({ due: this.clock + Math.max(0, ms), resolve, reject });
     return promise;
   }
 }
@@ -158,7 +190,7 @@ export class FakeRuntime implements AnimationRuntime {
 export async function runToEnd(rt: FakeRuntime, promise: Promise<unknown>): Promise<void> {
   let done = false;
   void promise.then(() => (done = true), () => (done = true));
-  for (let i = 0; i < 500 && !done; i++) {
+  for (let i = 0; i < 5000 && !done; i++) {
     rt.step();
     await Promise.resolve();
     await Promise.resolve();
