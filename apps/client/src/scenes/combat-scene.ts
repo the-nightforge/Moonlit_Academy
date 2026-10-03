@@ -27,7 +27,7 @@ import { applyRecordedRunAction } from "../run-session";
 import { recordStoryAction, startStoryTicket, submitStory } from "../story-session";
 import type { NetMatch } from "../net/match";
 import type { ServerMessage } from "../net/protocol";
-import { cycleEncounter, restartSession, session } from "../session";
+import { cycleEncounter, recoverMatchGone, restartSession, session } from "../session";
 import type { Team } from "../session";
 import {
   debugAddMoonPower,
@@ -284,7 +284,20 @@ export class CombatScene extends Phaser.Scene {
       this.netDown = !connected;
       if (this.scene.isActive()) this.requestRender();
     };
-    net.onRejoin = (snapshot) => this.applyNetRejoin(match.rejoin(snapshot));
+    net.onRecovery = (snapshot) => {
+      if (snapshot !== null) {
+        this.applyNetRejoin(match.rejoin(snapshot));
+        return;
+      }
+      // No room left — the match is gone; leave for the lobby (`16` §8.4).
+      recoverMatchGone(match, {
+        abortPlayback: () => this.playback.reset(),
+        startScene: (key) => {
+          if (this.scene.isActive()) this.scene.start(key);
+        },
+        refreshProfile: () => resumeSession(),
+      });
+    };
     // A `match.sync` answer resyncs the seat the same way a welcome rejoin does.
     match.onRejoin = (_snapshot, lostPending) => this.applyNetRejoin(lostPending);
     match.onPush = (events, view) => this.onNetPush(events, view);
@@ -1952,6 +1965,14 @@ export class CombatScene extends Phaser.Scene {
         if (parts.length > 0) {
           this.text(WIDTH / 2, HEIGHT / 2 + 72, parts.join("   "), 14, COLORS.gold).setOrigin(0.5);
         }
+      }
+      // Settlement write failed server-side: the result stands, rewards follow (`16` §8.4).
+      if (this.netMatch.settlement.status === "failed") {
+        this.text(
+          WIDTH / 2, HEIGHT / 2 + 72,
+          "Không nhận được thông tin thưởng; hồ sơ sẽ được cập nhật lại.",
+          14, "#cc5555",
+        ).setOrigin(0.5);
       }
       const coopMatch = this.netMatch.mode.startsWith("coop");
       this.endScreenButton(WIDTH / 2, HEIGHT / 2 + 116, coopMatch ? "Về Liên Thủ" : "Về Đấu Trường", () => {

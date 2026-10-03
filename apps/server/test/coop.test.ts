@@ -365,4 +365,41 @@ describe("co-op realtime (`17` §9)", () => {
     me = await call(server, "GET", "/api/coop/me", { token: a.token });
     expect(me.body).toMatchObject({ rewardClaimsLeft: 3 });
   }, 120_000);
+
+  it("N3 settlement đúng ghế: forfeiter thua không thưởng, partner thắng có thưởng; sync trả đúng từng ghế", async () => {
+    const server = await testServer();
+    shrinkBoss(server, 10);
+    const { wsA, wsB } = await coopPair(server);
+    const { matchId, seatA, seatB } = await queueCoopMatch(server, wsA, wsB);
+
+    // A bỏ cuộc — A forfeited; B đánh tiếp một mình tới thắng.
+    wsA.send({ type: "match.resign", matchId });
+    await wsA.settle();
+    await wsB.settle();
+    await driveToEnd(server, [seatB]);
+    const endA = wsA.last<CoopEnd>("match.end")!;
+    const endB = wsB.last<CoopEnd>("match.end")!;
+    expect(endA.result).toBe("lost");
+    expect(endB.result).toBe("won");
+
+    // `match.sync` trả settlement của chính ghế — forfeiter không có thưởng.
+    wsA.send({ type: "match.sync", matchId });
+    wsB.send({ type: "match.sync", matchId });
+    await wsA.settle();
+    await wsB.settle();
+    const snapA = wsA.last<{
+      you: number;
+      settlement: { status: string; end?: { result: string; rewards?: unknown } };
+    }>("match.snapshot")!;
+    const snapB = wsB.last<{
+      you: number;
+      settlement: { status: string; end?: { result: string; rewards?: unknown } };
+    }>("match.snapshot")!;
+    expect(snapA.you).toBe(seatA.seat);
+    expect(snapB.you).toBe(seatB.seat);
+    expect(snapA.settlement).toMatchObject({ status: "complete", end: { result: "lost" } });
+    expect(snapA.settlement.end?.rewards ?? null).toBeNull();
+    expect(snapB.settlement).toMatchObject({ status: "complete", end: { result: "won" } });
+    expect(snapB.settlement.end?.rewards).not.toBeNull();
+  }, 120_000);
 });

@@ -1,5 +1,23 @@
 import type { CombatEvent, CombatState } from "rules";
 
+/** The settled outcome of a match (`16` §8.3) — the `match.end` payload. */
+export interface MatchSettlement {
+  result: "won" | "lost" | "draw";
+  reason: string;
+  rating?: { before: number; after: number };
+  rewards?: { honor?: number; moonJade?: number; moonDust?: number; firstWin?: boolean } | null;
+  profileRev?: number;
+}
+
+/**
+ * Settlement lifecycle on a snapshot (`16` §8.4): a retained terminal room
+ * keeps reporting it for ~60 s so a late reconnect still learns the outcome.
+ */
+export type SettlementState =
+  | { status: "playing" | "pending" }
+  | { status: "complete"; end: MatchSettlement }
+  | { status: "failed"; error: string };
+
 /** `16` §8.2 — client mirror of the realtime protocol (`apps/server/src/realtime/protocol.ts`). */
 export interface MatchSnapshot {
   matchId: string;
@@ -11,6 +29,7 @@ export interface MatchSnapshot {
   eventSeq: number;
   /** Next action `seq` the server accepts from this seat — each receiver sees its own. */
   nextActionSeq: number;
+  settlement: SettlementState;
 }
 
 export type ServerMessage =
@@ -31,16 +50,10 @@ export type ServerMessage =
       deadline: number | null;
     }
   | { type: "match.rejected"; matchId: string; seq: number; nextActionSeq: number; reason: string }
-  | {
-      type: "match.end";
-      matchId: string;
-      result: "won" | "lost" | "draw";
-      reason: string;
-      rating?: { before: number; after: number };
-      /** Ranked pays `honor`; queue co-op pays `moonJade`/`moonDust` (`16` §8.8/§8.9). */
-      rewards?: { honor?: number; moonJade?: number; moonDust?: number; firstWin?: boolean };
-      profileRev?: number;
-    }
+  | ({ type: "match.end"; matchId: string } & MatchSettlement & {
+      /** Present when the settlement write failed — the result stands, rewards did not (`16` §8.4). */
+      settlementError?: string;
+    })
   | { type: "match.emote"; matchId: string; from: number; emoteId: string }
   | { type: "error"; error: string }
   | { type: "ping" };

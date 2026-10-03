@@ -1,6 +1,6 @@
 import type { Action, CombatEvent, CombatState } from "rules";
 import type { NetSocket } from "./socket";
-import type { MatchSnapshot, ServerMessage } from "./protocol";
+import type { MatchSettlement, MatchSnapshot, ServerMessage, SettlementState } from "./protocol";
 
 /**
  * One network match (`16` §8.2/§8.3): the seat's action `seq`, the latest
@@ -14,14 +14,10 @@ export class NetMatch {
   readonly others: { seat: number; username: string; connected: boolean }[];
   view: CombatState;
   deadline: number | null;
-  /** Ranked and queue co-op matches carry rewards and the new profile rev (`16` §8.8/§8.9). */
-  ended: {
-    result: "won" | "lost" | "draw";
-    reason: string;
-    rating?: { before: number; after: number };
-    rewards?: { honor?: number; moonJade?: number; moonDust?: number; firstWin?: boolean };
-    profileRev?: number;
-  } | null = null;
+  /** The settled outcome once it arrives — from `match.end` or a terminal snapshot (`16` §8.4). */
+  ended: MatchSettlement | null = null;
+  /** Settlement lifecycle as last reported by a snapshot (`16` §8.4). */
+  settlement: SettlementState = { status: "playing" };
 
   private seq: number;
   private lastEventSeq: number;
@@ -47,6 +43,8 @@ export class NetMatch {
     this.deadline = snapshot.deadline;
     this.lastEventSeq = snapshot.eventSeq;
     this.seq = snapshot.nextActionSeq;
+    this.settlement = snapshot.settlement;
+    if (snapshot.settlement.status === "complete") this.ended = snapshot.settlement.end;
   }
 
   /**
@@ -112,16 +110,23 @@ export class NetMatch {
         this.onRejoin(message, lostPending);
         return true;
       }
-      case "match.end":
-        this.ended = {
+      case "match.end": {
+        const end: MatchSettlement = {
           result: message.result,
           reason: message.reason,
           rating: message.rating,
           rewards: message.rewards,
           profileRev: message.profileRev,
         };
+        this.ended = end;
+        // A `settlementError` means the result stands but the reward write failed.
+        this.settlement =
+          message.settlementError !== undefined
+            ? { status: "failed", error: message.settlementError }
+            : { status: "complete", end };
         this.onEnd(message.result, message.reason);
         return true;
+      }
       case "match.emote":
         this.onEmote(message.from, message.emoteId);
         return true;
@@ -142,6 +147,10 @@ export class NetMatch {
     this.lastEventSeq = snapshot.eventSeq;
     this.seq = snapshot.nextActionSeq;
     this.pendingSeq = null;
+    this.settlement = snapshot.settlement;
+    // A terminal snapshot restores the settled outcome; pending/failed keeps the
+    // terminal view's provisional result instead (`16` §8.4).
+    this.ended = snapshot.settlement.status === "complete" ? snapshot.settlement.end : null;
     for (const other of snapshot.others) {
       const known = this.others.find((o) => o.seat === other.seat);
       if (known) known.connected = other.connected;

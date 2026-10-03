@@ -317,7 +317,12 @@ Server → client: `welcome { account, activeMatch?, serverTime }`, `queue.statu
 (MatchSnapshot, trả lời `match.sync` hoặc action trùng seq), `match.events
 { matchId, eventSeq, nextActionSeq, events, view, deadline }`, `match.rejected
 { matchId, seq, nextActionSeq, reason }`, `match.end { matchId, result, reason,
-rating?, rewards?, profileRev? }`, `match.emote`, `error`, `ping`.
+rating?, rewards?, profileRev?, settlementError? }`, `match.emote`, `error`, `ping`.
+
+`MatchSnapshot` luôn kèm `settlement: SettlementState` — `playing` | `pending`
+(trận đã chốt kết quả, transaction thưởng đang chạy) | `complete { end }` (payload
+giống `match.end`) | `failed { error }`. `match.end` mang `settlementError` khi
+ghi thưởng hỏng: kết quả vẫn đứng, thưởng sẽ được hồ sơ cập nhật lại sau.
 
 - `seq` trong `match.action` = số Action của riêng người đó đã được chấp nhận + 1;
   trùng (`seq < nextActionSeq`) → không áp lại, server trả `match.snapshot` hiện
@@ -345,7 +350,11 @@ rating?, rewards?, profileRev? }`, `match.emote`, `error`, `ping`.
   lượt.
 - `match.sync`: trả `match.snapshot` của chính ghế đó — kể cả trên phòng đã kết
   thúc còn giữ lại (~60 s), để client kết nối lại muộn vẫn lấy được trạng thái
-  chung kết.
+  chung kết và settlement (đọc snapshot, không chạy lại award). Frame
+  `match.action` trễ tới phòng đã kết thúc cũng được trả snapshot terminal.
+- Settlement chạy đúng một lần khi trận chốt kết quả (`finish`): ghi bản ghi +
+  thưởng trong một transaction rồi `match.end`; transaction hỏng → trạng thái
+  `failed`, không tự retry, và `match.end` vẫn gửi kèm `settlementError`.
 - Schema action của `match.action` (realtime) gồm mọi loại của `02` §3, kể cả
   **[Nguyệt Luân mới]** `discardCard` / `bloodPact`; trường `player` trong action
   **không tin client** — server gắn theo seat của kết nối trước khi `applyAction`.
@@ -358,12 +367,16 @@ rating?, rewards?, profileRev? }`, `match.emote`, `error`, `ping`.
 
 - Mất kết nối giữa trận: phòng giữ nguyên, đồng hồ lượt **vẫn chạy**; người kia
   nhận `match.events` kèm `playerDisconnected`.
-- Kết nối lại trong `reconnectSeconds`: `welcome.activeMatch` mang snapshot đầy
-  đủ (góc nhìn + `eventSeq` + `nextActionSeq` + `deadline`); client dựng lại màn
+- Kết nối lại trong `reconnectSeconds` — kể cả sau khi trận đã kết thúc còn
+  retention: `welcome.activeMatch` mang snapshot đầy đủ (góc nhìn + `eventSeq` +
+  `nextActionSeq` + `deadline` + `settlement`); socket ghế được gắn lại để nhận
+  settlement đang `pending` nhưng đồng hồ không chạy lại. Client dựng lại màn
   trận, đồng bộ lại seq action và bỏ action chưa được server chấp nhận (hiện
   "Thao tác chưa được xác nhận, hãy thử lại."). Client chỉ giữ tối đa một action
   chờ xác nhận; `seq` chỉ bị tiêu thụ khi frame thực sự rời socket — tin trận
   đấu không bao giờ nằm trong outbox offline.
+- `welcome` không còn `activeMatch` (phòng hết retention / server mới): client
+  hủy playback, tải lại hồ sơ và về Đấu Trường / Liên Thủ kèm "Trận đã kết thúc.".
 - Quá hạn → Action hệ thống `forfeit { reason: "disconnect" }`. Tải lại trang =
   kết nối lại (token trong `localStorage`).
 

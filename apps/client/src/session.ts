@@ -74,6 +74,26 @@ export function newCombatSession(
 
 export const session: CombatSession = newCombatSession();
 
+/**
+ * A `welcome` carried no `activeMatch` for this live match: the room is gone
+ * (settled and cleaned up, or the server restarted). Aborts playback, drops the
+ * match, refreshes the settled profile, and routes to the right lobby (`16` §8.4).
+ */
+export function recoverMatchGone(
+  match: NetMatch,
+  deps: {
+    abortPlayback(): void;
+    startScene(key: "arena" | "coop-lobby"): void;
+    refreshProfile(): Promise<unknown>;
+  },
+): void {
+  deps.abortPlayback();
+  session.match = null;
+  session.notices.push("Trận đã kết thúc.");
+  void deps.refreshProfile().catch(() => {});
+  deps.startScene(match.mode.startsWith("coop") ? "coop-lobby" : "arena");
+}
+
 export function restartSession(
   seed = session.seed,
   encounterId = session.encounterId,

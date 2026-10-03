@@ -62,6 +62,7 @@ export function snapshot(state: CombatState, you = 0, overrides: Partial<MatchSn
     deadline: null,
     eventSeq: 0,
     nextActionSeq: 1,
+    settlement: { status: "playing" },
     ...overrides,
   };
 }

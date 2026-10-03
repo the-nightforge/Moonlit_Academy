@@ -16,8 +16,11 @@ export class NetSocket {
   serverOffset = 0;
   /** Every server message except `ping` (answered internally). */
   onMessage: (message: ServerMessage) => void = () => {};
-  /** `welcome.activeMatch` on reconnect — the scene rejoins through this. */
-  onRejoin: (snapshot: MatchSnapshot) => void = () => {};
+  /**
+   * Fires on every `welcome`: the retained match snapshot, or null when the
+   * room is gone. Null means "nothing to rejoin" — not "recovered old match".
+   */
+  onRecovery: (snapshot: MatchSnapshot | null) => void = () => {};
   onStatus: (connected: boolean) => void = () => {};
 
   private ws: WebSocket | null = null;
@@ -91,7 +94,7 @@ export class NetSocket {
       this.connected = true;
       for (const queued of this.outbox.splice(0)) this.ws?.send(queued);
       this.onStatus(true);
-      if (message.activeMatch) this.onRejoin(message.activeMatch);
+      this.onRecovery(message.activeMatch ?? null);
     }
     this.onMessage(message);
   }

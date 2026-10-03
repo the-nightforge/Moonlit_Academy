@@ -55,3 +55,19 @@ describe("NetSocket.sendMatch", () => {
     expect(internals(sock).outbox).toHaveLength(1);
   });
 });
+
+describe("NetSocket.onRecovery", () => {
+  it("fires on every welcome — with the activeMatch snapshot or null", () => {
+    const sock = new NetSocket();
+    const onRecovery = vi.fn();
+    sock.onRecovery = onRecovery;
+    const raw = (message: unknown) =>
+      (sock as unknown as { onRaw(text: string): void }).onRaw(JSON.stringify(message));
+    const activeMatch = { matchId: "m1", mode: "practice", you: 0 };
+    raw({ type: "welcome", account: { id: 1, username: "x" }, serverTime: 123, activeMatch });
+    expect(onRecovery).toHaveBeenLastCalledWith(activeMatch);
+    raw({ type: "welcome", account: { id: 1, username: "x" }, serverTime: 456 });
+    expect(onRecovery).toHaveBeenLastCalledWith(null);
+    expect(onRecovery).toHaveBeenCalledTimes(2);
+  });
+});

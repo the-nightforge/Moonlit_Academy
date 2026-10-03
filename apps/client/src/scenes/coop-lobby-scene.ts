@@ -54,7 +54,8 @@ export class CoopLobbyScene extends Phaser.Scene {
       this.setStatus(connected ? "Đã kết nối." : "Mất kết nối — đang kết nối lại…");
       this.render();
     };
-    net.onRejoin = (snapshot) => {
+    net.onRecovery = (snapshot) => {
+      if (snapshot === null) return; // no room — nothing to rejoin
       session.match = session.match?.matchId === snapshot.matchId ? session.match : new NetMatch(net, snapshot);
       session.match!.rejoin(snapshot);
       this.scene.start("combat");

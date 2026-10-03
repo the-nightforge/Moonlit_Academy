@@ -365,6 +365,103 @@ describe("realtime", () => {
     expect(wsB.last("error")).toMatchObject({ error: "no match" });
   }, 60_000);
 
+  it("N3 reconnect sau kết thúc: terminal snapshot settlement complete; sync/hello không award lại", async () => {
+    const server = await testServer();
+    const sched = schedulerOf(server);
+    const a = await register(server, "rank_a");
+    const b = await register(server, "rank_b");
+    await giveStarterDeck(server, await accountIdOf(server, a.token), ["m05", "f04", "m06"]);
+    await giveStarterDeck(server, await accountIdOf(server, b.token), ["m06", "f03", "f02"]);
+    const wsA = await Ws.connect(server.app);
+    const wsB = await Ws.connect(server.app);
+    await hello(server, wsA, a.token);
+    await hello(server, wsB, b.token);
+    wsA.send({ type: "queue.join", mode: "ranked", deckId: "d1" });
+    wsB.send({ type: "queue.join", mode: "ranked", deckId: "d1" });
+    await wsA.settle();
+    await wsB.settle();
+    sched.advance(1_000); // một nhịp queue ghép cặp
+    await wsA.settle();
+    await wsB.settle();
+    const start = wsA.last<{ matchId: string }>("match.start")!;
+    const matchId = start.matchId;
+
+    wsA.send({ type: "match.resign", matchId });
+    await wsA.settle();
+    await wsB.settle();
+    const endA = wsA.last<{ result: string; profileRev?: number }>("match.end")!;
+    expect(endA.result).toBe("lost");
+    const revAfterSettle = endA.profileRev!;
+    expect(revAfterSettle).toBeGreaterThan(0);
+
+    // Reconnect trong retention: welcome.activeMatch là terminal snapshot.
+    wsA.close();
+    await wsA.waitForClose();
+    const wsA2 = await Ws.connect(server.app);
+    await hello(server, wsA2, a.token);
+    const welcome = wsA2.last<{
+      activeMatch?: {
+        matchId: string;
+        deadline: number | null;
+        settlement: { status: string; end?: { result: string; rating?: unknown; profileRev?: number } };
+      };
+    }>("welcome")!;
+    expect(welcome.activeMatch?.matchId).toBe(matchId);
+    expect(welcome.activeMatch?.deadline).toBeNull();
+    expect(welcome.activeMatch?.settlement.status).toBe("complete");
+    expect(welcome.activeMatch?.settlement.end?.result).toBe("lost");
+    expect(welcome.activeMatch?.settlement.end?.rating).toBeDefined();
+    expect(welcome.activeMatch?.settlement.end?.profileRev).toBe(revAfterSettle);
+
+    // Hello/sync chỉ đọc snapshot — không gửi lại match.end, không award thêm.
+    wsA2.send({ type: "match.sync", matchId });
+    await wsA2.settle();
+    expect(wsA2.inbox.filter((m) => m.type === "match.end")).toHaveLength(0);
+    expect(wsA2.last("match.snapshot")).toMatchObject({ matchId, settlement: { status: "complete" } });
+    const wsA3 = await Ws.connect(server.app);
+    await hello(server, wsA3, a.token);
+    const again = wsA3.last<{ activeMatch?: { settlement: { end?: { profileRev?: number } } } }>("welcome")!;
+    expect(again.activeMatch?.settlement.end?.profileRev).toBe(revAfterSettle);
+
+    // Hết retention → không còn activeMatch.
+    sched.advance(60_000);
+    const wsA4 = await Ws.connect(server.app);
+    await hello(server, wsA4, a.token);
+    expect(wsA4.last<{ activeMatch?: unknown }>("welcome")!.activeMatch).toBeUndefined();
+  }, 60_000);
+
+  it("N3 settlement lỗi DB → failed không kẹt pending; result vẫn đến, phòng vẫn retention", async () => {
+    const server = await testServer();
+    const sched = schedulerOf(server);
+    const { wsA, wsB, matchId, a } = await startPrivateMatch(server);
+
+    // Làm transaction settlement hỏng.
+    const realTx = server.db.transaction.bind(server.db);
+    server.db.transaction = (() => Promise.reject(new Error("db down"))) as typeof server.db.transaction;
+    wsA.send({ type: "match.resign", matchId });
+    await wsA.settle();
+    await wsB.settle();
+    server.db.transaction = realTx;
+
+    // Result vẫn đến cả hai client; settlement phía server là failed.
+    expect(wsA.last("match.end")).toMatchObject({ result: "lost", reason: "resign" });
+    expect(wsB.last("match.end")).toMatchObject({ result: "won" });
+    wsA.close();
+    await wsA.waitForClose();
+    const wsA2 = await Ws.connect(server.app);
+    await hello(server, wsA2, a.token);
+    const snap = wsA2.last<{ activeMatch?: { settlement: { status: string; error?: string } } }>("welcome")!
+      .activeMatch;
+    expect(snap?.settlement.status).toBe("failed");
+    expect(snap?.settlement.error).toBeTruthy();
+
+    // Phòng vẫn giữ retention rồi dọn đúng hạn.
+    sched.advance(60_000);
+    const wsA3 = await Ws.connect(server.app);
+    await hello(server, wsA3, a.token);
+    expect(wsA3.last<{ activeMatch?: unknown }>("welcome")!.activeMatch).toBeUndefined();
+  }, 60_000);
+
   it("T235 sau mỗi Action mỗi người nhận góc nhìn riêng: tay đối thủ chỉ còn số lượng", async () => {
     const server = await testServer();
     const { wsA, wsB, matchId } = await startPrivateMatch(server);

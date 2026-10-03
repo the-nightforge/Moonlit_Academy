@@ -161,10 +161,11 @@ export class RealtimeHub {
       stale.close(CLOSE_REPLACED, "replaced");
     }
     this.byAccount.set(accountId, conn);
-    // Reconnecting mid-match hands the seat's socket to this connection; a
-    // finished room lingers ~60 s for late frames but is not rejoinable.
+    // Reconnecting hands the seat's socket to this connection. A finished room
+    // lingers ~60 s and still answers with its terminal snapshot — including a
+    // settlement still pending — but never re-arms a clock (`16` §8.4).
     const room = this.matchByAccount.get(accountId);
-    const seat = room && !room.ended ? room.seatOf(accountId) : undefined;
+    const seat = room?.seatOf(accountId);
     if (room && seat) room.attach(seat, conn.socket);
     this.reply(conn, {
       type: "welcome",

@@ -4,6 +4,13 @@ import { NetMatch } from "../src/net/match";
 import type { MatchSnapshot, ServerMessage } from "../src/net/protocol";
 import { fixture, snapshot } from "./helpers/combat-fixture";
 
+vi.stubGlobal("window", {
+  devicePixelRatio: 1,
+  screen: { width: 1280, height: 720 },
+  location: { href: "http://localhost/" },
+});
+const { recoverMatchGone, session } = await import("../src/session");
+
 /** A fake transport: captures match frames and can refuse them when "offline". */
 function makeNet(opts: { online?: boolean } = {}) {
   const sent: Record<string, unknown>[] = [];
@@ -18,9 +25,9 @@ function makeNet(opts: { online?: boolean } = {}) {
   };
 }
 
-function makeMatch(opts: { online?: boolean; nextActionSeq?: number } = {}) {
+function makeMatch(opts: { online?: boolean; nextActionSeq?: number; mode?: "pvp" | "coop" } = {}) {
   const net = makeNet(opts);
-  const { state } = fixture("pvp");
+  const { state } = fixture(opts.mode ?? "pvp");
   const start = snapshot(state, 0, { nextActionSeq: opts.nextActionSeq ?? 1 });
   const match = new NetMatch(net as never, start);
   return { match, net, start, state };
@@ -130,5 +137,87 @@ describe("NetMatch action sequence", () => {
     expect(match.handle(events(start, { eventSeq: 0, nextActionSeq: 2 }))).toBe(true);
     expect(onPush).not.toHaveBeenCalled();
     expect(match.sendAction({ type: "endTurn" })).toBe(true);
+  });
+});
+
+describe("NetMatch settlement", () => {
+  it("a terminal snapshot restores ended from settlement.complete", () => {
+    const { state } = fixture("pvp");
+    const end = {
+      result: "won" as const,
+      reason: "combat",
+      rating: { before: 1000, after: 1016 },
+      rewards: { honor: 20 },
+      profileRev: 3,
+    };
+    const snap = snapshot(state, 0, { settlement: { status: "complete", end } });
+    const match = new NetMatch(makeNet() as never, snap);
+    expect(match.ended).toEqual(end);
+    expect(match.settlement.status).toBe("complete");
+  });
+
+  it("settlement.failed keeps the provisional result and reports the failure", () => {
+    const { state } = fixture("pvp");
+    const snap = snapshot(state, 0, { settlement: { status: "failed", error: "db down" } });
+    const match = new NetMatch(makeNet() as never, snap);
+    expect(match.ended).toBeNull();
+    expect(match.settlement).toEqual({ status: "failed", error: "db down" });
+  });
+
+  it("settlement.pending leaves ended null — the terminal view stays provisional", () => {
+    const { state } = fixture("pvp");
+    const snap = snapshot(state, 0, { settlement: { status: "pending" } });
+    const match = new NetMatch(makeNet() as never, snap);
+    expect(match.ended).toBeNull();
+    expect(match.settlement.status).toBe("pending");
+  });
+
+  it("match.end completes the settlement", () => {
+    const { match, start } = makeMatch();
+    const onEnd = vi.fn();
+    match.onEnd = onEnd;
+    const frame = {
+      type: "match.end" as const,
+      matchId: start.matchId,
+      result: "won" as const,
+      reason: "combat",
+      rating: { before: 1000, after: 1016 },
+      rewards: { honor: 20 },
+      profileRev: 5,
+    };
+    expect(match.handle(frame)).toBe(true);
+    expect(match.ended).toMatchObject({ result: "won", profileRev: 5 });
+    expect(match.settlement).toEqual({ status: "complete", end: match.ended });
+    expect(onEnd).toHaveBeenCalledWith("won", "combat");
+  });
+});
+
+describe("recoverMatchGone", () => {
+  it("drops the match, notices, refreshes the profile and returns to the arena", () => {
+    const { match } = makeMatch();
+    session.match = match;
+    session.notices = [];
+    const abortPlayback = vi.fn();
+    const startScene = vi.fn();
+    const refreshProfile = vi.fn(() => Promise.resolve(true));
+    recoverMatchGone(match, { abortPlayback, startScene, refreshProfile });
+    expect(abortPlayback).toHaveBeenCalled();
+    expect(session.match).toBeNull();
+    expect(session.notices).toContain("Trận đã kết thúc.");
+    expect(startScene).toHaveBeenCalledWith("arena");
+    expect(refreshProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it("routes a co-op match to coop-lobby", () => {
+    const { match } = makeMatch({ mode: "coop" });
+    session.match = match;
+    session.notices = [];
+    const startScene = vi.fn();
+    recoverMatchGone(match, {
+      abortPlayback: vi.fn(),
+      startScene,
+      refreshProfile: () => Promise.resolve(true),
+    });
+    expect(startScene).toHaveBeenCalledWith("coop-lobby");
   });
 });

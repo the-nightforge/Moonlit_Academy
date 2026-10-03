@@ -31,6 +31,24 @@ export const clientMessageSchema = z.discriminatedUnion("type", [
 
 export type ClientMessage = z.infer<typeof clientMessageSchema>;
 
+/** The settled outcome of a match (`16` §8.3) — the `match.end` payload. */
+export interface MatchSettlement {
+  result: "won" | "lost" | "draw";
+  reason: string;
+  rating?: { before: number; after: number };
+  rewards?: unknown;
+  profileRev?: number;
+}
+
+/**
+ * Settlement lifecycle on a snapshot (`16` §8.4): a retained terminal room
+ * keeps reporting it for ~60 s so a late reconnect still learns the outcome.
+ */
+export type SettlementState =
+  | { status: "playing" | "pending" }
+  | { status: "complete"; end: MatchSettlement }
+  | { status: "failed"; error: string };
+
 /** The per-seat snapshot of a live match (`17` §5.2). */
 export interface MatchSnapshot {
   matchId: string;
@@ -45,6 +63,7 @@ export interface MatchSnapshot {
   eventSeq: number;
   /** Next action `seq` the server accepts from this seat — each receiver sees its own (`16` §8.3). */
   nextActionSeq: number;
+  settlement: SettlementState;
 }
 
 export type ServerMessage =
@@ -65,15 +84,10 @@ export type ServerMessage =
       deadline: number | null;
     }
   | { type: "match.rejected"; matchId: string; seq: number; nextActionSeq: number; reason: string }
-  | {
-      type: "match.end";
-      matchId: string;
-      result: "won" | "lost" | "draw";
-      reason: string;
-      rating?: { before: number; after: number };
-      rewards?: unknown;
-      profileRev?: number;
-    }
+  | ({ type: "match.end"; matchId: string } & MatchSettlement & {
+      /** Present when the settlement write failed — the result stands, rewards did not (`16` §8.4). */
+      settlementError?: string;
+    })
   | { type: "match.emote"; matchId: string; from: number; emoteId: string }
   | { type: "error"; error: string }
   | { type: "ping" };

@@ -14,7 +14,7 @@ import {
   viewFor,
 } from "rules";
 import type { AppContext } from "../context";
-import type { MatchSnapshot } from "./protocol";
+import type { MatchSettlement, MatchSnapshot, SettlementState } from "./protocol";
 
 export type MatchMode = "ranked" | "private" | "practice" | "coop" | "coop_private" | "coop_practice";
 
@@ -60,6 +60,10 @@ export class MatchRoom {
   private turnHandle: unknown;
   private writeChain: Promise<unknown> = Promise.resolve();
   private readonly disconnectHandles = new Map<number, unknown>();
+  /** Settlement lifecycle (`16` §8.4): recovery reads it — it never re-awards. */
+  private settlementStatus: "playing" | "pending" | "complete" | "failed" = "playing";
+  private settlementError = "";
+  private readonly settlements = new Map<number, MatchSettlement>();
 
   constructor(
     private readonly ctx: AppContext,
@@ -118,7 +122,21 @@ export class MatchRoom {
       deadline: this.deadline,
       eventSeq: this.eventSeq,
       nextActionSeq: this.seats[seat]!.nextSeq,
+      settlement: this.settlementFor(seat),
     };
+  }
+
+  /** Per-seat settlement state for snapshots (`16` §8.4). */
+  private settlementFor(seat: number): SettlementState {
+    switch (this.settlementStatus) {
+      case "playing":
+      case "pending":
+        return { status: this.settlementStatus };
+      case "failed":
+        return { status: "failed", error: this.settlementError };
+      case "complete":
+        return { status: "complete", end: this.settlements.get(seat)! };
+    }
   }
 
   /** Reconnecting re-arms the seat's socket and cancels its disconnect clock. */
@@ -150,7 +168,11 @@ export class MatchRoom {
   }
 
   handleAction(seat: MatchSeat, seq: number, action: Action): void {
-    if (this.ended) return;
+    // A stale frame on a retained terminal room gets the settled snapshot back.
+    if (this.ended) {
+      this.handleSync(seat);
+      return;
+    }
     // A duplicate is never applied twice — the seat gets its current snapshot
     // back so a lost ack can reconcile (`16` §8.3).
     if (seq < seat.nextSeq) {
@@ -249,6 +271,8 @@ export class MatchRoom {
     this.armClock();
     this.push(events);
     if (this.state.status === "won" || this.state.status === "lost") {
+      // Settlement starts now — recovery reads "pending" until it lands.
+      this.settlementStatus = "pending";
       // Settlement waits for the final actions_json write to land first.
       void this.writeChain.then(() => this.finish()).catch((error) => {
         console.error("finish failed:", error);
@@ -396,69 +420,88 @@ export class MatchRoom {
     // the §9.2 rewards; private and practice matches only record the result.
     const ranked = this.mode === "ranked" && this.seats.every((seat) => seat.accountId !== null);
     const rewardedCoop = this.mode === "coop";
-    // Elo deltas compare pre-match ratings — capture both profiles first.
-    const profiles = new Map<number, Profile>();
-    if (ranked || rewardedCoop) {
-      for (const seat of this.seats) {
-        if (seat.accountId !== null) profiles.set(seat.seat, (await this.ctx.readProfile(seat.accountId)).profile);
-      }
-    }
-    const settled = new Map<number, { before: number; after: number; honor: number; rev: number }>();
-    const coopPaid = new Map<number, { rewards: CoopRewards | null; rev: number }>();
-    // The match record, seat results and both profile updates land in one
-    // transaction (`16` §8.3): a crash mid-write leaves the row consistent.
-    await this.ctx.db.transaction(async () => {
-      await finishMatch.run(this.ctx.clock(), resultJson, this.matchId);
-      for (const seat of this.seats) {
-        const result = resultOf(seat.seat);
-        const mine = profiles.get(seat.seat);
-        if (mine === undefined) {
-          await seatResult.run(result, this.matchId, seat.seat);
-          continue;
+    // Settlement runs exactly once (`16` §8.4): a failed transaction leaves the
+    // room "failed" for recovery reads — it is never retried silently.
+    this.settlementStatus = "pending";
+    try {
+      // Elo deltas compare pre-match ratings — capture both profiles first.
+      const profiles = new Map<number, Profile>();
+      if (ranked || rewardedCoop) {
+        for (const seat of this.seats) {
+          if (seat.accountId !== null) profiles.set(seat.seat, (await this.ctx.readProfile(seat.accountId)).profile);
         }
-        if (rewardedCoop) {
-          // §9.2 — a forfeited seat is settled as a personal loss with no reward.
-          const applied = applyCoopResult(this.ctx.data, mine, {
-            result: result === "won" ? "won" : "lost",
-            forfeited: forfeited.has(seat.seat),
+      }
+      const settled = new Map<number, { before: number; after: number; honor: number; rev: number }>();
+      const coopPaid = new Map<number, { rewards: CoopRewards | null; rev: number }>();
+      // The match record, seat results and both profile updates land in one
+      // transaction (`16` §8.3): a crash mid-write leaves the row consistent.
+      await this.ctx.db.transaction(async () => {
+        await finishMatch.run(this.ctx.clock(), resultJson, this.matchId);
+        for (const seat of this.seats) {
+          const result = resultOf(seat.seat);
+          const mine = profiles.get(seat.seat);
+          if (mine === undefined) {
+            await seatResult.run(result, this.matchId, seat.seat);
+            continue;
+          }
+          if (rewardedCoop) {
+            // §9.2 — a forfeited seat is settled as a personal loss with no reward.
+            const applied = applyCoopResult(this.ctx.data, mine, {
+              result: result === "won" ? "won" : "lost",
+              forfeited: forfeited.has(seat.seat),
+              now: this.ctx.clock(),
+            });
+            const rev = await this.ctx.saveProfile(seat.accountId!, applied.profile);
+            await seatResult.run(result, this.matchId, seat.seat);
+            coopPaid.set(seat.seat, { rewards: applied.rewards, rev });
+            continue;
+          }
+          const opponent = this.seats.find((s) => s.seat !== seat.seat)!;
+          const theirs = profiles.get(opponent.seat)!;
+          const score = result === "won" ? 1 : result === "lost" ? 0 : 0.5;
+          const before = mine.arena.rating;
+          const delta = ratingChange(mine.arena, theirs.arena, score);
+          const applied = applyPvpResult(this.ctx.data, mine, {
+            result,
+            reason: this.endReason,
+            round: this.state.round,
             now: this.ctx.clock(),
+            ratingDelta: delta,
           });
           const rev = await this.ctx.saveProfile(seat.accountId!, applied.profile);
-          await seatResult.run(result, this.matchId, seat.seat);
-          coopPaid.set(seat.seat, { rewards: applied.rewards, rev });
-          continue;
+          await seatResultRanked.run(result, before, applied.profile.arena.rating, this.matchId, seat.seat);
+          settled.set(seat.seat, { before, after: applied.profile.arena.rating, honor: applied.honor, rev });
         }
-        const opponent = this.seats.find((s) => s.seat !== seat.seat)!;
-        const theirs = profiles.get(opponent.seat)!;
-        const score = result === "won" ? 1 : result === "lost" ? 0 : 0.5;
-        const before = mine.arena.rating;
-        const delta = ratingChange(mine.arena, theirs.arena, score);
-        const applied = applyPvpResult(this.ctx.data, mine, {
-          result,
-          reason: this.endReason,
-          round: this.state.round,
-          now: this.ctx.clock(),
-          ratingDelta: delta,
-        });
-        const rev = await this.ctx.saveProfile(seat.accountId!, applied.profile);
-        await seatResultRanked.run(result, before, applied.profile.arena.rating, this.matchId, seat.seat);
-        settled.set(seat.seat, { before, after: applied.profile.arena.rating, honor: applied.honor, rev });
-      }
-    });
-    for (const seat of this.seats) {
-      const result = resultOf(seat.seat);
-      const extras = settled.get(seat.seat);
-      const coop = coopPaid.get(seat.seat);
-      send(seat.socket, {
-        type: "match.end",
-        matchId: this.matchId,
-        result,
-        reason: this.endReason,
-        ...(extras
-          ? { rating: { before: extras.before, after: extras.after }, rewards: { honor: extras.honor }, profileRev: extras.rev }
-          : {}),
-        ...(coop ? { rewards: coop.rewards, profileRev: coop.rev } : {}),
       });
+      for (const seat of this.seats) {
+        const extras = settled.get(seat.seat);
+        const coop = coopPaid.get(seat.seat);
+        const end: MatchSettlement = {
+          result: resultOf(seat.seat),
+          reason: this.endReason,
+          ...(extras
+            ? { rating: { before: extras.before, after: extras.after }, rewards: { honor: extras.honor }, profileRev: extras.rev }
+            : {}),
+          ...(coop ? { rewards: coop.rewards, profileRev: coop.rev } : {}),
+        };
+        this.settlements.set(seat.seat, end);
+        send(seat.socket, { type: "match.end", matchId: this.matchId, ...end });
+      }
+      this.settlementStatus = "complete";
+    } catch (error) {
+      console.error("finish failed:", error);
+      this.settlementStatus = "failed";
+      this.settlementError = error instanceof Error ? error.message : String(error);
+      // The result stands even when the reward write did not — tell each seat.
+      for (const seat of this.seats) {
+        send(seat.socket, {
+          type: "match.end",
+          matchId: this.matchId,
+          result: resultOf(seat.seat),
+          reason: this.endReason,
+          settlementError: this.settlementError,
+        });
+      }
     }
     // The room lives 60 s so clients can fetch late messages, then leaves memory.
     this.cleanupHandle = this.ctx.scheduler.setTimeout(() => this.drop(this), 60_000);
