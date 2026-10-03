@@ -866,7 +866,10 @@ function animateEvent(
     }
     case "weaponTriggered": {
       const name = ctx.gameData.weapons[event.weaponId]?.name ?? event.weaponId;
-      const player = event.player ?? ctx.presentation.heroes.find((hero) => hero.id === event.heroId)?.player;
+      // `heroId` on the event is the hero DEFINITION id; match either id shape.
+      const player =
+        event.player ??
+        ctx.presentation.heroes.find((hero) => hero.id === event.heroId || hero.defId === event.heroId)?.player;
       return triggerFlash(rt, ctx, player, "weapon", event.weaponId, `⚔ ${name}`, "#ffb080");
     }
     case "combatEnded": {

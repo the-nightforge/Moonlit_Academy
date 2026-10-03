@@ -141,14 +141,15 @@ export function computeCombatLayout(state: CombatState, mySeat: number): CombatL
     units.set(enemy.id, cardRect(enemyXs[i] ?? ENEMY_BAND.left, FOE_ROW_Y, w, h));
   });
 
-  // Summons get per-seat slot pairs — a seat's extra summons wrap downward in
-  // pairs instead of piling onto the first slot or drifting into controls.
+  // Summons get per-seat slot pairs — extras fan downward in 28px steps (like
+  // a stacked deck) instead of a full row, so a 3rd+ summon never reaches the
+  // hand band or the controls column.
   const summonCounts = new Map<number, number>();
   for (const summon of state.summons ?? []) {
     const i = summonCounts.get(summon.player) ?? 0;
     summonCounts.set(summon.player, i + 1);
     const baseY = summon.player === mySeat ? SUMMON_OWN_Y : FOE_ROW_Y;
-    const slotY = baseY + Math.floor(i / SUMMON_XS.length) * (SUMMON_H + 8);
+    const slotY = baseY + Math.floor(i / SUMMON_XS.length) * 28;
     units.set(summon.id, cardRect(SUMMON_XS[i % SUMMON_XS.length]!, slotY, SUMMON_W, SUMMON_H));
   }
 
@@ -183,11 +184,12 @@ export function handSlots(count: number, area: Rect, cardWidth = UNIT_W - 26): P
 }
 
 /**
- * The Chọn Pha panel: fixed 360 wide, height grows with the measured text and
- * clamps to the visible rect — long decrees scroll instead of shrinking font.
+ * The Chọn Pha panel: up to 360 wide (clamped to the visible rect on tiny
+ * windows), height grows with the measured text and clamps too — long decrees
+ * scroll instead of shrinking font.
  */
 export function fitChoicePanel(textHeight: number, visible: Rect): Rect {
-  const w = 360;
+  const w = Math.min(360, visible.w - 32);
   const h = Math.min(textHeight + 96, visible.h - 32);
   return {
     x: visible.x + (visible.w - w) / 2,

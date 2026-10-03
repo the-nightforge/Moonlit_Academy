@@ -120,6 +120,29 @@ describe("combatCardModel", () => {
     const instanceId = s.players[0]!.hand[0]!;
     expect(combatCardModel(d, s, instanceId, 0).disabledReason).toBe("Bạn đã Xong — chờ đồng đội");
   });
+
+  it("a Chiêm Bài option reports no turn reason — it is pickable, not played", () => {
+    const { data: d, state: s } = fixture("pve");
+    const seat = s.players[0]!;
+    const option = seat.drawPile[0]!;
+    seat.pendingChoice = { kind: "chooseCard", options: [option] };
+    s.status = "choosing";
+    expect(combatCardModel(d, s, option, 0).disabledReason).toBeNull();
+  });
+
+  it("a dead owner's reason still shows on a Chiêm Bài option", () => {
+    const { data: d, state: s } = fixture("pve");
+    const seat = s.players[0]!;
+    const option = seat.drawPile.find((id) => {
+      const inst = s.cards[id]!;
+      return inst.ownerIds.length === 1 && inst.ownerIds[0] !== undefined;
+    })!;
+    const owner = s.heroes.find((h) => h.defId === s.cards[option]!.ownerIds[0])!;
+    owner.alive = false;
+    seat.pendingChoice = { kind: "chooseCard", options: [option] };
+    s.status = "choosing";
+    expect(combatCardModel(d, s, option, 0).disabledReason).toBe("Tàn Chiêu — chủ lá đã ngã");
+  });
 });
 
 describe("owner palette and fonts", () => {

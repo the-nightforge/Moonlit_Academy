@@ -101,6 +101,20 @@ export function heroProgressLabel(data: GameData, _state: CombatState, hero: Her
 }
 
 /**
+ * The seat's Trang Bị worn by this hero (`01` §14). `CombatWeapon.heroId` is the
+ * hero DEFINITION id (`"m05"`), never the unit id (`"hero:m05"`/`"p0_hero:m05"`),
+ * so the lookup is by `defId` within the hero's own seat.
+ */
+export function weaponForHero(
+  state: CombatState,
+  hero: HeroState,
+): { id: string; refinement: number; seat: number } | undefined {
+  const weapon = state.players[hero.player]?.weapons.find((w) => w.heroId === hero.defId);
+  if (weapon === undefined) return undefined;
+  return { id: weapon.weaponId, refinement: weapon.refinement, seat: hero.player };
+}
+
+/**
  * The `statusApplied` popup's label: `Name → total`, no `+`. Stacks use the
  * short STATUS_LABELS (`Mạnh → 5`); turn-measured statuses use the keyword's
  * full name and read rounds (`Đóng Băng → 1 vòng` for a PvP raw 2). `total` is

@@ -65,17 +65,25 @@ export function combatCardModel(
   const ownerNames = instance.ownerIds.map((id) => data.heroes[id]?.name ?? id);
   const ownerColors = instance.ownerIds.map((id) => OWNER_COLORS[id] ?? COLORS.panelBorder);
 
+  // A Chiêm Bài option is pickable right now — it isn't being played, so the
+  // turn/power/target gates don't apply; intrinsic flags (dead/frozen owner)
+  // still warn since they carry over once picked.
+  const isChoiceOption =
+    seat?.pendingChoice?.kind === "chooseCard" && seat.pendingChoice.options.includes(instanceId);
+
   let disabledReason: string | null = null;
   if (owners.some((owner) => !owner?.alive)) {
     disabledReason = "Tàn Chiêu — chủ lá đã ngã";
   } else if (owners.some((owner) => owner !== undefined && hasStatus(owner, "freeze"))) {
     disabledReason = "Chủ lá đang Đóng Băng";
-  } else if (card.requiresBloodMoon === true && state.bloodMoonRounds === 0) {
+  } else if (!isChoiceOption && card.requiresBloodMoon === true && state.bloodMoonRounds === 0) {
     disabledReason = "Cần Huyết Nguyệt";
-  } else if (seat !== undefined && seat.moonPower < breakdown.effective) {
+  } else if (!isChoiceOption && seat !== undefined && seat.moonPower < breakdown.effective) {
     disabledReason = "Không đủ Nguyệt Lực";
-  } else if (card.target !== "none" && getValidTargets(data, state, instanceId).length === 0) {
+  } else if (!isChoiceOption && card.target !== "none" && getValidTargets(data, state, instanceId).length === 0) {
     disabledReason = "Không có mục tiêu hợp lệ";
+  } else if (isChoiceOption) {
+    disabledReason = null;
   } else if (state.status === "mulligan") {
     disabledReason = "Hãy Đổi Bài trướ";
   } else if (state.status !== "playerTurn") {

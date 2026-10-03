@@ -55,7 +55,7 @@ import type { AnimationRuntime } from "../ui/animation-runtime";
 import { createPresentation } from "../ui/combat-presentation";
 import { HUD, hudImage } from "../ui/hud-art";
 import { cardColorOf, cardIconOf } from "../ui/attack-style";
-import { displayStatuses, heroProgressLabel, statusBadgeModels, unitAt } from "../ui/combat-display";
+import { displayStatuses, heroProgressLabel, statusBadgeModels, unitAt, weaponForHero } from "../ui/combat-display";
 import type { SeatAnchors } from "../ui/combat-display";
 import { computeCombatLayout, endTurnAnchor, fitChoicePanel, handSlots } from "../ui/combat-layout";
 import type { CombatLayout } from "../ui/combat-layout";
@@ -638,7 +638,8 @@ export class CombatScene extends Phaser.Scene {
     if (hero !== undefined && hero.alive) {
       // The Thức Tỉnh ring/neon lives outside the card fill — re-lay it.
       const def = this.gameData.heroes[hero.defId]!;
-      const threshold = hero.constellation >= 2 ? def.levelUp.constellationThreshold : def.levelUp.threshold;
+      const threshold =
+        hero.constellation >= 2 && !hero.pvp ? def.levelUp.constellationThreshold : def.levelUp.threshold;
       if (hero.leveledUp) this.neonFrame(view, spec.w, spec.h);
       else this.frameTrace(view, spec.w, spec.h, Math.min(1, hero.levelUpCounter / threshold));
     }
@@ -2000,7 +2001,7 @@ export class CombatScene extends Phaser.Scene {
    */
   private heroSpecOf(hero: HeroState, x: number, y: number, w: number, h: number, hostile: boolean, frame: number, state = this.state): UnitCardSpec {
     const def = this.gameData.heroes[hero.defId]!;
-    const weapon = state.players[hero.player]?.weapons.find((w) => w.heroId === hero.id);
+    const weapon = weaponForHero(state, hero);
     const upKey = `heroes:${hero.defId}_up`;
     // Shown from state: the second form's name, the Tinh Hồn 2 threshold (`01` §8).
     const passiveName = hero.levelUpForm === "alt" ? def.altLevelUp.name : def.levelUp.name;
@@ -2025,7 +2026,7 @@ export class CombatScene extends Phaser.Scene {
       stealth: hero.statuses.some((s) => s.id === "stealth"),
       unit: hero,
       progress: progress ?? undefined,
-      weapon: weapon !== undefined ? { id: weapon.weaponId, refinement: weapon.refinement, seat: hero.player } : undefined,
+      weapon,
       tooltip: () => [
         `${def.name}${hero.leveledUp ? " ★" : ""}`,
         `HP ${hero.hp}/${hero.maxHp}${hero.armor > 0 ? ` · Giáp ${hero.armor}` : ""}`,
@@ -2590,7 +2591,7 @@ export class CombatScene extends Phaser.Scene {
     if (this.netMatch) {
       const end = this.netMatch.ended;
       const won = end ? end.result === "won" : this.state.winner === this.mySeat;
-      const draw = end?.result === "draw";
+      const draw = end ? end.result === "draw" : this.state.winner === "draw";
       // Terminal recovery lands here without a combatEnded beat — the audio
       // instance dedupes so an earlier beat's sting never repeats (`16` §8.3).
       this.audio.play(draw ? "draw" : won ? "victory" : "defeat");
