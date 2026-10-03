@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { probeCombat } from "./helpers/combat";
 
 /**
  * `17` §9.3 e2e — Liên Thủ: two browser contexts, two accounts, one private
@@ -366,6 +367,13 @@ test("đấu tập Liên Thủ: đồng đội máy đánh cùng tới khi trậ
   await expect
     .poll(async () => (await vn(page)).view?.status ?? "", { timeout: 15_000 })
     .toBe("playerTurn");
+
+  // U6: co-op layout — six heroes across two rows, none spilling into the
+  // right control band, and no leftover FX once the board settles.
+  const board = await probeCombat(page);
+  expect(board.units.length).toBeGreaterThanOrEqual(6);
+  expect(board.units.every((u) => u.bounds.x + u.bounds.w <= 1160)).toBe(true);
+  expect(board.temporaryFxCount).toBe(0);
 
   // Chơi tới hết: máy tự đánh phần mình; người chơi churn lá + Xong mỗi lượt.
   for (let i = 0; i < 90; i++) {

@@ -4,11 +4,20 @@ Prototype dùng **art tạm**: hình chữ nhật màu + tên. Mục tiêu là �
 
 ## 1. Thông số chung
 
-- Độ phân giải thiết kế: **1280 × 720** (ngang), Phaser Scale Mode `FIT`, căn giữa.
+- Độ phân giải thiết kế: **1280 × 720** (ngang) — canvas render `RENDER_SCALE`×,
+  Phaser Scale Mode `EXPAND`, căn giữa; cửa sổ rộng/cao hơn hiện thêm xung quanh
+  vùng thiết kế (`visibleWorld` kẹp panel/tooltip vào phần nhìn thấy).
 - Nền: màu xanh đêm đậm. Màu nền thay đổi nhẹ theo pha trăng (Trăng Tròn sáng hơn, Trăng Non tối hơn).
 - Phông chữ: một font sans-serif có hỗ trợ tiếng Việt, kèm fallback.
 
 ## 2. Bố cục
+
+Mọi neo vị trí nằm trong **`combat-layout.ts`** (`computeCombatLayout(state, mySeat)`) —
+renderer, animator, vùng flash và test dùng chung một bảng tọa độ; PvE/PvP/co-op
+đổi bảng ghế qua `seatAnchors`/`units` chứ không có hệ tọa độ thứ hai.
+Dải **Nguyệt Bảo/Kỳ Vật/Lõi** nằm dưới plate encounter bên trái (x16..208, y72;
+tối đa 6 icon/hàng × 2 hàng, 10 icon trực tiếp rồi nút `+N` mở inspector) —
+nội dung phía địch bắt đầu từ x≥232 nên không đè nhau.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
@@ -43,20 +52,33 @@ Prototype dùng **art tạm**: hình chữ nhật màu + tên. Mục tiêu là �
 ## 3. Thành phần
 
 ### Lá bài
-- Kích thước ~110 × 160. Hiện: chi phí (góc trên trái), tên, dòng mô tả ngắn, **viền màu theo chủ** (M05 đỏ, F04 xanh lá, M06 tím xám).
-- Chi phí thực tế khác chi phí gốc → hiện màu xanh (rẻ hơn) và gạch chi phí gốc.
-- **Không đánh được** (thiếu Nguyệt Lực, chủ Đóng Băng): làm mờ 50%.
-- **Tàn Chiêu**: xám hoàn toàn, có dấu nứt hoặc chữ "Tàn Chiêu".
-- Hover: phóng to 1.2×, nhấc lên, hiện mô tả đầy đủ.
-- **Lá Song Hành [GĐ2]:** viền hai màu (màu của cả 2 Hero), nhãn nhỏ "Song Hành". Thành Tàn Chiêu khi một trong hai Hero ngã; mờ khi một trong hai Hero Đóng Băng.
-- **Lá cần Huyết Nguyệt [GĐ2]:** khi không Huyết Nguyệt thì làm mờ như lá không đánh được (lý do lấy từ `rules`).
+- Kích thước ~110 × 160. Hiện: chi phí (góc trên trái), tên, thân bài, **dải màu chủ sở hữu** ở chân lá
+  (một/hai dải cho lá đơn và Song Hành; lá Binh Khí mang màu người mặc).
+- Chi phí **hiệu lực** lấy từ `getCardCostBreakdown`: khác chi phí gốc → hiện số hiệu lực,
+  gạch chi phí gốc; tooltip preview liệt kê từng dòng lý do cộng/trừ.
+- Thân bài tối thiểu **11px**, tối đa 4 dòng, cắt bằng ellipsis khi tràn — không co font dưới 11px.
+- Hover: preview 320px, thân **14px**, có tooltip scroll khi nội dung cao; kẹp trong `visibleWorld`.
+- **Không đánh được**: làm mờ + **lý do tiếng Việt** theo ưu tiên chủ ngã → Đóng Băng → thiếu Huyết
+  Nguyệt → thiếu Nguyệt Lực → không có mục tiêu → lượt/ghế (`combatCardModel.disabledReason`);
+  không lộ chuỗi lỗi tiếng Anh của rules.
+- **Tàn Chiêu**: xám hoàn toàn.
+- Đang chọn để đánh: lá nhấc lên giữ vị trí; đường ngắm vàng từ lá tới mục tiêu hợp lệ đang hover.
+- **Lá Song Hành [GĐ2]:** nhãn "⚡ Hợp Kích" ở mép trên; dải chủ hai màu. Thành Tàn Chiêu khi một trong hai Hero ngã.
+- **Lá cần Huyết Nguyệt [GĐ2]:** khi không Huyết Nguyệt thì làm mờ như lá không đánh được.
 
 ### Hero / Kẻ địch
-- Thanh HP có số, giáp (🛡 + số), danh sách trạng thái dạng nhãn ngắn kèm số (`Ẩn 1`, `Hồi 3`, `Yếu 2`, `Phản 2` **[GĐ2]**). Hover nhãn → hiện mô tả trạng thái.
-- Nhãn trạng thái hiển thị **theo thứ tự `statuses[]`** — đây là thứ tự bị Cướp buff **[GĐ2]**.
-- Hero: dòng tiến độ thăng cấp (`Liệt Hỏa 12/15`). Đã thăng cấp → dấu ★ và viền vàng.
-- Hero ngã: xám, chữ "Ngã".
+- Thanh HP có số `hp/max` trên thanh (khi thẻ đủ rộng), giáp (🛡 + số), hàng nhãn trạng thái.
+- Nhãn trạng thái **tối đa 2 hàng**, số nhãn mỗi hàng theo bề rộng thẻ, giữ **thứ tự `statuses[]`**,
+  Phong Ấn xếp cuối; nhãn `+N` gom phần tràn — tooltip giữ đầy đủ mọi trạng thái, nguồn và thời hạn.
+  Emitter hiệu ứng thường trực tối đa 3/đơn vị (ưu tiên Đóng Băng → Thiêu Đốt → Hộ Vệ → thứ tự state).
+- Hero: dòng tiến độ thăng cấp (`Liệt Hỏa 12/15` — ngưỡng Tinh Hồn 2 không áp dụng trong PvP).
+  Đã thăng cấp → dấu ★ và viền vàng.
+- Hero ngã: xám, chữ "Ngã". Thiếu ảnh: silhouette + tên — không khung trống.
+- Hero mang Binh Khí: huy hiệu ⚔ góc trái dưới thẻ (tooltip + inspector); cũng là neo flash khi `weaponTriggered`.
+- Hộ Vệ: đường nối mờ tới người gác chỉ hiện khi hover/gần trigger, không vẽ thường trực.
 - Kẻ địch Ẩn Thân: bán trong suốt.
+- **Co-op [GĐ6]:** nhãn nhóm "Đội của bạn" / "Đồng đội · Đã Xong" trên hai hàng Hero;
+  Linh Thú có ô riêng theo ghế (không tràn vào dải địch hay cột điều khiển).
 - **[Nguyệt Luân mới]** Tooltip kẻ địch thêm phần **Nguyệt tính**: với mỗi
   `moonOverride` / `bloodMoonOverride` của loại địch đó — dòng
   "Nguyệt tính: <tên pha> — <tên chiêu>: <text>". Đây là thông tin công khai
@@ -78,6 +100,16 @@ Prototype dùng **art tạm**: hình chữ nhật màu + tên. Mục tiêu là �
   Client chỉ đọc dữ liệu + state — không tự tính luật.
 - **Huyết Nguyệt [GĐ2]:** khi `bloodMoonRounds > 0`: nền đỏ tối, icon 🔴 **cạnh** bánh xe kèm số lượt còn lại. Pha hiện tại vẫn hiển thị và vẫn tiến bình thường.
 
+### Chồng bài & Inspector
+- Click **chồng rút**: panel "Chồng rút" — **chỉ số lượng** + dòng "Thứ tự chồng rút được giữ kín";
+  ghế của mình còn thêm danh sách "Lá còn lại" gộp theo tên (kiến thức deck công khai, không lộ thứ tự).
+  Ở PvP id bị che (`hidden_*`) không bao giờ resolve ra lá thật.
+- Click **chồng bỏ**: danh sách đầy đủ lá đã bỏ (tên + cost + text), scroll khi dài — công khai mọi chế độ.
+- **Dải Nguyệt Bảo/Kỳ Vật/Lõi** dưới plate encounter: hover → tooltip tên + mô tả; click → chi tiết
+  (loại + Cộng Minh cho Nguyệt Bảo); `+N` mở danh sách đầy đủ khi quá 10 mục.
+- Inspector là modal của scene: Esc / chuột phải / nút ✕ đóng; chặn hotkey và input bàn đấu khi mở;
+  trigger `relicTriggered`/`runRelicTriggered`/`weaponTriggered` flash đúng icon của đúng ghế.
+
 ### Màn chọn đội [GĐ2]
 - Trước trận: chọn 3 trong số các Hero có trong `heroes.json` và chọn encounter.
 - Hiện các lá Song Hành sẽ được thêm vào deck theo đội đang chọn.
@@ -89,7 +121,10 @@ Prototype dùng **art tạm**: hình chữ nhật màu + tên. Mục tiêu là �
 | Click lá `target: none` | Đánh ngay |
 | Click lá `target: enemy / ally` | Vào chế độ chọn mục tiêu: mục tiêu hợp lệ sáng lên (lấy từ `getValidTargets`), mục tiêu không hợp lệ mờ đi. Click mục tiêu để đánh |
 | Kéo lá lên mục tiêu | Tương đương (làm sau, không bắt buộc ở prototype) |
-| Chuột phải / Esc | Hủy chọn mục tiêu |
+| Chuột phải / Esc | Ưu tiên: đóng modal → thu nhỏ panel chọn (lựa chọn bắt buộc không hủy được, gập thành banner mở lại) → hủy chọn mục tiêu |
+| Click chồng rút / chồng bỏ | Mở inspector chồng bài |
+| Click icon Nguyệt Bảo/Kỳ Vật/Lõi/Binh Khí | Mở chi tiết trong inspector |
+| Nút ⚙ | Panel Thiết lập (tốc độ animation, giảm chuyển động, âm lượng) |
 | **Chuột phải lá trên tay [Nguyệt Luân mới]** | `discardCard(instanceId)` — chỉ khi lệnh **Xả Thân** có hiệu lực; lá vào chồng bỏ, `moonPower` tăng theo lệnh |
 | **Nút "Huyết Tế" [Nguyệt Luân mới]** | `bloodPact` — chỉ khi lệnh **Huyết Tế** có hiệu lực; click nút → chế độ chọn Hero sống, click Hero để xác nhận |
 | Nút Kết Thúc Lượt / phím `E` | `endTurn` |

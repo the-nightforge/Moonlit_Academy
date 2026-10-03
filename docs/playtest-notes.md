@@ -1569,3 +1569,28 @@ luật, RNG, economy, replay):
   action của `16` §8.3) — trước đây send rơi lặng lẽ làm mất cửa sổ trăng
   trong spec Liên Thủ. `phase7a` nới timeout text poll lên 60 s: playback nối
   tiếp khiến overlay "Chọn Pha" chỉ hiện sau khi queue rút hết.
+
+## Kiểm UI chiến đấu — 2026-10-03 (nhánh feature/combat-ui-layout-assets)
+
+- **Môi trường**: Windows + pnpm, Vite dev `http://localhost:5173` (API down →
+  đường "Chơi offline"); không có dev DB nên các spec online
+  (`pvp`/`coop`/`arena`/`settlement`) chưa chạy được — probe layout đã chèn sẵn
+  trong `pvp.spec.ts`/`coop.spec.ts` để verify khi có DB.
+- **Lệnh đã chạy**: `pnpm --filter client exec vitest run` (20 files / 169 test,
+  trong đó `combat-assets` ghi 4 `it.fails` cho asset còn thiếu),
+  `pnpm -r typecheck`, `npx playwright test e2e/combat-visual.spec.ts` — 13/13
+  xanh (4 viewport × board+hand, denseStatus, longChoice gập/mở, summonRevive,
+  khóa input trong batch, inspector chồng rút giữ kín thứ tự).
+- **Screenshot**: `test-results/combat-visual/<viewport>/<scenario>.png`
+  (default/hand0/hand1/hand8/hand10 × 4 viewport + denseStatus/longChoice-open/
+  folded/summonRevive/pile-draw ở 1280×720).
+- **Timeline**: intro reveal batch vẫn chạy khi `status` đã đọc "mulligan" —
+  dispatch sớm bị input lock chặn; e2e phải `waitIdle` trước khi gửi Đổi Bài
+  (đã ghi trong `e2e/helpers/combat.ts`). Một chuỗi lượt địch đầy đủ ~30–55 s
+  ở tốc độ mặc định — `waitIdle` của spec khóa input dùng timeout 60 s.
+- **Giới hạn**: art U5 còn 44 file (blocker: không có công cụ sinh ảnh trong
+  môi trường — xem `docs/combat-visual-assets.md`); `hand10` vượt `handLimit`
+  của rules nên fixture đẩy thẳng vào `seat.hand` (chỉ e2e, không đổi luật);
+  `longChoice` dùng `chooseMoon` vì Chiêm Bài thật tối đa ~3 lựa chọn;
+  assert bố cục bằng bounds probe (≤1160) chứ chưa so pixel-text clip ở e2e —
+  phần kiểm ảnh thật vẫn là bước thủ công.
