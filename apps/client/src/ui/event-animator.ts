@@ -11,6 +11,7 @@ import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
 import { castCard, deathBurn, moonWheel, playAttack, statusPop } from "./vfx";
 import { HAND_AREA, MOON, handSlots } from "./combat-layout";
 import type { CombatLayout } from "./combat-layout";
+import { triggerAnchorKey } from "./combat-inspector";
 import type { AnimationRuntime } from "./animation-runtime";
 import type { CombatAudio } from "./combat-audio";
 
@@ -47,6 +48,8 @@ export interface AnimContext {
   runtime: AnimationRuntime;
   /** Procedural cue player — silent until unlocked and muted under volume 0. */
   audio?: CombatAudio;
+  /** Relic/weapon icon positions keyed `${player}:${kind}:${id}` — trigger flashes land here (`05` review). */
+  triggerAnchors?: Map<string, { x: number; y: number }>;
 }
 
 function anchorsFor(ctx: AnimContext, player?: number) {
@@ -110,6 +113,26 @@ function findIntent(ctx: AnimContext, enemyId: string, intentId: string): Intent
 
 function instant(): Promise<void> {
   return Promise.resolve();
+}
+
+/**
+ * Relic/Kỳ Vật/Lõi/weapon trigger feedback (`05` review): a flash on the
+ * entry's own icon plus a short label right there — never a bare text blob at
+ * screen center. An unregistered id falls back to the center float.
+ */
+function triggerFlash(
+  rt: AnimationRuntime,
+  ctx: AnimContext,
+  player: number | undefined,
+  kind: "relic" | "runRelic" | "augment" | "weapon",
+  id: string,
+  label: string,
+  color: string,
+): Promise<void> {
+  const anchor = ctx.triggerAnchors?.get(triggerAnchorKey(player ?? ctx.mySeat ?? 0, kind, id));
+  if (anchor === undefined) return floatHeld(rt, WIDTH / 2, midY, label, color, 18, 400, 200);
+  const colorNum = parseInt(color.slice(1), 16);
+  return held(rt, 350, flash(rt, anchor.x, anchor.y, 40, 40, colorNum, 400), floatText(rt, anchor.x, anchor.y - 12, label, color, 14, 320));
 }
 
 /**
@@ -832,17 +855,19 @@ function animateEvent(
     }
     case "runRelicTriggered": {
       const relic = ctx.gameData.runRelics[event.runRelicId];
-      const name = relic?.name ?? ctx.gameData.augments[event.runRelicId]?.name ?? event.runRelicId;
-      const color = relic === undefined ? "#e0b0ff" : "#9fd4ff";
-      return floatHeld(rt, WIDTH / 2, midY, `✦ ${name}`, color, 18, 400, 200);
+      const augment = relic === undefined ? ctx.gameData.augments[event.runRelicId] : undefined;
+      const name = relic?.name ?? augment?.name ?? event.runRelicId;
+      const kind = relic !== undefined ? "runRelic" : "augment";
+      return triggerFlash(rt, ctx, event.player, kind, event.runRelicId, `✦ ${name}`, relic === undefined ? "#e0b0ff" : "#9fd4ff");
     }
     case "relicTriggered": {
       const name = ctx.gameData.relics[event.relicId]?.name ?? event.relicId;
-      return floatHeld(rt, WIDTH / 2, midY, `☾ ${name}`, "#f4d35e", 18, 400, 200);
+      return triggerFlash(rt, ctx, event.player, "relic", event.relicId, `☾ ${name}`, "#f4d35e");
     }
     case "weaponTriggered": {
       const name = ctx.gameData.weapons[event.weaponId]?.name ?? event.weaponId;
-      return floatHeld(rt, WIDTH / 2, midY, `⚔ ${name}`, "#ffb080", 18, 400, 200);
+      const player = event.player ?? ctx.presentation.heroes.find((hero) => hero.id === event.heroId)?.player;
+      return triggerFlash(rt, ctx, player, "weapon", event.weaponId, `⚔ ${name}`, "#ffb080");
     }
     case "combatEnded": {
       // Seat-relative win: PvP carries `winner`, PvE the viewer's `result` —

@@ -300,6 +300,20 @@ export function isModalOpen(): boolean {
 }
 
 /**
+ * Registers a non-`showModal` overlay (e.g. the combat inspector) as the
+ * active modal — hotkeys yield and an earlier modal cancels. Returns the
+ * unregister call; it only clears if this handle is still active.
+ */
+export function registerModal(cancel: () => void): () => void {
+  const handle = { cancel };
+  activeModal?.cancel();
+  activeModal = handle;
+  return () => {
+    if (activeModal === handle) activeModal = null;
+  };
+}
+
+/**
  * In-game dialog replacing `window.alert/confirm/prompt`: drawn in the game's
  * own style, blocks the screen under it, Enter picks the last action, Esc
  * dismisses. Lives outside scene roots, so a re-render underneath keeps it.

@@ -43,7 +43,7 @@ import {
 } from "../debug";
 import manifest from "virtual:assets-manifest";
 import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
-import { confirmModal, isModalOpen, showModal } from "../ui/widgets";
+import { confirmModal, isModalOpen, registerModal, showModal } from "../ui/widgets";
 import { CombatAudio } from "../ui/combat-audio";
 import { loadCombatSettings, saveCombatSettings, DEFAULT_COMBAT_SETTINGS } from "../ui/combat-settings";
 import type { CombatSettings } from "../ui/combat-settings";
@@ -60,6 +60,8 @@ import type { SeatAnchors } from "../ui/combat-display";
 import { computeCombatLayout, endTurnAnchor, fitChoicePanel, handSlots } from "../ui/combat-layout";
 import type { CombatLayout } from "../ui/combat-layout";
 import { moonHudModel, renderMoonHud } from "../ui/moon-hud";
+import { InspectorView, drawComposition, pileModel, relicHudEntries, triggerAnchorKey } from "../ui/combat-inspector";
+import type { RelicHudEntry } from "../ui/combat-inspector";
 import { COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES, combatCardModel, ellipsize } from "../ui/combat-card-view";
 import {
   BLOOD_MOON_BG,
@@ -124,6 +126,8 @@ interface UnitCardSpec {
   unit?: UnitState;
   /** Short Thức Tỉnh counter for the reserved footer (heroes only). */
   progress?: string;
+  /** The wearer's Trang Bị — its badge is the weapon-trigger anchor (`05` review). */
+  weapon?: { id: string; refinement: number; seat: number };
   tooltip: () => string[];
 }
 
@@ -168,6 +172,10 @@ export class CombatScene extends Phaser.Scene {
   private unitSpecs = new Map<string, UnitCardSpec>();
   /** Per-seat chrome (hand, piles, moon power) the batch bindings rebuild surgically. */
   private seatLayers = new Map<number, Phaser.GameObjects.Container>();
+  /** Relic/weapon icon positions keyed `${player}:${kind}:${id}` — trigger flashes land here (`05` review). */
+  private triggerAnchors = new Map<string, { x: number; y: number }>();
+  /** The pile/relic modal — scene-owned so it dies with the scene. */
+  private inspector?: InspectorView;
   /** Holds the moon badge so `updateMoon` can repaint it mid-batch. */
   private moonLayer?: Phaser.GameObjects.Container;
   /** Hand cards currently flying their cast clone — hover/click ignores them. */
@@ -252,6 +260,9 @@ export class CombatScene extends Phaser.Scene {
     this.latestState = this.state;
     this.renderQueued = false;
     this.commitWork.clear();
+    this.triggerAnchors.clear();
+    this.inspector = new InspectorView(this, registerModal);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.inspector?.destroy());
     this.playback = new CombatPlayback({
       play: (batch, signal) => this.playBatch(batch, signal),
       commit: (batch) => this.commitBatch(batch),
@@ -557,6 +568,7 @@ export class CombatScene extends Phaser.Scene {
       moonAnchor: this.moonAnchor,
       layout: this.layout,
       mySeat: this.mySeat,
+      triggerAnchors: this.triggerAnchors,
       runtime,
       audio: this.audio,
     })
@@ -875,6 +887,7 @@ export class CombatScene extends Phaser.Scene {
     this.unitAnchors.clear();
     this.unitViews.clear();
     this.unitSpecs.clear();
+    this.triggerAnchors.clear();
     this.errorText = undefined;
     this.timerText = null;
     for (const player of this.state.players) {
@@ -1107,6 +1120,9 @@ export class CombatScene extends Phaser.Scene {
     });
     // The other seat's draw pile sits at the top row's height (`17` §7.3 piles).
     if (other) this.renderPile(other, this.layout.seats.get(other.index)!, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ", this.seatLayers.get(other.index));
+    // Relic/Kỳ Vật/Lõi strip under the encounter plate (`05` review): own seat only —
+    // enemy content stays at x≥232 so the strip never overlaps it.
+    this.renderRelicStrip(this.mySeatState);
     const gear = this.badge(WIDTH - 40, 36, 16, "⚙", COLORS.panelBorder, this.root, COLORS.button, 15, COLORS.dimText);
     gear.setInteractive({ useHandCursor: true });
     gear.on("pointerup", (pointer: Phaser.Input.Pointer) => {
@@ -1127,6 +1143,49 @@ export class CombatScene extends Phaser.Scene {
     if (match && match.deadline !== null) {
       const { x, y } = endTurnAnchor(this.layout);
       this.timerText = this.text(x, y - 66, "", 15, COLORS.gold).setOrigin(0.5);
+    }
+  }
+
+  /**
+   * Own seat's Nguyệt Bảo/Kỳ Vật/Lõi strip under the encounter plate (`05`
+   * review): x16..208, six a row, two rows, ten direct icons then a `+N`
+   * overflow that opens the inspector list. Every icon is also that entry's
+   * trigger anchor so `relicTriggered` flashes land on it — two seats holding
+   * the same id never collide because the key carries the seat.
+   */
+  private renderRelicStrip(seat: PlayerState | undefined): void {
+    if (seat === undefined) return;
+    const entries = relicHudEntries(this.gameData, this.state, seat.index);
+    const KIND_GLYPH: Record<RelicHudEntry["kind"], [string, number, string]> = {
+      relic: ["☾", COLORS.goldFill, COLORS.gold],
+      runRelic: ["✦", 0x4a6fa5, "#9fd4ff"],
+      augment: ["◆", 0x6a4a85, "#e0b0ff"],
+      weapon: ["⚔", 0x7a4a30, "#ffb080"],
+    };
+    const MAX = 10;
+    const slotAt = (i: number) => ({ x: 29 + (i % 6) * 32, y: 85 + Math.floor(i / 6) * 32 });
+    entries.slice(0, MAX).forEach((entry, i) => {
+      const { x, y } = slotAt(i);
+      const [glyph, ring, color] = KIND_GLYPH[entry.kind];
+      const icon = this.badge(x, y, 13, glyph, ring, this.root, 0x0a0e20, 12, color);
+      icon.setInteractive({ useHandCursor: true });
+      icon.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0) this.inspector?.openRelic(entry);
+      });
+      this.hoverTooltip(icon, () => ({ x: x + 20, y: y + 22 }), () => [entry.name, entry.description]);
+      this.triggerAnchors.set(triggerAnchorKey(seat.index, entry.kind, entry.id), { x, y });
+      if (entry.count !== undefined && entry.count > 1) {
+        this.text(x + 11, y + 9, `${entry.count}`, 9, COLORS.gold, this.root).setOrigin(0.5).setStroke("#05070f", 3);
+      }
+    });
+    if (entries.length > MAX) {
+      const { x, y } = slotAt(MAX);
+      const more = this.badge(x, y, 13, `+${entries.length - MAX}`, COLORS.panelBorder, this.root, 0x0a0e20, 11, COLORS.dimText);
+      more.setInteractive({ useHandCursor: true });
+      more.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0) this.inspector?.openRelics(entries);
+      });
+      this.hoverTooltip(more, () => ({ x: x + 20, y: y + 22 }), () => [`Còn ${entries.length - MAX} mục nữa`, "Bấm để xem tất cả"]);
     }
   }
 
@@ -1219,6 +1278,29 @@ export class CombatScene extends Phaser.Scene {
           })
           .setOrigin(1, 1),
       );
+    }
+    // Trang Bị badge at the bottom-left — its position is the weapon-trigger anchor.
+    if (spec.weapon !== undefined && spec.alive) {
+      const weapon = spec.weapon;
+      const wx = x - w / 2 + 15;
+      const wy = y + h / 2 - 15;
+      const def = this.gameData.weapons[weapon.id];
+      const entry: RelicHudEntry = {
+        id: weapon.id,
+        kind: "weapon",
+        name: def?.name ?? weapon.id,
+        description:
+          def === undefined
+            ? "Chưa có mô tả."
+            : `${def.text}${def.refinement[weapon.refinement - 1] ? ` — Tinh Luyện ${weapon.refinement}: ${def.refinement[weapon.refinement - 1]!.text}` : ""}`,
+      };
+      const icon = this.badge(-w / 2 + 15, h / 2 - 15, 11, "⚔", 0x7a4a30, c, 0x0a0e20, 10, "#ffb080");
+      icon.setInteractive({ useHandCursor: true });
+      icon.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0) this.inspector?.openRelic(entry);
+      });
+      this.hoverTooltip(icon, () => ({ x: wx + 18, y: wy - 40 }), () => [entry.name, entry.description]);
+      this.triggerAnchors.set(triggerAnchorKey(weapon.seat, "weapon", weapon.id), { x: wx, y: wy });
     }
     if (this.targeting !== null && !isValidTarget) c.setAlpha(0.4);
   }
@@ -1918,6 +2000,7 @@ export class CombatScene extends Phaser.Scene {
    */
   private heroSpecOf(hero: HeroState, x: number, y: number, w: number, h: number, hostile: boolean, frame: number, state = this.state): UnitCardSpec {
     const def = this.gameData.heroes[hero.defId]!;
+    const weapon = state.players[hero.player]?.weapons.find((w) => w.heroId === hero.id);
     const upKey = `heroes:${hero.defId}_up`;
     // Shown from state: the second form's name, the Tinh Hồn 2 threshold (`01` §8).
     const passiveName = hero.levelUpForm === "alt" ? def.altLevelUp.name : def.levelUp.name;
@@ -1942,6 +2025,7 @@ export class CombatScene extends Phaser.Scene {
       stealth: hero.statuses.some((s) => s.id === "stealth"),
       unit: hero,
       progress: progress ?? undefined,
+      weapon: weapon !== undefined ? { id: weapon.weaponId, refinement: weapon.refinement, seat: hero.player } : undefined,
       tooltip: () => [
         `${def.name}${hero.leveledUp ? " ★" : ""}`,
         `HP ${hero.hp}/${hero.maxHp}${hero.armor > 0 ? ` · Giáp ${hero.armor}` : ""}`,
@@ -2014,12 +2098,30 @@ export class CombatScene extends Phaser.Scene {
     // The hover zone spans whichever way this seat's discard sits from its draw.
     const midX = (anchors.draw.x + anchors.discard.x) / 2;
     const midY = (anchors.draw.y + anchors.discard.y) / 2;
-    const hit = this.add.zone(midX, midY, Math.abs(anchors.discard.x - anchors.draw.x) + 110, Math.abs(anchors.discard.y - anchors.draw.y) + 140).setInteractive();
+    const hit = this.add.zone(midX, midY, Math.abs(anchors.discard.x - anchors.draw.x) + 110, Math.abs(anchors.discard.y - anchors.discard.y) + 140).setInteractive();
     parent.add(hit);
     this.hoverTooltip(hit, () => ({ x: midX + 70, y: midY - 40 }), () => [
       `Chồng bài ${owner}`,
       `Còn ${left} lá · Bỏ ${seat.discardPile.length} lá`,
+      "Bấm để xem chi tiết",
     ]);
+    // Clicking either pile opens the inspector (`05` review): the draw pile
+    // shows count + composition (own seat only), never the draw order.
+    const drawHit = this.add.zone(anchors.draw.x, anchors.draw.y, 90, 130).setInteractive({ useHandCursor: true });
+    parent.add(drawHit);
+    drawHit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button !== 0) return;
+      this.inspector?.openPile(
+        pileModel(this.gameData, this.state, seat.index, "draw", this.mySeat),
+        drawComposition(this.gameData, this.state, seat.index, this.mySeat),
+      );
+    });
+    const discardHit = this.add.zone(anchors.discard.x, anchors.discard.y, 90, 100).setInteractive({ useHandCursor: true });
+    parent.add(discardHit);
+    discardHit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button !== 0) return;
+      this.inspector?.openPile(pileModel(this.gameData, this.state, seat.index, "discard", this.mySeat));
+    });
   }
 
   private renderCard(
