@@ -21,7 +21,10 @@ function assetsManifest(): Plugin {
         const files: Record<string, string> = {};
         for (const file of readdirSync(join(root, dir.name))) {
           if (file.startsWith(".")) continue;
-          files[file.replace(/\.[^.]+$/, "")] = `/assets/${dir.name}/${file}`;
+          const key = file.replace(/\.[^.]+$/, "");
+          // Prefer replacement PNGs while retaining the original SVG source.
+          if (file.endsWith(".svg") && files[key]?.endsWith(".png")) continue;
+          files[key] = `/assets/${dir.name}/${file}`;
         }
         manifest[dir.name] = files;
       }
