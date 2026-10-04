@@ -101,9 +101,12 @@ export function planEnemyIntents(data: GameData, state: CombatState, events: Com
       (decreeModifier(data, state, "turnMoonPowerBonus")?.amount ?? 0);
     let left = fund;
     const chain: PlannedIntent[] = [];
+    // Huyết Nguyệt replaces the phase wholesale (`01` §7.4): only the blood
+    // override leads — a moon override is a phase trait, and the phase is off.
     const override =
-      (state.bloodMoonRounds > 0 ? def.bloodMoonOverride : undefined) ??
-      def.moonOverrides?.find((entry) => entry.phase === phaseId)?.intent;
+      state.bloodMoonRounds > 0
+        ? def.bloodMoonOverride
+        : def.moonOverrides?.find((entry) => entry.phase === phaseId)?.intent;
     if (override) chain.push({ intent: override, cost: 0, targetId: null });
     const used = new Set<string>();
     // `alwaysPlan` intents lead the chain while the fund covers them (`01` §16.5).

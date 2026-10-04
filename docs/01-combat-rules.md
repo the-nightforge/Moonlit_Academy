@@ -405,7 +405,7 @@ co-op gồm người chơi (mọi ghế) và phe kẻ địch; PvP gồm từng 
 - Không ảnh hưởng chuỗi chiêu kẻ địch đã lên.
 
 ### 7.4 Huyết Nguyệt [GĐ2]
-- `bloodMoonRounds > 0` → trận ở trạng thái Huyết Nguyệt **chồng lên** pha hiện tại (hai hiệu ứng cùng áp dụng). Trận bắt đầu với `bloodMoonRounds = 0`.
+- `bloodMoonRounds > 0` → trận ở trạng thái Huyết Nguyệt — một **pha ẩn thay thế** pha đang ở Nguyệt Luân: Ưu Đãi Pha và Nguyệt Lệnh của pha bị che **tạm ngừng** (không cộng dồn), `moonOverrides` cũng không kích (chỉ `bloodMoonOverride` xét, mục 9.1). Nguyệt Luân vẫn tiến pha bình thường cuối vòng (mục 9.4) — pha bị che không "chờ" lại; khi Huyết Nguyệt tan, pha đang tới lúc đó áp lại. Trận bắt đầu với `bloodMoonRounds = 0`.
 - Effect `bloodMoon(rounds)`: `bloodMoonRounds = max(hiện tại, rounds)`. Nếu giá trị đổi: phát `bloodMoonChanged { rounds, cause: "card" }`.
 - **Mở khóa lá:** lá có `requiresBloodMoon: true` (chỉ hợp lệ trên lá có tag `forbidden`) chỉ đánh được khi `bloodMoonRounds > 0` (mục 5.1). Lá `forbidden` khác đánh được mọi lúc.
 - **Mất HP:** đầu lượt người chơi, mỗi Hero còn sống mất 2 HP (`hpLost`, cause `"bloodMoon"`) — bước 3.1.4.
@@ -574,7 +574,7 @@ Tra cứu (trong `moon.ts`): `currentDecree` → lệnh đang bốc của pha;
 ### 9.1 Bộ chiêu
 - Mỗi kẻ địch có `intents`: danh sách chiêu, mỗi chiêu là `IntentDef` kèm `cost` (số nguyên ≥ 0); và đường cong Nguyệt Lực riêng `moonPower: { start, cap }` (`perRound` dùng chung của `combatConfig`).
 - **Nguyệt tính [Nguyệt Luân mới]:** có thể có `moonOverrides` — chiêu trăng của riêng loại địch đó, **thông tin công khai** (client hiển thị trong tooltip kẻ địch, `05` mục 3). Nếu **tại thời điểm lên chuỗi** pha trăng khớp, dùng chiêu thay thế (là `IntentDef`, không có `cost`).
-- Có thể có `bloodMoonOverride` **[GĐ2]**: chiêu thay thế khi **tại thời điểm lên chuỗi** đang Huyết Nguyệt; ưu tiên hơn `moonOverrides`. Chiêu override luôn có cost 0 và đứng đầu chuỗi (mục 9.2).
+- Có thể có `bloodMoonOverride` **[GĐ2]**: chiêu thay thế khi **tại thời điểm lên chuỗi** đang Huyết Nguyệt. Khi Huyết Nguyệt che pha hiện tại (mục 7.4) `moonOverrides` không kích — `bloodMoonOverride` là chiêu thay thế duy nhất được xét. Chiêu override luôn có cost 0 và đứng đầu chuỗi (mục 9.2).
 
 ### 9.2 Lên chuỗi
 Nguyệt Lực của kẻ địch theo cùng đường cong với người chơi (`base(r)`, mục 3.1) nhưng dùng `start`/`cap` riêng của kẻ địch. Vòng 1: quỹ = `start` (chưa có Dự Trữ).
@@ -582,7 +582,7 @@ Nguyệt Lực của kẻ địch theo cùng đường cong với người chơi
 Chạy lúc tạo trận (vòng 1) và ở cuối mỗi vòng (mục 9.4, sau khi tiến pha và giảm `bloodMoonRounds`), cho từng kẻ địch còn sống theo vị trí 0 → n. Với quỹ `P = base(r) + moonReserve` **[Nguyệt Lệnh]** `+ turnMoonPowerBonus` nếu lệnh **Nguyệt Sinh** đang có hiệu lực **lúc lên chuỗi** (mục 7.5):
 
 1. `chain = []`, `used = ∅`.
-2. **Override:** nếu `bloodMoonRounds > 0` và có `bloodMoonOverride` **[GĐ2]**, hoặc có override trong `moonOverrides` khớp pha hiện tại → thêm chiêu đó vào `chain` với cost 0.
+2. **Override:** nếu đang Huyết Nguyệt **[GĐ2]**: chỉ xét `bloodMoonOverride` (`moonOverrides` tắt cùng pha, mục 7.4); nếu không: xét `moonOverrides` khớp pha hiện tại → thêm chiêu khớp vào `chain` với cost 0.
 3. Lặp khi `chain.length < maxIntentsPerRound`:
    - `affordable` = chiêu trong `intents` có `cost ≤ P` và `id ∉ used`.
    - Rỗng → dừng.

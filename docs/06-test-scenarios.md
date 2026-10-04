@@ -143,6 +143,11 @@ Quy ước thêm: "Boss" = `moon_ape` (HP 110, `enc_04`). F03 = Tần Sương, F
 | T74 | `bloodMoonRounds 0`, Phệ Hồn trên tay | `playCard` | Từ chối `"requires blood moon"`; `isCardPlayable = false` |
 | T75 | `bloodMoonRounds 1`, Phệ Hồn → Khôi Lỗi | `playCard` | F02 mất 3 HP; Khôi Lỗi HP 42 → 26 |
 | T76 | `bloodMoonRounds 3` | Đổi Vận Chú | Vẫn 3; không có `bloodMoonChanged` |
+| T326 | `moonIndex 2` (Ưu Đãi + lệnh đang áp), `bloodMoonRounds 2` | đọc `activeModifiers`/`decreeModifier` | Pha hiện tại bị che toàn bộ: tag bonus và Nguyệt Lệnh rơi khỏi `activeModifiers`, `decreeModifier` → `undefined`; `phaseModifiers` (đọc thẳng) vẫn trả đủ; `bloodMoonRounds 0` → pha áp lại |
+| T327 | `moonIndex 2`, lá `control` trên tay, `bloodMoonRounds 2` | đọc `getEffectiveCost` | Giảm giá pha (`control` −1) mất hiệu lực — giá về đúng base; hết Huyết Nguyệt → −1 áp lại |
+| T328 | `moonIndex 4`, kẻ địch có `moonOverrides` khớp nhưng không có `bloodMoonOverride`; `bloodMoonRounds 2` | `planEnemyIntents` | Không chiêu trăng nào đứng đầu chuỗi — `moonOverrides` tắt cùng pha bị che; chỉ `bloodMoonOverride` được xét |
+| T329 | `bloodMoonRounds 2` | `endTurn` ×2 | Nguyệt Luân vẫn tiến pha mỗi vòng (`moonIndex +1`) đồng thời `bloodMoonRounds` giảm về 0 — pha đang tới áp lại |
+| T330 | ghế có Kỳ Vật `while: "bloodMoon"` (vd `r_huyet_ngoc_boi`) | đọc `activeModifiers` | Modifier relic `while:"bloodMoon"` ngủ khi `bloodMoonRounds = 0`, **bật khi đang Huyết Nguyệt** — không bị chung phạm với pha bị che |
 | T77 | Chỉ còn F02 HP 2, `bloodMoonRounds 2`, kẻ địch bị vô hiệu | `endTurn` | `status = lost` |
 
 ### J. Song Hành

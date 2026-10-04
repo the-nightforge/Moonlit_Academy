@@ -20,6 +20,7 @@ export {
   DECREE_ONLY_MODIFIERS,
   enterPhase,
   phaseModifiers,
+  phaseSuppressed,
   rollMoon,
 } from "./moon";
 export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-combat";

@@ -28,6 +28,15 @@ export function currentDecree(data: GameData, state: CombatState, index = state.
   return data.moonPhases[index]?.decrees.find((decree) => decree.id === id);
 }
 
+/**
+ * Huyết Nguyệt is a hidden phase: while it burns it REPLACES the current
+ * phase — tag bonus and Nguyệt Lệnh stop applying until it ends (`01` §7.4).
+ * The wheel itself keeps turning (`moonIndex` still advances at round end).
+ */
+export function phaseSuppressed(state: CombatState): boolean {
+  return state.bloodMoonRounds > 0;
+}
+
 /** Tag bonus + rolled decree of a phase (`01` §7). */
 export function phaseModifiers(data: GameData, state: CombatState, index = state.moonIndex): MoonModifier[] {
   return [...(data.moonPhases[index]?.tagBonus ?? []), ...(currentDecree(data, state, index)?.modifiers ?? [])];
@@ -38,6 +47,7 @@ export function decreeModifier<T extends MoonModifier["type"]>(
   state: CombatState,
   type: T,
 ): Extract<MoonModifier, { type: T }> | undefined {
+  if (phaseSuppressed(state)) return undefined;
   return phaseModifiers(data, state).find((m): m is Extract<MoonModifier, { type: T }> => m.type === type);
 }
 
@@ -126,7 +136,8 @@ export function activeModifiers(data: GameData, state: CombatState, player: numb
     const def = data.relics[relic.id];
     return def ? (relicAt(def, relic.resonance).modifiers ?? []) : [];
   });
-  return [...phaseModifiers(data, state), ...relicModifiers, ...moonRelicModifiers].filter(
+  const phase = phaseSuppressed(state) ? [] : phaseModifiers(data, state);
+  return [...phase, ...relicModifiers, ...moonRelicModifiers].filter(
     (modifier) => modifier.type !== "costModifierForTag" || modifier.while !== "bloodMoon" || state.bloodMoonRounds > 0,
   );
 }

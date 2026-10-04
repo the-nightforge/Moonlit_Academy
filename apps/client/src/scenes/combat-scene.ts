@@ -1269,13 +1269,23 @@ export class CombatScene extends Phaser.Scene {
     }
     layer.add(moon);
     moon.setName("moon_current").setInteractive();
-    this.hoverTooltip(moon, () => ({ x: x + size / 2 + 8, y: y - 10 }), () => [
-      `${model.phase.name} — pha hiện tại`,
-      model.phase.description,
-      `${model.next.name} — pha kế tiếp`,
-      model.next.description,
-      bloodMoon ? `Huyết Nguyệt — còn ${state.bloodMoonRounds} vòng` : "",
-    ]);
+    // Huyết Nguyệt IS the current phase while it burns (`01` §7.4): the
+    // suppressed phase's name shows as covered, its effects read as paused.
+    this.hoverTooltip(moon, () => ({ x: x + size / 2 + 8, y: y - 10 }), () =>
+      bloodMoon
+        ? [
+            `Huyết Nguyệt — pha hiện tại · còn ${state.bloodMoonRounds} vòng`,
+            `${model.phase.name} đang bị che — Ưu Đãi Pha và Nguyệt Lệnh tạm ngừng`,
+            `${model.next.name} — pha kế tiếp`,
+            model.next.description,
+          ]
+        : [
+            `${model.phase.name} — pha hiện tại`,
+            model.phase.description,
+            `${model.next.name} — pha kế tiếp`,
+            model.next.description,
+          ],
+    );
   }
 
   /**

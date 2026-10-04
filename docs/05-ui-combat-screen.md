@@ -98,7 +98,7 @@ nội dung phía địch bắt đầu từ x≥232 nên không đè nhau.
   đãi (`tagBonusText`), tên + mô tả Nguyệt Lệnh của pha trong trận này
   (`currentDecree` → `name` + `text`), dòng "Đang diễn ra" nếu là pha hiện tại.
   Client chỉ đọc dữ liệu + state — không tự tính luật.
-- **Huyết Nguyệt [GĐ2]:** khi `bloodMoonRounds > 0`: nền đỏ tối, icon 🔴 **cạnh** bánh xe kèm số lượt còn lại. Pha hiện tại vẫn hiển thị và vẫn tiến bình thường.
+- **Huyết Nguyệt [GĐ2]:** khi `bloodMoonRounds > 0` Huyết Nguyệt là **pha đang hoạt động** (pha ẩn thay thế, `01` §7.4): icon trăng nhuộm đỏ + corona đập nhẹ, badge số vòng cạnh trăng, mép màn hình vignette đỏ + tàn lửa; tooltip ghi pha bị che "tạm ngừng". Nguyệt Luân vẫn tiến bình thường cuối vòng.
 
 ### Chồng bài & Inspector
 - Click **chồng rút**: panel "Chồng rút" — **chỉ số lượng** + dòng "Thứ tự chồng rút được giữ kín";
