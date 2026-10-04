@@ -36,9 +36,9 @@ export function moonHudModel(data: GameData, state: CombatState): MoonHudModel {
 }
 
 /**
- * While Huyết Nguyệt burns: a slow-breathing crimson corona behind the moon
- * plus a round-count badge in the game's own badge idiom (dark disc, crimson
- * ring) — the countdown detail itself lives in the moon's tooltip.
+ * While Huyết Nguyệt burns: a slow-breathing crimson corona behind the
+ * blood-moon icon — the countdown is intentionally not displayed on the HUD
+ * (the event stream carries the "còn N vòng" detail each round).
  */
 export function renderMoonHud(
   scene: Phaser.Scene,
@@ -64,16 +64,6 @@ export function renderMoonHud(
     .setName("moon_blood_corona");
   container.add(corona);
   pulse?.(corona, { alpha: 0.5, scale: (size * 1.9) / 128, duration: 1700 });
-
-  // Countdown badge — bottom-right edge of the moon, dark disc + crimson ring.
-  const bx = moonAt.x + size * 0.58;
-  const by = moonAt.y + size * 0.5;
-  const disc = scene.add.circle(bx, by, 11, 0x14060c, 0.95).setStrokeStyle(2, 0xd03a4a).setName("moon_blood");
-  const numeral = scene.add
-    .text(bx, by, `${model.bloodRounds}`, { ...TEXT_BASE, fontSize: "12px", color: "#ff6a6a" })
-    .setOrigin(0.5);
-  container.add(disc);
-  container.add(numeral);
 
   return container;
 }

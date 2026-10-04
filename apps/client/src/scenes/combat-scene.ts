@@ -1258,23 +1258,25 @@ export class CombatScene extends Phaser.Scene {
     const model = moonHudModel(this.gameData, state);
     const hud = renderMoonHud(this, model, this.layout, this.moonAnchor, (t, cfg) => this.loopTween(t, cfg));
     layer.add(hud);
-    const moon = this.textures.exists(iconKey)
-      ? this.add.image(x, y, iconKey).setDisplaySize(size, size)
-      : this.add.text(x, y, phase.icon, { ...TEXT_BASE, fontSize: `${Math.round(size * 0.6)}px`, color: COLORS.gold }).setOrigin(0.5);
-    // Huyết Nguyệt burns the moon itself — the corona pulses underneath.
-    if (bloodMoon) {
-      // A faint ember tint — reads crimson up close, doesn't eat the glyph.
-      if (moon instanceof Phaser.GameObjects.Image) moon.setTint(0xffb8a4);
-      else (moon as Phaser.GameObjects.Text).setColor("#ffb8a4");
-    }
+    // Huyết Nguyệt replaces the phase (`01` §7.4) — the socket shows the
+    // dedicated blood-moon icon, not the covered phase's glyph.
+    const moon = bloodMoon
+      ? this.textures.exists("ui:moon_blood")
+        ? this.add.image(x, y, "ui:moon_blood").setDisplaySize(size, size)
+        : this.add
+            .text(x, y, phase.icon, { ...TEXT_BASE, fontSize: `${Math.round(size * 0.6)}px`, color: "#d03a4a" })
+            .setOrigin(0.5)
+      : this.textures.exists(iconKey)
+        ? this.add.image(x, y, iconKey).setDisplaySize(size, size)
+        : this.add.text(x, y, phase.icon, { ...TEXT_BASE, fontSize: `${Math.round(size * 0.6)}px`, color: COLORS.gold }).setOrigin(0.5);
     layer.add(moon);
     moon.setName("moon_current").setInteractive();
-    // Huyết Nguyệt IS the current phase while it burns (`01` §7.4): the
-    // suppressed phase's name shows as covered, its effects read as paused.
+    // Huyết Nguyệt IS the current phase while it burns: the suppressed
+    // phase's name shows as covered, its effects read as paused.
     this.hoverTooltip(moon, () => ({ x: x + size / 2 + 8, y: y - 10 }), () =>
       bloodMoon
         ? [
-            `Huyết Nguyệt — pha hiện tại · còn ${state.bloodMoonRounds} vòng`,
+            "Huyết Nguyệt — pha hiện tại",
             `${model.phase.name} đang bị che — Ưu Đãi Pha và Nguyệt Lệnh tạm ngừng`,
             `${model.next.name} — pha kế tiếp`,
             model.next.description,

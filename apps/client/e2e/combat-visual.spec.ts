@@ -179,7 +179,7 @@ test.describe("combat visual matrix (offline)", () => {
     expect(errors).toEqual([]);
   });
 
-  test("bloodMoon: the lasting look — tinted moon, corona, badge, edge vignette", async ({ page }) => {
+  test("bloodMoon: the lasting look — blood-moon icon, corona, edge vignette", async ({ page }) => {
     const errors = collectErrors(page);
     await page.setViewportSize({ width: 1280, height: 720 });
     await setupOfflineCombat(page, "bloodMoon");
@@ -188,19 +188,23 @@ test.describe("combat visual matrix (offline)", () => {
     const dressed = await page.evaluate(() => {
       const handle = (window as unknown as { __vn: { game: { scene: { getScene(k: string): { children: { list: unknown[] } } | undefined } } } }).__vn;
       const scene = handle.game.scene.getScene("combat");
-      const names: string[] = [];
+      const found: { names: string[]; moonTexture?: string } = { names: [] };
       const walk = (list: unknown[] | undefined) => {
         list?.forEach((node) => {
-          const n = node as { name?: string; list?: unknown[] };
-          if (n.name) names.push(n.name);
+          const n = node as { name?: string; list?: unknown[]; texture?: { key?: string } };
+          if (n.name) found.names.push(n.name);
+          if (n.name === "moon_current") found.moonTexture = n.texture?.key;
           if (Array.isArray(n.list)) walk(n.list);
         });
       };
       walk(scene?.children.list);
-      return names;
+      return found;
     });
-    expect(dressed).toContain("moon_blood");
-    expect(dressed).toContain("moon_blood_corona");
+    // The socket shows the dedicated blood-moon icon — not the phase glyph —
+    // and no round-count badge is rendered by design.
+    expect(dressed.moonTexture).toBe("ui:moon_blood");
+    expect(dressed.names).toContain("moon_blood_corona");
+    expect(dressed.names).not.toContain("moon_blood");
     await captureCombat(page, "1280x720", "bloodMoon");
     expect(errors).toEqual([]);
   });
