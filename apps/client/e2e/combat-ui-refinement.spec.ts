@@ -74,7 +74,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
       const s = (window as any).__vn.game.scene.getScene("combat"), v: any = [...s.cardViews.values()].find((v: any) => v.getByName("card_swap_gate"));
       return { radius: v.getByName("card_swap_gate").radius, size: v.getByName("card_swap_icon").displayWidth };
     });
-    expect(swap.radius).toBe(21); expect(swap.size).toBe(24);
+    expect(swap.radius).toBe(24); expect(swap.size).toBe(24);
     await moveDesign(page, 40, 690);
     await page.screenshot({ path: `${OUT}/mulligan-picked-${viewport.width}.png` });
     const action = await page.evaluate(async () => {
@@ -94,12 +94,15 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
       s.requestRender();
     });
     await assertFooter(page, 136);
-    const chrome = await page.evaluate(() => {
+    const chrome = await page.evaluate(async () => {
       const h = (window as any).__vn, s = h.game.scene.getScene("combat"), nodes: any[] = [];
+      const { combatCardModel, cardOwnerLabel } = await import("/src/ui/combat-card-view.ts");
       const walk = (list: any[]) => list.forEach(n => { nodes.push(n); if (n.list) walk(n.list); }); walk(s.children.list);
-      const cards = [...s.cardViews.values()].map((v: any) => {
-        const icon = v.getByName("card_category_icon"), art = v.getByName("card_gate_art"), body = v.getByName("card_body"), owner = v.getByName("card_owner");
-        return { icon: icon?.displayWidth, art: art?.displayWidth, body: body.text, font: body.style.fontSize, gap: body.getBounds().top - owner.getBounds().bottom, bodyBottom: body.getBounds().bottom, paperBottom: v.y + 76 };
+      const cards = [...s.cardViews.entries()].map(([id, v]: any) => {
+        const icon = v.getByName("card_category_icon"), art = v.getByName("card_gate_art"), body = v.getByName("card_body");
+        const label = cardOwnerLabel(combatCardModel(h.session.data, s.state, id));
+        const b = body.getBounds();
+        return { icon: icon?.displayWidth, art: art?.displayWidth, body: body.text, font: body.style.fontSize, startsWithOwner: body.text.startsWith(label), ownerGone: v.getByName("card_owner") === null, bodyTop: b.top, bodyBottom: b.bottom, paperTop: v.y + 22, paperBottom: v.y + 72 };
       });
       const canvas = s.textures.get("hud_card_face").getSourceImage(), ctx = canvas.getContext("2d");
       const pixel = ctx.getImageData(Math.round(10 * canvas.width / 110), Math.round(115 * canvas.height / 160), 1, 1).data;
@@ -108,8 +111,8 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
     });
     expect(chrome.rail).toBe(0); expect(chrome.blood).toBe(true); expect(chrome.summonHp).toBe("7/12"); expect(chrome.summonHearts).toBe(0);
     expect(chrome.oldPaperPixel[0]).toBeLessThan(80);
-    for (const card of chrome.cards) { if (card.icon) expect(card.icon).toBe(24); if (card.art) expect(card.art).toBe(36); expect(card.font).toBe("11px"); expect(card.gap).toBeGreaterThanOrEqual(0); expect(card.bodyBottom).toBeLessThanOrEqual(card.paperBottom); }
-    expect(chrome.cards.some(card => card.body === "Một\nHai\nBa…")).toBe(true);
+    for (const card of chrome.cards) { if (card.icon) expect(card.icon).toBe(30); if (card.art) expect(card.art).toBe(44); expect(card.font).toBe("11px"); expect(card.ownerGone).toBe(true); expect(card.startsWithOwner).toBe(true); expect(card.bodyTop).toBeGreaterThanOrEqual(card.paperTop); expect(card.bodyBottom).toBeLessThanOrEqual(card.paperBottom - 2); }
+    expect(chrome.cards.some(card => card.body.includes("Một") && card.body.endsWith("…"))).toBe(true);
     await page.screenshot({ path: `${OUT}/battle-${viewport.width}.png` });
     // A hovered hand card raises smoothly but never reaches the hero row.
     const hover = await page.evaluate(() => {

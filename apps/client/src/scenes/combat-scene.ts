@@ -2207,7 +2207,7 @@ export class CombatScene extends Phaser.Scene {
     cardArt?.setName("card_gate_art");
     if (!cardArt) {
       ensureTextures(this);
-      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.46).setAlpha(broken ? 0.15 : 0.5));
+      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.55).setAlpha(broken ? 0.15 : 0.5));
       for (const [sx, sy, r] of [[-11, -7, 0.9], [9, -11, 0.7], [12, 5, 0.6], [-12, 6, 0.5]] as const) {
         container.add(this.add.circle(sx, gateY + sy, r, 0xffffff, 0.7));
       }
@@ -2216,13 +2216,14 @@ export class CombatScene extends Phaser.Scene {
     }
     // Reclaim the description chrome for an owner header plus three lines.
     container.add(roundedPanel(this,0,(CARD_DESCRIPTION.top+CARD_DESCRIPTION.bottom)/2,CARD_W-24,CARD_DESCRIPTION.bottom-CARD_DESCRIPTION.top,0xd2c18d,1,0x806b45,3));
-    // Title plate between the gate and the parchment (red lacquer: attack, blue: skill), the name on one line.
-    const titleY = 15;
+    // Title plate between the gate and the parchment (red lacquer: attack,
+    // blue: skill) — small and clearly above the description band.
+    const titleY = 8;
     container.add(grey(hudImage(this, card.type === "attack" ? HUD.bannerAttack : HUD.bannerSkill, 0, titleY)));
     const name = this.add
       .text(0, titleY, model.title, {
         ...TEXT_BASE,
-        fontSize: "12px",
+        fontSize: "10px",
         fontStyle: "bold",
         color: "#fff1d0",
         stroke: "#1a0608",
@@ -2297,8 +2298,10 @@ export class CombatScene extends Phaser.Scene {
 
     // 11px body, three measured lines with an ellipsis; the
     // hover preview carries the full text (`05` review: readable at 1024×576).
+    // The owner reads as the text's subject — "Tô Dạ ẩn thân 1 vòng…". Three
+    // measured lines centered in the parchment; full text on hover.
     const body = this.add
-      .text(0, CARD_DESCRIPTION.bodyY, ellipsize(this, model.fullText, CARD_W - 24, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES), {
+      .text(0, (CARD_DESCRIPTION.top + CARD_DESCRIPTION.bottom) / 2, ellipsize(this, `${cardOwnerLabel(model)} ${model.fullText}`, CARD_W - 24, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES), {
         ...TEXT_BASE,
         fontSize: `${COMPACT_BODY_FONT}px`,
         color: "#3a2810",
@@ -2306,23 +2309,8 @@ export class CombatScene extends Phaser.Scene {
         lineSpacing: -1,
         wordWrap: { width: CARD_W - 24 },
       })
-      .setOrigin(0.5, 0).setName("card_body");
+      .setOrigin(0.5).setName("card_body");
     container.add(body);
-    // The owner/category header belongs to the parchment, above the body.
-    const strip = cardOwnerLabel(model);
-    container.add(
-      this.fitWidth(
-        this.add
-          .text(0, CARD_DESCRIPTION.ownerY, strip, {
-            ...TEXT_BASE,
-            fontSize: "10px",
-            color: "#51381c",
-            fontStyle: "bold",
-          })
-          .setOrigin(0.5).setName("card_owner"),
-        CARD_W - 24,
-      ),
-    );
 
     if (mulliganPicked) {
       ensureTextures(this);

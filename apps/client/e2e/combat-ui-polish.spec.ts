@@ -91,20 +91,21 @@ test(`current moon and card description geometry @ ${viewport.width}`,async({pag
     const walk=(list:any[])=>list.forEach(n=>{nodes.push(n);if(n.list)walk(n.list);});walk(s.children.list);
     const phases=nodes.filter(n=>/^moon_phase_\d$/.test(n.name));
     const cards=[...s.cardViews.values()].map((v:any)=>{
-      const owner=v.list.find((n:any)=>n.name==="card_owner"),body=v.list.find((n:any)=>n.name==="card_body");
-      return owner&&body?{owner:owner.text,ownerTop:owner.getBounds().top,ownerBottom:owner.getBounds().bottom,bodyTop:body.getBounds().top,bodyBottom:body.getBounds().bottom,parchmentTop:v.y+23,parchmentBottom:v.y+75}:null;
+      const body=v.list.find((n:any)=>n.name==="card_body");
+      const b=body?.getBounds();
+      return body&&b?{body:body.text,bodyTop:b.top,bodyBottom:b.bottom,parchmentTop:v.y+22,parchmentBottom:v.y+72}:null;
     });
     return {phases:phases.map(n=>({x:n.x,y:n.y})),label:nodes.some(n=>n.name==="moon_label"),ring:nodes.some(n=>n.name==="moon_current_ring"),aura:nodes.some(n=>n.name==="moon_current_aura"),cards};
   });
   expect(probe.phases).toHaveLength(0);
   expect(probe.label).toBe(false);expect(probe.ring).toBe(false);expect(probe.aura).toBe(false);
-  for(const card of probe.cards){expect(card).not.toBeNull();expect(card!.owner.length).toBeGreaterThan(0);expect(card!.ownerTop).toBeGreaterThanOrEqual(card!.parchmentTop);expect(card!.ownerBottom).toBeLessThanOrEqual(card!.bodyTop);expect(card!.bodyBottom).toBeLessThanOrEqual(card!.parchmentBottom);}
+  for(const card of probe.cards){expect(card).not.toBeNull();expect(card!.body.length).toBeGreaterThan(0);expect(card!.bodyTop).toBeGreaterThanOrEqual(card!.parchmentTop);expect(card!.bodyBottom).toBeLessThanOrEqual(card!.parchmentBottom-2);}
   await page.evaluate(()=>{
     const h=(window as any).__vn,s=h.game.scene.getScene("combat"),id=h.session.state.players[0].hand[0];
     const card=h.session.data.cards[h.session.state.cards[id].cardId];
     card.text="Một\nHai\nBa";s.requestRender();
   });
-  await expect.poll(()=>page.evaluate(()=>{const s=(window as any).__vn.game.scene.getScene("combat");return [...s.cardViews.values()].some((v:any)=>v.list.some((n:any)=>n.name==="card_body"&&n.text==="Một\nHai\nBa"));})).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>{const s=(window as any).__vn.game.scene.getScene("combat");return [...s.cardViews.values()].some((v:any)=>v.list.some((n:any)=>n.name==="card_body"&&n.text.endsWith(" Một\nHai\nBa")));})).toBe(true);
   await page.screenshot({path:`../../.sdd-work/combat-ui-polish/screenshots/board-${viewport.width}.png`});
   const compact=await page.evaluate(async()=>{
     const h=(window as any).__vn,s=h.game.scene.getScene("combat");
@@ -113,12 +114,12 @@ test(`current moon and card description geometry @ ${viewport.width}`,async({pag
     const models=[base,{...base,category:"bond",ownerNames:[h.session.data.heroes.f03.name,h.session.data.heroes.f04.name],ownerColors:[0xaaaaff,0xddbbff]},{...base,category:"weapon",ownerNames:[base.ownerNames[0]]},base];
     return models.map((model:any,i:number)=>{
       const view=renderCombatCard(s,{...model,fullText:i===3?"Một Hai Ba Bốn Năm Sáu Bảy Tám Chín Mười":"Một\nHai\nBa\nBốn"},{x:410+i*120,y:400}).setDepth(1800);
-      const owner=view.getByName("card_owner") as any,body=view.getByName("card_body") as any;
-      return {owners:owner.text,scale:owner.scaleX,expected:model.ownerNames,ownerTop:owner.getBounds().top,ownerBottom:owner.getBounds().bottom,bodyTop:body.getBounds().top,bodyBottom:body.getBounds().bottom,bodyLeft:body.getBounds().left,bodyRight:body.getBounds().right,parchmentLeft:view.x-43,parchmentRight:view.x+43,lines:body.getWrappedText(),font:body.style.fontSize};
+      const body=view.getByName("card_body") as any;
+      return {body:body.text,expected:model.ownerNames,bodyTop:body.getBounds().top,bodyBottom:body.getBounds().bottom,bodyLeft:body.getBounds().left,bodyRight:body.getBounds().right,parchmentLeft:view.x-43,parchmentRight:view.x+43,parchmentTop:view.y+22,parchmentBottom:view.y+72,lines:body.getWrappedText(),font:body.style.fontSize};
     });
   });
-  for(const [i,card] of compact.entries()){for(const name of card.expected)expect(card.owners).toContain(name);expect(card.scale).toBeGreaterThanOrEqual(0.75);expect(card.ownerTop).toBeGreaterThanOrEqual(423);expect(card.ownerBottom).toBeLessThanOrEqual(card.bodyTop);expect(card.bodyBottom).toBeLessThanOrEqual(475);expect(card.bodyLeft).toBeGreaterThanOrEqual(card.parchmentLeft);expect(card.bodyRight).toBeLessThanOrEqual(card.parchmentRight);if(i<3)expect(card.lines).toEqual(["Một","Hai","Ba…"]);else expect(card.lines.length).toBeLessThanOrEqual(3);expect(card.font).toBe("11px");}
-  expect(compact[1]!.owners).toContain("∞");expect(compact[2]!.owners).toContain("⚔");
+  for(const card of compact){const flat=card.body.replace(/\s+/g," ");for(const name of card.expected)expect(flat).toContain(name);expect(card.bodyTop).toBeGreaterThanOrEqual(card.parchmentTop);expect(card.bodyBottom).toBeLessThanOrEqual(card.parchmentBottom-2);expect(card.bodyLeft).toBeGreaterThanOrEqual(card.parchmentLeft);expect(card.bodyRight).toBeLessThanOrEqual(card.parchmentRight);expect(card.lines.length).toBeLessThanOrEqual(3);expect(card.font).toBe("11px");}
+  expect(compact[1]!.body).toContain("∞");expect(compact[2]!.body).toContain("⚔");
   await page.screenshot({path:`../../.sdd-work/combat-ui-polish/screenshots/compact-categories-${viewport.width}.png`});
 });
 }

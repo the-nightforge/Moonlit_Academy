@@ -18,8 +18,9 @@ export const PREVIEW_BODY_FONT = 14;
 /** Compact cards show at most this many body lines; the rest ellipsizes. */
 export const COMPACT_MAX_BODY_LINES = 3;
 export const COMPACT_CARD = { w: 110, h: 160 } as const;
-export const CARD_GATE = { y: -30, radius: 21, artSize: 36, glyphSize: 24 } as const;
-export const CARD_DESCRIPTION = { top: 23, bottom: 76, ownerY: 29, bodyY: 36 } as const;
+export const CARD_GATE = { y: -30, radius: 24, artSize: 44, glyphSize: 30 } as const;
+/** Parchment band — its bottom keeps 8px of card border beneath it. */
+export const CARD_DESCRIPTION = { top: 22, bottom: 72 } as const;
 
 /**
  * Everything a combat card view shows, sourced from authoritative state —
@@ -227,11 +228,11 @@ export function renderCombatCard(
     container.add(scene.add.rectangle(coinX, coinY + 17, 10, 1, 0xffffff, 0.8));
   }
 
-  // 12px title, one line, scaled down only when a name truly overflows.
+  // 10px title clear of the parchment, one line, scaled when it overflows.
   const title = scene.add
-    .text(0, 12, model.title, {
+    .text(0, 8, model.title, {
       ...TEXT_BASE,
-      fontSize: "12px",
+      fontSize: "10px",
       fontStyle: "bold",
       color: "#fff1d0",
       align: "center",
@@ -241,11 +242,12 @@ export function renderCombatCard(
   container.add(title);
 
   container.add(roundedPanel(scene,0,(CARD_DESCRIPTION.top+CARD_DESCRIPTION.bottom)/2,w-24,CARD_DESCRIPTION.bottom-CARD_DESCRIPTION.top,0xd2c18d,1,0x806b45,3));
-  // Three measured 11px lines; the full text lives in the hover preview.
-  const body = ellipsize(scene, model.fullText, w - 24, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES);
+  // The owner reads as the text's subject — "Tô Dạ ẩn thân 1 vòng…". Three
+  // measured 11px lines centered in the parchment; full text on hover.
+  const body = ellipsize(scene, `${cardOwnerLabel(model)} ${model.fullText}`, w - 24, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES);
   container.add(
     scene.add
-      .text(0, CARD_DESCRIPTION.bodyY, body, {
+      .text(0, (CARD_DESCRIPTION.top + CARD_DESCRIPTION.bottom) / 2, body, {
         ...TEXT_BASE,
         fontSize: `${COMPACT_BODY_FONT}px`,
         color: "#3a2810",
@@ -253,22 +255,8 @@ export function renderCombatCard(
         lineSpacing: -1,
         wordWrap: { width: w - 24 },
       })
-      .setOrigin(0.5, 0).setName("card_body"),
+      .setOrigin(0.5).setName("card_body"),
   );
-
-  // Compact owner header inside the parchment.
-  const strip = cardOwnerLabel(model);
-  const ownerText = scene.add
-    .text(0, CARD_DESCRIPTION.ownerY, strip, {
-      ...TEXT_BASE,
-      fontSize: "10px",
-      color: "#51381c",
-      fontStyle: "bold",
-      align: "center",
-    })
-    .setOrigin(0.5).setName("card_owner");
-  if (ownerText.width > w - 24) ownerText.setScale((w - 24) / ownerText.width);
-  container.add(ownerText);
 
   if (!model.playable) {
     container.setAlpha(0.55);

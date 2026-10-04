@@ -52,8 +52,8 @@ test(`selected card retains lift after pointerover/out and body stays clear of o
     const scene = (window as any).__vn.game.scene.getScene("combat");
     return [...scene.cardViews.values()].flatMap((view: any) => {
       const body = view.list.find((n: any) => n.name === "card_body");
-      const owner = view.list.find((n: any) => n.name === "card_owner");
-      return !body || !owner || owner.getBounds().bottom > body.getBounds().top || body.getBounds().bottom > view.y + 80 ? [body?.text ?? "missing header/body"] : [];
+      // The owner name is the body's subject line now — no separate header.
+      return !body || body.getBounds().top < view.y + 22 || body.getBounds().bottom > view.y + 70 ? [body?.text ?? "missing body"] : [];
     });
   });
   expect(overlaps).toEqual([]);
@@ -121,7 +121,7 @@ for (const viewport of viewports) {
       expect(probe.anchors).toContainEqual([`review_summon_${partner}`,{x:1100,y:410}]);
       expect(probe.cost).toBe(`${effective}`);
       expect(probe.texts.some(t=>t.includes(`${effective} Nguyệt Lực (`) && t.includes("Thiên Cơ -1"))).toBe(true);
-      expect(probe.phaseTexture).toBe(`ui:moon_${data.moonPhases[state.moonIndex]!.id}`);
+      expect(probe.phaseTexture).toBe(state.bloodMoonRounds > 0 ? "ui:moon_blood" : `ui:moon_${data.moonPhases[state.moonIndex]!.id}`);
       await page.screenshot({path:`../../.sdd-work/combat-review-fixes/screenshots/coop-${viewport.width}x${viewport.height}-seat${viewer}.png`});
     }
   });

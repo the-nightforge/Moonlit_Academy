@@ -556,8 +556,9 @@ function animateEvent(
             targets: rect,
             x: toX,
             y: anchors.hand.y,
-            delay: i * 60,
-            duration: 120,
+            delay: i * 80,
+            duration: 200,
+            ease: "Cubic.easeOut",
             onComplete: () => rect.destroy(),
           });
         }),
