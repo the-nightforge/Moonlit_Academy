@@ -26,10 +26,6 @@ export interface CombatLayout {
   controls: Rect;
   /** Current-moon icon center. */
   moon: Point;
-  /** The eight schedule icons — a gap separates past and upcoming phases. */
-  phaseSlots: Point[];
-  /** The current phase/decree label strip under the moon. */
-  phaseLabel: Rect;
 }
 
 // ---- Design-pixel geometry (1280×720, `05` + review table) ----
@@ -48,27 +44,25 @@ const OWN_ROW_Y = 424;
 const FOE_ROW_Y = 200;
 const SUMMON_XS = [1000, 1100];
 const SUMMON_OWN_Y = 410;
-const ENEMY_BAND = { left: 300, right: 920 };
+const ENEMY_BAND = { left: 330, right: 950 };
 
 export const HAND_AREA: Rect = { x: 130, y: 556, w: 1010, h: 160 };
 const CONTROLS: Rect = { x: 1154, y: 48, w: 104, h: 652 };
 export const MOON: Point = { x: 640, y: 40 };
-const PHASE_SLOT_XS = [464, 504, 544, 584, 696, 736, 776, 816];
-const PHASE_LABEL: Rect = { x: 390, y: 72, w: 500, h: 24 };
 
 const OWN_ANCHORS: SeatAnchors = {
   draw: { x: 54, y: 424 },
-  discard: { x: 54, y: 504 },
+  discard: { x: 54, y: 540 },
   hand: { x: 635, y: 636 },
   resource: { x: 1206, y: 104 },
   reserve: { x: 1206, y: 144 },
 };
 const PVP_OTHER_ANCHORS: SeatAnchors = {
   draw: { x: 54, y: 168 },
-  discard: { x: 54, y: 248 },
+  discard: { x: 54, y: 286 },
   hand: { x: 156, y: 168 },
-  resource: { x: 1206, y: 248 },
-  reserve: { x: 1206, y: 288 },
+  resource: { x: 200, y: 242 },
+  reserve: { x: 200, y: 270 },
 };
 const COOP_PARTNER_ANCHORS: SeatAnchors = {
   draw: { x: 970, y: 532 },
@@ -127,8 +121,9 @@ export function computeCombatLayout(state: CombatState, mySeat: number): CombatL
       });
     } else {
       const hostile = seat.index !== mySeat;
+      const xs = heroes.length === 3 ? HERO_XS : bandXs(heroes.length, {left:385,right:895});
       heroes.forEach((hero, i) => {
-        units.set(hero.id, cardRect(HERO_XS[i] ?? HERO_XS[HERO_XS.length - 1]!, hostile ? FOE_ROW_Y : OWN_ROW_Y, UNIT_W, UNIT_H));
+        units.set(hero.id, cardRect(xs[i]!, hostile ? FOE_ROW_Y : OWN_ROW_Y, UNIT_W, UNIT_H));
       });
     }
   }
@@ -167,8 +162,6 @@ export function computeCombatLayout(state: CombatState, mySeat: number): CombatL
     hand: { ...HAND_AREA },
     controls: { ...CONTROLS },
     moon: { ...MOON },
-    phaseSlots: PHASE_SLOT_XS.map((x) => ({ x, y: MOON.y })),
-    phaseLabel: { ...PHASE_LABEL },
   };
 }
 

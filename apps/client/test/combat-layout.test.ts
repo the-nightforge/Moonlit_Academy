@@ -10,6 +10,21 @@ function overlap(a: Rect, b: Rect): boolean {
 
 const { data, state } = fixture("pve");
 
+it.each([1, 2, 3, 4])("centers the enemy group for %s enemies", count => {
+  const enemies = Array.from({length:count}, (_,i)=>({...state.enemies[0]!,id:`enemy_${i}`}));
+  const layout = computeCombatLayout({...state,enemies},0);
+  const centers = enemies.map(e => {const r=layout.units.get(e.id)!;return r.x+r.w/2;});
+  expect((Math.min(...centers)+Math.max(...centers))/2).toBe(640);
+});
+
+it.each(["pve", "pvp", "coop"] as const)("keeps pile click regions separate in %s", mode => {
+  const {state:s}=fixture(mode), l=computeCombatLayout(s,0);
+  for(const a of l.seats.values()) {
+    expect(overlap({x:a.draw.x-45,y:a.draw.y-65,w:90,h:130},{x:a.discard.x-45,y:a.discard.y-35,w:90,h:70})).toBe(false);
+  }
+
+});
+
 it.each([0, 1])("co-op viewer %s keeps each seat's second summon separate from all allies", (viewer) => {
   const {state} = fixture("coop");
   const summons = [0,1].flatMap(player => [0,1].map(i => ({id:`pair_${player}_${i}`,player,summonId:"tho_ngoc",alive:true,hp:5,maxHp:5,armor:0,statuses:[]})));
@@ -41,7 +56,7 @@ describe("computeCombatLayout", () => {
       expect(overlap(own, partner)).toBe(false);
     });
   }
-  it("places the three PvE hero cards on the own row and enemies inside 300..920", () => {
+  it("places the three PvE hero cards on the own row and enemies inside 330..950", () => {
     const layout = computeCombatLayout(state, 0);
     const heroXs = state.heroes.map((hero) => layout.units.get(hero.id)!.x + 68);
     expect(heroXs).toEqual([470, 640, 810]);
@@ -54,8 +69,8 @@ describe("computeCombatLayout", () => {
     for (const enemy of state.enemies) {
       const rect = layout.units.get(enemy.id)!;
       const cx = rect.x + rect.w / 2;
-      expect(cx).toBeGreaterThanOrEqual(300);
-      expect(cx).toBeLessThanOrEqual(920);
+      expect(cx).toBeGreaterThanOrEqual(330);
+      expect(cx).toBeLessThanOrEqual(950);
       expect(rect.y + rect.h / 2).toBe(200);
     }
     // No unit may intrude into the controls column.
@@ -69,9 +84,6 @@ describe("computeCombatLayout", () => {
     expect(layout.hand).toEqual({ x: 130, y: 556, w: 1010, h: 160 });
     expect(layout.controls).toEqual({ x: 1154, y: 48, w: 104, h: 652 });
     expect(layout.moon).toEqual({ x: 640, y: 40 });
-    expect(layout.phaseSlots.map((p) => p.x)).toEqual([464, 504, 544, 584, 696, 736, 776, 816]);
-    expect(layout.phaseSlots.every((p) => p.y === 40)).toBe(true);
-    expect(layout.phaseLabel).toEqual({ x: 390, y: 72, w: 500, h: 24 });
   });
 
   it("gives every seat its own zone anchors — no shared second coordinate system", () => {
@@ -79,17 +91,17 @@ describe("computeCombatLayout", () => {
     const layout = computeCombatLayout(pvp, 0);
     expect(layout.seats.get(0)).toEqual({
       draw: { x: 54, y: 424 },
-      discard: { x: 54, y: 504 },
+      discard: { x: 54, y: 540 },
       hand: { x: 635, y: 636 },
       resource: { x: 1206, y: 104 },
       reserve: { x: 1206, y: 144 },
     });
     expect(layout.seats.get(1)).toEqual({
       draw: { x: 54, y: 168 },
-      discard: { x: 54, y: 248 },
+      discard: { x: 54, y: 286 },
       hand: { x: 156, y: 168 },
-      resource: { x: 1206, y: 248 },
-      reserve: { x: 1206, y: 288 },
+      resource: { x: 200, y: 242 },
+      reserve: { x: 200, y: 270 },
     });
   });
 

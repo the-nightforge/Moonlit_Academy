@@ -43,7 +43,7 @@ import {
 } from "../debug";
 import manifest from "virtual:assets-manifest";
 import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
-import { confirmModal, isModalOpen, registerModal, showModal } from "../ui/widgets";
+import { confirmModal, isModalOpen, registerModal } from "../ui/widgets";
 import { CombatAudio } from "../ui/combat-audio";
 import { loadCombatSettings, saveCombatSettings, DEFAULT_COMBAT_SETTINGS } from "../ui/combat-settings";
 import type { CombatSettings } from "../ui/combat-settings";
@@ -55,14 +55,16 @@ import type { AnimationRuntime } from "../ui/animation-runtime";
 import { createPresentation } from "../ui/combat-presentation";
 import { HUD, hudImage } from "../ui/hud-art";
 import { cardColorOf, cardIconOf } from "../ui/attack-style";
-import { displayStatuses, heroProgressLabel, statusBadgeModels, unitAt, weaponForHero } from "../ui/combat-display";
+import { displayStatuses, heroProgressLabel, heroTooltipLines, statusBadgeModels, unitAt, weaponForHero } from "../ui/combat-display";
 import type { SeatAnchors } from "../ui/combat-display";
 import { computeCombatLayout, endTurnAnchor, fitChoicePanel, handSlots } from "../ui/combat-layout";
 import type { CombatLayout } from "../ui/combat-layout";
 import { moonHudModel, renderMoonHud } from "../ui/moon-hud";
 import { InspectorView, drawComposition, pileModel, relicHudEntries, triggerAnchorKey } from "../ui/combat-inspector";
 import type { RelicHudEntry } from "../ui/combat-inspector";
-import { COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES, combatCardModel, ellipsize } from "../ui/combat-card-view";
+import { CARD_DESCRIPTION, CARD_GATE, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES, combatCardModel, cardOwnerLabel, ellipsize } from "../ui/combat-card-view";
+import { roundedPanel } from "../ui/rounded-panel";
+import { showCombatSettings } from "../ui/combat-settings-dialog";
 import {
   BLOOD_MOON_BG,
   COLORS,
@@ -673,7 +675,10 @@ export class CombatScene extends Phaser.Scene {
       this.renderPile(seat, this.layout.seats.get(playerIndex)!, 0x3f7fd0, "của bạn", layer);
     } else {
       this.renderPile(seat, this.layout.seats.get(playerIndex)!, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ", layer);
-      if (this.state.mode === "pvp") this.renderOpponentHand(seat, layer);
+      if (this.state.mode === "pvp") {
+        this.renderOpponentHand(seat, layer);
+        this.renderOpponentResource(seat, layer);
+      }
       else if (this.isCoop) this.renderPartnerHand(seat, layer, visual);
     }
   }
@@ -1137,7 +1142,10 @@ export class CombatScene extends Phaser.Scene {
       return [name, relics.length > 0 ? `Kỳ Vật · Lõi: ${relics.join(" · ")}` : ""];
     });
     // The other seat's draw pile sits at the top row's height (`17` §7.3 piles).
-    if (other) this.renderPile(other, this.layout.seats.get(other.index)!, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ", this.seatLayers.get(other.index));
+    if (other) {
+      this.renderPile(other, this.layout.seats.get(other.index)!, this.isCoop ? 0x5f8fdd : 0x9a6fd0, this.isCoop ? "Đồng đội" : "Đối thủ", this.seatLayers.get(other.index));
+      if(this.state.mode === "pvp") this.renderOpponentResource(other,this.seatLayerOf(other.index));
+    }
     // Relic/Kỳ Vật/Lõi strip under the encounter plate (`05` review): own seat only —
     // enemy content stays at x≥232 so the strip never overlaps it.
     this.renderRelicStrip(this.mySeatState);
@@ -1208,9 +1216,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /**
-   * The moon header: the current icon in the art's socket, the eight-phase
-   * schedule strip with per-phase tooltips, the decree label and the blood
-   * badge (`05` + review: the schedule was hidden before).
+   * Current moon in the art socket; its tooltip also explains the next phase.
    */
   private renderMoon(state: CombatState = this.state) {
     const { x, y, size } = this.moonAnchor;
@@ -1221,30 +1227,22 @@ export class CombatScene extends Phaser.Scene {
     const model = moonHudModel(this.gameData, state);
     const hud = renderMoonHud(this, model, this.layout, this.moonAnchor);
     layer.add(hud);
-    // Per-phase schedule tooltips — phase name, its rolled decree and the full text.
-    for (const entry of model.phases) {
-      const icon = hud.getByName(`moon_phase_${entry.index}`);
-      if (icon === null) continue;
-      this.hoverTooltip(icon, () => ({ x: 700, y: 56 }), () => [
-        `${entry.name}${entry.index === model.current ? " — pha hiện tại" : ""}`,
-        entry.description,
-        bloodMoon ? `Huyết Nguyệt — còn ${model.bloodRounds} vòng` : "",
-      ]);
-    }
     const moon = this.textures.exists(iconKey)
       ? this.add.image(x, y, iconKey).setDisplaySize(size, size)
       : this.add.text(x, y, phase.icon, { ...TEXT_BASE, fontSize: `${Math.round(size * 0.6)}px`, color: COLORS.gold }).setOrigin(0.5);
     layer.add(moon);
-    moon.setInteractive();
+    moon.setName("moon_current").setInteractive();
     this.hoverTooltip(moon, () => ({ x: x + size / 2 + 8, y: y - 10 }), () => [
-      phase.name,
-      describePhase(this.gameData, state, state.moonIndex),
+      `${model.phase.name} — pha hiện tại`,
+      model.phase.description,
+      `${model.next.name} — pha kế tiếp`,
+      model.next.description,
       bloodMoon ? `Huyết Nguyệt — còn ${state.bloodMoonRounds} vòng` : "",
     ]);
   }
 
   /**
-   * One unit as a portrait card: art, HP badge (top-left), armor under it,
+   * One unit as a portrait card: art, HP bar, armor at top-left,
    * status icons inside above the name strip. Name and numbers in detail are
    * in the hover tooltip. Registered for targeting and animations.
    */
@@ -1270,7 +1268,16 @@ export class CombatScene extends Phaser.Scene {
       this.unitSilhouette(c, w, h, spec.hostile);
     }
     c.add(this.add.rectangle(0, h / 2 - 15, w - 6, 24, 0x0a0e20, 0.8));
-    this.fitWidth(this.text(0, h / 2 - 15, spec.name, 12, spec.nameColor ?? COLORS.text, c).setOrigin(0.5), w - 14);
+    // Separate measured allocations on one baseline keep the name and counter readable.
+    const footerY = h / 2 - 15;
+    const progress = spec.alive ? spec.progress : undefined;
+    const counter = progress === undefined ? null : this.add.text(w / 2 - 8, footerY, progress, {
+      ...TEXT_BASE, fontSize: "11px", color: COLORS.gold,
+    }).setOrigin(1, 0.5).setName("unit_progress");
+    if (counter) c.add(counter);
+    const nameWidth = w - 16 - (counter ? counter.width + 7 : 0);
+    this.text(-w / 2 + 8, footerY, ellipsize(this, spec.name, nameWidth, 11, 1), 11, spec.nameColor ?? COLORS.text, c)
+      .setOrigin(0, 0.5).setName("unit_name");
     this.hpPlate(c, spec, w, h);
     if (spec.stealth) this.stealthVeil(c, w, h);
     this.statusLooks(c, w, h, spec.statuses);
@@ -1283,25 +1290,11 @@ export class CombatScene extends Phaser.Scene {
     this.unitPanelHit(panel, w, h, id);
     this.hoverTooltip(panel, () => ({ x: x + w / 2 + 8, y: y - h / 2 }), spec.tooltip);
     this.statusIcons(spec, c);
-    // Thức Tỉnh counter in the reserved bottom-right footer (`01` §8).
-    if (spec.progress !== undefined && spec.alive) {
-      c.add(
-        this.add
-          .text(w / 2 - 8, h / 2 - 5, spec.progress, {
-            ...TEXT_BASE,
-            fontSize: "10px",
-            color: COLORS.gold,
-            stroke: "#05070f",
-            strokeThickness: 3,
-          })
-          .setOrigin(1, 1),
-      );
-    }
-    // Trang Bị badge at the bottom-left — its position is the weapon-trigger anchor.
+    // Trang Bị uses the freed top-left portrait area, also its trigger anchor.
     if (spec.weapon !== undefined && spec.alive) {
       const weapon = spec.weapon;
       const wx = x - w / 2 + 15;
-      const wy = y + h / 2 - 15;
+      const wy = y - h / 2 + 17;
       const def = this.gameData.weapons[weapon.id];
       const entry: RelicHudEntry = {
         id: weapon.id,
@@ -1312,7 +1305,7 @@ export class CombatScene extends Phaser.Scene {
             ? "Chưa có mô tả."
             : `${def.text}${def.refinement[weapon.refinement - 1] ? ` — Tinh Luyện ${weapon.refinement}: ${def.refinement[weapon.refinement - 1]!.text}` : ""}`,
       };
-      const icon = this.badge(-w / 2 + 15, h / 2 - 15, 11, "⚔", 0x7a4a30, c, 0x0a0e20, 10, "#ffb080");
+      const icon = this.badge(-w / 2 + 15, -h / 2 + 17, 11, "⚔", 0x7a4a30, c, 0x0a0e20, 10, "#ffb080").setName("unit_weapon");
       icon.setInteractive({ useHandCursor: true });
       icon.on("pointerup", (pointer: Phaser.Input.Pointer) => {
         if (pointer.button === 0) this.inspector?.openRelic(entry);
@@ -1336,14 +1329,11 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /**
-   * HP in a red heart at the top-left corner, armor as a shield under it, and a
-   * thin HP bar above the name strip (green for allies, red for foes).
+   * Armor at top-left and readable current/max HP on the bottom bar.
    */
   private hpPlate(c: Phaser.GameObjects.Container, spec: UnitCardSpec, w: number, h: number) {
     const gx = -w / 2 + 17;
     const gy = -h / 2 + 17;
-    c.add(hudImage(this, HUD.heart, gx, gy, 0.95));
-    c.add(this.add.text(gx, gy - 1, `${spec.hp}`, { ...TEXT_BASE, fontSize: "14px", fontStyle: "bold", color: "#ffffff", stroke: "#05070f", strokeThickness: 3 }).setOrigin(0.5));
     if (spec.armor > 0) {
       c.add(hudImage(this, HUD.shield, gx, gy + 32, 0.85));
       c.add(this.add.text(gx, gy + 31, `${spec.armor}`, { ...TEXT_BASE, fontSize: "12px", fontStyle: "bold", color: "#ffffff", stroke: "#0a1830", strokeThickness: 3 }).setOrigin(0.5));
@@ -1358,9 +1348,8 @@ export class CombatScene extends Phaser.Scene {
       c.add(this.add.rectangle(-barW / 2, barY, barW * ratio, 4, fill).setOrigin(0, 0.5));
       c.add(this.add.rectangle(-barW / 2, barY - 1, barW * ratio, 1, 0xffffff, 0.35).setOrigin(0, 0.5));
     }
-    // Compact `current/max` on the bar when the card is wide enough to read it.
-    if (w >= 100) {
-      c.add(
+    // Summons also retain readable current/max when the top badge is absent.
+    c.add(
         this.add
           .text(0, barY - 1, `${spec.hp}/${spec.maxHp}`, {
             ...TEXT_BASE,
@@ -1369,9 +1358,8 @@ export class CombatScene extends Phaser.Scene {
             stroke: "#05070f",
             strokeThickness: 2,
           })
-          .setOrigin(0.5),
-      );
-    }
+          .setOrigin(0.5).setName("unit_hp"),
+    );
   }
 
   /** Point at distance `d` along a w×h card's border, clockwise from the top center. */
@@ -1928,7 +1916,7 @@ export class CombatScene extends Phaser.Scene {
       tile.setInteractive();
       tile.on("pointerover", () => {
         this.tooltip?.destroy();
-        this.tooltip = showCardTooltip(this, x, y - 120, this.gameData, card, [], { effectiveCost: model.effectiveCost, costReasons: model.costReasons });
+        this.tooltip = showCardTooltip(this, x, y - 120, this.gameData, card, [cardOwnerLabel(model,true)], { effectiveCost: model.effectiveCost, costReasons: model.costReasons });
       });
       tile.on("pointerout", () => {
         this.tooltip?.destroy();
@@ -1959,6 +1947,12 @@ export class CombatScene extends Phaser.Scene {
     for (let i = 0; i < count; i++) {
       parent.add(this.add.rectangle(anchor.x + (i - (count - 1) / 2) * 26, anchor.y, 22, 32, 0x2c3e6e).setStrokeStyle(1, COLORS.panelBorder));
     }
+  }
+
+  private renderOpponentResource(seat: PlayerState, parent: Phaser.GameObjects.Container) {
+    const anchors=this.layout.seats.get(seat.index)!;
+    this.text(anchors.resource.x,anchors.resource.y,`Nguyệt Lực ${seat.moonPower}`,12,COLORS.text,parent).setOrigin(0.5).setName("opponent_power").setStroke("#05070f",3);
+    this.text(anchors.reserve.x,anchors.reserve.y,`Dự Trữ ${Math.min(seat.moonReserve,seat.moonPower)}`,11,"#a5d5b5",parent).setOrigin(0.5).setName("opponent_reserve").setStroke("#05070f",3);
   }
 
   /** Fixed emote list + mute (`17` §7.3, `pvp-config.emotes`); one send per 3 s. */
@@ -2015,15 +2009,12 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /**
-   * A hero's portrait card: HP / armor badges, status icons, and top-right the
-   * Thức Tỉnh badge — a ★ ringed by its progress, solid gold once awakened.
+   * A hero's portrait card with health bar, armor, statuses and awakening footer.
    */
   private heroSpecOf(hero: HeroState, x: number, y: number, w: number, h: number, hostile: boolean, frame: number, state = this.state): UnitCardSpec {
     const def = this.gameData.heroes[hero.defId]!;
     const weapon = weaponForHero(state, hero);
     const upKey = `heroes:${hero.defId}_up`;
-    // Shown from state: the second form's name, the Tinh Hồn 2 threshold (`01` §8).
-    const passiveName = hero.levelUpForm === "alt" ? def.altLevelUp.name : def.levelUp.name;
     const progress = heroProgressLabel(this.gameData, state, hero);
     return {
       id: hero.id,
@@ -2046,12 +2037,7 @@ export class CombatScene extends Phaser.Scene {
       unit: hero,
       progress: progress ?? undefined,
       weapon,
-      tooltip: () => [
-        `${def.name}${hero.leveledUp ? " ★" : ""}`,
-        `HP ${hero.hp}/${hero.maxHp}${hero.armor > 0 ? ` · Giáp ${hero.armor}` : ""}`,
-        hero.leveledUp ? `${passiveName} — đã Thức Tỉnh` : `${passiveName}: ${progress ?? ""}`,
-        hero.sealedBy !== undefined ? "Phong Ấn: lá lượt tới chỉ còn damage" : "",
-      ],
+      tooltip: () => heroTooltipLines(this.gameData, state, hero),
     };
   }
 
@@ -2116,19 +2102,11 @@ export class CombatScene extends Phaser.Scene {
     discard.add(this.add.text(0, 0, `${seat.discardPile.length}`, { ...TEXT_BASE, fontSize: "12px", color: COLORS.text, stroke: "#05070f", strokeThickness: 3 }).setOrigin(0.5));
     parent.add(discard);
     // The hover zone spans whichever way this seat's discard sits from its draw.
-    const midX = (anchors.draw.x + anchors.discard.x) / 2;
-    const midY = (anchors.draw.y + anchors.discard.y) / 2;
-    const hit = this.add.zone(midX, midY, Math.abs(anchors.discard.x - anchors.draw.x) + 110, Math.abs(anchors.discard.y - anchors.discard.y) + 140).setInteractive();
-    parent.add(hit);
-    this.hoverTooltip(hit, () => ({ x: midX + 70, y: midY - 40 }), () => [
-      `Chồng bài ${owner}`,
-      `Còn ${left} lá · Bỏ ${seat.discardPile.length} lá`,
-      "Bấm để xem chi tiết",
-    ]);
     // Clicking either pile opens the inspector (`05` review): the draw pile
     // shows count + composition (own seat only), never the draw order.
-    const drawHit = this.add.zone(anchors.draw.x, anchors.draw.y, 90, 130).setInteractive({ useHandCursor: true });
+    const drawHit = this.add.zone(anchors.draw.x, anchors.draw.y, 90, 130).setName(`pile_draw_${seat.index}`).setInteractive({ useHandCursor: true });
     parent.add(drawHit);
+    this.hoverTooltip(drawHit,()=>({x:anchors.draw.x+50,y:anchors.draw.y-50}),()=>[`Chồng rút ${owner}`,`Còn ${left} lá`,"Bấm để xem chi tiết"]);
     drawHit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (pointer.button !== 0) return;
       this.inspector?.openPile(
@@ -2136,8 +2114,9 @@ export class CombatScene extends Phaser.Scene {
         drawComposition(this.gameData, this.state, seat.index, this.mySeat),
       );
     });
-    const discardHit = this.add.zone(anchors.discard.x, anchors.discard.y + 16, 90, 60).setInteractive({ useHandCursor: true });
+    const discardHit = this.add.zone(anchors.discard.x, anchors.discard.y, 90, 70).setName(`pile_discard_${seat.index}`).setInteractive({ useHandCursor: true });
     parent.add(discardHit);
+    this.hoverTooltip(discardHit,()=>({x:anchors.discard.x+50,y:anchors.discard.y-50}),()=>[`Chồng bỏ ${owner}`,`${seat.discardPile.length} lá`,"Bấm để xem chi tiết"]);
     discardHit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (pointer.button !== 0) return;
       this.inspector?.openPile(pileModel(this.gameData, this.state, seat.index, "discard", this.mySeat));
@@ -2180,18 +2159,21 @@ export class CombatScene extends Phaser.Scene {
       ),
     );
     // Moon gate (center 0,-30): the card's own art if there is one, else its tag icon in a tag-colored sky.
-    const gateY = -30;
+    const gateY = CARD_GATE.y;
     const color = cardColorOf(card);
-    if (!this.coverImage(`cards:${instance.cardId}`, 0, gateY, 50, 50, container)) {
+    const cardArt = this.coverImage(`cards:${instance.cardId}`, 0, gateY, CARD_GATE.artSize, CARD_GATE.artSize, container);
+    cardArt?.setName("card_gate_art");
+    if (!cardArt) {
       ensureTextures(this);
-      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.66).setAlpha(broken ? 0.15 : 0.5));
-      for (const [sx, sy, r] of [[-15, -10, 0.9], [13, -15, 0.7], [17, 7, 0.6], [-17, 9, 0.5]] as const) {
+      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.46).setAlpha(broken ? 0.15 : 0.5));
+      for (const [sx, sy, r] of [[-11, -7, 0.9], [9, -11, 0.7], [12, 5, 0.6], [-12, 6, 0.5]] as const) {
         container.add(this.add.circle(sx, gateY + sy, r, 0xffffff, 0.7));
       }
       const iconKey = cardIconOf(card);
-      if (this.textures.exists(iconKey)) container.add(this.add.image(0, gateY, iconKey).setDisplaySize(36, 36).setAlpha(broken ? 0.5 : 1));
+      if (this.textures.exists(iconKey)) container.add(this.add.image(0, gateY, iconKey).setDisplaySize(CARD_GATE.glyphSize, CARD_GATE.glyphSize).setAlpha(broken ? 0.5 : 1).setName("card_category_icon"));
     }
-    // Owner identity moved into the named strip along the bottom edge.
+    // Reclaim the description chrome for an owner header plus three lines.
+    container.add(roundedPanel(this,0,(CARD_DESCRIPTION.top+CARD_DESCRIPTION.bottom)/2,CARD_W-24,CARD_DESCRIPTION.bottom-CARD_DESCRIPTION.top,0xd2c18d,1,0x806b45,3));
     // Title plate between the gate and the parchment (red lacquer: attack, blue: skill), the name on one line.
     const titleY = 15;
     container.add(grey(hudImage(this, card.type === "attack" ? HUD.bannerAttack : HUD.bannerSkill, 0, titleY)));
@@ -2271,10 +2253,10 @@ export class CombatScene extends Phaser.Scene {
       );
     }
 
-    // 11px body, four lines max with an ellipsis — never a smaller font; the
+    // 11px body, three measured lines with an ellipsis; the
     // hover preview carries the full text (`05` review: readable at 1024×576).
     const body = this.add
-      .text(0, 28, ellipsize(this, model.fullText, CARD_W - 24, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES), {
+      .text(0, CARD_DESCRIPTION.bodyY, ellipsize(this, model.fullText, CARD_W - 24, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES), {
         ...TEXT_BASE,
         fontSize: `${COMPACT_BODY_FONT}px`,
         color: "#3a2810",
@@ -2282,41 +2264,30 @@ export class CombatScene extends Phaser.Scene {
         lineSpacing: -1,
         wordWrap: { width: CARD_W - 24 },
       })
-      .setOrigin(0.5, 0);
+      .setOrigin(0.5, 0).setName("card_body");
     container.add(body);
-    // Owner strip along the bottom edge: the name(s) in owner color; Song
-    // Hành joins both and Binh Khí keeps its own label (`05` review).
-    const strip =
-      model.category === "weapon"
-        ? `Binh Khí${model.ownerNames.length > 0 ? ` · ${model.ownerNames[0]}` : ""}`
-        : model.category === "bond"
-          ? `Song Hành · ${model.ownerNames.join(" × ")}`
-          : (model.ownerNames[0] ?? "");
-    const stripColor =
-      model.category === "hero" && model.ownerColors[0] !== undefined
-        ? `#${model.ownerColors[0].toString(16).padStart(6, "0")}`
-        : "#d8cfae";
+    // The owner/category header belongs to the parchment, above the body.
+    const strip = cardOwnerLabel(model);
     container.add(
       this.fitWidth(
         this.add
-          .text(0, CARD_H / 2 - 8, strip, {
+          .text(0, CARD_DESCRIPTION.ownerY, strip, {
             ...TEXT_BASE,
             fontSize: "10px",
-            color: stripColor,
-            stroke: "#05070f",
-            strokeThickness: 3,
+            color: "#51381c",
+            fontStyle: "bold",
           })
-          .setOrigin(0.5),
-        CARD_W - 10,
+          .setOrigin(0.5).setName("card_owner"),
+        CARD_W - 24,
       ),
     );
 
     if (mulliganPicked) {
       ensureTextures(this);
       container.add(this.roundBox(CARD_W - 4, CARD_H - 4, 0x05070f, 0.55, 0, 0, CARD_RADIUS - 1));
-      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e).setScale(0.7).setAlpha(0.6));
-      container.add(this.add.circle(0, gateY, 22, 0x0a0e26, 0.95).setStrokeStyle(1.5, COLORS.goldFill));
-      container.add(hudImage(this, HUD.swap, 0, gateY, 1.2));
+      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e).setScale(0.46).setAlpha(0.6));
+      container.add(this.add.circle(0, gateY, CARD_GATE.radius, 0x0a0e26, 0.95).setStrokeStyle(1.5, COLORS.goldFill).setName("card_swap_gate"));
+      container.add(hudImage(this, HUD.swap, 0, gateY, 0.8).setName("card_swap_icon"));
     }
     if (broken) {
       container.add(
@@ -2359,7 +2330,7 @@ export class CombatScene extends Phaser.Scene {
         liftY - 40,
         this.gameData,
         cardDefOf(this.gameData, state, instance)!,
-        hintName !== undefined ? [`⚡ ${hintName} — đồng đội đã đánh nửa kia`] : [],
+        [cardOwnerLabel(model,true), ...(hintName !== undefined ? [`⚡ ${hintName} — đồng đội đã đánh nửa kia`] : [])],
         {
           effectiveCost: model.effectiveCost,
           costReasons: model.costReasons,
@@ -2401,7 +2372,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /**
-   * Đổi Bài: a lacquer plate over the hand (swap emblem, title, hint, one pip
+   * Đổi Bài: a lacquer plate under the top moon (swap emblem, title, hint, one pip
    * per pick) and the medallion where end turn sits. Once done, the plate
    * says who is still choosing.
    */
@@ -2409,10 +2380,10 @@ export class CombatScene extends Phaser.Scene {
     const done = this.state.players[this.mySeat]?.mulliganDone === true;
     const max = this.gameData.combatConfig.maxMulligan;
     const picks = this.mulliganPicks.size;
-    const plate = this.add.container(WIDTH / 2, 574);
+    const plate = this.add.container(WIDTH / 2, 76).setName("mulligan_banner");
     this.root.add(plate);
     const w = done ? 250 : 320;
-    plate.add(this.roundBox(w, 34, 0x0a0e26, 0.92, 1.5, COLORS.goldFill, 17));
+    plate.add(this.roundBox(w, 30, 0x0a0e26, 0.92, 1.5, COLORS.goldFill, 15));
     plate.add(hudImage(this, done ? HUD.hourglass : HUD.swap, -w / 2 + 22, 0, done ? 0.7 : 0.8).setAlpha(done ? 0.7 : 1));
     const title = this.add.text(-w / 2 + 42, 0, "Đổi Bài", { ...TEXT_BASE, fontSize: "15px", fontStyle: "bold", color: COLORS.gold }).setOrigin(0, 0.5);
     plate.add(title);
@@ -2535,12 +2506,10 @@ export class CombatScene extends Phaser.Scene {
     let cy = regionTop;
     for (const row of rows) {
       const phase = this.gameData.moonPhases[row.phaseIndex]!;
-      const block = this.add
-        .rectangle(cx, cy + row.h / 2 - 4, PANEL_W - 14, row.h - 8, 0x141b33)
-        .setStrokeStyle(1, COLORS.goldFill)
+      const block = roundedPanel(this,cx,cy+row.h/2-4,PANEL_W-14,row.h-8,0x141b33,1,COLORS.panelBorder,10)
         .setInteractive({ useHandCursor: true });
-      block.on("pointerover", () => { block.setFillStyle(0x2a3a70); });
-      block.on("pointerout", () => { block.setFillStyle(0x141b33); });
+      block.on("pointerover", () => { block.setAlpha(0.8); });
+      block.on("pointerout", () => { block.setAlpha(1); });
       block.on("pointerup", (pointer: Phaser.Input.Pointer) => {
         // The mask clips pixels, not input — only honour clicks in the viewport.
         if (pointer.button === 0 && inBand(pointer)) this.dispatch({ type: "chooseMoon", offset: row.offset });
@@ -2735,36 +2704,18 @@ export class CombatScene extends Phaser.Scene {
    * The ⚙ modal: speed, reduced motion, volume. Purely local presentation —
    * the server deadline keeps running while it is open, and a running batch
    * keeps the settings it started with (`16` §8.3). Esc/Enter dismiss it via
-   * the modal's own handlers; each option re-opens the modal so the labels
-   * reflect the new value.
+   * the modal's own handlers; control updates preserve modal ownership.
    */
   private openSettings(): void {
     if (isModalOpen()) return;
-    const s = this.settings;
-    void showModal(this, {
-      title: "Thiết Lập",
-      message: "Nhịp độ và âm thanh của trận — chỉ lưu trên máy này.",
-      actions: [
-        { label: `Tốc độ: ×${s.speed}` },
-        { label: `Giảm chuyển động: ${s.reducedMotion ? "Bật" : "Tắt"}` },
-        { label: s.volume <= 0 ? "Âm thanh: Tắt" : `Âm thanh: ${Math.round(s.volume * 100)}%` },
-        { label: "Đóng", variant: "primary" },
-      ],
-    }).then((result) => {
-      if (result.action === -1 || result.action === 3) return;
-      const next = { ...this.settings };
-      if (result.action === 0) next.speed = next.speed === 1 ? 2 : 1;
-      else if (result.action === 1) next.reducedMotion = !next.reducedMotion;
-      else if (result.action === 2) next.volume = next.volume >= 1 ? 0 : Math.min(1, next.volume + 0.25);
-      this.applySettings(next);
-      this.openSettings();
-    });
+    showCombatSettings(this, this.settings, next => this.applySettings(next));
   }
 
   /** Applies new preferences to audio immediately and to the next batch's runtime. */
   private applySettings(next: CombatSettings): void {
     this.settings = next;
     this.audio.configure(next);
+    this.refreshMoon(this.state);
     try {
       saveCombatSettings(localStorage, next);
     } catch {

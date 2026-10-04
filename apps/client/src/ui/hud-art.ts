@@ -240,7 +240,7 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
     // Moon gate: night sky disc, gold ring, inner hairline, four studs.
     const gx = w / 2;
     const gy = 50;
-    const gr = 30;
+    const gr = 21;
     ctx.fillStyle = radial(ctx, gx, gy, gr, [[0, "#2a3878"], [0.7, "#0e1438"], [1, "#060920"]]);
     ctx.beginPath();
     ctx.arc(gx, gy, gr, 0, Math.PI * 2);
@@ -260,19 +260,6 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
       ctx.arc(gx + gr * Math.cos(a), gy + gr * Math.sin(a), 2, 0, Math.PI * 2);
       ctx.fill();
     }
-    // Parchment text panel.
-    ctx.beginPath();
-    ctx.roundRect(9, 108, w - 18, 44, 4);
-    ctx.fillStyle = linear(ctx, 108, 152, [[0, "#f7ecd2"], [1, "#d9c391"]]);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(110,72,26,0.85)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.strokeStyle = "rgba(110,72,26,0.25)";
-    ctx.beginPath();
-    ctx.moveTo(12, 110.5);
-    ctx.lineTo(w - 12, 110.5);
-    ctx.stroke();
   },
   [HUD.bannerAttack]: (ctx, w, h) => banner(ctx, w, h, ["#c8424a", "#8a1a26", "#4a0a12"]),
   [HUD.bannerSkill]: (ctx, w, h) => banner(ctx, w, h, ["#4a78c8", "#1c3f7c", "#0c1f44"]),

@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import type { CardDef, GameData } from "rules";
 import { COLORS, TEXT_BASE, visibleWorld } from "./theme";
 import { PREVIEW_BODY_FONT } from "./combat-card-view";
+import { roundedPanel } from "./rounded-panel";
 
 const WIDTH = 320;
 
@@ -14,8 +15,7 @@ function tooltipBox(scene: Phaser.Scene, lines: string[], width: number, fontSiz
     lineSpacing: 4,
   });
   const height = text.height + 20;
-  const panel = scene.add.rectangle(0, 0, width, height, 0x0a0e20, 0.96).setOrigin(0, 0);
-  panel.setStrokeStyle(1, COLORS.goldFill);
+  const panel = roundedPanel(scene,width/2,height/2,width,height,0x0a0e20,0.96);
   return { height, parts: [panel, text], text };
 }
 
@@ -69,8 +69,7 @@ export function showCardTooltip(
   const top = view.y + 8;
   const viewH = maxHeight;
   const container = scene.add.container(left, top);
-  const panel = scene.add.rectangle(0, 0, WIDTH, viewH, 0x0a0e20, 0.96).setOrigin(0, 0);
-  panel.setStrokeStyle(1, COLORS.goldFill);
+  const panel = roundedPanel(scene,WIDTH/2,viewH/2,WIDTH,viewH,0x0a0e20,0.96);
   const content = scene.add.container(0, 0, [text]);
   const veil = scene.add.rectangle(left + WIDTH / 2, top + viewH / 2, WIDTH, viewH).setVisible(false);
   content.setMask(veil.createGeometryMask());
@@ -104,9 +103,30 @@ export function showTextTooltip(
   lines: string[],
   width = 240,
 ): Phaser.GameObjects.Container {
-  const { height, parts } = tooltipBox(scene, lines, width);
+  const { height, parts, text } = tooltipBox(scene, lines, width);
   const view = visibleWorld(scene);
   const left = Phaser.Math.Clamp(x, view.x + 8, view.x + view.w - width - 8);
-  const top = Phaser.Math.Clamp(y, view.y + 8, view.y + view.h - height - 8);
-  return scene.add.container(left, top, parts).setDepth(200);
+  const viewH = Math.min(height, view.h - 16);
+  const top = Phaser.Math.Clamp(y, view.y + 8, view.y + view.h - viewH - 8);
+  if (height <= viewH) return scene.add.container(left, top, parts).setDepth(200).setName("text_tooltip");
+  parts[0]!.destroy();
+  const container = scene.add.container(left, top).setDepth(200).setName("text_tooltip");
+  const panel = roundedPanel(scene, width / 2, viewH / 2, width, viewH, 0x0a0e20, 0.96);
+  const content = scene.add.container(0, 0, [text]).setName("tooltip_scroll_content");
+  const veil = scene.add.rectangle(left + width / 2, top + viewH / 2, width, viewH).setVisible(false);
+  const mask = veil.createGeometryMask();
+  content.setMask(mask);
+  // Hover tooltips remain tied to their source: wheel works while hovering it.
+  const onWheel = (_pointer: Phaser.Input.Pointer, _over: unknown, _dx: number, dy: number) => {
+    content.y = Phaser.Math.Clamp(content.y - dy * 0.6, -(height - viewH), 0);
+  };
+  scene.input.on("wheel", onWheel);
+  container.once(Phaser.GameObjects.Events.DESTROY, () => {
+    scene.input.off("wheel", onWheel);
+    mask.destroy();
+    veil.destroy();
+  });
+  const hint = scene.add.text(width - 10, viewH - 8, "▼ Cuộn", { ...TEXT_BASE, fontSize: "10px", color: COLORS.dimText }).setOrigin(1, 1);
+  container.add([panel, content, hint]);
+  return container;
 }

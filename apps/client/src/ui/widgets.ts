@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { COLORS, CURRENCY_LABELS, DESIGN_HEIGHT, DESIGN_WIDTH, TEXT_BASE, visibleWorld } from "./theme";
+import { roundedPanel } from "./rounded-panel";
 
 export function addText(
   scene: Phaser.Scene,
@@ -78,7 +79,7 @@ function hoverNote(scene: Phaser.Scene, x: number, y: number, message: string): 
     .setOrigin(0.5);
   const width = text.width + 20;
   const height = text.height + 12;
-  const box = scene.add.rectangle(0, 0, width, height, 0x0a0e20, 0.96).setStrokeStyle(1, COLORS.panelBorder);
+  const box = roundedPanel(scene,0,0,width,height,0x0a0e20,0.96,COLORS.panelBorder,10);
   const left = Phaser.Math.Clamp(x, width / 2 + 8, DESIGN_WIDTH - width / 2 - 8);
   const top = Phaser.Math.Clamp(y, height / 2 + 8, DESIGN_HEIGHT - height / 2 - 8);
   return scene.add.container(left, top, [box, text]).setDepth(1500);
@@ -332,7 +333,7 @@ export function showModal(scene: Phaser.Scene, options: ModalOptions): Promise<M
     const inputH = options.input ? 52 : 0;
     const height = 24 + titleH + message.height + 20 + inputH + 34 + 24;
     const top = DESIGN_HEIGHT / 2 - height / 2;
-    layer.add(scene.add.rectangle(cx, DESIGN_HEIGHT / 2, MODAL_W, height, 0x101830).setStrokeStyle(1, COLORS.goldFill));
+    layer.add(roundedPanel(scene,cx,DESIGN_HEIGHT / 2,MODAL_W,height));
     if (options.title) addText(scene, layer, cx, top + 24 + 12, options.title, 20, COLORS.gold).setOrigin(0.5);
     message.setY(top + 24 + titleH);
     layer.add(message);

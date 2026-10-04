@@ -9,14 +9,17 @@ import {
 } from "rules";
 import type { CombatState, GameData } from "rules";
 import { COLORS, OWNER_COLORS, TEXT_BASE } from "./theme";
+import { roundedPanel } from "./rounded-panel";
 
 /** Compact (in-hand) card typography (`05` review): body never below 11px. */
 export const COMPACT_BODY_FONT = 11;
 /** The hover preview's body size. */
 export const PREVIEW_BODY_FONT = 14;
 /** Compact cards show at most this many body lines; the rest ellipsizes. */
-export const COMPACT_MAX_BODY_LINES = 4;
+export const COMPACT_MAX_BODY_LINES = 3;
 export const COMPACT_CARD = { w: 110, h: 160 } as const;
+export const CARD_GATE = { y: -30, radius: 21, artSize: 36, glyphSize: 24 } as const;
+export const CARD_DESCRIPTION = { top: 23, bottom: 76, ownerY: 29, bodyY: 36 } as const;
 
 /**
  * Everything a combat card view shows, sourced from authoritative state —
@@ -117,18 +120,23 @@ export function combatCardModel(
  * `text` clamped to `maxLines` wrapped lines with an ellipsis — never a
  * smaller font (`05` review). The scene keeps the full text for tooltips.
  */
-export function ellipsize(scene: Phaser.Scene, text: string, width: number, fontSize: number, maxLines: number, maxHeight = 34): string {
+export function ellipsize(scene: Phaser.Scene, text: string, width: number, fontSize: number, maxLines: number, maxHeight?: number): string {
   const probe = scene.add
     .text(-4000, -4000, text, { ...TEXT_BASE, fontSize: `${fontSize}px`, lineSpacing: -1, wordWrap: { width } });
   const lines = probe.getWrappedText();
-  if (lines.length <= maxLines && probe.height <= maxHeight) {
+  // Phaser's font metrics include ascent/descent, not just fontSize. Measure
+  // the actual line budget so three real lines never get cut back to two.
+  probe.setText(Array.from({length:maxLines},()=>"Ág").join("\n"));
+  const heightLimit = maxHeight ?? probe.height;
+  probe.setText(text);
+  if (lines.length <= maxLines && probe.height <= heightLimit) {
     probe.destroy();
     return text;
   }
   const kept = lines.slice(0, maxLines);
   while (kept.length > 1) {
     probe.setText(kept.join("\n"));
-    if (probe.height <= maxHeight) break;
+    if (probe.height <= heightLimit) break;
     kept.pop();
   }
   let last = kept.at(-1)!.trimEnd();
@@ -149,11 +157,19 @@ const CATEGORY_GLYPH: Record<CombatCardModel["category"], string> = {
   weapon: "⚔",
 };
 
+export function cardOwnerLabel(model: CombatCardModel, expanded = false): string {
+  return model.category === "weapon"
+    ? `${expanded ? "Binh Khí ·" : "⚔"} ${model.ownerNames.join(" × ")}`
+    : model.category === "bond"
+      ? expanded ? `Song Hành · ${model.ownerNames.join(" × ")}` : `∞${model.ownerNames.join("×")}`
+      : (model.ownerNames[0] ?? "");
+}
+
 /**
  * The compact 110×160 combat card (`05` review): owner-colored frame, a 16px
  * effective-cost disc (base struck through when discounted), 12px title,
- * 11px body capped at four lines, and an owner/category strip along the
- * bottom — Song Hành names both owners, Binh Khí gets its own label.
+ * 11px body capped at three lines, with an owner/category header inside
+ * the parchment — Song Hành names both owners, Binh Khí keeps its label.
  */
 export function renderCombatCard(
   scene: Phaser.Scene,
@@ -179,13 +195,13 @@ export function renderCombatCard(
   // The gate: a category glyph where card art would sit (art stays optional).
   container.add(
     scene.add
-      .circle(0, -30, 22, 0x0a0e26, 0.9)
-      .setStrokeStyle(1.5, frame),
+      .circle(0, CARD_GATE.y, CARD_GATE.radius, 0x0a0e26, 0.9)
+      .setStrokeStyle(1.5, frame).setName("card_gate"),
   );
   container.add(
     scene.add
-      .text(0, -30, CATEGORY_GLYPH[model.category], { ...TEXT_BASE, fontSize: "24px", color: "#f4d35e" })
-      .setOrigin(0.5),
+      .text(0, CARD_GATE.y, CATEGORY_GLYPH[model.category], { ...TEXT_BASE, fontSize: `${CARD_GATE.glyphSize}px`, color: "#f4d35e" })
+      .setOrigin(0.5).setName("card_category_icon"),
   );
 
   // Cost disc top-left: effective cost 16px, base struck through when lower.
@@ -224,37 +240,34 @@ export function renderCombatCard(
   if (title.width > w - 16) title.setScale((w - 16) / title.width);
   container.add(title);
 
-  // 11px body, four lines max — the full text lives in the hover preview.
-  const body = ellipsize(scene, model.fullText, w - 16, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES);
+  container.add(roundedPanel(scene,0,(CARD_DESCRIPTION.top+CARD_DESCRIPTION.bottom)/2,w-24,CARD_DESCRIPTION.bottom-CARD_DESCRIPTION.top,0xd2c18d,1,0x806b45,3));
+  // Three measured 11px lines; the full text lives in the hover preview.
+  const body = ellipsize(scene, model.fullText, w - 24, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES);
   container.add(
     scene.add
-      .text(0, 28, body, {
+      .text(0, CARD_DESCRIPTION.bodyY, body, {
         ...TEXT_BASE,
         fontSize: `${COMPACT_BODY_FONT}px`,
-        color: "#cfc4a8",
+        color: "#3a2810",
         align: "center",
         lineSpacing: -1,
-        wordWrap: { width: w - 16 },
+        wordWrap: { width: w - 24 },
       })
-      .setOrigin(0.5, 0),
+      .setOrigin(0.5, 0).setName("card_body"),
   );
 
-  // Bottom strip: owners (both for Song Hành) or the Binh Khí label.
-  const strip =
-    model.category === "weapon"
-      ? `Binh Khí${model.ownerNames.length > 0 ? ` · ${model.ownerNames[0]}` : ""}`
-      : model.category === "bond"
-        ? `Song Hành · ${model.ownerNames.join(" × ")}`
-        : (model.ownerNames[0] ?? "");
+  // Compact owner header inside the parchment.
+  const strip = cardOwnerLabel(model);
   const ownerText = scene.add
-    .text(0, h / 2 - 11, strip, {
+    .text(0, CARD_DESCRIPTION.ownerY, strip, {
       ...TEXT_BASE,
       fontSize: "10px",
-      color: "#d8cfae",
+      color: "#51381c",
+      fontStyle: "bold",
       align: "center",
     })
-    .setOrigin(0.5);
-  if (ownerText.width > w - 10) ownerText.setScale((w - 10) / ownerText.width);
+    .setOrigin(0.5).setName("card_owner");
+  if (ownerText.width > w - 24) ownerText.setScale((w - 24) / ownerText.width);
   container.add(ownerText);
 
   if (!model.playable) {

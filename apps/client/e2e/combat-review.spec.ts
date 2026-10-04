@@ -40,7 +40,7 @@ test("draw icon, lower edge and count open draw; discard opens discard", async (
     expect(await page.evaluate(() => (window as any).__vn.session.state.round)).toBe(1);
     await page.keyboard.press("Escape");
   }
-  await clickDesign(page, 54, 520);
+  await clickDesign(page, 54, 540);
   await expect.poll(async () => (await sceneTexts(page, "combat")).some(t => t.includes("Chồng bỏ"))).toBe(true);
 });
 
@@ -51,9 +51,9 @@ test(`selected card retains lift after pointerover/out and body stays clear of o
   const overlaps = await page.evaluate(() => {
     const scene = (window as any).__vn.game.scene.getScene("combat");
     return [...scene.cardViews.values()].flatMap((view: any) => {
-      const body = view.list.find((n: any) => n.type === "Text" && n.y === 28);
-      const strip = view.list.find((n: any) => n.type === "Text" && n.y === 72);
-      return body && strip && body.getBounds().bottom > strip.getBounds().top ? [body.text] : [];
+      const body = view.list.find((n: any) => n.name === "card_body");
+      const owner = view.list.find((n: any) => n.name === "card_owner");
+      return !body || !owner || owner.getBounds().bottom > body.getBounds().top || body.getBounds().bottom > view.y + 80 ? [body?.text ?? "missing header/body"] : [];
     });
   });
   expect(overlaps).toEqual([]);

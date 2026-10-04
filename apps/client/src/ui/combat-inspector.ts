@@ -2,6 +2,7 @@ import type Phaser from "phaser";
 import { cardDefOf } from "rules";
 import type { CardDef, CombatState, GameData } from "rules";
 import { COLORS, TEXT_BASE, visibleWorld } from "./theme";
+import { roundedPanel } from "./rounded-panel";
 
 /**
  * What one seat's pile inspector shows (`05` review): the draw pile never
@@ -199,9 +200,7 @@ export class InspectorView {
     });
     const maxPanelH = view.h - 120;
     const panelH = Math.min(56 + text.height + 48, maxPanelH);
-    const panel = this.scene.add
-      .rectangle(cx, cy, PANEL_W, panelH, 0x101830, 0.98)
-      .setStrokeStyle(1, COLORS.goldFill);
+    const panel = roundedPanel(this.scene,cx,cy,PANEL_W,panelH);
     layer.add(panel);
     layer.add(this.scene.add.text(cx, cy - panelH / 2 + 20, title, { ...TEXT_BASE, fontSize: "18px", color: COLORS.gold }).setOrigin(0.5));
 

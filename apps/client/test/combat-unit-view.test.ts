@@ -8,7 +8,7 @@ vi.stubGlobal("window", {
   screen: { width: 1280, height: 720 },
 });
 
-const { heroProgressLabel, statusBadgeModels, statusTooltipNames, weaponForHero } = await import(
+const { heroProgressLabel, heroTooltipLines, statusBadgeModels, statusTooltipNames, weaponForHero } = await import(
   "../src/ui/combat-display"
 );
 
@@ -87,6 +87,28 @@ describe("heroProgressLabel — Thức Tỉnh counter (`01` §8)", () => {
 
   it("an already-Thức Tỉnh hero shows no counter", () => {
     expect(heroProgressLabel(data, state, { ...hero, leveledUp: true })).toBeNull();
+  });
+});
+
+describe("hero tooltip — both authoritative awakening forms", () => {
+  const { data, state } = fixture("pve");
+  const hero = state.heroes[0]!;
+  const def = data.heroes[hero.defId]!;
+
+  it.each(["base", "alt"] as const)("marks selected %s and retains both full descriptions", levelUpForm => {
+    const lines = heroTooltipLines(data, state, { ...hero, levelUpForm, constellation: 5, levelUpCounter: 2, armor: 4, sealedBy: "seal" });
+    expect(lines).toContain(def.levelUp.description);
+    expect(lines).toContain(def.altLevelUp.description);
+    expect(lines.find(line => line.includes("Đang chọn"))).toContain(levelUpForm === "base" ? def.levelUp.name : def.altLevelUp.name);
+    expect(lines).toContain(`Tiến độ Thức Tỉnh: 2/${def.levelUp.constellationThreshold}`);
+    expect(lines).toContain(`HP ${hero.hp}/${hero.maxHp} · Giáp 4`);
+    expect(lines.at(-1)).toContain("Phong Ấn");
+  });
+
+  it("shows awakened state instead of stale progress, and keeps PvP threshold authoritative", () => {
+    expect(heroTooltipLines(data, state, { ...hero, leveledUp: true })).toContain("Đã Thức Tỉnh");
+    expect(heroTooltipLines(data, state, { ...hero, leveledUp: true }).some(line => line.includes("Tiến độ"))).toBe(false);
+    expect(heroTooltipLines(data, state, { ...hero, pvp: true, constellation: 5, levelUpCounter: 2 })).toContain(`Tiến độ Thức Tỉnh: 2/${def.levelUp.threshold}`);
   });
 });
 

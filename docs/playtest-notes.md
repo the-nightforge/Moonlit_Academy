@@ -1670,3 +1670,25 @@ nhánh topup PostgreSQL dev yêu cầu URL riêng rõ ràng và chưa chạy tr�
 PostgreSQL thật. Đã bỏ phụ thuộc SQLite cũ của arena E2E. Timing đo tới
 cleanup trên scheduler, không phải FPS; menu Tiên Tri thật có4 lá, chưa có
 bằng chứng menu dữ liệu production dài đến mức cần cuộn.
+
+### Đợt chỉnh UI theo phản hồi — 2026-10-04
+
+- Tooltip/modal/inspector/choice row dùng panel bo góc, viền nhẹ. Cài đặt
+  chuyển sang ba hàng riêng, thay đổi giữ cùng layer và lưu qua cơ chế cũ;
+  kiểm actual controls, persistence, Esc/Enter và modal input lock đạt.
+- Nhóm quái căn tâm640; chồng bỏ tách chồng rút với hit/hover riêng;8 pha
+  dọc bên phải giữa Nguyệt Lực/nút lượt. Bỏ text pha hiện tại và vòng vàng,
+  dùng aura/sparkle có lifecycle; reduced motion tĩnh. Tài nguyên PvP đối
+  thủ chuyển vùng trái và vẫn công khai.
+- Owner header chuyển vào giấy mô tả, body11px tối đa3 dòng rồi…; cả
+  actual scene và compact renderer dùng cùng vùng86px. Song Hành/Binh Khí
+  dùng glyph gọn, giữ đầy đủ tên chủ lá và category đầy đủ trong hover.
+- Client218/218 đạt; sau sửa cuối model bài13/13 đạt; typecheck/build client
+  cuối exit0. Browser5/5 đầu,4/4 sau vùng giấy,2/2 bài cuối đạt; không cộng
+  các lượt có ca trùng thành số ca độc lập. Root/reviewer kiểm ảnh thật.
+- Independent review hai P2 về heading quá nhỏ và body rộng hơn giấy đã
+  sửa; scoped review spec/quality PASS. All-mode piles/centering kiểm ở
+  1280×800, settings/cards ở1280×720 và1024×576. Không đổi luật/mạng/art;
+  110 file asset trước/sau khớp hash. Không lặp gate không bị thay đổi.
+- Báo cáo `docs/combat-ui-polish-2026-10-04.md`; bằng chứng và ảnh dưới
+  `.sdd-work/combat-ui-polish/`, raw browser cuối `final-card-browser.log`.

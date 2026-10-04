@@ -100,6 +100,22 @@ export function heroProgressLabel(data: GameData, _state: CombatState, hero: Her
   return `${hero.levelUpCounter}/${threshold}`;
 }
 
+/** Both real awakening forms, with the selected form and authoritative progress. */
+export function heroTooltipLines(data: GameData, state: CombatState, hero: HeroState): string[] {
+  const def = data.heroes[hero.defId]!;
+  const selected = hero.levelUpForm === "alt" ? "alt" : "base";
+  return [
+    `${def.name}${hero.leveledUp ? " ★" : ""}`,
+    `HP ${hero.hp}/${hero.maxHp}${hero.armor > 0 ? ` · Giáp ${hero.armor}` : ""}`,
+    hero.leveledUp ? "Đã Thức Tỉnh" : `Tiến độ Thức Tỉnh: ${heroProgressLabel(data, state, hero) ?? ""}`,
+    `${def.levelUp.name} — dạng cơ bản${selected === "base" ? " · Đang chọn" : ""}`,
+    def.levelUp.description,
+    `${def.altLevelUp.name} — dạng thứ hai${selected === "alt" ? " · Đang chọn" : ""}`,
+    def.altLevelUp.description,
+    hero.sealedBy !== undefined ? "Phong Ấn: lá lượt tới chỉ còn damage" : "",
+  ];
+}
+
 /**
  * The seat's Trang Bị worn by this hero (`01` §14). `CombatWeapon.heroId` is the
  * hero DEFINITION id (`"m05"`), never the unit id (`"hero:m05"`/`"p0_hero:m05"`),

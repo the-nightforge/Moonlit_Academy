@@ -83,7 +83,7 @@ interface SceneNode {
 export function activeSceneKey(page: Page): Promise<string> {
   return page.evaluate(
     () =>
-      (window as unknown as { __vn: VnHandle }).__vn.game.scene.getScenes(true)[0]?.scene.key ?? "",
+      (window as unknown as { __vn?: VnHandle }).__vn?.game.scene.getScenes(true)[0]?.scene.key ?? "",
   );
 }
 
@@ -166,7 +166,7 @@ export function probeCombat(page: Page): Promise<CombatProbe> {
  * scene, then applies the scenario through the debug harness and in-page
  * state edits (`05` review: e2e-only fixtures, no production cheat route).
  */
-export async function setupOfflineCombat(page: Page, scenario: CombatScenario = "default"): Promise<void> {
+export async function setupOfflineCombat(page: Page, scenario: CombatScenario = "default", options: { keepMulligan?: boolean } = {}): Promise<void> {
   await page.goto(APP);
   await expect.poll(async () => activeSceneKey(page), { timeout: 30_000 }).toBe("login");
   // Offline path — "Chơi offline" appears once the health check fails.
@@ -193,6 +193,7 @@ export async function setupOfflineCombat(page: Page, scenario: CombatScenario = 
   // The intro reveal batch still plays while the state reads "mulligan" —
   // dispatches are rejected while input is locked, so drain it first.
   await waitIdle(page);
+  if (options.keepMulligan) return;
   // Keep the opening hand so the board settles into the first player turn.
   await page.evaluate(() => {
     const handle = (window as unknown as { __vn: VnHandle }).__vn;
