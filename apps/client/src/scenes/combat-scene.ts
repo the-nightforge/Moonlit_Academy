@@ -55,7 +55,7 @@ import type { AnimationRuntime } from "../ui/animation-runtime";
 import { createPresentation } from "../ui/combat-presentation";
 import { HUD, hudImage } from "../ui/hud-art";
 import { cardColorOf, cardIconOf } from "../ui/attack-style";
-import { displayStatuses, heroProgressLabel, heroTooltipLines, statusBadgeModels, unitAt, weaponForHero } from "../ui/combat-display";
+import { displayStatuses, heroTooltipLines, statusBadgeModels, unitAt, weaponForHero } from "../ui/combat-display";
 import type { SeatAnchors } from "../ui/combat-display";
 import { computeCombatLayout, endTurnAnchor, fitChoicePanel, handSlots } from "../ui/combat-layout";
 import type { CombatLayout } from "../ui/combat-layout";
@@ -126,8 +126,6 @@ interface UnitCardSpec {
   stealth?: boolean;
   /** The unit this spec was built from — badge models read raw status state. */
   unit?: UnitState;
-  /** Short Thức Tỉnh counter for the reserved footer (heroes only). */
-  progress?: string;
   /** The wearer's Trang Bị — its badge is the weapon-trigger anchor (`05` review). */
   weapon?: { id: string; refinement: number; seat: number };
   tooltip: () => string[];
@@ -1317,16 +1315,11 @@ export class CombatScene extends Phaser.Scene {
       this.unitSilhouette(c, w, h, spec.hostile);
     }
     c.add(this.add.rectangle(0, h / 2 - 15, w - 6, 24, 0x0a0e20, 0.8));
-    // Separate measured allocations on one baseline keep the name and counter readable.
+    // The name strip is the whole footer now — centered; Thức Tỉnh detail
+    // stays on the tooltip and the gold frame trace.
     const footerY = h / 2 - 15;
-    const progress = spec.alive ? spec.progress : undefined;
-    const counter = progress === undefined ? null : this.add.text(w / 2 - 8, footerY, progress, {
-      ...TEXT_BASE, fontSize: "11px", color: COLORS.gold,
-    }).setOrigin(1, 0.5).setName("unit_progress");
-    if (counter) c.add(counter);
-    const nameWidth = w - 16 - (counter ? counter.width + 7 : 0);
-    this.text(-w / 2 + 8, footerY, ellipsize(this, spec.name, nameWidth, 11, 1), 11, spec.nameColor ?? COLORS.text, c)
-      .setOrigin(0, 0.5).setName("unit_name");
+    this.text(0, footerY, ellipsize(this, spec.name, w - 16, 11, 1), 11, spec.nameColor ?? COLORS.text, c)
+      .setOrigin(0.5).setName("unit_name");
     this.hpPlate(c, spec, w, h);
     if (spec.stealth) this.stealthVeil(c, w, h);
     this.statusLooks(c, w, h, spec.statuses);
@@ -2065,7 +2058,6 @@ export class CombatScene extends Phaser.Scene {
     const def = this.gameData.heroes[hero.defId]!;
     const weapon = weaponForHero(state, hero);
     const upKey = `heroes:${hero.defId}_up`;
-    const progress = heroProgressLabel(this.gameData, state, hero);
     return {
       id: hero.id,
       x,
@@ -2085,7 +2077,6 @@ export class CombatScene extends Phaser.Scene {
       alive: hero.alive,
       stealth: hero.statuses.some((s) => s.id === "stealth"),
       unit: hero,
-      progress: progress ?? undefined,
       weapon,
       tooltip: () => heroTooltipLines(this.gameData, state, hero),
     };
