@@ -1120,7 +1120,7 @@ export function bloodMoonSurge(rt: AnimationRuntime, at: Point): Promise<void> {
       .setDepth(DEPTH - 1)
       .setBlendMode("ADD")
       .setScale(0.5 * S)
-      .setAlpha(0.95),
+      .setAlpha(0.75),
   );
   fadeOut(rt, corona, { scale: 3.4 * S, duration: 720, ease: "Cubic.easeOut" });
   const ring = rt.track(
@@ -1162,7 +1162,7 @@ export function bloodMoonSurge(rt: AnimationRuntime, at: Point): Promise<void> {
   rt.shake(60, 0.004);
   return rt.tween({
     targets: veil,
-    alpha: 0.75,
+    alpha: 0.5,
     duration: 180,
     yoyo: true,
     hold: 160,

@@ -1058,7 +1058,7 @@ export class CombatScene extends Phaser.Scene {
       size: socket.size * scale,
     };
     this.root.add(this.add.rectangle(cx, cy, view.w, view.h, 0x060a18, 0.3));
-    if (bloodMoon) this.bloodMoonDressing(view, 0.16);
+    if (bloodMoon) this.bloodMoonDressing(view, 0.09);
   }
 
   /**
@@ -1076,7 +1076,7 @@ export class CombatScene extends Phaser.Scene {
         .image(cx, cy, VIGNETTE)
         .setDisplaySize(view.w + 8, view.h + 8)
         .setTint(0x90142c)
-        .setAlpha(0.8),
+        .setAlpha(0.45),
     );
     const embers = this.add.particles(view.x + view.w / 2, view.y + view.h, VFX_GLOW, {
       x: { min: -view.w / 2, max: view.w / 2 },
@@ -1085,9 +1085,9 @@ export class CombatScene extends Phaser.Scene {
       speedX: { min: -8, max: 8 },
       lifespan: { min: 2600, max: 4400 },
       scale: { start: 0.14, end: 0 },
-      alpha: { start: 0.3, end: 0 },
+      alpha: { start: 0.2, end: 0 },
       tint: [0x8a1420, 0xc03040],
-      frequency: 240,
+      frequency: 340,
       maxParticles: 26,
       blendMode: "ADD",
     });
@@ -1263,10 +1263,9 @@ export class CombatScene extends Phaser.Scene {
       : this.add.text(x, y, phase.icon, { ...TEXT_BASE, fontSize: `${Math.round(size * 0.6)}px`, color: COLORS.gold }).setOrigin(0.5);
     // Huyết Nguyệt burns the moon itself — the corona pulses underneath.
     if (bloodMoon) {
-      // A light ember tint — heavy enough to read crimson, light enough to
-      // keep the phase glyph's strokes legible.
-      if (moon instanceof Phaser.GameObjects.Image) moon.setTint(0xffa38c);
-      else (moon as Phaser.GameObjects.Text).setColor("#ffa38c");
+      // A faint ember tint — reads crimson up close, doesn't eat the glyph.
+      if (moon instanceof Phaser.GameObjects.Image) moon.setTint(0xffb8a4);
+      else (moon as Phaser.GameObjects.Text).setColor("#ffb8a4");
     }
     layer.add(moon);
     moon.setName("moon_current").setInteractive();

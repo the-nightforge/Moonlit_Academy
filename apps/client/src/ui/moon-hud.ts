@@ -60,10 +60,10 @@ export function renderMoonHud(
     .setTint(0xc01830)
     .setBlendMode("ADD")
     .setScale(((size * 1.9) / 128) * 0.9)
-    .setAlpha(0.5)
+    .setAlpha(0.28)
     .setName("moon_blood_corona");
   container.add(corona);
-  pulse?.(corona, { alpha: 0.85, scale: (size * 1.9) / 128, duration: 1500 });
+  pulse?.(corona, { alpha: 0.5, scale: (size * 1.9) / 128, duration: 1700 });
 
   // Countdown badge — bottom-right edge of the moon, dark disc + crimson ring.
   const bx = moonAt.x + size * 0.58;
