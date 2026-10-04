@@ -48,7 +48,7 @@ import { CombatAudio } from "../ui/combat-audio";
 import { loadCombatSettings, saveCombatSettings, DEFAULT_COMBAT_SETTINGS } from "../ui/combat-settings";
 import type { CombatSettings } from "../ui/combat-settings";
 import { buildIntroEvents, playEventQueue } from "../ui/event-animator";
-import { GLOW as VFX_GLOW, STAR as VFX_STAR, ensureTextures } from "../ui/vfx";
+import { GLOW as VFX_GLOW, STAR as VFX_STAR, VIGNETTE, ensureTextures } from "../ui/vfx";
 import { CombatPlayback, type PlaybackBatch } from "../ui/combat-playback";
 import { createAnimationRuntime } from "../ui/animation-runtime";
 import type { AnimationRuntime } from "../ui/animation-runtime";
@@ -1045,6 +1045,7 @@ export class CombatScene extends Phaser.Scene {
     this.moonAnchor = { x: this.layout.moon.x, y: this.layout.moon.y, size: 46 };
     if (!this.textures.exists(key)) {
       this.root.add(this.add.rectangle(cx, cy, view.w, view.h, bloodMoon ? BLOOD_MOON_BG : PHASE_BG[phase.id]));
+      if (bloodMoon) this.bloodMoonDressing(view, 0);
       return;
     }
     const source = this.textures.get(key).getSourceImage();
@@ -1057,10 +1058,40 @@ export class CombatScene extends Phaser.Scene {
       size: socket.size * scale,
     };
     this.root.add(this.add.rectangle(cx, cy, view.w, view.h, 0x060a18, 0.3));
-    if (bloodMoon) {
-      this.root.add(this.add.rectangle(cx, cy, view.w, view.h, BLOOD_MOON_BG, 0.35));
-      this.root.add(this.add.rectangle(cx, cy, view.w - 24, view.h - 24).setStrokeStyle(24, 0xc01030, 0.35));
-    }
+    if (bloodMoon) this.bloodMoonDressing(view, 0.16);
+  }
+
+  /**
+   * Huyết Nguyệt's lasting look: a faint wash + an edge vignette (the art
+   * stays readable, the rim bleeds) + sparse embers drifting up. All parts
+   * live on `root`, so they die with the next rebuild.
+   */
+  private bloodMoonDressing(view: { x: number; y: number; w: number; h: number }, wash: number) {
+    ensureTextures(this);
+    const cx = view.x + view.w / 2;
+    const cy = view.y + view.h / 2;
+    if (wash > 0) this.root.add(this.add.rectangle(cx, cy, view.w, view.h, BLOOD_MOON_BG, wash));
+    this.root.add(
+      this.add
+        .image(cx, cy, VIGNETTE)
+        .setDisplaySize(view.w + 8, view.h + 8)
+        .setTint(0x90142c)
+        .setAlpha(0.8),
+    );
+    const embers = this.add.particles(view.x + view.w / 2, view.y + view.h, VFX_GLOW, {
+      x: { min: -view.w / 2, max: view.w / 2 },
+      y: { min: -view.h * 0.65, max: 0 },
+      speedY: { min: -30, max: -12 },
+      speedX: { min: -8, max: 8 },
+      lifespan: { min: 2600, max: 4400 },
+      scale: { start: 0.14, end: 0 },
+      alpha: { start: 0.3, end: 0 },
+      tint: [0x8a1420, 0xc03040],
+      frequency: 240,
+      maxParticles: 26,
+      blendMode: "ADD",
+    });
+    this.root.add(embers);
   }
 
   /** The encounter being fought: story stage, run node or the single-combat pick. */
@@ -1225,11 +1256,18 @@ export class CombatScene extends Phaser.Scene {
     const iconKey = `ui:moon_${phase.id}`;
     const layer = this.moonLayer ?? this.root;
     const model = moonHudModel(this.gameData, state);
-    const hud = renderMoonHud(this, model, this.layout, this.moonAnchor);
+    const hud = renderMoonHud(this, model, this.layout, this.moonAnchor, (t, cfg) => this.loopTween(t, cfg));
     layer.add(hud);
     const moon = this.textures.exists(iconKey)
       ? this.add.image(x, y, iconKey).setDisplaySize(size, size)
       : this.add.text(x, y, phase.icon, { ...TEXT_BASE, fontSize: `${Math.round(size * 0.6)}px`, color: COLORS.gold }).setOrigin(0.5);
+    // Huyết Nguyệt burns the moon itself — the corona pulses underneath.
+    if (bloodMoon) {
+      // A light ember tint — heavy enough to read crimson, light enough to
+      // keep the phase glyph's strokes legible.
+      if (moon instanceof Phaser.GameObjects.Image) moon.setTint(0xffa38c);
+      else (moon as Phaser.GameObjects.Text).setColor("#ffa38c");
+    }
     layer.add(moon);
     moon.setName("moon_current").setInteractive();
     this.hoverTooltip(moon, () => ({ x: x + size / 2 + 8, y: y - 10 }), () => [
@@ -1497,7 +1535,8 @@ export class CombatScene extends Phaser.Scene {
       // Mê Hoặc: small hearts floating up.
       charm: () => {
         if (!this.textures.exists("ui:status_charm")) return;
-        this.drift(c, w, h, { from: "bottom", speedY: [-30, -14], tint: [0xffffff], scale: 14 / (48 * RENDER_SCALE), frequency: 260, texture: "ui:status_charm", add: false });
+        const textureWidth = this.textures.get("ui:status_charm").getSourceImage().width;
+        this.drift(c, w, h, { from: "bottom", speedY: [-30, -14], tint: [0xffffff], scale: 14 / textureWidth, frequency: 260, texture: "ui:status_charm", add: false });
       },
     };
     // At most three ambient looks per unit (`05` review) — freeze, burn and

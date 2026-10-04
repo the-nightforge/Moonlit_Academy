@@ -35,6 +35,8 @@ export const STAR = "vfx_star";
 const CRESCENT = "vfx_crescent";
 const BRUSH = "vfx_brush";
 const TALISMAN = "vfx_talisman";
+/** White edge vignette (clear center → opaque rim) — tinted per use. */
+export const VIGNETTE = "vfx_vignette";
 
 function canvasTexture(
   sc: Phaser.Scene,
@@ -267,6 +269,19 @@ export function ensureTextures(scene: Phaser.Scene): void {
     ctx.lineTo(10.4, 10.4);
     ctx.closePath();
     ctx.fill();
+  });
+  // Screen-edge vignette: a circle scaled into the rect's bounding ellipse, so
+  // every edge and corner darkens instead of only the top/bottom.
+  canvasTexture(scene, VIGNETTE, 160, 96, (ctx) => {
+    ctx.translate(80, 48);
+    ctx.scale(80 / 48, 1);
+    const g = ctx.createRadialGradient(0, 0, 12, 0, 0, 48);
+    g.addColorStop(0, "rgba(255,255,255,0)");
+    g.addColorStop(0.62, "rgba(255,255,255,0)");
+    g.addColorStop(0.85, "rgba(255,255,255,0.55)");
+    g.addColorStop(1, "rgba(255,255,255,1)");
+    ctx.fillStyle = g;
+    ctx.fillRect(-80, -48, 160, 96);
   });
   canvasTexture(scene, CRESCENT, 48, 48, (ctx) => {
     ctx.fillStyle = "#fff";
@@ -1088,4 +1103,70 @@ export async function deathBurn(
   }
   ash.stop();
   destroyLater(rt, ash, 1300);
+}
+
+/**
+ * Huyết Nguyệt ignites: a crimson corona swallows the moon, a shock ring
+ * surges outward, ember sparks scatter, and the screen's edges bleed for a
+ * beat — the vignette keeps the board readable, unlike a flat red wash.
+ * Resolves when the edge pulse finishes; all parts die on abort.
+ */
+export function bloodMoonSurge(rt: AnimationRuntime, at: Point): Promise<void> {
+  ensureTextures(rt.scene);
+  const corona = rt.track(
+    rt.scene.add
+      .image(at.x, at.y, GLOW)
+      .setTint(0xc01830)
+      .setDepth(DEPTH - 1)
+      .setBlendMode("ADD")
+      .setScale(0.5 * S)
+      .setAlpha(0.95),
+  );
+  fadeOut(rt, corona, { scale: 3.4 * S, duration: 720, ease: "Cubic.easeOut" });
+  const ring = rt.track(
+    rt.scene.add
+      .image(at.x, at.y, RING)
+      .setTint(0xff4a5a)
+      .setDepth(DEPTH)
+      .setBlendMode("ADD")
+      .setScale(0.3 * S)
+      .setAlpha(1),
+  );
+  fadeOut(rt, ring, { scale: 4.4 * S, duration: 620, ease: "Cubic.easeOut" });
+  const embers = rt.track(
+    rt.scene.add
+      .particles(at.x, at.y, GLOW, {
+        speed: { min: 30, max: 95 },
+        angle: { min: 200, max: 340 },
+        lifespan: { min: 400, max: 750 },
+        scale: { start: 0.14 * S, end: 0 },
+        alpha: { start: 0.7, end: 0 },
+        tint: [0xd03a4a, 0xff6a4a, 0x80101c],
+        blendMode: "ADD",
+        emitting: false,
+      })
+      .setDepth(DEPTH),
+  );
+  embers.explode(moteCount(rt, 12));
+  destroyLater(rt, embers, 800);
+  // Edge flash: a vignette pulse — the board stays legible under it.
+  const view = rt.scene.cameras.main.worldView;
+  const veil = rt.track(
+    rt.scene.add
+      .image(view.centerX, view.centerY, VIGNETTE)
+      .setDisplaySize(view.width, view.height)
+      .setTint(0xb01a30)
+      .setDepth(88)
+      .setAlpha(0),
+  );
+  rt.shake(60, 0.004);
+  return rt.tween({
+    targets: veil,
+    alpha: 0.75,
+    duration: 180,
+    yoyo: true,
+    hold: 160,
+    ease: "Sine.easeOut",
+    onComplete: () => veil.destroy(),
+  });
 }

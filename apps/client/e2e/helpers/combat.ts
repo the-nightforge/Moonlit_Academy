@@ -8,7 +8,7 @@ import { expect, type Page } from "@playwright/test";
 export const APP = "http://localhost:5173";
 
 /** Scenario presets reachable through the debug harness + in-page state edits (e2e only). */
-export type CombatScenario = "default" | "hand0" | "hand1" | "hand8" | "hand10" | "denseStatus" | "longChoice" | "summonRevive" | "multiHit";
+export type CombatScenario = "default" | "hand0" | "hand1" | "hand8" | "hand10" | "denseStatus" | "longChoice" | "summonRevive" | "multiHit" | "bloodMoon";
 
 /** What `probeCombat` reports about the live combat scene. */
 export interface CombatProbe {
@@ -55,6 +55,7 @@ interface VnHandle {
   debug: {
     debugDrawCards(count: number): void;
     debugAddMoonPower(amount?: number): void;
+    debugSetBloodMoon(rounds: number): void;
   };
 }
 
@@ -256,6 +257,8 @@ async function applyScenario(page: Page, scenario: CombatScenario): Promise<void
       }
     } else if (sc === "multiHit") {
       handle.debug.debugAddMoonPower(9);
+    } else if (sc === "bloodMoon") {
+      handle.debug.debugSetBloodMoon(2);
     }
     scene.requestRender();
   }, scenario);

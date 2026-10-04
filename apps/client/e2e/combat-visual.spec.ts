@@ -178,4 +178,30 @@ test.describe("combat visual matrix (offline)", () => {
       .toBe(false);
     expect(errors).toEqual([]);
   });
+
+  test("bloodMoon: the lasting look — tinted moon, corona, badge, edge vignette", async ({ page }) => {
+    const errors = collectErrors(page);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await setupOfflineCombat(page, "bloodMoon");
+    await waitIdle(page);
+    // The surge has played out; only the persistent dressing remains.
+    const dressed = await page.evaluate(() => {
+      const handle = (window as unknown as { __vn: { game: { scene: { getScene(k: string): { children: { list: unknown[] } } | undefined } } } }).__vn;
+      const scene = handle.game.scene.getScene("combat");
+      const names: string[] = [];
+      const walk = (list: unknown[] | undefined) => {
+        list?.forEach((node) => {
+          const n = node as { name?: string; list?: unknown[] };
+          if (n.name) names.push(n.name);
+          if (Array.isArray(n.list)) walk(n.list);
+        });
+      };
+      walk(scene?.children.list);
+      return names;
+    });
+    expect(dressed).toContain("moon_blood");
+    expect(dressed).toContain("moon_blood_corona");
+    await captureCombat(page, "1280x720", "bloodMoon");
+    expect(errors).toEqual([]);
+  });
 });

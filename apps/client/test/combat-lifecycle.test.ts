@@ -247,17 +247,28 @@ describe("queue-time banners", () => {
   });
 });
 
-describe("blood moon overlay", () => {
-  it("tints the visible camera bounds lightly — the base phase stays readable", async () => {
+describe("blood moon ignition", () => {
+  it("surges at the moon with a stroked banner — no flat full-screen wash", async () => {
     const rt = new FakeRuntime();
     const context = ctx(rt);
     await runToEnd(rt, playEventQueue(rt, [{ type: "bloodMoonChanged", rounds: 2, cause: "card" }], context));
-    const overlay = rt.rects.find((rect) => (rect[4] as number) === 0xc01030 || (rect[4] as number) === 0x8b0000);
-    expect(overlay).toBeDefined();
-    // Light overlay (≤0.3 alpha), camera-size not a hardcoded viewport rect.
-    expect(overlay![5] as number).toBeLessThanOrEqual(0.3);
-    expect(overlay![2] as number).toBeGreaterThanOrEqual(1280);
-    expect(overlay![3] as number).toBeGreaterThanOrEqual(720);
+    // The old flat red rectangle is gone; the edge pulse is an image vignette.
+    expect(rt.rects.some((r) => (r[4] as number) === 0xc01030)).toBe(false);
+    expect(rt.texts.some((t) => t.includes("HUYẾT NGUYỆT"))).toBe(true);
+    // Corona + ring + ember emitter + vignette veil + banner — all runtime-tracked.
+    expect(rt.created.length).toBeGreaterThanOrEqual(5);
+    // The veil pulse is a brief yoyo alpha tween, not a lingering overlay.
+    expect(rt.tweenConfigs.some((c) => c.yoyo === true && c.alpha !== undefined)).toBe(true);
+    expect(rt.shakes.length).toBeGreaterThan(0);
+  });
+
+  it("a roundEnd decrement only floats the countdown — no surge, no shake", async () => {
+    const rt = new FakeRuntime();
+    const context = ctx(rt);
+    await runToEnd(rt, playEventQueue(rt, [{ type: "bloodMoonChanged", rounds: 1, cause: "roundEnd" }], context));
+    expect(rt.texts.some((t) => t.includes("còn 1 vòng"))).toBe(true);
+    expect(rt.texts.some((t) => t.includes("HUYẾT NGUYỆT"))).toBe(false);
+    expect(rt.shakes.length).toBe(0);
   });
 });
 

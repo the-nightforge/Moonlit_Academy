@@ -8,7 +8,7 @@ import { resolvePlayedCard, seatAnchors, statusAppliedLabel, statusDisplayValue,
 import type { Point, SeatAnchors } from "./combat-display";
 import type { PublicPlayedCard } from "../net/protocol";
 import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
-import { castCard, deathBurn, moonWheel, playAttack, statusPop } from "./vfx";
+import { bloodMoonSurge, castCard, deathBurn, moonWheel, playAttack, statusPop } from "./vfx";
 import { HAND_AREA, MOON, handSlots } from "./combat-layout";
 import type { CombatLayout } from "./combat-layout";
 import { triggerAnchorKey } from "./combat-inspector";
@@ -688,25 +688,38 @@ function animateEvent(
     }
     case "bloodMoonChanged": {
       ctx.audio?.play("moon");
+      const moonAt = ctx.moonAnchor ?? MOON;
       if (event.rounds === 0) {
-        return floatHeld(rt, WIDTH / 2, midY, "Huyết Nguyệt tan", "#cfd6f0", 22, 500, 250);
+        return floatHeld(rt, moonAt.x, moonAt.y + 60, "Huyết Nguyệt tan", "#cfd6f0", 16, 500, 250);
       }
-      // A light tint over the visible camera bounds — the base phase stays readable.
-      const view = rt.scene.cameras.main.worldView;
-      const overlay = rt.track(
-        rt.scene.add.rectangle(view.centerX, view.centerY, view.width, view.height, 0xc01030, 0.25).setDepth(88),
+      // Only an ignition gets the surge — a roundEnd decrement is a quiet
+      // countdown next to the moon, never another screen flash.
+      if (event.cause === "roundEnd") {
+        return floatHeld(rt, moonAt.x, moonAt.y + 60, `Huyết Nguyệt còn ${event.rounds} vòng`, "#ff8080", 13, 350, 180);
+      }
+      const surge = bloodMoonSurge(rt, { x: moonAt.x, y: moonAt.y });
+      const banner = rt.track(
+        rt.scene.add
+          .text(WIDTH / 2, midY - 60, "HUYẾT NGUYỆT", {
+            ...TEXT_BASE,
+            fontSize: "30px",
+            color: "#ff5a5a",
+            stroke: "#20040a",
+            strokeThickness: 6,
+          })
+          .setOrigin(0.5)
+          .setDepth(100),
       );
-      const fade = rt.tween({
-        targets: overlay,
-        alpha: 0,
-        duration: 600,
-        onComplete: () => overlay.destroy(),
+      const announce = rt.tween({
+        targets: banner,
+        scale: 1.06,
+        duration: 380,
+        yoyo: true,
+        hold: 260,
+        ease: "Sine.easeOut",
+        onComplete: () => banner.destroy(),
       });
-      const label =
-        event.cause === "card"
-          ? floatText(rt, WIDTH / 2, midY, "🔴 Huyết Nguyệt!", "#ff5a5a", 30, 500)
-          : floatText(rt, WIDTH / 2, midY, `Huyết Nguyệt còn ${event.rounds} vòng`, "#ff5a5a", 18, 500);
-      return held(rt, 400, fade, label);
+      return held(rt, 450, surge, announce);
     }
     case "healed": {
       const anchor = anchorOf(event.targetId);
