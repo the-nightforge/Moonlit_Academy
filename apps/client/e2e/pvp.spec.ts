@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { probeCombat } from "./helpers/combat";
+import { probeCombat, waitIdle } from "./helpers/combat";
 
 /**
  * `17` §7 e2e — two browser contexts, two accounts, one private match plus a
@@ -183,6 +183,7 @@ test("phòng riêng PvP: hai trình duyệt đấu, tải lại một bên vào 
 
   // U6: the PvP layout holds — units stay left of the control band, and a
   // settled board leaves no floating FX behind.
+  await waitIdle(pageA, 60_000);
   const board = await probeCombat(pageA);
   expect(board.units.length).toBeGreaterThan(0);
   expect(board.units.every((u) => u.bounds.x + u.bounds.w <= 1160)).toBe(true);

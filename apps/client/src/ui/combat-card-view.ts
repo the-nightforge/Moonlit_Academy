@@ -117,14 +117,29 @@ export function combatCardModel(
  * `text` clamped to `maxLines` wrapped lines with an ellipsis — never a
  * smaller font (`05` review). The scene keeps the full text for tooltips.
  */
-export function ellipsize(scene: Phaser.Scene, text: string, width: number, fontSize: number, maxLines: number): string {
+export function ellipsize(scene: Phaser.Scene, text: string, width: number, fontSize: number, maxLines: number, maxHeight = 34): string {
   const probe = scene.add
-    .text(-4000, -4000, text, { ...TEXT_BASE, fontSize: `${fontSize}px`, wordWrap: { width } });
+    .text(-4000, -4000, text, { ...TEXT_BASE, fontSize: `${fontSize}px`, lineSpacing: -1, wordWrap: { width } });
   const lines = probe.getWrappedText();
-  probe.destroy();
-  if (lines.length <= maxLines) return text;
+  if (lines.length <= maxLines && probe.height <= maxHeight) {
+    probe.destroy();
+    return text;
+  }
   const kept = lines.slice(0, maxLines);
-  kept[maxLines - 1] = `${kept[maxLines - 1]!.trimEnd()}…`;
+  while (kept.length > 1) {
+    probe.setText(kept.join("\n"));
+    if (probe.height <= maxHeight) break;
+    kept.pop();
+  }
+  let last = kept.at(-1)!.trimEnd();
+  // The ellipsis itself must fit the last line; appending it can wrap again.
+  while (last.length > 0) {
+    probe.setText(`${last}…`);
+    if (probe.getWrappedText().length === 1) break;
+    last = last.slice(0, -1).trimEnd();
+  }
+  kept[kept.length - 1] = `${last}…`;
+  probe.destroy();
   return kept.join("\n");
 }
 
@@ -218,6 +233,7 @@ export function renderCombatCard(
         fontSize: `${COMPACT_BODY_FONT}px`,
         color: "#cfc4a8",
         align: "center",
+        lineSpacing: -1,
         wordWrap: { width: w - 16 },
       })
       .setOrigin(0.5, 0),

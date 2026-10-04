@@ -11,6 +11,17 @@ const to = { x: 320, y: 120 };
 const attacker = () => stubObject() as unknown as Phaser.GameObjects.Container;
 
 describe("playAttack onImpact", () => {
+  for (const kind of ["slash", "spear"] as const) {
+    it(`reduced motion ${kind} keeps the attacker stationary with one impact`, async () => {
+      const rt = new FakeRuntime({ reducedMotion: true });
+      const view = attacker();
+      let impacts = 0;
+      await runToEnd(rt, playAttack(look(kind), from, to, { blocked: false, runtime: rt, attackerView: view, onImpact: () => impacts++ }));
+      await rt.drain();
+      expect(impacts).toBe(1);
+      expect(rt.tweenConfigs.filter(config => config.targets === view && (config.x !== undefined || config.y !== undefined))).toEqual([]);
+    });
+  }
   it("slash fires onImpact exactly once, before cleanup completes", async () => {
     const rt = new FakeRuntime();
     const order: string[] = [];

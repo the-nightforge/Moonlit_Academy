@@ -292,8 +292,8 @@ test("7b: Linh Thú renders beside the hero row and a fallen Hero can be picked 
     return [...scene.validTargetIds];
   });
   expect(validTargets).toContain("summon:f09");
-  // Heroes sit at x = 470/640/810, y = 400; Linh Thú cards line up right of the row (first at 956).
-  await clickDesign(page, 956, 400);
+  const summonAnchor = await page.evaluate(() => (window as any).__vn.game.scene.getScene("combat").unitAnchors.get("summon:f09"));
+  await clickDesign(page, summonAnchor.x, summonAnchor.y);
   await expect
     .poll(
       async () =>

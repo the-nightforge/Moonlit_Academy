@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import type Phaser from "phaser";
 import type { CombatEvent } from "rules";
+import { applyAction, cloneState } from "rules";
 import { createPresentation } from "../src/ui/combat-presentation";
 import type { PresentationBindings } from "../src/ui/combat-presentation";
 import type { CombatSettings } from "../src/ui/combat-settings";
@@ -21,6 +22,9 @@ import type { AnimContext } from "../src/ui/event-animator";
 
 const { data, state: base } = fixture("pve");
 const ON: CombatSettings = { speed: 1, reducedMotion: false, volume: 0.5 };
+// Cosmetic scatter must be identical at both speeds; take its longest duration.
+beforeEach(() => vi.spyOn(Math, "random").mockReturnValue(1));
+afterEach(() => vi.restoreAllMocks());
 
 /** A scene stub that records what the real runtime asks of Phaser. */
 function recordingScene() {
@@ -162,12 +166,26 @@ function enemyTurnEvents(): CombatEvent[] {
 async function playAndMeasure(events: CombatEvent[], settings: Partial<CombatSettings> = {}, overrides: Partial<AnimContext> = {}) {
   const rt = new FakeRuntime(settings);
   const trace: string[] = [];
-  const promise = playEventQueue(rt, events, ctx(rt, trace, overrides));
+  const promise = playEventQueue(rt, events, ctx(rt, trace, overrides)).then(() => rt.drain());
   await runToEnd(rt, promise);
   return { rt, trace };
 }
 
 describe("timeline budgets", () => {
+  it("seed 42 encounter round 6 drains every cosmetic before the 3000 ms commit budget", async () => {
+    let state = fixture().state;
+    state = applyAction(data, state, { type: "mulligan", instanceIds: [] }).state;
+    for (let round = 1; round <= 6; round++) {
+      const before = cloneState(state);
+      const result = applyAction(data, state, { type: "endTurn" });
+      state = result.state;
+      if (round !== 6) continue;
+      expect(result.events.some(e => ["unitDied", "heroLeveledUp", "coopComboTriggered"].includes(e.type))).toBe(false);
+      const { rt } = await playAndMeasure(result.events, {}, { presentation: createPresentation(before), before, after: state });
+      expect(rt.pendingCount).toBe(0);
+      expect(rt.clock).toBeLessThanOrEqual(3000);
+    }
+  });
   it("a routine enemy turn finishes within 3000 ms at speed 1", async () => {
     const { rt } = await playAndMeasure(enemyTurnEvents());
     expect(rt.clock).toBeLessThanOrEqual(3000);
@@ -302,6 +320,6 @@ describe("audio cues in the queue", () => {
 
     const draw = fakeAudio();
     await playAndMeasure([{ type: "combatEnded", result: "draw", winner: "draw" }], {}, { audio: draw.audio, mySeat: 0 });
-    expect(draw.played).toEqual(["draw"]);
+    expect(draw.played).toEqual(["resultDraw"]);
   });
 });

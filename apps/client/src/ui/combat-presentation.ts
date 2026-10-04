@@ -133,7 +133,7 @@ export function applyPresentationEvent(
     case "summoned": {
       const defId = event.summonId;
       const existing = visual.summons?.find((summon) => summon.id === event.unitId);
-      if (existing) {
+      if (existing?.alive) {
         // Awakened form (`01` §17.1): same unit, new def — hp keeps its ratio.
         const def = data.summons[defId];
         if (def) {
@@ -162,7 +162,7 @@ export function applyPresentationEvent(
         statuses: [],
         alive: true,
       };
-      visual.summons = [...(visual.summons ?? []), summon];
+      visual.summons = [...(visual.summons ?? []).filter((entry) => entry.id !== event.unitId), summon];
       return;
     }
     case "summonDismissed": {
@@ -175,11 +175,18 @@ export function applyPresentationEvent(
       return;
     }
     case "bossPhaseChanged": {
-      // Phase record is snapshot metadata the event doesn't carry.
+      // Phase and countdown become visible at this event, never the batch's final phase.
       if (visual.boss && after.boss) {
-        visual.boss.phase = after.boss.phase;
-        visual.boss.reviveCountdown = after.boss.reviveCountdown;
-        visual.boss.revived = after.boss.revived;
+        const previous = visual.boss.phase;
+        visual.boss.phase = event.phase;
+        if (event.phase < previous) {
+          visual.boss.reviveCountdown = null;
+          visual.boss.revived = true;
+        } else {
+          const enemy = visual.enemies.find((entry) => entry.id === event.enemyId);
+          const phase = enemy && data.enemies[enemy.defId]?.phases?.[event.phase - 1];
+          if (phase?.reviveAfterRounds !== undefined && !visual.boss.revived) visual.boss.reviveCountdown = phase.reviveAfterRounds;
+        }
       }
       return;
     }

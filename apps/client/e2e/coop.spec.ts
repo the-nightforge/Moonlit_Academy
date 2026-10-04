@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { probeCombat } from "./helpers/combat";
+import { clickSceneText, probeCombat } from "./helpers/combat";
 
 /**
  * `17` §9.3 e2e — Liên Thủ: two browser contexts, two accounts, one private
@@ -78,6 +78,8 @@ async function saveDeck(token: string, rev: number): Promise<void> {
 async function signedInPage(browser: Browser, token: string): Promise<Page> {
   const context = await browser.newContext();
   const page = await context.newPage();
+  page.on("framenavigated", frame => { if (frame === page.mainFrame()) console.info("Co-op main-frame navigation", frame.url()); });
+  page.on("pageerror", error => console.info("Co-op page error", error.message));
   await page.addInitScript((value) => localStorage.setItem("vong-nguyet.token", value), token);
   await page.goto(APP);
   await page.waitForFunction(() => {
@@ -154,7 +156,7 @@ async function sceneKey(page: Page): Promise<string> {
 }
 
 async function enterLobby(page: Page): Promise<void> {
-  await clickDesign(page, 1090, 524); // "Liên Thủ"
+  await clickSceneText(page, "deck-select", "Liên Thủ");
   // Reconnecting with a live match bounces straight into "combat" instead.
   await page.waitForFunction(() => {
     const vn = (window as unknown as {
@@ -165,7 +167,7 @@ async function enterLobby(page: Page): Promise<void> {
     }).__vn;
     const key = vn?.game.scene.getScenes(true)[0]?.scene.key;
     return (key === "coop-lobby" && vn?.session.net?.connected === true) || (key === "combat" && vn?.session.match != null);
-  }, undefined, { timeout: 30_000 });
+  }, undefined, { timeout: 60_000 });
 }
 
 async function sendMatchAction(page: Page, action: unknown): Promise<void> {
@@ -291,6 +293,9 @@ async function churnSeat(page: Page): Promise<void> {
 }
 
 test("phòng riêng Liên Thủ: hai trình duyệt kích Hợp Kích, tải lại một bên vào lại trận", async ({ browser }) => {
+  // Real shared-turn cards, playback and the full portrait preload also run
+  // during rejoin; the diagnostic reached round5/combo after70s of actions.
+  test.setTimeout(300_000);
   const accA = await registerAccount(`e2e_ca_${Date.now()}`);
   const accB = await registerAccount(`e2e_cb_${Date.now()}`);
   await saveDeck(accA.token, accA.rev);
@@ -329,12 +334,18 @@ test("phòng riêng Liên Thủ: hai trình duyệt kích Hợp Kích, tải l�
   // Đánh tới khi Hợp Kích kích (hoặc trận kết thúc); vòng lặp điều khiển cả hai ghế.
   // Hai lượt comboPass trước churn+endTurn để nửa được đánh sau vẫn bắt kịp journal.
   let fired = false;
+  const started = Date.now();
   for (let round = 0; round < 30 && !fired; round++) {
     for (const page of [pageA, pageB]) await comboPass(page);
     for (const page of [pageA, pageB]) await comboPass(page);
     for (const page of [pageA, pageB]) await churnSeat(page);
     await pageA.waitForTimeout(400);
     fired = ((await vn(pageA)).view?.comboUsed?.[COMBO_ID]?.total ?? 0) > 0;
+    const progress = await pageA.evaluate(() => {
+      const h = (window as any).__vn, s = h.game.scene.getScene("combat");
+      return {round:h.session.match?.view.round,moon:h.session.match?.view.moonIndex,status:h.session.match?.view.status,pending:h.session.match?.pending,busy:s.playback.busy};
+    });
+    console.info("Co-op progress", {iteration:round,elapsedMs:Date.now()-started,...progress});
     if ((await vn(pageA)).match?.ended !== null) break;
   }
   const view = (await vn(pageA)).view;

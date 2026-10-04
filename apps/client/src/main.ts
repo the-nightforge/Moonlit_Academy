@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { auth, initApi, setToken } from "./api";
+import { resetAccount } from "./account";
 import { ArenaScene } from "./scenes/arena-scene";
 import { CoopLobbyScene } from "./scenes/coop-lobby-scene";
 import { LoginScene } from "./scenes/login-scene";
@@ -41,6 +42,7 @@ const game = new Phaser.Game({
 
 // A refused or expired session anywhere sends the player back to sign in.
 auth.onUnauthorized = () => {
+  resetAccount();
   setToken(null);
   session.online = false;
   const active = game.scene.getScenes(true)[0];

@@ -47,25 +47,22 @@ const enemies = stems("enemies");
 const summons = stems("summons");
 
 describe("combat art inventory (`05` review U5)", () => {
-  // `it.fails` = the recorded U5 blocker: no image-generation tool exists in
-  // this environment, so the missing files are asserted but expected to fail.
-  // When the portraits land, each test flips to XPASS — remove `.fails` then.
-  it.fails("every hero has a normal portrait", () => {
+  it("every hero has a normal portrait", () => {
     const missingNormalHeroes = heroIds.filter((id) => !heroes.has(id));
     expect(missingNormalHeroes).toEqual([]);
   });
 
-  it.fails("every hero has a Thức Tỉnh `_up` portrait", () => {
+  it("every hero has a Thức Tỉnh `_up` portrait", () => {
     const missingUpHeroes = heroIds.filter((id) => !heroes.has(`${id}_up`));
     expect(missingUpHeroes).toEqual([]);
   });
 
-  it.fails("every enemy has a portrait", () => {
+  it("every enemy has a portrait", () => {
     const missingEnemies = enemyIds.filter((id) => !enemies.has(id));
     expect(missingEnemies).toEqual([]);
   });
 
-  it.fails("every summon has a portrait", () => {
+  it("every summon has a portrait", () => {
     const missingSummons = summonIds.filter((id) => !summons.has(id));
     expect(missingSummons).toEqual([]);
   });
@@ -78,7 +75,7 @@ describe("combat art inventory (`05` review U5)", () => {
   });
 
   it("inventory covers every definition — no id may fall back silently", () => {
-    // The four asserts above name the missing ids; this one keeps the list
+    // The four asserts above reject missing ids; this one keeps the list
     // honest: the count is 20 heroes ×2 forms + 15 enemies + 2 summons = 57.
     const expected = heroIds.length * 2 + enemyIds.length + summonIds.length;
     expect(expected).toBe(57);

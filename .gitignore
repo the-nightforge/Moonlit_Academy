@@ -13,3 +13,4 @@ logs/
 *.db-shm
 test-results/
 playwright-report/
+.sdd-work

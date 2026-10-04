@@ -393,7 +393,7 @@ function impact(rt: AnimationRuntime, at: Point, color: number, angle: number, p
       x: at.x + Math.cos(a) * dist,
       y: at.y + Math.sin(a) * dist,
       scaleX: 0.1 * S,
-      duration: rand(240, 400),
+      duration: rand(200, 300),
       ease: "Cubic.easeOut",
     });
   }
@@ -403,7 +403,7 @@ function impact(rt: AnimationRuntime, at: Point, color: number, angle: number, p
       .particles(at.x, at.y, GLOW, {
         speed: { min: 50, max: 140 },
         angle: { min: 200, max: 340 },
-        lifespan: { min: 450, max: 750 },
+        lifespan: { min: 350, max: 550 },
         scale: { start: 0.15 * S, end: 0 },
         gravityY: 280,
         tint: color,
@@ -413,14 +413,14 @@ function impact(rt: AnimationRuntime, at: Point, color: number, angle: number, p
       .setDepth(DEPTH),
   );
   embers.explode(moteCount(rt, Math.round(8 * power)));
-  destroyLater(rt, embers, 800);
+  destroyLater(rt, embers, 600);
   // 60 ms + 60 ms fits the batch's two-shake / 120 ms budget; reduced motion denies it.
   rt.shake(40 + 20 * power, 0.0025 * power);
 }
 
 /** The attacker's card steps toward the target and back. */
 function lunge(rt: AnimationRuntime, view: Phaser.GameObjects.Container | undefined, from: Point, to: Point, reach: number, ms: number) {
-  if (!view) return;
+  if (!view || rt.reducedMotion) return;
   void rt.tween({
     targets: view,
     x: from.x + (to.x - from.x) * reach,

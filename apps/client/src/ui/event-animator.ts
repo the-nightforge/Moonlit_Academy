@@ -48,6 +48,8 @@ export interface AnimContext {
   runtime: AnimationRuntime;
   /** Procedural cue player — silent until unlocked and muted under volume 0. */
   audio?: CombatAudio;
+  /** A public personal forfeit already observed for the local network seat. */
+  forfeited?: boolean;
   /** Relic/weapon icon positions keyed `${player}:${kind}:${id}` — trigger flashes land here (`05` review). */
   triggerAnchors?: Map<string, { x: number; y: number }>;
 }
@@ -457,7 +459,7 @@ export async function playEventQueue(
         }),
       );
       previous = group[group.length - 1];
-      if (g + 1 < groups.length) await rt.wait(90);
+      if (g + 1 < groups.length) await rt.wait(40);
       continue;
     }
     if (
@@ -530,7 +532,7 @@ function animateEvent(
           : event.side === "hero"
             ? "— Lượt người chơi —"
             : "— Lượt kẻ địch —";
-      return floatHeld(rt, WIDTH / 2, midY, label, "#cfd6f0", 16, 350, 200);
+      return floatHeld(rt, WIDTH / 2, midY, label, "#cfd6f0", 16, 250, 120);
     }
     case "cardsDrawn": {
       const ids = event.instanceIds;
@@ -737,7 +739,7 @@ function animateEvent(
         ease: "Sine.easeOut",
         onComplete: () => ring.destroy(),
       });
-      return held(rt, 250, shatter, floatText(rt, anchor.x, anchor.y - 50, "🛡 Vỡ Giáp", "#9fd4ff", 15, 350));
+      return held(rt, 180, shatter, floatText(rt, anchor.x, anchor.y - 50, "🛡 Vỡ Giáp", "#9fd4ff", 15, 280));
     }
     case "statusApplied": {
       const anchor = anchorOf(event.targetId);
@@ -763,7 +765,7 @@ function animateEvent(
     }
     case "moonPowerChanged": {
       const at = anchorsFor(ctx, event.player).resource;
-      return floatHeld(rt, at.x - 60, at.y, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 200, 120);
+      return floatHeld(rt, at.x - 60, at.y, `Nguyệt Lực ${event.value}`, "#f4d35e", 12, 160, 80);
     }
     case "moonShifted": {
       // The Nguyệt Luân turns at center stage and settles into the moon badge; the new phase's name floats down.
@@ -817,15 +819,15 @@ function animateEvent(
           : [];
       const dx = target ? (target.x - anchor.x) * 0.18 : 0;
       const dy = target ? (target.y - anchor.y) * 0.18 : (aimed.length > 0 ? 20 : 0);
-      // Reduced motion trades the lunge for an alpha pulse — same 120 ms beat.
+      // Reduced motion trades the lunge for an alpha pulse with the same beat.
       const signal = rt.reducedMotion
-        ? rt.tween({ targets: view, alpha: 0.45, duration: 60, yoyo: true })
-        : rt.tween({ targets: view, x: anchor.x + dx, y: anchor.y + dy, duration: 60, yoyo: true });
+        ? rt.tween({ targets: view, alpha: 0.45, duration: 40, yoyo: true })
+        : rt.tween({ targets: view, x: anchor.x + dx, y: anchor.y + dy, duration: 40, yoyo: true });
       void floatText(rt, anchor.x, anchor.y + 90, intent?.name ?? "", "#ffb070", 18, 400).catch(() => {});
       if (intent?.kind !== "attack" && intent?.kind !== "attackDefend") {
         for (const to of aimed) void beam(rt, anchor, to, 0xff7050, 350, 5).catch(() => {});
       }
-      return Promise.all([signal, rt.wait(120)]).then(() => undefined);
+      return Promise.all([signal, rt.wait(60)]).then(() => undefined);
     }
     case "intentSkipped": {
       const anchor = anchorOf(event.enemyId);
@@ -876,8 +878,8 @@ function animateEvent(
       // Seat-relative win: PvP carries `winner`, PvE the viewer's `result` —
       // the audio instance dedupes against a later terminal recovery frame.
       const won =
-        event.winner === "draw" ? false : event.winner !== undefined ? event.winner === (ctx.mySeat ?? 0) : event.result === "won";
-      ctx.audio?.play(event.result === "draw" ? "draw" : won ? "victory" : "defeat");
+        !ctx.forfeited && (event.winner === "draw" ? false : event.winner !== undefined ? event.winner === (ctx.mySeat ?? 0) : event.result === "won");
+      ctx.audio?.play(event.result === "draw" ? "resultDraw" : won ? "victory" : "defeat");
       return instant();
     }
     case "playerForfeited": {

@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { clickSceneText } from "./helpers/combat";
 
 /**
  * `17` §7.1 e2e — ranked queue between two real clients, the full match,
@@ -10,7 +11,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
  *
  * Vinh Dự is capped at 120/day (§6.4) while the cheapest shop item costs 150 —
  * a first-day purchase is impossible by design, so the test tops the winner's
- * balance up in SQLite (same DB file the dev server opened) before buying.
+ * balance up in an explicitly selected disposable/dev database before buying.
  */
 const API = "http://localhost:8787";
 const APP = "http://localhost:5173";
@@ -70,6 +71,8 @@ async function saveDeck(token: string, rev: number): Promise<void> {
 async function signedInPage(browser: Browser, token: string): Promise<Page> {
   const context = await browser.newContext();
   const page = await context.newPage();
+  page.on("framenavigated", frame => { if (frame === page.mainFrame()) console.info("Arena main-frame navigation", frame.url()); });
+  page.on("pageerror", error => console.info("Arena page error", error.message));
   await page.addInitScript((value) => localStorage.setItem("vong-nguyet.token", value), token);
   await page.goto(APP);
   await page.waitForFunction(() => {
@@ -129,7 +132,9 @@ async function enterArena(page: Page): Promise<void> {
 }
 
 test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đổi, mua ở cửa hàng Vinh Dự", async ({ browser }) => {
-  test.setTimeout(300_000);
+  // Seven clients plus the winner's reload preload the full assets on Vite.
+  // Keep each step bounded while allowing the six-match scenario to finish.
+  test.setTimeout(600_000);
   const stamp = Date.now();
   const winnerName = `e2e_w_${stamp}`;
   const winner = await registerAccount(winnerName);
@@ -141,6 +146,7 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
   // 10 min, so every match needs a new account. 6 × 20 hits the 120/day cap.
   const WINS = 6;
   for (let i = 0; i < WINS; i++) {
+    console.info("Ranked win attempt", i + 1, "elapsed ms", Date.now() - stamp);
     const loser = await registerAccount(`e2e_l${i}_${stamp}`);
     await saveDeck(loser.token, loser.rev);
     const pageL = await signedInPage(browser, loser.token);
@@ -162,9 +168,10 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
     expect(ended.rating!.after).toBeGreaterThan(ended.rating!.before);
     expect(ended.rewards!.honor).toBeGreaterThan(0);
 
-    await clickDesign(pageW, 640, 476); // "Về Đấu Trường"
+    await clickSceneText(pageW, "combat", "Về Đấu Trường");
     await expect.poll(() => sceneKey(pageW), { timeout: 30_000 }).toBe("arena");
     await pageL.context().close();
+    console.info("Ranked win settled", i + 1, "elapsed ms", Date.now() - stamp);
   }
 
   const me = await api("/api/arena/me", { token: winner.token });
@@ -172,22 +179,33 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
   expect(arena.wins).toBe(WINS);
   expect(arena.rating).toBeGreaterThan(1000);
   expect((me.body.honorToday as { gained: number }).gained).toBe(120); // daily cap (§6.4)
+  console.info("Six wins and daily cap verified; elapsed ms", Date.now() - stamp);
 
-  // Top up Vinh Dự straight in SQLite — the cap makes a purchase impossible
-  // on day one; this checks the whole buy path, not the economy design.
-  execFileSync(
+  // The cap makes a day-one purchase impossible. The review fixture owns its
+  // test-only endpoint; ordinary runs require an explicit dedicated dev DB.
+  if (process.env.COMBAT_REVIEW_FIXTURE === "1") {
+    const toppedUp = await fetch(`${API}/__review/honor`, {
+      method:"POST",headers:{"content-type":"application/json","x-data-version":version},
+      body:JSON.stringify({username:winnerName,honor:200}),
+    });
+    expect(toppedUp.status).toBe(200);
+  } else {
+    if (!process.env.COMBAT_E2E_DATABASE_URL) throw new Error("Set COMBAT_E2E_DATABASE_URL to the dedicated PostgreSQL database used by the dev API");
+    execFileSync(
     process.execPath,
     [
-      "-e",
-      `const db = require("better-sqlite3")("data/vong-nguyet.db");
-       db.pragma("busy_timeout = 5000");
-       const acc = db.prepare("SELECT id FROM accounts WHERE username = ?").get(process.argv[1]);
-       if (!acc) throw new Error("no such account");
-       db.prepare("UPDATE profiles SET profile_json = json_set(profile_json, '$.currencies.honor', 200) WHERE account_id = ?").run(acc.id);`,
+      "--input-type=module", "-e",
+      `import postgres from "postgres";
+       const sql = postgres(process.env.COMBAT_E2E_DATABASE_URL, {max:1});
+       try {
+         const changed = await sql.unsafe("UPDATE profiles SET profile_json = jsonb_set(profile_json::jsonb, '{currencies,honor}', '200'::jsonb)::text, rev = rev + 1 WHERE account_id = (SELECT id FROM accounts WHERE username = $1) RETURNING account_id", [process.argv[1]]);
+         if (changed.length !== 1) throw new Error("expected one dev fixture account");
+       } finally { await sql.end(); }`,
       winnerName,
     ],
     { cwd: SERVER_DIR },
-  );
+    );
+  }
 
   // Reload → fresh profile with the topped-up Vinh Dự → arena → Vinh Dự shop.
   await pageW.reload();
@@ -197,8 +215,18 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
     return key === "deck-select";
   }, undefined, { timeout: 30_000 });
   await enterArena(pageW);
-  await clickDesign(pageW, 1110, 518); // "Cửa hàng Vinh Dự"
+  // Welcome may enqueue recovery of the retained completed room. Let the
+  // scene manager apply that transition before navigating toward the shop.
+  await pageW.evaluate(() => new Promise<void>(resolve => (window as any).__vn.game.events.once("poststep", () => resolve())));
+  await expect.poll(() => sceneKey(pageW), {timeout:60_000}).toMatch(/^(arena|combat)$/);
+  if (await sceneKey(pageW) === "combat") {
+    expect((await vn(pageW))?.ended?.result).toBe("won");
+    await clickSceneText(pageW, "combat", "Về Đấu Trường");
+    await expect.poll(() => sceneKey(pageW)).toBe("arena");
+  }
+  await clickSceneText(pageW, "arena", "Cửa hàng Vinh Dự");
   await expect.poll(() => sceneKey(pageW), { timeout: 15_000 }).toBe("shop");
+  console.info("Reload recovery and shop entry verified; elapsed ms", Date.now() - stamp);
 
   const before = await api("/api/profile", { token: winner.token });
   const jadeBefore = (before.body.profile as { currencies: { moonJade: number } }).currencies.moonJade;
@@ -213,4 +241,5 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
       return currencies.moonJade === jadeBefore + 160 && currencies.honor === 50;
     }, { timeout: 15_000 })
     .toBe(true);
+  console.info("Honor shop purchase verified; elapsed ms", Date.now() - stamp);
 });

@@ -14,6 +14,7 @@ export class MatchRegistry {
   private readonly tombstones = new Set<string>();
   /** `rejoin` consumed this once already; the scene reads it via `consumeLostPending`. */
   private readonly lostPending = new Map<string, boolean>();
+  private disposed = false;
 
   constructor(
     private readonly onSettled: (matchId: string, settlement: MatchSettlement) => Promise<void>,
@@ -23,7 +24,7 @@ export class MatchRegistry {
 
   /** Tracks a match the account is (or was) seated in. Tombstoned ids never come back. */
   retain(match: NetMatch): void {
-    if (this.tombstones.has(match.matchId)) return;
+    if (this.disposed || this.tombstones.has(match.matchId)) return;
     this.matches.set(match.matchId, match);
   }
 
@@ -34,6 +35,7 @@ export class MatchRegistry {
    * through to the scene handler. Returns true when the frame was consumed.
    */
   handle(message: ServerMessage): boolean {
+    if (this.disposed) return true;
     if (!("matchId" in message)) return false;
     const matchId = message.matchId;
     if (this.tombstones.has(matchId)) return true;
@@ -53,6 +55,7 @@ export class MatchRegistry {
    * the reconciled view); every other pending retained id gets a `match.sync`.
    */
   recover(snapshot: MatchSnapshot | null): void {
+    if (this.disposed) return;
     const match = snapshot === null || this.tombstones.has(snapshot.matchId) ? undefined : this.matches.get(snapshot.matchId);
     if (snapshot !== null && match !== undefined) {
       this.lostPending.set(match.matchId, match.rejoin(snapshot));
@@ -82,6 +85,7 @@ export class MatchRegistry {
 
   /** Logout — no entry of the old account may leak into the next session. */
   dispose(): void {
+    this.disposed = true;
     this.matches.clear();
     this.tombstones.clear();
     this.lostPending.clear();
@@ -107,6 +111,7 @@ export class MatchRegistry {
     try {
       await this.onSettled(match.matchId, match.ended!);
     } catch (error) {
+      if (this.disposed) return;
       console.error("settle failed:", error);
       this.notify("Không nhận được thông tin thưởng; hồ sơ sẽ được cập nhật lại.");
     }

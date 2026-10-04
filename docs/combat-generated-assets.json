@@ -1,0 +1,927 @@
+{
+  "date": "2026-10-04",
+  "generator": "OpenAI built-in image generation",
+  "styleTarget": "Older supplied Leonardo.AI anime portraits: dark ink contours, cel shading, vivid illustrated palette. Leonardo references guide the style; these new outputs were generated with OpenAI.",
+  "preserved": "13 existing normal portraits and their13 approved derived awakened portraits",
+  "entries": [
+    {
+      "key": "m05_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/m05_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Hoắc Liệt (Liệt Hỏa). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Mọi đòn từ lá tấn công của Hoắc Liệt gây thêm 3 damage.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m05.png"
+      ],
+      "regeneratedAnime": false,
+      "sha256": "d2669b6afa697c3c3d0ba22196d46bc829d4c3207e4130720fb47bab80bfd4ba",
+      "sourceFile": "exec-2bb10ec0-14e5-4176-9a1e-2ae050119cca.png",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f04_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/f04_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Ôn Như Ý (Bách Thảo). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Khi lá của Ôn Như Ý áp Hồi Phục, mọi Hero còn sống đều nhận Hồi Phục.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/f04.jpg"
+      ],
+      "regeneratedAnime": false,
+      "sha256": "dc0a92643ebe166bda289c0e12895aab82873e935f698d031befac2697f745e5",
+      "sourceFile": "exec-d5d86f81-a388-4568-b2c3-c1df7643ec93.png",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "m06_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/m06_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Tô Dạ (Vô Nguyệt). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Từ lượt sau: lá đầu tiên của Tô Dạ mỗi lượt giảm 3 Nguyệt Lực.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m06.jpg"
+      ],
+      "regeneratedAnime": false,
+      "sha256": "e5b0dc00698bac29caf0840e5c6ea5a64b31f23ad5dc167e7b4748edf91ca6f3",
+      "sourceFile": "exec-079e07c7-9f56-4e77-8125-d43f5f9e510c.png",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f03_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/f03_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Tần Sương (Hàn Sơn Kiếm). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Damage từ lá của Tần Sương lên kẻ địch đang Đóng Băng tăng gấp đôi.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/f03.jpg"
+      ],
+      "regeneratedAnime": false,
+      "sourceFile": "exec-338a7057-cdbb-4795-9c47-ff61c1c2adbb.png",
+      "sha256": "e5eb3323425d395f610beb948d4f60427c3d63d7b1896471aaa05bd2258412d6",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f02_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/f02_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Diệp Linh Lung (Thiên Diện). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Mỗi buff Diệp Linh Lung cướp bằng lá của mình được thêm 1.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": false,
+      "sourceFile": "exec-a8bcf8e4-3c37-4804-90b9-3094b0663801.png",
+      "sha256": "cfe893fe2452632aaca059bf00d99ceedf879c133c290653448f70708e185a28",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "m01_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/m01_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Tạ Vân Chiêu (Thiên Cơ). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Đầu lượt, lá rẻ nhất trên tay giảm 2 Nguyệt Lực trong lượt đó.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m01.jpg"
+      ],
+      "regeneratedAnime": false,
+      "sha256": "3c4ddddd74e7212bef814a9a2e9bd2cf68981a1b45aa0e698f56761363d262a1",
+      "sourceFile": "exec-e2fd688e-6542-481a-b5af-8b73fccc5b00.png",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "m02_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/m02_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Lục Hàn Phong (Thiết Bích). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Đầu lượt Lục Hàn Phong nhận 4 giáp.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m02.jpg"
+      ],
+      "regeneratedAnime": false,
+      "sha256": "d8e8b7c633181248b09b43803113aa988264b1126b0f38c55449aad5de4dd8f2",
+      "sourceFile": "exec-d38e3ff4-89c5-487f-9f52-e3619ea1b660.png",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "m03_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/m03_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Mặc Tử Du (Vạn Kim). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Đầu lượt, sau khi rút bù tay, Chiêm Bài 4 miễn phí.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m03.png"
+      ],
+      "regeneratedAnime": false,
+      "sha256": "13401bcb37156ea9cbf29c19b5ee5e99f742c9e112701a5715cb4bf62c7595d9",
+      "sourceFile": "exec-4547b5e3-aa01-4ce9-a36a-a7db260b25c7.png",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "m04_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/m04_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Bùi Thanh Minh (Thần Y). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Lá hồi của Bùi Thanh Minh giải trừ Hero được hồi.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg"
+      ],
+      "regeneratedAnime": false,
+      "sha256": "12ee46f68275a3c94ee736596b318ffeb0cb36f687b0d18393695a3507931e51",
+      "sourceFile": "exec-ee023a85-f8c5-44fc-9cc9-a0d8645f7082.png",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f01_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/f01_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Thẩm Nguyệt Hoa (Nguyệt Chủ). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Khi thăng cấp Thẩm Nguyệt Hoa nhận Nguyệt Hoa Chiếu Thế vào tay.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/f01.jpg"
+      ],
+      "regeneratedAnime": false,
+      "sourceFile": "exec-70dde824-ae58-46c1-ba77-d6dddfd25ba4.png",
+      "sha256": "79668c8750b159ef05dbd3da74797e828f52c3755c1b8d8fda4d735113937e1c",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "m07_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/m07_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Ninh An (Huyết Mạch). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Đầu lượt Ninh An nhận 1 buff ngẫu nhiên (Sức Mạnh 1, Cường Hóa 3, Hồi Phục 3 hoặc Phản Đòn 2).. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m07.jpg"
+      ],
+      "regeneratedAnime": false,
+      "sourceFile": "exec-019d1d46-9f62-4b82-94d8-48ef0e978f95.png",
+      "sha256": "00ea6d8abd2506010fd5899020824a7250fd9a1702ce3f85c16972c7cc85c169",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "m08_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/m08_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Khương Tịch (Quan Tinh). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Đầu lượt Khương Tịch mở Chọn Pha: giữ pha hoặc cho trăng tiến 1–2 pha.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m08.jpg"
+      ],
+      "regeneratedAnime": false,
+      "sourceFile": "exec-620a963b-e1be-4677-8057-ddb64123a0e5.png",
+      "sha256": "3db182b64225085a9250dce15ff77bb9a90c2d64c69c1e890f5d2ab7eff3df9e",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "m10",
+      "category": "heroes",
+      "kind": "normal",
+      "path": "apps/client/public/assets/heroes/m10.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: original combat hero portrait. Subject: determined young commoner scholar, sharp focused eyes, neatly tied black hair with simple wooden hairpin, calligraphy brush tucked behind ear, dark blue hemp hanfu with neat patches and rolled-up sleeves, simple sash with a single blue cord tassel, holding an open book, calligraphy papers with glowing ink characters flying around him, warm oil lamp glow mixed with cool moonlight, soft dark blue blurred background, deep blue and warm amber palette. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-ffa751fa-1565-4617-802d-b2f749fc8483.png",
+      "sha256": "301187385bb085c89a9b51f820a3f21b3af1e4ff848bdf9b0b2043fb5bb47ff2",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "m10_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/m10_up.png",
+      "prompt": "Reference image1 is the FINAL NORMAL hero: preserve exactly this character's face, hair, weapon/prop, clothing palette and2D drawing style. Reference images2–3 are older game art STYLE/COLOR guides only. STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Chu Quyết (Bác Học). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Lá scheme đầu tiên mỗi lượt của Chu Quyết giải quyết hiệu ứng 2 lần.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m10.png",
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-f93ddfcb-2be9-4208-bdba-cb49dab8a6b8.png",
+      "sha256": "ea068ed2b56803fbe53ba9413272baf529b976e87cee4b8f0f8feb523c0af3d6",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f08",
+      "category": "heroes",
+      "kind": "normal",
+      "path": "apps/client/public/assets/heroes/f08.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: original combat hero portrait. Subject: imperious beautiful sorceress, proud cold smirk, red eyeshadow and sharp crimson eyes, long black hair flowing upward, ornate golden phoenix crown with ruby drops and long hanging gold chains, deep crimson and black hanfu with fiery phoenix embroidery and translucent dark red gauze layers, long golden nail guards, violet flames swirling from her raised palm, glowing red rune circles and burning feathers floating around, soft dark red blurred background with blood-red moon glow, crimson black gold and violet palette. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-117f8493-cdf7-4ec1-b172-239fa4be2c57.png",
+      "sha256": "3f7886e44ccab52ad32fe257c7cedd74c833ecbdd7259f760e9adf7d0339d89e",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f08_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/f08_up.png",
+      "prompt": "Reference image1 is the FINAL NORMAL character: preserve exactly this face, hair/fur, weapon/prop, clothing palette and2D drawing style. Reference images2–3 are older game art STYLE/COLOR guides only. STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Phượng Chiêu Dung (Huyết Phượng). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Lá Cấm Thuật của Phượng Chiêu Dung không còn làm nàng mất HP.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/f08.png",
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-774660ad-211c-495e-9409-c3c3b04148a2.png",
+      "sha256": "f9ca5359e1adc87e8527dd76cbded91830ee02e6cb84bd1430c09e93addefb51",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f05",
+      "category": "heroes",
+      "kind": "normal",
+      "path": "apps/client/public/assets/heroes/f05.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: original combat hero portrait. Subject: energetic tomboyish archer woman, big confident grin, shoulder-length messy auburn hair tied to one side, feather and wooden bead ear ornament, short orange-brown hunting hanfu with leather bracers and a sheer amber gauze sash streaming behind, drawing longbow with arrow aimed forward, hair and green leaves blowing in strong wind, soft sunlit forest green blurred background, warm orange brown and forest green palette. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-e2eabc97-f680-484a-ac42-a59056005571.png",
+      "sha256": "5f8cee7fe2e9d6fe4cc8d1445205a8456033d8bf853eb07678e93565271601bd",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f05_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/f05_up.png",
+      "prompt": "Reference image1 is the FINAL NORMAL hero: preserve exactly this character's face, hair, weapon/prop, clothing palette and2D drawing style. Reference images2–3 are older game art STYLE/COLOR guides only. STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Hạ Chi (Xuyên Vân Tiễn). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Mọi đòn đơn mục tiêu từ lá của Hạ Chi đánh thêm kẻ địch đứng ngay sau mục tiêu, cùng damage gốc.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/f05.png",
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-aae1f2fd-bc55-43d6-a49b-2a6a2466f9f6.png",
+      "sha256": "ef366f89b4d43d09f05cc254d931de3202f1d5f5843019fd793824c708407a8b",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f06",
+      "category": "heroes",
+      "kind": "normal",
+      "path": "apps/client/public/assets/heroes/f06.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: original combat hero portrait. Subject: graceful elegant dancer, calm mysterious smile with half-lowered eyes, long dark hair flowing in arcs, silver lotus hair ornament with hanging aquamarine beads, translucent layered azure and teal silk dance hanfu, extremely long sheer ribbons spiraling around her body in mid-spin, silver bracelets with tiny bells, water droplets and floating lotus lanterns glowing around, soft shimmering blue water reflections in blurred background, azure teal and silver palette. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-35d8111c-3df5-48dd-91d2-1d62b3aa9256.png",
+      "sha256": "d9a19ce42a4ca8b384545110f55cb526744dccfa5d0604f9da17b88d127d9b26",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f06_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/f06_up.png",
+      "prompt": "Reference image1 is the FINAL NORMAL hero: preserve exactly this character's face, hair, weapon/prop, clothing palette and2D drawing style. Reference images2–3 are older game art STYLE/COLOR guides only. STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Lam Khê (Kinh Hồng Vũ). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Mê Hoặc do Lam Khê gây thêm 1 lượt; đòn bị đổi mục tiêu của kẻ địch đó gây ×1.5 damage khi Lam Khê còn sống.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/f06.png",
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-e02b856c-b55b-4a36-b828-cc49a5145a84.png",
+      "sha256": "faacb191d133cc6b274a2fff8d108ac299bb168f7bb1e8f12e19bc331c534eca",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f07",
+      "category": "heroes",
+      "kind": "normal",
+      "path": "apps/client/public/assets/heroes/f07.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: original combat hero portrait. Subject: serious intellectual young scholar woman, focused thoughtful eyes glancing up from a book, dark hair in neat bun with calligraphy brush hairpin and small silver bookmark charms, grey-blue hanfu with sheer pale grey gauze layers and ink-stained sleeves, holding an open ancient book with glowing ink characters rising from the pages, calligraphy papers fluttering around like butterflies, soft parchment-toned blurred background, grey-blue parchment and black ink palette. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-5ada8da0-8bce-4850-a030-939156ecf2e6.png",
+      "sha256": "7950cdee248ae4f4106f690e318c9d2c591167110ee923c885af76b7ad9eddf4",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f07_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/f07_up.png",
+      "prompt": "Reference image1 is the FINAL NORMAL character: preserve exactly this face, hair/fur, weapon/prop, clothing palette and2D drawing style. Reference images2–3 are older game art STYLE/COLOR guides only. STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Cố Uyển (Sử Bút). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Lần Phong Ấn đầu tiên mỗi lượt của Cố Uyển còn đặt dấu lên kẻ địch khác.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/f07.png",
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-45f21ca1-3b18-4bc6-98d7-7b189722a9ac.png",
+      "sha256": "28caa9d80d45929903892bc693981248b5af8fc92c34558664eb843026060084",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f09",
+      "category": "heroes",
+      "kind": "normal",
+      "path": "apps/client/public/assets/heroes/f09.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: original combat hero portrait. Subject: cheerful curious young adult woman, bright round eyes and delighted smile, dark hair in two round buns with pearl clusters and small white ribbons fluttering, pale butter-yellow and white hanfu with sheer cream gauze layers, rabbit-shaped embroidered sachet, glowing white jade rabbit spirit leaping from her shoulder, tiny glowing spirit animals and light orbs swirling around, soft pastel yellow blurred background with moon glow, pastel yellow white and soft gold palette. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-6f980a4a-4a41-4f50-a3a9-1ca85c4613a4.png",
+      "sha256": "93ba3e617d1bb9bcae6e14eabbce0851077b402b3588e779fff3ee12b30890cf",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f09_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/f09_up.png",
+      "prompt": "Reference image1 is the FINAL NORMAL character: preserve exactly this face, hair/fur, weapon/prop, clothing palette and2D drawing style. Reference images2–3 are older game art STYLE/COLOR guides only. STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Tiểu Mãn (Thỏ Ngọc Thức Tỉnh). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Linh Thú của Tiểu Mãn dùng bản thức tỉnh (18 HP, đòn 5 damage và hồi chủ 2 HP).. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/f09.png",
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-dfcfe5db-f161-41f7-9445-ada5329a65dc.png",
+      "sha256": "4fd81a66309e7e13fe1bb1207f8cc31e59259a3df647c32d680cf2f1d9d20750",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "f10_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/f10_up.png",
+      "prompt": "Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Liễu Tịnh Nhan (Nguyệt Hồn). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Khi thăng cấp: Hồi Hồn đồng đội đã ngã gần nhất với 30% HP tối đa.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/f10.jpg"
+      ],
+      "regeneratedAnime": false,
+      "sourceFile": "exec-105a0851-702d-4fb1-b606-d6c1de17b950.png",
+      "sha256": "fcf13231237e2300694fbd3f8650f6fe60be6f74089aef551d7a2d22d175561d",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "m09",
+      "category": "heroes",
+      "kind": "normal",
+      "path": "apps/client/public/assets/heroes/m09.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: original combat hero portrait. Subject: melancholic elegant exiled prince, sorrowful downcast eyes, long dark hair loosely tied with a worn faded ribbon, strands drifting across his face, faded moss-green royal hanfu with pale sage gauze layers and tarnished gold embroidery, broken jade pendant on a cord, holding a guqin zither against his chest, bamboo leaves and translucent musical light ribbons swirling around, soft misty pale green blurred background, muted green grey and gold palette. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-e3c8c49d-8fef-4293-a4ca-e7b8cded5c09.png",
+      "sha256": "7275c8acba10028c0583146b4a071390fc2597dc7485700a58b102f7e135bbb1",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "m09_up",
+      "category": "heroes",
+      "kind": "awakened",
+      "path": "apps/client/public/assets/heroes/m09_up.png",
+      "prompt": "Reference image1 is the FINAL NORMAL hero: preserve exactly this character's face, hair, weapon/prop, clothing palette and2D drawing style. Reference images2–3 are older game art STYLE/COLOR guides only. STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: identity-preserve. Asset type: awakened combat hero portrait. Edit the referenced NORMAL portrait into the awakened form of Đoàn Lạc (Vong Quốc Khúc). Preserve the SAME face, apparent adult age, hair color and hairstyle, personal identity, clothing palette and signature weapon/prop; no second character. Upgrade the existing outfit with richer ornament, moonlit rim light and a restrained motif inspired by this ability: Debuff có thời hạn do Đoàn Lạc gây kéo dài thêm 1 vòng.. Keep full face recognizable at thumbnail size; awakening must be visually distinct with light, flowing robes and motif, not a copied normal image. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m09.png",
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-81c419e3-d45f-42ce-b1b8-fd7d9451e511.png",
+      "sha256": "6ca73a5568233d2e048380afa2cf33cee5d3410e7e72a59bdd4942c38f29699a",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "puppet_guard",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/puppet_guard.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Khôi Lỗi Canh Thư: ancient armored wooden-and-jade library guardian puppet, heavy bronze pauldrons, carved expressionless wooden face, broad armored shoulders and stone hammer, navy gold moonlight. Combat role motifs grounded in game data: Thủ Thế, Trọng Kích, Phản Giáp, Chấn Địa, Phá Thành. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-bea3fe4c-d574-4f69-be6a-406c0ab1de68.png",
+      "sha256": "6b90efae7eed8ce530508fe54a4c161fcf858b908b12f8e77582a570d79def48",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "shadow_fox",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/shadow_fox.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Ảnh Hồ: a mystical shadow fox animal, sleek dark violet fur, bright golden eyes, wisps of translucent illusion, paws and pointed ears readable, indigo moonlight. Combat role motifs grounded in game data: Song Trảo, Huyễn Thuật, Cắn Xé, Ẩn Hình, Ảnh Sát. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-d318edf3-4d3f-4086-9f90-80609f685ee5.png",
+      "sha256": "d6dcd33e1ef7e34affa0024ac78006dd78f7ebc0d26c7a0de1bff9ed94d6b990",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "moon_ape",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/moon_ape.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Thần Viên Trấn Nguyệt: a powerful moon guardian ape, silver grey fur, broad face and shoulders, jade lunar armor, clenched massive fists, blue silver lunar glow. Combat role motifs grounded in game data: Nguyệt Giáp, Cuồng Nộ, Trấn Sơn Quyền, Hống Nguyệt, Thiên Nguyệt Kích. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-4374514c-dda1-488d-ae7c-818cc4c23d34.png",
+      "sha256": "f9f07a7b19139d7d48d41bd77e63f0f096660b4b1f24fe6c950e5a38c0612ef7",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "book_wraith",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/book_wraith.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Thư Hồn: a spectral librarian spirit formed from flowing torn scroll ribbons around a readable ghostly face and robes, floating closed books, dark violet and parchment gold palette, no writing. Combat role motifs grounded in game data: Nguyền Thư, Tự Tu, Thư Kích, Thiêu Thư, Phong Ấn. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-08d60153-a366-4712-a85f-1a1b5103a715.png",
+      "sha256": "367df932dbde169aba776526a7a8ca29ba3cd10c3675977ff32fa9c11e00bcd7",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "black_guard",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/black_guard.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Hắc Giáp Vệ: an imposing black-armored adult palace guard, closed dark helm with visible eyes, ornate bronze shield and heavy dao blade, black gold palette. Combat role motifs grounded in game data: Chấn Hồn, Hắc Thuẫn, Thịnh Nộ, Hoành Tảo, Hắc Trảm. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-ef022c56-8659-48fd-8adc-dc99e04d2ed0.png",
+      "sha256": "cf45ebd99cf8269cee27246fb049e7d3ec268c4e15c3a25eb46b61f4e04dd373",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "fox_king",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/fox_king.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Hồ Vương: a majestic nine-tailed fox animal monarch with luminous white silver fur, royal gold and jade ornaments, fierce elegant fox face and crownlike ears, layered tails in background, crimson violet glow. Combat role motifs grounded in game data: Huyễn Ảnh, Hồ Khiếu, Huyết Hồ, Vương Trảo, Cửu Vĩ Trảm. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-ab38b604-2fde-4a08-b356-cb086bd22690.png",
+      "sha256": "856db7cc70e49315da277c27835b104452799006412eff57d36ed68e4359a524",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "eclipse_lord",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/eclipse_lord.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Nguyệt Thực Ma Quân: an original adult lunar eclipse demon sovereign in dark violet layered ceremonial hanfu and obsidian silver armor, long dark hair, readable stern face, crescent-shaped blade and eclipsed moon aura, indigo crimson restrained light. Combat role motifs grounded in game data: Nguyệt Nha, Triều Nguyệt, Nguyệt Mạc, Ám Triệu. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-79525352-36a2-440a-b2ce-53dd330869e9.png",
+      "sha256": "173c2a0fad16ce154886b9a6449b3610da3028648f54305ff1cc3aac32433276",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "thanh_loan_thi_quan",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/thanh_loan_thi_quan.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Thanh Loan Thí Quan: an adult elegant scholar examiner from the azure phoenix academy, flowing blue silver hanfu, jade hair crown, long calligraphy brush held safely near torso, stern intelligent face, abstract ink wind without writing. Combat role motifs grounded in game data: Bút Phong, Tỏa Nguyệt, Mực Ấn, Luận Kiếm, Nguyệt Chú. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-df280881-ffe3-41f0-b61c-adf0b9cdec75.png",
+      "sha256": "e8eda534e4c2ca875a4a246d171241ddc8998525b4d94b07c541354fd90ddb1f",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "huyen_vu_thi_quan",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/huyen_vu_thi_quan.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Huyền Vũ Thí Quan: an adult martial examiner from the black tortoise academy, black bronze scale armor, powerful guarded stance and jade tortoise shoulder emblem, disciplined readable face, earth gold light. Combat role motifs grounded in game data: Thiết Chưởng, Quy Giáp, Phản Kích, Truy Phong, Huyền Vũ Bích. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-16eaa9a3-11a0-454a-9aad-6420e16e471a.png",
+      "sha256": "1fa49458aad536a5a0f78542ee9edf84138bec0a0864d130fd5fcfb2d73192c1",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "bach_lo_thi_quan",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/bach_lo_thi_quan.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Bạch Lộ Thí Quan: an adult healer examiner from the white heron academy, white jade green hanfu, heron feather ornament, fine acupuncture needle between fingers and medicinal jade bottle, calm readable face, pale mint light. Combat role motifs grounded in game data: Châm Kích, Dưỡng Sinh, Cam Lộ, Kim Châm, Hồi Xuân. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-2977f8fe-31a1-4775-a96b-20db29e9ced2.png",
+      "sha256": "545e7b72ae017c00fe7b5151d8ee25c8ee1d55749540d6e5673bc9de1632f09d",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "khao_hach_chi_linh",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/khao_hach_chi_linh.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Khảo Hạch Chi Linh: an ancient living jade-and-stone examination guardian spirit, humanoid stone face and shoulders, glowing jade seal emblem without writing, carved crescent ornaments, teal gold aura. Combat role motifs grounded in game data: Thạch Trảo, Khảo Ấn, Trấn Áp, Ngọc Bích, Lạc Ấn. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-e0eb84ae-919c-4635-964e-ea80f98a7e91.png",
+      "sha256": "32b476ad210b5a9a70ba970ac56390d16eb972ea20fae7a1b19ab23dfcf2a7c2",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "hac_y_mat_tham",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/hac_y_mat_tham.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Hắc Y Mật Thám: an adult covert court scout in black layered hanfu, tied black hair, lower face cloth mask with sharp eyes visible, concealed needles and jade intelligence token, indigo grey palette. Combat role motifs grounded in game data: Ám Châm, Thính Tức, Đạo Ấn, Mai Phục, Cấp Báo. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-8a83bc1f-b89c-493e-98ca-7966525074d5.png",
+      "sha256": "00151af90e2d40af396c915861caf34479cd4d56d06af5cc44351ea79174edc7",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "vo_nguyet_am_sat",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/vo_nguyet_am_sat.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Vô Nguyệt Ám Sát: an adult silent assassin of the moonless faction, dark black violet stealth hanfu and layered light armor, long dark hair, lower face veil and intense eyes, curved silver dagger, dim violet light. Combat role motifs grounded in game data: Lãnh Đao, Ám Chủ, Tản Ảnh, Đoạt Mệnh, Vô Thanh. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-c8483c48-f116-46e2-b553-a307b01a212e.png",
+      "sha256": "e92e6c784217c70f5e678649c799001ebb2fa553b35a1365b95d48680b12393e",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "vo_nguyet_nghi_si",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/vo_nguyet_nghi_si.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Vô Nguyệt Nghi Sĩ: an adult moonless ritual celebrant in black plum ceremonial hanfu, severe readable face, long hair and intricate dark silver headdress, pale crescent ritual staff, extinguished constellation motes, violet grey palette. Combat role motifs grounded in game data: Hắc Chúc, Tế Tinh, Đoạn Tinh, Vô Vọng, Tàn Nguyệt. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-352f7d5f-7bce-47b8-87b0-09eef5d6d22d.png",
+      "sha256": "f22a1358799caecd2bce9af8152dd69a751ce6c51dd3ae47243f4c99ea3a1e7a",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "vo_nguyet_anh_chu",
+      "category": "enemies",
+      "kind": "enemy",
+      "path": "apps/client/public/assets/enemies/vo_nguyet_anh_chu.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: one original combat enemy portrait for Vọng Nguyệt Thư Viện. Subject Vô Nguyệt Ảnh Chủ: an adult sovereign of the moonless shadow faction, long black hair, readable commanding face, elaborate black silver hanfu with shadow ribbons, crescent dao at side, dark purple moon-eclipse aura. Combat role motifs grounded in game data: Ảnh Châm, Đoạt Uy, Ám Chiếu, Tản Thể, Đoạt Nguyệt, Vô Nguyệt Trảm. One finished portrait,2:3 aspect,1024x1536 pixels or larger. Upper body to thigh, one centered subject, fully visible head and face in upper two thirds, safe margins for136x196 and100x148 cover crop. Soft uncluttered background with restrained atmospheric motifs; strong readable silhouette. No words, calligraphy, letters, watermark, signature, frame, card border, labels or UI. Natural correct hands. ",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-6c909e9f-7871-4f09-b288-5082243255b5.png",
+      "sha256": "c8bb97987ed88742cdd885d7bcf8e3eaa5becaea92e3d49e4ebb203789f0f9c7",
+      "width": 1024,
+      "height": 1536,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "tho_ngoc",
+      "category": "summons",
+      "kind": "summon",
+      "path": "apps/client/public/assets/summons/tho_ngoc.png",
+      "prompt": "STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: stylized-concept. Asset type: original combat summon portrait. A cute alert magical jade rabbit, snowy white soft fur, long complete rabbit ears, bright teal eyes, tiny jade pendant and pale mint lunar wisps. Clearly a rabbit animal, not a person. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One centered rabbit, square1024x1024, face and ears have wide safe margins for80x108 centered cover crop, simple pale mint mist background. No text, symbols resembling writing, watermark, frame, UI or border.",
+      "references": [
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-d1e91888-b612-4520-b1fb-cc17cc82bb4c.png",
+      "sha256": "630e0d9b2a8763eba1381e511feb2f226fa4ee8068e601a0833c72f05881c996",
+      "width": 1254,
+      "height": 1254,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    },
+    {
+      "key": "tho_ngoc_thuc_tinh",
+      "category": "summons",
+      "kind": "awakened_summon",
+      "path": "apps/client/public/assets/summons/tho_ngoc_thuc_tinh.png",
+      "prompt": "Reference image1 is the FINAL NORMAL character: preserve exactly this face, hair/fur, weapon/prop, clothing palette and2D drawing style. Reference images2–3 are older game art STYLE/COLOR guides only. STYLE IS THE PRIMARY REQUIREMENT: Precisely match the attached older Leonardo Anime game illustrations: unmistakable 2D anime, expressive large anime eyes, simplified sharp faces, visible dark navy ink outlines, smooth flat cel-shaded color regions with two or three hard-edged shadow bands, graphic white highlights, clean stylized hair strands, vivid sapphire/teal/jewel colors and lavender shadows, luminous pale skin, clear graphic embroidered clothing, bright saturated illustrated environments. Keep restrained gold accents. NO photorealism, NO realistic skin/fur or fabric texture, NO painterly muddy colors, NO 3D rendering, NO muted brown-gray realism. The attached images are STYLE/COLOR references only, do not copy their characters. Use case: identity-preserve. Asset type: awakened original combat summon. Edit the referenced jade rabbit into its awakened form. Preserve the same white rabbit face, ears, teal eyes and jade pendant identity. Add luminous jade fur accents and a gentle crescent halo with tiny healing motes, more flowing moon magic around body, recognizably stronger than normal. Hand-painted Chinese mobile game gufeng ANIME splash illustration, crisp elegant linework, stylized anime eyes and facial features, rich illustrated silk folds, luminous painted shading, flowing ribbons, delicate gold ornament. Match the existing original game portraits: no photographic realism, no 3D rendering. One rabbit only, square1024x1024, complete ears and face inside centered80x108 cover-safe area with generous margins. Pale mint moonlit background. No text, watermark, border, frame or UI.",
+      "references": [
+        "apps/client/public/assets/summons/tho_ngoc.png",
+        "apps/client/public/assets/heroes/m04.jpg",
+        "apps/client/public/assets/heroes/f02.jpg"
+      ],
+      "regeneratedAnime": true,
+      "sourceFile": "exec-ed9bf423-1242-4ae7-9a60-ba21423130d2.png",
+      "sha256": "f99fc64761867a4a44c766237104f394d9ff6b46005180a9ee03fd18b5bf897a",
+      "width": 1254,
+      "height": 1254,
+      "cropQA": [
+        "136x196",
+        "100x148",
+        "80x108"
+      ]
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { clickSceneText } from "./helpers/combat";
 
 /**
  * `16` §8.4 e2e — a match settlement outlives the combat scene: resigning in a
@@ -130,7 +131,7 @@ test("settlement sống ngoài combat: rời trận vẫn xử lý, frame lặp 
     .toBe(true);
 
   // Rời combat về Đấu Trường — scene unbind callback, registry vẫn giữ quyết định.
-  await clickDesign(page, 640, 476); // "Về Đấu Trường"
+  await clickSceneText(page, "combat", "Về Đấu Trường");
   await expect.poll(() => sceneKey(page)).toBe("arena");
 
   // matchId nằm trong tombstone — settlement xử lý đúng một lần.

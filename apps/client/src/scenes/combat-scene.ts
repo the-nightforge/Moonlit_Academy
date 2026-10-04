@@ -155,6 +155,7 @@ export class CombatScene extends Phaser.Scene {
   private gameData!: GameData;
   private state!: CombatState;
   private root!: Phaser.GameObjects.Container;
+  private rootReady = false;
   private targeting: string | null = null;
   private validTargetIds = new Set<string>();
   /** The aim line from the selected card to the hovered valid target. */
@@ -194,6 +195,7 @@ export class CombatScene extends Phaser.Scene {
   private netMatch: NetMatch | null = null;
   private mySeat = 0;
   private timerText: Phaser.GameObjects.Text | null = null;
+  private endTurnObjects: Phaser.GameObjects.GameObject[] = [];
   private netDown = false;
   private emotePanel = false;
   private lastEmoteAt = 0;
@@ -243,6 +245,12 @@ export class CombatScene extends Phaser.Scene {
   }
 
   create() {
+    this.rootReady = false;
+    this.endTurnObjects = [];
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.rootReady = false;
+      this.endTurnObjects = [];
+    });
     this.gameData = session.data;
     this.netMatch = session.match;
     this.state = this.netMatch ? this.netMatch.view : session.state;
@@ -279,6 +287,7 @@ export class CombatScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off("resize", onResize));
     useDesignCamera(this);
     this.root = this.add.container(0, 0);
+    this.rootReady = true;
     this.input.mouse?.disableContextMenu();
     // Preferences are local-only; the audio context waits for the first gesture.
     this.settings = loadCombatSettings(
@@ -571,6 +580,7 @@ export class CombatScene extends Phaser.Scene {
       triggerAnchors: this.triggerAnchors,
       runtime,
       audio: this.audio,
+      forfeited: this.netMatch?.forfeited,
     })
       .then(() => runtime.drain())
       .finally(() => {
@@ -727,12 +737,18 @@ export class CombatScene extends Phaser.Scene {
 
   /** The single source of truth for the input lock (`16` §8.4). */
   private syncInputLock(): void {
+    const previous = this.inputLocked;
     this.inputLocked =
       this.playback.busy ||
       (this.netMatch?.pending ?? false) ||
       this.netMatch?.ended != null ||
       this.storyFinishing ||
       (this.netMatch !== null && this.netDown);
+    if (this.rootReady && this.root.scene && previous !== this.inputLocked && this.endTurnObjects.length > 0) {
+      for (const object of this.endTurnObjects) this.root.remove(object, true);
+      this.endTurnObjects = [];
+      this.renderEndTurn(this.state.players[this.mySeat]!);
+    }
   }
 
   /** Redraws once the queue drains — immediately when it is already idle. */
@@ -871,6 +887,7 @@ export class CombatScene extends Phaser.Scene {
   // ---- rendering ----
 
   private renderAll() {
+    this.endTurnObjects = [];
     this.layout = computeCombatLayout(this.state, this.mySeat);
     this.root.removeAll(true);
     this.tooltip?.destroy();
@@ -1199,7 +1216,7 @@ export class CombatScene extends Phaser.Scene {
     const { x, y, size } = this.moonAnchor;
     const phase = this.gameData.moonPhases[state.moonIndex]!;
     const bloodMoon = state.bloodMoonRounds > 0;
-    const iconKey = `ui:moon_${bloodMoon ? "blood" : phase.id}`;
+    const iconKey = `ui:moon_${phase.id}`;
     const layer = this.moonLayer ?? this.root;
     const model = moonHudModel(this.gameData, state);
     const hud = renderMoonHud(this, model, this.layout, this.moonAnchor);
@@ -1611,11 +1628,12 @@ export class CombatScene extends Phaser.Scene {
       spec.unit !== undefined
         ? statusBadgeModels(this.state, spec.unit, spec.w)
         : spec.statuses.map((status) => ({ id: status.id as StatusId | "seal" | "overflow", label: status.id, value: status.value }));
-    const r = 10;
+    const compact = spec.w < 100;
+    const r = compact ? 8 : 10;
     const step = 2 * r + 4;
-    const perRow = Math.max(1, Math.floor((spec.w - 16) / step));
+    const perRow = compact ? 2 : Math.max(1, Math.floor((spec.w - 16) / step));
     badges.forEach((badge, index) => {
-      const ix = -spec.w / 2 + 8 + r + (index % perRow) * step;
+      const ix = compact ? 2 + (index % perRow) * step : -spec.w / 2 + 8 + r + (index % perRow) * step;
       // Clear of the HP bar (h/2 - 32 … h/2 - 26).
       const iy = spec.h / 2 - 37 - r - Math.floor(index / perRow) * step;
       if (badge.id === "overflow") {
@@ -1904,12 +1922,13 @@ export class CombatScene extends Phaser.Scene {
       const tile = this.add.rectangle(x, y, 24, 34, 0x141b33).setStrokeStyle(1, OWNER_COLORS[instance.ownerIds[0]!] ?? 0x5f8fdd);
       parent.add(tile);
       // The partner's cost, not ours — their seat's modifiers apply (`17` §16).
-      const partnerCost = getEffectiveCost(this.gameData, state, instanceId, partner.index);
+      const model = combatCardModel(this.gameData, state, instanceId, partner.index);
+      const partnerCost = model.effectiveCost;
       this.text(x, y, `${partnerCost}`, 12, partnerCost < card.cost ? "#8fd08f" : COLORS.text, parent).setOrigin(0.5);
       tile.setInteractive();
       tile.on("pointerover", () => {
         this.tooltip?.destroy();
-        this.tooltip = showCardTooltip(this, x, y - 120, this.gameData, card);
+        this.tooltip = showCardTooltip(this, x, y - 120, this.gameData, card, [], { effectiveCost: model.effectiveCost, costReasons: model.costReasons });
       });
       tile.on("pointerout", () => {
         this.tooltip?.destroy();
@@ -2117,7 +2136,7 @@ export class CombatScene extends Phaser.Scene {
         drawComposition(this.gameData, this.state, seat.index, this.mySeat),
       );
     });
-    const discardHit = this.add.zone(anchors.discard.x, anchors.discard.y, 90, 100).setInteractive({ useHandCursor: true });
+    const discardHit = this.add.zone(anchors.discard.x, anchors.discard.y + 16, 90, 60).setInteractive({ useHandCursor: true });
     parent.add(discardHit);
     discardHit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (pointer.button !== 0) return;
@@ -2359,6 +2378,7 @@ export class CombatScene extends Phaser.Scene {
       if (this.castingIds.has(instanceId)) return;
       this.tooltip?.destroy();
       this.tooltip = null;
+      if (this.targeting === instanceId) return;
       container.setScale(1);
       container.y = y;
       container.setDepth(0);
@@ -2590,11 +2610,11 @@ export class CombatScene extends Phaser.Scene {
   private renderCombatEnd() {
     if (this.netMatch) {
       const end = this.netMatch.ended;
-      const won = end ? end.result === "won" : this.state.winner === this.mySeat;
+      const won = end ? end.result === "won" : this.state.mode === "coop" ? this.state.status === "won" && !this.netMatch.forfeited : this.state.winner === this.mySeat;
       const draw = end ? end.result === "draw" : this.state.winner === "draw";
       // Terminal recovery lands here without a combatEnded beat — the audio
       // instance dedupes so an earlier beat's sting never repeats (`16` §8.3).
-      this.audio.play(draw ? "draw" : won ? "victory" : "defeat");
+      this.audio.play(draw ? "resultDraw" : won ? "victory" : "defeat");
       const reasons: Record<string, string> = {
         resign: "Đối thủ bỏ cuộc",
         timeout: "Đối thủ hết giờ quá nhiều lần",
@@ -2937,15 +2957,17 @@ export class CombatScene extends Phaser.Scene {
    * tooltip says whose turn it is.
    */
   private renderEndTurn(seat: PlayerState) {
+    const firstObject = this.root.list.length;
     const { x, y } = endTurnAnchor(this.layout);
     const coop = this.isCoop;
     const canAct = this.state.status === "playerTurn" || (coop && this.state.status === "choosing");
     const myDone = coop && seat.done === true;
-    const active = canAct && !myDone;
+    const active = canAct && !myDone && !this.inputLocked;
+    const busyLabel = this.netDown ? "Mất kết nối" : this.inputLocked ? "Đang xử lý…" : null;
     const icon = coop
       ? this.add.text(0, -16, "✓", { ...TEXT_BASE, fontSize: "24px", color: active ? COLORS.gold : COLORS.dimText }).setOrigin(0.5)
       : hudImage(this, HUD.hourglass, 0, -16).setAlpha(active ? 1 : 0.45);
-    const btn = this.medallionButton(x, y, active, icon, coop ? "Xong lượt" : "Kết thúc", `Vòng ${this.state.round}`, () =>
+    const btn = this.medallionButton(x, y, active, icon, busyLabel ?? (coop ? "Xong lượt" : "Kết thúc"), `Vòng ${this.state.round}`, () =>
       this.dispatch({ type: "endTurn" }),
     );
     const keep = Math.min(this.gameData.combatConfig.moonReserveMax, seat.moonPower);
@@ -2960,8 +2982,9 @@ export class CombatScene extends Phaser.Scene {
     this.hoverTooltip(btn, () => ({ x: x - 290, y: y - 60 }), () =>
       active
         ? [`${coop ? "Xong lượt" : "Kết thúc lượt"} (phím E) — vòng ${this.state.round}`, `Giữ ${keep} Nguyệt Lực sang lượt sau`]
-        : [waiting, `Vòng ${this.state.round}`],
+        : [busyLabel ?? waiting, `Vòng ${this.state.round}`],
     );
+    this.endTurnObjects = this.root.list.slice(firstObject);
   }
 
   /**

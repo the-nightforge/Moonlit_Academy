@@ -1585,12 +1585,88 @@ luật, RNG, economy, replay):
   (default/hand0/hand1/hand8/hand10 × 4 viewport + denseStatus/longChoice-open/
   folded/summonRevive/pile-draw ở 1280×720).
 - **Timeline**: intro reveal batch vẫn chạy khi `status` đã đọc "mulligan" —
-  dispatch sớm bị input lock chặn; e2e phải `waitIdle` trước khi gửi Đổi Bài
-  (đã ghi trong `e2e/helpers/combat.ts`). Một chuỗi lượt địch đầy đủ ~30–55 s
-  ở tốc độ mặc định — `waitIdle` của spec khóa input dùng timeout 60 s.
-- **Giới hạn**: art U5 còn 44 file (blocker: không có công cụ sinh ảnh trong
-  môi trường — xem `docs/combat-visual-assets.md`); `hand10` vượt `handLimit`
-  của rules nên fixture đẩy thẳng vào `seat.hand` (chỉ e2e, không đổi luật);
-  `longChoice` dùng `chooseMoon` vì Chiêm Bài thật tối đa ~3 lựa chọn;
-  assert bố cục bằng bounds probe (≤1160) chứ chưa so pixel-text clip ở e2e —
-  phần kiểm ảnh thật vẫn là bước thủ công.
+  dispatch sớm bị input lock chặn; e2e phải `waitIdle` trước khi gửi Đổi Bài.
+  Sau đợt sửa review, timing đo cả `runtime.drain`: chuỗi vòng6 seed42/enc_01
+  và chuỗi routine tổng hợp đạt ≤3000ms ở1×; lifecycle dài đạt ≤5000ms.
+  Đây là timeline scheduler của test, không phải đo FPS hay thời gian máy thật.
+- **Giới hạn**: `hand10` vượt `handLimit` của rules nên fixture đẩy thẳng vào
+  `seat.hand` (chỉ e2e, không đổi luật). `longChoice` cũ là Chọn Pha tổng hợp;
+  Tiên Tri thật có4 lựa chọn, đã được kiểm riêng bên dưới. Bộ art anime hiện
+  có đủ57/57 file;6 assertion asset đã chuyển sang kiểm dương và xanh. Crop/
+  contact-sheet/build cuối do root kiểm riêng; ảnh bố cục cũ không chứng nhận
+  toàn bộ phiên bản art cuối cùng.
+
+### Đợt sửa combat review F01–F17
+
+- **Focused regression**:10 file/96 test xanh (`green-focused.log` dưới
+  `.sdd-work/combat-review-fixes/`), gồm phản hồi profile cũ sau đổi tài khoản,
+  retained settlement trên WebSocket thật + pg-mem, kết quả Liên Thủ cả hai
+  ghế, audio rút bài/kết quả, thay summon đã chết, phase boss theo event,
+  reduced motion và timing tới cleanup. Không truy cập DB production.
+- **Browser thật**: phase7a đã tới Chọn Pha +2; phase7b đã thực thi đánh
+  summon, Hồi Hồn và hành động summon sau hồi sinh. Probe Liên Thủ kiểm cả
+  hai ghế ở1280×720,1366×768,1024×576,1280×900:6 hero+2 summon, giáp/status,
+  cost tile/tooltip của partner và actual moon phase khi có badge Huyết Nguyệt.
+  Probe offline dựng state bằng rules, không thay thế gate online.
+- **Input/choice/cast**: chồng rút ởicon/mép dưới/count mở đúng inspector;
+  modal chặn E; selected giữ lift qua pointerout; nút lượt hiện đang xử lý,
+  chặn dispatch thứ hai và mở lại sau idle. Bách Chiến thực thi2 hit qua resize
+  giữa cast; Tiên Tri hiển thị4 option thật, chặn E và click option cuối sinh
+  event `cardChosen` (`browser-narrow.log`:2/2 xanh).
+- **VFX**: production renderer/runtime của14 attack style+spell được kiểm ở
+  1×,2×,reduced motion:3 matrix test xanh,45 ảnh impact, mỗi probe đúng1 impact,
+  attacker trở về vị trí và không còn FX sau drain. Đây là probe renderer,
+  không phải45 trận chơi thật (`green-browser-extra-final.log`).
+- **Ảnh**: `.sdd-work/combat-review-fixes/screenshots/`; đã kiểm hình compact
+  Liên Thủ và menu4 lá. Kiểm body/owner dùng bounds Text Phaser thật, kèm ảnh
+  hand10 ở1280×720 và1024×576. Art đang thay nên nhận xét chỉ áp dụng bố cục.
+- **Còn mở**: root chạy full suite/typecheck/build, offline gate và online
+  lifecycle trên fixture DB đã xác minh; nghiệm thu art/provenance/crop cuối.
+  Expected-fail asset đã bỏ khi đủ file. Menu4 option thật vừa viewport; chưa chứng minh một
+  menu production-data dài tới mức cần scroll. Lỗi context navigation trước
+  đó xảy ra khi preview reload trong lúc ảnh được cập nhật; lượt kiểm hẹp trên
+  preview test tắt HMR xanh mà không hạ assertion hoặc đổi cấu hình sản phẩm.
+
+### Nghiệm thu source và art cuối — 2026-10-04
+
+Mục này cập nhật kết quả của các mục còn mở ở trên. Source và bộ ảnh đã ổn
+định trước gate cuối; preview dùng cấu hình Vite sản phẩm, không tắt HMR.
+
+- Unit: data49 + rules712 (3 skip có sẵn), client211 + server59 đạt. Lượt
+  tổng đầu phát hiện hai summon cùng ghế chồng nhau; sau sửa, cả assertion
+  cũ và hai trường hợp mới cho hai ghế đều đạt. Client/server được chạy lại
+  toàn bộ (`client-server-final.log`), tổng cuối1031 passed/3 skipped.
+- Typecheck toàn workspace và build client/server đạt trên source cuối
+  (`typecheck-final.log`, `build-final.log`).
+- Offline chính thức: `combat-visual.spec.ts`, `phase7a.spec.ts`,
+  `phase7b.spec.ts`, một worker, **15/15 đạt** (`offline-final.log`). Ảnh dưới
+  `test-results/combat-visual/` dùng đủ57 asset cuối; root kiểm trực quan ảnh
+  default1280×720 và hand10 ở1024×576.
+- Art:44 file bổ sung,31 gen lại theo nét anime/màu mẫu cũ; giữ13 thăng cấp
+  dựa trên hero cũ. Đã đối chiếu toàn bộ thường/thăng cấp và creature ở ba
+  kích thước crop;44 hash khớp output gốc. Prompt/nguồn nằm trong
+  `docs/combat-generated-assets.json`, inventory57/57 trong
+  `docs/combat-visual-assets.md`.
+- Online disposable pg-mem: hai đấu tập đạt trong `online-gate.log`; PvP
+  private/reload đạt trong `online-pvp-green.log`; co-op private/Hợp Kích/
+  reload đạt trong `online-arena-coop-green.log` (file đó còn một ca arena
+  thất bại); settlement/tombstone/frame lặp đạt trong
+  `online-settlement-narrow.log`. Không suy diễn rằng lượt sáu ca ban đầu
+  đã xanh toàn bộ. Arena ranked/shop cuối **1/1 đạt**, exit0 trong
+  `arena-budget.log` (khoảng5 phút): sáu thắng +cap120 ở283.451s, tải lại/
+  vào shop ở295.184s, mua thành công ở296.246s (+160 Ngọc,
+  Vinh Dự200→50). Tổng sáu ca online đều có bằng chứng đạt qua các lượt này.
+  Test xử lý retained terminal nếu còn, nhưng log không chứng nhận riêng
+  nhánh điều kiện này đã chạy trong lượt arena.
+  Lượt trước hết giới hạn tổng300s giữa trận thứ sáu; chỉ tăng ngân sách tổng
+  lên600s và thêm log thời gian, giữ nguyên thời gian chờ từng bước/assertion.
+- Independent review: R1 race401 và R2 scene root cũ đã sửa, đỏ→xanh và
+  scoped review đạt; extra summon layout và các thay đổi acceptance cũng
+  được review đạt. Delta arena cuối đạt cả spec/quality trong
+  `arena-final-review.md`. Không thay luật, RNG hoặc economy.
+
+Log nằm trong `.sdd-work/combat-review-fixes/`. Không truy cập DB production;
+nhánh topup PostgreSQL dev yêu cầu URL riêng rõ ràng và chưa chạy trên
+PostgreSQL thật. Đã bỏ phụ thuộc SQLite cũ của arena E2E. Timing đo tới
+cleanup trên scheduler, không phải FPS; menu Tiên Tri thật có4 lá, chưa có
+bằng chứng menu dữ liệu production dài đến mức cần cuộn.

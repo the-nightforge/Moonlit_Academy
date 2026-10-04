@@ -149,6 +149,7 @@ test("7a: Chọn Pha mở khi M08 thăng cấp, chọn +2 đẩy Nguyệt Luân 
     handle.game.scene.getScene("combat")!.restart();
   });
   await expect.poll(async () => (await probe(page)).status, { timeout: 15_000 }).toBe("mulligan");
+  await expect.poll(async () => (await probe(page)).inputLocked, { timeout: 15_000 }).toBe(false);
 
   // Keep the opening hand, then force M08 leveled up (debug hook) and end the turn.
   await page.evaluate(() => {
@@ -202,9 +203,20 @@ test("7a: Chọn Pha mở khi M08 thăng cấp, chọn +2 đẩy Nguyệt Luân 
     .toBe(true);
   expect((await probe(page)).eventTypes.some((e) => e.type === "moonChoiceOpened")).toBe(true);
 
-  // Buttons sit at x = 400/640/880, y = 380 — the rightmost is "+2".
+  // The choice rows use measured text heights; click the real +2 label bounds.
   const before = (await probe(page)).moonIndex;
-  await clickDesign(page, 880, 380);
+  const choiceAt = await page.evaluate(() => {
+    const scene = (window as any).__vn.game.scene.getScene("combat");
+    const find = (nodes: any[]): any => {
+      for (const node of nodes) {
+        if (node.type === "Text" && node.text.startsWith("+2 —")) return node;
+        if (node.list) { const found = find(node.list); if (found) return found; }
+      }
+    };
+    const bounds = find(scene.root.list).getBounds();
+    return { x: bounds.centerX, y: bounds.centerY };
+  });
+  await clickDesign(page, choiceAt.x, choiceAt.y);
   await expect
     .poll(async () => (await probe(page)).moonIndex, { timeout: 15_000 })
     .toBe((before + 2) % 8);

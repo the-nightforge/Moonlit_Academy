@@ -18,6 +18,31 @@ function target(state: CombatState, id: string): UnitState {
 }
 
 describe("createPresentation", () => {
+  it("replaces a dead summon before its next act and damage beat", () => {
+    const visual = createPresentation(base);
+    const owner = visual.heroes[0]!;
+    const summonId = Object.keys(data.summons)[0]!;
+    visual.summons = [{ id: "reused", defId: summonId, summonId, side: "hero", player: 0, ownerHeroId: owner.id, position: 0, hp: 0, maxHp: 12, armor: 3, statuses: [{ id: "strength", value: 3 }], alive: false }];
+    applyPresentationEvent(data, visual, { type: "summoned", unitId: "reused", summonId, ownerHeroId: owner.id }, base);
+    expect(visual.summons).toHaveLength(1);
+    expect(target(visual, "reused")).toMatchObject({ alive: true, hp: data.summons[summonId]!.maxHp, armor: 0, statuses: [] });
+    applyPresentationEvent(data, visual, { type: "damageDealt", targetId: "reused", amount: 2, hpLost: 2, blocked: 0 }, base);
+    expect(target(visual, "reused").hp).toBe(data.summons[summonId]!.maxHp - 2);
+  });
+
+  it("walks boss phases in order and starts countdown only at its phase", () => {
+    const { state } = fixture("coop");
+    const visual = createPresentation(state);
+    const boss = visual.boss!;
+    const after = cloneState(state);
+    after.boss!.phase = 4;
+    after.boss!.reviveCountdown = 2;
+    for (const phase of [2, 3, 4]) {
+      applyPresentationEvent(data, visual, { type: "bossPhaseChanged", enemyId: boss.enemyId, phase }, after);
+      expect(boss.phase).toBe(phase);
+      expect(boss.reviveCountdown).toBe(phase === 4 ? 2 : null);
+    }
+  });
   it("deep-clones the before state — editing the clone never touches before/after", () => {
     const visual = createPresentation(base);
     const heroId = visual.heroes[0]!.id;

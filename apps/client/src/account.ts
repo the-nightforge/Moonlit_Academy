@@ -10,6 +10,14 @@ export interface ProfileReply {
   rev: number;
 }
 
+/** Invalidates old callbacks when authentication expires as well as on logout. */
+export function resetAccount(): void {
+  auth.generation++;
+  session.registry?.dispose();
+  session.registry = null;
+  session.match = null;
+}
+
 /** Replaces the local copy of the profile with the server's (`16` §2). */
 export function applyServerProfile(reply: ProfileReply): void {
   session.profile = reply.profile;
@@ -25,12 +33,13 @@ export async function mutate<T extends ProfileReply>(
   path: string,
   body?: unknown,
 ): Promise<T> {
+  const generation = auth.generation;
   try {
     const reply = await api<T>(method, path, { body, rev: session.rev });
-    applyServerProfile(reply);
+    if (generation === auth.generation) applyServerProfile(reply);
     return reply;
   } catch (error) {
-    if (error instanceof ApiError && error.code === "stale profile") {
+    if (generation === auth.generation && error instanceof ApiError && error.code === "stale profile") {
       applyServerProfile(error.payload as unknown as ProfileReply);
     }
     throw error;
@@ -42,10 +51,12 @@ export async function mutate<T extends ProfileReply>(
  * when the settlement carried a newer `profileRev`, then announce the result.
  */
 async function settleMatch(matchId: string, settlement: MatchSettlement): Promise<void> {
+  const generation = auth.generation;
   void matchId;
   if (settlement.profileRev !== undefined && settlement.profileRev > session.rev) {
     await resumeSession();
   }
+  if (generation !== auth.generation) return;
   const result = settlement.result === "won" ? "Thắng" : settlement.result === "lost" ? "Thua" : "Hòa";
   const parts: string[] = [];
   if (settlement.rewards?.honor) parts.push(`+${settlement.rewards.honor} ${CURRENCY_LABELS.honor}`);
@@ -65,9 +76,13 @@ export function matchRegistry(): MatchRegistry {
 }
 
 export async function login(username: string, password: string, register: boolean): Promise<void> {
+  const generation = ++auth.generation;
+  session.registry?.dispose();
+  session.registry = null;
   const reply = await api<ProfileReply & { token: string }>("POST", register ? "/auth/register" : "/auth/login", {
     body: { username, password },
   });
+  if (generation !== auth.generation) return;
   setToken(reply.token);
   applyServerProfile(reply);
   session.online = true;
@@ -90,18 +105,25 @@ export function achievementNotices(ids: readonly string[] | undefined): string[]
 /** Uses a saved token; false when there is none or it was refused. */
 export async function resumeSession(): Promise<boolean> {
   if (!auth.token) return false;
-  applyServerProfile(await api<ProfileReply>("GET", "/profile"));
+  const generation = auth.generation;
+  const token = auth.token;
+  const reply = await api<ProfileReply>("GET", "/profile");
+  if (generation !== auth.generation || token !== auth.token) return false;
+  applyServerProfile(reply);
   session.online = true;
   matchRegistry();
   return true;
 }
 
 export async function logout(): Promise<void> {
+  const generation = ++auth.generation;
+  session.registry?.dispose();
   try {
     await api("POST", "/auth/logout");
   } catch {
     // Already signed out on the server.
   }
+  if (generation !== auth.generation) return;
   setToken(null);
   session.online = false;
   session.registry?.dispose();

@@ -257,6 +257,7 @@ export class RealtimeHub {
           this.reply(conn, { type: "error", error: "no match" });
           return;
         }
+        room.attach(seat, conn.socket);
         room.handleSync(seat);
         return;
       }

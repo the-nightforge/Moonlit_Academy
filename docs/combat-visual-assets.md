@@ -31,22 +31,23 @@ every subdir of `apps/client/public/assets` — one stem must map to exactly one
 | f03 | heroes/f03.jpg | done | existing |
 | f04 | heroes/f04.jpg | done | existing |
 | f10 | heroes/f10.jpg | done | existing |
-| m09 | heroes/m09 | **missing** | Đoàn Lạc — prompt `docs/08-character-prompts.md` §M09 |
-| m10 | heroes/m10 | **missing** | Chu Quyết — §M10 |
-| f05 | heroes/f05 | **missing** | Hạ Chi — §F05 |
-| f06 | heroes/f06 | **missing** | Lam Khê — §F06 |
-| f07 | heroes/f07 | **missing** | Cố Uyển — §F07 |
-| f08 | heroes/f08 | **missing** | Phượng Chiêu Dung — §F08 |
-| f09 | heroes/f09 | **missing** | Tiểu Mãn — §F09 |
+| m09 | heroes/m09.png | present | Đoàn Lạc — prompt `docs/08-character-prompts.md` §M09 |
+| m10 | heroes/m10.png | present | Chu Quyết — §M10 |
+| f05 | heroes/f05.png | present | Hạ Chi — §F05 |
+| f06 | heroes/f06.png | present | Lam Khê — §F06 |
+| f07 | heroes/f07.png | present | Cố Uyển — §F07 |
+| f08 | heroes/f08.png | present | Phượng Chiêu Dung — §F08 |
+| f09 | heroes/f09.png | present | Tiểu Mãn — §F09 |
 
 ## Hero awakened — `public/assets/heroes/{id}_up`
 
-All 20 IDs (m01–m10, f01–f10): **missing**. One shared `_up` art per hero covers base/alt forms; add
-motif/lore over the normal art while keeping identity, palette and facing.
+All 20 IDs (m01–m10, f01–f10): **present** as `heroes/{id}_up.png`. One shared `_up` art per hero
+covers base/alt forms. Thirteen awakened portraits retain the existing normal hero identity;
+the seven newly introduced heroes have matching anime normal/awakened pairs.
 
 ## Enemies — `public/assets/enemies/{id}`
 
-All 15 IDs **missing**: puppet_guard, shadow_fox, moon_ape, book_wraith, black_guard, fox_king,
+All 15 IDs **present** as `enemies/{id}.png`: puppet_guard, shadow_fox, moon_ape, book_wraith, black_guard, fox_king,
 eclipse_lord, thanh_loan_thi_quan, huyen_vu_thi_quan, bach_lo_thi_quan, khao_hach_chi_linh,
 hac_y_mat_tham, vo_nguyet_am_sat, vo_nguyet_nghi_si, vo_nguyet_anh_chu. Designs follow the actual
 enemy data (name, faction, intents), not invented lore.
@@ -55,25 +56,30 @@ enemy data (name, faction, intents), not invented lore.
 
 | ID | Path | Status |
 |----|------|--------|
-| tho_ngoc | summons/tho_ngoc | **missing** |
-| tho_ngoc_thuc_tinh | summons/tho_ngoc_thuc_tinh | **missing** (awakened form of tho_ngoc) |
+| tho_ngoc | summons/tho_ngoc.png | present |
+| tho_ngoc_thuc_tinh | summons/tho_ngoc_thuc_tinh.png | present (awakened form of tho_ngoc) |
 
-## Blocker
+## Inventory and provenance — 2026-10-04
 
-U5 Step 3 requires an image-generation/editing tool. None is installed in this environment — the
-character prompts target an external generator (Leonardo.AI) which the CLI cannot drive. Per the plan
-("giữ task chưa hoàn thành và ghi đúng blocker, không coi silhouette là đủ U5") the inventory stays
-open: `apps/client/test/combat-assets.test.ts` marks the four missing-asset assertions `it.fails` —
-they flip to XPASS when the files land, at which point `.fails` must be removed.
+**57/57 required files are present**:20 hero normals +20 awakened portraits +15 enemies +2 summons.
+The44 previously missing files were produced through the built-in image-generation tool. New
+hero/enemy/summon designs were regenerated toward the existing Leonardo anime look after user feedback;
+the13 awakened portraits based on existing normals were retained. m06–m08 original normals remain
+untouched. No image-generation tool blocker remains.
 
-**Remaining to close U5:** 7 hero normals + 20 `_up` + 15 enemies + 2 summons = 44 files
-(m06–m08 normals already exist at 784×1176, satisfying the 2:3 ≥768×1152 bar).
+Character prompt references: `docs/08-character-prompts.md`; enemy/summon prompts follow actual
+definitions and established art references. Root records per-file generation prompts, references,
+source/crop details and provenance in `docs/combat-generated-assets.json`. The44 generated files
+were matched by SHA-256 to their native generation outputs. New hero/enemy sources are1024×1536;
+summons are1254×1254. Existing normal portraits retain their original resolutions.
 
-## QA checklist (Step 4, once art lands)
+## QA checklist (Step 4)
 
-- [ ] `pnpm --filter client exec vitest run test/combat-assets.test.ts` green with `.fails` removed.
-- [ ] `pnpm --filter client build` — no texture load errors.
-- [ ] Contact sheet + per-asset crop at 136×196, 100×148, 80×108 stored under
-      `test-results/combat-visual/assets/`; faces/hands/weapons checked at game scale.
-- [ ] Normal vs `_up` side-by-side — identity kept, motif upgraded.
-- [ ] No leftover text in images, no texture-key collisions.
+- [x] `combat-assets.test.ts`:6 positive assertions green, `.fails` removed (`green-final-assets.log`).
+- [x] Ordinary client/server build passes (`build-final.log`); browser texture QA is recorded separately.
+- [x] Six contact sheets with136×196,100×148,80×108 centered covers stored under
+      `apps/client/test-results/combat-art/`; faces, props and silhouettes inspected at game scale.
+- [x] Normal vs `_up` side-by-side — identity retained and awakening motifs distinct.
+- [x] No baked text seen in final images; positive inventory tests confirm no texture-key collisions.
+- [x] Style comparison against original m04/f02 and overview of31 regenerated designs:
+      `apps/client/test-results/combat-art/new-art-overview.png`.

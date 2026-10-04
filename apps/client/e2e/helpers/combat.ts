@@ -96,6 +96,27 @@ export async function clickDesign(page: Page, x: number, y: number): Promise<voi
   await page.mouse.click(left + x * s, top + y * s);
 }
 
+/** Waits for the rendered caption, since terminal network state can precede playback commit. */
+export async function clickSceneText(page: Page, sceneKey: string, label: string): Promise<void> {
+  const bounds = () => page.evaluate(({ sceneKey, label }) => {
+    const scene = (window as any).__vn?.game.scene.getScene(sceneKey);
+    const find = (nodes: any[]): any => {
+      for (const node of nodes) {
+        if (node.type === "Text" && node.text === label && node.scene) return node;
+        if (node.list) { const found = find(node.list); if (found) return found; }
+      }
+      return null;
+    };
+    const text = find(scene?.root?.list ?? []);
+    if (!text) return null;
+    const b = text.getBounds();
+    return {x:b.centerX,y:b.centerY};
+  }, {sceneKey,label});
+  await expect.poll(bounds, {timeout:60_000}).not.toBeNull();
+  const point = (await bounds())!;
+  await clickDesign(page, point.x, point.y);
+}
+
 /** Polls until the playback queue drains and input unlocks — never a fixed sleep. */
 export async function waitIdle(page: Page, timeout = 15_000): Promise<void> {
   await expect

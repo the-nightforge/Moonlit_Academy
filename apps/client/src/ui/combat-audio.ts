@@ -11,6 +11,7 @@ export type CombatCue =
   | "levelUp"
   | "victory"
   | "defeat"
+  | "resultDraw"
   | "draw";
 
 interface CueSpec {
@@ -32,9 +33,10 @@ const CUES: Record<CombatCue, CueSpec> = {
   victory: { type: "triangle", from: 523, to: 1568, ms: 700, gain: 0.14 },
   defeat: { type: "sawtooth", from: 196, to: 65, ms: 800, gain: 0.12 },
   draw: { type: "sine", from: 330, to: 440, ms: 90, gain: 0.06 },
+  resultDraw: { type: "sine", from: 330, to: 440, ms: 700, gain: 0.1 },
 };
 
-const TERMINAL: ReadonlySet<CombatCue> = new Set<CombatCue>(["victory", "defeat", "draw"]);
+const TERMINAL: ReadonlySet<CombatCue> = new Set<CombatCue>(["victory", "defeat", "resultDraw"]);
 
 const clamp = (volume: number): number => Math.min(1, Math.max(0, volume));
 

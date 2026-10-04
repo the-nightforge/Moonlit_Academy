@@ -32,6 +32,8 @@ export class NetMatch {
   readonly initialEvents: readonly CombatEvent[];
   /** The settled outcome once it arrives — from `match.end` or a terminal snapshot (`16` §8.4). */
   ended: MatchSettlement | null = null;
+  /** Known personal forfeit from public events; team victory cannot undo it. */
+  forfeited = false;
   /** Settlement lifecycle as last reported by a snapshot (`16` §8.4). */
   settlement: SettlementState = { status: "playing" };
 
@@ -118,8 +120,12 @@ export class NetMatch {
         this.seq = Math.max(this.seq, message.nextActionSeq);
         if (message.eventSeq <= this.lastEventSeq) return true; // replay on rejoin
         this.lastEventSeq = message.eventSeq;
+        if (message.events.some(event => event.type === "playerForfeited" && event.player === this.you)) this.forfeited = true;
         this.deadline = message.deadline;
         this.view = message.view;
+        if ((message.view.status === "won" || message.view.status === "lost") && this.settlement.status === "playing") {
+          this.settlement = { status: "pending" };
+        }
         this.onPush(message.events, message.view, {
           eventSeq: message.eventSeq,
           revealedCards: message.revealedCards,

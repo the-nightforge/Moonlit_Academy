@@ -141,16 +141,19 @@ export function computeCombatLayout(state: CombatState, mySeat: number): CombatL
     units.set(enemy.id, cardRect(enemyXs[i] ?? ENEMY_BAND.left, FOE_ROW_Y, w, h));
   });
 
-  // Summons get per-seat slot pairs — extras fan downward in 28px steps (like
-  // a stacked deck) instead of a full row, so a 3rd+ summon never reaches the
-  // hand band or the controls column.
+  // Co-op reserves one column for each ally. A second summon uses a separate
+  // card-height slot above the first; extras fan upward. Other modes retain
+  // their two-column pair with extra cards fanning toward the hand band.
   const summonCounts = new Map<number, number>();
   for (const summon of state.summons ?? []) {
     const i = summonCounts.get(summon.player) ?? 0;
     summonCounts.set(summon.player, i + 1);
-    const baseY = summon.player === mySeat ? SUMMON_OWN_Y : FOE_ROW_Y;
-    const slotY = baseY + Math.floor(i / SUMMON_XS.length) * 28;
-    units.set(summon.id, cardRect(SUMMON_XS[i % SUMMON_XS.length]!, slotY, SUMMON_W, SUMMON_H));
+    const baseY = coop || summon.player === mySeat ? SUMMON_OWN_Y : FOE_ROW_Y;
+    const slotY = coop
+      ? baseY - (i === 0 ? 0 : SUMMON_H + 12 + (i - 1) * 28)
+      : baseY + Math.floor(i / SUMMON_XS.length) * 28;
+    const slot = coop ? (summon.player === mySeat ? 0 : 1) : i % SUMMON_XS.length;
+    units.set(summon.id, cardRect(SUMMON_XS[slot]!, slotY, SUMMON_W, SUMMON_H));
   }
 
   const seats = new Map<number, SeatAnchors>();

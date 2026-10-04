@@ -10,7 +10,37 @@ function overlap(a: Rect, b: Rect): boolean {
 
 const { data, state } = fixture("pve");
 
+it.each([0, 1])("co-op viewer %s keeps each seat's second summon separate from all allies", (viewer) => {
+  const {state} = fixture("coop");
+  const summons = [0,1].flatMap(player => [0,1].map(i => ({id:`pair_${player}_${i}`,player,summonId:"tho_ngoc",alive:true,hp:5,maxHp:5,armor:0,statuses:[]})));
+  const layout = computeCombatLayout({...state,summons:summons as never},viewer);
+  const rectangles = summons.map(s => layout.units.get(s.id)!);
+  for (let i=0;i<rectangles.length;i++) {
+    const rect = rectangles[i]!;
+    expect(rect.x + rect.w).toBeLessThanOrEqual(layout.controls.x);
+    expect(rect.y + rect.h).toBeLessThanOrEqual(layout.hand.y);
+    for (const next of rectangles.slice(i+1)) expect(overlap(rect,next)).toBe(false);
+    for (const hero of state.heroes) expect(overlap(rect,layout.units.get(hero.id)!)).toBe(false);
+  }
+  for (const player of [0,1]) {
+    const first = layout.units.get(`pair_${player}_0`)!;
+    expect({x:first.x+first.w/2,y:first.y+first.h/2}).toEqual({x:player===viewer?1000:1100,y:410});
+  }
+});
+
 describe("computeCombatLayout", () => {
+  for (const viewer of [0, 1]) {
+    it(`co-op summons share the ally band with distinct own/partner slots for viewer ${viewer}`, () => {
+      const { state: coop } = fixture("coop");
+      coop.summons = [0, 1].map(player => ({ id: `summon_${player}`, defId: "tho_ngoc", summonId: "tho_ngoc", side: "hero" as const, player, ownerHeroId: coop.heroes.find(h => h.player === player)!.id, position: 0, hp: 12, maxHp: 12, armor: 3, statuses: [], alive: true }));
+      const layout = computeCombatLayout(coop, viewer);
+      const own = layout.units.get(`summon_${viewer}`)!;
+      const partner = layout.units.get(`summon_${1 - viewer}`)!;
+      expect([own.x + 40, own.y + 54]).toEqual([1000, 410]);
+      expect([partner.x + 40, partner.y + 54]).toEqual([1100, 410]);
+      expect(overlap(own, partner)).toBe(false);
+    });
+  }
   it("places the three PvE hero cards on the own row and enemies inside 300..920", () => {
     const layout = computeCombatLayout(state, 0);
     const heroXs = state.heroes.map((hero) => layout.units.get(hero.id)!.x + 68);

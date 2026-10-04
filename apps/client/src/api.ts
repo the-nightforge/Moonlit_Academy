@@ -30,7 +30,9 @@ function readToken(): string | null {
 
 export const auth = {
   token: readToken(),
-  /** Called on any 401; the app goes back to the login screen. */
+  /** Invalidates requests at authentication boundaries, before a new token arrives. */
+  generation: 0,
+  /** Called on a current-session 401; the app goes back to the login screen. */
   onUnauthorized: (): void => {},
 };
 
@@ -69,6 +71,8 @@ export async function api<T>(
   path: string,
   options: { body?: unknown; rev?: number } = {},
 ): Promise<T> {
+  const requestToken = auth.token;
+  const requestGeneration = auth.generation;
   const headers: Record<string, string> = { "x-data-version": version };
   if (auth.token) headers.authorization = `Bearer ${auth.token}`;
   if (options.rev !== undefined) headers["if-match"] = String(options.rev);
@@ -94,7 +98,7 @@ export async function api<T>(
   // A gateway error without our error body means the server itself is unreachable.
   if (response.status >= 502 && typeof body.error !== "string") throw new ApiError(0, "network");
   if (!response.ok) {
-    if (response.status === 401 && path !== "/auth/login") auth.onUnauthorized();
+    if (response.status === 401 && path !== "/auth/login" && requestGeneration === auth.generation && requestToken === auth.token) auth.onUnauthorized();
     throw new ApiError(response.status, typeof body.error === "string" ? body.error : "unknown", body);
   }
   return body as T;

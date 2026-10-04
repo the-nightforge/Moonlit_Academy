@@ -83,6 +83,15 @@ function harness(settings: CombatSettings = ON, failResume = false) {
 }
 
 describe("CombatAudio", () => {
+  it("each card draw plays and cannot consume the later victory cue", async () => {
+    const { audio, context } = harness();
+    await audio.unlock();
+    audio.play("draw");
+    audio.play("draw");
+    audio.play("victory");
+    audio.play("victory");
+    expect(context.oscillators.length).toBe(3);
+  });
   it("creates no context before the user gesture", async () => {
     let made = 0;
     const audio = new CombatAudio(ON, () => {
