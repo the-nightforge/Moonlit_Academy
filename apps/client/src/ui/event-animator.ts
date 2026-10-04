@@ -541,28 +541,31 @@ function animateEvent(
       const anchors = anchorsFor(ctx, event.player);
       const mine = (event.player ?? 0) === (ctx.mySeat ?? 0);
       const spacing = mine ? 70 : ctx.presentation.mode === "coop" ? 34 : 26;
-      return Promise.all(
-        ids.map((id, i) => {
-          // The remote seat's draws stay face-down backs — count only, no card identity.
-          const rect = rt.track(
-            rt.scene.add
-              .rectangle(anchors.draw.x + 6, anchors.draw.y, 30, 44, 0x2c3e6e)
-              .setStrokeStyle(1, 0xf4d35e)
-              .setDepth(100),
-          );
-          // Own-seat backs land on the slot the id already holds in the hand.
-          const toX = mine ? (handSlotX(ctx, event.player, id) ?? WIDTH / 2 + (i - (ids.length - 1) / 2) * spacing) : anchors.hand.x + i * spacing;
-          return rt.tween({
-            targets: rect,
-            x: toX,
-            y: anchors.hand.y,
-            delay: i * 80,
-            duration: 200,
-            ease: "Cubic.easeOut",
-            onComplete: () => rect.destroy(),
-          });
-        }),
-      ).then(() => undefined);
+      for (const [i, id] of ids.entries()) {
+        // The remote seat's draws stay face-down backs — count only, no card identity.
+        const rect = rt.track(
+          rt.scene.add
+            .rectangle(anchors.draw.x + 6, anchors.draw.y, 30, 44, 0x2c3e6e)
+            .setStrokeStyle(1, 0xf4d35e)
+            .setDepth(100),
+        );
+        // Own-seat backs land on the slot the id already holds in the hand.
+        const toX = mine ? (handSlotX(ctx, event.player, id) ?? WIDTH / 2 + (i - (ids.length - 1) / 2) * spacing) : anchors.hand.x + i * spacing;
+        // Fire-and-forget: a slow readable glide that never holds the queue —
+        // the runtime still owns the flight for aborts and drains it at commit.
+        void rt.tween({
+          targets: rect,
+          x: toX,
+          y: anchors.hand.y,
+          scaleX: { from: 0.8, to: 1 },
+          scaleY: { from: 0.8, to: 1 },
+          delay: i * 150,
+          duration: 450,
+          ease: "Quad.easeOut",
+          onComplete: () => rect.destroy(),
+        });
+      }
+      return instant();
     }
     case "deckShuffled": {
       const draw = anchorsFor(ctx, event.player).draw;

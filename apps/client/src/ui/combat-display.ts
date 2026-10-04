@@ -1,5 +1,5 @@
 import { cardDefOf, displayDuration, DURATION_STATUSES, getStatus } from "rules";
-import type { CardDef, CardInstance, CombatState, GameData, HeroState, StatusId, UnitState } from "rules";
+import type { CardDef, CardInstance, CombatState, GameData, HeroState, LevelUpCounter, StatusId, UnitState } from "rules";
 import type { PublicPlayedCard } from "../net/protocol";
 import { SEAL_ICON, STATUS_ICONS, STATUS_LABELS } from "./theme";
 import { seatAnchorsFor } from "./combat-layout";
@@ -100,6 +100,30 @@ export function heroProgressLabel(data: GameData, _state: CombatState, hero: Her
   return `${hero.levelUpCounter}/${threshold}`;
 }
 
+/** How each Thức Tỉnh counter grows — the `01` §8 table as short phrases. */
+const COUNTER_CONDITION: Record<LevelUpCounter, string> = {
+  damageTaken: "mất HP",
+  turnsWithAllyRegen: "vòng có đồng đội đang Hồi Phục",
+  enemiesKilled: "hạ kẻ địch bằng lá",
+  freezesApplied: "áp Đóng Băng lên địch",
+  buffsStolen: "cướp buff / đoạt Nguyệt Lực",
+  hitsIntercepted: "chặn đòn cho đồng đội",
+  schemeCardsPlayed: "đánh lá Mưu Lược",
+  cardsChosen: "chọn lá qua Chiêm Bài",
+  hpHealed: "hồi HP bằng lá",
+  turnsSurvived: "sống sót qua lượt",
+  moonShifts: "đánh lá có Chuyển Pha",
+  studyPoints: "tích điểm (sống sót + lá Mưu Lược)",
+  fullMoonsSeen: "đón pha Trăng Tròn",
+  forbiddenHpLost: "mất HP vì lá Cấm Thuật",
+  summonsMade: "triệu hồi Linh Thú",
+  charmsApplied: "áp Mê Hoặc lên địch",
+  debuffsApplied: "áp debuff lên địch",
+  intentsSealed: "phong ấn chiêu địch",
+  alliesFallen: "Hero ngã",
+  backRowHits: "đánh trúng hàng sau",
+};
+
 /** Both real awakening forms, with the selected form and authoritative progress. */
 export function heroTooltipLines(data: GameData, state: CombatState, hero: HeroState): string[] {
   const def = data.heroes[hero.defId]!;
@@ -107,7 +131,8 @@ export function heroTooltipLines(data: GameData, state: CombatState, hero: HeroS
   return [
     `${def.name}${hero.leveledUp ? " ★" : ""}`,
     `HP ${hero.hp}/${hero.maxHp}${hero.armor > 0 ? ` · Giáp ${hero.armor}` : ""}`,
-    hero.leveledUp ? "Đã Thức Tỉnh" : `Tiến độ Thức Tỉnh: ${heroProgressLabel(data, state, hero) ?? ""}`,
+    hero.leveledUp ? "Đã Thức Tỉnh" : `Điều kiện Thức Tỉnh: ${COUNTER_CONDITION[def.levelUp.counter]}`,
+    hero.leveledUp ? "" : `Tiến độ Thức Tỉnh: ${heroProgressLabel(data, state, hero) ?? ""}`,
     `${def.levelUp.name} — dạng cơ bản${selected === "base" ? " · Đang chọn" : ""}`,
     def.levelUp.description,
     `${def.altLevelUp.name} — dạng thứ hai${selected === "alt" ? " · Đang chọn" : ""}`,

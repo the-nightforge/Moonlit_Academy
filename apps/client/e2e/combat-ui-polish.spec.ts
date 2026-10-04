@@ -95,10 +95,12 @@ test(`current moon and card description geometry @ ${viewport.width}`,async({pag
       const b=body?.getBounds();
       return body&&b?{body:body.text,bodyTop:b.top,bodyBottom:b.bottom,parchmentTop:v.y+22,parchmentBottom:v.y+72}:null;
     });
-    return {phases:phases.map(n=>({x:n.x,y:n.y})),label:nodes.some(n=>n.name==="moon_label"),ring:nodes.some(n=>n.name==="moon_current_ring"),aura:nodes.some(n=>n.name==="moon_current_aura"),cards};
+    return {phases:phases.map(n=>({x:n.x,y:n.y})),label:nodes.some(n=>n.name==="moon_label"),ring:nodes.some(n=>n.name==="moon_current_ring"),aura:nodes.some(n=>n.name==="moon_current_aura"),exit:nodes.some(n=>n.text==="✕"),cards};
   });
   expect(probe.phases).toHaveLength(0);
   expect(probe.label).toBe(false);expect(probe.ring).toBe(false);expect(probe.aura).toBe(false);
+  // Offline combat offers an exit back to deck-select (`✕` badge by the gear).
+  expect(probe.exit).toBe(true);
   for(const card of probe.cards){expect(card).not.toBeNull();expect(card!.body.length).toBeGreaterThan(0);expect(card!.bodyTop).toBeGreaterThanOrEqual(card!.parchmentTop);expect(card!.bodyBottom).toBeLessThanOrEqual(card!.parchmentBottom-2);}
   await page.evaluate(()=>{
     const h=(window as any).__vn,s=h.game.scene.getScene("combat"),id=h.session.state.players[0].hand[0];

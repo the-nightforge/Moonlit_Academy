@@ -25,7 +25,7 @@ import type {
 } from "rules";
 import { errorText, resumeSession } from "../account";
 import { applyRecordedRunAction } from "../run-session";
-import { recordStoryAction, startStoryTicket, submitStory } from "../story-session";
+import { abandonStory, recordStoryAction, startStoryTicket, submitStory } from "../story-session";
 import { NetMatch } from "../net/match";
 import type { PushMetadata } from "../net/match";
 import type { ServerMessage } from "../net/protocol";
@@ -1194,6 +1194,32 @@ export class CombatScene extends Phaser.Scene {
         });
       });
       this.hoverTooltip(flag, () => ({ x: WIDTH - 300, y: 60 }), () => ["Bỏ cuộc"]);
+    }
+    // Local fights (offline, run node, story stage) have no resign flag —
+    // leaving just drops the local attempt; runs and story tickets close too.
+    if (!match && this.state.status !== "won" && this.state.status !== "lost") {
+      const exit = this.badge(WIDTH - 88, 36, 16, "✕", 0x884455, this.root, 0x40202a, 13, "#ff9090");
+      exit.setInteractive({ useHandCursor: true });
+      exit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button !== 0) return;
+        const prompt = this.isStory
+          ? "Rời trận? Màn Cốt Truyện chưa hoàn thành."
+          : session.run !== null
+            ? "Bỏ run này? Toàn bộ tiến trình run sẽ mất."
+            : "Rời trận? Tiến trình trận đấu sẽ mất.";
+        void confirmModal(this, prompt, { label: "Rời trận", danger: true }).then((ok) => {
+          if (!ok) return;
+          if (this.isStory) {
+            void abandonStory();
+            session.pendingStageId = null;
+            this.scene.start("story");
+          } else {
+            session.run = null;
+            this.scene.start("deck-select");
+          }
+        });
+      });
+      this.hoverTooltip(exit, () => ({ x: WIDTH - 280, y: 60 }), () => ["Rời trận"]);
     }
     if (match && match.deadline !== null) {
       const { x, y } = endTurnAnchor(this.layout);
