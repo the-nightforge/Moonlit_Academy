@@ -2345,7 +2345,7 @@ export class CombatScene extends Phaser.Scene {
     if (this.targeting === instanceId) {
       const inHand = y === this.layout.hand.y + this.layout.hand.h / 2;
       container.setScale(1.15);
-      container.y = inHand ? this.layout.hand.y + 44 : y - 18;
+      container.y = inHand ? this.layout.hand.y + 66 : y - 18;
       container.setDepth(10);
       parent.bringToTop(container);
     }
@@ -2362,13 +2362,32 @@ export class CombatScene extends Phaser.Scene {
       this.tooltip?.destroy();
       const hintName =
         hintComboId !== undefined ? this.gameData.coopCombos[hintComboId]?.name : undefined;
-      // Hand cards sit fully inside the hand area; hovering lifts to the
-      // raised read position (center y=600, `05` hand spec).
+      // The raise stops short of the hero row's bottom edge (522) — raised
+      // top lands at 530, leaving the lift inside the 34px buffer.
       const inHand = y === this.layout.hand.y + this.layout.hand.h / 2;
-      const liftY = inHand ? this.layout.hand.y + 44 : y - 18;
+      const liftY = inHand ? this.layout.hand.y + 66 : y - 18;
+      // The preview prefers a side clear of the own-hero row; a crowded mid
+      // card keeps the roomier side instead of covering both neighbours.
+      const row = this.state.heroes
+        .filter((h) => h.player === this.mySeat)
+        .map((h) => this.layout.units.get(h.id))
+        .filter((r): r is { x: number; y: number; w: number; h: number } => r !== undefined);
+      const rowLeft = Math.min(...row.map((r) => r.x), 1280);
+      const rowRight = Math.max(...row.map((r) => r.x + r.w), 0);
+      const rightX = x + CARD_W / 2 + 10;
+      const leftX = x - CARD_W / 2 - 10 - 320;
+      const rightFits = rightX + 320 <= 1272;
+      const leftFits = leftX >= 8;
+      const overlapX = (lx: number) => row.reduce((n, r) => n + Math.max(0, Math.min(lx + 320, r.x + r.w) - Math.max(lx, r.x)), 0);
+      const tipX =
+        rightFits && rightX >= rowRight ? rightX
+        : leftFits && leftX + 320 <= rowLeft ? leftX
+        : rightFits && (!leftFits || overlapX(rightX) <= overlapX(leftX)) ? rightX
+        : leftFits ? leftX
+        : rightX;
       this.tooltip = showCardTooltip(
         this,
-        x + CARD_W / 2 + 10,
+        tipX,
         liftY - 40,
         this.gameData,
         cardDefOf(this.gameData, state, instance)!,
@@ -2380,11 +2399,10 @@ export class CombatScene extends Phaser.Scene {
         },
       );
       if (!broken && (inHand || state.status === "playerTurn" || state.status === "mulligan")) {
-        container.setScale(1.15);
-        container.y = liftY;
         container.setDepth(10);
         // Depth does not reorder a container's children: lift the card over its neighbours.
         parent.bringToTop(container);
+        if (!this.inputLocked) this.liftCard(container, liftY, 1.15);
       }
     });
     container.on("pointerout", () => {
@@ -2392,14 +2410,34 @@ export class CombatScene extends Phaser.Scene {
       this.tooltip?.destroy();
       this.tooltip = null;
       if (this.targeting === instanceId) return;
-      container.setScale(1);
-      container.y = y;
+      this.liftCard(container, y, 1);
       container.setDepth(0);
     });
     container.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (pointer.button === 0) this.onCardClicked(instanceId);
     });
+    container.once("destroy", () => {
+      this.cardHoverTweens.get(container)?.stop();
+      this.cardHoverTweens.delete(container);
+    });
     return container;
+  }
+
+  /** A card's in-flight hover tween — a re-hover retweens from where it is. */
+  private readonly cardHoverTweens = new Map<Phaser.GameObjects.Container, Phaser.Tweens.Tween>();
+
+  /** Smooths the hover raise/drop; the new tween replaces the in-flight one. */
+  private liftCard(container: Phaser.GameObjects.Container, y: number, scale: number) {
+    this.cardHoverTweens.get(container)?.stop();
+    const tween = this.tweens.add({
+      targets: container,
+      y,
+      scale,
+      duration: 160,
+      ease: "Cubic.easeOut",
+      onComplete: () => this.cardHoverTweens.delete(container),
+    });
+    this.cardHoverTweens.set(container, tween);
   }
 
   private renderTargetingHint() {

@@ -111,6 +111,25 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
     for (const card of chrome.cards) { if (card.icon) expect(card.icon).toBe(24); if (card.art) expect(card.art).toBe(36); expect(card.font).toBe("11px"); expect(card.gap).toBeGreaterThanOrEqual(0); expect(card.bodyBottom).toBeLessThanOrEqual(card.paperBottom); }
     expect(chrome.cards.some(card => card.body === "Một\nHai\nBa…")).toBe(true);
     await page.screenshot({ path: `${OUT}/battle-${viewport.width}.png` });
+    // A hovered hand card raises smoothly but never reaches the hero row.
+    const hover = await page.evaluate(() => {
+      const s = (window as any).__vn.game.scene.getScene("combat");
+      const heroRect = s.layout.units.get(s.state.heroes.find((h: any) => h.player === 0 && h.alive)!.id)!;
+      const cx = heroRect.x + heroRect.w / 2;
+      const [id, v] = [...s.cardViews.entries()].reduce((best: any, entry: any) =>
+        Math.abs(entry[1].x - cx) < Math.abs(best[1].x - cx) ? entry : best);
+      return { id, x: v.x, y: v.y, heroBottom: heroRect.y + heroRect.h };
+    });
+    await moveDesign(page, hover.x, hover.y);
+    await expect
+      .poll(async () => page.evaluate((id: string) => (window as any).__vn.game.scene.getScene("combat").cardViews.get(id)?.scaleX ?? 0, hover.id))
+      .toBeGreaterThan(1.13);
+    const raised = await page.evaluate((id: string) => {
+      const v = (window as any).__vn.game.scene.getScene("combat").cardViews.get(id)!;
+      return { top: v.getBounds().top, scale: v.scaleX };
+    }, hover.id);
+    expect(raised.top).toBeGreaterThanOrEqual(hover.heroBottom - 1);
+    await moveDesign(page, 40, 690);
     const moon = await page.evaluate(() => {
       const s = (window as any).__vn.game.scene.getScene("combat"), n = s.moonLayer.list.find((n: any) => n.name === "moon_current");
       const state = s.state, data = s.gameData;
