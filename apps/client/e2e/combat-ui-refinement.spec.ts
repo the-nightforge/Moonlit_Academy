@@ -28,20 +28,30 @@ async function tooltipProbe(page: Page) {
 async function assertFooter(page: Page, expectedWidth: number) {
   const units = await page.evaluate(() => {
     const s = (window as any).__vn.game.scene.getScene("combat");
-    return s.state.heroes.map((h: any) => {
-      const v = s.unitViews.get(h.id), spec = s.unitSpecs.get(h.id);
-      const name = v.getByName("unit_name"), progress = v.getByName("unit_progress"), hp = v.getByName("unit_hp"), weapon = v.getByName("unit_weapon");
-      const n = name.getBounds(), p = progress?.getBounds(), w = weapon?.getBounds();
-      return { width: spec.w, name: name.text, nameFont: name.style.fontSize, nameAllocation: (p ? p.left - 7 : v.x + spec.w / 2 - 8) - n.left, progress: progress?.text, progressFont: progress?.style.fontSize, sameTop: !p || Math.abs(n.top - p.top) < 0.1, sameBottom: !p || Math.abs(n.bottom - p.bottom) < 0.1, gap: p ? p.left - n.right : null, hp: hp?.text, expectedHp: `${h.hp}/${h.maxHp}`, hearts: v.list.filter((n: any) => n.texture?.key === "hud_heart").length, weaponClear: !w || w.bottom < n.top, weaponAnchor: weapon ? [...s.triggerAnchors.values()].some((a: any) => a.x === w.centerX && a.y === w.centerY) : true, alive: h.alive, awakened: h.leveledUp };
-    });
+    const probe = (u: any, expectedHp: string, alive: boolean) => {
+      const v = s.unitViews.get(u.id), spec = s.unitSpecs.get(u.id);
+      const name = v.getByName("unit_name"), hp = v.getByName("unit_hp"), weapon = v.getByName("unit_weapon");
+      const n = name.getBounds(), w = weapon?.getBounds();
+      const shield = v.list.find((node: any) => node.texture?.key === "hud_shield"), sb = shield?.getBounds();
+      return { width: spec.w, name: name.text, nameFont: name.style.fontSize, nameCentered: Math.abs(n.centerX - v.x) < 1.5, progressGone: v.getByName("unit_progress") === null,
+        hp: hp?.text, expectedHp, hearts: v.list.filter((node: any) => node.texture?.key === "hud_heart").length,
+        armor: sb ? { dx: sb.centerX - (v.x - spec.w / 2 + 17), dy: sb.centerY - (v.y - spec.h / 2 + 17) } : null,
+        weaponClear: !w || w.bottom < n.top, weaponBelowArmor: !w || !sb || w.top > sb.bottom - 2,
+        weaponAnchor: weapon ? [...s.triggerAnchors.values()].some((a: any) => a.x === w.centerX && a.y === w.centerY) : true, alive };
+    };
+    return {
+      heroes: s.state.heroes.map((h: any) => probe(h, `${h.hp}/${h.maxHp}`, h.alive)),
+      enemies: s.state.enemies.map((e: any) => probe(e, `${e.hp}/${e.maxHp}`, e.alive)),
+    };
   });
-  for (const unit of units) {
+  for (const unit of [...units.heroes, ...units.enemies]) {
+    expect(unit.name.length).toBeGreaterThan(0); expect(unit.nameCentered).toBe(true);
+    expect(unit.nameFont).toBe("11px"); expect(unit.progressGone).toBe(true);
+    if (unit.armor) { expect(Math.abs(unit.armor.dx)).toBeLessThan(2); expect(Math.abs(unit.armor.dy)).toBeLessThan(2); }
+    expect(unit.weaponClear).toBe(true); expect(unit.weaponBelowArmor).toBe(true); expect(unit.weaponAnchor).toBe(true);
+  }
+  for (const unit of units.heroes) {
     expect(unit.width).toBe(expectedWidth); expect(unit.hearts).toBe(0); expect(unit.hp).toBe(unit.expectedHp);
-    expect(unit.name.length).toBeGreaterThan(0); expect(unit.nameAllocation).toBeGreaterThanOrEqual(50);
-    expect(unit.nameFont).toBe("11px"); expect(unit.sameTop).toBe(true); expect(unit.sameBottom).toBe(true);
-    if (unit.progress) { expect(unit.progressFont).toBe(unit.nameFont); expect(unit.gap).toBeGreaterThanOrEqual(6); }
-    if (!unit.alive || unit.awakened) expect(unit.progress).toBeUndefined();
-    expect(unit.weaponClear).toBe(true); expect(unit.weaponAnchor).toBe(true);
   }
 }
 
@@ -94,7 +104,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
       const canvas = s.textures.get("hud_card_face").getSourceImage(), ctx = canvas.getContext("2d");
       const pixel = ctx.getImageData(Math.round(10 * canvas.width / 110), Math.round(115 * canvas.height / 160), 1, 1).data;
       const summon = s.unitViews.get("refinement_summon");
-      return { rail: nodes.filter(n => /^moon_phase_\d$/.test(n.name) || n.name === "moon_current_aura").length, blood: nodes.some(n => n.name === "moon_blood" && n.text.includes("2")), cards, oldPaperPixel: [...pixel], summonHp: summon.getByName("unit_hp").text, summonHearts: summon.list.filter((n: any) => n.texture?.key === "hud_heart").length };
+      return { rail: nodes.filter(n => /^moon_phase_\d$/.test(n.name) || n.name === "moon_current_aura").length, blood: nodes.some(n => n.name === "moon_current" && n.texture?.key === "ui:moon_blood"), cards, oldPaperPixel: [...pixel], summonHp: summon.getByName("unit_hp").text, summonHearts: summon.list.filter((n: any) => n.texture?.key === "hud_heart").length };
     });
     expect(chrome.rail).toBe(0); expect(chrome.blood).toBe(true); expect(chrome.summonHp).toBe("7/12"); expect(chrome.summonHearts).toBe(0);
     expect(chrome.oldPaperPixel[0]).toBeLessThan(80);
@@ -109,11 +119,15 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
     await moveDesign(page, moon.x, moon.y);
     await expect.poll(() => tooltipProbe(page)).not.toBeNull();
     const moonTip = (await tooltipProbe(page))!;
-    for (const [phase, id] of [[moon.phase, moon.currentId], [moon.next, moon.nextId]] as const) {
-      expect(moonTip.text).toContain(phase.name); const decree = phase.decrees.find((d: any) => d.id === id)!;
-      expect(moonTip.text).toContain(decree.name); expect(moonTip.text).toContain(decree.text); expect(moonTip.text).toContain(phase.tagBonusText);
-    }
-    expect(moonTip.text).toContain("pha kế tiếp"); expect(moonTip.text).toContain("còn 2 vòng");
+    // Huyết Nguyệt IS the current phase — the covered phase only shows as suppressed.
+    expect(moonTip.text).toContain("Huyết Nguyệt — pha hiện tại");
+    expect(moonTip.text).toContain(`${moon.phase.name} đang bị che`);
+    // The next phase still previews fully — name, rolled decree, tag bonus.
+    const nextDecree = moon.next.decrees.find((d: any) => d.id === moon.nextId)!;
+    expect(moonTip.text).toContain(moon.next.name);
+    expect(moonTip.text).toContain(nextDecree.name); expect(moonTip.text).toContain(nextDecree.text);
+    expect(moonTip.text).toContain(moon.next.tagBonusText);
+    expect(moonTip.text).toContain("pha kế tiếp");
     await page.screenshot({ path: `${OUT}/moon-current-next-${viewport.width}.png` });
     await moveDesign(page, 40, 690);
     for (const form of ["base", "alt"] as const) {

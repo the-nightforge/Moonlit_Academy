@@ -1170,3 +1170,40 @@ export function bloodMoonSurge(rt: AnimationRuntime, at: Point): Promise<void> {
     onComplete: () => veil.destroy(),
   });
 }
+
+/**
+ * Phản Đòn: the defender's ward flares — ring, shimmer, a crescent glancing
+ * the blow aside — then a shard of it streaks back into the attacker. Reads
+ * as a ricochet where the old hairline beam read as a scratch.
+ */
+export async function reflectStrike(rt: AnimationRuntime, from: Point, to: Point): Promise<void> {
+  ensureTextures(rt.scene);
+  const color = 0x7fb4ff;
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  // The ward pop on the defender — the hit visibly ricochets.
+  const flash = addFx(rt, from, GLOW).setTint(color).setScale(0.18 * S);
+  fadeOut(rt, flash, { scale: 1.2 * S, duration: 240, ease: "Cubic.easeOut" });
+  const ring = addFx(rt, from, RING).setTint(color).setScale(0.2 * S).setAlpha(0.95);
+  fadeOut(rt, ring, { scale: 1.7 * S, duration: 280, ease: "Cubic.easeOut" });
+  const ward = addFx(rt, from, CRESCENT)
+    .setTint(0xd8ecff)
+    .setRotation(angle + Math.PI - 0.55)
+    .setScale(0.4 * S);
+  fadeOut(rt, ward, { scale: 0.95 * S, rotation: angle + Math.PI + 0.55, duration: 230 });
+  await rt.wait(70);
+  // The rebound shard streaks back, trailing light.
+  const shard = rt.track(
+    rt.scene.add.image(from.x, from.y, SPARK).setTint(0xeaf4ff).setRotation(angle).setScale(1.5 * S, 0.85 * S).setDepth(DEPTH + 1),
+  );
+  const halo = addFx(rt, from, GLOW).setTint(color).setScale(0.34 * S);
+  const stop = trail(rt, shard, color, 0.13);
+  const flight = Math.min(230, Math.max(120, Math.hypot(to.x - from.x, to.y - from.y) * 0.6));
+  await Promise.all([
+    rt.tween({ targets: shard, x: to.x, y: to.y, duration: flight, ease: "Quad.easeIn" }),
+    rt.tween({ targets: halo, x: to.x, y: to.y, duration: flight, ease: "Quad.easeIn" }),
+  ]);
+  stop();
+  shard.destroy();
+  halo.destroy();
+  impact(rt, to, color, angle, 1.1);
+}

@@ -8,7 +8,7 @@ import { resolvePlayedCard, seatAnchors, statusAppliedLabel, statusDisplayValue,
 import type { Point, SeatAnchors } from "./combat-display";
 import type { PublicPlayedCard } from "../net/protocol";
 import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
-import { bloodMoonSurge, castCard, deathBurn, moonWheel, playAttack, statusPop } from "./vfx";
+import { bloodMoonSurge, castCard, deathBurn, moonWheel, playAttack, reflectStrike, statusPop } from "./vfx";
 import { HAND_AREA, MOON, handSlots } from "./combat-layout";
 import type { CombatLayout } from "./combat-layout";
 import { triggerAnchorKey } from "./combat-inspector";
@@ -296,7 +296,7 @@ function isBloodMoonLoss(
   return event?.type === "hpLost" && event.cause === "bloodMoon";
 }
 
-/** A line from one unit to another that fades out (reflect, enemy attacks). */
+/** A line from one unit to another that fades out (enemy aim lines). */
 function beam(
   rt: AnimationRuntime,
   from: { x: number; y: number },
@@ -501,7 +501,7 @@ export async function playEventQueue(
       const to = ctx.unitAnchors.get(event.targetId);
       if (from && to) {
         applyBeat(ctx, event);
-        await Promise.all([beam(rt, from, to), animateEvent(rt, event, ctx)]);
+        await Promise.all([reflectStrike(rt, from, to), animateEvent(rt, event, ctx)]);
         previous = event;
         continue;
       }

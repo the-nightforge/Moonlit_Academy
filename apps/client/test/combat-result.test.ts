@@ -30,7 +30,7 @@ it("compact summon status badges leave armor and HP regions readable", () => {
  const unit={...state.heroes[0],id:"summon",statuses:[{id:"strength",value:3},{id:"weak",value:2},{id:"burn",value:1}]};
  const harness={state,gameData:data,targeting:null,textures:{exists:()=>true},add:{image:()=>node,text:()=>node},badge:(x:number,y:number,r:number)=>{badges.push({x,y,r});return node;},hoverTooltip:()=>{},statusSourceLine:()=>"",fullStatusLines:()=>[]};
  (CombatScene.prototype as any).statusIcons.call(harness,{unit,statuses:unit.statuses,w:80,h:108,x:1000,y:410}, {add:()=>{}});
- const armor={left:-35.75,right:-10.25,top:-19.45,bottom:9.45};
+ const armor={left:-35.75,right:-10.25,top:-51.45,bottom:-22.55};
  for(const b of badges) expect(b.x-b.r>=armor.right || b.x+b.r<=armor.left || b.y-b.r>=armor.bottom || b.y+b.r<=armor.top).toBe(true);
 });
 

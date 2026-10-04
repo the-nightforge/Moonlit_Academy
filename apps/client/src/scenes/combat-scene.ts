@@ -1332,11 +1332,11 @@ export class CombatScene extends Phaser.Scene {
     this.unitPanelHit(panel, w, h, id);
     this.hoverTooltip(panel, () => ({ x: x + w / 2 + 8, y: y - h / 2 }), spec.tooltip);
     this.statusIcons(spec, c);
-    // Trang Bị uses the freed top-left portrait area, also its trigger anchor.
+    // Trang Bị stacks under the corner armor badge; it is also the trigger anchor.
     if (spec.weapon !== undefined && spec.alive) {
       const weapon = spec.weapon;
       const wx = x - w / 2 + 15;
-      const wy = y - h / 2 + 17;
+      const wy = y - h / 2 + 46;
       const def = this.gameData.weapons[weapon.id];
       const entry: RelicHudEntry = {
         id: weapon.id,
@@ -1347,7 +1347,7 @@ export class CombatScene extends Phaser.Scene {
             ? "Chưa có mô tả."
             : `${def.text}${def.refinement[weapon.refinement - 1] ? ` — Tinh Luyện ${weapon.refinement}: ${def.refinement[weapon.refinement - 1]!.text}` : ""}`,
       };
-      const icon = this.badge(-w / 2 + 15, -h / 2 + 17, 11, "⚔", 0x7a4a30, c, 0x0a0e20, 10, "#ffb080").setName("unit_weapon");
+      const icon = this.badge(-w / 2 + 15, -h / 2 + 46, 11, "⚔", 0x7a4a30, c, 0x0a0e20, 10, "#ffb080").setName("unit_weapon");
       icon.setInteractive({ useHandCursor: true });
       icon.on("pointerup", (pointer: Phaser.Input.Pointer) => {
         if (pointer.button === 0) this.inspector?.openRelic(entry);
@@ -1371,14 +1371,15 @@ export class CombatScene extends Phaser.Scene {
   }
 
   /**
-   * Armor at top-left and readable current/max HP on the bottom bar.
+   * Armor in the freed top-left corner and readable current/max HP on the
+   * bottom bar.
    */
   private hpPlate(c: Phaser.GameObjects.Container, spec: UnitCardSpec, w: number, h: number) {
     const gx = -w / 2 + 17;
     const gy = -h / 2 + 17;
     if (spec.armor > 0) {
-      c.add(hudImage(this, HUD.shield, gx, gy + 32, 0.85));
-      c.add(this.add.text(gx, gy + 31, `${spec.armor}`, { ...TEXT_BASE, fontSize: "12px", fontStyle: "bold", color: "#ffffff", stroke: "#0a1830", strokeThickness: 3 }).setOrigin(0.5));
+      c.add(hudImage(this, HUD.shield, gx, gy, 0.85));
+      c.add(this.add.text(gx, gy - 1, `${spec.armor}`, { ...TEXT_BASE, fontSize: "12px", fontStyle: "bold", color: "#ffffff", stroke: "#0a1830", strokeThickness: 3 }).setOrigin(0.5));
     }
     if (!spec.maxHp) return;
     const barW = w - 12;

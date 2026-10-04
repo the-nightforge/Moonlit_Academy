@@ -188,6 +188,31 @@ describe("unit flash bounds", () => {
   });
 });
 
+describe("reflect beat", () => {
+  it("shards the blocked blow back from the reflector into the attacker", async () => {
+    const rt = new FakeRuntime();
+    const hero = base.heroes[0]!;
+    const enemy = base.enemies[0]!;
+    const context = ctx(rt, {
+      unitAnchors: new Map([
+        [hero.id, { x: 400, y: 500 }],
+        [enemy.id, { x: 800, y: 220 }],
+      ]),
+    });
+    const events: CombatEvent[] = [
+      { type: "damageDealt", sourceId: hero.id, targetId: enemy.id, amount: 5, blocked: 0, hpLost: 5 },
+      { type: "hpLost", targetId: hero.id, amount: 2, cause: "reflect" },
+    ];
+    await runToEnd(rt, playEventQueue(rt, events, context));
+    // The rebound shard (and its halo) land exactly on the attacker's anchor.
+    const flights = rt.tweenConfigs.filter(
+      (config) => (config as { x?: number; y?: number }).x === 400 && (config as { x?: number; y?: number }).y === 500,
+    );
+    expect(flights.length).toBeGreaterThan(0);
+    expect(rt.texts.some((text) => text.includes("Phản"))).toBe(true);
+  });
+});
+
 describe("armorRemoved beat", () => {
   it("breaks the shield badge at the unit, not silently", async () => {
     const rt = new FakeRuntime();
