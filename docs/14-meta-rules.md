@@ -413,11 +413,16 @@ rỗng (fallback của rate-up).
 5. Theo độ hiếm **cuối cùng**: legendary → `sinceLegendary = 0`, `sinceEpic = 0`; epic →
    `sinceEpic = 0`.
 6. Chọn id: danh sách = pool của độ hiếm đó (banner `featured`: pool của entry).
+   **Tướng xoay tua là giới hạn tuần:** `reservedFeaturedHeroes(data, now)` = heroId đang
+   rate-up trên mọi banner `featured`; các id đó bị loại khỏi rút legendary thường của
+   mọi banner, kể cả fallback trượt rate-up (T335) — muốn có phải quay banner luân
+   chuyển trong tuần đó.
    **Rate-up tướng tuần** (banner `featured`, độ hiếm cuối cùng legendary): rút `u3` —
    `u3 < rateUp` (0.5) → `entry.heroId` (`featuredHit`), ngược lại đều trong
-   `pool.legendary` của banner (T331). **Bảo vệ người mới** (`newPlayerEpicHero`,
-   banner `hero`, độ hiếm epic): nếu có Hero epic chưa sở hữu trong pool → danh sách chỉ
-   gồm các Hero đó. Rút `u4`, chọn `danh sách[floor(u4 × độ dài)]`.
+   `pool.legendary` của banner sau khi loại reserved (T331). **Bảo vệ người mới**
+   (`newPlayerEpicHero`, banner `hero`, độ hiếm epic): nếu có Hero epic chưa sở hữu
+   trong pool → danh sách chỉ gồm các Hero đó. Rút `u4`, chọn `danh sách[floor(u4 × độ
+   dài)]`.
 7. `grantItem` theo `kind` của banner: Hero §10, vũ khí / Nguyệt Bảo §13.1.
 
 Mỗi lượt quay dùng RNG theo thứ tự `u1`, (`u2` nếu cần), rồi các rút chọn id ở bước 6

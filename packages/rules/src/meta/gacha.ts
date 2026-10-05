@@ -31,6 +31,17 @@ export function featuredRotationEnd(banner: BannerDef, now: number): number | un
   return ROTATION_ANCHOR + (week + 1) * WEEK_MS;
 }
 
+/** Hero ids currently offered via a featured banner's rate-up: while rotating they
+ *  are reserved to that banner and absent from every other legendary draw. */
+export function reservedFeaturedHeroes(data: GameData, now: number): string[] {
+  const reserved: string[] = [];
+  for (const banner of Object.values(data.banners)) {
+    const heroId = featuredEntry(banner, now)?.heroId;
+    if (heroId && !reserved.includes(heroId)) reserved.push(heroId);
+  }
+  return reserved;
+}
+
 export interface PullResult {
   itemId: string;
   rarity: Rarity;
@@ -182,6 +193,11 @@ function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: 
   // entry; its legendary resolves the rate-up against `pool.legendary`.
   const entry = featuredEntry(banner, now);
   const lowerPool: Partial<Record<Rarity, string[]>> = entry ? entry.pool : banner.pool;
+  // This week's featured heroes only drop from their own rate-up: they are
+  // removed from every other banner's legendary draw, including a featured
+  // banner's lost rate-up fallback.
+  const reserved = new Set(reservedFeaturedHeroes(data, now));
+  const heroPool = { ...banner.pool, legendary: (banner.pool.legendary ?? []).filter((id) => !reserved.has(id)) };
 
   const pLegendary = legendaryRate(gacha, pity.sinceLegendary);
   const u1 = draw();
@@ -193,9 +209,9 @@ function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: 
 
   const allowed = rolled === "legendary" ? RARITIES : entry ? LOWER_RARITIES : RARITIES;
   const rarityPool = rolled === "legendary" && entry
-    ? { ...banner.pool, legendary: [entry.heroId, ...banner.pool.legendary] }
+    ? { ...banner.pool, legendary: [entry.heroId, ...heroPool.legendary] }
     : rolled === "legendary"
-      ? banner.pool
+      ? heroPool
       : lowerPool;
   const rarity = availableRarity(rarityPool, rolled, allowed);
   if (rarity === "legendary") {
@@ -208,7 +224,7 @@ function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: 
   let itemId: string;
   let featuredHit = false;
   if (rarity === "legendary" && entry) {
-    const fallback = banner.pool.legendary;
+    const fallback = heroPool.legendary;
     if (fallback.length === 0 || draw() < banner.featured!.rateUp) {
       itemId = entry.heroId;
       featuredHit = true;
@@ -216,7 +232,7 @@ function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: 
       itemId = fallback[Math.floor(draw() * fallback.length)]!;
     }
   } else {
-    let candidates = (rarity === "legendary" ? banner.pool : lowerPool)[rarity]!;
+    let candidates = (rarity === "legendary" ? heroPool : lowerPool)[rarity]!;
     if (gacha.newPlayerEpicHero && banner.kind === "hero" && rarity === "epic") {
       const unowned = candidates.filter((heroId) => !profile.heroes[heroId]);
       if (unowned.length > 0) candidates = unowned;

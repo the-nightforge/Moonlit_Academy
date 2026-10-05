@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GameData, Profile, Rarity } from "../src/index";
-import { createProfile, featuredEntry, legendaryRate, parseProfile, pullMany } from "../src/index";
+import { createProfile, featuredEntry, legendaryRate, parseProfile, pullMany, reservedFeaturedHeroes } from "../src/index";
 import { testData } from "./helpers";
 
 const NOW = Date.UTC(2026, 8, 28, 12);
@@ -198,5 +198,21 @@ describe("gacha", () => {
     // The legendary resets both counters; the five pulls after it count again.
     expect(result.profile.pity.heroes).toEqual({ sinceEpic: 5, sinceLegendary: 5 });
     expect(result.profile.pity[BANNER]).toBeUndefined(); // migrated to the group key
+  });
+
+  it("T335: the week's rotating hero never drops from the base banner or a lost rate-up", () => {
+    const data = rigged({ legendary: 1, epic: 0 });
+    const entry = featuredEntry(data.banners[FEATURED]!, NOW)!;
+    expect(reservedFeaturedHeroes(data, NOW)).toEqual([entry.heroId]);
+    for (let seed = 1; seed <= 120; seed++) {
+      const base = pullMany(data, withJade(data, 1000), BANNER, 1, seed, NOW);
+      if (!base.ok) throw new Error(base.error);
+      expect(base.results[0]!.rarity).toBe("legendary");
+      expect(base.results[0]!.itemId).not.toBe(entry.heroId);
+      const featured = pullMany(data, withJade(data, 1000), FEATURED, 1, seed, NOW);
+      if (!featured.ok) throw new Error(featured.error);
+      if (!featured.results[0]!.featuredHit) expect(featured.results[0]!.itemId).not.toBe(entry.heroId);
+      else expect(featured.results[0]!.itemId).toBe(entry.heroId);
+    }
   });
 });

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { GameData, PullResult, Rarity } from "rules";
-import { featuredEntry, featuredRotationEnd } from "rules";
+import { featuredEntry, featuredRotationEnd, reservedFeaturedHeroes } from "rules";
 import manifest from "virtual:assets-manifest";
 import { achievementNotices, errorText, mutate, type ProfileReply } from "../account";
 import { api } from "../api";
@@ -513,9 +513,15 @@ export class GachaScene extends Phaser.Scene {
         ...(featured.name ? [{ text:`Tuần này: ${featured.name}` }] : []),
       ] : []),
     ];
+    // This week's rotating heroes are reserved to their featured banner.
+    const reserved = new Set(reservedFeaturedHeroes(data, Date.now()).filter((id) => id !== featured?.heroId));
+    const hidden = banner.pool.legendary.filter((id) => reserved.has(id));
+    for (const id of hidden) {
+      lines.push({ text:`${itemName(data,id)} hiện không nằm trong banner này — chỉ trên banner luân chuyển tuần này.`, color:"#8fa2bd" });
+    }
     const pool: Record<Rarity, string[]> = featured && banner.featured
-      ? { legendary: [featured.heroId, ...banner.pool.legendary], epic: featured.pool.epic, rare: featured.pool.rare, common: featured.pool.common }
-      : banner.pool;
+      ? { legendary: [featured.heroId, ...banner.pool.legendary.filter((id) => !reserved.has(id))], epic: featured.pool.epic, rare: featured.pool.rare, common: featured.pool.common }
+      : { ...banner.pool, legendary: banner.pool.legendary.filter((id) => !reserved.has(id)) };
     for (const rarity of RARITIES) {
       if (!pool[rarity].length) continue;
       lines.push({text:RARITY_LABELS[rarity],color:`#${RARITY_COLORS[rarity].toString(16).padStart(6,"0")}`});

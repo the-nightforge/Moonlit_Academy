@@ -339,6 +339,7 @@ Bối cảnh: `15-server-gacha-spec.md` §3. Luật: `14` §5–§12, `01` §8 (
 | T332 | `pityGroup`: hai banner Hero chia bộ đếm `pity.heroes`; bộ đếm cũ `pity.banner_heroes` được gộp (migrate) vào khóa nhóm và xóa |
 | T333 | `featuredEntry(banner, now)` chọn entry tuần hiện tại theo mốc thứ Hai 00:00 ICT, vòng qua `rotation.length`; hai `now` khác tuần cho tướng khác nhau |
 | T334 | Bảo hiểm mới: `legendaryPity` 80 chắc chắn; tỉ lệ mềm `2% + 1.5% × (n − 50)` từ lượt 51 áp mọi banner |
+| T335 | Tướng xoay tua là giới hạn tuần: legendary trên `banner_heroes` không bao giờ ra tướng tuần; trượt rate-up trên banner `featured` cũng không ra tướng tuần |
 
 
 ## Giai đoạn 4e
