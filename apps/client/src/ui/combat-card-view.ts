@@ -93,7 +93,7 @@ export function combatCardModel(
   } else if (state.status !== "playerTurn") {
     disabledReason = "Chưa tới lượt người chơi";
   } else if (state.mode === "coop" && seat?.done === true) {
-    disabledReason = "Bạn đã Xong — chờ đồng đội";
+    disabledReason = "Bạn đã xong — chờ đồng đội";
   } else if (state.mode === "coop" && seat?.pendingChoice !== null && seat?.pendingChoice !== undefined) {
     disabledReason = "Hãy chọn 1 lá";
   } else if (seat !== undefined && !seat.hand.includes(instanceId)) {

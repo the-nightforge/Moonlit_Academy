@@ -118,7 +118,7 @@ describe("combatCardModel", () => {
     s.players[0]!.moonPower = 99; // power check must pass for the reason to reach "done"
     s.status = "playerTurn";
     const instanceId = s.players[0]!.hand[0]!;
-    expect(combatCardModel(d, s, instanceId, 0).disabledReason).toBe("Bạn đã Xong — chờ đồng đội");
+    expect(combatCardModel(d, s, instanceId, 0).disabledReason).toBe("Bạn đã xong — chờ đồng đội");
   });
 
   it("a Chiêm Bài option reports no turn reason — it is pickable, not played", () => {

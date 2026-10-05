@@ -1205,7 +1205,7 @@ export class CombatScene extends Phaser.Scene {
         const prompt = this.isStory
           ? "Rời trận? Màn Cốt Truyện chưa hoàn thành."
           : session.run !== null
-            ? "Bỏ run này? Toàn bộ tiến trình run sẽ mất."
+            ? "Bỏ lượt chơi này? Toàn bộ tiến trình sẽ mất."
             : "Rời trận? Tiến trình trận đấu sẽ mất.";
         void confirmModal(this, prompt, { label: "Rời trận", danger: true }).then((ok) => {
           if (!ok) return;
@@ -2139,7 +2139,7 @@ export class CombatScene extends Phaser.Scene {
       const rowTop = OWN_ROW_TOP_LABEL;
       this.text(GROUP_LABEL_X_OWN, rowTop, "Đội của bạn", 12, COLORS.dimText, this.root).setOrigin(0.5);
       const partnerSeat = this.state.players.find((player) => player.index !== this.mySeat);
-      const partnerLabel = partnerSeat?.done === true ? "Đồng đội · Đã Xong" : "Đồng đội";
+      const partnerLabel = partnerSeat?.done === true ? "Đồng đội · Đã xong" : "Đồng đội";
       this.text(GROUP_LABEL_X_PARTNER, rowTop, partnerLabel, 12, "#8fb8ff", this.root).setOrigin(0.5);
     }
   }
@@ -2759,7 +2759,7 @@ export class CombatScene extends Phaser.Scene {
         this.text(WIDTH / 2, HEIGHT / 2 + 56, "Đang gửi kết quả lên server…", 15, COLORS.dimText).setOrigin(0.5);
       } else {
         // A loss leaves the ticket closed; a win already moved on to the after-dialogue.
-        this.endScreenButton(WIDTH / 2 - 100, HEIGHT / 2 + 96, "Thử Lại", () => this.retryStory());
+        this.endScreenButton(WIDTH / 2 - 100, HEIGHT / 2 + 96, "Thử lại", () => this.retryStory());
         this.endScreenButton(WIDTH / 2 + 100, HEIGHT / 2 + 96, "Về Cốt Truyện", () => {
           session.pendingStageId = null;
           this.scene.start("story");
