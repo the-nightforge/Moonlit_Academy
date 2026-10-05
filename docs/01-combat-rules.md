@@ -2,7 +2,7 @@
 
 Tài liệu này mô tả **chính xác** cách một trận đấu vận hành. Code trong `packages/rules` phải tuân theo từng mục. Thuật ngữ theo `04-glossary.md`.
 
-Phạm vi: giai đoạn 1–4b (PvE offline). Các mục đánh dấu **[GĐ2]** / **[GĐ3]** / **[GĐ4a]** / **[GĐ4b]** thuộc giai đoạn 2 / 3 / 4a / 4b (bối cảnh: `09-phase2-spec.md`, `10-phase3-spec.md`, `12-phase4a-spec.md`, `13-phase4b-spec.md`). Luật lượt chơi: `11-run-rules.md`. Luật hồ sơ, Tu Luyện và deck: `14-meta-rules.md`.
+Phạm vi: giai đoạn 1–4b (PvE offline). Các mục đánh dấu **[GĐ2]** / **[GĐ3]** / **[GĐ4a]** / **[GĐ4b]** thuộc giai đoạn 2 / 3 / 4a / 4b (bối cảnh: `09-combat-depth-spec.md`, `10-roguelike-spec.md`, `12-moon-economy-spec.md`, `13-card-pools-spec.md`). Luật lượt chơi: `11-run-rules.md`. Luật hồ sơ, Tu Luyện và deck: `14-meta-rules.md`.
 
 ---
 

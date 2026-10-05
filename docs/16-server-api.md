@@ -2,7 +2,7 @@
 
 Tài liệu này mô tả **chính xác** server (`apps/server`), tài khoản, lưu trữ và API
 HTTP. Luật hồ sơ / Tu Luyện / deck / lượt chơi có xác nhận ở `14-meta-rules.md`; bối
-cảnh và lý do ở `15-phase4-spec.md`. Phạm vi: giai đoạn 4c (4d/4e thêm route ở đây).
+cảnh và lý do ở `15-server-gacha-spec.md`. Phạm vi: giai đoạn 4c (4d/4e thêm route ở đây).
 
 Nguyên tắc: server là trọng tài của hồ sơ. Mọi thay đổi hồ sơ = gọi một hàm thuần của
 `rules/src/meta/` rồi ghi kết quả, trong một transaction. Server không tự sửa JSON hồ

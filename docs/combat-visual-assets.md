@@ -83,3 +83,14 @@ summons are1254×1254. Existing normal portraits retain their original resolutio
 - [x] No baked text seen in final images; positive inventory tests confirm no texture-key collisions.
 - [x] Style comparison against original m04/f02 and overview of31 regenerated designs:
       `apps/client/test-results/combat-art/new-art-overview.png`.
+
+## UI icons — `public/assets/ui/*.png`
+
+47 icon PNG (256×256, alpha thật) tạo bằng image generation — minh họa mới từ prompt, không phải
+raster hóa SVG cũ. Nhóm: 13 trạng thái, 9 pha trăng, 6 ý đồ địch, 5 tiền tệ, 5 điểm bản đồ,
+9 icon chức năng. Bản xuất qua sharp: trim, fit vùng 216×216, lề alpha 20px mỗi cạnh.
+Prompt/nguồn/kích thước/SHA-256 từng file: `docs/assets/ui-png-icons.json`.
+
+Nạp: manifest trong `apps/client/vite.config.ts` ưu tiên PNG khi trùng tên SVG; khóa texture
+giữ nguyên, loader chiến đấu đã hỗ trợ PNG qua `load.image`. Bản xem trước và ảnh QA ở
+`output/imagegen/`; ảnh tạo gốc ở `.sdd-work/ui-png-icons/originals`.

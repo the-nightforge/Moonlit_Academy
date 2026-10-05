@@ -1690,5 +1690,5 @@ bằng chứng menu dữ liệu production dài đến mức cần cuộn.
   sửa; scoped review spec/quality PASS. All-mode piles/centering kiểm ở
   1280×800, settings/cards ở1280×720 và1024×576. Không đổi luật/mạng/art;
   110 file asset trước/sau khớp hash. Không lặp gate không bị thay đổi.
-- Báo cáo `docs/combat-ui-polish-2026-10-04.md`; bằng chứng và ảnh dưới
-  `.sdd-work/combat-ui-polish/`, raw browser cuối `final-card-browser.log`.
+- Bằng chứng và ảnh dưới `.sdd-work/combat-ui-polish/`, raw browser cuối
+  `final-card-browser.log`.

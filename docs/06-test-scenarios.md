@@ -110,7 +110,7 @@ test cần lệnh thật truyền `decrees: "real"` kèm `start.decrees`.
 
 ## Giai đoạn 2
 
-Quy ước thêm: "Boss" = `moon_ape` (HP 110, `enc_04`). F03 = Tần Sương, F02 = Diệp Linh Lung. Đội phải có Hero sở hữu lá được dùng (ví dụ `heroIds: ["m05", "f03", "f02"]`). Bối cảnh thiết kế: `09-phase2-spec.md`.
+Quy ước thêm: "Boss" = `moon_ape` (HP 110, `enc_04`). F03 = Tần Sương, F02 = Diệp Linh Lung. Đội phải có Hero sở hữu lá được dùng (ví dụ `heroIds: ["m05", "f03", "f02"]`). Bối cảnh thiết kế: `09-combat-depth-spec.md`.
 
 ### G. Phản Đòn
 
@@ -186,7 +186,7 @@ Quy ước thêm: "Boss" = `moon_ape` (HP 110, `enc_04`). F03 = Tần Sương, F
 
 ## Giai đoạn 3
 
-Quy ước thêm: test bản đồ kiểm tra **tính chất** trên seed 1–50. Test lượt chơi dùng đội M05/F04/M06, seed 42 trừ khi ghi khác; "thắng trận" trong test = cho mọi kẻ địch `burn 999` rồi `endTurn`. Bối cảnh: `10-phase3-spec.md`.
+Quy ước thêm: test bản đồ kiểm tra **tính chất** trên seed 1–50. Test lượt chơi dùng đội M05/F04/M06, seed 42 trừ khi ghi khác; "thắng trận" trong test = cho mọi kẻ địch `burn 999` rồi `endTurn`. Bối cảnh: `10-roguelike-spec.md`.
 
 ### M. Bản đồ
 
@@ -239,7 +239,7 @@ Quy ước thêm: test bản đồ kiểm tra **tính chất** trên seed 1–50
 
 ## Giai đoạn 4a
 
-Bối cảnh thiết kế: `12-phase4a-spec.md`. Test luật dùng fixture cố định (`strike9Intent`, v.v.), không phụ thuộc số cân bằng. Helper `setIntent` → `setPlan(state, pos, plan)`. Các test hiện có dựa vào bỏ tay / rút 5 / Nguyệt Lực 3 / `currentIntent` được viết lại theo luật mới (giữ mã cũ nếu kịch bản còn nghĩa).
+Bối cảnh thiết kế: `12-moon-economy-spec.md`. Test luật dùng fixture cố định (`strike9Intent`, v.v.), không phụ thuộc số cân bằng. Helper `setIntent` → `setPlan(state, pos, plan)`. Các test hiện có dựa vào bỏ tay / rút 5 / Nguyệt Lực 3 / `currentIntent` được viết lại theo luật mới (giữ mã cũ nếu kịch bản còn nghĩa).
 
 | Mã | Kịch bản |
 |---|---|
@@ -269,7 +269,7 @@ Bối cảnh thiết kế: `12-phase4a-spec.md`. Test luật dùng fixture cố 
 
 ## Giai đoạn 4b
 
-Bối cảnh thiết kế: `13-phase4b-spec.md`. Luật từ khóa: `01`; luật hồ sơ / Tu Luyện / deck: `14`. Test luật dùng fixture cố định, không phụ thuộc số cân bằng.
+Bối cảnh thiết kế: `13-card-pools-spec.md`. Luật từ khóa: `01`; luật hồ sơ / Tu Luyện / deck: `14`. Test luật dùng fixture cố định, không phụ thuộc số cân bằng.
 
 | Mã | Kịch bản |
 |---|---|
@@ -300,7 +300,7 @@ Bối cảnh thiết kế: `13-phase4b-spec.md`. Luật từ khóa: `01`; luật
 
 ## Giai đoạn 4c
 
-Bối cảnh thiết kế: `15-phase4-spec.md`. Luật hồ sơ / lượt chơi có xác nhận: `14`; server và API: `16`. Test server dùng `buildApp` với DB `:memory:`, đồng hồ và nguồn ngẫu nhiên giả.
+Bối cảnh thiết kế: `15-server-gacha-spec.md`. Luật hồ sơ / lượt chơi có xác nhận: `14`; server và API: `16`. Test server dùng `buildApp` với DB `:memory:`, đồng hồ và nguồn ngẫu nhiên giả.
 
 | Mã | Kịch bản |
 |---|---|
@@ -317,7 +317,7 @@ Bối cảnh thiết kế: `15-phase4-spec.md`. Luật hồ sơ / lượt chơi 
 
 ## Giai đoạn 4d
 
-Bối cảnh: `15-phase4-spec.md` §3. Luật: `14` §5–§12, `01` §8 (Tinh Hồn), API `16` §4.1. Test luật dùng `now` và `rngState` cố định.
+Bối cảnh: `15-server-gacha-spec.md` §3. Luật: `14` §5–§12, `01` §8 (Tinh Hồn), API `16` §4.1. Test luật dùng `now` và `rngState` cố định.
 
 | Mã | Kịch bản |
 |---|---|
@@ -339,7 +339,7 @@ Bối cảnh: `15-phase4-spec.md` §3. Luật: `14` §5–§12, `01` §8 (Tinh H
 
 ## Giai đoạn 4e
 
-Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01` §14, `14` §3.1, §10.1, §12–§13, API `16` §4.2. Test trận dùng vũ khí / Nguyệt Bảo fixture khi cần số cố định.
+Bối cảnh: `15-server-gacha-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01` §14, `14` §3.1, §10.1, §12–§13, API `16` §4.2. Test trận dùng vũ khí / Nguyệt Bảo fixture khi cần số cố định.
 
 | Mã | Kịch bản |
 |---|---|
@@ -414,7 +414,7 @@ Bối cảnh: `15-phase4-spec.md` §4. Luật: `01` §8 (dạng thứ hai), `01`
 
 ## Giai đoạn 7a
 
-Bối cảnh: `18-phase7-spec.md` §2; luật `01` §3.1, §4.6, §5.5, §9.3.1, §15.4. Trước khi Hero 7a có dữ liệu, test đặt nội tại / bộ đếm mới lên Hero có sẵn qua `withLevelUp` (`packages/rules/test/helpers.ts`).
+Bối cảnh: `18-content-spec.md` §2; luật `01` §3.1, §4.6, §5.5, §9.3.1, §15.4. Trước khi Hero 7a có dữ liệu, test đặt nội tại / bộ đếm mới lên Hero có sẵn qua `withLevelUp` (`packages/rules/test/helpers.ts`).
 
 | Mã | Kịch bản |
 |---|---|
@@ -439,7 +439,7 @@ Bối cảnh: `18-phase7-spec.md` §2; luật `01` §3.1, §4.6, §5.5, §9.3.1,
 
 ## Giai đoạn 7b
 
-Bối cảnh: `18-phase7-spec.md` §3; luật `01` §5.6, §9.3.1, §17, §15.4, §15.5. Trước khi Hero
+Bối cảnh: `18-content-spec.md` §3; luật `01` §5.6, §9.3.1, §17, §15.4, §15.5. Trước khi Hero
 7b có dữ liệu, test đặt nội tại / bộ đếm mới lên Hero có sẵn qua `withLevelUp`, và Linh
 Thú test qua dữ liệu tiêm vào (`packages/rules/test/helpers.ts`).
 
@@ -470,7 +470,7 @@ Thú test qua dữ liệu tiêm vào (`packages/rules/test/helpers.ts`).
 
 ## Giai đoạn 7c
 
-Bối cảnh: `18-phase7-spec.md` §4; luật `01` §2, §9.3.2; dữ liệu `02` §1.16; hồ sơ `14`
+Bối cảnh: `18-content-spec.md` §4; luật `01` §2, §9.3.2; dữ liệu `02` §1.16; hồ sơ `14`
 §16; route `16` §9. Test dùng dữ liệu Cốt truyện tiêm vào (`withTestStory`: 2 arc × 2
 màn trên encounter `story` có sẵn) — không phụ thuộc nội dung Arc 1–2 thật. Test server
 dùng `buildApp` với DB trong bộ nhớ, đồng hồ và nguồn ngẫu nhiên giả như GĐ 4c.
@@ -490,7 +490,7 @@ dùng `buildApp` với DB trong bộ nhớ, đồng hồ và nguồn ngẫu nhi�
 
 ## Giai đoạn 7d
 
-Bối cảnh: `18-phase7-spec.md` §5; luật `14` §5 (thưởng Lượt chơi), §13.3 (Nâng Cấp);
+Bối cảnh: `18-content-spec.md` §5; luật `14` §5 (thưởng Lượt chơi), §13.3 (Nâng Cấp);
 dữ liệu `02` §1.11–§1.12; route `16` §4.3. Test luật dùng hồ sơ dựng trực tiếp
 (`createProfile` rồi gán `weapons` / `relics` / `currencies`), không phụ thuộc số cân
 bằng. Test route dùng `buildApp` với DB trong bộ nhớ như GĐ 4c.

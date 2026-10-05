@@ -1,6 +1,6 @@
 # 14 — Luật hồ sơ, Tu Luyện và deck
 
-Tài liệu này mô tả **chính xác** cách hồ sơ người chơi, Tu Luyện (mở lá khóa) và các deck đặt tên vận hành. Luật trận ở `01`, luật lượt chơi ở `11`. Thuật ngữ theo `04-glossary.md`. Bối cảnh và lý do thiết kế: `13-phase4b-spec.md` (4b), `15-phase4-spec.md` (4c, 4d). Phạm vi: giai đoạn 4b + 4c + 4d (hồ sơ nằm trên server; API ở `16-server-api.md`).
+Tài liệu này mô tả **chính xác** cách hồ sơ người chơi, Tu Luyện (mở lá khóa) và các deck đặt tên vận hành. Luật trận ở `01`, luật lượt chơi ở `11`. Thuật ngữ theo `04-glossary.md`. Bối cảnh và lý do thiết kế: `13-card-pools-spec.md` (4b), `15-server-gacha-spec.md` (4c, 4d). Phạm vi: giai đoạn 4b + 4c + 4d (hồ sơ nằm trên server; API ở `16-server-api.md`).
 
 Hồ sơ là dữ liệu JSON thuần; mọi hàm dưới đây là hàm thuần trong `packages/rules` (`src/meta/`): nhận `Profile` và trả `Profile` mới, không sửa input. **[GĐ4c]** Hồ sơ lưu trên server; chỉ server gọi các hàm làm thay đổi hồ sơ rồi ghi lại, client chỉ giữ bản sao để hiển thị. `createRun` / `createCombat` không đọc hồ sơ — chỉ nhận danh sách lá.
 

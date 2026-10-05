@@ -77,13 +77,13 @@ Không cần AI. Chơi mỗi encounter vài lần, ghi vào `docs/playtest-notes
 
 ## Giai đoạn 2 — Chiều sâu
 
-Đặc tả: `09-phase2-spec.md`. Luật đã đưa vào `01` (các mục **[GĐ2]**), kiểu dữ liệu vào `02`, test vào `06` (T61–T95).
+Đặc tả: `09-combat-depth-spec.md`. Luật đã đưa vào `01` (các mục **[GĐ2]**), kiểu dữ liệu vào `02`, test vào `06` (T61–T95).
 
 ### Bước 2.1 — Cập nhật tài liệu
 Đưa đặc tả `09` vào `01`, `02`, `04`, `05`, `06`, `07`. *(Đã xong.)*
 
 ### Bước 2.2 — Schema và dữ liệu
-> Đọc `02-data-schema.md` (các mục GĐ2) và `09-phase2-spec.md` mục 1, 4.1, 5, 6. Mở rộng type trong `packages/rules/src/types/` và schema zod: tag `scheme`/`ward`/`harmony`, status `reflect`, effect `stealBuff`/`bloodMoon` + `actor`, condition `bloodMoonActive`, `CardDef.bond`/`requiresBloodMoon`, `CardInstance.ownerIds`, counter/passive mới, `EnemyDef.bloodMoonOverride`, event `bloodMoonChanged`, `hpLost.cause` mới. Thêm các kiểm tra chéo GĐ2 ở `02` mục 6. Thêm dữ liệu: F03, F02, 13 lá mới, gắn tag 4 lá cũ, `costModifierForTag` cho `full`/`lastQuarter`, boss `moon_ape`, `enc_04`, `strength 1` cho Thủ Thế. Đổi code đang dùng `ownerId` sang `ownerIds` nhưng **chưa** thêm luật mới (effect mới có thể `throw` "not implemented"). Làm test T94; toàn bộ T01–T60 vẫn pass (sửa test bị ảnh hưởng bởi Thủ Thế nếu có).
+> Đọc `02-data-schema.md` (các mục GĐ2) và `09-combat-depth-spec.md` mục 1, 4.1, 5, 6. Mở rộng type trong `packages/rules/src/types/` và schema zod: tag `scheme`/`ward`/`harmony`, status `reflect`, effect `stealBuff`/`bloodMoon` + `actor`, condition `bloodMoonActive`, `CardDef.bond`/`requiresBloodMoon`, `CardInstance.ownerIds`, counter/passive mới, `EnemyDef.bloodMoonOverride`, event `bloodMoonChanged`, `hpLost.cause` mới. Thêm các kiểm tra chéo GĐ2 ở `02` mục 6. Thêm dữ liệu: F03, F02, 13 lá mới, gắn tag 4 lá cũ, `costModifierForTag` cho `full`/`lastQuarter`, boss `moon_ape`, `enc_04`, `strength 1` cho Thủ Thế. Đổi code đang dùng `ownerId` sang `ownerIds` nhưng **chưa** thêm luật mới (effect mới có thể `throw` "not implemented"). Làm test T94; toàn bộ T01–T60 vẫn pass (sửa test bị ảnh hưởng bởi Thủ Thế nếu có).
 
 ### Bước 2.3 — Phản Đòn, Cướp buff, Huyết Nguyệt
 > Đọc `01-combat-rules.md` mục 3.1, 5.1, 6.1, 6.4, 6.5, 7.4, 9.3, 9.4, 10.5. Thêm `reflect` (kích hoạt mỗi hit, gỡ cùng giáp, dừng lá/ý định khi nguồn ngã), `stealBuff`, `bloodMoon`, `bloodMoonActive`, mất HP đầu lượt, giảm cuối vòng, `requiresBloodMoon`. Làm test T61–T77.
@@ -111,7 +111,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ## Giai đoạn 3 — Roguelike
 
-Đặc tả: `10-phase3-spec.md`. Luật: `01` §13 (Kỳ Vật), `11-run-rules.md` (lượt chơi). Test: `06` T96–T127. Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-24-phase3-roguelike.md`.
+Đặc tả: `10-roguelike-spec.md`. Luật: `01` §13 (Kỳ Vật), `11-run-rules.md` (lượt chơi). Test: `06` T96–T127. Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-24-phase3-roguelike.md`.
 
 ### Bước 3.1 — Cập nhật tài liệu *(Task 1)*
 ### Bước 3.2 — Schema và dữ liệu *(Task 2)*
@@ -133,7 +133,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ## Giai đoạn 4a — Kinh tế Nguyệt Lực
 
-Đặc tả: `12-phase4a-spec.md`. Luật đã đưa vào `01`, schema vào `02`, thuật ngữ vào `04`, test vào `06` (T128–T148). Mỗi bước gom thay đổi luật cùng phần data phụ thuộc để `pnpm test` xanh sau từng bước.
+Đặc tả: `12-moon-economy-spec.md`. Luật đã đưa vào `01`, schema vào `02`, thuật ngữ vào `04`, test vào `06` (T128–T148). Mỗi bước gom thay đổi luật cùng phần data phụ thuộc để `pnpm test` xanh sau từng bước.
 
 ### Bước 4a.1 — Cập nhật tài liệu
 Đưa đặc tả `12` vào `00`, `01`, `02`, `04`, `06`, `07` (`12` §9). *(Đã xong.)*
@@ -163,7 +163,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ## Giai đoạn 4b — Pool lá, Tu Luyện, xếp deck
 
-Đặc tả: `13-phase4b-spec.md`. Luật đã đưa vào `01` (từ khóa), `14` (hồ sơ / Tu Luyện / deck), schema vào `02`, thuật ngữ vào `04`, test vào `06` (T149–T168). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-26-phase4b-pools-mastery-decks.md`. Mỗi bước gom thay đổi luật cùng phần data phụ thuộc để `pnpm test` xanh sau từng bước.
+Đặc tả: `13-card-pools-spec.md`. Luật đã đưa vào `01` (từ khóa), `14` (hồ sơ / Tu Luyện / deck), schema vào `02`, thuật ngữ vào `04`, test vào `06` (T149–T168). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-26-phase4b-pools-mastery-decks.md`. Mỗi bước gom thay đổi luật cùng phần data phụ thuộc để `pnpm test` xanh sau từng bước.
 
 ### Bước 4b.1 — Cập nhật tài liệu
 Đưa đặc tả `13` vào `00`, `01`, `02`, `04`, `06`, `07` và tài liệu mới `14` (`13` §9). *(Đã xong.)*
@@ -190,7 +190,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ## Giai đoạn 4c — Server, tài khoản, hồ sơ trên server
 
-Đặc tả: `15-phase4-spec.md` (§2). Luật hồ sơ / lượt chơi có xác nhận vào `14`, server và API vào `16` (mới), thuật ngữ vào `04`, test vào `06` (T173–T182). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-27-phase4c-server-accounts.md`. Thư viện đã duyệt: `fastify`, `better-sqlite3`, `@types/better-sqlite3`.
+Đặc tả: `15-server-gacha-spec.md` (§2). Luật hồ sơ / lượt chơi có xác nhận vào `14`, server và API vào `16` (mới), thuật ngữ vào `04`, test vào `06` (T173–T182). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-27-phase4c-server-accounts.md`. Thư viện đã duyệt: `fastify`, `better-sqlite3`, `@types/better-sqlite3`.
 
 ### Bước 4c.1 — Cập nhật tài liệu
 > Đưa luật 4c vào `14`, `16`, `04`, `06`, `07`, `CLAUDE.md`.
@@ -212,7 +212,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ## Giai đoạn 4d — Tiền tệ, nhiệm vụ, gacha Hero, Tinh Hồn
 
-Đặc tả: `15-phase4-spec.md` §3. Luật vào `14` (§5–§12), `01` §8 (Tinh Hồn 2, 4), API vào `16` §4.1, thuật ngữ vào `04`, test vào `06` (T183–T196). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-28-phase4d-economy-gacha.md`. Tinh Hồn 5 (dạng thăng cấp thứ hai) dời sang 4e.
+Đặc tả: `15-server-gacha-spec.md` §3. Luật vào `14` (§5–§12), `01` §8 (Tinh Hồn 2, 4), API vào `16` §4.1, thuật ngữ vào `04`, test vào `06` (T183–T196). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-28-phase4d-economy-gacha.md`. Tinh Hồn 5 (dạng thăng cấp thứ hai) dời sang 4e.
 
 ### Bước 4d.1 — Cập nhật tài liệu
 ### Bước 4d.2 — Kinh tế
@@ -227,7 +227,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ## Giai đoạn 4e — Binh Khí, Nguyệt Bảo, Tinh Luyện, Cộng Minh, Tinh Hồn 5
 
-Đặc tả: `15-phase4-spec.md` §4. Luật: `01` §8, §14; `14` §3.1, §10.1, §12–§13; dữ liệu `02` §1.12; nội dung `03` §7; API `16` §4.2; test `06` (T197–T212). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-29-phase4e-gear.md`.
+Đặc tả: `15-server-gacha-spec.md` §4. Luật: `01` §8, §14; `14` §3.1, §10.1, §12–§13; dữ liệu `02` §1.12; nội dung `03` §7; API `16` §4.2; test `06` (T197–T212). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-29-phase4e-gear.md`.
 
 ### Bước 4e.1 — Cập nhật tài liệu
 ### Bước 4e.2 — Dữ liệu
@@ -245,7 +245,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ## Giai đoạn 5 — PvP (Đấu Trường Công Bằng) và triển khai Internet
 
-> Đặc tả: `17-phase5-6-spec.md` (đã duyệt 2026-09-30). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-30-phase5-6-pvp-coop.md` (24 Task).
+> Đặc tả: `17-pvp-coop-spec.md` (đã duyệt 2026-09-30). Kế hoạch chi tiết: `docs/superpowers/plans/2026-09-30-phase5-6-pvp-coop.md` (24 Task).
 
 ### Bước 5a.1 — Tài liệu + bộ ghi vàng
 > Chốt spec §12; cập nhật `01`, `02`, `04`, `06`, `07`, `CLAUDE.md`. Ghi vàng ~200 trận / lượt PvE **trên code cũ** làm chuẩn so. T213–T215.
@@ -277,7 +277,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ## Giai đoạn 7 — Nội dung: đủ 20 Hero, Cốt truyện, trang bị
 
-Đặc tả: `18-phase7-spec.md` (khung cả giai đoạn; luật 7a đã đưa vào `01`, `02`, `04`, `06`). Kế hoạch chi tiết 7a: `docs/superpowers/plans/2026-09-28-phase7a-heroes-wave1.md` (10 Task). T213 (ghi vàng PvE) xanh sau mỗi bước.
+Đặc tả: `18-content-spec.md` (khung cả giai đoạn; luật 7a đã đưa vào `01`, `02`, `04`, `06`). Kế hoạch chi tiết 7a: `docs/superpowers/plans/2026-09-28-phase7a-heroes-wave1.md` (10 Task). T213 (ghi vàng PvE) xanh sau mỗi bước.
 
 ### Phần 7a — 9 Hero đợt 1
 
@@ -301,7 +301,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ### Phần 7b — Linh Thú + 6 Hero đợt 2
 
-Đặc tả: `18-phase7-spec.md` §3. Kế hoạch chi tiết:
+Đặc tả: `18-content-spec.md` §3. Kế hoạch chi tiết:
 `docs/superpowers/plans/2026-09-28-phase7b-heroes-wave2.md` (10 Task).
 
 ### Bước 7b.1 — Tài liệu 7b *(Task 1)*
@@ -330,7 +330,7 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ### Phần 7c — Cốt truyện Arc 1–2
 
-Đặc tả: `18-phase7-spec.md` §4. Kế hoạch chi tiết:
+Đặc tả: `18-content-spec.md` §4. Kế hoạch chi tiết:
 `docs/superpowers/plans/2026-09-30-phase7c-story.md` (9 Task).
 
 ### Bước 7c.1 — Tài liệu 7c *(Task 1)*
@@ -367,9 +367,9 @@ Cập nhật playtest scripted (thêm đội hình có F03/F02 và `enc_04`), ch
 
 ### Phần 7d — Trang bị bản mệnh + nâng cấp vật liệu
 
-**Giai đoạn 7 đã xong — `docs/18-phase7-spec.md` đã hoàn thành.**
+**Giai đoạn 7 đã xong — `docs/18-content-spec.md` đã hoàn thành.**
 
-Đặc tả: `18-phase7-spec.md` §5. Kế hoạch chi tiết:
+Đặc tả: `18-content-spec.md` §5. Kế hoạch chi tiết:
 `docs/superpowers/plans/2026-09-30-phase7d-gear-materials.md` (7 Task).
 
 ### Bước 7d.1 — Tài liệu 7d *(Task 1)*

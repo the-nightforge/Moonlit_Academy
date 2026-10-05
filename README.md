@@ -118,7 +118,7 @@ Dự án là một **pnpm monorepo** với nguyên tắc cốt lõi: **luật ch
 ├── pnpm-workspace.yaml
 ├── tsconfig.base.json
 ├── render.yaml               # Render Blueprint cho server
-├── docs/                     # Tài liệu thiết kế và đặc tả (00–17)
+├── docs/                     # Tài liệu thiết kế và đặc tả (00–18)
 │   └── superpowers/plans/    # Kế hoạch triển khai chi tiết từng giai đoạn
 ├── deploy/                   # Caddyfile, systemd unit, hướng dẫn triển khai
 ├── data/                     # Dữ liệu prototype GĐ 1 (lịch sử — không còn dùng)
@@ -219,7 +219,7 @@ Chạy ở thư mục gốc:
 
 Dự án coi test là điều kiện bắt buộc trước khi hoàn thành bất kỳ thay đổi nào.
 
-- **`packages/rules/test`** — kiểm thử luật theo các kịch bản đánh mã trong `docs/06-test-scenarios.md` và các file đặc tả giai đoạn (`T01`, `T11`, …, `T262`), cùng:
+- **`packages/rules/test`** — kiểm thử luật theo các kịch bản đánh mã trong `docs/06-test-scenarios.md` và các file đặc tả giai đoạn (`T01`, `T11`, …, `T330`), cùng:
   - **Golden record** (`golden.test.ts`): ghi lại kết quả các trận và lượt chơi mẫu, phát hiện mọi thay đổi hành vi ngoài ý muốn.
   - **Mô phỏng cân bằng** (`*-sim.test.ts`, `playtest.test.ts`): bot tự chơi hàng loạt trận để đo tỉ lệ thắng, kinh tế, PvP và co-op.
 - **`packages/data/test`** — mọi file JSON phải qua schema zod; `dataVersion` ổn định.
@@ -322,13 +322,18 @@ Tài liệu nằm trong `docs/` và là **nguồn chân lý** cho luật chơi.
 | `06-test-scenarios.md` | Kịch bản test có kết quả mong đợi (mã `T…`) |
 | `07-implementation-plan.md` | Kế hoạch code theo từng bước, từ giai đoạn 0 đến 6 |
 | `08-character-prompts.md` | Lore và prompt art của 20 nhân vật |
-| `09-phase2-spec.md` → `13-phase4b-spec.md` | Đặc tả giai đoạn 2, 3, 4a, 4b |
+| `09-combat-depth-spec.md` | Đặc tả giai đoạn 2 — chiều sâu chiến đấu (Song Hành, từ khóa) |
+| `10-roguelike-spec.md` | Đặc tả giai đoạn 3 — bản đồ nút, Kỳ Vật, roguelike |
 | `11-run-rules.md` | Luật lượt chơi roguelike |
+| `12-moon-economy-spec.md` | Đặc tả giai đoạn 4a — kinh tế Nguyệt Lực theo vòng |
+| `13-card-pools-spec.md` | Đặc tả giai đoạn 4b — pool lá, Tu Luyện, xếp deck |
 | `14-meta-rules.md` | Luật hồ sơ, Tu Luyện, deck, kinh tế, gacha, Elo, thưởng |
-| `15-phase4-spec.md` | Bối cảnh và lý do thiết kế giai đoạn 4 |
+| `15-server-gacha-spec.md` | Đặc tả giai đoạn 4 — server, gacha, trang bị |
 | `16-server-api.md` | Server, API HTTP, lưu trữ, realtime, triển khai |
-| `17-phase5-6-spec.md` | Đặc tả PvP, co-op và triển khai Internet |
+| `17-pvp-coop-spec.md` | Đặc tả giai đoạn 5–6 — PvP, co-op, triển khai Internet |
+| `18-content-spec.md` | Đặc tả giai đoạn 7 — đủ 20 Hero, Cốt truyện, trang bị |
 | `playtest-notes.md` | Ghi chú chơi thử và các lần chỉnh số |
+| `combat-visual-assets.md` | Kiểm kê asset chiến đấu và icon UI |
 
 **Khi tài liệu mâu thuẫn**, thứ tự ưu tiên là:
 

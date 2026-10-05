@@ -8,7 +8,7 @@ Thiết kế được chốt qua brainstorming (2026-09-25). Khi đưa vào tài
 `14-meta-rules.md`, schema vào `02`, thuật ngữ vào `04`, test vào `06`, bước vào
 `07`. Khi có khác biệt, `01`/`14` là chuẩn; tài liệu này giữ bối cảnh và lý do.
 
-**Điều kiện trước:** GĐ 4a (`12-phase4a-spec.md`) đã xong — thang cost 0–8, giữ
+**Điều kiện trước:** GĐ 4a (`12-moon-economy-spec.md`) đã xong — thang cost 0–8, giữ
 tay, `copies`, Chiêm Bài, địch dùng Nguyệt Lực.
 
 **Trạng thái:** đã đưa vào `01`, `02`, `04`, `06`, `07`, `14` (bước 4b.1).

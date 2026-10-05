@@ -1,6 +1,6 @@
 # 11 — Luật lượt chơi (Roguelike)
 
-Tài liệu này mô tả **chính xác** cách một lượt chơi vận hành, bổ sung cho `01-combat-rules.md` (một trận). Thuật ngữ theo `04-glossary.md`. Bối cảnh và lý do thiết kế: `10-phase3-spec.md`. Phạm vi: giai đoạn 3.
+Tài liệu này mô tả **chính xác** cách một lượt chơi vận hành, bổ sung cho `01-combat-rules.md` (một trận). Thuật ngữ theo `04-glossary.md`. Bối cảnh và lý do thiết kế: `10-roguelike-spec.md`. Phạm vi: giai đoạn 3.
 
 ---
 
