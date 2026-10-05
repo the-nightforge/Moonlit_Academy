@@ -7,6 +7,7 @@
   "maxMulligan": 2,
   "maxIntentsPerRound": 3,
   "bloodMoonHpLoss": 2,
+  "turnSeconds": 60,
   "levelUpRandomBuffs": [
     { "status": "strength", "amount": 1 },
     { "status": "empower", "amount": 3 },

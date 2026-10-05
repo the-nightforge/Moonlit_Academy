@@ -404,6 +404,8 @@ export const combatConfigSchema = z.object({
   maxMulligan: z.number().int().nonnegative(),
   maxIntentsPerRound: z.number().int().positive(),
   bloodMoonHpLoss: z.number().int().nonnegative(),
+  /** Offline/PvE player-turn clock in seconds; expiry auto-ends the turn. */
+  turnSeconds: z.number().int().positive(),
   levelUpRandomBuffs: z.array(z.object({ status: statusIdSchema, amount: z.number().int().positive() })).min(1),
 });
 

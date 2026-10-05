@@ -101,6 +101,8 @@ test(`current moon and card description geometry @ ${viewport.width}`,async({pag
   expect(probe.label).toBe(false);expect(probe.ring).toBe(false);expect(probe.aura).toBe(false);
   // Offline combat offers an exit back to deck-select (`✕` badge by the gear).
   expect(probe.exit).toBe(true);
+  // Offline player turns run on `combatConfig.turnSeconds` — the clock ticks per frame.
+  await expect.poll(()=>page.evaluate(()=>{const s=(window as any).__vn.game.scene.getScene("combat"),nodes:any[]=[];const walk=(l:any[])=>l.forEach((n:any)=>{nodes.push(n);if(n.list)walk(n.list);});walk(s.children.list);return nodes.some((n:any)=>/^⏱ \d+s$/.test(n.text||""));})).toBe(true);
   for(const card of probe.cards){expect(card).not.toBeNull();expect(card!.body.length).toBeGreaterThan(0);expect(card!.bodyTop).toBeGreaterThanOrEqual(card!.parchmentTop);expect(card!.bodyBottom).toBeLessThanOrEqual(card!.parchmentBottom-2);}
   await page.evaluate(()=>{
     const h=(window as any).__vn,s=h.game.scene.getScene("combat"),id=h.session.state.players[0].hand[0];

@@ -58,6 +58,7 @@ import { cardColorOf, cardIconOf } from "../ui/attack-style";
 import { displayStatuses, heroTooltipLines, statusBadgeModels, unitAt, weaponForHero } from "../ui/combat-display";
 import type { SeatAnchors } from "../ui/combat-display";
 import { computeCombatLayout, endTurnAnchor, fitChoicePanel, handSlots } from "../ui/combat-layout";
+import { OfflineTurnClock } from "../ui/turn-clock";
 import type { CombatLayout } from "../ui/combat-layout";
 import { moonHudModel, renderMoonHud } from "../ui/moon-hud";
 import { InspectorView, drawComposition, pileModel, relicHudEntries, triggerAnchorKey } from "../ui/combat-inspector";
@@ -195,6 +196,8 @@ export class CombatScene extends Phaser.Scene {
   private netMatch: NetMatch | null = null;
   private mySeat = 0;
   private timerText: Phaser.GameObjects.Text | null = null;
+  /** Offline turn clock (`combatConfig.turnSeconds`); null when a net match drives the deadline. */
+  private turnClock: OfflineTurnClock | null = null;
   private endTurnObjects: Phaser.GameObjects.GameObject[] = [];
   private netDown = false;
   private emotePanel = false;
@@ -257,6 +260,7 @@ export class CombatScene extends Phaser.Scene {
     this.mySeat = this.netMatch?.you ?? 0;
     this.netDown = false;
     this.timerText = null;
+    this.turnClock = this.netMatch ? null : new OfflineTurnClock(this.gameData.combatConfig.turnSeconds);
     this.emotePanel = false;
     this.targeting = null;
     this.validTargetIds.clear();
@@ -949,16 +953,30 @@ export class CombatScene extends Phaser.Scene {
     this.renderDebugPanel();
   }
 
-  /** Per-frame: the shared turn clock counts down to the server deadline. */
-  update(): void {
-    if (!this.timerText || !this.netMatch) return;
-    const deadline = this.netMatch.deadline;
-    if (deadline === null) {
+  /** Per-frame: countdown to the server deadline (online) or the local turn
+   *  clock (offline — expiry auto-`endTurn`s, clock freezes while locked/modal). */
+  update(_time: number, delta: number): void {
+    if (!this.timerText) return;
+    if (this.netMatch) {
+      const deadline = this.netMatch.deadline;
+      if (deadline === null) {
+        this.timerText.setText("");
+        return;
+      }
+      const left = Math.max(0, deadline - (session.net?.serverNow() ?? Date.now()));
+      this.timerText.setText(`⏱ ${Math.ceil(left / 1000)}s`);
+      return;
+    }
+    if (!this.turnClock) return;
+    const frozen = this.inputLocked || isModalOpen();
+    const left = this.turnClock.tick(this.state.status === "playerTurn", frozen, delta);
+    if (left === null) {
       this.timerText.setText("");
       return;
     }
-    const left = Math.max(0, deadline - (session.net?.serverNow() ?? Date.now()));
     this.timerText.setText(`⏱ ${Math.ceil(left / 1000)}s`);
+    this.timerText.setColor(left <= 10000 ? "#ff5a4e" : COLORS.gold);
+    if (left <= 0 && !frozen) this.dispatch({ type: "endTurn" });
   }
 
   private restart(seed?: number, encounterId?: string): void {
@@ -1221,7 +1239,7 @@ export class CombatScene extends Phaser.Scene {
       });
       this.hoverTooltip(exit, () => ({ x: WIDTH - 280, y: 60 }), () => ["Rời trận"]);
     }
-    if (match && match.deadline !== null) {
+    if ((match && match.deadline !== null) || this.turnClock) {
       const { x, y } = endTurnAnchor(this.layout);
       this.timerText = this.text(x, y - 66, "", 15, COLORS.gold).setOrigin(0.5);
     }

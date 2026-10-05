@@ -448,6 +448,9 @@ export interface CombatConfig {
   maxMulligan: number;
   maxIntentsPerRound: number;
   bloodMoonHpLoss: number;
+  /** Offline/PvE player-turn clock; the client auto-`endTurn`s at 0.
+   *  Online modes use `pvpConfig.turnSeconds` / `coopConfig.turnSeconds` instead. */
+  turnSeconds: number;
   /** Huyết Mạch (M07) buff table, rolled with the combat RNG. */
   levelUpRandomBuffs: { status: StatusId; amount: number }[];
 }
