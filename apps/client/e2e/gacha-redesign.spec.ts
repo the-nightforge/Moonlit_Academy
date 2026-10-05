@@ -44,7 +44,7 @@ async function reply(page: Page, count = 1) {
     profile.currencies.moonJade -= h.session.data.economyConfig.pullCost*n;
     const ids = ["m01", "m05", "f01", "m08", "f08", "f10", "m06", "f02", "f03", "m02"].slice(0,n);
     for (const id of ids) profile.heroes[id] = { ...profile.heroes[id], constellation:1, bonusUnlocks:1 };
-    profile.pity.banner_heroes = { sinceEpic:0, sinceLegendary:Math.max(0,n-6) };
+    profile.pity.heroes = { sinceEpic:0, sinceLegendary:Math.max(0,n-6) };
     profile.missions.daily.gachaPulls += n;
     profile.missions.weekly.gachaPulls += n;
     return { profile, rev:h.session.rev+1, achievements:[], results:ids.map((itemId,i) => ({ itemId, rarity:i < 6 ? "legendary":"epic", outcome:"constellation", constellation:1 })) };
@@ -186,7 +186,7 @@ for (const lastRarity of ["rare", "epic"] as const) {
       body.profile.heroes.f04 = { xp:0, unlockedCardIds:[], constellation:1, bonusUnlocks:1, levelUpForm:"base" };
       body.profile.heroes.m02.constellation = 0;
       body.profile.heroes.m02.bonusUnlocks = 0;
-      body.profile.pity.banner_heroes.sinceEpic = 1;
+      body.profile.pity.heroes.sinceEpic = 1;
     }
     await page.evaluate(() => {
       // Keep Phaser's real tween state machine/callback ordering; control only

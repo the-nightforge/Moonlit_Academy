@@ -69,7 +69,7 @@ describe("gear routes", () => {
     const server = await testServer();
     const { token } = await register(server);
     const banners = await call(server, "GET", "/api/gacha/banners", { token });
-    expect(banners.body.banners.map((banner: { id: string }) => banner.id)).toEqual(["banner_heroes", "banner_weapons", "banner_relics"]);
+    expect(banners.body.banners.map((banner: { id: string }) => banner.id)).toEqual(["banner_heroes", "banner_nguyet_tuong", "banner_weapons", "banner_relics"]);
     const pulled = await call(server, "POST", "/api/gacha/banner_weapons/pull", { token, rev: 1, body: { count: 10 } });
     expect(pulled.status).toBe(200);
     const owned = Object.keys(pulled.body.profile.weapons);

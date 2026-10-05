@@ -491,12 +491,29 @@ export const bannerDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
   kind: z.enum(["hero", "weapon", "relic"]),
+  /** Banners sharing a group use one pity counter keyed by this name (`14` §9). */
+  pityGroup: idSchema.optional(),
   pool: z.object({
     common: z.array(idSchema),
     rare: z.array(idSchema),
     epic: z.array(idSchema),
     legendary: z.array(idSchema),
   }),
+  /** Hero banner with a weekly featured legendary: `rateUp` of legendary rolls
+   *  give the week's hero, the rest draw `pool.legendary`; non-legendary rolls
+   *  use the active rotation entry's pool. */
+  featured: z.object({
+    rateUp: z.number().gt(0).lte(1),
+    rotation: z.array(z.object({
+      heroId: idSchema,
+      name: z.string().min(1).optional(),
+      pool: z.object({
+        epic: z.array(idSchema),
+        rare: z.array(idSchema),
+        common: z.array(idSchema),
+      }),
+    })).min(1),
+  }).optional(),
 });
 
 export const achievementDefSchema = z.object({

@@ -7,9 +7,9 @@
   "gacha": {
     "rates": { "legendary": 0.02, "epic": 0.13 },
     "epicPity": 10,
-    "legendarySoftPityStart": 55,
-    "legendarySoftPityStep": 0.06,
-    "legendaryPity": 70,
+    "legendarySoftPityStart": 50,
+    "legendarySoftPityStep": 0.015,
+    "legendaryPity": 80,
     "newPlayerEpicHero": true
   },
   "dupeMoonStar": { "legendary": 25, "epic": 5, "rare": 1, "common": 1 },

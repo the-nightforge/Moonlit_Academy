@@ -454,18 +454,42 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   for (const id of duplicate(missions.map((mission) => mission.id))) errors.push(`missions: duplicate id "${id}"`);
   for (const id of duplicate(achievements.map((achievement) => achievement.id))) errors.push(`achievements: duplicate id "${id}"`);
   for (const id of duplicate(banners.map((banner) => banner.id))) errors.push(`banners: duplicate id "${id}"`);
-  for (const banner of banners) {
-    const ids = Object.values(banner.pool).flat();
-    for (const id of duplicate(ids)) errors.push(`banners: "${banner.id}" lists "${id}" twice`);
-    if (ids.length === 0) errors.push(`banners: "${banner.id}" has an empty pool`);
+  const validateBannerPool = (banner: (typeof banners)[number], where: string, pool: Record<string, string[]>) => {
+    const ids = Object.values(pool).flat();
+    for (const id of duplicate(ids)) errors.push(`banners: "${banner.id}" ${where} lists "${id}" twice`);
     // Pool ids come from the file of the banner's kind, at their own rarity.
     const items: { id: string; rarity: string }[] =
       banner.kind === "hero" ? heroes : banner.kind === "weapon" ? parsed.weapons : parsed.relics;
-    for (const [rarity, itemIds] of Object.entries(banner.pool)) {
+    for (const [rarity, itemIds] of Object.entries(pool)) {
       for (const itemId of itemIds) {
         const item = items.find((candidate) => candidate.id === itemId);
-        if (!item) errors.push(`banners: "${banner.id}" has unknown ${banner.kind} "${itemId}"`);
-        else if (item.rarity !== rarity) errors.push(`banners: "${banner.id}" lists ${item.rarity} ${banner.kind} "${itemId}" as ${rarity}`);
+        if (!item) errors.push(`banners: "${banner.id}" ${where} has unknown ${banner.kind} "${itemId}"`);
+        else if (item.rarity !== rarity) errors.push(`banners: "${banner.id}" ${where} lists ${item.rarity} ${banner.kind} "${itemId}" as ${rarity}`);
+      }
+    }
+  };
+  const pityGroups = new Map<string, string>();
+  for (const banner of banners) {
+    validateBannerPool(banner, "pool", banner.pool);
+    if (Object.values(banner.pool).flat().length === 0) errors.push(`banners: "${banner.id}" has an empty pool`);
+    if (banner.pityGroup) {
+      const kind = pityGroups.get(banner.pityGroup);
+      if (kind && kind !== banner.kind) errors.push(`banners: pity group "${banner.pityGroup}" mixes kinds`);
+      pityGroups.set(banner.pityGroup, banner.kind);
+    }
+    if (banner.featured) {
+      if (banner.kind !== "hero") errors.push(`banners: "${banner.id}" featured is only for hero banners`);
+      if (banner.pool.legendary.length === 0) {
+        errors.push(`banners: "${banner.id}" featured needs a non-empty pool.legendary for the rate-up fallback`);
+      }
+      for (const entry of banner.featured.rotation) {
+        const hero = heroes.find((candidate) => candidate.id === entry.heroId);
+        if (!hero) errors.push(`banners: "${banner.id}" rotation has unknown hero "${entry.heroId}"`);
+        else if (hero.rarity !== "legendary") errors.push(`banners: "${banner.id}" rotation hero "${entry.heroId}" is not legendary`);
+        validateBannerPool(banner, `rotation "${entry.heroId}"`, entry.pool);
+        if (Object.values(entry.pool).flat().length === 0) {
+          errors.push(`banners: "${banner.id}" rotation "${entry.heroId}" has an empty pool`);
+        }
       }
     }
   }

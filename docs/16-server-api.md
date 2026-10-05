@@ -109,7 +109,7 @@ tương ứng (`xa_than` / `huyet_te`) không có hiệu lực, hoặc quá gi�
 | Route | Body | Kết quả / lỗi |
 |---|---|---|
 | `POST /api/missions/:id/claim` | — | `claimMission` (`14` §7) → `{ profile, rev }` |
-| `GET /api/gacha/banners` | — | `{ banners: BannerDef[], gacha, pullCost, pity }` (`pity` của người chơi theo banner) |
+| `GET /api/gacha/banners` | — | `{ banners: BannerDef[], gacha, pullCost, pity }` (`pity` của người chơi theo `pityGroup ?? bannerId`, bộ đếm theo id cũ đã gộp) |
 | `POST /api/gacha/:bannerId/pull` | `{ count: 1 \| 10 }` | Seed = `random(4)` uint32 → `pullMany` (`14` §9); ghi `pulls` cùng transaction → `{ profile, rev, results }` |
 | `GET /api/gacha/history` | query `banner?`, `page?` (0-based) | 20 bản ghi mới nhất mỗi trang: `{ entries: { bannerId, results, createdAt }[] }` (không trả seed cho client) |
 | `POST /api/shop/:itemId/buy` | `{ heroId? }` | `buyShopItem` (`14` §11) → `{ profile, rev }` |
@@ -123,8 +123,9 @@ Mọi route đổi hồ sơ ở trên cần `If-Match`.
 - **`POST /api/runs`:** `buildLoadout(data, profile, deck)` với trang bị của deck (Bộ cơ
   bản: không trang bị); lỗi sở hữu → `400` như `"invalid deck"`. Loadout vẫn nằm trong
   `runs.loadout_json` — **không** cần migration.
-- **Gacha:** `GET /api/gacha/banners` trả cả 3 banner; `POST /api/gacha/:bannerId/pull`
-  không đổi (kết quả theo `14` §9, §13.1).
+- **Gacha:** `GET /api/gacha/banners` trả 4 banner (2 Hero chung `pityGroup`
+  `"heroes"` — gồm banner tướng xoay tua tuần `banner_nguyet_tuong`, `14` §9);
+  `POST /api/gacha/:bannerId/pull` không đổi (kết quả theo `14` §9, §13.1).
 
 | Route | Body | Kết quả / lỗi |
 |---|---|---|

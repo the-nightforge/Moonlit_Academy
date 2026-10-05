@@ -1,5 +1,5 @@
 import { nextRandom } from "../rng";
-import type { EconomyConfig, GameData, Profile, Rarity } from "../types/index";
+import type { BannerDef, EconomyConfig, FeaturedRotationEntry, GameData, Profile, Rarity } from "../types/index";
 import { checkAchievements, recordProgress } from "./economy";
 
 function clone<T>(value: T): T {
@@ -8,11 +8,27 @@ function clone<T>(value: T): T {
 
 /** Rarities from highest to lowest (`14` §9 step 4). */
 const RARITIES: readonly Rarity[] = ["legendary", "epic", "rare", "common"];
+/** The epic/rare/common tiers a featured rotation pool can hold. */
+const LOWER_RARITIES: readonly Rarity[] = ["epic", "rare", "common"];
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+/** Rotation weeks roll over Monday 00:00 ICT (UTC+7). */
+const ROTATION_ANCHOR = Date.UTC(1970, 0, 4, 17); // Monday 1970-01-05 00:00 ICT
+
+/** The rotation entry active at `now` on a featured banner (undefined elsewhere). */
+export function featuredEntry(banner: BannerDef, now: number): FeaturedRotationEntry | undefined {
+  const rotation = banner.featured?.rotation;
+  if (!rotation || rotation.length === 0) return undefined;
+  const week = Math.floor((now - ROTATION_ANCHOR) / WEEK_MS);
+  return rotation[((week % rotation.length) + rotation.length) % rotation.length];
+}
 
 export interface PullResult {
   itemId: string;
   rarity: Rarity;
   outcome: "newHero" | "constellation" | "moonStar" | "newWeapon" | "refinement" | "newRelic" | "resonance" | "maxed";
+  /** True when a featured banner's rate-up gave the week's hero. */
+  featuredHit?: boolean;
   /** Constellation after a duplicate raised it. */
   constellation?: number;
   /** Refinement / resonance after a duplicate raised it (`14` §13.1). */
@@ -27,21 +43,48 @@ export interface PullResult {
 
 const MAX_GEAR_LEVEL = 5;
 
-/** Chance of a legendary on the `sinceLegendary`-th pull since the last one (`14` §9 step 2). */
+/** Chance of a legendary on the `sinceLegendary`-th pull since the last one (`14` §9 step 2).
+ *  Soft pity: `base + step × (pulls past legendarySoftPityStart)`. */
 export function legendaryRate(gacha: EconomyConfig["gacha"], sinceLegendary: number): number {
   if (sinceLegendary >= gacha.legendaryPity) return 1;
-  if (sinceLegendary >= gacha.legendarySoftPityStart) {
-    return Math.min(1, gacha.rates.legendary + gacha.legendarySoftPityStep * (sinceLegendary - gacha.legendarySoftPityStart + 1));
+  if (sinceLegendary > gacha.legendarySoftPityStart) {
+    return Math.min(1, gacha.rates.legendary + gacha.legendarySoftPityStep * (sinceLegendary - gacha.legendarySoftPityStart));
   }
   return gacha.rates.legendary;
 }
 
-/** The rarity to use when `rolled` has nothing in the pool: step down, then up (`14` §9 step 4). */
-function availableRarity(pool: Record<Rarity, string[]>, rolled: Rarity): Rarity {
-  const start = RARITIES.indexOf(rolled);
-  const down = RARITIES.slice(start).find((rarity) => pool[rarity].length > 0);
+/** The rarity to use when `rolled` has nothing in the pool: step down, then up
+ *  (`14` §9 step 4). `allowed` bounds the search — featured banners never let a
+ *  lower roll step up to legendary. */
+function availableRarity(pool: Partial<Record<Rarity, string[]>>, rolled: Rarity, allowed: readonly Rarity[]): Rarity {
+  const start = allowed.indexOf(rolled);
+  const down = allowed.slice(start).find((rarity) => (pool[rarity] ?? []).length > 0);
   if (down) return down;
-  return [...RARITIES.slice(0, start)].reverse().find((rarity) => pool[rarity].length > 0)!;
+  return [...allowed.slice(0, start)].reverse().find((rarity) => (pool[rarity] ?? []).length > 0)!;
+}
+
+/** The pity counter key for a banner: its group, or its own id (`14` §9). */
+function pityKey(banner: BannerDef): string {
+  return banner.pityGroup ?? banner.id;
+}
+
+/** Lazily adopts per-banner pity counters left over from before `pityGroup`. */
+function migratePity(data: GameData, profile: Profile, banner: BannerDef): void {
+  const key = pityKey(banner);
+  if (key === banner.id || profile.pity[key]) return;
+  for (const member of Object.values(data.banners)) {
+    if (member.pityGroup !== key) continue;
+    const legacy = profile.pity[member.id];
+    if (legacy && (!profile.pity[key] || legacy.sinceLegendary > profile.pity[key]!.sinceLegendary)) {
+      profile.pity[key] = legacy;
+    }
+    if (member.id !== key) delete profile.pity[member.id];
+  }
+}
+
+/** Folds all pre-`pityGroup` per-banner counters into their group keys. Mutates `profile`. */
+export function normalizePity(data: GameData, profile: Profile): void {
+  for (const banner of Object.values(data.banners)) migratePity(data, profile, banner);
 }
 
 /**
@@ -112,10 +155,11 @@ export function grantGearItem(data: GameData, profile: Profile, kind: "weapon" |
 }
 
 /** One pull on `bannerId` (`14` §9 steps 1–7). Mutates `profile`; returns the next RNG state. */
-function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: number): { result: PullResult; rngState: number } {
+function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: number, now: number): { result: PullResult; rngState: number } {
   const banner = data.banners[bannerId]!;
   const gacha = data.economyConfig.gacha;
-  const pity = (profile.pity[bannerId] ??= { sinceEpic: 0, sinceLegendary: 0 });
+  migratePity(data, profile, banner);
+  const pity = (profile.pity[pityKey(banner)] ??= { sinceEpic: 0, sinceLegendary: 0 });
   pity.sinceEpic += 1;
   pity.sinceLegendary += 1;
 
@@ -126,15 +170,26 @@ function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: 
     return next.value;
   };
 
+  // A featured banner's epic/rare/common pools come from the week's rotation
+  // entry; its legendary resolves the rate-up against `pool.legendary`.
+  const entry = featuredEntry(banner, now);
+  const lowerPool: Partial<Record<Rarity, string[]>> = entry ? entry.pool : banner.pool;
+
   const pLegendary = legendaryRate(gacha, pity.sinceLegendary);
   const u1 = draw();
   let rolled: Rarity;
   if (u1 < pLegendary) rolled = "legendary";
   else if (pity.sinceEpic >= gacha.epicPity || u1 < pLegendary + gacha.rates.epic) rolled = "epic";
-  else if (banner.pool.common.length > 0 && banner.pool.rare.length > 0) rolled = draw() < 0.5 ? "common" : "rare";
-  else rolled = banner.pool.common.length > 0 ? "common" : "rare";
+  else if ((lowerPool.common ?? []).length > 0 && (lowerPool.rare ?? []).length > 0) rolled = draw() < 0.5 ? "common" : "rare";
+  else rolled = (lowerPool.common ?? []).length > 0 ? "common" : "rare";
 
-  const rarity = availableRarity(banner.pool, rolled);
+  const allowed = rolled === "legendary" ? RARITIES : entry ? LOWER_RARITIES : RARITIES;
+  const rarityPool = rolled === "legendary" && entry
+    ? { ...banner.pool, legendary: [entry.heroId, ...banner.pool.legendary] }
+    : rolled === "legendary"
+      ? banner.pool
+      : lowerPool;
+  const rarity = availableRarity(rarityPool, rolled, allowed);
   if (rarity === "legendary") {
     pity.sinceLegendary = 0;
     pity.sinceEpic = 0;
@@ -142,16 +197,28 @@ function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: 
     pity.sinceEpic = 0;
   }
 
-  let candidates = banner.pool[rarity];
-  if (gacha.newPlayerEpicHero && banner.kind === "hero" && rarity === "epic") {
-    const unowned = candidates.filter((heroId) => !profile.heroes[heroId]);
-    if (unowned.length > 0) candidates = unowned;
+  let itemId: string;
+  let featuredHit = false;
+  if (rarity === "legendary" && entry) {
+    const fallback = banner.pool.legendary;
+    if (fallback.length === 0 || draw() < banner.featured!.rateUp) {
+      itemId = entry.heroId;
+      featuredHit = true;
+    } else {
+      itemId = fallback[Math.floor(draw() * fallback.length)]!;
+    }
+  } else {
+    let candidates = (rarity === "legendary" ? banner.pool : lowerPool)[rarity]!;
+    if (gacha.newPlayerEpicHero && banner.kind === "hero" && rarity === "epic") {
+      const unowned = candidates.filter((heroId) => !profile.heroes[heroId]);
+      if (unowned.length > 0) candidates = unowned;
+    }
+    itemId = candidates[Math.floor(draw() * candidates.length)]!;
   }
-  const itemId = candidates[Math.floor(draw() * candidates.length)]!;
   const result = banner.kind === "hero"
     ? grantHero(data, profile, itemId, rarity)
     : grantGear(data, profile, banner.kind, itemId, rarity);
-  return { result, rngState: rng };
+  return { result: featuredHit ? { ...result, featuredHit: true } : result, rngState: rng };
 }
 
 /** Pays for and performs `count` pulls (1 or 10) with the server's seed (`14` §9). */
@@ -171,7 +238,7 @@ export function pullMany(
   const results: PullResult[] = [];
   let rng = rngState;
   for (let index = 0; index < count; index++) {
-    const pulled = pullOnce(data, next, bannerId, rng);
+    const pulled = pullOnce(data, next, bannerId, rng, now);
     results.push(pulled.result);
     rng = pulled.rngState;
   }

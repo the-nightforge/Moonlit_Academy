@@ -335,6 +335,10 @@ Bối cảnh: `15-server-gacha-spec.md` §3. Luật: `14` §5–§12, `01` §8 (
 | T194 | Tinh Hồn 4: lá chủ lực trong deck thành lá "+" khi tạo lượt chơi / trận |
 | T195 | `buildLoadout` từ hồ sơ; phiếu chụp loadout, nộp chạy lại với loadout đó dù Tinh Hồn đổi sau; `levelUpForm` luôn `base` ở 4d |
 | T196 | Cửa hàng Nguyệt Tinh: giá, giới hạn tuần (reset sang tuần mới), `heroChoice` chỉ Hero đúng độ hiếm chưa sở hữu |
+| T331 | Banner `featured`: legendary rút `u < rateUp` (0.5) → tướng tuần (`featuredHit`), `u ≥ rateUp` → rơi `pool.legendary` fallback; epic/rare/common lấy từ pool entry tuần |
+| T332 | `pityGroup`: hai banner Hero chia bộ đếm `pity.heroes`; bộ đếm cũ `pity.banner_heroes` được gộp (migrate) vào khóa nhóm và xóa |
+| T333 | `featuredEntry(banner, now)` chọn entry tuần hiện tại theo mốc thứ Hai 00:00 ICT, vòng qua `rotation.length`; hai `now` khác tuần cho tướng khác nhau |
+| T334 | Bảo hiểm mới: `legendaryPity` 80 chắc chắn; tỉ lệ mềm `2% + 1.5% × (n − 50)` từ lượt 51 áp mọi banner |
 
 
 ## Giai đoạn 4e

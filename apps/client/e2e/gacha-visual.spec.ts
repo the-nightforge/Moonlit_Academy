@@ -67,7 +67,7 @@ for (const viewport of [{width:1280,height:720},{width:1920,height:1080}]) {
       const body=await page.evaluate(()=>{
         const h=(window as any).__vn,profile=structuredClone(h.session.profile);
         profile.currencies.moonJade=8400;profile.currencies.moonStar=25;
-        profile.pity.banner_heroes={sinceEpic:3,sinceLegendary:9};
+        profile.pity.heroes={sinceEpic:3,sinceLegendary:9};
         const ids=["m05","m01","f01","m06","f02","f03","f04","m03","f05","f09"];
         ids.forEach(id=>profile.heroes[id]={xp:0,unlockedCardIds:[],constellation:0,bonusUnlocks:0,levelUpForm:"base"});
         profile.heroes.m05.constellation=2;
@@ -90,7 +90,7 @@ for (const viewport of [{width:1280,height:720},{width:1920,height:1080}]) {
     await page.screenshot({path:`../../.sdd-work/gacha-redesign/results-${viewport.width}.png`});
     expect(requestPath).toBe("/api/gacha/banner_heroes/pull");expect(requestBody).toEqual({count:10});expect(requestRevision).toBe("5");
     await click(page,"Tiếp tục");
-    const refreshed=await probe(page);expect(refreshed.phase).toBe("idle");expect(refreshed.texts).toContain("8400");expect(refreshed.texts).toContain("3 / 10");expect(refreshed.texts).toContain("9 / 70");
+    const refreshed=await probe(page);expect(refreshed.phase).toBe("idle");expect(refreshed.texts).toContain("8400");expect(refreshed.texts).toContain("3 / 10");expect(refreshed.texts).toContain("9 / 80");
     expect(errors).toEqual([]);
   });
 }

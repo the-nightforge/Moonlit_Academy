@@ -533,12 +533,24 @@ export type AchievementGoal =
   | { type: "starterFloor"; floor: number }
   | { type: "allLockedUnlocked" };
 
-/** A gacha banner (`14` §9): heroes, weapons or moon relics. */
+/** One week of a featured hero banner: the rate-up legendary and its
+ *  story-bound epic/rare/common pool (`14` §9). */
+export interface FeaturedRotationEntry {
+  heroId: string;
+  name?: string;
+  pool: { epic: string[]; rare: string[]; common: string[] };
+}
+
+/** A gacha banner (`14` §9): heroes, weapons or moon relics. Banners sharing a
+ *  `pityGroup` keep one pity counter. A `featured` hero banner puts a rotating
+ *  legendary at `rateUp` of legendary rolls, falling back to `pool.legendary`. */
 export interface BannerDef {
   id: string;
   name: string;
   kind: "hero" | "weapon" | "relic";
+  pityGroup?: string;
   pool: Record<Rarity, string[]>;
+  featured?: { rateUp: number; rotation: FeaturedRotationEntry[] };
 }
 
 /** One-time, auto-claimed achievement (`14` §8). */

@@ -61,8 +61,8 @@ nào khác: băm mật khẩu và sinh token dùng `node:crypto`; kiểm tra bod
   deck mang vũ khí + Nguyệt Bảo; client: kho đồ, trang bị trong xếp deck.
 
 **Không có (để sau):** PvP / Đấu Trường Công Bằng và bảng chỉ số PvP (GĐ 5); co-op
-và Hợp Kích (GĐ 6); banner giới hạn và 50/50 nhân vật quảng bá (chỉ chừa chỗ trong
-schema, chưa dùng — mọi banner GĐ 4 là banner thường); cốt truyện; Vinh Dự; skin /
+và Hợp Kích (GĐ 6); banner sự kiện giới hạn thời gian (banner tướng xoay tua tuần
+với rate-up 50/50 đã có — §3.5; còn lại mọi banner GĐ 4 là banner thường); cốt truyện; Vinh Dự; skin /
 khung card / hiệu ứng lật bài (cửa hàng Nguyệt Tinh chỉ bán vé); art thật (vẫn dùng
 art tạm; GDD ghi art thật ở GĐ 4 — tách thành việc riêng không chặn code); triển
 khai lên Internet (server chạy local / LAN).
@@ -146,7 +146,7 @@ interface Profile {
   currencies: { moonJade: number; moonStar: number; darkIron: number; moonDust: number };
   weapons: Record<string, { refinement: 1 | 2 | 3 | 4 | 5 }>;   // 4e
   relics: Record<string, { resonance: 1 | 2 | 3 | 4 | 5 }>;     // 4e
-  pity: Record<string, PityState>;          // theo bannerId (4d)
+  pity: Record<string, PityState>;          // theo pityGroup ?? bannerId (4d)
   missions: MissionState;                   // 4d
   achievements: string[];                   // id đã nhận (4d)
   stats: ProfileStats;                      // bộ đếm cho thành tựu (4d)
@@ -276,7 +276,8 @@ trước khi nộp) và server.
 
 Ước lượng (bot, lượt TB tầng ~6.5, thắng ~40%): ~130 Nguyệt Ngọc/lượt; 2 lượt/ngày +
 nhiệm vụ ngày ≈ 450/ngày ≈ **2.8 lượt quay/ngày**. Mục tiêu GDD "Legendary mới sau vài
-tuần": bảo hiểm cứng 70 lượt ≈ 25 ngày, trung bình (bảo hiểm mềm) ~16–20 ngày.
+tuần": bảo hiểm cứng 80 lượt ≈ 29 ngày, trung bình (bảo hiểm mềm từ lượt 51, +1.5%/lượt)
+~20 ngày.
 
 ### 3.3 Nhiệm vụ ngày/tuần (`missions.json`)
 
@@ -318,37 +319,53 @@ của mọi Hero đang sở hữu (500).
 interface BannerDef {
   id: string; name: string;
   kind: "hero" | "weapon" | "relic";
+  pityGroup?: string;                  // banner cùng nhóm chia bộ đếm pity
   pool: Record<Rarity, string[]>;     // id theo độ hiếm; độ hiếm rỗng được phép
-  featured?: string[];                 // chừa cho banner giới hạn (GĐ 4: không dùng)
+  featured?: {                         // banner tướng xoay tua tuần (chỉ hero)
+    rateUp: number;                    // phần trăm legendary trúng tướng tuần (0.5)
+    rotation: { heroId: string; name?: string;
+      pool: { epic: string[]; rare: string[]; common: string[] } }[];
+  };
 }
 // economy-config.json thêm:
 "gacha": {
   "rates": { "legendary": 0.02, "epic": 0.13 },   // còn lại rare/common
   "epicPity": 10,
-  "legendarySoftPityStart": 55, "legendarySoftPityStep": 0.06, "legendaryPity": 70,
+  "legendarySoftPityStart": 50, "legendarySoftPityStep": 0.015, "legendaryPity": 80,
   "newPlayerEpicHero": true
 }
 ```
 
-- Banner Hero khởi điểm: legendary `[m05]`, epic `[m06, f02, f03]`, rare `[f04]`,
-  common `[]`.
+- Banner Hero khởi điểm `banner_heroes`: pool Hero đầy đủ theo độ hiếm (sau GĐ 7: 6
+  legendary, 7 epic, 6 rare, 1 common).
+- **`banner_nguyet_tuong` (Nguyệt Tướng Luân Chuyển)**: banner Hero có `featured` —
+  mỗi tuần một tướng legendary trong `rotation` (đổi thứ Hai 00:00 ICT,
+  `featuredEntry(banner, now)`); pool epic/rare/common của tuần là tướng có quan hệ
+  cốt truyện với tướng đó. Hai banner Hero chia `pityGroup: "heroes"` — bộ đếm pity
+  chung, gộp bộ đếm `banner_heroes` cũ vào khóa nhóm khi cần (`normalizePity` khi
+  đọc `GET /gacha/banners`, `migratePity` trong từng lượt quay).
 - **Rarity rỗng:** nếu độ hiếm rút được không có id nào trong pool → hạ xuống độ hiếm
-  thấp hơn gần nhất có id; không có độ hiếm thấp hơn → nâng lên gần nhất.
+  thấp hơn gần nhất có id; không có độ hiếm thấp hơn → nâng lên gần nhất. Ngoại lệ
+  banner `featured`: rút epic/rare/common không nâng lên legendary (pool tuần không
+  có legendary; legendary chỉ đến qua rate-up hoặc `pool.legendary` fallback).
 
-**Thuật toán một lượt quay** (`pull(data, profile, bannerId, rngState)` thuần; quay
-10 = gọi 10 lần liên tiếp, một giao dịch):
+**Thuật toán một lượt quay** (`pullMany(data, profile, bannerId, count, rngState,
+now)` thuần; quay 10 = 10 lượt liên tiếp, một giao dịch):
 
-1. `p = pity[bannerId]` (`{ sinceEpic, sinceLegendary }`, mặc định 0); tăng cả hai +1.
-2. Tỉ lệ Legendary: `sinceLegendary ≥ legendaryPity` → 1; `≥ softPityStart` →
-   `rates.legendary + step × (sinceLegendary − softPityStart + 1)`; ngược lại
+1. `p = pity[pityGroup ?? bannerId]` (`{ sinceEpic, sinceLegendary }`, mặc định 0);
+   tăng cả hai +1.
+2. Tỉ lệ Legendary: `sinceLegendary ≥ legendaryPity` → 1; `> softPityStart` →
+   `rates.legendary + step × (sinceLegendary − softPityStart)`; ngược lại
    `rates.legendary`.
 3. Rút `u ∈ [0,1)` bằng RNG seed (`packages/rules` RNG có sẵn): `u < pLeg` →
    Legendary; ngược lại nếu `sinceEpic ≥ epicPity` hoặc `u < pLeg + rates.epic` → Epic;
    ngược lại Rare/Common (chia theo pool: có cả hai → common 50% / rare 50%).
 4. Legendary → `sinceLegendary = 0` **và** `sinceEpic = 0`; Epic → `sinceEpic = 0`.
-5. Chọn id đều trong pool độ hiếm đó. **Bảo vệ người mới** (`newPlayerEpicHero`, chỉ
-   banner Hero): khi rút Epic mà còn Hero Epic trong pool chưa sở hữu → chỉ chọn trong
-   các Hero chưa sở hữu.
+5. Chọn id đều trong pool độ hiếm đó. **Rate-up tướng tuần** (banner `featured`,
+   legendary): rút thêm `u` — `u < rateUp` → tướng tuần (`featuredHit: true` trong
+   `PullResult`), ngược lại đều trong `pool.legendary`. **Bảo vệ người mới**
+   (`newPlayerEpicHero`, chỉ banner Hero): khi rút Epic mà còn Hero Epic trong pool
+   chưa sở hữu → chỉ chọn trong các Hero chưa sở hữu.
 6. Trao vật phẩm (§3.6 cho Hero; §4.5 cho vũ khí/relic); ghi nhật ký.
 
 - Seed: server sinh bằng `crypto.randomInt` cho mỗi giao dịch quay và lưu trong nhật

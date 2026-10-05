@@ -26,6 +26,7 @@ export function registerGachaRoutes(app: FastifyInstance, ctx: AppContext): void
   );
 
   app.get("/api/gacha/banners", async (request) => {
+    // parseProfile folds legacy per-banner pity keys into their pityGroup already.
     const { profile } = await ctx.readProfile(await ctx.requireAccount(request));
     return {
       banners: Object.values(data.banners),

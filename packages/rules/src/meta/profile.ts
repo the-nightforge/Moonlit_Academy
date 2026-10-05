@@ -191,6 +191,14 @@ export function parseProfile(data: GameData, raw: unknown): { profile: Profile; 
     for (const [id, entry] of Object.entries(raw.pity)) {
       if (isRecord(entry)) profile.pity[id] = { sinceEpic: count(entry.sinceEpic), sinceLegendary: count(entry.sinceLegendary) };
     }
+    // Fold counters saved under a bannerId into that banner's pityGroup (`14` §9).
+    for (const banner of Object.values(data.banners)) {
+      const legacy = banner.pityGroup ? profile.pity[banner.id] : undefined;
+      if (!legacy) continue;
+      const group = profile.pity[banner.pityGroup!];
+      if (!group || legacy.sinceLegendary > group.sinceLegendary) profile.pity[banner.pityGroup!] = legacy;
+      delete profile.pity[banner.id];
+    }
   }
   if (isRecord(raw.missions)) {
     const missions = raw.missions;

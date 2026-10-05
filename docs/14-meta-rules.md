@@ -44,9 +44,9 @@ Hồ sơ là dữ liệu JSON thuần; mọi hàm dưới đây là hàm thuần
   "gacha": {
     "rates": { "legendary": 0.02, "epic": 0.13 },
     "epicPity": 10,
-    "legendarySoftPityStart": 55,
-    "legendarySoftPityStep": 0.06,
-    "legendaryPity": 70,
+    "legendarySoftPityStart": 50,
+    "legendarySoftPityStep": 0.015,
+    "legendaryPity": 80,
     "newPlayerEpicHero": true
   },
   "dupeMoonStar": { "legendary": 25, "epic": 5, "rare": 1, "common": 1 },
@@ -349,19 +349,39 @@ interface AchievementDef {      // achievements.json
 interface BannerDef {
   id: string; name: string;
   kind: "hero" | "weapon" | "relic";          // weapon, relic: GĐ 4e
+  pityGroup?: string;                          // banner cùng nhóm chia một bộ đếm pity
   pool: Record<Rarity, string[]>;             // id theo độ hiếm; mảng rỗng được phép
+  featured?: {                                // banner tướng xoay tua tuần (chỉ hero)
+    rateUp: number;                           // phần trăm legendary trúng tướng tuần
+    rotation: { heroId: string; name?: string;
+      pool: { epic: string[]; rare: string[]; common: string[] } }[];
+  };
 }
 ```
 
-Banner khởi điểm `banner_heroes` (Triệu Hồi Anh Hùng): legendary `[m05]`, epic `[m06,
-f02, f03]`, rare `[f04]`, common `[]`. Kiểm tra khi nạp: id trong pool là Hero có trong
+Banner khởi điểm `banner_heroes` (Triệu Hồi Anh Hùng): 6 legendary, 7 epic, 6 rare, 1
+common — pool đầy đủ sau GĐ 7. Kiểm tra khi nạp: id trong pool là Hero có trong
 data, độ hiếm khớp `heroes.json rarity`, không trùng.
 
 **[GĐ4e]** Thêm `banner_weapons` (Binh Khí Các, `kind: "weapon"`, pool là id trong
 `weapons.json`) và `banner_relics` (Nguyệt Bảo Các, `kind: "relic"`, `relics.json`); kiểm
 tra khi nạp như trên với file tương ứng. Mọi banner dùng chung `gacha` (tỉ lệ, bảo hiểm),
-`pullCost`; bộ đếm `pity` riêng từng banner; bảo vệ người mới chỉ áp banner `hero`;
-`gachaPulls` đếm mọi banner.
+`pullCost`; bảo vệ người mới chỉ áp banner `hero`; `gachaPulls` đếm mọi banner.
+
+**Nhóm bảo hiểm:** bộ đếm `pity` nằm dưới khóa `pityGroup ?? bannerId`. `banner_heroes`
+và `banner_nguyet_tuong` cùng `pityGroup: "heroes"` → **chia chung bộ đếm** Epic và
+Legendary: quay banner này cũng cộng cho banner kia (T332). Bộ đếm cũ theo id
+(`pity.banner_heroes`) được gộp vào khóa nhóm khi nạp/quay lần đầu (`normalizePity` —
+giữ `sinceLegendary` lớn hơn nếu đã có cả hai).
+
+**Banner tướng xoay tua:** `banner_nguyet_tuong` (Nguyệt Tướng Luân Chuyển) có
+`featured.rotation` — một tuần một tướng legendary, đổi **thứ Hai 00:00 ICT**;
+`featuredEntry(banner, now)` trả entry của tuần hiện tại (`(now − mốc) / 7 ngày mod
+số tuần`; số tuần = độ dài rotation). Pool epic/rare/common của banner đến từ entry
+đang chạy (tướng có quan hệ cốt truyện với tướng tuần); `pool.legendary` của banner
+làm fallback. Kiểm tra khi nạp: `featured` chỉ trên banner `hero`, `heroId` của từng
+entry là Hero legendary, pool entry không rỗng, `pool.legendary` của banner không
+rỗng (fallback của rate-up).
 
 `pullMany(data, profile, bannerId, count, rngState, now)` — `count` là 1 hoặc 10:
 
@@ -374,27 +394,35 @@ tra khi nạp như trên với file tương ứng. Mọi banner dùng chung `gac
   `{ itemId, rarity, outcome: "newHero" | "constellation" | "moonStar", constellation?, moonStar? }`.
   **[GĐ4e]** `outcome` thêm `"newWeapon" | "refinement" | "newRelic" | "resonance" |
   "maxed"`; trường thêm `refinement?`, `resonance?`, `darkIron?`, `moonDust?` (§13.1).
+  `featuredHit?: true` khi legendary trên banner tướng trúng tướng tuần.
 
 **Một lượt quay:**
 
-1. `p = pity[bannerId]` (thiếu → `{ sinceEpic: 0, sinceLegendary: 0 }`); tăng cả hai 1.
+1. `p = pity[pityGroup ?? bannerId]` (thiếu → `{ sinceEpic: 0, sinceLegendary: 0 }`);
+   tăng cả hai 1. Trước đó `migratePity` gộp bộ đếm theo id cũ vào khóa nhóm.
 2. `pLeg` = 1 nếu `sinceLegendary ≥ legendaryPity`; `rates.legendary + legendarySoftPityStep
-   × (sinceLegendary − legendarySoftPityStart + 1)` nếu `sinceLegendary ≥
+   × (sinceLegendary − legendarySoftPityStart)` nếu `sinceLegendary >
    legendarySoftPityStart`; ngược lại `rates.legendary`.
 3. Rút `u1`: `u1 < pLeg` → legendary; ngược lại `sinceEpic ≥ epicPity` hoặc `u1 < pLeg +
    rates.epic` → epic; ngược lại rare/common: nếu pool có cả hai, rút `u2`: `u2 < 0.5` →
-   common, ngược lại rare; chỉ có một → độ hiếm đó.
+   common, ngược lại rare; chỉ có một → độ hiếm đó. Trên banner `featured`, pool
+   epic/rare/common là pool của entry tuần; một rút epic/rare/common **không bao giờ**
+   nâng lên legendary (không có legendary trong pool tuần).
 4. Độ hiếm không có id nào → hạ dần (legendary → epic → rare → common) tới độ hiếm đầu
    tiên có id; không có → nâng dần từ độ hiếm ban đầu.
 5. Theo độ hiếm **cuối cùng**: legendary → `sinceLegendary = 0`, `sinceEpic = 0`; epic →
    `sinceEpic = 0`.
-6. Chọn id: danh sách = pool của độ hiếm đó; **bảo vệ người mới** (`newPlayerEpicHero`,
+6. Chọn id: danh sách = pool của độ hiếm đó (banner `featured`: pool của entry).
+   **Rate-up tướng tuần** (banner `featured`, độ hiếm cuối cùng legendary): rút `u3` —
+   `u3 < rateUp` (0.5) → `entry.heroId` (`featuredHit`), ngược lại đều trong
+   `pool.legendary` của banner (T331). **Bảo vệ người mới** (`newPlayerEpicHero`,
    banner `hero`, độ hiếm epic): nếu có Hero epic chưa sở hữu trong pool → danh sách chỉ
-   gồm các Hero đó. Rút `u3`, chọn `danh sách[floor(u3 × độ dài)]`.
+   gồm các Hero đó. Rút `u4`, chọn `danh sách[floor(u4 × độ dài)]`.
 7. `grantItem` theo `kind` của banner: Hero §10, vũ khí / Nguyệt Bảo §13.1.
 
-Mỗi lượt quay dùng RNG theo thứ tự `u1`, (`u2` nếu cần), `u3`. Cùng hồ sơ, `rngState`,
-`count` → cùng kết quả (T186).
+Mỗi lượt quay dùng RNG theo thứ tự `u1`, (`u2` nếu cần), rồi các rút chọn id ở bước 6
+(banner `featured` legendary: `u3` rate-up, `u4` chọn fallback khi trượt). Cùng hồ sơ,
+`rngState`, `now`, `count` → cùng kết quả (T186).
 
 ## 10. Sở hữu Hero và Tinh Hồn **[GĐ4d]**
 
