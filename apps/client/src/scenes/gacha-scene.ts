@@ -178,12 +178,8 @@ export class GachaScene extends Phaser.Scene {
         this.bannerId = entry.id; this.render();
       });
       panel.add(this.add.rectangle(-119, 0, 4, 56, KIND_ACCENT[entry.kind], 0.85));
-      const weekHeroId = entry.featured ? featuredEntry(entry, Date.now())?.heroId : undefined;
-      const textX = weekHeroId ? -60 : -105;
-      if (weekHeroId) this.image(panel, `heroes:${weekHeroId}`, -88, 0, 34, 50);
-      this.text(panel, textX, -13, entry.name, weekHeroId ? 16 : 18, selected ? "#f4dfb2" : COLORS.text);
-      this.text(panel, textX, 14, entry.featured ? "Tướng Legendary xoay tua tuần" : entry.kind === "hero" ? "Anh hùng trong thư viện" : entry.kind === "weapon" ? "Trang bị · Binh khí" : "Trang bị · Nguyệt bảo", 12, "#aab9d0");
-      if (entry.featured) this.text(panel, 112, -23, "★", 13, "#e8c784").setOrigin(1, 0);
+      this.text(panel, -105, -13, entry.name, 18, selected ? "#f4dfb2" : COLORS.text);
+      this.text(panel, -105, 14, entry.featured ? "Tướng Legendary xoay tua tuần" : entry.kind === "hero" ? "Anh hùng trong thư viện" : entry.kind === "weapon" ? "Trang bị · Binh khí" : "Trang bị · Nguyệt bảo", 12, "#aab9d0");
       leftCol.add(panel);
     });
     leftCol.add(this.add.rectangle(170, 504, 236, 1, 0x69748a, 0.45));
@@ -200,7 +196,9 @@ export class GachaScene extends Phaser.Scene {
       const soft = softStart !== undefined && since >= softStart;
       const w = 230 * Math.min(1, since / limit);
       if (w > 0) {
-        const fill = this.add.rectangle(990 + w / 2, y + 38, w, 6, soft ? 0xffd977 : RARITY_COLORS[rarity]);
+        const fill = this.add.graphics();
+        fill.fillStyle(soft ? 0xffd977 : RARITY_COLORS[rarity], 1);
+        fill.fillRoundedRect(990, y + 35, w, 6, Math.min(3, w / 2));
         rightCol.add(fill);
         if (soft && !this.reducedMotion) this.tweens.add({ targets: fill, alpha: 0.55, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       }
@@ -224,9 +222,9 @@ export class GachaScene extends Phaser.Scene {
     const artKey = banner.kind === "hero" ? `heroes:${heroId}` : `gacha:${banner.kind}_banner`;
     centerCol.add(this.add.circle(640, 300, 215, 0xe8d9ae, 0.09));
     centerCol.add(this.add.circle(640, 300, 185, 0xf4e2b0, 0.07));
-    const art = this.image(centerCol, artKey, 640, 325, 495, 430);
+    const art = this.image(centerCol, artKey, 640, 300, 470, 380);
     if (art) {
-      centerCol.add(roundedPanel(this, 640, 325, art.displayWidth + 14, art.displayHeight + 14, 0x0b172a, 0, 0x9a8965, 10));
+      centerCol.add(roundedPanel(this, 640, 300, art.displayWidth + 14, art.displayHeight + 14, 0x0b172a, 0, 0x9a8965, 10));
       if (!this.reducedMotion) {
         this.artTween = this.tweens.add({ targets: art, scaleX: art.scaleX * 1.012, scaleY: art.scaleY * 1.012, duration: 3600, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       }
