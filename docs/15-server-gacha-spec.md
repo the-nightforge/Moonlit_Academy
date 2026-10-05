@@ -322,7 +322,7 @@ interface BannerDef {
   pityGroup?: string;                  // banner cùng nhóm chia bộ đếm pity
   pool: Record<Rarity, string[]>;     // id theo độ hiếm; độ hiếm rỗng được phép
   featured?: {                         // banner tướng xoay tua tuần (chỉ hero)
-    rateUp: number;                    // phần trăm legendary trúng tướng tuần (1 = luôn)
+    rateUp: number;                    // phần trăm legendary trúng tướng tuần (0.5)
     rotation: { heroId: string; name?: string;
       pool: { epic: string[]; rare: string[]; common: string[] } }[];
   };
@@ -366,9 +366,8 @@ now)` thuần; quay 10 = 10 lượt liên tiếp, một giao dịch):
    ngược lại Rare/Common (chia theo pool: có cả hai → common 50% / rare 50%).
 4. Legendary → `sinceLegendary = 0` **và** `sinceEpic = 0`; Epic → `sinceEpic = 0`.
 5. Chọn id đều trong pool độ hiếm đó. **Rate-up tướng tuần** (banner `featured`,
-   legendary): banner xoay tua có `pool.legendary` rỗng nên legendary luôn là tướng
-   tuần (`featuredHit: true`); nếu có fallback, rút thêm `u` — `u < rateUp` → tướng
-   tuần, ngược lại đều trong `pool.legendary`. **Bảo vệ người mới**
+   legendary): rút thêm `u` — `u < rateUp` → tướng tuần (`featuredHit: true` trong
+   `PullResult`), ngược lại đều trong `pool.legendary`. **Bảo vệ người mới**
    (`newPlayerEpicHero`, chỉ banner Hero): khi rút Epic mà còn Hero Epic trong pool
    chưa sở hữu → chỉ chọn trong các Hero chưa sở hữu.
 6. Trao vật phẩm (§3.6 cho Hero; §4.5 cho vũ khí/relic); ghi nhật ký.

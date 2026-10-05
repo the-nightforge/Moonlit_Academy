@@ -471,8 +471,7 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   const pityGroups = new Map<string, string>();
   for (const banner of banners) {
     validateBannerPool(banner, "pool", banner.pool);
-    // A featured banner may empty its pool entirely — rotation entries carry it.
-    if (!banner.featured && Object.values(banner.pool).flat().length === 0) errors.push(`banners: "${banner.id}" has an empty pool`);
+    if (Object.values(banner.pool).flat().length === 0) errors.push(`banners: "${banner.id}" has an empty pool`);
     if (banner.pityGroup) {
       const kind = pityGroups.get(banner.pityGroup);
       if (kind && kind !== banner.kind) errors.push(`banners: pity group "${banner.pityGroup}" mixes kinds`);
@@ -480,6 +479,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
     }
     if (banner.featured) {
       if (banner.kind !== "hero") errors.push(`banners: "${banner.id}" featured is only for hero banners`);
+      if (banner.pool.legendary.length === 0) {
+        errors.push(`banners: "${banner.id}" featured needs a non-empty pool.legendary for the rate-up fallback`);
+      }
       for (const entry of banner.featured.rotation) {
         const hero = heroes.find((candidate) => candidate.id === entry.heroId);
         if (!hero) errors.push(`banners: "${banner.id}" rotation has unknown hero "${entry.heroId}"`);

@@ -421,10 +421,9 @@ không nằm trong `pool.legendary` của banner khác.
    rate-up trên mọi banner `featured`; các id đó bị loại khỏi rút legendary thường của
    mọi banner, kể cả fallback trượt rate-up (T335) — muốn có phải quay banner luân
    chuyển trong tuần đó.
-   **Rate-up tướng tuần** (banner `featured`, độ hiếm cuối cùng legendary): `pool.legendary`
-   của banner xoay tua rỗng nên legendary **luôn** là `entry.heroId` (`featuredHit`,
-   T331); nếu một banner featured nào đó có fallback, rút `u3` — `u3 < rateUp` →
-   `entry.heroId`, ngược lại đều trong `pool.legendary` sau khi loại reserved.
+   **Rate-up tướng tuần** (banner `featured`, độ hiếm cuối cùng legendary): rút `u3` —
+   `u3 < rateUp` (0.5) → `entry.heroId` (`featuredHit`), ngược lại đều trong
+   `pool.legendary` của banner — ba tướng thường trực — sau khi loại reserved (T331).
    **Bảo vệ người mới**
    (`newPlayerEpicHero`, banner `hero`, độ hiếm epic): nếu có Hero epic chưa sở hữu
    trong pool → danh sách chỉ gồm các Hero đó. Rút `u4`, chọn `danh sách[floor(u4 × độ
