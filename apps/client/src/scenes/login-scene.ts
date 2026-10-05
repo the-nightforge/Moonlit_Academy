@@ -4,158 +4,125 @@ import { ApiError, serverReachable } from "../api";
 import { readLegacyProfile, retireLegacyProfile } from "../profile-store";
 import { abandonSavedRun, resumeRun, savedRun } from "../run-session";
 import { session } from "../session";
-import { COLORS, useDesignCamera } from "../ui/theme";
-import { addButton, addText, alertModal } from "../ui/widgets";
+import { LoginView } from "../ui/login-view";
+import { useDesignCamera } from "../ui/theme";
 
-const WIDTH = 1280;
-
-/**
- * Sign in / register (`15` §6). The form is plain HTML over the canvas so the
- * browser handles typing and password managers; later prompts use Phaser.
- */
+/** Scene owns async work; the DOM view owns accessible fields and responsive art. */
 export class LoginScene extends Phaser.Scene {
-  private root!: Phaser.GameObjects.Container;
-  private form: HTMLDivElement | null = null;
+  private view: LoginView | null = null;
+  private generation = 0;
+  private busy = false;
+  private cancelChoice: (() => void) | null = null;
 
-  constructor() {
-    super("login");
-  }
+  constructor() { super("login"); }
 
   create() {
     useDesignCamera(this);
-    this.root = this.add.container(0, 0);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.removeForm());
-    addText(this, this.root, WIDTH / 2, 120, "Vọng Nguyệt Thư Viện", 34, COLORS.gold).setOrigin(0.5);
-    addText(this, this.root, WIDTH / 2, 170, "Đang kết nối…", 16, COLORS.dimText).setOrigin(0.5);
-    void this.start();
-  }
-
-  private async start() {
-    try {
-      if (await resumeSession()) {
-        await this.afterSignIn();
-        return;
-      }
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 0) {
-        this.showOffline();
-        return;
-      }
-      // Token refused or expired: fall through to the form.
-    }
-    if (!(await serverReachable())) {
-      this.showOffline();
-      return;
-    }
-    this.showForm();
-  }
-
-  private showForm(message = "") {
-    this.root.removeAll(true);
-    addText(this, this.root, WIDTH / 2, 120, "Vọng Nguyệt Thư Viện", 34, COLORS.gold).setOrigin(0.5);
-    addText(this, this.root, WIDTH / 2, 560, "Không có khôi phục mật khẩu — hãy ghi nhớ mật khẩu của mình.", 12, COLORS.dimText).setOrigin(0.5);
-    this.removeForm();
-    const form = document.createElement("div");
-    form.style.cssText =
-      "position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;gap:10px;" +
-      "width:280px;padding:20px;background:#141b33;border:1px solid #f4d35e;font-family:sans-serif;color:#e8ecf8";
-    const field = (placeholder: string, type: string, autocomplete: AutoFill) => {
-      const input = document.createElement("input");
-      input.placeholder = placeholder;
-      input.type = type;
-      input.autocomplete = autocomplete;
-      input.style.cssText = "padding:8px;font-size:15px;background:#0b1026;color:#e8ecf8;border:1px solid #4a5a8a";
-      form.appendChild(input);
-      return input;
-    };
-    const username = field("Tên đăng nhập", "text", "username");
-    const password = field("Mật khẩu", "password", "current-password");
-    const error = document.createElement("div");
-    error.style.cssText = "min-height:18px;font-size:13px;color:#ff8080";
-    error.textContent = message;
-    const button = (label: string, register: boolean) => {
-      const element = document.createElement("button");
-      element.textContent = label;
-      element.style.cssText = "padding:8px;font-size:15px;cursor:pointer;background:#2c3e6e;color:#e8ecf8;border:1px solid #f4d35e";
-      element.onclick = async () => {
-        error.textContent = "";
-        try {
-          await login(username.value, password.value, register);
-          this.removeForm();
-          await this.afterSignIn();
-        } catch (failure) {
-          if (failure instanceof ApiError && failure.status === 0) {
-            this.removeForm();
-            this.showOffline();
-            return;
-          }
-          error.textContent = errorText(failure);
-        }
-      };
-      form.appendChild(element);
-    };
-    button("Đăng nhập", false);
-    button("Đăng ký tài khoản mới", true);
-    form.appendChild(error);
-    password.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") (form.querySelector("button") as HTMLButtonElement).click();
+    const generation = ++this.generation;
+    this.busy = false;
+    this.view = new LoginView();
+    this.view.showConnecting();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.generation++;
+      this.cancelChoice?.();
+      this.cancelChoice = null;
+      this.view?.destroy();
+      this.view = null;
     });
-    document.body.appendChild(form);
-    this.form = form;
-    username.focus();
+    void this.start(generation);
   }
 
-  private removeForm() {
-    this.form?.remove();
-    this.form = null;
+  private current(generation: number): boolean {
+    return generation === this.generation && this.view !== null;
   }
 
-  /** Signed in: offer the one-time import, then an unfinished run, then the deck screen. */
-  private async afterSignIn() {
+  private async start(generation: number) {
+    try {
+      const resumed = await resumeSession();
+      if (!this.current(generation)) return;
+      if (resumed) { await this.afterSignIn(generation); return; }
+    } catch (error) {
+      if (!this.current(generation)) return;
+      if (error instanceof ApiError && error.status === 0) { this.showOffline(generation); return; }
+      // A refused or expired token returns to the sign-in form.
+    }
+    const reachable = await serverReachable();
+    if (!this.current(generation)) return;
+    if (!reachable) { this.showOffline(generation); return; }
+    this.view!.showForm((username, password, register) => { void this.submit(username, password, register, generation); });
+  }
+
+  private async submit(username: string, password: string, register: boolean, generation: number) {
+    if (!this.current(generation) || this.busy) return;
+    this.busy = true;
+    this.view!.showError("");
+    this.view!.setBusy(true);
+    try {
+      await login(username, password, register);
+      if (!this.current(generation)) return;
+      this.view!.showConnecting("Đang mở thư viện…");
+      await this.afterSignIn(generation);
+    } catch (error) {
+      if (!this.current(generation)) return;
+      if (error instanceof ApiError && error.status === 0) { this.showOffline(generation); return; }
+      this.view!.showError(errorText(error));
+    } finally {
+      if (this.current(generation)) {
+        this.busy = false;
+        this.view!.setBusy(false);
+      }
+    }
+  }
+
+  /** Offer the existing one-time import and unfinished-run flows after sign-in. */
+  private async afterSignIn(generation: number) {
     const legacy = readLegacyProfile();
     if (legacy !== null && !session.profile.flags.localImportDone) {
-      const choice = await this.ask("Có tiến độ cũ trên máy này (Tu Luyện, deck). Nhập vào tài khoản?", ["Nhập", "Bỏ qua"]);
+      const choice = await this.ask("Tiếp nối hành trình", "Có tiến độ cũ trên máy này (Tu Luyện, deck). Nhập vào tài khoản?", ["Nhập", "Bỏ qua"], generation);
+      if (!this.current(generation)) return;
       if (choice === 0) {
         try {
           await mutate("POST", "/profile/import", { local: legacy });
+          if (!this.current(generation)) return;
           retireLegacyProfile();
         } catch (error) {
-          await alertModal(this, errorText(error));
+          if (!this.current(generation)) return;
+          await this.ask("Chưa thể nhập tiến độ", errorText(error), ["Tiếp tục"], generation);
         }
-      } else {
-        retireLegacyProfile();
-      }
+      } else { retireLegacyProfile(); }
     }
+    if (!this.current(generation)) return;
     const unfinished = savedRun();
     if (unfinished) {
-      const choice = await this.ask("Có lượt chơi đang dở trên máy này.", ["Chơi tiếp", "Bỏ lượt này"]);
+      const choice = await this.ask("Hành trình còn dang dở", "Có lượt chơi đang dở trên máy này.", ["Chơi tiếp", "Bỏ lượt này"], generation);
+      if (!this.current(generation)) return;
       if (choice === 0 && resumeRun(unfinished)) {
         this.scene.start(session.run!.status === "combat" ? "combat" : "run");
         return;
       }
+      this.view!.showConnecting("Đang mở thư viện…");
       await abandonSavedRun(unfinished);
     }
-    this.scene.start("deck-select");
+    if (this.current(generation)) this.scene.start("deck-select");
   }
 
-  private showOffline() {
-    this.root.removeAll(true);
+  private showOffline(generation: number) {
+    if (!this.current(generation)) return;
     session.online = false;
-    addText(this, this.root, WIDTH / 2, 120, "Vọng Nguyệt Thư Viện", 34, COLORS.gold).setOrigin(0.5);
-    addText(this, this.root, WIDTH / 2, 260, "Không kết nối được server.", 18).setOrigin(0.5);
-    addText(this, this.root, WIDTH / 2, 290, "Chế độ offline chỉ có Trận lẻ; lượt chơi và tiến độ cần server.", 14, COLORS.dimText).setOrigin(0.5);
-    addButton(this, this.root, WIDTH / 2 - 110, 360, 200, "Thử lại", () => this.scene.restart());
-    addButton(this, this.root, WIDTH / 2 + 110, 360, 200, "Chơi offline", () => this.scene.start("deck-select"));
+    this.view!.showChoice("Tạm mất kết nối", "Không kết nối được server. Bạn vẫn có thể chơi Trận lẻ offline; lượt chơi và tiến độ cần kết nối server.", ["Thử lại", "Chơi offline"], index => {
+      if (!this.current(generation)) return;
+      if (index === 0) this.scene.restart();
+      else this.scene.start("deck-select");
+    });
   }
 
-  /** A question with buttons; resolves with the index of the one clicked. */
-  private ask(question: string, options: string[]): Promise<number> {
-    return new Promise((resolve) => {
-      this.root.removeAll(true);
-      addText(this, this.root, WIDTH / 2, 260, question, 18).setOrigin(0.5);
-      options.forEach((label, index) => {
-        const x = WIDTH / 2 + (index - (options.length - 1) / 2) * 220;
-        addButton(this, this.root, x, 340, 200, label, () => resolve(index));
+  private ask(title: string, description: string, options: string[], generation: number): Promise<number | null> {
+    return new Promise(resolve => {
+      if (!this.current(generation)) { resolve(null); return; }
+      this.cancelChoice = () => resolve(null);
+      this.view!.showChoice(title, description, options, index => {
+        this.cancelChoice = null;
+        resolve(index);
       });
     });
   }

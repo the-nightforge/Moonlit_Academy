@@ -170,9 +170,8 @@ export function probeCombat(page: Page): Promise<CombatProbe> {
 export async function setupOfflineCombat(page: Page, scenario: CombatScenario = "default", options: { keepMulligan?: boolean } = {}): Promise<void> {
   await page.goto(APP);
   await expect.poll(async () => activeSceneKey(page), { timeout: 30_000 }).toBe("login");
-  // Offline path — "Chơi offline" appears once the health check fails.
-  await expect.poll(async () => (await sceneTexts(page, "login")).includes("Chơi offline"), { timeout: 15_000 }).toBe(true);
-  await clickDesign(page, 750, 360);
+  // The login screen uses accessible DOM controls over the canvas.
+  await page.getByRole("button", { name: "Chơi offline", exact: true }).click({ timeout: 15_000 });
   await expect.poll(async () => activeSceneKey(page), { timeout: 15_000 }).toBe("deck-select");
   await page.evaluate(() => {
     const handle = (window as unknown as { __vn: VnHandle }).__vn;

@@ -1,0 +1,154 @@
+.vn-login {
+  --login-gold: #f0d99a;
+  /* Palatino covers the full Latin Extended Additional block (ẫ, ố, ệ…);
+     Georgia lacks some marks and renders detached accents in Vietnamese. */
+  --login-serif: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, "Times New Roman", serif;
+  position: fixed; inset: 0; z-index: 10; overflow: auto; isolation: isolate;
+  display: flex;
+  color: #f1ecdc; background: #101832; color-scheme: dark;
+  font-family: "Segoe UI", "Noto Sans", Arial, sans-serif;
+}
+.vn-login *, .vn-login *::before, .vn-login *::after { box-sizing: border-box; }
+.vn-login-sky {
+  position: fixed; inset: -14px; z-index: -2;
+  background-image: linear-gradient(90deg, #08122645 10%, #0b10264d 50%, #070d23bd 100%), var(--login-background);
+  background-position: center; background-size: cover;
+  transform: translate3d(calc(var(--px, 0px) * .7), calc(var(--py, 0px) * .7), 0);
+}
+.vn-login::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(0deg, #071024c9 0%, transparent 30%, transparent 75%, #07102455 100%);
+}
+.vn-login-layout {
+  width: min(1200px, 100%); min-height: 100%; min-height: 100dvh;
+  margin: auto; padding: 64px 64px 72px; display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 416px);
+  align-items: center; gap: 60px; position: relative;
+}
+.vn-login-brand { padding-bottom: 32px; text-shadow: 0 3px 20px #020718; }
+.vn-login-moon { object-fit: contain; margin: 0 0 16px -10px; filter: drop-shadow(0 0 24px #f4d89435); animation: vn-login-moon-breathe 7s ease-in-out infinite; }
+@keyframes vn-login-moon-breathe { 0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 24px #f4d89435); } 50% { transform: translateY(-4px); filter: drop-shadow(0 0 36px #f4d89460); } }
+.vn-login-brand > * { animation: vn-login-enter .55s ease-out both; }
+.vn-login-brand > *:nth-child(2) { animation-delay: .06s; }
+.vn-login-brand > *:nth-child(3) { animation-delay: .12s; }
+.vn-login-brand > *:nth-child(4) { animation-delay: .18s; }
+.vn-login-brand > *:nth-child(5) { animation-delay: .24s; }
+.vn-login-brand > *:nth-child(6) { animation-delay: .3s; }
+/* Moon gets entrance AND the idle breathe — breathe waits for the entrance. */
+.vn-login-brand > .vn-login-moon { animation: vn-login-enter .55s ease-out both, vn-login-moon-breathe 7s ease-in-out .6s infinite; }
+.vn-login-eyebrow { color: var(--login-gold); font-size: 11px; letter-spacing: 2.5px; line-height: 1.7; margin: 0 0 14px; }
+.vn-login-brand h1 { margin: 0; color: #fff0c5; font: 500 clamp(44px, 4.2vw, 64px)/1.17 var(--login-serif); letter-spacing: -1px; }
+.vn-login-brand h1 span { display: block; }
+.vn-login-rule { display: flex; align-items: center; gap: 12px; width: 190px; color: #e6c378; margin: 28px 0 22px; }
+.vn-login-rule::before, .vn-login-rule::after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, #e6c37899); }
+.vn-login-rule::after { transform: scaleX(-1); }
+.vn-login-tagline { font-size: 17px; line-height: 1.7; margin: 0 0 14px; color: #ebe9e6; }
+.vn-login-genre { font-size: 12px; color: #bacbe0; letter-spacing: .5px; }
+.vn-login-genre span { color: #dcb967; margin: 0 7px; }
+.vn-login-card {
+  width: 100%; padding: 32px; border: 1px solid #c9a96970; border-radius: 26px;
+  background: linear-gradient(145deg, #1a2945ee, #101a30f5);
+  box-shadow: 0 24px 80px #02061680, inset 0 1px 0 #f9eac515;
+  backdrop-filter: blur(12px); animation: vn-login-enter .55s ease-out both;
+}
+.vn-login-card h2 { font: 500 27px/1.25 var(--login-serif); color: #fff0cd; margin: 0 0 10px; }
+.vn-login-intro, .vn-login-description { color: #b9c6da; font-size: 13px; line-height: 1.7; margin: 0 0 22px; }
+.vn-login-tabs { position: relative; display: flex; padding: 4px; gap: 4px; margin: 0 0 24px; border-radius: 12px; background: #080f2299; border: 1px solid #50628040; }
+.vn-login button { font: inherit; cursor: pointer; transition: background .18s, border-color .18s, box-shadow .18s; }
+.vn-login-tabs-thumb { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 6px); border: 1px solid #d8bd7960; border-radius: 9px; background: #3a4055; box-shadow: 0 3px 10px #04081a55; transition: transform .22s ease; }
+.vn-login-tabs[data-active="1"] .vn-login-tabs-thumb { transform: translateX(calc(100% + 4px)); }
+.vn-login-tabs button { position: relative; z-index: 1; flex: 1; padding: 10px 8px; border: 1px solid transparent; border-radius: 9px; background: transparent; font-size: 13px; color: #a9b8ce; }
+.vn-login-tabs button[aria-selected="true"] { color: #f6dda2; }
+.vn-login-form { display: flex; flex-direction: column; }
+.vn-login-form label { color: #dddccf; font-size: 12px; margin: 0 0 8px; }
+.vn-login input {
+  width: 100%; min-width: 0; padding: 13px 14px; border: 1px solid #506182; border-radius: 11px; outline: none;
+  background: #0b1428c9; color: #f5efe0; font: 16px "Segoe UI", sans-serif; line-height: 1.35;
+  margin: 0 0 18px; transition: border-color .18s, box-shadow .18s;
+}
+.vn-login input::placeholder { color: #7f91ae; font-size: 13px; }
+.vn-login input:focus { border-color: #e2c585; box-shadow: 0 0 0 3px #e2c5851f; }
+.vn-login-password { position: relative; }
+.vn-login-password input { padding-right: 48px; margin-bottom: 0; }
+/* Edge/Chrome native reveal + autofill icons would double the custom Hiện button. */
+.vn-login-password input::-ms-reveal,
+.vn-login-password input::-ms-clear,
+.vn-login-password input::-webkit-credentials-auto-fill-button { display: none; }
+.vn-login-reveal { position: absolute; right: 7px; top: 7px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 7px; background: transparent; color: #c2cfdf; }
+.vn-login-reveal .vn-eye-off { display: none; }
+.vn-login-reveal[aria-pressed="true"] .vn-eye { display: none; }
+.vn-login-reveal[aria-pressed="true"] .vn-eye-off { display: block; }
+.vn-login-reveal:hover { background: #44537166; color: #ffe2a1; }
+.vn-login-caps { font-size: 11px; line-height: 1.7; color: #ffd27f; margin: 8px 0 0; }
+.vn-login-caps::before { content: "⚠ "; }
+.vn-login-help { font-size: 11px; line-height: 1.7; color: #a5b6d0; margin: 10px 0 0; min-height: 38px; }
+.vn-login-reqs { list-style: none; margin: 10px 0 14px; padding: 0; min-height: 38px; }
+.vn-login-reqs li { font-size: 11px; line-height: 1.8; color: #a5b6d0; padding-left: 17px; position: relative; }
+.vn-login-reqs li::before { content: "·"; position: absolute; left: 5px; }
+.vn-login-reqs li.ok { color: #9fd8a8; }
+.vn-login-reqs li.ok::before { content: "✓"; }
+.vn-login-reqs li.bad { color: #ffc3bc; }
+.vn-login-reqs li.bad::before { content: "✕"; }
+.vn-login-error { color: #ffc3bc; font-size: 12px; line-height: 1.6; margin: 0 0 12px; overflow-wrap: anywhere; }
+.vn-login-error:empty { display: none; }
+.vn-login-primary, .vn-login-secondary { width: 100%; min-height: 46px; padding: 12px 16px; border-radius: 12px; font-size: 14px !important; font-weight: 600 !important; }
+.vn-login-btn-spinner { display: none; width: 15px; height: 15px; border: 2px solid #20213740; border-top-color: #202137; border-radius: 50%; animation: vn-login-spin .8s linear infinite; margin-right: 8px; vertical-align: -3px; }
+.vn-login-primary.is-busy .vn-login-btn-spinner { display: inline-block; }
+.vn-login-primary { border: 1px solid #f4d99d; background: linear-gradient(120deg, #efd398, #cfa35f); color: #202137; box-shadow: 0 4px 20px #e3bd6815; }
+.vn-login-primary:hover { background: linear-gradient(120deg, #ffe6b4, #e3ba77); box-shadow: 0 4px 24px #e3bd6833; }
+.vn-login-secondary { border: 1px solid #768bac85; background: #273752; color: #e8e3d5; }
+.vn-login-secondary:hover { background: #344a6c; border-color: #d3bf87; }
+.vn-login :is(button, input):disabled { cursor: default; opacity: .58; }
+.vn-login :is(button, input):focus-visible { outline: 2px solid #f5d897; outline-offset: 3px; }
+.vn-login-submit-status { font-size: 12px; color: #cbd9ed; margin: 10px 0 0; line-height: 1.6; }
+.vn-login-submit-status:empty { display: none; }
+.vn-login-password-note { border-top: 1px solid #8091b02c; margin: 24px 0 0; padding-top: 17px; color: #96a9c6; text-align: center; font-size: 11px; line-height: 1.8; }
+.vn-login-footer { position: absolute; bottom: 26px; left: 30px; right: 30px; text-align: center; color: #aab9cdbd; font-size: 9px; letter-spacing: 1.8px; line-height: 1.8; }
+.vn-login-footer span { margin: 0 12px; color: #c1a164; }
+.vn-login-state { text-align: center; padding: 18px 0; }
+.vn-login-state > p:not(.vn-login-eyebrow) { line-height: 1.8; font-size: 13px; color: #bdcbe1; }
+.vn-login-state h2 { margin-top: 12px; }
+.vn-login-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+.vn-login-muted { color: #91a3bf !important; }
+.vn-login-spinner { display: inline-block; width: 38px; height: 38px; border: 2px solid #e4c58030; border-top-color: #e4c580; border-radius: 50%; animation: vn-login-spin 1.3s linear infinite; margin: 8px 0 18px; }
+.vn-login-motes { position: fixed; inset: -14px; pointer-events: none; z-index: -1; overflow: hidden; transform: translate3d(var(--px, 0px), var(--py, 0px), 0); }
+.vn-login-motes i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #ffe3a4; box-shadow: 0 0 8px 2px #ffe3a43b; opacity: .3; animation: vn-login-drift 10s ease-in-out infinite; animation-delay: calc(var(--i) * -.85s); }
+@keyframes vn-login-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes vn-login-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+.vn-login-card.vn-login-shake { animation: vn-login-shake .35s ease; }
+@keyframes vn-login-spin { to { transform: rotate(360deg); } }
+@keyframes vn-login-drift { 0%, 100% { transform: translateY(0); opacity: .15; } 50% { transform: translate(6px, -22px); opacity: .65; } }
+@media (max-width: 900px) {
+  .vn-login-layout { padding: 32px 22px 70px; grid-template-columns: minmax(0, 430px); justify-content: center; gap: 28px; }
+  .vn-login-brand { text-align: center; padding: 0; }
+  .vn-login-moon { width: 52px; height: 52px; margin: 0 0 8px; }
+  .vn-login-brand h1 { font-size: 40px; }
+  .vn-login-brand h1 span { display: inline; margin-left: .2em; }
+  .vn-login-brand .vn-login-eyebrow { font-size: 9px; margin-bottom: 8px; }
+  .vn-login-rule { margin: 14px auto; width: 130px; }
+  .vn-login-tagline { font-size: 13px; margin-bottom: 0; }
+  .vn-login-genre { display: none; }
+  .vn-login-card { padding: 26px; border-radius: 22px; }
+  .vn-login-footer { font-size: 8px; letter-spacing: .8px; }
+}
+@media (max-width: 480px) {
+  .vn-login-layout { padding: 22px 16px 62px; gap: 22px; }
+  .vn-login-brand h1 { font-size: 34px; }
+  .vn-login-brand h1 span { display: block; margin-left: 0; }
+  .vn-login-card h2 { font-size: 24px; }
+  .vn-login-card { padding: 24px; }
+  .vn-login-footer span { margin: 0 5px; }
+}
+@media (max-height: 600px) and (min-width: 901px) {
+  .vn-login-layout { padding: 28px 48px 64px; }
+  .vn-login-card { padding: 24px; }
+  .vn-login-moon { width: 60px; height: 60px; }
+}
+@media (max-height: 500px) and (max-width: 900px) {
+  .vn-login-layout { padding-top: 20px; }
+  .vn-login-moon, .vn-login-brand .vn-login-eyebrow, .vn-login-rule, .vn-login-tagline { display: none; }
+  .vn-login-brand h1 { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vn-login *, .vn-login *::before, .vn-login *::after { animation: none !important; transition: none !important; }
+}

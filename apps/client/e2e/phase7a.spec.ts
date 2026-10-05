@@ -105,13 +105,7 @@ test("7a: Chọn Pha mở khi M08 thăng cấp, chọn +2 đẩy Nguyệt Luân 
   await page.goto(APP);
   await expect.poll(async () => (await probe(page)).sceneKey, { timeout: 30_000 }).toBe("login");
 
-  // Offline path — "Chơi offline" appears once the health check fails.
-  await expect
-    .poll(async () => (await sceneTexts(page, "login")).includes("Chơi offline"), {
-      timeout: 15_000,
-    })
-    .toBe(true);
-  await clickDesign(page, 750, 360);
+  await page.getByRole("button", { name: "Chơi offline", exact: true }).click({ timeout: 15_000 });
   await expect.poll(async () => (await probe(page)).sceneKey, { timeout: 15_000 }).toBe("deck-select");
 
   // Team M08 + M02 + F01 (the plan's manual check), straight into a Trận lẻ.
