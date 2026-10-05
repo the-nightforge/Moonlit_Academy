@@ -100,16 +100,15 @@ describe("hero tooltip — both authoritative awakening forms", () => {
     expect(lines).toContain(def.levelUp.description);
     expect(lines).toContain(def.altLevelUp.description);
     expect(lines.find(line => line.includes("Đang chọn"))).toContain(levelUpForm === "base" ? def.levelUp.name : def.altLevelUp.name);
-    expect(lines).toContain("Điều kiện Thức Tỉnh: mất HP");
-    expect(lines).toContain(`Tiến độ Thức Tỉnh: 2/${def.levelUp.constellationThreshold}`);
+    expect(lines).toContain(`Thức Tỉnh: mất HP · 2/${def.levelUp.constellationThreshold}`);
     // Awakening info only — unit stats and status notes live on the card itself.
-    expect(lines.some((line) => line.includes("HP ") || line.includes("Phong Ấn"))).toBe(false);
+    expect(lines.some((line) => line.startsWith("HP ") || line.includes("Phong Ấn"))).toBe(false);
   });
 
   it("shows awakened state instead of stale progress, and keeps PvP threshold authoritative", () => {
     expect(heroTooltipLines(data, state, { ...hero, leveledUp: true })).toContain("Đã Thức Tỉnh");
-    expect(heroTooltipLines(data, state, { ...hero, leveledUp: true }).some(line => line.includes("Tiến độ"))).toBe(false);
-    expect(heroTooltipLines(data, state, { ...hero, pvp: true, constellation: 5, levelUpCounter: 2 })).toContain(`Tiến độ Thức Tỉnh: 2/${def.levelUp.threshold}`);
+    expect(heroTooltipLines(data, state, { ...hero, leveledUp: true }).some(line => line.includes("Thức Tỉnh:"))).toBe(false);
+    expect(heroTooltipLines(data, state, { ...hero, pvp: true, constellation: 5, levelUpCounter: 2 })).toContain(`Thức Tỉnh: mất HP · 2/${def.levelUp.threshold}`);
   });
 });
 

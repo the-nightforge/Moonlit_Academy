@@ -129,8 +129,9 @@ export function heroTooltipLines(data: GameData, state: CombatState, hero: HeroS
   const def = data.heroes[hero.defId]!;
   const selected = hero.levelUpForm === "alt" ? "alt" : "base";
   return [
-    hero.leveledUp ? "Đã Thức Tỉnh" : `Điều kiện Thức Tỉnh: ${COUNTER_CONDITION[def.levelUp.counter]}`,
-    hero.leveledUp ? "" : `Tiến độ Thức Tỉnh: ${heroProgressLabel(data, state, hero) ?? ""}`,
+    hero.leveledUp
+      ? "Đã Thức Tỉnh"
+      : `Thức Tỉnh: ${COUNTER_CONDITION[def.levelUp.counter]} · ${heroProgressLabel(data, state, hero) ?? ""}`,
     `${def.levelUp.name} — dạng cơ bản${selected === "base" ? " · Đang chọn" : ""}`,
     def.levelUp.description,
     `${def.altLevelUp.name} — dạng thứ hai${selected === "alt" ? " · Đang chọn" : ""}`,

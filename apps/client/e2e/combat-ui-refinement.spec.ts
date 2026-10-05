@@ -164,8 +164,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
       // Awakening-only tooltip — the unit-stat line is gone.
       expect(tip.text).not.toMatch(/HP \d/);
       expect(tip.text).toContain(`${(form === "base" ? hero.def.levelUp : hero.def.altLevelUp).name} — dạng ${form === "base" ? "cơ bản" : "thứ hai"} · Đang chọn`);
-      expect(tip.text).toContain(`Tiến độ Thức Tỉnh: 2/${hero.def.levelUp.constellationThreshold}`);
-      expect(tip.text).toContain("Điều kiện Thức Tỉnh:");
+      expect(tip.text).toContain(`Thức Tỉnh: mất HP · 2/${hero.def.levelUp.constellationThreshold}`);
       expect(tip.panel.left).toBeGreaterThanOrEqual(tip.visible.left); expect(tip.panel.right).toBeLessThanOrEqual(tip.visible.right); expect(tip.panel.top).toBeGreaterThanOrEqual(tip.visible.top); expect(tip.panel.bottom).toBeLessThanOrEqual(tip.visible.bottom);
       await page.screenshot({ path: `${OUT}/hero-${form}-${viewport.width}.png` });
       await moveDesign(page, 40, 690);
