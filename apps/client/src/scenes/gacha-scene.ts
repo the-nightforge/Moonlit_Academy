@@ -125,10 +125,11 @@ export class GachaScene extends Phaser.Scene {
     const featured = featuredEntry(banner, Date.now());
     const pity = profile.pity[banner.pityGroup ?? this.bannerId] ?? { sinceEpic: 0, sinceLegendary: 0 };
     const enabled = !this.busy && !this.modal;
-    this.root.add(this.add.rectangle(640, 360, 1280, 720, 0x071222));
-    const altar = this.image(this.root, "gacha:altar", 640, 360, 1280, 720);
-    if (altar) altar.setDisplaySize(1280, 720).setAlpha(0.86);
-    this.root.add(this.add.rectangle(640, 43, 1280, 86, 0x091425, 0.96));
+    const view = visibleWorld(this);
+    this.root.add(this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x071222));
+    const altar = this.image(this.root, "gacha:altar", view.x + view.w / 2, view.y + view.h / 2, view.w, view.h);
+    if (altar) altar.setScale(Math.max(view.w / altar.width, view.h / altar.height)).setAlpha(0.86);
+    this.root.add(this.add.rectangle(640, 43, view.w, 86, 0x091425, 0.96));
     this.button(this.root, 92, 42, 142, "◂ Quay lại", () => this.back(), enabled);
     this.text(this.root, 204, 23, "TRIỆU HỒI", 25, "#f3dfb1");
     this.text(this.root, 205, 54, "Dưới ánh trăng, duyên mới khởi sinh", 13, "#afbfd4");
