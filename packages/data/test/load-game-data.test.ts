@@ -380,6 +380,12 @@ describe("economyConfig", () => {
     wrong.banners = [{ ...wrong.banners[0], pool: { ...wrong.banners[0].pool, rare: ["f04", "m05"] } }];
     expect(() => parseGameData(wrong)).toThrow(/lists legendary hero "m05" as rare|lists "m05" twice/);
   });
+
+  it("rejects a rotating hero inside a fixed legendary pool", () => {
+    const overlap = rawData();
+    overlap.banners[0].pool = { ...overlap.banners[0].pool, legendary: [...overlap.banners[0].pool.legendary, "m08"] };
+    expect(() => parseGameData(overlap)).toThrow(/rotating hero "m08"/);
+  });
 });
 
 

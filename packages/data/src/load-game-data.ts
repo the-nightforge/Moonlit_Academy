@@ -493,6 +493,12 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       }
     }
   }
+  const rotating = new Set(banners.flatMap((banner) => (banner.featured?.rotation ?? []).map((entry) => entry.heroId)));
+  for (const banner of banners) {
+    for (const id of banner.pool.legendary) {
+      if (rotating.has(id)) errors.push(`banners: "${banner.id}" pool.legendary contains rotating hero "${id}" — weekly heroes stay out of fixed pools`);
+    }
+  }
   for (const achievement of achievements) {
     const goal = achievement.goal;
     if (goal.type === "bossKillWithBond" && !cards.some((card) => card.id === goal.bondCardId && card.bond)) {

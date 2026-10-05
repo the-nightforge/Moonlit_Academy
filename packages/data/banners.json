@@ -7,10 +7,7 @@
     "pool": {
       "legendary": [
         "m05",
-        "m01",
         "f01",
-        "m08",
-        "f08",
         "f10"
       ],
       "epic": [
@@ -43,10 +40,7 @@
     "pool": {
       "legendary": [
         "m05",
-        "m01",
         "f01",
-        "m08",
-        "f08",
         "f10"
       ],
       "epic": [],
@@ -57,26 +51,8 @@
       "rateUp": 0.5,
       "rotation": [
         {
-          "heroId": "m05",
-          "name": "Liệt Hỏa Trấn Vũ — Hoắc Liệt",
-          "pool": {
-            "epic": ["f03", "m02", "m06"],
-            "rare": ["f05"],
-            "common": ["f09"]
-          }
-        },
-        {
           "heroId": "m01",
           "name": "Thiên Cơ Bách Toán — Tạ Vân Chiêu",
-          "pool": {
-            "epic": ["m06"],
-            "rare": ["m03", "m10", "f07"],
-            "common": ["f09"]
-          }
-        },
-        {
-          "heroId": "f01",
-          "name": "Nguyệt Hoa Chiếu Thế — Thẩm Nguyệt Hoa",
           "pool": {
             "epic": ["m06"],
             "rare": ["m03", "m10", "f07"],
@@ -98,15 +74,6 @@
           "pool": {
             "epic": ["f02", "m06"],
             "rare": [],
-            "common": ["f09"]
-          }
-        },
-        {
-          "heroId": "f10",
-          "name": "Nguyệt Hồn Dẫn Tịch — Liễu Tịnh Nhan",
-          "pool": {
-            "epic": ["m06"],
-            "rare": ["f04"],
             "common": ["f09"]
           }
         }

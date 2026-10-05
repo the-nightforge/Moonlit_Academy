@@ -336,14 +336,18 @@ interface BannerDef {
 }
 ```
 
-- Banner Hero khởi điểm `banner_heroes`: pool Hero đầy đủ theo độ hiếm (sau GĐ 7: 6
-  legendary, 7 epic, 6 rare, 1 common).
+- Banner Hero khởi điểm `banner_heroes`: pool Hero theo độ hiếm (3 legendary
+  thường trực `m05`/`f01`/`f10`, 7 epic, 6 rare, 1 common).
 - **`banner_nguyet_tuong` (Nguyệt Tướng Luân Chuyển)**: banner Hero có `featured` —
   mỗi tuần một tướng legendary trong `rotation` (đổi thứ Hai 00:00 ICT,
-  `featuredEntry(banner, now)`); pool epic/rare/common của tuần là tướng có quan hệ
-  cốt truyện với tướng đó. Hai banner Hero chia `pityGroup: "heroes"` — bộ đếm pity
-  chung, gộp bộ đếm `banner_heroes` cũ vào khóa nhóm khi cần (`normalizePity` khi
-  đọc `GET /gacha/banners`, `migratePity` trong từng lượt quay).
+  `featuredEntry(banner, now)`); `rotation` gồm 3 tướng mạnh `m01`/`m08`/`f08` —
+  **chỉ xoay tua, không nằm trong `pool.legendary` của bất kỳ banner nào**
+  (validation báo lỗi nếu có). `pool.legendary` của banner này là ba legendary
+  thường trực, làm fallback khi trượt rate-up. Pool epic/rare/common của tuần là
+  tướng có quan hệ cốt truyện với tướng đó. Hai banner Hero chia
+  `pityGroup: "heroes"` — bộ đếm pity chung, gộp bộ đếm `banner_heroes` cũ vào
+  khóa nhóm khi cần (`normalizePity` khi đọc `GET /gacha/banners`, `migratePity`
+  trong từng lượt quay).
 - **Rarity rỗng:** nếu độ hiếm rút được không có id nào trong pool → hạ xuống độ hiếm
   thấp hơn gần nhất có id; không có độ hiếm thấp hơn → nâng lên gần nhất. Ngoại lệ
   banner `featured`: rút epic/rare/common không nâng lên legendary (pool tuần không

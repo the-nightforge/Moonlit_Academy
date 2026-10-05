@@ -379,9 +379,12 @@ giữ `sinceLegendary` lớn hơn nếu đã có cả hai).
 `featuredEntry(banner, now)` trả entry của tuần hiện tại (`(now − mốc) / 7 ngày mod
 số tuần`; số tuần = độ dài rotation). Pool epic/rare/common của banner đến từ entry
 đang chạy (tướng có quan hệ cốt truyện với tướng tuần); `pool.legendary` của banner
-làm fallback. Kiểm tra khi nạp: `featured` chỉ trên banner `hero`, `heroId` của từng
-entry là Hero legendary, pool entry không rỗng, `pool.legendary` của banner không
-rỗng (fallback của rate-up).
+làm fallback — **chỉ gồm legendary thường trực**, tướng xoay tua không nằm trong
+`pool.legendary` của bất kỳ banner nào (kể cả banner cơ bản): lấy duy nhất qua
+rate-up tuần của mình. Kiểm tra khi nạp: `featured` chỉ trên banner `hero`,
+`heroId` của từng entry là Hero legendary, pool entry không rỗng, `pool.legendary`
+của banner không rỗng (fallback của rate-up), rotation heroId không trùng
+`pool.legendary` nào.
 
 `pullMany(data, profile, bannerId, count, rngState, now)` — `count` là 1 hoặc 10:
 

@@ -45,7 +45,8 @@ export class GachaScene extends Phaser.Scene {
 
   preload() {
     const heroes = new Set(Object.values(session.data.banners)
-      .filter(banner => banner.kind === "hero").flatMap(banner => Object.values(banner.pool).flat()));
+      .filter(banner => banner.kind === "hero")
+      .flatMap(banner => [...Object.values(banner.pool).flat(), ...(banner.featured?.rotation ?? []).map(entry => entry.heroId)]));
     const selected = {
       gacha: ["altar", "card_back", "weapon_banner", "relic_banner", "spark"],
       heroes: [...heroes],
