@@ -296,6 +296,7 @@ Có hai phương án, đều dùng Postgres làm nguồn dữ liệu duy nhất 
 | Biến | Mô tả |
 |---|---|
 | `VITE_API_BASE` | Để trống → gọi cùng origin `/api/*` (Caddy). Đặt `https://…` khi client và server ở hai domain khác nhau (Vercel + Render) |
+| `API_PROXY_TARGET` | Chỉ dev (`apps/client/.env.local`): backend mà Vite proxy `/api/*` (HTTP + WS) tới. Mặc định `http://localhost:$API_PORT` (8787); đặt `https://<domain-render>` để dev nối backend Render — proxy bỏ header `Origin` nên không cần đụng `ALLOWED_ORIGINS` |
 
 ### Bảo mật đã có sẵn
 

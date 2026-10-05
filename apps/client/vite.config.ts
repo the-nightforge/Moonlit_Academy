@@ -1,7 +1,7 @@
 import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 
 const VIRTUAL_ID = "virtual:assets-manifest";
 const RESOLVED_ID = "\0" + VIRTUAL_ID;
@@ -47,9 +47,31 @@ function assetsManifest(): Plugin {
   };
 }
 
-export default defineConfig({
-  plugins: [assetsManifest()],
-  // The API server (`apps/server`, `16` §1) runs beside Vite in development.
-  // `ws: true` — `/api/ws` is the realtime endpoint (`16` §8).
-  server: { proxy: { "/api": { target: `http://localhost:${process.env.API_PORT ?? 8787}`, ws: true } } },
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  // The API server (`apps/server`, `16` §1) usually runs beside Vite; set
+  // `API_PROXY_TARGET` (apps/client/.env.local) to reach a remote backend
+  // such as the Render deployment. `ws: true` — `/api/ws` (`16` §8).
+  const apiTarget = env.API_PROXY_TARGET ?? `http://localhost:${env.API_PORT ?? 8787}`;
+  const remote = /^https?:\/\/(?!localhost|127\.0\.0\.1)/.test(apiTarget);
+  return {
+    plugins: [assetsManifest()],
+    server: {
+      proxy: {
+        "/api": {
+          target: apiTarget,
+          ws: true,
+          changeOrigin: true,
+          // A browser `Origin` outside `ALLOWED_ORIGINS` gets 403 on the remote
+          // API (`16` §7.3); requests without it pass like any non-browser client.
+          configure: remote
+            ? (proxy) => {
+                proxy.on("proxyReq", (proxyReq) => proxyReq.removeHeader("origin"));
+                proxy.on("proxyReqWs", (proxyReq) => proxyReq.removeHeader("origin"));
+              }
+            : undefined,
+        },
+      },
+    },
+  };
 });
