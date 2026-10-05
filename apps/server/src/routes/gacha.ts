@@ -17,11 +17,20 @@ export function registerGachaRoutes(app: FastifyInstance, ctx: AppContext): void
   const insertPull = db.prepare(
     "INSERT INTO pulls (account_id, banner_id, count, seed, results_json, created_at) VALUES (?, ?, ?, ?, ?, ?)",
   );
-  const history = db.prepare<[number, string | null, string | null, number, number], {
+  // Two statements instead of `? IS NULL OR …`: Postgres cannot infer the type
+  // of a parameter used only inside IS NULL (42P18 on real Postgres).
+  const historyAll = db.prepare<[number, number, number], {
     banner_id: string; results_json: string; created_at: number;
   }>(
     `SELECT banner_id, results_json, created_at FROM pulls
-     WHERE account_id = ? AND (? IS NULL OR banner_id = ?)
+     WHERE account_id = ?
+     ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+  );
+  const historyBanner = db.prepare<[number, string, number, number], {
+    banner_id: string; results_json: string; created_at: number;
+  }>(
+    `SELECT banner_id, results_json, created_at FROM pulls
+     WHERE account_id = ? AND banner_id = ?
      ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
   );
 
@@ -52,8 +61,9 @@ export function registerGachaRoutes(app: FastifyInstance, ctx: AppContext): void
   app.get("/api/gacha/history", async (request) => {
     const accountId = await ctx.requireAccount(request);
     const { banner, page } = ctx.parseBody(historyQuery, request.query);
-    const bannerId = banner ?? null;
-    const rows = await history.all(accountId, bannerId, bannerId, HISTORY_PAGE_SIZE, page * HISTORY_PAGE_SIZE);
+    const rows = banner
+      ? await historyBanner.all(accountId, banner, HISTORY_PAGE_SIZE, page * HISTORY_PAGE_SIZE)
+      : await historyAll.all(accountId, HISTORY_PAGE_SIZE, page * HISTORY_PAGE_SIZE);
     return {
       entries: rows.map((row) => ({ bannerId: row.banner_id, results: JSON.parse(row.results_json), createdAt: row.created_at })),
     };
