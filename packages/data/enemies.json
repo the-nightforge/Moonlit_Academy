@@ -46,7 +46,7 @@
   {
     "id": "shadow_fox",
     "name": "Ảnh Hồ",
-    "maxHp": 23,
+    "maxHp": 20,
     "moonPower": { "start": 0, "cap": 2 },
     "intents": [
       { "id": "twin_claw", "name": "Song Trảo", "kind": "attack", "targeting": "lowestHp", "cost": 1,
@@ -220,7 +220,7 @@
   {
     "id": "black_guard",
     "name": "Hắc Giáp Vệ",
-    "maxHp": 69,
+    "maxHp": 52,
     "attackStyle": "spear",
     "moonPower": { "start": 1, "cap": 5 },
     "intents": [
@@ -236,7 +236,7 @@
       { "id": "black_sweep", "name": "Hoành Tảo", "kind": "attack", "cost": 3,
         "effects": [{ "type": "damage", "amount": 6, "to": "allEnemies" }] },
       { "id": "black_cleave", "name": "Hắc Trảm", "kind": "attack", "targeting": "lowestHp", "cost": 5,
-        "effects": [{ "type": "damage", "amount": 14, "to": "chosen" }] }
+        "effects": [{ "type": "damage", "amount": 12, "to": "chosen" }] }
     ],
     "moonOverrides": [
       {
@@ -264,16 +264,16 @@
   {
     "id": "fox_king",
     "name": "Hồ Vương",
-    "maxHp": 50,
+    "maxHp": 40,
     "attackStyle": "fire",
     "moonPower": { "start": 1, "cap": 5 },
     "intents": [
       { "id": "fox_king_veil", "name": "Huyễn Ảnh", "kind": "buff", "cost": 1,
         "effects": [{ "type": "applyStatus", "status": "stealth", "amount": 2, "to": "self" }] },
       { "id": "fox_king_howl", "name": "Hồ Khiếu", "kind": "debuff", "cost": 2,
-        "effects": [{ "type": "applyStatus", "status": "weak", "amount": 2, "to": "allEnemies" }] },
+        "effects": [{ "type": "applyStatus", "status": "weak", "amount": 1, "to": "allEnemies" }] },
       { "id": "fox_king_feast", "name": "Huyết Hồ", "kind": "buff", "cost": 2,
-        "effects": [{ "type": "heal", "amount": 8, "to": "self" }] },
+        "effects": [{ "type": "heal", "amount": 5, "to": "self" }] },
       { "id": "fox_king_claw", "name": "Vương Trảo", "kind": "attack", "targeting": "highestHp", "cost": 3,
         "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }] },
       { "id": "fox_king_nine_tails", "name": "Cửu Vĩ Trảm", "kind": "attack", "targeting": "lowestHp", "cost": 5,
@@ -490,7 +490,7 @@
   {
     "id": "bach_lo_thi_quan",
     "name": "Bạch Lộ Thí Quan",
-    "maxHp": 30,
+    "maxHp": 26,
     "attackStyle": "ribbon",
     "moonPower": { "start": 1, "cap": 4 },
     "intents": [
@@ -528,7 +528,7 @@
   {
     "id": "khao_hach_chi_linh",
     "name": "Khảo Hạch Chi Linh",
-    "maxHp": 80,
+    "maxHp": 72,
     "attackStyle": "talisman",
     "moonPower": { "start": 2, "cap": 7 },
     "intents": [
@@ -622,7 +622,7 @@
   {
     "id": "vo_nguyet_am_sat",
     "name": "Vô Nguyệt Ám Sát",
-    "maxHp": 18,
+    "maxHp": 17,
     "attackStyle": "darts",
     "moonPower": { "start": 1, "cap": 4 },
     "intents": [

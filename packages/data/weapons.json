@@ -1522,9 +1522,14 @@
     {
      "type": "gainMoonPower",
      "amount": 3
+    },
+    {
+     "type": "gainArmor",
+     "amount": 2,
+     "to": "allAllies"
     }
    ],
-   "text": "Rút 2 lá, +3 Nguyệt Lực."
+   "text": "Rút 2 lá, +3 Nguyệt Lực; mọi Hero +2 giáp."
   },
   "hooks": [
    {
@@ -1570,9 +1575,14 @@
       {
        "type": "gainMoonPower",
        "amount": 4
+      },
+      {
+       "type": "gainArmor",
+       "amount": 2,
+       "to": "allAllies"
       }
      ],
-     "text": "Rút 2 lá, +4 Nguyệt Lực."
+     "text": "Rút 2 lá, +4 Nguyệt Lực; mọi Hero +2 giáp."
     }
    },
    {
@@ -1592,9 +1602,14 @@
       {
        "type": "gainMoonPower",
        "amount": 4
+      },
+      {
+       "type": "gainArmor",
+       "amount": 2,
+       "to": "allAllies"
       }
      ],
-     "text": "Rút 3 lá, +4 Nguyệt Lực."
+     "text": "Rút 3 lá, +4 Nguyệt Lực; mọi Hero +2 giáp."
     }
    },
    {
@@ -1825,11 +1840,16 @@
      "amount": 2
     },
     {
+     "type": "gainArmor",
+     "amount": 2,
+     "to": "allAllies"
+    },
+    {
      "type": "chooseCard",
      "look": 2
     }
    ],
-   "text": "+2 Nguyệt Lực. Chiêm Bài 2.",
+   "text": "+2 Nguyệt Lực; mọi Hero +2 giáp. Chiêm Bài 2.",
    "keywords": [
     "chiem_bai"
    ]
@@ -1883,11 +1903,16 @@
        "amount": 2
       },
       {
+       "type": "gainArmor",
+       "amount": 2,
+       "to": "allAllies"
+      },
+      {
        "type": "chooseCard",
        "look": 3
       }
      ],
-     "text": "+2 Nguyệt Lực. Chiêm Bài 3."
+     "text": "+2 Nguyệt Lực; mọi Hero +2 giáp. Chiêm Bài 3."
     }
    },
    {
@@ -1905,11 +1930,16 @@
        "amount": 3
       },
       {
+       "type": "gainArmor",
+       "amount": 2,
+       "to": "allAllies"
+      },
+      {
        "type": "chooseCard",
        "look": 3
       }
      ],
-     "text": "+3 Nguyệt Lực. Chiêm Bài 3."
+     "text": "+3 Nguyệt Lực; mọi Hero +2 giáp. Chiêm Bài 3."
     }
    },
    {
@@ -3889,10 +3919,10 @@
     {
      "type": "gainArmor",
      "amount": 3,
-     "to": "chosen"
+     "to": "allAllies"
     }
    ],
-   "text": "Hồi Hồn 50% HP, đồng đội đó +3 giáp.",
+   "text": "Hồi Hồn một đồng đội đã ngã 50% HP; mọi Hero +3 giáp.",
    "keywords": [
     "hoi_hon"
    ]

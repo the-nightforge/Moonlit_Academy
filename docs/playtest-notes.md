@@ -794,20 +794,18 @@ khóa (PvP deck chỉ dùng 6 lá tự do + trang bị) — giới hạn kỳ v�
 
 ## Điểm cần cờ
 
-- **m01/m03 không có lá damage trong pool** — m01 12 lá toàn scheme/control
-  (drain, weak, Chiêm Bài); m03 chỉ có `m03_kim_tien` (5 dmg) mà nó nằm ở pool
-  khóa. Đội không carry thua sạch ở tầng 1 — không chỉnh bằng con số được; đề
-  xuất nội dung riêng (đổi pool / thêm lá damage ở đợt nội dung sau, hoặc chấp
-  nhận vai trò support bắt buộc đi cùng carry).
+- (Đã đóng — **m01/m03 không có lá damage**: gói 3 lá damage đặc trưng/Hero
+  (mục "Hero hỗ trợ" dưới) cho m01 damage theo lá đánh/lượt và m03 theo Nguyệt
+  Lực; đo lại sau redesign m01 **50/47**, m03 **45/39** — hết dưới sàn.)
 - **`m03_tieu_loi` ramp 0-cost ×3** — +1 NL miễn phí; hiện vô hại vì m03 không
   có đầu ra damage (NL dư tràn qua trần `cap`), nhưng sẽ phải xem lại ngay khi
   m03 có payoff (đang ở mức sàn 28% nên không nerf bây giờ).
 - **M10 `firstSchemeRepeats` + scheme rẻ** — m10 đạt 49–50%, trong band; lá
   scheme c1–c2 lặp hai lần chưa lật meta nhưng đáng theo dõi sau khi chỉnh m01/
   m03 (cùng tag `scheme`, hưởng chung mọi buff scheme).
-- **F08 forbidden pacing** — trận đơn f08 thăng cấp được (ctr 9–15 ở tầng 1)
-  nhưng lượt chơi cộng dồn HP → đội m08+f08+m05 thua sạch (0–20%). Ngưỡng 15 HP
-  mất tự gây hơi cao cho vòng đời trận: đề xuất hạ ngưỡng (xem gói dưới).
+- (Đã đóng — **F08 forbidden pacing**: ngưỡng hạ 15→12 / 11→9 trong gói dưới;
+  đội m08+f08+m05 từ 0% lên 6–7% tổng — phần còn lại là vấn đề deck carry đơn,
+  xác nhận "không phình số".)
 - **M07 `m07_ho_tong`** — c2 cho đồng đội Giáp 4 + Ẩn Thân 1: Ẩn Thân trên đồng
   đội đánh lạc ý định đã báo (PvE) và khóa target (PvP). Dữ liệu không cho thấy
   lạm dụng (m07 34–38%) nhưng lá này là "stealth cho người khác" duy nhất — cần
@@ -819,7 +817,7 @@ khóa (PvP deck chỉ dùng 6 lá tự do + trang bị) — giới hạn kỳ v�
 - **Độ dài trận / tỉ lệ đi trước** — như mục PvP trên; giữ quyết định 5b (không
   chỉnh toàn cục trước khi có người chơi thật).
 
-## Gói chỉnh đề xuất (CHƯA áp — chờ duyệt)
+## Gói chỉnh đề xuất (đã duyệt — đã áp; kết quả mục dưới)
 
 Chỉ con số JSON; mục tiêu kéo m01/m03/m07/m08 lên sàn 40% PvP và giảm bleed
 F08 ở PvE. Không đụng m02 (đúng sàn 40%, tăng tank sẽ kéo dài trận thêm).
@@ -1023,16 +1021,11 @@ tước **2.44/2.57**, tước trên Linh Thú **5/1** lần tổng, Hồi Hồn
 
 ## Điểm cần cờ
 
-- **F09 outlier PvP (81%/78%)** — Thỏ Ngọc đánh mỗi lượt, đối thủ-bot không
-  ưu tiên giết summon; dạng thức tỉnh (24 HP, 6 dmg + hồi 2 cho chủ) gần như
-  không thể tháo. Tuy nhiên PvE f09 **không** lệch (đội f09+f10+m05 27.5%,
-  tụt do pool) → nerf Linh Thú, không nerf chủ; lưu ý `awakenSummons` chỉ áp
-  khi chủ còn sống + đã thăng cấp (giết f09 hạ Thỏ về dạng thường).
-- **Pool 0-damage (f06, f09, f10 — và m04 cũ)** — damage của f09 đi qua Linh
-  Thú, f10 qua Hồi Hồn/hỗ trợ, f06 qua đổi hướng Mê Hoặc. Đội 2 support
-  0-damage + 1 carry thua sạch (f10+f05+m04 0%, f06+m09+f03 1.7%) — cùng
-  lớp vấn đề m01/m03 ở 7a; **không sửa bằng con số**, cần duyệt đổi pool
-  (thêm/đổi 1 lá damage mỗi Hero) ở đợt nội dung.
+- (Đã đóng — F09 outlier giải quyết bằng ngưỡng `summonsMade` 7: PvP về
+  **52%/50%** trong band ở đo lại mẫu 2000 — xem phần cuối file.)
+- (Đã đóng — pool 0-damage xử lý bằng lá damage đặc trưng theo cơ chế riêng mỗi
+  Hero (gói "3 lá damage", mục "Hero hỗ trợ" dưới); tổng PvE 23%→38% lúc đó.
+  Đội cực yếu còn lại ghi ở phần cuối file.)
 - **Mê ×2 (đặt chồng Mê Hoặc)** — ~2.4–2.5 lần/trận PvP, 638 lần tier normal
   ở đội f06+m09+f03. Charges stack đúng thiết kế và bot nhắm unit damage cao
   nhất — thường là cùng một mục tiêu; giá trị không mất hẳn nhưng mật độ lá
@@ -1047,10 +1040,10 @@ tước **2.44/2.57**, tước trên Linh Thú **5/1** lần tổng, Hồi Hồn
   bị trên 4000 trận): pool seal của f07 hẹp + bot ưu tiên chuỗi nhiều hiệu
   ứng (Linh Thú chỉ có action damage → weight 0, đúng thiết kế).
 - **Độ dài trận / đi trước** — như mục PvP; giữ quyết định 5b.
-- **m02 tụt khỏi sàn (38%/37%)** — từ 40%/40% ở 7a; vẫn giữ lập trường 7a
-  (tăng HP tank kéo dài trận), cờ theo dõi.
+- (Đã đóng — **m02 tụt khỏi sàn**: meta sau redesign đẩy m02 về **56%/56%**,
+  đo lại mẫu 2000 ở phần cuối file.)
 
-## Đề xuất gói chỉnh (CHƯA áp — chờ duyệt)
+## Đề xuất gói chỉnh (đã duyệt — đã áp; kết quả mục dưới)
 
 Chỉ con số JSON; mục tiêu kéo f09 về band và nhấc f07/f06 sát sàn. Không
 đụng f10/m09/f05 (đang trong band/sàn) và không phình số cho các pool
@@ -1135,19 +1128,15 @@ normal; f05+f07+m06 tước 2.31/2.56/3.88; f10+f05+m04 vẫn chết tầng 1.
 
 - **Nerf Thỏ Ngọc đúng hướng nhưng chưa đủ**: f09 −10/−11 điểm nhưng 71%/67%
   vẫn trên band — dự báo "có thể cần nhịp nerf thứ hai" thành hiện thực.
-  **Cờ: cần beat nerf thứ hai** (gợi ý chưa áp: `tho_ngoc` damage 2→1, hoặc
-  `thuc_tinh` 18→14 HP / bỏ `heal 2 owner`, hoặc `summonsMade` 6→7).
-- **f07 không hồi (33→31/32)**: +2 HP và constellation 2 không cứu nổi —
-  trong sai số ±3 nhưng xu hướng âm. Phong Ấn là utility mỏng trong meta
-  damage; có thể cần buff thực chất hơn (cost `f07_phe_but` 3→2 hoặc
-  `f07_doat_but` damage 3→4) ở beat sau — cùng nhịp với f09.
-- **f06 vẫn sát sàn (39/38)**: rider 2 damage trên `f06_mat_ham` + 2 HP không
-  nhúc nhích đáng kể — PvP damage 2 từ lá 2-cost không lật kèo; giữ quan sát,
-  xem xét cùng đợt f07.
+  ~~**Cờ: cần beat nerf thứ hai**~~ (đã đóng: ngưỡng `summonsMade` 7 một mình
+  đưa f09 về 52%/50% trong band — đo lại mẫu 2000 ở phần cuối file).
+- (Đã đóng — **f07 không hồi**: đã áp `f07_phe_but` cost 3→2 + `f07_doat_but`
+  damage 3→4 ở nhịp sau; đo lại mẫu 2000: **46%/44%** trong band.)
+- (Đã đóng — **f06 sát sàn**: đo lại **51%/47%** trong band, không cần thêm.)
 - **Rider 0-damage không cứu PvE**: f10+f05+m04 vẫn 0% tầng ~1.2, f06+m09+f03
   vẫn 1.7% — xác nhận chẩn đoán "vấn đề pool, không phải số": 2 damage AoE
-  trên 2 lá/deck không đủ khi cả đội thiếu động cơ damage. Vẫn cần đổi thành
-  phần pool thật ở đợt nội dung (đề xuất cũ đứng).
+  trên 2 lá/deck không đủ khi cả đội thiếu động cơ damage. (Đã đóng ở mức
+  phương án — gói 3 lá damage đặc trưng/Hero áp sau đó thay cho đổi pool id.)
 - PvP cho thấy rider có giá trị nhỏ nhưng đo được ở chủ nhân: m04 +2/+2,
   f10 +3/+2 (f10 giờ sát trần trên band — theo dõi).
 - Nerf f09 kéo PvE f09+f10+m05 tụt 27.5→18.3% như dự báo; chênh vẫn là pool.
@@ -1375,17 +1364,15 @@ nhất thấp nhất: arc2_s05 75.0%).
 
 ## Điểm mở / ghi chú
 
-- **arc2_s06 (Quan Tinh Đài, ghim Trăng Non):** đội `m05+f03+f02` chỉ 15% — tường
-  Ẩn Thân của 3 kẻ địch override `new` + Bộ cơ bản của đội đó thiếu đòn lan đúng
-  lúc; đạt chuẩn "đội tốt nhất ≥ 60%" nhờ m01+m02+f04 (97.5). Đúng thiết kế
-  "đội đòn lan", theo dõi khi người chơi thật thử.
+- (Đã đóng — đo lại sau redesign ở phần cuối file: `m05+f03+f02` ở arc2_s06 nay
+  **69%** (từ 15%); ghim Trăng Non + pool damage đặc trưng mới đủ qua tường
+  Ẩn Thân.)
 - **Cạn Bài** tập trung ở màn kéo dài: arc1_s08 22.5% (đội chuẩn), arc2_s07
   31.3%, arc2_s08 20.0%, arc2_s05 16–19% — deck 18 lá cố định, cùng lớp rủi ro
   "lối chơi kéo dài trận" đã chấp nhận ở 4b/Lõi; story không có mục tiêu Cạn Bài
   riêng.
-- Khi redesign Nguyệt Luân cài (pha đầu ngẫu nhiên + Nguyệt Lệnh bốc theo trận):
-  đo lại toàn bảng — `start.moonIndex` của arc2_s06 sẽ đè lên pha ngẫu nhiên,
-  kẻ địch cũ nhận Nguyệt tính đổi độ khó arc1_s05–s07.
+- (Đã đóng — toàn bảng đã đo lại sau khi redesign Nguyệt Luân cài; kết quả và
+  retune ở phần "Đo lại sau redesign Nguyệt Luân" cuối file.)
 - **Chơi tay còn treo** (bot không thay được cảm nhận) — cần kiểm trên client:
   - Arc 1: màn 1 (Nhập Học — màn mở đầu, thoại có đủ ngắn), màn 5 (Cấm Địa Xích
     Diên — `bloodMoonRounds: 3` đọc được không), màn 8 (boss Khảo Hạch Chi Linh —
@@ -1517,19 +1504,20 @@ cho `freeWeaponIds`/`freeRelicIds`; giữ nguyên, xem lại khi có data ngư�
 
 ## Điểm mở
 
-- **Ngọc Bút −21 / Vạn Kim Đẩu −13 sau buff** — lá R1 vẫn lỗi so lá bị bỏ trên
-  đội yếu; mục tiêu R1 chỉ chặn phía trên nên không chặn, cân nhắc buff thêm
-  (hoặc chấp nhận) ở đợt cân sau.
-- **Phán Quan Bút / Ngọc Thố Bội cần nerf vòng 2** mới về ≤ +10 (+8 / +9): nội
-  tại R1 của cả hai giờ trống (engine rút bài / summon đều từ R3) — nếu sau này
-  thấy R1–R2 quá nghèo, cân nhắc thêm rider nhẹ ở R2 thay vì trả engine về R1.
+- (Đã đóng — buff đợt 2: lá Ngọc Bút và Bản Kim thêm `gainArmor` 2 `allAllies`
+  (rider nằm trong mọi refinement `effects` thay thế); đo lại R1 trên cùng quy
+  ước 80 seed: Ngọc Bút **−6**, Vạn Kim Đẩu **−6** — trong nhiễu ±8 của ô,
+  chấp nhận.)
+- (Đã đóng — engine R1 trống là chủ đích sau nerf vòng 2; R2 của cả hai đã mang
+  rider nhẹ (Đoạn Án Suy Yếu 2 / Thố Linh +4 giáp Linh Thú), Δ R1 cuối +8/+9
+  trong ngưỡng.)
 - **Hàn Tuyết Song Kiếm (cũ) +10** — borderline trong nhiễu ±8 (4e đo +6), theo
   dõi.
 - **Kinh Hồng Phiến ≈0 trên đội f06+m09+f03 (2%)** — đội quá yếu để đo giá trị
   món, không kết luận được.
-- **Minh Đăng (Dẫn Hồn Đăng, f10) 0×/20 trận ở monitoring Task 4** — lá
-  `fallenAlly` chết tay khi chưa có Hero ngã; kiểm chức năng xác nhận hoạt động
-  đúng. Cờ giữ nguyên: cân nhắc đổi target / thêm bản sao ở đợt sau.
+- (Đã đóng — Minh Đăng giữ `target: "fallenAlly"` + `revive to: "chosen"` (đã
+  đúng schema từ 7d.3); buff: giáp +3 từ chỉ đồng đội được hồi → **mọi Hero**
+  (`allAllies`). Δ R1 đo lại **+3** — lá vẫn chờ đồng đội ngã nhưng payoff đủ.)
 - **PvP band Hero 38–62%** (trần 40–61) — lệch nhẹ ±2 ngoài mục tiêu 40–60, đã
   ghi nhận từ 7b; xem lại bằng người chơi thật.
 - **Chơi tay Cốt truyện** treo từ 7c — bot không thay cảm nhận (xem mục trên).
@@ -1692,3 +1680,80 @@ bằng chứng menu dữ liệu production dài đến mức cần cuộn.
   110 file asset trước/sau khớp hash. Không lặp gate không bị thay đổi.
 - Bằng chứng và ảnh dưới `.sdd-work/combat-ui-polish/`, raw browser cuối
   `final-card-browser.log`.
+
+# Playtest Notes — Đo lại sau redesign Nguyệt Luân (2026-10-05)
+
+Lượt đo lại các mục mở sau khi redesign Nguyệt Luân (pha đầu ngẫu nhiên, Nguyệt
+Lệnh bốc theo pha) đã cài: bảng Cốt Truyện 7c, F09/trang bị 7d, PvP band. Harness
+Cốt Truyện nay là test cố định `PLAYTEST_STORY=1` (`story-sim.test.ts`), không
+còn file tạm.
+
+## Cốt Truyện 16 màn × 3 đội (80 seed — sau retune)
+
+| Màn | m05+f04+m06 | m05+f03+f02 | m01+m02+f04 | Đội tốt nhất | Band (đội chuẩn) |
+|---|---|---|---|---|---|
+| arc1_s01 | 100 | 100 | 100 | 100 | ≥80 ✓ |
+| arc1_s02 | 100 | 100 | 100 | 100 | ≥80 ✓ |
+| arc1_s03 | 95 | 100 | 83 | 100 | ≥80 ✓ |
+| arc1_s04 | 80 | 100 | 100 | 100 | ≥80 ✓ |
+| arc1_s05 | 99 | 100 | 99 | 100 | ≥80 ✓ |
+| arc1_s06 | 86 | 100 | 93 | 100 | ≥80 ✓ |
+| arc1_s07 | 88 | 98 | 83 | 98 | ≥80 ✓ |
+| arc1_s08 boss | 60 | 100 | 66 | 100 | ≥60 ✓ |
+| arc2_s01 | 99 | 100 | 98 | 100 | 55–75 † |
+| arc2_s02 | 99 | 100 | 100 | 100 | 55–75 † |
+| arc2_s03 | 73 | 66 | 96 | 96 | 55–75 ✓ |
+| arc2_s04 | 78 | 60 | 99 | 99 | 55–75 † (+3, như duyệt 7c) |
+| arc2_s05 | 59 | 76 | 61 | 76 | 55–75 ✓ |
+| arc2_s06 | 69 | 69 | 99 | 99 | 55–75 ✓ |
+| arc2_s07 | 56 | 91 | 95 | 95 | 55–75 ✓ |
+| arc2_s08 boss | 41 | 94 | 53 | 94 | 40–60 ✓ |
+
+0 kẹt toàn bảng. † = lệch trần đã duyệt ở 7c (s04 trở lại đúng mức duyệt ~+3.8).
+
+**Retune áp** (địch — `enemies.json`): `bach_lo_thi_quan` 30→26 HP;
+`khao_hach_chi_linh` 80→72; `shadow_fox` 23→20; `fox_king` 50→40 + Hồ Khiếu
+Suy Yếu 2→1 + Huyết Hồ 8→5; `vo_nguyet_am_sat` 18→17; `black_guard` 69→52 +
+Hắc Trảm 14→12. Trước retune, redesign đẩy 4 màn xuống dưới band (s04 71,
+s08 45, s05 54 best, s07 31) — nerf HP đơn thuần không cứu s05: phải cắt AoE
+Suy Yếu của Hồ Vương (bóp damage cả đội) + hồi 8 (kéo dài trận → Cạn Bài).
+
+## PvP đo lại (mẫu 2000, Bộ cơ bản)
+
+Trần / trang bị R1 ngẫu nhiên: đi trước 59%/56% (vẫn trên mục tiêu 47–53 — giữ
+ghi nhận 5b/7b), hòa 2%, vòng TB 9.7 / 11.4.
+
+| Band 40–60 | Kết quả |
+|---|---|
+| Trần | tất cả trong band trừ **f03 37** (từ 40 — sát sàn, theo dõi) |
+| Trang bị | **f10 63** trên trần; m07 38, m03 39 sát sàn; còn lại trong band |
+
+**f09: 52%/50%** — ngưỡng `summonsMade` 7 đủ, beat nerf thứ hai không cần.
+**f07: 46%/44%** sau `f07_phe_but` 3→2 + `f07_doat_but` 3→4 damage — trong band.
+
+Nhóm từng dưới sàn ở 7b hồi nhờ meta dịch (không cần buff riêng): m01 50/47
+(trước 30/28), m08 48/45 (39/38), f01 46/45 (39/36), f02 41/47, m10 53/56.
+Còn lệch: **f03 37** trần và **f10 63** trang bị — hai cờ theo dõi mới.
+
+## Trang bị đo lại (R1, 80 seed, cùng quy ước bỏ lá cuối người mang)
+
+| Món | Δ trước | Δ sau buff/sửa |
+|---|---|---|
+| Ngọc Bút (rider +2 giáp mọi Hero trên lá) | −21 | **−6** (trong nhiễu ±8) |
+| Vạn Kim Đẩu (rider +2 giáp mọi Hero trên lá) | −13 | **−6** (trong nhiễu) |
+| Dẫn Hồn Đăng (giáp +3 `chosen` → `allAllies`) | −1 | **+3** |
+
+Lưu ý: refinement list `effects` thay thế phải lặp lại rider giáp nếu không
+refine sẽ làm mất hiệu ứng (đã vá cả R1/R3 của hai món).
+
+## Phát hiện mới: baseline lượt chơi (run) sụt sau redesign
+
+Bộ cơ bản, 80 seed/đội, 12 đội — trước 38% → **nay 26.3%**: m05+f04+m06 50→19,
+m05+f03+f04 80→53, f05+f07+m06 66→51, m05+f03+f02 56→59, m06+f02+f03 61→60,
+f01+m07+m06 34→31, m08+f08+m05 20→14, m01+m02+f04 41→10, m03+m10+m04 18→11,
+f09+f10+m05 13→6, f06+m09+f03 4→1, f10+f05+m04 3→1.
+
+Chẩn đoán (m05+f04+m06, win% theo lệnh/tier): không có lệnh nào outlier (68–83%
+phẳng) — normal 82%, elite 67% (12 trận), **boss 44%**; run chết vì lũy kế qua
+nhiều tầng khi mỗi trận khó hơn chút. Story gate 7c vẫn đạt sau retune — hệ quả
+run-mode này cần quyết định mục tiêu riêng (giả định kinh tế ~40% ở `15` §277).

@@ -7166,7 +7166,7 @@
     "id": "f07_phe_but",
     "name": "Phê Bút",
     "ownerId": "f07",
-    "cost": 3,
+    "cost": 2,
     "copies": 2,
     "type": "skill",
     "tags": [
