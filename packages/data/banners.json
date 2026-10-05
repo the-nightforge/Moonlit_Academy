@@ -38,13 +38,17 @@
     "kind": "hero",
     "pityGroup": "heroes",
     "pool": {
-      "legendary": [],
+      "legendary": [
+        "m05",
+        "f01",
+        "f10"
+      ],
       "epic": [],
       "rare": [],
       "common": []
     },
     "featured": {
-      "rateUp": 1,
+      "rateUp": 0.5,
       "rotation": [
         {
           "heroId": "m01",
