@@ -100,9 +100,10 @@ describe("hero tooltip — both authoritative awakening forms", () => {
     expect(lines).toContain(def.levelUp.description);
     expect(lines).toContain(def.altLevelUp.description);
     expect(lines.find(line => line.includes("Đang chọn"))).toContain(levelUpForm === "base" ? def.levelUp.name : def.altLevelUp.name);
+    expect(lines).toContain("Điều kiện Thức Tỉnh: mất HP");
     expect(lines).toContain(`Tiến độ Thức Tỉnh: 2/${def.levelUp.constellationThreshold}`);
-    expect(lines).toContain(`HP ${hero.hp}/${hero.maxHp} · Giáp 4`);
-    expect(lines.at(-1)).toContain("Phong Ấn");
+    // Awakening info only — unit stats and status notes live on the card itself.
+    expect(lines.some((line) => line.includes("HP ") || line.includes("Phong Ấn"))).toBe(false);
   });
 
   it("shows awakened state instead of stale progress, and keeps PvP threshold authoritative", () => {

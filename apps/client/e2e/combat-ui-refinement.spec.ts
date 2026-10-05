@@ -160,7 +160,9 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
       await moveDesign(page, hero.x, hero.y);
       await expect.poll(async () => (await tooltipProbe(page))?.text).toContain("Đang chọn");
       const tip = (await tooltipProbe(page))!;
-      expect(tip.text).toContain(hero.def.name); expect(tip.text).toContain(hero.def.levelUp.description); expect(tip.text).toContain(hero.def.altLevelUp.description);
+      expect(tip.text).toContain(hero.def.levelUp.description); expect(tip.text).toContain(hero.def.altLevelUp.description);
+      // Awakening-only tooltip — the unit-stat line is gone.
+      expect(tip.text).not.toMatch(/HP \d/);
       expect(tip.text).toContain(`${(form === "base" ? hero.def.levelUp : hero.def.altLevelUp).name} — dạng ${form === "base" ? "cơ bản" : "thứ hai"} · Đang chọn`);
       expect(tip.text).toContain(`Tiến độ Thức Tỉnh: 2/${hero.def.levelUp.constellationThreshold}`);
       expect(tip.text).toContain("Điều kiện Thức Tỉnh:");
