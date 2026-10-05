@@ -23,6 +23,14 @@ export function featuredEntry(banner: BannerDef, now: number): FeaturedRotationE
   return rotation[((week % rotation.length) + rotation.length) % rotation.length];
 }
 
+/** Timestamp (ms) when a featured banner's rotation rolls to the next week. */
+export function featuredRotationEnd(banner: BannerDef, now: number): number | undefined {
+  const rotation = banner.featured?.rotation;
+  if (!rotation || rotation.length === 0) return undefined;
+  const week = Math.floor((now - ROTATION_ANCHOR) / WEEK_MS);
+  return ROTATION_ANCHOR + (week + 1) * WEEK_MS;
+}
+
 export interface PullResult {
   itemId: string;
   rarity: Rarity;

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { GameData, PullResult, Rarity } from "rules";
-import { featuredEntry } from "rules";
+import { featuredEntry, featuredRotationEnd } from "rules";
 import manifest from "virtual:assets-manifest";
 import { achievementNotices, errorText, mutate, type ProfileReply } from "../account";
 import { api } from "../api";
@@ -25,6 +25,7 @@ export class GachaScene extends Phaser.Scene {
   private modal: Phaser.GameObjects.Container | null = null;
   private modalCleanup: (() => void) | null = null;
   private bannerId = "";
+  private spotlightHeroId = "";
   private phase: "idle" | "pending" | "revealing" | "complete" = "idle";
   private alive = false;
   private generation = 0;
@@ -68,6 +69,8 @@ export class GachaScene extends Phaser.Scene {
       || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     this.root = this.add.container(0, 0);
     this.bannerId = Object.keys(session.data.banners)[0]!;
+    const spotlightPool = (session.data.banners[this.bannerId]?.pool.legendary ?? []).filter(id => session.data.heroes[id]);
+    this.spotlightHeroId = spotlightPool[Math.floor(Math.random() * spotlightPool.length)] ?? "";
     const onEsc = () => { if (!isModalOpen()) this.back(); };
     this.input.keyboard?.on("keydown-ESC", onEsc);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -136,10 +139,10 @@ export class GachaScene extends Phaser.Scene {
       this.text(this.root, currencyX + 22, 41, String(profile.currencies[key] ?? 0), 20, "#f3dfb1");
       currencyX += 168;
     }
-    this.root.add(roundedPanel(this, 170, 288, 284, 428, 0x0b192e, 0.91, 0x69748a, 16));
+    this.root.add(roundedPanel(this, 170, 390, 284, 560, 0x0b192e, 0.91, 0x69748a, 16));
     this.text(this.root, 52, 132, "CHỌN DUYÊN TRIỆU HỒI", 13, "#bfad85");
     Object.values(data.banners).forEach((entry, index) => {
-      const y = 198 + index * 89, selected = entry.id === this.bannerId;
+      const y = 186 + index * 89, selected = entry.id === this.bannerId;
       const panel = roundedPanel(this, 170, y, 244, 72, selected ? 0x34405a : 0x14243a, 0.96, selected ? 0xe8c784 : 0x53627d, 12);
       const hit = this.add.rectangle(0, 0, 244, 72, 0, 0);
       panel.add(hit);
@@ -149,15 +152,16 @@ export class GachaScene extends Phaser.Scene {
       });
       this.text(panel, -105, -13, entry.name, 18, selected ? "#f4dfb2" : COLORS.text);
       this.text(panel, -105, 14, entry.featured ? "Tướng Legendary xoay tua tuần" : entry.kind === "hero" ? "Anh hùng trong thư viện" : entry.kind === "weapon" ? "Trang bị · Binh khí" : "Trang bị · Nguyệt bảo", 12, "#aab9d0");
+      if (entry.featured) this.text(panel, 105, -13, "★", 14, "#e8c784").setOrigin(1, 0);
       this.root.add(panel);
     });
-    this.button(this.root, 170, 540, 244, "Tỉ lệ & vật phẩm", () => this.showDetails(), enabled);
-    this.button(this.root, 170, 594, 244, "Nhật ký quay", () => void this.showHistory(0), enabled);
-    this.button(this.root, 170, 648, 244, "Cửa hàng Nguyệt Tinh", () => { if (!this.busy && !this.modal) this.scene.start("shop"); }, enabled);
+    this.root.add(this.add.rectangle(170, 504, 236, 1, 0x69748a, 0.45));
+    this.button(this.root, 170, 540, 244, "Nhật ký quay", () => void this.showHistory(0), enabled);
+    this.button(this.root, 170, 606, 244, "Cửa hàng Nguyệt Tinh", () => { if (!this.busy && !this.modal) this.scene.start("shop"); }, enabled);
 
-    this.root.add(roundedPanel(this, 1105, 295, 284, 350, 0x0a192e, 0.93, 0x69748a, 16));
-    this.text(this.root, 990, 145, "LỜI HẸN DƯỚI TRĂNG", 13, "#bfad85");
-    this.text(this.root, 990, 180, banner.pityGroup ? "Bảo hiểm chung banner Hero" : "Bảo hiểm riêng banner", 18, "#f3dfb1");
+    this.root.add(roundedPanel(this, 1105, 326, 284, 432, 0x0a192e, 0.93, 0x69748a, 16));
+    this.text(this.root, 990, 143, "LỜI HẸN DƯỚI TRĂNG", 13, "#bfad85");
+    this.text(this.root, 990, 178, banner.pityGroup ? "Bảo hiểm chung banner Hero" : "Bảo hiểm riêng banner", 18, "#f3dfb1");
     const progress = (y: number, rarity: "epic" | "legendary", since: number, limit: number) => {
       this.text(this.root, 990, y, RARITY_LABELS[rarity], 17, rarity === "epic" ? "#d4b6f7" : "#f3d98c");
       this.text(this.root, 1217, y, `${since} / ${limit}`, 15, "#c3cfdf").setOrigin(1, 0);
@@ -168,21 +172,27 @@ export class GachaScene extends Phaser.Scene {
     };
     progress(226, "epic", pity.sinceEpic, gacha.epicPity);
     progress(342, "legendary", pity.sinceLegendary, gacha.legendaryPity);
+    const rotationEnd = featuredRotationEnd(banner, Date.now());
+    if (rotationEnd !== undefined) {
+      const left = rotationEnd - Date.now(), days = Math.floor(left / 86_400_000), hours = Math.floor(left / 3_600_000) % 24, minutes = Math.floor(left / 60_000) % 60;
+      this.text(this.root, 990, 428, `Tuần sau đổi tướng · còn ${days > 0 ? `${days}d ${hours}h` : `${hours}h ${minutes}m`}`, 13, "#adbed4");
+    }
+    this.button(this.root, 1105, 505, 244, "Tỉ lệ & vật phẩm", () => this.showDetails(), enabled);
 
-    const heroId = featured?.heroId ?? banner.pool.legendary.find(id => data.heroes[id]) ?? banner.pool.epic.find(id => data.heroes[id]);
+    const heroId = featured?.heroId ?? (banner.kind === "hero" ? this.spotlightHeroId : undefined) ?? banner.pool.legendary.find(id => data.heroes[id]) ?? banner.pool.epic.find(id => data.heroes[id]);
     const artKey = banner.kind === "hero" ? `heroes:${heroId}` : `gacha:${banner.kind}_banner`;
     const art = this.image(this.root, artKey, 640, 325, 495, 430);
     if (!art) { this.root.add(this.add.circle(640, 295, 106, 0xded7b4, 0.15).setStrokeStyle(2, 0xc0aa78)); this.image(this.root, "ui:moon_full", 640, 300, 160, 160); }
     this.root.add(roundedPanel(this, 640, 549, 558, 82, 0x0b172a, 0.94, 0x9a8965, 14));
-    this.text(this.root, 640, 523, featured ? "TƯỚNG TUẦN NÀY" : banner.kind === "hero" ? "TRONG BANNER" : "MINH HỌA LOẠI TRANG BỊ", 12, "#bda77e").setOrigin(0.5);
+    this.text(this.root, 640, 523, featured ? "TƯỚNG TUẦN NÀY" : banner.kind === "hero" ? "ANH HÙNG TRONG BANNER" : "MINH HỌA LOẠI TRANG BỊ", 12, "#bda77e").setOrigin(0.5);
     this.text(this.root, 640, 547, banner.kind === "hero" && heroId ? itemName(data, heroId) : banner.name, 25, "#f5e2ba").setOrigin(0.5);
-    this.text(this.root, 640, 575, featured ? `Legendary: ${percent(banner.featured!.rateUp)} trúng tướng tuần · tuần sau đổi tướng` : banner.kind === "hero" ? "Anh hùng tiêu biểu · xem toàn bộ trong Tỉ lệ & vật phẩm" : "Vật phẩm nhận được theo danh sách trong banner", 13, "#adbed4").setOrigin(0.5);
-    this.root.add(roundedPanel(this, 792, 646, 878, 86, 0x0c182b, 0.97, 0x6b6c77, 16));
-    for (const [count, x] of [[1, 634], [10, 921]] as const) {
+    this.text(this.root, 640, 575, featured ? `Legendary: ${percent(banner.featured!.rateUp)} trúng tướng tuần · tuần sau đổi tướng` : banner.kind === "hero" ? "Xem toàn bộ anh hùng trong Tỉ lệ & vật phẩm" : "Vật phẩm nhận được theo danh sách trong banner", 13, "#adbed4").setOrigin(0.5);
+    this.root.add(roundedPanel(this, 640, 646, 640, 86, 0x0c182b, 0.97, 0x6b6c77, 16));
+    for (const [count, x] of [[1, 490], [10, 790]] as const) {
       this.button(this.root, x, 637, 260, `Quay ${count}   ·   ${pullCost * count}`, () => this.pull(count), enabled && profile.currencies.moonJade >= pullCost * count, count === 10);
       this.image(this.root, "ui:cur_moonJade", x + 101, 637, 24, 24);
     }
-    this.text(this.root, 792, 675, this.phase === "pending" ? "Đang kết nối · xin chờ hồi âm…" : `${CURRENCY_LABELS.moonJade} · Mỗi lượt ${pullCost} · Tỉ lệ công khai trong Tỉ lệ & vật phẩm`, 13, "#b4c3d7").setOrigin(0.5);
+    this.text(this.root, 640, 675, this.phase === "pending" ? "Đang kết nối · xin chờ hồi âm…" : `${CURRENCY_LABELS.moonJade} · Mỗi lượt ${pullCost} · Tỉ lệ công khai trong Tỉ lệ & vật phẩm`, 13, "#b4c3d7").setOrigin(0.5);
   }
 
   private back() {
