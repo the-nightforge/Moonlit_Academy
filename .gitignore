@@ -14,3 +14,4 @@ logs/
 test-results/
 playwright-report/
 .sdd-work
+output/
