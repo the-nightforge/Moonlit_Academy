@@ -113,26 +113,17 @@ describe("gacha", () => {
     expect(profile.currencies.moonStar).toBe(3 * moonStar);
   });
 
-  it("T331: the featured banner gives the week's hero on ~half of legendary rolls", () => {
+  it("T331: the featured banner always gives the week's hero on legendary rolls", () => {
     const data = rigged({ legendary: 1, epic: 0 });
     const entry = featuredEntry(data.banners[FEATURED]!, NOW)!;
-    const hits = { featured: 0, fallback: 0 };
     for (let seed = 1; seed <= 200; seed++) {
       const result = pullMany(data, withJade(data, 1000), FEATURED, 1, seed, NOW);
       if (!result.ok) throw new Error(result.error);
       const pull = result.results[0]!;
       expect(pull.rarity).toBe("legendary");
-      if (pull.featuredHit) {
-        expect(pull.itemId).toBe(entry.heroId);
-        hits.featured += 1;
-      } else {
-        expect(data.banners[FEATURED]!.pool.legendary).toContain(pull.itemId);
-        hits.fallback += 1;
-      }
+      // Empty fallback pool: every legendary is the week's hero.
+      expect(pull).toMatchObject({ itemId: entry.heroId, featuredHit: true });
     }
-    // 50% rate-up over 200 seeds: a 40–60% window is generous yet proves the split.
-    expect(hits.featured).toBeGreaterThan(60);
-    expect(hits.fallback).toBeGreaterThan(60);
   });
 
   it("T332: the two hero banners share one pity counter, migrating the old key", () => {

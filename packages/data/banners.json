@@ -38,43 +38,57 @@
     "kind": "hero",
     "pityGroup": "heroes",
     "pool": {
-      "legendary": [
-        "m01",
-        "m08",
-        "f08"
-      ],
+      "legendary": [],
       "epic": [],
       "rare": [],
       "common": []
     },
     "featured": {
-      "rateUp": 0.5,
+      "rateUp": 1,
       "rotation": [
         {
           "heroId": "m01",
           "name": "Thiên Cơ Bách Toán — Tạ Vân Chiêu",
           "pool": {
-            "epic": ["m06"],
-            "rare": ["m03", "m10", "f07"],
-            "common": ["f09"]
+            "epic": [
+              "m06"
+            ],
+            "rare": [
+              "m03",
+              "m10",
+              "f07"
+            ],
+            "common": [
+              "f09"
+            ]
           }
         },
         {
           "heroId": "m08",
           "name": "Quan Tinh Đoạt Vận — Khương Tịch",
           "pool": {
-            "epic": ["f02", "m06"],
+            "epic": [
+              "f02",
+              "m06"
+            ],
             "rare": [],
-            "common": ["f09"]
+            "common": [
+              "f09"
+            ]
           }
         },
         {
           "heroId": "f08",
           "name": "Huyết Phượng Nghịch Thiên — Phượng Chiêu Dung",
           "pool": {
-            "epic": ["f02", "m06"],
+            "epic": [
+              "f02",
+              "m06"
+            ],
             "rare": [],
-            "common": ["f09"]
+            "common": [
+              "f09"
+            ]
           }
         }
       ]

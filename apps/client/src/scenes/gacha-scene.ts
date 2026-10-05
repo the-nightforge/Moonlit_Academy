@@ -510,7 +510,9 @@ export class GachaScene extends Phaser.Scene {
       ...(banner.pityGroup ? [{ text:`Bảo hiểm chung giữa các banner Hero (${banner.pityGroup}).` }] : []),
       ...(g.newPlayerEpicHero && banner.kind === "hero" ? [{ text:"Bảo vệ người mới: Epic ưu tiên Hero chưa sở hữu." }] : []),
       ...(featured && banner.featured ? [
-        { text:`Legendary trúng: ${percent(banner.featured.rateUp)} ${itemName(data,featured.heroId)} (tướng tuần) · ${percent(1-banner.featured.rateUp)} một tướng Legendary khác.`, color:"#f3d98c" },
+        { text: banner.pool.legendary.length === 0
+            ? `Legendary luôn trúng ${itemName(data,featured.heroId)} (tướng tuần).`
+            : `Legendary trúng: ${percent(banner.featured.rateUp)} ${itemName(data,featured.heroId)} (tướng tuần) · ${percent(1-banner.featured.rateUp)} một tướng Legendary khác.`, color:"#f3d98c" },
         ...(featured.name ? [{ text:`Tuần này: ${featured.name}` }] : []),
       ] : []),
     ];
