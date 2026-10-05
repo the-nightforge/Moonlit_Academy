@@ -22,8 +22,8 @@ function assetsManifest(): Plugin {
         for (const file of readdirSync(join(root, dir.name))) {
           if (file.startsWith(".")) continue;
           const key = file.replace(/\.[^.]+$/, "");
-          // Prefer replacement PNGs while retaining the original SVG source.
-          if (file.endsWith(".svg") && files[key]?.endsWith(".png")) continue;
+          // Prefer raster art (webp) while retaining any original SVG source.
+          if (file.endsWith(".svg") && files[key]?.endsWith(".webp")) continue;
           files[key] = `/assets/${dir.name}/${file}`;
         }
         manifest[dir.name] = files;

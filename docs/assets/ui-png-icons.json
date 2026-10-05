@@ -15,7 +15,7 @@
   "icons": [
     {
       "key": "bolt",
-      "file": "apps/client/public/assets/ui/bolt.png",
+      "file": "apps/client/public/assets/ui/bolt.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a single bright golden lightning bolt, electric energy. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-a9b2267d-af00-4dfb-aad1-558e00e51304.png",
       "sha256": "151c43f719eec7fef22305fede62b896663b88ce8a4ec9494926fa590e5e86e2",
@@ -26,7 +26,7 @@
     },
     {
       "key": "chat",
-      "file": "apps/client/public/assets/ui/chat.png",
+      "file": "apps/client/public/assets/ui/chat.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: an ivory and azure speech bubble, communication. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-420d99e7-9308-419e-b826-4ec84a5247ac.png",
       "sha256": "95802e9d930b8a60ee559082943cd1af06175a8b6905c5f0be67cf85ae5c88a3",
@@ -37,7 +37,7 @@
     },
     {
       "key": "check",
-      "file": "apps/client/public/assets/ui/check.png",
+      "file": "apps/client/public/assets/ui/check.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a bold luminous jade green check mark, confirmed. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-f80653e7-cb62-429f-8553-22e588714d8d.png",
       "sha256": "c91b92bc4ea101f7c3a7f1ad10b9f04e64604e10b3026bdeadde91f6a424980b",
@@ -48,7 +48,7 @@
     },
     {
       "key": "cur_darkIron",
-      "file": "apps/client/public/assets/ui/cur_darkIron.png",
+      "file": "apps/client/public/assets/ui/cur_darkIron.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a faceted dark blue iron ingot with silver metallic edges, dark iron currency. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-435cc821-9cbd-484e-9e27-ca2ef37a93f1.png",
       "sha256": "2e12ed4579997aa9f0f891241d9c091e22c5f841f8c67d7a1e799079fc2bb997",
@@ -59,7 +59,7 @@
     },
     {
       "key": "cur_honor",
-      "file": "apps/client/public/assets/ui/cur_honor.png",
+      "file": "apps/client/public/assets/ui/cur_honor.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a golden five-point medal with blue jewel center and short red ribbons, honor currency. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-813f5d44-bd41-42ad-abc3-b162ffc66a8d.png",
       "sha256": "84436513c0211f1f9017927531e267dc6bdaf36b83302c0fc299decda7b13855",
@@ -70,7 +70,7 @@
     },
     {
       "key": "cur_moonDust",
-      "file": "apps/client/public/assets/ui/cur_moonDust.png",
+      "file": "apps/client/public/assets/ui/cur_moonDust.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a small pile of luminous lavender silver dust with a few broad sparkling particles, moon dust currency. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-35704522-974e-46bd-a0be-e6c3becd3ecd.png",
       "sha256": "5d14d9f28a6864708779bdec9c301082f4fc5020f32bb1df60f39a671c7f82dd",
@@ -81,7 +81,7 @@
     },
     {
       "key": "cur_moonJade",
-      "file": "apps/client/public/assets/ui/cur_moonJade.png",
+      "file": "apps/client/public/assets/ui/cur_moonJade.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one polished teal jade crescent gemstone with gold rim, moon jade currency. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-53af741a-b12c-4138-af99-1696d848807f.png",
       "sha256": "8ef1e4260657534b1d4a1f2cbdb766a5e5b7d1ddefa6c95ff96239a5138b19eb",
@@ -92,7 +92,7 @@
     },
     {
       "key": "cur_moonStar",
-      "file": "apps/client/public/assets/ui/cur_moonStar.png",
+      "file": "apps/client/public/assets/ui/cur_moonStar.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one radiant gold four-point star gemstone with violet center, moon star currency. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-2755cde9-3340-4d93-b4f6-06604e9bd6ff.png",
       "sha256": "5f302d1042ea8aaec0086865d07dc01fb2ccfe96a0fd52dbdb4497e288dd0904",
@@ -103,7 +103,7 @@
     },
     {
       "key": "gear",
-      "file": "apps/client/public/assets/ui/gear.png",
+      "file": "apps/client/public/assets/ui/gear.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a gold and ivory eight-tooth gear wheel with dark blue center hole, settings. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-04f8ef79-e1b6-4f34-beb1-6e32ef60f140.png",
       "sha256": "09a2cb7b507f7a9ec6b9e725c3a94ee674b163d7331452b426893b5b3ec63fc0",
@@ -114,7 +114,7 @@
     },
     {
       "key": "intent_attack",
-      "file": "apps/client/public/assets/ui/intent_attack.png",
+      "file": "apps/client/public/assets/ui/intent_attack.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one diagonal crimson and gold sword, enemy attack intent. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-ec659e22-7cc3-4e0e-b3f5-30c4135638ad.png",
       "sha256": "0c41fac739c2646d410f3a1d432b4d09ae5d372e2b497266bcca9c1c94ad74d2",
@@ -125,7 +125,7 @@
     },
     {
       "key": "intent_attackDefend",
-      "file": "apps/client/public/assets/ui/intent_attackDefend.png",
+      "file": "apps/client/public/assets/ui/intent_attackDefend.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one crimson gold sword in front of a compact blue shield, simultaneous attack and defense. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-06b0a23e-f806-43dc-8b04-54f0a0d03436.png",
       "sha256": "84b5d647b3ab764e5c509ddbc1a686547f219d38b4eb61a1f0006399bb177442",
@@ -136,7 +136,7 @@
     },
     {
       "key": "intent_buff",
-      "file": "apps/client/public/assets/ui/intent_buff.png",
+      "file": "apps/client/public/assets/ui/intent_buff.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a bold upward golden arrow with a small teal sparkle, enemy beneficial buff. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-e7126d29-bc1b-48db-ac9d-b6d2664a62c7.png",
       "sha256": "00b134de0a38684acb564c44071476104f443058d39c9abcef28cef2405fddee",
@@ -147,7 +147,7 @@
     },
     {
       "key": "intent_debuff",
-      "file": "apps/client/public/assets/ui/intent_debuff.png",
+      "file": "apps/client/public/assets/ui/intent_debuff.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a bold downward violet arrow with a small crimson broken sparkle, enemy harmful debuff. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-92e1d4ea-d70d-4f69-ac5c-7b4c9f21c88e.png",
       "sha256": "376b2edf319c9d9acd42b7f72294cd9886f1b8337137498eaa410879f1eef408",
@@ -158,7 +158,7 @@
     },
     {
       "key": "intent_defend",
-      "file": "apps/client/public/assets/ui/intent_defend.png",
+      "file": "apps/client/public/assets/ui/intent_defend.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a single polished azure and silver shield, enemy defense intent. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-1d0fe63f-6817-4619-b9a0-e50e27aec162.png",
       "sha256": "bf0f293e75da09830e50a95a27424e6c8fb8a2376ae69fec9a910120d65b62f8",
@@ -169,7 +169,7 @@
     },
     {
       "key": "intent_special",
-      "file": "apps/client/public/assets/ui/intent_special.png",
+      "file": "apps/client/public/assets/ui/intent_special.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a violet eye-shaped magical sigil with bright white pupil, enemy special action intent. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-c9a8db68-cc81-4a5a-8579-a4afca0603cf.png",
       "sha256": "67511be354b241bd966adfff89cab49be6a42118d4e09e564cb20020457f8436",
@@ -180,7 +180,7 @@
     },
     {
       "key": "lock",
-      "file": "apps/client/public/assets/ui/lock.png",
+      "file": "apps/client/public/assets/ui/lock.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one closed gold padlock with navy central keyhole. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-9218cc45-1536-4022-85b5-72cab3824180.png",
       "sha256": "3edb2c705e2da47524c06e48352514f978ca1143ac5f7bb7c8a3e892c592c6cf",
@@ -191,7 +191,7 @@
     },
     {
       "key": "moon_blood",
-      "file": "apps/client/public/assets/ui/moon_blood.png",
+      "file": "apps/client/public/assets/ui/moon_blood.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one perfectly circular blood-red full moon disk with simplified crimson craters, luminous ruby rim. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-0aa4d814-63b3-4808-9888-bc7b2ea63791.png",
       "sha256": "7d0d441aa42f318dceb7fa47cd57723d4a2c6f78e7bca1b1da3156295fa07b4c",
@@ -202,7 +202,7 @@
     },
     {
       "key": "moon_firstQuarter",
-      "file": "apps/client/public/assets/ui/moon_firstQuarter.png",
+      "file": "apps/client/public/assets/ui/moon_firstQuarter.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a perfect circular moon disk, RIGHT HALF bright ivory gold, LEFT HALF dark navy, straight vertical terminator, waxing first quarter. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-9fbbb3e4-97b7-46db-876f-3ebcb241849f.png",
       "sha256": "a1726af318923f0ff4dc337da0b1dd6234f392b452b4253eb868e6a9bcd42117",
@@ -213,7 +213,7 @@
     },
     {
       "key": "moon_full",
-      "file": "apps/client/public/assets/ui/moon_full.png",
+      "file": "apps/client/public/assets/ui/moon_full.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a perfect circular full moon disk entirely luminous ivory gold with simplified broad craters. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-10afa4cb-fda5-4c3e-87ab-d3f9c77771f6.png",
       "sha256": "1a38629e77d87bbfdc38b0d2aa350f1724bc59233c53d7f660cdde0c67c870cf",
@@ -224,7 +224,7 @@
     },
     {
       "key": "moon_lastQuarter",
-      "file": "apps/client/public/assets/ui/moon_lastQuarter.png",
+      "file": "apps/client/public/assets/ui/moon_lastQuarter.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a perfect circular moon disk, LEFT HALF bright ivory gold, RIGHT HALF dark navy, straight vertical terminator, waning last quarter. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-51e7787e-56e9-422d-a8a0-6b44399429bb.png",
       "sha256": "9516d9df3045dcf26db4e22370402b7638fc12523b8bc1817853fd147782ce28",
@@ -235,7 +235,7 @@
     },
     {
       "key": "moon_new",
-      "file": "apps/client/public/assets/ui/moon_new.png",
+      "file": "apps/client/public/assets/ui/moon_new.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a perfect circular new moon disk entirely dark navy with a slim silver gold perimeter, NO bright crescent inside. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-8ae93d9c-92a5-4256-bcb6-bce3d1e1109d.png",
       "sha256": "519cca8a09c86b3e7e96769d534919db59ba48bdc4c4373d06dfee03181a85a7",
@@ -246,7 +246,7 @@
     },
     {
       "key": "moon_waningCrescent",
-      "file": "apps/client/public/assets/ui/moon_waningCrescent.png",
+      "file": "apps/client/public/assets/ui/moon_waningCrescent.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a perfect circular moon disk with a thin luminous LEFT crescent, remainder dark navy, waning crescent. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-f9c8db09-a9c8-406a-86e1-5775ac24c417.png",
       "sha256": "c46c9a85cd6ab6b52902d2ed762e1ba8cc4c81c00cece344d35f85d1a8842f0c",
@@ -257,7 +257,7 @@
     },
     {
       "key": "moon_waningGibbous",
-      "file": "apps/client/public/assets/ui/moon_waningGibbous.png",
+      "file": "apps/client/public/assets/ui/moon_waningGibbous.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a perfect circular moon disk mostly illuminated ivory gold on the LEFT, a narrow dark crescent on RIGHT, waning gibbous. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-216edc73-c4d9-4c3c-86fd-bf6b843ba94f.png",
       "sha256": "1433c8e29169a9b51c7064c30c9c8fa1ef14d0c4c8805e99b481d5a71c42e0b5",
@@ -268,7 +268,7 @@
     },
     {
       "key": "moon_waxingCrescent",
-      "file": "apps/client/public/assets/ui/moon_waxingCrescent.png",
+      "file": "apps/client/public/assets/ui/moon_waxingCrescent.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a perfect circular moon disk with a thin luminous RIGHT crescent, remainder dark navy, waxing crescent. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-6e8319a0-f695-47fa-a707-3f91f85a97a0.png",
       "sha256": "ce61474a785a3492b12f70c9d7cfdd568f31e97e53330123e5531c3e06c23b17",
@@ -279,7 +279,7 @@
     },
     {
       "key": "moon_waxingGibbous",
-      "file": "apps/client/public/assets/ui/moon_waxingGibbous.png",
+      "file": "apps/client/public/assets/ui/moon_waxingGibbous.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a perfect circular moon disk mostly illuminated ivory gold on the RIGHT, a narrow dark crescent on LEFT, waxing gibbous. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-a3037792-f337-4ad3-b731-c112ac788c71.png",
       "sha256": "6e57813de0b088d26da797030e24d0a2aec6b05cd59eef6bac8992b1621f1961",
@@ -290,7 +290,7 @@
     },
     {
       "key": "muted",
-      "file": "apps/client/public/assets/ui/muted.png",
+      "file": "apps/client/public/assets/ui/muted.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one gold speaker with a clear crimson diagonal slash across it, sound muted. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-758b3b43-dafc-4521-a8ed-cb00c02e70df.png",
       "sha256": "3feca6b80a520ff198a427adc61ace33ffbc387194d44255d22cb46de698a6c3",
@@ -301,7 +301,7 @@
     },
     {
       "key": "node_boss",
-      "file": "apps/client/public/assets/ui/node_boss.png",
+      "file": "apps/client/public/assets/ui/node_boss.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a fierce stylized purple demon mask with two gold horns, boss map node. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-478c30d4-b0bb-4989-8b82-61e8d9c366d3.png",
       "sha256": "1d62af8f89a54ba2bf7a82a4f0728565becfb2d3607e5cab597440268ea39e9e",
@@ -312,7 +312,7 @@
     },
     {
       "key": "node_combat",
-      "file": "apps/client/public/assets/ui/node_combat.png",
+      "file": "apps/client/public/assets/ui/node_combat.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: two crossed crimson gold swords, normal combat map node. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-ef536561-f8b7-45c0-b6ec-fb5674a62a83.png",
       "sha256": "a748280b29eb7a6ccf2b1aabd1627dd9e990a08e607fef4b06db8b42ad47d238",
@@ -323,7 +323,7 @@
     },
     {
       "key": "node_elite",
-      "file": "apps/client/public/assets/ui/node_elite.png",
+      "file": "apps/client/public/assets/ui/node_elite.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a crimson and gold horned battle helmet, elite combat map node. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-91652c38-d156-4f1c-b96c-f4109fc67626.png",
       "sha256": "92fc6d8810402f5f321c97de3a0e3b2fbe5da90544a99f26d4dcc528e703c897",
@@ -334,7 +334,7 @@
     },
     {
       "key": "node_rest",
-      "file": "apps/client/public/assets/ui/node_rest.png",
+      "file": "apps/client/public/assets/ui/node_rest.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a small azure crescent moon resting above an ivory cloud, rest map node. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-c20c9e85-b534-42f2-91ee-8140b65fd8f8.png",
       "sha256": "a6f70cec86f08200d1ab08f3515537c475c8d3552660a94ca849092675157655",
@@ -345,7 +345,7 @@
     },
     {
       "key": "node_treasure",
-      "file": "apps/client/public/assets/ui/node_treasure.png",
+      "file": "apps/client/public/assets/ui/node_treasure.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one open dark blue treasure chest with gold trim and three gold coins, treasure map node. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-fd6525f7-8893-4f7c-91cb-8c6586477ac2.png",
       "sha256": "5957dcc92d4d7b2b6f2e6c2d2e7533b0b78baa0a28a5bee32808fd1fd99ae878",
@@ -356,7 +356,7 @@
     },
     {
       "key": "seal",
-      "file": "apps/client/public/assets/ui/seal.png",
+      "file": "apps/client/public/assets/ui/seal.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one red magical sealing talisman with a gold closed knot, no written characters. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-5d1f4b85-df75-452c-b0f3-70d3858059c9.png",
       "sha256": "8103f0c09c8a12611c12e72e0c92130cf9004fa76597217fbc4bf6213c4a7da1",
@@ -367,7 +367,7 @@
     },
     {
       "key": "shield",
-      "file": "apps/client/public/assets/ui/shield.png",
+      "file": "apps/client/public/assets/ui/shield.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one blue and gold protective shield with a bold ivory center, armor. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-48c4659e-b7ba-4974-a0e2-02f81cf222d0.png",
       "sha256": "b77d745c299bd360cf51c18f111985c03a366faa210ee0735fed6891c25afa41",
@@ -378,7 +378,7 @@
     },
     {
       "key": "star",
-      "file": "apps/client/public/assets/ui/star.png",
+      "file": "apps/client/public/assets/ui/star.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one luminous gold five-point star, awakening. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-a3982c53-2a6b-49d1-a72a-053c7afa3ee3.png",
       "sha256": "7047ac1db534c7fc75f4b8c5359dfb37df4a4dbfcdb77ec267f4192f5a438b72",
@@ -389,7 +389,7 @@
     },
     {
       "key": "status_burn",
-      "file": "apps/client/public/assets/ui/status_burn.png",
+      "file": "apps/client/public/assets/ui/status_burn.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a single vivid orange and crimson flame with a pale gold core, burning. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:/Users/Hienq/.codex/generated_images/01a0ff78-6104-7242-bf82-fcba28ef7d9a/exec-0494245d-7e43-44f8-a11a-2f02c0c5ea3c.png",
       "sha256": "4876d849c229d15b6e55b7d92bcd43cab0cbb8b76d779e8b5bf55d5ff0a269ca",
@@ -400,7 +400,7 @@
     },
     {
       "key": "status_charm",
-      "file": "apps/client/public/assets/ui/status_charm.png",
+      "file": "apps/client/public/assets/ui/status_charm.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a single glossy rose pink heart with a small violet magic flourish, charm. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-b1bfbd9c-f7f1-4568-aeab-5d843699727f.png",
       "sha256": "203eff05a380f22015682e69af462320dc3bf0ec9fa98b8aa15a1e8b11db28d6",
@@ -411,7 +411,7 @@
     },
     {
       "key": "status_empower",
-      "file": "apps/client/public/assets/ui/status_empower.png",
+      "file": "apps/client/public/assets/ui/status_empower.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one glowing violet crystal shard with a bold golden upward ray, empowerment. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-d375c308-ab83-41a1-932e-95fcb92056f6.png",
       "sha256": "35be54285803e533d2aa548ec82b3041a275566699c4341bec38c0f9a7d8347d",
@@ -422,7 +422,7 @@
     },
     {
       "key": "status_freeze",
-      "file": "apps/client/public/assets/ui/status_freeze.png",
+      "file": "apps/client/public/assets/ui/status_freeze.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a single broad icy blue six-point snowflake, frozen. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:/Users/Hienq/.codex/generated_images/01a0ff78-6104-7242-bf82-fcba28ef7d9a/exec-77f3321a-8452-4872-9b48-07ad7f8438bd.png",
       "sha256": "e8b4e4491c4125e1ba3c3eee4d0a590373c216cfa5b5d21073157c3b76c3dd3d",
@@ -433,7 +433,7 @@
     },
     {
       "key": "status_guard",
-      "file": "apps/client/public/assets/ui/status_guard.png",
+      "file": "apps/client/public/assets/ui/status_guard.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a sturdy jade green shield with bright ivory center, guard. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-a85394e4-f989-468a-b035-d664f0e0ae1d.png",
       "sha256": "e9c9ca10692b6889d75e4ab0a14484b08ef3424b73742308a3cb39d50914e3e8",
@@ -444,7 +444,7 @@
     },
     {
       "key": "status_mark",
-      "file": "apps/client/public/assets/ui/status_mark.png",
+      "file": "apps/client/public/assets/ui/status_mark.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a bright ruby red target ring and crosshair, marked target. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-3b1060e6-f48f-46a6-a9f2-06caa56e1957.png",
       "sha256": "f1b375c86356f5806dc7d9e7b5518b7300ea4581e2752b9ae2433faf257384d3",
@@ -455,7 +455,7 @@
     },
     {
       "key": "status_reflect",
-      "file": "apps/client/public/assets/ui/status_reflect.png",
+      "file": "apps/client/public/assets/ui/status_reflect.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a polished violet silver shield with a curved silver returning arrow, reflection. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-9da3632b-f016-4d04-9e1f-1cdc3cff7aa5.png",
       "sha256": "8d8081db074d072b174ae2cc34ef1d64c3342f6d3764660b7b98c90af967799f",
@@ -466,7 +466,7 @@
     },
     {
       "key": "status_regen",
-      "file": "apps/client/public/assets/ui/status_regen.png",
+      "file": "apps/client/public/assets/ui/status_regen.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: one fresh jade green sprout with two broad leaves and a small golden healing sparkle, regeneration. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:/Users/Hienq/.codex/generated_images/01a0ff78-6104-7242-bf82-fcba28ef7d9a/exec-77ab47fa-8d6d-4734-bd48-caedb046d904.png",
       "sha256": "5a8ac705edf43c55f541a7939a4170077163a065bc66849b0edb786cce744a83",
@@ -477,7 +477,7 @@
     },
     {
       "key": "status_stealth",
-      "file": "apps/client/public/assets/ui/status_stealth.png",
+      "file": "apps/client/public/assets/ui/status_stealth.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a deep violet hood with a dark face opening and two soft blue highlights, stealth. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-aa73041d-215d-42ef-9727-32dde065029d.png",
       "sha256": "1e41c05e75918186eacb072b220981d08104c71e114af79f2720d728c7fba4eb",
@@ -488,7 +488,7 @@
     },
     {
       "key": "status_strength",
-      "file": "apps/client/public/assets/ui/status_strength.png",
+      "file": "apps/client/public/assets/ui/status_strength.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a stylized clenched crimson and gold gauntlet fist, strength. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-95b14017-3f78-47b7-833a-9a3f24e424b9.png",
       "sha256": "667afb42e3c6825a9aa48b9c30b1fc0362447f20eb2c4c0a9f25937dc7ac040b",
@@ -499,7 +499,7 @@
     },
     {
       "key": "status_taunt",
-      "file": "apps/client/public/assets/ui/status_taunt.png",
+      "file": "apps/client/public/assets/ui/status_taunt.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a golden eye with a ruby red pupil and bold eyebrows, provocation. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-faefe265-3f36-4098-8fcf-828eb75ea066.png",
       "sha256": "3716de3707b8aeb08e8809ce3844814a6ef0ef1f60f55871547f23bd305ab15e",
@@ -510,7 +510,7 @@
     },
     {
       "key": "status_vulnerable",
-      "file": "apps/client/public/assets/ui/status_vulnerable.png",
+      "file": "apps/client/public/assets/ui/status_vulnerable.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a cracked red shield with one large visible diagonal fracture, vulnerability. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-b50d86ff-bbb4-4362-aca4-83d13bac2402.png",
       "sha256": "25c60cdaefea8fcea6149cdb7d63051cc504905f1dec12322f74902537dd8e47",
@@ -521,7 +521,7 @@
     },
     {
       "key": "status_weak",
-      "file": "apps/client/public/assets/ui/status_weak.png",
+      "file": "apps/client/public/assets/ui/status_weak.webp",
       "prompt": "Use case: stylized-concept. Asset: one standalone UI icon for the Vietnamese anime fantasy card game Vong Nguyet. Create ONE centered icon only: a dark violet broken sword with visibly separated blade tip, weakened. Authentic polished 2D anime game item illustration, clean confident dark-indigo outlines, bold readable silhouette, restrained cel shading with broad saturated color planes and two or three bright highlights. Match the existing game artwork's rich navy, warm antique gold, ivory, jewel colors; Chinese fantasy elegance. Icon occupies roughly 78–84 percent of a square canvas with equal transparent margins. Intended display 24–48px: favor thick forms and very few large details. Preserve the subject's semantic color. Crisp clean edges, tasteful soft highlights only within silhouette. GENUINELY transparent alpha background, no opaque plate, no enclosing UI frame or extra circular badge (a moon or target itself may be circular). No text, letters, numbers, watermark, people, realistic photography, 3D renders, excessive microdetail, particles outside silhouette, drop shadow or background scene. Export PNG.",
       "generatedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a0ff78-6104-7242-bf82-fcba28ef7d9a\\exec-66757c43-086b-48d5-b75d-3b471bec13ef.png",
       "sha256": "849e23a2d587c9f358375a08045336c9a390ade2f3d94606b74dea50f7b5865b",

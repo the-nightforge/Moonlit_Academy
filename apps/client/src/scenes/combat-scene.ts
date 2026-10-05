@@ -84,7 +84,7 @@ import {
 const WIDTH = 1280;
 const HEIGHT = 720;
 /**
- * The round socket in the top frame of `backgrounds/background.png`, in source
+ * The round socket in the top frame of `backgrounds/background.webp`, in source
  * pixels (1671×941): where the moon icon sits and how big it fits. Re-measure
  * if the art changes.
  */

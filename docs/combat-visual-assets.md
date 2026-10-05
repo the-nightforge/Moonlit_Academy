@@ -84,7 +84,7 @@ summons are1254×1254. Existing normal portraits retain their original resolutio
 - [x] Style comparison against original m04/f02 and overview of31 regenerated designs:
       `apps/client/test-results/combat-art/new-art-overview.png`.
 
-## UI icons — `public/assets/ui/*.png`
+## UI icons — `public/assets/ui/*.webp`
 
 47 icon PNG (256×256, alpha thật) tạo bằng image generation — minh họa mới từ prompt, không phải
 raster hóa SVG cũ. Nhóm: 13 trạng thái, 9 pha trăng, 6 ý đồ địch, 5 tiền tệ, 5 điểm bản đồ,
