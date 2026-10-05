@@ -493,10 +493,15 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
       }
     }
   }
-  const rotating = new Set(banners.flatMap((banner) => (banner.featured?.rotation ?? []).map((entry) => entry.heroId)));
-  for (const banner of banners) {
-    for (const id of banner.pool.legendary) {
-      if (rotating.has(id)) errors.push(`banners: "${banner.id}" pool.legendary contains rotating hero "${id}" — weekly heroes stay out of fixed pools`);
+  // A rotation hero belongs to its featured banner's legendary fallback only —
+  // it must not appear in any other banner's fixed pool.
+  for (const host of banners) {
+    for (const entry of host.featured?.rotation ?? []) {
+      for (const banner of banners) {
+        if (banner !== host && banner.pool.legendary.includes(entry.heroId)) {
+          errors.push(`banners: "${banner.id}" pool.legendary contains rotating hero "${entry.heroId}" — weekly heroes stay inside "${host.id}"`);
+        }
+      }
     }
   }
   for (const achievement of achievements) {

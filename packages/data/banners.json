@@ -39,9 +39,9 @@
     "pityGroup": "heroes",
     "pool": {
       "legendary": [
-        "m05",
-        "f01",
-        "f10"
+        "m01",
+        "m08",
+        "f08"
       ],
       "epic": [],
       "rare": [],

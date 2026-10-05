@@ -514,9 +514,10 @@ export class GachaScene extends Phaser.Scene {
         ...(featured.name ? [{ text:`Tuần này: ${featured.name}` }] : []),
       ] : []),
     ];
-    // This week's rotating heroes are reserved to their featured banner.
-    const reserved = new Set(reservedFeaturedHeroes(data, Date.now()).filter((id) => id !== featured?.heroId));
-    const hidden = banner.pool.legendary.filter((id) => reserved.has(id));
+    // This week's rotating heroes are reserved to their featured banner's rate-up:
+    // filtered out of every other legendary draw, including this banner's fallback.
+    const reserved = new Set(reservedFeaturedHeroes(data, Date.now()));
+    const hidden = banner.pool.legendary.filter((id) => reserved.has(id) && id !== featured?.heroId);
     for (const id of hidden) {
       lines.push({ text:`${itemName(data,id)} hiện không nằm trong banner này — chỉ trên banner luân chuyển tuần này.`, color:"#8fa2bd" });
     }

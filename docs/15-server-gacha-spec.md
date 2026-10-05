@@ -341,9 +341,9 @@ interface BannerDef {
 - **`banner_nguyet_tuong` (Nguyệt Tướng Luân Chuyển)**: banner Hero có `featured` —
   mỗi tuần một tướng legendary trong `rotation` (đổi thứ Hai 00:00 ICT,
   `featuredEntry(banner, now)`); `rotation` gồm 3 tướng mạnh `m01`/`m08`/`f08` —
-  **chỉ xoay tua, không nằm trong `pool.legendary` của bất kỳ banner nào**
-  (validation báo lỗi nếu có). `pool.legendary` của banner này là ba legendary
-  thường trực, làm fallback khi trượt rate-up. Pool epic/rare/common của tuần là
+  nhóm khép kín của banner này: `pool.legendary` chính là 3 tướng đó, trượt
+  rate-up rơi đều 2 tướng còn lại (tướng tuần bị loại khỏi fallback); **không
+  nằm trong `pool.legendary` của banner nào khác** (validation báo lỗi nếu có). Pool epic/rare/common của tuần là
   tướng có quan hệ cốt truyện với tướng đó. Hai banner Hero chia
   `pityGroup: "heroes"` — bộ đếm pity chung, gộp bộ đếm `banner_heroes` cũ vào
   khóa nhóm khi cần (`normalizePity` khi đọc `GET /gacha/banners`, `migratePity`
