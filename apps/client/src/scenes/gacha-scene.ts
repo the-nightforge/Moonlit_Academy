@@ -1,15 +1,16 @@
 import Phaser from "phaser";
 import type { GameData, PullResult, Rarity } from "rules";
-import { featuredEntry, featuredRotationEnd, reservedFeaturedHeroes } from "rules";
+import { featuredEntry, featuredRotationEnd, reservedFeaturedHeroes, weekKey } from "rules";
 import manifest from "virtual:assets-manifest";
 import { achievementNotices, errorText, mutate, type ProfileReply } from "../account";
 import { api } from "../api";
 import { session } from "../session";
 import { loadCombatSettings } from "../ui/combat-settings";
+import { GachaAudio } from "../ui/gacha-audio";
 import { roundedPanel } from "../ui/rounded-panel";
 import { preloadEquipmentArt } from "../ui/equipment-art";
 import { COLORS, CURRENCY_LABELS, RARITY_COLORS, RARITY_LABELS, useDesignCamera, visibleWorld } from "../ui/theme";
-import { addText, alertModal, isModalOpen, showToast } from "../ui/widgets";
+import { addText, alertModal, confirmModal, isModalOpen, showToast } from "../ui/widgets";
 
 const RARITIES: readonly Rarity[] = ["legendary", "epic", "rare", "common"];
 const itemName = (data: GameData, id: string) => data.heroes[id]?.name ?? data.weapons[id]?.name ?? data.relics[id]?.name ?? id;
@@ -41,8 +42,11 @@ export class GachaScene extends Phaser.Scene {
   private drawer: Phaser.GameObjects.Container | null = null;
   private drawerPanel: Phaser.GameObjects.Container | null = null;
   private countdownText: Phaser.GameObjects.Text | null = null;
+  private audio: GachaAudio | null = null;
+  private converting = false;
+  private hotPull = false;
 
-  private get busy() { return this.phase !== "idle"; }
+  private get busy() { return this.phase !== "idle" || this.converting; }
 
   constructor() { super("gacha"); }
 
@@ -77,8 +81,14 @@ export class GachaScene extends Phaser.Scene {
     this.results = null;
     this.modal = null;
     this.cards = [];
-    this.reducedMotion = loadCombatSettings(localStorage, window.matchMedia("(prefers-reduced-motion: reduce)").matches).reducedMotion
-      || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const settings = loadCombatSettings(localStorage, window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    this.reducedMotion = settings.reducedMotion || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.audio?.dispose();
+    this.audio = new GachaAudio(settings);
+    this.converting = false;
+    this.hotPull = false;
+    const unlock = () => void this.audio?.unlock();
+    this.input.on("pointerdown", unlock);
     this.root = this.add.container(0, 0);
     this.enteredOnce = false;
     this.ambient = this.add.container(0, 0).setDepth(-1);
@@ -121,6 +131,9 @@ export class GachaScene extends Phaser.Scene {
       this.drawer = null;
       this.drawerPanel = null;
       this.countdownText = null;
+      this.audio?.dispose();
+      this.audio = null;
+      this.input.off("pointerdown", unlock);
       this.input.keyboard?.off("keydown-ESC", onEsc);
       this.input.keyboard?.off("keydown", onArrows);
       this.tweens.killAll();
@@ -248,8 +261,15 @@ export class GachaScene extends Phaser.Scene {
     this.button(this.root, 124, 674, 190, "Tỉ lệ & vật phẩm", () => this.showDetails(), enabled);
     this.button(this.root, 328, 674, 190, "Nhật ký quay", () => void this.showHistory(0), enabled);
     this.button(this.root, 532, 674, 190, "Cửa hàng Nguyệt Tinh", () => { if (!this.busy && !this.modal) this.scene.start("shop"); }, enabled);
-    this.text(this.root, 722, 685, this.phase === "pending" ? "Đang kết nối · xin chờ hồi âm…" : `${pullCost} Ngọc / lượt · ↑↓ đổi duyên`, 12, "#b4c3d7").setOrigin(0.5);
     const jade = profile.currencies.moonJade;
+    const jadeItem = data.economyConfig.moonStarShop.find(item => item.item.type === "moonJade");
+    const jadeBought = jadeItem && profile.shop.weekKey === weekKey(data, Date.now()) ? (profile.shop.bought[jadeItem.id] ?? 0) : 0;
+    const canConvert = jadeItem !== undefined && jadeBought < jadeItem.limitPerWeek && profile.currencies.moonStar >= jadeItem.price;
+    if (this.phase !== "pending" && jade < pullCost * 10 && canConvert) {
+      this.button(this.root, 722, 674, 190, "⇄ Đổi Tinh lấy Ngọc", () => void this.showConvert(), enabled);
+    } else {
+      this.text(this.root, 722, 685, this.phase === "pending" ? "Đang kết nối · xin chờ hồi âm…" : `${pullCost} Ngọc / lượt · ↑↓ đổi duyên`, 12, "#b4c3d7").setOrigin(0.5);
+    }
     for (const [count, x] of [[1, 928], [10, 1150]] as const) {
       const need = pullCost * count, afford = jade >= need;
       this.button(this.root, x, 674, 208, afford ? `Quay ×${count} · ${need}` : `Thiếu ${need - jade} ${CURRENCY_LABELS.moonJade}`, () => this.pull(count), enabled && afford, count === 10);
@@ -366,6 +386,10 @@ export class GachaScene extends Phaser.Scene {
   private pull(count: 1 | 10) {
     if (this.busy || this.modal || !this.alive || session.profile.currencies.moonJade < session.data.economyConfig.pullCost * count) return;
     this.phase = "pending";
+    const banner = session.data.banners[this.bannerId];
+    const gacha = session.data.economyConfig.gacha;
+    this.hotPull = (session.profile.pity[banner?.pityGroup ?? this.bannerId]?.sinceLegendary ?? 0) >= gacha.legendaryPity - 10;
+    this.audio?.play("cast");
     const generation = this.generation;
     this.historyRequest++;
     this.render();
@@ -430,10 +454,16 @@ export class GachaScene extends Phaser.Scene {
     const view = visibleWorld(this);
     const dim = this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x030914, 0);
     layer.add(dim);
-    this.animate({ targets: dim, fillAlpha: 0.55, duration: 240 });
+    this.animate({ targets: dim, fillAlpha: this.hotPull ? 0.68 : 0.55, duration: 240 });
     const count = results.length === 1 ? 1 : 4;
     const hasMeteor = this.textures.exists("gacha:meteor_head") && this.textures.exists("gacha:meteor_tail");
     const flight = this.reducedMotion ? 60 : rarity === "legendary" ? 780 : rarity === "epic" ? 660 : 540;
+    const hotFlight = this.hotPull ? Math.round(flight * 1.35) : flight;
+    if (this.hotPull && !this.reducedMotion) {
+      const hint = this.text(layer, 640, 620, rarity === "legendary" ? "Nguyệt tinh đang rực sáng…" : "Bảo hiểm đang gần…", 17, "#f3d98c").setOrigin(0.5).setAlpha(0);
+      this.animate({ targets: hint, alpha: 1, duration: 300, delay: 300 });
+      this.animate({ targets: hint, alpha: 0, duration: 220, delay: count * 130 + hotFlight });
+    }
     for (let i = 0; i < count; i++) {
       const main = i === count - 1;
       const delay = this.reducedMotion ? 0 : i * 130;
@@ -450,12 +480,12 @@ export class GachaScene extends Phaser.Scene {
         streak.add(this.add.circle(0, 0, 60, tint, 0.3));
       }
       streak.setRotation(Phaser.Math.Angle.Between(sx, sy, ex, ey));
-      streak.setScale(main ? (rarity === "legendary" ? 1.45 : 1.15) : 0.65);
+      streak.setScale(main ? (rarity === "legendary" ? 1.45 : 1.15) * (this.hotPull ? 1.15 : 1) : 0.65);
       layer.add(streak);
-      this.animate({ targets: streak, x: ex, y: ey, duration: flight, delay, ease: "Quad.easeIn",
+      this.animate({ targets: streak, x: ex, y: ey, duration: hotFlight, delay, ease: "Quad.easeIn",
         onComplete: () => { streak.destroy(); this.impactBurst(ex, ey, tint, layer, main, rarity); } });
     }
-    this.later(this.reducedMotion ? 480 : count * 130 + flight + 260, () => {
+    this.later(this.reducedMotion ? 480 : count * 130 + hotFlight + 260, () => {
       this.cine?.destroy();
       this.cine = null;
       this.cards.forEach(card => card.root.setAlpha(1));
@@ -477,6 +507,7 @@ export class GachaScene extends Phaser.Scene {
       }
     }
     if (!big) return;
+    this.audio?.play("impact");
     const flash = this.add.rectangle(640, 360, 1280, 720, 0xfff6dd, 0);
     layer.add(flash);
     this.animate({ targets: flash, fillAlpha: 0.38, duration: 80, yoyo: true });
@@ -528,6 +559,7 @@ export class GachaScene extends Phaser.Scene {
     if (art) {
       if (!hero) this.coverCrop(art, w - 8, h - 8); // square equipment art -> cover-crop to 2:3
     } else this.image(root, hero ? "ui:star" : "ui:gear", 0, -20, 60, 60);
+    this.audio?.play(result.rarity === "legendary" ? "legendary" : result.rarity === "epic" ? "epic" : result.rarity === "rare" ? "rare" : "flip");
     const frameKey = `gacha:frame_${result.rarity}`;
     if (this.textures.exists(frameKey)) this.image(root, frameKey, 0, 0, w, h);
     const ribbon = this.add.graphics();
@@ -609,6 +641,47 @@ export class GachaScene extends Phaser.Scene {
     ].filter(Boolean).join("   ");
     this.text(this.resultFooter, 640, 652, gains ? `${parts}   —   ${gains}` : parts, 15, "#d8c9a0").setOrigin(0.5);
     this.button(this.resultFooter, 640, 692, 258, "Tiếp tục", () => this.closeResults(), true, true);
+    this.button(this.resultFooter, 1050, 692, 170, "Lưu ảnh ⤓", () => this.saveSnapshot(), true);
+  }
+
+  /** Exports the current frame as a PNG so players can keep/share a lucky pull. */
+  private saveSnapshot() {
+    this.audio?.play("click");
+    this.game.renderer.snapshot(snap => {
+      if (!(snap instanceof HTMLImageElement)) return;
+      const link = document.createElement("a");
+      link.href = snap.src;
+      link.download = `duyen-trang-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.png`;
+      link.click();
+    }, "image/png");
+  }
+
+  /** Convert moonStar into moonJade through the weekly shop item when the pull cost is short. */
+  private async showConvert() {
+    const item = session.data.economyConfig.moonStarShop.find(entry => entry.item.type === "moonJade");
+    if (!item || this.busy || !this.alive) return;
+    const shop = session.profile.shop;
+    const bought = shop.weekKey === weekKey(session.data, Date.now()) ? (shop.bought[item.id] ?? 0) : 0;
+    const left = item.limitPerWeek - bought;
+    const gain = item.item.type === "moonJade" ? item.item.amount : 0;
+    const ok = await confirmModal(this, `Đổi ${item.price} ${CURRENCY_LABELS.moonStar} lấy ${gain} ${CURRENCY_LABELS.moonJade}?\nTuần này còn ${Math.max(0, left)}/${item.limitPerWeek} lần đổi.`, { label: "Đổi" });
+    if (!ok || this.busy || !this.alive) return;
+    this.converting = true;
+    this.render();
+    mutate<ProfileReply & { achievements?: string[] }>("POST", `/shop/${item.id}/buy`).then(
+      reply => {
+        this.converting = false;
+        if (!this.alive) return;
+        this.render();
+        showToast(this, [`Đã đổi +${gain} ${CURRENCY_LABELS.moonJade}`, ...achievementNotices(reply.achievements)]);
+      },
+      (error: unknown) => {
+        this.converting = false;
+        if (!this.alive) return;
+        void alertModal(this, errorText(error));
+        this.render();
+      },
+    );
   }
 
   private closeResults() {
