@@ -98,6 +98,14 @@ Tổng: **9 file P0** (banner ×4 gồm 3 splash xoay tua, meteor ×2, frame ×3
 
 P0 chỉ chuẩn bị asset. Các thay đổi scene để sử dụng banner, cinematic và khung thẻ mới lần lượt thuộc P1, P2 và P3; chưa triển khai trong lần thực hiện P0 này.
 
+### Asset P1 bổ sung — 2026-10-06
+
+- [x] Gen `gacha/banner_weapons.webp` và `gacha/banner_relics.webp` 1280×720 theo phong cách anime của các banner P0, lấy full art vũ khí và Nguyệt Bảo đang có làm mẫu.
+- [x] Lưu tại `apps/client/public/assets/gacha/`, key `gacha:banner_weapons` và `gacha:banner_relics`; kiểm tra định dạng WebP và kích thước.
+- Trang xem: `output/gacha-p1-banners/index.html`; PNG nguồn và prompt nằm trong cùng thư mục.
+
+Phạm vi bổ sung này chỉ gồm hai banner được yêu cầu; các asset P1 khác và phần triển khai bố cục P1 vẫn theo phase riêng.
+
 ## 5. Đề xuất ngoài layout — **đã duyệt** (2026-10-06)
 
 | # | Đề xuất | Học từ | Độ phức tạp | Phase |
