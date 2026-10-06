@@ -349,7 +349,9 @@ export class GachaScene extends Phaser.Scene {
     if (end === undefined) { this.countdownText.setText(""); return; }
     const left = Math.max(0, end - Date.now());
     const days = Math.floor(left / 86_400_000), hours = Math.floor(left / 3_600_000) % 24, minutes = Math.floor(left / 60_000) % 60;
-    this.countdownText.setText(`Đổi tướng sau ${days > 0 ? `${days}d ${hours}h` : `${hours}h ${minutes}m`}`);
+    const label = days > 0 ? `${days}d ${hours}h` : hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+    this.countdownText.setText(`Đổi tướng sau ${label}`);
+    this.countdownText.setColor(left < 24 * 3_600_000 ? "#f3d98c" : "#adbed4");
   }
 
   private back() {
@@ -634,7 +636,7 @@ export class GachaScene extends Phaser.Scene {
   }
 
   /** Whole visible text rows keep the scroll list clear of modal controls in WebGL. */
-  private openList(title: string, lines: { text: string; color?: string }[], footer?: (layer: Phaser.GameObjects.Container) => void) {
+  private openList(title: string, lines: { text: string; color?: string }[], footer?: (layer: Phaser.GameObjects.Container) => void, header?: (layer: Phaser.GameObjects.Container) => void) {
     this.closeModal();
     const layer = this.add.container(0,0).setDepth(500); this.modal = layer;
     const view = visibleWorld(this);
@@ -642,9 +644,11 @@ export class GachaScene extends Phaser.Scene {
     layer.add(roundedPanel(this,640,360,1030,650,0x0f1e34,0.99,0xbba172,20));
     this.text(layer,640,70,title,24,"#f3dfb5").setOrigin(0.5);
     this.text(layer,640,105,"Cuộn để xem toàn bộ · Esc để đóng",13,"#a8bbd2").setOrigin(0.5);
+    header?.(layer);
+    const top = header ? 168 : 137;
     const content = this.add.container(0,0); layer.add(content);
     const rows: Phaser.GameObjects.Text[] = [];
-    let y = 143;
+    let y = top + 6;
     lines.forEach(line => {
       const measure = this.text(content,178,y,line.text,16,line.color ?? "#d8e0e9",918);
       const wrapped = measure.getWrappedText();
@@ -659,7 +663,7 @@ export class GachaScene extends Phaser.Scene {
     let offset = 0;
     const updateRows = () => {
       content.setY(-offset);
-      rows.forEach(row => row.setVisible(row.y - offset >= 137 && row.y - offset + row.height <= 577));
+      rows.forEach(row => row.setVisible(row.y - offset >= top && row.y - offset + row.height <= 577));
     };
     const scroll = (delta: number) => {
       offset = Phaser.Math.Clamp(offset + delta,0,Math.max(0,y-577));
@@ -668,7 +672,7 @@ export class GachaScene extends Phaser.Scene {
     updateRows();
     const wheel = (pointer: Phaser.Input.Pointer, _over: unknown, _dx: number, dy: number) => {
       const p = this.cameras.main.getWorldPoint(pointer.x,pointer.y);
-      if (p.x >= 166 && p.x <= 1114 && p.y >= 137 && p.y <= 577) scroll(Math.sign(dy)*90);
+      if (p.x >= 166 && p.x <= 1114 && p.y >= top && p.y <= 577) scroll(Math.sign(dy)*90);
     };
     this.input.on("wheel",wheel);
     this.modalCleanup = () => { this.input.off("wheel",wheel); };
@@ -720,19 +724,46 @@ export class GachaScene extends Phaser.Scene {
     this.openList(`${banner.name} · Tỉ lệ & vật phẩm`,lines);
   }
 
-  private async showHistory(page: number) {
+  private chip(parent: Phaser.GameObjects.Container, x: number, y: number, label: string, active: boolean, action: () => void) {
+    const panel = roundedPanel(this, x, y, 130, 30, active ? 0x3a4d70 : 0x14243a, 0.95, active ? 0xe8c784 : 0x53627d, 15);
+    parent.add(panel);
+    this.text(panel, 0, 0, label, 13, active ? "#f4dfb2" : "#aab9d0").setOrigin(0.5);
+    const hit = this.add.rectangle(0, 0, 130, 30, 0, 0);
+    panel.add(hit);
+    if (!active) {
+      hit.setInteractive({ useHandCursor: true });
+      hit.on("pointerup", action);
+      hit.on("pointerover", () => panel.setAlpha(0.8));
+      hit.on("pointerout", () => panel.setAlpha(1));
+    }
+  }
+
+  private bannerTabLabel(banner: GameData["banners"][string]) {
+    return banner.featured ? "Xoay tua" : banner.kind === "hero" ? "Tướng" : banner.kind === "weapon" ? "Binh khí" : "Bảo vật";
+  }
+
+  private async showHistory(page: number, bannerFilter?: string) {
     if (this.busy || !this.alive) return;
-    this.openList(`Nhật ký quay — trang ${page+1}`,[{text:"Đang tải nhật ký…"}],layer=>this.button(layer,640,636,220,"Đóng",()=>{this.closeModal();this.render();}));
+    const banners = Object.values(session.data.banners);
+    const tabs = (layer: Phaser.GameObjects.Container) => {
+      const defs: (string | undefined)[] = [undefined, ...banners.map(b => b.id)];
+      defs.forEach((id, index) => {
+        const label = id === undefined ? "Tất cả" : this.bannerTabLabel(banners[index - 1]!);
+        this.chip(layer, 640 + (index - (defs.length - 1) / 2) * 140, 138, label, id === bannerFilter, () => void this.showHistory(0, id));
+      });
+    };
+    this.openList(`Nhật ký quay — trang ${page+1}`,[{text:"Đang tải nhật ký…"}],layer=>this.button(layer,640,636,220,"Đóng",()=>{this.closeModal();this.render();}),tabs);
     const request = ++this.historyRequest, generation = this.generation;
     try {
-      const { entries } = await api<{ entries:HistoryEntry[] }>("GET",`/gacha/history?page=${page}`);
+      const filter = bannerFilter ? `&banner=${bannerFilter}` : "";
+      const { entries } = await api<{ entries:HistoryEntry[] }>("GET",`/gacha/history?page=${page}${filter}`);
       if (!this.alive || generation !== this.generation || request !== this.historyRequest || !this.modal) return;
       const lines = entries.map(entry=>({text:`${new Date(entry.createdAt).toLocaleString("vi-VN")} · ${session.data.banners[entry.bannerId]?.name ?? entry.bannerId}\n${entry.results.map(result=>`${itemName(session.data,result.itemId)} (${RARITY_LABELS[result.rarity]}) · ${this.outcomeText(result).replace("\n"," · ")}`).join("; ")}`}));
       this.openList(`Nhật ký quay — trang ${page+1}`,lines.length ? lines : [{text:"Chưa có lượt quay nào"}],layer=>{
-        this.button(layer,430,636,170,"◂ Mới hơn",()=>void this.showHistory(page-1),page>0);
+        this.button(layer,430,636,170,"◂ Mới hơn",()=>void this.showHistory(page-1,bannerFilter),page>0);
         this.button(layer,640,636,170,"Đóng",()=>{this.closeModal();this.render();});
-        this.button(layer,850,636,170,"Cũ hơn ▸",()=>void this.showHistory(page+1),entries.length===20);
-      });
+        this.button(layer,850,636,170,"Cũ hơn ▸",()=>void this.showHistory(page+1,bannerFilter),entries.length===20);
+      },tabs);
     } catch (error) {
       if (!this.alive || generation !== this.generation || request !== this.historyRequest || !this.modal) return;
       this.closeModal(); this.render(); void alertModal(this,errorText(error));
