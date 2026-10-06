@@ -95,7 +95,7 @@ export class GachaModals {
       { text: `Legendary ${percent(g.rates.legendary)} · Epic ${percent(g.rates.epic)} · còn lại Rare/Common`, color: "#eed4a1" },
       { text: `Bảo hiểm Epic: chắc chắn trong ${g.epicPity} lượt. Legendary chắc chắn ở lượt ${g.legendaryPity}.` },
       { text: `Legendary: từ lượt ${g.legendarySoftPityStart + 1}, tỉ lệ tăng ${percent(g.legendarySoftPityStep)} mỗi lượt.` },
-      ...(banner.pityGroup ? [{ text: `Bảo hiểm chung giữa các banner Hero (${banner.pityGroup}).` }] : []),
+      ...(banner.pityGroup ? [{ text: "Bảo hiểm chung giữa các banner Hero." }] : []),
       ...(banner.epitomized ? [{
         text: `Nguyệt Ước: khóa 1 Legendary làm mục tiêu — trượt ${banner.epitomized.maxPoints} lần thì Legendary kế chắc chắn trúng mục tiêu. Đổi/hủy mục tiêu mất điểm.`,
         color: "#f3d98c",

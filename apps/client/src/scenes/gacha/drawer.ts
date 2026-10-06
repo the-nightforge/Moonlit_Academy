@@ -10,6 +10,7 @@ import { coverCrop, itemName, splashKey } from "./shared";
 export class GachaDrawer {
   layer: Phaser.GameObjects.Container | null = null;
   panel: Phaser.GameObjects.Container | null = null;
+  private scrim: Phaser.GameObjects.Rectangle | null = null;
 
   constructor(private s: GachaScene) {}
 
@@ -22,6 +23,7 @@ export class GachaDrawer {
     const panel = s.add.container(0, 0);
     const scrim = s.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x030914, 0.62);
     scrim.setInteractive().on("pointerup", () => this.close());
+    this.scrim = scrim;
     layer.add([scrim, panel]);
     this.layer = layer;
     this.panel = panel;
@@ -79,6 +81,9 @@ export class GachaDrawer {
     if (!layer) return;
     this.layer = null;
     this.panel = null;
+    // Stop the fading scrim from swallowing clicks during the close tween.
+    this.scrim?.disableInteractive();
+    this.scrim = null;
     if (instant || this.s.reducedMotion || !panel) { layer.destroy(); return; }
     this.s.tweens.add({ targets: panel, x: -440, alpha: 0, duration: 180, ease: "Cubic.easeIn" });
     this.s.tweens.add({ targets: layer, alpha: 0, delay: 140, duration: 80, onComplete: () => layer.destroy() });
