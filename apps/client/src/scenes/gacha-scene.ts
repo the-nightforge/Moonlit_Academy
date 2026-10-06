@@ -363,6 +363,23 @@ export class GachaScene extends Phaser.Scene {
       }
       panel.add(card);
     });
+    panel.add(this.add.rectangle(202, 618, 356, 1, 0x53627d, 0.6));
+    this.text(panel, 36, 630, "TÚI ĐỒ", 12, "#bfad85");
+    // Kho Hero / Kho đồ are the existing inventory screens (spec P6d: reuse, no
+    // duplicate inventory scene).
+    const bag = (label: string, x: number, scene: string) => {
+      const btn = roundedPanel(this, x, 664, 168, 36, 0x16253e, 0.98, 0xc8ad73, 10);
+      const hit = this.add.rectangle(0, 0, 168, 36, 0, 0);
+      btn.add(hit);
+      hit.setInteractive({ useHandCursor: true });
+      hit.on("pointerup", () => this.scene.start(scene));
+      hit.on("pointerover", () => btn.setAlpha(0.85));
+      hit.on("pointerout", () => btn.setAlpha(1));
+      this.text(btn, 0, 0, label, 13, COLORS.text).setOrigin(0.5);
+      panel.add(btn);
+    };
+    bag("Kho Hero", 112, "heroes");
+    bag("Kho đồ", 292, "armory");
     if (!this.reducedMotion) {
       panel.x = -440;
       panel.setAlpha(0.6);

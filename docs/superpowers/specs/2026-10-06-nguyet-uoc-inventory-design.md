@@ -115,18 +115,16 @@ POST /api/gacha/:bannerId/path    body: { targetId: string | null }
 
 ## 3. Túi đồ — inventory
 
-### 3.1. Phạm vi
+### 3.1. Quyết định (đã chốt khi implement)
 
-- **Scene riêng** `inventory` (không gộp Nhật ký): 3 tab — **Tướng** (grid hero + Tinh Hồn), **Binh khí** (Tinh Luyện), **Nguyệt Bảo** (Cộng Minh).
-- Mỗi ô: art thumbnail (tái dùng `heroes:`/`weapons:`/`relics:`), tên, rarity border, cấp dup (`Tinh Hồn n`, `Luyện n`, `Minh n`), trạng thái chưa có → ô mờ + "Chưa có".
-- Chỉ **đọc** `session.profile` (heroes/weapons/relics đã đầy đủ client-side) → **không cần endpoint mới**. Dữ liệu tên/rarity/art lấy từ `session.data`.
-- Vào từ: nút **"Túi đồ"** trong footer gacha (cụm trái, cạnh "Cửa hàng Nguyệt Tinh") hoặc menu chính — quyết trong lúc làm: ưu tiên footer gacha vì đây là "đồ từ gacha".
-- Sort: rarity giảm dần → owned trước → tên.
-- Scroll grid tái dùng pattern `openList` (wheel + ▲▼) hoặc mask gallery — chọn lúc implement, ưu tiên đơn giản.
+**Tái dùng 2 scene có sẵn thay vì viết scene `inventory` mới.** `HeroesScene` ("Kho Hero") và `ArmoryScene` ("Kho đồ") đã hiển thị đủ: toàn bộ hero/trang bị, cấp dup (Tinh Hồn/Tinh Luyện/Cộng Minh), trạng thái mờ khi chưa sở hữu, đọc thẳng `session.profile`. Một scene thứ ba với 3 tab sẽ trùng ~450 dòng UI cho cùng một dữ liệu.
 
-### 3.2. Test
+- Điểm vào: mục **"TÚI ĐỒ"** ở đáy drawer "Đổi duyên" — 2 nút **Kho Hero** / **Kho đồ**. Footer gacha đã kín (3 nút trái + nút đổi tiền giữa), drawer là nơi điều hướng hợp lý hơn.
+- Không cần endpoint mới, không test server — hai scene kia đã được phủ e2e sẵn.
 
-- E2E nhẹ: mở scene, thấy grid, tab chuyển đúng, hero mới quay xuất hiện. Không cần test server.
+### 3.2. (đã thay bởi §3.1 — giữ lại ý định gốc)
+
+Ý định ban đầu là scene `inventory` riêng; đổi sau khi phát hiện trùng chức năng. Nếu sau này cần trang xem-đồ-gacha chuyên biệt (vd. lọc theo nguồn quay), xây trên nền 2 scene kia chứ không thêm scene mới.
 
 ## 4. Không làm (giữ phase sạch)
 
@@ -140,6 +138,6 @@ POST /api/gacha/:bannerId/path    body: { targetId: string | null }
 1. **P6a**: rules — `epitomized` schema + `setEpitomizedTarget`/`clearEpitomizedTarget` + `pullOnce` hook + `epitomizedHit` + test T335–T339.
 2. **P6b**: server — route `/gacha/:id/path` + `parseProfile` default + test route.
 3. **P6c**: client — UI chọn mục tiêu + badge kết quả + e2e.
-4. **P6d**: scene `inventory` + nút vào + e2e.
+4. **P6d**: nút Túi đồ trong drawer → Kho Hero / Kho đồ (tái dùng, xem §3.1).
 
 Mỗi bước 1 commit; P6a+b có thể gộp nếu diff nhỏ.
