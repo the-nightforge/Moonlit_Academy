@@ -13,7 +13,7 @@ import { addText, alertModal, isModalOpen, showToast } from "../ui/widgets";
 import { GachaDrawer } from "./gacha/drawer";
 import { GachaModals } from "./gacha/modals";
 import { GachaResults } from "./gacha/results";
-import { itemName, percent, splashKey, type PullReply } from "./gacha/shared";
+import { coverCrop, itemName, percent, splashKey, type PullReply } from "./gacha/shared";
 
 /**
  * Moon altar presentation. Profile changes remain authoritative server replies.
@@ -22,6 +22,7 @@ import { itemName, percent, splashKey, type PullReply } from "./gacha/shared";
  */
 export class GachaScene extends Phaser.Scene {
   private root!: Phaser.GameObjects.Container;
+  private backdrop: Phaser.GameObjects.Container | null = null;
   private ambient: Phaser.GameObjects.Container | null = null;
   private artTween: Phaser.Tweens.Tween | null = null;
   private enteredOnce = false;
@@ -88,6 +89,19 @@ export class GachaScene extends Phaser.Scene {
     this.input.on("pointerdown", unlock);
     this.root = this.add.container(0, 0);
     this.enteredOnce = false;
+    // Backdrop: the altar art is the page background; banner splashes live in a
+    // framed art window instead of covering the whole screen.
+    this.backdrop = this.add.container(0, 0).setDepth(-2);
+    {
+      const bounds = visibleWorld(this), cx = bounds.x + bounds.w / 2, cy = bounds.y + bounds.h / 2;
+      this.backdrop.add(this.add.rectangle(cx, cy, bounds.w, bounds.h, 0x071222));
+      if (this.textures.exists("gacha:altar")) {
+        const altar = this.add.image(cx, cy, "gacha:altar");
+        altar.setScale(Math.max(bounds.w / altar.width, bounds.h / altar.height));
+        this.backdrop.add(altar);
+        this.backdrop.add(this.add.rectangle(cx, cy, bounds.w, bounds.h, 0x050c18, 0.35));
+      }
+    }
     this.ambient = this.add.container(0, 0).setDepth(-1);
     const ambientTexture = this.textures.exists("gacha:dust_mote") ? "gacha:dust_mote" : "gacha:spark";
     if (this.textures.exists(ambientTexture)) {
@@ -175,18 +189,33 @@ export class GachaScene extends Phaser.Scene {
     const pity = profile.pity[banner.pityGroup ?? this.bannerId] ?? { sinceEpic: 0, sinceLegendary: 0 };
     const enabled = !this.busy && !this.modals.modal;
     const view = visibleWorld(this);
-    this.root.add(this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x071222));
-    const splash = this.image(this.root, splashKey(this, banner, featured), view.x + view.w / 2, view.y + view.h / 2, view.w, view.h);
+    // Banner art window (~70% width) over the altar backdrop.
+    const ART = { left: 24, top: 96, w: 880, h: 528 };
+    const artCx = ART.left + ART.w / 2, artCy = ART.top + ART.h / 2;
+    // Splash + scrim share one container clipped by a single Mask filter:
+    // GeometryMask only works in the Canvas renderer, so WebGL clips via an
+    // external (screen-space) mask — the window stays fixed while the splash
+    // breathes behind it. The crop keeps the art inside the rect regardless.
+    const artGroup = this.add.container(0, 0);
+    this.root.add(artGroup);
+    const splash = this.image(artGroup, splashKey(this, banner, featured), artCx, artCy, ART.w, ART.h);
     if (splash) {
-      splash.setScale(Math.max(view.w / splash.width, view.h / splash.height));
+      coverCrop(splash, ART.w, ART.h);
       if (!this.reducedMotion) {
         this.artTween = this.tweens.add({ targets: splash, scaleX: splash.scaleX * 1.02, scaleY: splash.scaleY * 1.02, duration: 9000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       }
     }
     const scrim = this.add.graphics();
-    scrim.fillGradientStyle(0x050c18, 0x050c18, 0x050c18, 0x050c18, 0, 0, 0.9, 0.9);
-    scrim.fillRect(0, 360, view.w, view.h - 360);
-    this.root.add(scrim);
+    scrim.fillGradientStyle(0x050c18, 0x050c18, 0x050c18, 0x050c18, 0, 0, 0.88, 0.88);
+    scrim.fillRect(ART.left, 400, ART.w, ART.top + ART.h - 400);
+    artGroup.add(scrim);
+    const maskG = this.add.graphics();
+    maskG.fillStyle(0xffffff).fillRoundedRect(ART.left, ART.top, ART.w, ART.h, 16);
+    maskG.setVisible(false);
+    this.root.add(maskG);
+    artGroup.enableFilters();
+    artGroup.filters!.external.addMask(maskG, false, this.cameras.main);
+    this.root.add(roundedPanel(this, artCx, artCy, ART.w, ART.h, 0x000000, 0, 0x9a8965, 16));
 
     this.root.add(this.add.rectangle(640, 43, view.w, 86, 0x091425, 0.92));
     this.button(this.root, 92, 42, 142, "◂ Quay lại", () => this.back(), enabled);
@@ -201,70 +230,75 @@ export class GachaScene extends Phaser.Scene {
     }
 
     this.button(this.root, 140, 124, 176, "≡ Đổi duyên", () => this.drawerFx.toggle(), enabled);
-    this.text(this.root, 52, 448, banner.name, 30, "#f3dfb1").setStroke("#0a1424", 6);
+    this.text(this.root, 56, 500, banner.name, 30, "#f3dfb1").setStroke("#0a1424", 6);
     const epitomized = banner.epitomized;
     const path = epitomized ? profile.epitomized[this.bannerId] : undefined;
     const headline = featured
       ? `★ ${itemName(data, featured.heroId)} — tướng tuần · ${percent(banner.featured!.rateUp)} Legendary`
       : banner.kind === "hero" ? `${banner.pool.legendary.length} tướng Legendary thường trực`
       : `${banner.pool.legendary.length} món Legendary trong banner`;
-    this.text(this.root, 52, 488, headline, 16, "#f0d9a8").setStroke("#0a1424", 5);
-    this.text(this.root, 52, 512, featured ? "Trượt rate-up: rơi đều vào 3 tướng Legendary cơ bản"
+    this.text(this.root, 56, 540, headline, 16, "#f0d9a8").setStroke("#0a1424", 5);
+    this.text(this.root, 56, 564, featured ? "Trượt rate-up: rơi đều vào 3 tướng Legendary cơ bản"
       : epitomized ? (path ? `Nguyệt Ước: ${itemName(data, path.targetId)} — ${path.points}/${epitomized.maxPoints} điểm` : "Khóa mục tiêu Legendary trong panel Nguyệt Ước")
       : "Xem danh sách vật phẩm trong Tỉ lệ & vật phẩm", 13, "#aebed4").setStroke("#0a1424", 4);
 
-    const pityPanel = roundedPanel(this, 1092, 278, 264, 252, 0x0b192e, 0.8, 0x69748a, 14);
-    this.root.add(pityPanel);
-    this.text(this.root, 978, 170, "LỜI HẸN DƯỚI TRĂNG", 12, "#bfad85");
-    this.text(this.root, 978, 192, banner.pityGroup ? "Bảo hiểm chung banner Hero" : "Bảo hiểm riêng banner", 14, "#f3dfb1");
+    // Info column (~30% right): pity, rotation countdown, Nguyệt Ước, rates hint.
+    const COL = { left: 940, right: 1236, cx: 1088, barW: 296 };
+    const column = roundedPanel(this, COL.cx, 360, 336, 528, 0x0b192e, 0.82, 0x69748a, 16);
+    this.root.add(column);
+    this.text(this.root, COL.left, 118, "LỜI HẸN DƯỚI TRĂNG", 12, "#bfad85");
+    this.text(this.root, COL.left, 140, banner.pityGroup ? "Bảo hiểm chung banner Hero" : "Bảo hiểm riêng banner", 14, "#f3dfb1");
     const progress = (y: number, rarity: "epic" | "legendary", since: number, limit: number, softStart?: number) => {
-      this.text(this.root, 978, y, RARITY_LABELS[rarity], 14, rarity === "epic" ? "#d4b6f7" : "#f3d98c");
-      this.text(this.root, 1210, y, `${since} / ${limit}`, 13, "#c3cfdf").setOrigin(1, 0);
-      this.root.add(roundedPanel(this, 1092, y + 26, 216, 7, 0x25334c, 1, 0x25334c, 4));
+      this.text(this.root, COL.left, y, RARITY_LABELS[rarity], 14, rarity === "epic" ? "#d4b6f7" : "#f3d98c");
+      this.text(this.root, COL.right, y, `${since} / ${limit}`, 13, "#c3cfdf").setOrigin(1, 0);
+      this.root.add(roundedPanel(this, COL.cx, y + 26, COL.barW, 7, 0x25334c, 1, 0x25334c, 4));
       const soft = softStart !== undefined && since >= softStart;
-      const w = 216 * Math.min(1, since / limit);
+      const w = COL.barW * Math.min(1, since / limit);
       if (w > 0) {
         const fill = this.add.graphics();
         fill.fillStyle(soft ? 0xffd977 : RARITY_COLORS[rarity], 1);
-        fill.fillRoundedRect(984, y + 23, w, 6, Math.min(3, w / 2));
+        fill.fillRoundedRect(COL.left, y + 23, w, 6, Math.min(3, w / 2));
         this.root.add(fill);
         if (soft && !this.reducedMotion) this.tweens.add({ targets: fill, alpha: 0.55, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       }
       if (softStart !== undefined) {
-        this.root.add(this.add.rectangle(984 + 216 * Math.min(1, softStart / limit), y + 26, 2, 11, 0xf3d98c, 0.7));
+        this.root.add(this.add.rectangle(COL.left + COL.barW * Math.min(1, softStart / limit), y + 26, 2, 11, 0xf3d98c, 0.7));
       }
-      this.text(this.root, 978, y + 38, soft ? `Soft pity mở · còn ${Math.max(1, limit - since)}` : `Còn ${Math.max(1, limit - since)} lượt tới bảo hiểm`, 12, soft ? "#f3d98c" : "#aebed3");
+      this.text(this.root, COL.left, y + 38, soft ? `Soft pity mở · còn ${Math.max(1, limit - since)}` : `Còn ${Math.max(1, limit - since)} lượt tới bảo hiểm`, 12, soft ? "#f3d98c" : "#aebed3");
     };
-    progress(224, "epic", pity.sinceEpic, gacha.epicPity);
-    progress(306, "legendary", pity.sinceLegendary, gacha.legendaryPity, gacha.legendarySoftPityStart);
-    this.countdownText = this.text(this.root, 978, 364, "", 12, "#adbed4");
+    progress(178, "epic", pity.sinceEpic, gacha.epicPity);
+    progress(260, "legendary", pity.sinceLegendary, gacha.legendaryPity, gacha.legendarySoftPityStart);
+    this.countdownText = this.text(this.root, COL.left, 336, "", 12, "#adbed4");
     this.updateCountdown();
     const nextHero = featured ? featuredEntry(banner, Date.now() + 7 * 24 * 60 * 60 * 1000)?.heroId : undefined;
-    if (nextHero) this.text(this.root, 978, 386, `Tuần sau: ${itemName(data, nextHero)}`, 12, "#8fa2bd");
-    this.text(this.root, 1210, 170, "›", 18, "#8fa2bd").setOrigin(1, 0);
+    if (nextHero) this.text(this.root, COL.left, 358, `Tuần sau: ${itemName(data, nextHero)}`, 12, "#8fa2bd");
+    this.text(this.root, COL.right, 118, "›", 18, "#8fa2bd").setOrigin(1, 0);
     // On Epitomized Path banners the bottom zone belongs to the path picker, so
     // the details hit-rect stops above it.
-    const pityHit = this.add.rectangle(1092, epitomized ? 256 : 278, 264, epitomized ? 208 : 252, 0, 0);
-    this.root.add(pityHit);
+    const detailsHit = this.add.rectangle(COL.cx, epitomized ? 232 : 360, 336, epitomized ? 272 : 528, 0, 0);
+    this.root.add(detailsHit);
     if (enabled) {
-      pityHit.setInteractive({ useHandCursor: true });
-      pityHit.on("pointerup", () => this.modals.details());
-      pityHit.on("pointerover", () => pityPanel.setAlpha(0.85));
-      pityHit.on("pointerout", () => pityPanel.setAlpha(1));
+      detailsHit.setInteractive({ useHandCursor: true });
+      detailsHit.on("pointerup", () => this.modals.details());
+      detailsHit.on("pointerover", () => column.setAlpha(0.85));
+      detailsHit.on("pointerout", () => column.setAlpha(1));
     }
     if (epitomized) {
       const pathColor = path && path.points >= epitomized.maxPoints - 1 ? "#f3d98c" : "#aebed3";
-      this.image(this.root, "ui:epitomized_moon", 987, 371, 20, 20);
-      this.text(this.root, 1002, 364, "NGUYỆT ƯỚC", 12, "#bfad85");
-      this.text(this.root, 978, 384, path ? `${itemName(data, path.targetId)} · ${path.points}/${epitomized.maxPoints}` : "Chưa khóa mục tiêu — chạm để chọn", 13, path ? pathColor : "#8fa2bd", 216);
-      this.text(this.root, 1210, 378, "›", 18, "#8fa2bd").setOrigin(1, 0);
-      const pathHit = this.add.rectangle(1092, 384, 264, 44, 0, 0);
+      this.image(this.root, "ui:epitomized_moon", 953, 389, 20, 20);
+      this.text(this.root, 968, 382, "NGUYỆT ƯỚC", 12, "#bfad85");
+      this.text(this.root, COL.left, 402, path ? `${itemName(data, path.targetId)} · ${path.points}/${epitomized.maxPoints}` : "Chưa khóa mục tiêu — chạm để chọn", 13, path ? pathColor : "#8fa2bd", COL.barW);
+      this.text(this.root, COL.right, 396, "›", 18, "#8fa2bd").setOrigin(1, 0);
+      const pathHit = this.add.rectangle(COL.cx, 402, 336, 68, 0, 0);
       this.root.add(pathHit);
       if (enabled) {
         pathHit.setInteractive({ useHandCursor: true });
         pathHit.on("pointerup", () => this.modals.pathPicker());
       }
     }
+    this.root.add(this.add.rectangle(COL.cx, 566, COL.barW, 1, 0x53627d, 0.6));
+    this.text(this.root, COL.cx, 582, `Legendary ${percent(gacha.rates.legendary)} · Epic ${percent(gacha.rates.epic)}`, 12, "#aebed3").setOrigin(0.5);
+    this.text(this.root, COL.cx, 602, "Chạm khung này để xem Tỉ lệ & vật phẩm", 11, "#778aa4").setOrigin(0.5);
 
     this.root.add(this.add.rectangle(640, 677, view.w, 86, 0x091425, 0.95));
     this.root.add(this.add.rectangle(640, 634, view.w, 1, 0x69748a, 0.4));

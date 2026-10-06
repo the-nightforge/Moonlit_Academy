@@ -16,6 +16,7 @@ export class GachaResults {
   private footer: Phaser.GameObjects.Container | null = null;
   private cine: Phaser.GameObjects.Container | null = null;
   private revealTweens: Phaser.Tweens.Tween[] = [];
+  private revealTimers: ReturnType<typeof setTimeout>[] = [];
   private transientVfx = new Set<Phaser.GameObjects.Container>();
 
   constructor(private s: GachaScene) {}
@@ -137,12 +138,14 @@ export class GachaResults {
       this.animate({ targets: card.root, alpha: 1, duration: 90 });
       this.later(beat + 100, () => this.revealNext(index + 1));
     } else {
-      this.animate({ targets: card.root, scaleX: 0, duration: 110, onComplete: () => {
-        if (s.phase !== "revealing" || !s.alive) return;
+      this.animate({ targets: card.root, scaleX: 0, duration: 110 });
+      // The flip tween is visual only — card content swaps on wall-clock time so
+      // the reveal keeps its pace even when frame delta is heavily capped.
+      this.later(110, () => {
         this.drawCard(card);
         this.rarityVfx(card);
         this.animate({ targets: card.root, scaleX: 1, duration: 160 });
-      } });
+      });
       this.later(beat + 270, () => this.revealNext(index + 1));
     }
   }
@@ -279,6 +282,7 @@ export class GachaResults {
 
   cancel() {
     this.revealTweens.forEach(tween => tween.stop()); this.revealTweens = [];
+    this.revealTimers.forEach(clearTimeout); this.revealTimers = [];
     this.transientVfx.forEach(vfx => vfx.destroy()); this.transientVfx.clear();
   }
 
@@ -292,11 +296,13 @@ export class GachaResults {
   }
 
   private later(delay: number, action: () => void) {
-    // Use the same elapsed-time clock as the visual tweens. TimerEvents use
-    // capped scene delta, which can leave the seal waiting at low frame rates.
-    this.animate({ targets: { progress: 0 }, progress: 1, duration: delay, onComplete: () => {
+    // Wall-clock pacing on purpose: both TimerEvents and tween elapsed run on
+    // capped scene delta, which crawls far behind real time at low frame rates
+    // (a 690ms beat took ~10s under a ~4fps headless run and stalled the reveal).
+    const timer = setTimeout(() => {
       if (this.s.alive && this.s.phase === "revealing") action();
-    } });
+    }, delay);
+    this.revealTimers.push(timer);
   }
 
   private animate(config: Phaser.Types.Tweens.TweenBuilderConfig) { this.revealTweens.push(this.s.tweens.add(config)); }
