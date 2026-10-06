@@ -23,6 +23,10 @@ export class GachaResults {
 
   start(results: PullResult[]) {
     const s = this.s;
+    // A repeat pull ("Quay tiếp") leaves a pending overlay up — rebuild on top.
+    this.cancel();
+    this.cine?.destroy(); this.cine = null;
+    this.layer?.destroy();
     this.layer = s.add.container(0, 0).setDepth(600);
     const view = visibleWorld(s);
     this.layer.add(s.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x050c18, 0.94).setInteractive());
@@ -31,7 +35,7 @@ export class GachaResults {
     s.text(this.layer, 640, 82, session.data.banners[s.bannerId]!.name, 15, "#b7c5d9").setOrigin(0.5);
     this.cards = results.map((result, i) => {
       const single = results.length === 1, width = single ? 330 : 178, height = single ? 495 : 267;
-      const root = s.add.container(single ? 640 : 236 + (i % 5) * 202, single ? 360 : 240 + Math.floor(i / 5) * 276).setAlpha(0);
+      const root = s.add.container(single ? 640 : 236 + (i % 5) * 202, single ? 360 : 230 + Math.floor(i / 5) * 274).setAlpha(0);
       root.add(roundedPanel(s, 0, 0, width, height, 0x15243e, 1, 0x97845f, 12));
       const image = s.image(root, "gacha:card_back", 0, 0, width - 6, height - 6);
       if (!image) s.image(root, "ui:seal", 0, 0, 92, 92);
@@ -246,10 +250,10 @@ export class GachaResults {
     const cost = session.data.economyConfig.pullCost * count;
     const jade = session.profile.currencies.moonJade;
     const afford = jade >= cost;
-    s.button(this.footer, 300, 664, 220, "Trở về", () => this.close(), true);
-    s.button(this.footer, 640, 664, 250, afford ? `Quay tiếp ×${count} · ${cost}` : `Thiếu ${cost - jade} ${CURRENCY_LABELS.moonJade}`,
-      () => { this.close(); s.pull(count); }, afford, true);
-    s.button(this.footer, 980, 664, 220, "Lưu ảnh ⤓", () => this.saveSnapshot(), true);
+    s.button(this.footer, 300, 676, 220, "Trở về", () => this.close(), true);
+    s.button(this.footer, 640, 676, 250, afford ? `Quay tiếp ×${count} · ${cost}` : `Thiếu ${cost - jade} ${CURRENCY_LABELS.moonJade}`,
+      () => this.pullAgain(), afford, true);
+    s.button(this.footer, 980, 676, 220, "Lưu ảnh ⤓", () => this.saveSnapshot(), true);
   }
 
   /** Exports the current frame as a PNG so players can keep/share a lucky pull. */
@@ -266,10 +270,34 @@ export class GachaResults {
 
   close() {
     if (this.s.phase !== "complete") return;
-    this.cancel();
-    this.layer?.destroy(); this.layer = null; this.footer = null; this.cards = [];
+    this.forceClose();
     this.s.phase = "idle";
     this.s.render();
+  }
+
+  /** Destroys the overlay outside the normal complete→close path (pull errors). */
+  forceClose() {
+    this.cancel();
+    this.cine?.destroy(); this.cine = null;
+    this.layer?.destroy(); this.layer = null; this.footer = null; this.cards = [];
+  }
+
+  /** Same pull again, straight into the next cinematic — never flashes the idle altar. */
+  private pullAgain() {
+    const s = this.s;
+    if (s.phase !== "complete") return;
+    const count = this.cards.length === 1 ? 1 : 10;
+    if (session.profile.currencies.moonJade < session.data.economyConfig.pullCost * count) return;
+    this.cancel();
+    this.cine?.destroy(); this.cine = null;
+    this.layer?.destroy(); this.footer = null; this.cards = [];
+    const view = visibleWorld(s);
+    this.layer = s.add.container(0, 0).setDepth(600);
+    this.layer.add(s.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x050c18, 0.94).setInteractive());
+    s.text(this.layer, 640, 360, "Đang kết nối · xin chờ hồi âm…", 16, "#d8c9a0").setOrigin(0.5);
+    // pull() early-returns while busy — release the phase so it can proceed.
+    s.phase = "idle";
+    s.pull(count);
   }
 
   cancel() {

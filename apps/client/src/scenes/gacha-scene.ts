@@ -374,6 +374,7 @@ export class GachaScene extends Phaser.Scene {
       showToast(this, achievementNotices(reply.achievements), 94);
     }, (error: unknown) => {
       if (!this.alive || generation !== this.generation) return;
+      this.resultsFx.forceClose();
       this.phase = "idle";
       this.render();
       void alertModal(this, errorText(error));
