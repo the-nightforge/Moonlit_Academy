@@ -96,7 +96,7 @@ test("reveal keeps pulls locked and skip reveals all ten before closing", async 
   await clickText(page,"Bỏ qua");
   await expect.poll(async () => (await texts(page)).filter(t => t === "Tinh Hồn 1").length).toBe(10);
   expect(await page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").busy)).toBe(true);
-  await clickText(page,"Tiếp tục");
+  await clickText(page,"Trở về");
   expect(await page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").busy)).toBe(false);
 });
 
@@ -222,7 +222,7 @@ for (const lastRarity of ["rare", "epic"] as const) {
     })));
     expect(cards.map(({artWidth:_artWidth,...card}:any) => card)).toEqual(Array.from({length:10}, () => ({scaleX:1,scaleY:1,alpha:1,visible:true,revealed:true})));
     expect(cards.every((card:any) => card.artWidth > 0)).toBe(true);
-    expect((await texts(page)).includes("Tiếp tục")).toBe(true);
+    expect((await texts(page)).includes("Trở về")).toBe(true);
   });
 }
 

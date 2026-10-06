@@ -108,7 +108,7 @@ for (const viewport of [{width:1280,height:720},{width:1920,height:1080}]) {
     expect(done.texts).toContain("Tinh Hồn 2");expect(done.texts).toContain("+25 Nguyệt Tinh");
     await page.screenshot({path:`../../.sdd-work/gacha-redesign/results-${viewport.width}.png`});
     expect(requestPath).toBe("/api/gacha/banner_heroes/pull");expect(requestBody).toEqual({count:10});expect(requestRevision).toBe("5");
-    await click(page,"Tiếp tục");
+    await click(page,"Trở về");
     const refreshed=await probe(page);expect(refreshed.phase).toBe("idle");expect(refreshed.texts).toContain("8400");expect(refreshed.texts).toContain("3 / 10");expect(refreshed.texts).toContain("9 / 80");
     expect(errors).toEqual([]);
   });

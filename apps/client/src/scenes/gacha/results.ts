@@ -2,9 +2,9 @@ import Phaser from "phaser";
 import type { PullResult, Rarity } from "rules";
 import { session } from "../../session";
 import { roundedPanel } from "../../ui/rounded-panel";
-import { CURRENCY_LABELS, RARITY_COLORS, RARITY_LABELS, visibleWorld } from "../../ui/theme";
+import { CURRENCY_LABELS, RARITY_COLORS, visibleWorld } from "../../ui/theme";
 import type { GachaScene } from "../gacha-scene";
-import { coverCrop, itemName, outcomeText, RARITIES, type ResultCard } from "./shared";
+import { coverCrop, itemName, outcomeText, type ResultCard } from "./shared";
 
 /**
  * The summon result flow: meteor cinematic → sequential card flip → footer.
@@ -242,23 +242,14 @@ export class GachaResults {
       s.button(this.footer, 1148, 58, 150, "Bỏ qua ≫", () => this.skip(), true);
       return;
     }
-    const counts: Record<Rarity, number> = { legendary: 0, epic: 0, rare: 0, common: 0 };
-    let moonStar = 0, moonDust = 0, darkIron = 0;
-    for (const card of this.cards) {
-      counts[card.result.rarity]++;
-      moonStar += card.result.moonStar ?? 0;
-      moonDust += card.result.moonDust ?? 0;
-      darkIron += card.result.darkIron ?? 0;
-    }
-    const parts = RARITIES.filter(r => counts[r] > 0).map(r => `${counts[r]} ${RARITY_LABELS[r]}`).join(" · ");
-    const gains = [
-      moonStar ? `+${moonStar} ${CURRENCY_LABELS.moonStar}` : "",
-      moonDust ? `+${moonDust} ${CURRENCY_LABELS.moonDust}` : "",
-      darkIron ? `+${darkIron} ${CURRENCY_LABELS.darkIron}` : "",
-    ].filter(Boolean).join("   ");
-    s.text(this.footer, 640, 652, gains ? `${parts}   —   ${gains}` : parts, 15, "#d8c9a0").setOrigin(0.5);
-    s.button(this.footer, 640, 692, 258, "Tiếp tục", () => this.close(), true, true);
-    s.button(this.footer, 1050, 692, 170, "Lưu ảnh ⤓", () => this.saveSnapshot(), true);
+    const count = this.cards.length === 1 ? 1 : 10;
+    const cost = session.data.economyConfig.pullCost * count;
+    const jade = session.profile.currencies.moonJade;
+    const afford = jade >= cost;
+    s.button(this.footer, 300, 664, 220, "Trở về", () => this.close(), true);
+    s.button(this.footer, 640, 664, 250, afford ? `Quay tiếp ×${count} · ${cost}` : `Thiếu ${cost - jade} ${CURRENCY_LABELS.moonJade}`,
+      () => { this.close(); s.pull(count); }, afford, true);
+    s.button(this.footer, 980, 664, 220, "Lưu ảnh ⤓", () => this.saveSnapshot(), true);
   }
 
   /** Exports the current frame as a PNG so players can keep/share a lucky pull. */

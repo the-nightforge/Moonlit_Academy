@@ -356,7 +356,7 @@ export class GachaScene extends Phaser.Scene {
     this.scene.start("deck-select");
   }
 
-  private pull(count: 1 | 10) {
+  pull(count: 1 | 10) {
     if (this.busy || this.modals.modal || !this.alive || session.profile.currencies.moonJade < session.data.economyConfig.pullCost * count) return;
     this.phase = "pending";
     const banner = session.data.banners[this.bannerId];
