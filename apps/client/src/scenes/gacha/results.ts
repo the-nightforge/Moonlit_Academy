@@ -169,12 +169,11 @@ export class GachaResults {
     s.audio?.play(result.rarity === "legendary" ? "legendary" : result.rarity === "epic" ? "epic" : result.rarity === "rare" ? "rare" : "flip");
     const frameKey = `gacha:frame_${result.rarity}`;
     if (s.textures.exists(frameKey)) s.image(root, frameKey, 0, 0, w, h);
-    const badgeW = w * 0.52, badgeH = 17, badgeY = -h / 2 + 5;
-    const ribbon = s.add.graphics();
-    ribbon.fillStyle(color, 0.85);
-    ribbon.fillRoundedRect(-badgeW / 2, badgeY, badgeW, badgeH, 8);
-    root.add(ribbon);
-    s.text(root, 0, badgeY + badgeH / 2, RARITY_LABELS[result.rarity], single ? 12 : 10, "#fff8e8").setOrigin(0.5);
+    // Rarity shows as a border around the art instead of a floating badge.
+    const artBorder = s.add.graphics();
+    artBorder.lineStyle(2, color, 0.9);
+    artBorder.strokeRoundedRect(-w / 2 + 5, -h / 2 + 5, w - 10, h - 10, 10);
+    root.add(artBorder);
     if (result.epitomizedHit) {
       const tagW = w * 0.52, tagH = 16, tagY = h / 2 - 76;
       const tag = s.add.graphics();
