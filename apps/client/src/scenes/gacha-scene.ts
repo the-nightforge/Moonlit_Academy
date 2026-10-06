@@ -211,12 +211,16 @@ export class GachaScene extends Phaser.Scene {
 
     this.button(this.root, 140, 124, 176, "≡ Đổi duyên", () => this.toggleDrawer(), enabled);
     this.text(this.root, 52, 448, banner.name, 30, "#f3dfb1").setStroke("#0a1424", 6);
+    const epitomized = banner.epitomized;
+    const path = epitomized ? profile.epitomized[this.bannerId] : undefined;
     const headline = featured
       ? `★ ${itemName(data, featured.heroId)} — tướng tuần · ${percent(banner.featured!.rateUp)} Legendary`
       : banner.kind === "hero" ? `${banner.pool.legendary.length} tướng Legendary thường trực`
       : `${banner.pool.legendary.length} món Legendary trong banner`;
     this.text(this.root, 52, 488, headline, 16, "#f0d9a8").setStroke("#0a1424", 5);
-    this.text(this.root, 52, 512, featured ? "Trượt rate-up: rơi đều vào 3 tướng Legendary cơ bản" : "Xem danh sách vật phẩm trong Tỉ lệ & vật phẩm", 13, "#aebed4").setStroke("#0a1424", 4);
+    this.text(this.root, 52, 512, featured ? "Trượt rate-up: rơi đều vào 3 tướng Legendary cơ bản"
+      : epitomized ? (path ? `Nguyệt Ước: ${itemName(data, path.targetId)} — ${path.points}/${epitomized.maxPoints} điểm` : "Khóa mục tiêu Legendary trong panel Nguyệt Ước")
+      : "Xem danh sách vật phẩm trong Tỉ lệ & vật phẩm", 13, "#aebed4").setStroke("#0a1424", 4);
 
     const pityPanel = roundedPanel(this, 1092, 278, 264, 252, 0x0b192e, 0.8, 0x69748a, 14);
     this.root.add(pityPanel);
@@ -247,13 +251,27 @@ export class GachaScene extends Phaser.Scene {
     const nextHero = featured ? featuredEntry(banner, Date.now() + 7 * 24 * 60 * 60 * 1000)?.heroId : undefined;
     if (nextHero) this.text(this.root, 978, 386, `Tuần sau: ${itemName(data, nextHero)}`, 12, "#8fa2bd");
     this.text(this.root, 1210, 170, "›", 18, "#8fa2bd").setOrigin(1, 0);
-    const pityHit = this.add.rectangle(1092, 278, 264, 252, 0, 0);
+    // On Epitomized Path banners the bottom zone belongs to the path picker, so
+    // the details hit-rect stops above it.
+    const pityHit = this.add.rectangle(1092, epitomized ? 256 : 278, 264, epitomized ? 208 : 252, 0, 0);
     this.root.add(pityHit);
     if (enabled) {
       pityHit.setInteractive({ useHandCursor: true });
       pityHit.on("pointerup", () => this.showDetails());
       pityHit.on("pointerover", () => pityPanel.setAlpha(0.85));
       pityHit.on("pointerout", () => pityPanel.setAlpha(1));
+    }
+    if (epitomized) {
+      const pathColor = path && path.points >= epitomized.maxPoints - 1 ? "#f3d98c" : "#aebed3";
+      this.text(this.root, 978, 364, "NGUYỆT ƯỚC", 12, "#bfad85");
+      this.text(this.root, 978, 384, path ? `${itemName(data, path.targetId)} · ${path.points}/${epitomized.maxPoints}` : "Chưa khóa mục tiêu — chạm để chọn", 13, path ? pathColor : "#8fa2bd", 216);
+      this.text(this.root, 1210, 378, "›", 18, "#8fa2bd").setOrigin(1, 0);
+      const pathHit = this.add.rectangle(1092, 384, 264, 44, 0, 0);
+      this.root.add(pathHit);
+      if (enabled) {
+        pathHit.setInteractive({ useHandCursor: true });
+        pathHit.on("pointerup", () => this.showPathPicker());
+      }
     }
 
     this.root.add(this.add.rectangle(640, 677, view.w, 86, 0x091425, 0.95));
@@ -567,6 +585,13 @@ export class GachaScene extends Phaser.Scene {
     ribbon.fillRoundedRect(-w * 0.31, -h / 2 + 6, w * 0.62, 20, 9);
     root.add(ribbon);
     this.text(root, 0, -h / 2 + 9, RARITY_LABELS[result.rarity], single ? 15 : 11, "#fff8e8").setOrigin(0.5);
+    if (result.epitomizedHit) {
+      const tag = this.add.graphics();
+      tag.fillStyle(0xe8c784, 0.92);
+      tag.fillRoundedRect(-w * 0.28, h / 2 - 78, w * 0.56, 20, 9);
+      root.add(tag);
+      this.text(root, 0, h / 2 - 75, "NGUYỆT ƯỚC", single ? 13 : 10, "#151c30").setOrigin(0.5);
+    }
     this.text(root, 0, h / 2 - 52, itemName(data, result.itemId), single ? 22 : 14, "#f7ecd2", w - 16).setOrigin(0.5).setAlign("center").setStroke("#0a1424", 4);
     this.text(root, 0, h / 2 - 24, this.outcomeText(result), single ? 16 : 11, "#ecd7a4", w - 14).setOrigin(0.5).setAlign("center").setStroke("#0a1424", 3);
     if (!hero && !hasEquipmentArt) this.text(root, 0, -h / 2 + 34, "Minh họa loại trang bị", single ? 12 : 10, "#9babc3").setOrigin(0.5);
@@ -690,6 +715,60 @@ export class GachaScene extends Phaser.Scene {
     this.phase = "idle"; this.render();
   }
 
+  /** Epitomized Path picker (spec P6): lock one legendary weapon as the target. */
+  private showPathPicker() {
+    const data = session.data, banner = data.banners[this.bannerId];
+    if (!banner?.epitomized || this.busy || !this.alive) return;
+    this.closeModal();
+    const layer = this.add.container(0, 0).setDepth(500); this.modal = layer;
+    const view = visibleWorld(this);
+    layer.add(this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x030914, 0.8).setInteractive());
+    layer.add(roundedPanel(this, 640, 360, 760, 620, 0x0f1e34, 0.99, 0xbba172, 20));
+    this.text(layer, 640, 76, "NGUYỆT ƯỚC", 24, "#f3dfb5").setOrigin(0.5);
+    this.text(layer, 640, 108, `Trượt ${banner.epitomized.maxPoints} lần → Legendary kế chắc chắn là mục tiêu. Đổi/hủy mục tiêu mất điểm.`, 13, "#a8bbd2").setOrigin(0.5);
+    const path = session.profile.epitomized[this.bannerId];
+    this.text(layer, 640, 136, path ? `Đang khóa: ${itemName(data, path.targetId)} — ${path.points}/${banner.epitomized.maxPoints} điểm` : "Chưa khóa mục tiêu nào", 14, path ? "#f3d98c" : "#8fa2bd").setOrigin(0.5);
+    const rows = this.add.container(0, 0); layer.add(rows);
+    banner.pool.legendary.forEach((id, index) => {
+      const y = 196 + index * 62, locked = path?.targetId === id;
+      const row = roundedPanel(this, 640, y, 680, 52, locked ? 0x2c3a55 : 0x14243a, 0.95, locked ? 0xe8c784 : 0x53627d, 10);
+      rows.add(row);
+      const thumb = this.image(row, `weapons:${id}`, -298, 0, 40, 40);
+      if (!thumb) this.image(row, "ui:gear", -298, 0, 40, 40);
+      this.text(row, -266, -10, itemName(data, id), 15, locked ? "#f4dfb2" : COLORS.text);
+      this.text(row, -266, 12, session.profile.weapons[id] ? `Tinh Luyện ${session.profile.weapons[id]!.refinement}` : "Chưa sở hữu", 11, "#8fa2bd");
+      if (locked) this.text(row, 300, 0, "● MỤC TIÊU", 12, "#e8c784").setOrigin(1, 0.5);
+      const hit = this.add.rectangle(0, 0, 680, 52, 0, 0);
+      row.add(hit);
+      if (!locked) {
+        hit.setInteractive({ useHandCursor: true });
+        hit.on("pointerup", () => void this.selectPathTarget(id));
+        hit.on("pointerover", () => row.setAlpha(0.85));
+        hit.on("pointerout", () => row.setAlpha(1));
+      }
+    });
+    this.button(layer, 512, 622, 170, "Đóng", () => { this.closeModal(); this.render(); });
+    this.button(layer, 768, 622, 170, "Hủy Nguyệt Ước", () => void this.selectPathTarget(null), path !== undefined);
+  }
+
+  private async selectPathTarget(targetId: string | null) {
+    if (this.busy || !this.alive) return;
+    this.converting = true;
+    try {
+      await mutate<ProfileReply>("POST", `/gacha/${this.bannerId}/path`, { targetId });
+      if (!this.alive) return;
+      this.converting = false;
+      this.showPathPicker();
+      showToast(this, [targetId === null ? "Đã hủy Nguyệt Ước" : `Đã khóa mục tiêu: ${itemName(session.data, targetId)}`], 94);
+    } catch (error) {
+      this.converting = false;
+      if (!this.alive) return;
+      this.closeModal();
+      void alertModal(this, errorText(error));
+    }
+    if (this.alive) this.render();
+  }
+
   private outcomeText(result: PullResult): string {
     switch (result.outcome) {
       case "newHero": case "newWeapon": case "newRelic": return "MỚI!";
@@ -765,6 +844,10 @@ export class GachaScene extends Phaser.Scene {
       { text:`Bảo hiểm Epic: chắc chắn trong ${g.epicPity} lượt. Legendary chắc chắn ở lượt ${g.legendaryPity}.` },
       { text:`Legendary: từ lượt ${g.legendarySoftPityStart + 1}, tỉ lệ tăng ${percent(g.legendarySoftPityStep)} mỗi lượt.` },
       ...(banner.pityGroup ? [{ text:`Bảo hiểm chung giữa các banner Hero (${banner.pityGroup}).` }] : []),
+      ...(banner.epitomized ? [{
+        text: `Nguyệt Ước: khóa 1 Legendary làm mục tiêu — trượt ${banner.epitomized.maxPoints} lần thì Legendary kế chắc chắn trúng mục tiêu. Đổi/hủy mục tiêu mất điểm.`,
+        color: "#f3d98c",
+      }] : []),
       ...(g.newPlayerEpicHero && banner.kind === "hero" ? [{ text:"Bảo vệ người mới: Epic ưu tiên Hero chưa sở hữu." }] : []),
       ...(featured && banner.featured ? [
         { text: banner.pool.legendary.length === 0
@@ -787,7 +870,8 @@ export class GachaScene extends Phaser.Scene {
       if (!pool[rarity].length) continue;
       lines.push({text:RARITY_LABELS[rarity],color:`#${RARITY_COLORS[rarity].toString(16).padStart(6,"0")}`});
       for (const id of pool[rarity]) {
-        const featuredTag = featured && rarity === "legendary" && id === featured.heroId ? " ★" : "";
+        const featuredTag = (featured && rarity === "legendary" && id === featured.heroId ? " ★" : "")
+          + (rarity === "legendary" && profile.epitomized[this.bannerId]?.targetId === id ? " ☾" : "");
         const owned = banner.kind === "hero" ? (profile.heroes[id] ? `Tinh Hồn ${profile.heroes[id]!.constellation}` : "chưa có")
           : banner.kind === "weapon" ? (profile.weapons[id] ? `Tinh Luyện ${profile.weapons[id]!.refinement}` : "chưa có")
           : (profile.relics[id] ? `Cộng Minh ${profile.relics[id]!.resonance}` : "chưa có");
