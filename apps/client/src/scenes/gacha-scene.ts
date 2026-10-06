@@ -169,7 +169,7 @@ export class GachaScene extends Phaser.Scene {
     leftCol.add(roundedPanel(this, 170, 400, 284, 580, 0x0b192e, 0.91, 0x69748a, 16));
     this.text(leftCol, 52, 142, "CHỌN DUYÊN TRIỆU HỒI", 13, "#bfad85");
     Object.values(data.banners).forEach((entry, index) => {
-      const y = 226 + index * 128, selected = entry.id === this.bannerId;
+      const y = 200 + index * 89, selected = entry.id === this.bannerId;
       const panel = roundedPanel(this, 170, y, 244, 72, selected ? 0x34405a : 0x14243a, 0.96, selected ? 0xe8c784 : 0x53627d, 12);
       const hit = this.add.rectangle(0, 0, 244, 72, 0, 0);
       panel.add(hit);
@@ -179,7 +179,7 @@ export class GachaScene extends Phaser.Scene {
       });
       const accent = this.add.graphics();
       accent.fillStyle(KIND_ACCENT[entry.kind], 0.85);
-      accent.fillRoundedRect(-122, -36, 10, 72, { tl: 12, bl: 12, tr: 0, br: 0 });
+      accent.fillRoundedRect(-122, -36, 4, 72, { tl: 12, bl: 12, tr: 0, br: 0 });
       panel.add(accent);
       this.text(panel, -98, -13, entry.name, 18, selected ? "#f4dfb2" : COLORS.text);
       this.text(panel, -98, 14, entry.featured ? "Tướng Legendary xoay tua tuần" : entry.kind === "hero" ? "Anh hùng trong thư viện" : entry.kind === "weapon" ? "Trang bị · Binh khí" : "Trang bị · Nguyệt bảo", 12, "#aab9d0");
