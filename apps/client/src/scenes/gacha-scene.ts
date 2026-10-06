@@ -311,16 +311,17 @@ export class GachaScene extends Phaser.Scene {
     const canConvert = jadeItem !== undefined && jadeBought < jadeItem.limitPerWeek && profile.currencies.moonStar >= jadeItem.price;
     if (this.phase !== "pending" && jade < pullCost * 10 && canConvert) {
       this.button(this.root, 722, 674, 190, "⇄ Đổi Tinh lấy Ngọc", () => void this.modals.convert(), enabled);
-    } else {
-      this.text(this.root, 722, 685, this.phase === "pending" ? "Đang kết nối · xin chờ hồi âm…" : `${pullCost} Ngọc / lượt · ↑↓ đổi duyên`, 12, "#b4c3d7").setOrigin(0.5);
+    } else if (this.phase === "pending") {
+      this.text(this.root, 722, 685, "Đang kết nối · xin chờ hồi âm…", 12, "#b4c3d7").setOrigin(0.5);
     }
-    for (const [count, x] of [[1, 928], [10, 1150]] as const) {
+    // Pull buttons live inside the banner art window, bottom-right over the scrim.
+    for (const [count, x] of [[1, 560], [10, 780]] as const) {
       const need = pullCost * count, afford = jade >= need;
-      this.button(this.root, x, 674, 208, afford ? `Quay ×${count} · ${need}` : `Thiếu ${need - jade} ${CURRENCY_LABELS.moonJade}`, () => this.pull(count), enabled && afford, count === 10);
-      if (afford) this.image(this.root, "ui:cur_moonJade", x - 80, 674, 20, 20);
+      this.button(this.root, x, 570, 208, afford ? `Quay ×${count} · ${need}` : `Thiếu ${need - jade} ${CURRENCY_LABELS.moonJade}`, () => this.pull(count), enabled && afford, count === 10);
+      if (afford) this.image(this.root, "ui:cur_moonJade", x - 80, 570, 20, 20);
     }
     if (enabled && jade >= pullCost * 10) {
-      const ring = roundedPanel(this, 1150, 674, 216, 50, 0xe8c784, 0, 0xf3d98c, 12);
+      const ring = roundedPanel(this, 780, 570, 216, 50, 0xe8c784, 0, 0xf3d98c, 12);
       this.root.add(ring);
       if (this.reducedMotion) ring.setAlpha(0.45);
       else this.tweens.add({ targets: ring, alpha: 0.3, duration: 1400, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
