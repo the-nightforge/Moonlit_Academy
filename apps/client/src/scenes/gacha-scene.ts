@@ -186,7 +186,7 @@ export class GachaScene extends Phaser.Scene {
     this.button(leftCol, 170, 540, 244, "Nhật ký quay", () => void this.showHistory(0), enabled);
     this.button(leftCol, 170, 606, 244, "Cửa hàng Nguyệt Tinh", () => { if (!this.busy && !this.modal) this.scene.start("shop"); }, enabled);
 
-    rightCol.add(roundedPanel(this, 1105, 326, 284, 432, 0x0a192e, 0.93, 0x69748a, 16));
+    rightCol.add(roundedPanel(this, 1105, 390, 284, 560, 0x0a192e, 0.93, 0x69748a, 16));
     this.text(rightCol, 990, 143, "LỜI HẸN DƯỚI TRĂNG", 13, "#bfad85");
     this.text(rightCol, 990, 178, banner.pityGroup ? "Bảo hiểm chung banner Hero" : "Bảo hiểm riêng banner", 18, "#f3dfb1");
     const progress = (y: number, rarity: "epic" | "legendary", since: number, limit: number, softStart?: number) => {
@@ -216,7 +216,7 @@ export class GachaScene extends Phaser.Scene {
       const nextHero = featuredEntry(banner, Date.now() + 7 * 24 * 60 * 60 * 1000)?.heroId;
       if (nextHero) this.text(rightCol, 990, 448, `Tuần sau: ${itemName(data, nextHero)}`, 13, "#8fa2bd");
     }
-    this.button(rightCol, 1105, 505, 244, "Tỉ lệ & vật phẩm", () => this.showDetails(), enabled);
+    this.button(rightCol, 1105, 606, 244, "Tỉ lệ & vật phẩm", () => this.showDetails(), enabled);
 
     const heroId = featured?.heroId ?? (banner.kind === "hero" ? this.spotlightHeroId : undefined) ?? banner.pool.legendary.find(id => data.heroes[id]) ?? banner.pool.epic.find(id => data.heroes[id]);
     const artKey = banner.kind === "hero" ? `heroes:${heroId}` : `gacha:${banner.kind}_banner`;
@@ -229,7 +229,7 @@ export class GachaScene extends Phaser.Scene {
         this.artTween = this.tweens.add({ targets: art, scaleX: art.scaleX * 1.012, scaleY: art.scaleY * 1.012, duration: 3600, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       }
     } else { centerCol.add(this.add.circle(640, 295, 106, 0xded7b4, 0.15).setStrokeStyle(2, 0xc0aa78)); this.image(centerCol, "ui:moon_full", 640, 300, 160, 160); }
-    centerCol.add(roundedPanel(this, 640, 549, 558, 82, 0x0b172a, 0.94, 0x9a8965, 14));
+    centerCol.add(roundedPanel(this, 640, 549, 640, 82, 0x0b172a, 0.94, 0x9a8965, 14));
     this.text(centerCol, 640, 523, featured ? "TƯỚNG TUẦN NÀY" : banner.kind === "hero" ? "ANH HÙNG TRONG BANNER" : "MINH HỌA LOẠI TRANG BỊ", 12, "#bda77e").setOrigin(0.5);
     this.text(centerCol, 640, 547, banner.kind === "hero" && heroId ? itemName(data, heroId) : banner.name, 25, "#f5e2ba").setOrigin(0.5);
     this.text(centerCol, 640, 575, featured ? `Legendary: ${percent(banner.featured!.rateUp)} trúng tướng tuần · tuần sau đổi tướng` : banner.kind === "hero" ? "Xem toàn bộ anh hùng trong Tỉ lệ & vật phẩm" : "Vật phẩm nhận được theo danh sách trong banner", 13, "#adbed4").setOrigin(0.5);
