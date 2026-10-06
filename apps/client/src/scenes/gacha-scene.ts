@@ -399,15 +399,15 @@ export class GachaScene extends Phaser.Scene {
   private reveal(results: PullResult[]) {
     this.results = this.add.container(0, 0).setDepth(600);
     const view = visibleWorld(this);
-    this.results.add(this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x050c18, 0.97).setInteractive());
-    this.results.add(roundedPanel(this, 640, 360, 1192, 672, 0x0b182b, 0.97, 0x9e8864, 22));
-    this.text(this.results, 640, 60, "DUYÊN TRĂNG ĐÃ ĐẾN", 25, "#f3deb0").setOrigin(0.5);
-    this.text(this.results, 640, 94, session.data.banners[this.bannerId]!.name, 15, "#b7c5d9").setOrigin(0.5);
+    this.results.add(this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x050c18, 0.94).setInteractive());
+    this.results.add(roundedPanel(this, 640, 360, 1220, 690, 0x0b182b, 0.95, 0x9e8864, 22));
+    this.text(this.results, 640, 48, "DUYÊN TRĂNG ĐÃ ĐẾN", 25, "#f3deb0").setOrigin(0.5);
+    this.text(this.results, 640, 82, session.data.banners[this.bannerId]!.name, 15, "#b7c5d9").setOrigin(0.5);
     this.cards = results.map((result, i) => {
-      const single = results.length === 1, width = single ? 330 : 207, height = single ? 472 : 234;
-      const root = this.add.container(single ? 640 : 190 + (i % 5) * 225, single ? 370 : 247 + Math.floor(i / 5) * 249).setAlpha(0);
+      const single = results.length === 1, width = single ? 330 : 178, height = single ? 495 : 267;
+      const root = this.add.container(single ? 640 : 236 + (i % 5) * 202, single ? 360 : 240 + Math.floor(i / 5) * 276).setAlpha(0);
       root.add(roundedPanel(this, 0, 0, width, height, 0x15243e, 1, 0x97845f, 12));
-      const image = this.image(root, "gacha:card_back", 0, 0, width - 10, height - 10);
+      const image = this.image(root, "gacha:card_back", 0, 0, width - 6, height - 6);
       if (!image) this.image(root, "ui:seal", 0, 0, 92, 92);
       this.results!.add(root);
       return { root, result, width, height, revealed: false };
@@ -494,7 +494,7 @@ export class GachaScene extends Phaser.Scene {
   private revealNext(index: number) {
     const card = this.cards[index];
     if (!card) { this.finishReveal(); return; }
-    const beat = this.reducedMotion ? 90 : card.result.rarity === "legendary" ? 440 : card.result.rarity === "epic" ? 300 : 170;
+    const beat = this.reducedMotion ? 90 : card.result.rarity === "legendary" ? 420 : card.result.rarity === "epic" ? 280 : 130;
     if (this.reducedMotion) {
       card.root.setAlpha(0.15); this.drawCard(card);
       this.rarityVfx(card);
@@ -517,20 +517,25 @@ export class GachaScene extends Phaser.Scene {
     const { root, result, width:w, height:h } = card, single = this.cards.length === 1;
     const data = session.data, color = RARITY_COLORS[result.rarity];
     root.removeAll(true);
-    root.add(roundedPanel(this, 0, 0, w, h, 0x15253c, 1, color, 12));
-    root.add(this.add.rectangle(0, -h/2 + 17, w - 16, 24, color, 0.22));
-    this.text(root, 0, -h/2 + 17, RARITY_LABELS[result.rarity], single ? 18 : 14, `#${color.toString(16).padStart(6,"0")}`).setOrigin(0.5);
+    root.add(roundedPanel(this, 0, 0, w, h, 0x0d1830, 1, color, 12));
     const hero = data.heroes[result.itemId], weapon = data.weapons[result.itemId];
     const equipmentKey = `${weapon ? "weapons" : "relics"}:${result.itemId}`;
     const hasEquipmentArt = !hero && this.textures.exists(equipmentKey);
     const artKey = hero ? `heroes:${result.itemId}` : hasEquipmentArt ? equipmentKey : weapon ? "gacha:weapon_banner" : "gacha:relic_banner";
-    const artH = single ? 294 : hero ? 118 : 102, artY = -h/2 + 40 + artH/2;
-    const art = this.image(root, artKey, 0, artY, w - 20, artH);
-    if (!art) this.image(root, hero ? "ui:star" : "ui:gear", 0, artY, 60, 60);
-    const nameY = single ? 126 : 44;
-    this.text(root, 0, nameY, itemName(data,result.itemId), single ? 24 : 16, "#f3e5c7", w - 24).setOrigin(0.5,0).setAlign("center");
-    this.text(root, 0, single ? 192 : 84, this.outcomeText(result), single ? 17 : 12, "#dbc28d", w - 20).setOrigin(0.5,0).setAlign("center");
-    if (!hero && !hasEquipmentArt) this.text(root, 0, single ? 110 : 30, "Minh họa loại trang bị", single ? 12 : 10, "#9babc3").setOrigin(0.5);
+    const art = this.image(root, artKey, 0, 0, w - 8, h - 8);
+    if (art) {
+      if (!hero) this.coverCrop(art, w - 8, h - 8); // square equipment art -> cover-crop to 2:3
+    } else this.image(root, hero ? "ui:star" : "ui:gear", 0, -20, 60, 60);
+    const frameKey = `gacha:frame_${result.rarity}`;
+    if (this.textures.exists(frameKey)) this.image(root, frameKey, 0, 0, w, h);
+    const ribbon = this.add.graphics();
+    ribbon.fillStyle(color, 0.85);
+    ribbon.fillRoundedRect(-w * 0.31, -h / 2 + 6, w * 0.62, 20, 9);
+    root.add(ribbon);
+    this.text(root, 0, -h / 2 + 9, RARITY_LABELS[result.rarity], single ? 15 : 11, "#fff8e8").setOrigin(0.5);
+    this.text(root, 0, h / 2 - 52, itemName(data, result.itemId), single ? 22 : 14, "#f7ecd2", w - 16).setOrigin(0.5).setAlign("center").setStroke("#0a1424", 4);
+    this.text(root, 0, h / 2 - 24, this.outcomeText(result), single ? 16 : 11, "#ecd7a4", w - 14).setOrigin(0.5).setAlign("center").setStroke("#0a1424", 3);
+    if (!hero && !hasEquipmentArt) this.text(root, 0, -h / 2 + 34, "Minh họa loại trang bị", single ? 12 : 10, "#9babc3").setOrigin(0.5);
   }
 
   private rarityVfx(card: ResultCard) {
@@ -540,6 +545,13 @@ export class GachaScene extends Phaser.Scene {
     this.results.add(vfx);
     this.transientVfx.add(vfx);
     vfx.add(roundedPanel(this,0,0,card.width+10,card.height+10,color,0.14,color,16));
+    if (card.result.rarity === "legendary" && this.textures.exists("gacha:halo_legendary")) {
+      const halo = this.image(vfx, "gacha:halo_legendary", 0, 0, card.width * 2.1, card.width * 2.1);
+      if (halo) {
+        halo.setTint(color).setAlpha(0.75).setBlendMode(Phaser.BlendModes.ADD);
+        this.animate({ targets: halo, scale: 1.35, alpha: 0, duration: 650 });
+      }
+    }
     const finish = () => { this.transientVfx.delete(vfx); vfx.destroy(); };
     if (this.reducedMotion) {
       this.animate({ targets:vfx,alpha:0,duration:150,onComplete:finish });
@@ -575,8 +587,26 @@ export class GachaScene extends Phaser.Scene {
   private renderResultFooter() {
     this.resultFooter?.removeAll(true);
     if (!this.resultFooter) return;
-    if (this.phase === "revealing") this.button(this.resultFooter, 1148, 58, 150, "Bỏ qua ≫", () => this.skipReveal(), true);
-    else this.button(this.resultFooter, 640, 650, 258, "Tiếp tục", () => this.closeResults(), true, true);
+    if (this.phase === "revealing") {
+      this.button(this.resultFooter, 1148, 58, 150, "Bỏ qua ≫", () => this.skipReveal(), true);
+      return;
+    }
+    const counts: Record<Rarity, number> = { legendary: 0, epic: 0, rare: 0, common: 0 };
+    let moonStar = 0, moonDust = 0, darkIron = 0;
+    for (const card of this.cards) {
+      counts[card.result.rarity]++;
+      moonStar += card.result.moonStar ?? 0;
+      moonDust += card.result.moonDust ?? 0;
+      darkIron += card.result.darkIron ?? 0;
+    }
+    const parts = RARITIES.filter(r => counts[r] > 0).map(r => `${counts[r]} ${RARITY_LABELS[r]}`).join(" · ");
+    const gains = [
+      moonStar ? `+${moonStar} ${CURRENCY_LABELS.moonStar}` : "",
+      moonDust ? `+${moonDust} ${CURRENCY_LABELS.moonDust}` : "",
+      darkIron ? `+${darkIron} ${CURRENCY_LABELS.darkIron}` : "",
+    ].filter(Boolean).join("   ");
+    this.text(this.resultFooter, 640, 652, gains ? `${parts}   —   ${gains}` : parts, 15, "#d8c9a0").setOrigin(0.5);
+    this.button(this.resultFooter, 640, 692, 258, "Tiếp tục", () => this.closeResults(), true, true);
   }
 
   private closeResults() {

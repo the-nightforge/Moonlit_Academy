@@ -286,7 +286,7 @@ export const API_ERROR_TEXT: Record<string, string> = {
   "not enough": "Không đủ vật liệu",
 };
 
-export const CURRENCY_LABELS = { moonJade: "Nguyệt Ngọc", moonStar: "Nguyệt Tinh", honor: "Vinh Dự" } as const;
+export const CURRENCY_LABELS = { moonJade: "Nguyệt Ngọc", moonStar: "Nguyệt Tinh", honor: "Vinh Dự", moonDust: "Nguyệt Trần", darkIron: "Huyền Thiết" } as const;
 
 /** Rarity names as the spec writes them ("còn N lượt tới Epic chắc chắn", `15` §3.5). */
 export const RARITY_LABELS: Record<Rarity, string> = {
