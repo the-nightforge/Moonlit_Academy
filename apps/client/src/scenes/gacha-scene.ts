@@ -166,7 +166,7 @@ export class GachaScene extends Phaser.Scene {
     this.root.add([leftCol, centerCol, rightCol]);
     const KIND_ACCENT = { hero: 0xe8c784, weapon: 0x7f9cc4, relic: 0xb08ee0 } as const;
 
-    leftCol.add(roundedPanel(this, 170, 390, 284, 560, 0x0b192e, 0.91, 0x69748a, 16));
+    leftCol.add(roundedPanel(this, 170, 400, 284, 580, 0x0b192e, 0.91, 0x69748a, 16));
     this.text(leftCol, 52, 132, "CHỌN DUYÊN TRIỆU HỒI", 13, "#bfad85");
     Object.values(data.banners).forEach((entry, index) => {
       const y = 186 + index * 89, selected = entry.id === this.bannerId;
@@ -183,40 +183,40 @@ export class GachaScene extends Phaser.Scene {
       leftCol.add(panel);
     });
     leftCol.add(this.add.rectangle(170, 504, 236, 1, 0x69748a, 0.45));
-    this.button(leftCol, 170, 540, 244, "Nhật ký quay", () => void this.showHistory(0), enabled);
-    this.button(leftCol, 170, 606, 244, "Cửa hàng Nguyệt Tinh", () => { if (!this.busy && !this.modal) this.scene.start("shop"); }, enabled);
+    this.button(leftCol, 170, 585, 244, "Nhật ký quay", () => void this.showHistory(0), enabled);
+    this.button(leftCol, 170, 645, 244, "Cửa hàng Nguyệt Tinh", () => { if (!this.busy && !this.modal) this.scene.start("shop"); }, enabled);
 
-    rightCol.add(roundedPanel(this, 1105, 390, 284, 560, 0x0a192e, 0.93, 0x69748a, 16));
-    this.text(rightCol, 990, 143, "LỜI HẸN DƯỚI TRĂNG", 13, "#bfad85");
-    this.text(rightCol, 990, 178, banner.pityGroup ? "Bảo hiểm chung banner Hero" : "Bảo hiểm riêng banner", 18, "#f3dfb1");
+    rightCol.add(roundedPanel(this, 1110, 400, 284, 580, 0x0a192e, 0.93, 0x69748a, 16));
+    this.text(rightCol, 995, 143, "LỜI HẸN DƯỚI TRĂNG", 13, "#bfad85");
+    this.text(rightCol, 995, 178, banner.pityGroup ? "Bảo hiểm chung banner Hero" : "Bảo hiểm riêng banner", 18, "#f3dfb1");
     const progress = (y: number, rarity: "epic" | "legendary", since: number, limit: number, softStart?: number) => {
-      this.text(rightCol, 990, y, RARITY_LABELS[rarity], 17, rarity === "epic" ? "#d4b6f7" : "#f3d98c");
-      this.text(rightCol, 1217, y, `${since} / ${limit}`, 15, "#c3cfdf").setOrigin(1, 0);
-      rightCol.add(roundedPanel(this, 1105, y + 38, 230, 8, 0x25334c, 1, 0x25334c, 4));
+      this.text(rightCol, 995, y, RARITY_LABELS[rarity], 17, rarity === "epic" ? "#d4b6f7" : "#f3d98c");
+      this.text(rightCol, 1222, y, `${since} / ${limit}`, 15, "#c3cfdf").setOrigin(1, 0);
+      rightCol.add(roundedPanel(this, 1110, y + 38, 230, 8, 0x25334c, 1, 0x25334c, 4));
       const soft = softStart !== undefined && since >= softStart;
       const w = 230 * Math.min(1, since / limit);
       if (w > 0) {
         const fill = this.add.graphics();
         fill.fillStyle(soft ? 0xffd977 : RARITY_COLORS[rarity], 1);
-        fill.fillRoundedRect(990, y + 35, w, 6, Math.min(3, w / 2));
+        fill.fillRoundedRect(995, y + 35, w, 6, Math.min(3, w / 2));
         rightCol.add(fill);
         if (soft && !this.reducedMotion) this.tweens.add({ targets: fill, alpha: 0.55, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       }
       if (softStart !== undefined) {
-        rightCol.add(this.add.rectangle(990 + 230 * Math.min(1, softStart / limit), y + 38, 2, 12, 0xf3d98c, 0.7));
+        rightCol.add(this.add.rectangle(995 + 230 * Math.min(1, softStart / limit), y + 38, 2, 12, 0xf3d98c, 0.7));
       }
-      this.text(rightCol, 990, y + 56, soft ? `Soft pity đang mở · còn ${Math.max(1, limit - since)}` : `Còn ${Math.max(1, limit - since)} lượt tới bảo hiểm`, 14, soft ? "#f3d98c" : "#aebed3");
+      this.text(rightCol, 995, y + 56, soft ? `Soft pity đang mở · còn ${Math.max(1, limit - since)}` : `Còn ${Math.max(1, limit - since)} lượt tới bảo hiểm`, 14, soft ? "#f3d98c" : "#aebed3");
     };
     progress(226, "epic", pity.sinceEpic, gacha.epicPity);
     progress(342, "legendary", pity.sinceLegendary, gacha.legendaryPity, gacha.legendarySoftPityStart);
     const rotationEnd = featuredRotationEnd(banner, Date.now());
     if (rotationEnd !== undefined) {
       const left = rotationEnd - Date.now(), days = Math.floor(left / 86_400_000), hours = Math.floor(left / 3_600_000) % 24, minutes = Math.floor(left / 60_000) % 60;
-      this.text(rightCol, 990, 426, `Đổi tướng sau ${days > 0 ? `${days}d ${hours}h` : `${hours}h ${minutes}m`}`, 13, "#adbed4");
+      this.text(rightCol, 995, 426, `Đổi tướng sau ${days > 0 ? `${days}d ${hours}h` : `${hours}h ${minutes}m`}`, 13, "#adbed4");
       const nextHero = featuredEntry(banner, Date.now() + 7 * 24 * 60 * 60 * 1000)?.heroId;
-      if (nextHero) this.text(rightCol, 990, 448, `Tuần sau: ${itemName(data, nextHero)}`, 13, "#8fa2bd");
+      if (nextHero) this.text(rightCol, 995, 448, `Tuần sau: ${itemName(data, nextHero)}`, 13, "#8fa2bd");
     }
-    this.button(rightCol, 1105, 606, 244, "Tỉ lệ & vật phẩm", () => this.showDetails(), enabled);
+    this.button(rightCol, 1110, 645, 244, "Tỉ lệ & vật phẩm", () => this.showDetails(), enabled);
 
     const heroId = featured?.heroId ?? (banner.kind === "hero" ? this.spotlightHeroId : undefined) ?? banner.pool.legendary.find(id => data.heroes[id]) ?? banner.pool.epic.find(id => data.heroes[id]);
     const artKey = banner.kind === "hero" ? `heroes:${heroId}` : `gacha:${banner.kind}_banner`;
