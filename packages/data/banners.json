@@ -102,6 +102,7 @@
     "id": "banner_weapons",
     "name": "Binh Khí Các",
     "kind": "weapon",
+    "epitomized": { "maxPoints": 2 },
     "pool": {
       "legendary": [
         "w_xich_diem_thuong",

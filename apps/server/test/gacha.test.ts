@@ -50,4 +50,23 @@ describe("gacha routes", () => {
     expect((await call(server, "GET", "/api/gacha/history?page=1", { token })).body.entries).toEqual([]);
     expect((await call(server, "GET", "/api/gacha/history?banner=other", { token })).body.entries).toEqual([]);
   });
+
+  it("locks, keeps and clears an Epitomized Path target (spec P6)", async () => {
+    const server = await testServer();
+    const { token } = await register(server);
+    const target = server.data.banners.banner_weapons!.pool.legendary[0]!;
+
+    const locked = await call(server, "POST", "/api/gacha/banner_weapons/path", { token, rev: 1, body: { targetId: target } });
+    expect(locked.status).toBe(200);
+    expect(locked.body.profile.epitomized.banner_weapons).toEqual({ targetId: target, points: 0 });
+
+    // Unknown banner, wrong kind and an item outside the pool all refuse.
+    expect((await call(server, "POST", "/api/gacha/banner_heroes/path", { token, rev: 2, body: { targetId: "m05" } })).status).toBe(400);
+    expect((await call(server, "POST", "/api/gacha/banner_weapons/path", { token, rev: 2, body: { targetId: "w_thiet_thuan" } })).status).toBe(400);
+    expect((await call(server, "POST", "/api/gacha/banner_nope/path", { token, rev: 2, body: { targetId: target } })).status).toBe(400);
+
+    const cleared = await call(server, "POST", "/api/gacha/banner_weapons/path", { token, rev: 2, body: { targetId: null } });
+    expect(cleared.status).toBe(200);
+    expect(cleared.body.profile.epitomized.banner_weapons).toBeUndefined();
+  });
 });

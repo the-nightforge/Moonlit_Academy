@@ -492,6 +492,9 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
         }
       }
     }
+    if (banner.epitomized && banner.kind !== "weapon") {
+      errors.push(`banners: "${banner.id}" epitomized is only for weapon banners (spec P6)`);
+    }
   }
   // A rotation hero belongs to its featured banner's legendary fallback only —
   // it must not appear in any other banner's fixed pool.

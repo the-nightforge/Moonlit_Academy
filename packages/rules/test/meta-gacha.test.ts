@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GameData, Profile, Rarity } from "../src/index";
-import { createProfile, featuredEntry, legendaryRate, parseProfile, pullMany, reservedFeaturedHeroes } from "../src/index";
+import { clearEpitomizedTarget, createProfile, featuredEntry, legendaryRate, parseProfile, pullMany, reservedFeaturedHeroes, setEpitomizedTarget } from "../src/index";
 import { testData } from "./helpers";
 
 const NOW = Date.UTC(2026, 8, 28, 12);
@@ -214,5 +214,98 @@ describe("gacha", () => {
       if (!featured.results[0]!.featuredHit) expect(featured.results[0]!.itemId).not.toBe(entry.heroId);
       else expect(featured.results[0]!.itemId).toBe(entry.heroId);
     }
+  });
+
+  const WEAPONS = "banner_weapons";
+
+  function weaponPull(data: GameData, profile: Profile, count: 1 | 10, seed = 7) {
+    const result = pullMany(data, profile, WEAPONS, count, seed, NOW);
+    if (!result.ok) throw new Error(result.error);
+    return result;
+  }
+
+  /** Data where every weapon pull is legendary. */
+  function legendaryWeapons(): GameData {
+    const data = testData();
+    data.economyConfig.gacha.rates = { legendary: 1, epic: 0 };
+    return data;
+  }
+
+  it("T336: at max fate points the next legendary is the locked target and resets the count", () => {
+    const data = legendaryWeapons();
+    const target = data.banners[WEAPONS]!.pool.legendary[0]!;
+    const profile = withJade(data, 5000);
+    profile.epitomized[WEAPONS] = { targetId: target, points: data.banners[WEAPONS]!.epitomized!.maxPoints };
+    const result = weaponPull(data, profile, 1);
+    expect(result.results[0]).toMatchObject({ itemId: target, rarity: "legendary", epitomizedHit: true });
+    expect(result.profile.epitomized[WEAPONS]).toEqual({ targetId: target, points: 0 });
+  });
+
+  it("T337: a legendary miss adds a point; a natural hit on the target resets it", () => {
+    const data = legendaryWeapons();
+    const target = data.banners[WEAPONS]!.pool.legendary[0]!;
+    const set = setEpitomizedTarget(data, withJade(data, 50_000), WEAPONS, target);
+    if (!set.ok) throw new Error(set.error);
+    let misses = 0, hits = 0;
+    let profile = set.profile;
+    for (let seed = 1; seed <= 40 && (misses === 0 || hits === 0 || profile.epitomized[WEAPONS]!.points < 2); seed++) {
+      const before = profile.epitomized[WEAPONS]!.points;
+      const result = weaponPull(data, profile, 1, seed);
+      profile = result.profile;
+      if (result.results[0]!.itemId === target) {
+        hits++;
+        expect(result.results[0]!.epitomizedHit).toBeUndefined(); // natural hit, not the guarantee
+        expect(profile.epitomized[WEAPONS]!.points).toBe(0);
+      } else {
+        misses++;
+        expect(profile.epitomized[WEAPONS]!.points).toBe(Math.min(before + 1, data.banners[WEAPONS]!.epitomized!.maxPoints));
+      }
+    }
+    expect(misses).toBeGreaterThan(0);
+    expect(hits).toBeGreaterThan(0);
+  });
+
+  it("T338: switching or clearing the target drops accumulated points", () => {
+    const data = testData();
+    const pool = data.banners[WEAPONS]!.pool.legendary;
+    const first = setEpitomizedTarget(data, createProfile(data), WEAPONS, pool[0]!);
+    if (!first.ok) throw new Error(first.error);
+    const charged = structuredClone(first.profile);
+    charged.epitomized[WEAPONS] = { targetId: pool[0]!, points: 2 };
+    // Same target again keeps the points; a different target resets them.
+    const same = setEpitomizedTarget(data, charged, WEAPONS, pool[0]!);
+    if (!same.ok) throw new Error(same.error);
+    expect(same.profile.epitomized[WEAPONS]!.points).toBe(2);
+    const swapped = setEpitomizedTarget(data, charged, WEAPONS, pool[1]!);
+    if (!swapped.ok) throw new Error(swapped.error);
+    expect(swapped.profile.epitomized[WEAPONS]).toEqual({ targetId: pool[1], points: 0 });
+    const cleared = clearEpitomizedTarget(data, swapped.profile, WEAPONS);
+    if (!cleared.ok) throw new Error(cleared.error);
+    expect(cleared.profile.epitomized[WEAPONS]).toBeUndefined();
+    expect(charged.epitomized[WEAPONS]!.points).toBe(2); // input untouched
+  });
+
+  it("T339: without a target the weapon banner rolls its pool and stores no points", () => {
+    const data = legendaryWeapons();
+    const result = weaponPull(data, withJade(data, 5000), 10);
+    expect(result.results.every((entry) => entry.rarity === "legendary")).toBe(true);
+    expect(result.results.every((entry) => entry.epitomizedHit === undefined)).toBe(true);
+    expect(result.profile.epitomized).toEqual({});
+  });
+
+  it("T340: epitomized targets validate and survive parseProfile with clamped points", () => {
+    const data = testData();
+    const pool = data.banners[WEAPONS]!.pool.legendary;
+    expect(setEpitomizedTarget(data, createProfile(data), BANNER, "m05")).toMatchObject({ ok: false });
+    expect(setEpitomizedTarget(data, createProfile(data), WEAPONS, "m05")).toMatchObject({ ok: false });
+    expect(clearEpitomizedTarget(data, createProfile(data), BANNER)).toMatchObject({ ok: false });
+    const stored = JSON.parse(JSON.stringify(withJade(data, 0)));
+    stored.epitomized = {
+      [WEAPONS]: { targetId: pool[0], points: 99 },
+      banner_gone: { targetId: pool[0], points: 1 },
+      [BANNER]: { targetId: "m05", points: 1 },
+    };
+    const parsed = parseProfile(data, stored).profile;
+    expect(parsed.epitomized).toEqual({ [WEAPONS]: { targetId: pool[0], points: data.banners[WEAPONS]!.epitomized!.maxPoints } });
   });
 });

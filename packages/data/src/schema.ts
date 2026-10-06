@@ -514,6 +514,11 @@ export const bannerDefSchema = z.object({
       }),
     })).min(1),
   }).optional(),
+  /** Epitomized Path (spec P6): legendary rolls missing the locked target add a
+   *  point; at `maxPoints` the next legendary is the target. */
+  epitomized: z.object({
+    maxPoints: z.number().int().gte(1),
+  }).optional(),
 });
 
 export const achievementDefSchema = z.object({

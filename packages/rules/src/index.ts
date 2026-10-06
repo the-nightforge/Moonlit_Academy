@@ -88,7 +88,7 @@ export { ratingChange, tierFor, RATING_START } from "./meta/rating";
 export { applyPvpResult, buyHonorItem, HONOR_PER_DAY } from "./meta/honor";
 export { applyCoopResult } from "./meta/coop-rewards";
 export type { CoopResultOpts, CoopRewards } from "./meta/coop-rewards";
-export { featuredEntry, featuredRotationEnd, grantHeroItem, legendaryRate, normalizePity, pullMany, reservedFeaturedHeroes } from "./meta/gacha";
+export { clearEpitomizedTarget, featuredEntry, featuredRotationEnd, grantHeroItem, legendaryRate, normalizePity, pullMany, reservedFeaturedHeroes, setEpitomizedTarget } from "./meta/gacha";
 export { buildLoadout, buildPvpLoadout } from "./meta/loadout";
 export { buyShopItem } from "./meta/shop";
 export type { PullResult } from "./meta/gacha";

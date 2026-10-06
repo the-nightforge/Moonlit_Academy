@@ -551,6 +551,10 @@ export interface BannerDef {
   pityGroup?: string;
   pool: Record<Rarity, string[]>;
   featured?: { rateUp: number; rotation: FeaturedRotationEntry[] };
+  /** Opt-in Epitomized Path (spec P6): the player locks one pool.legendary item;
+   *  legendary rolls that miss it add a point, at `maxPoints` the next legendary
+   *  is the target. Currently weapon banners only. */
+  epitomized?: { maxPoints: number };
 }
 
 /** One-time, auto-claimed achievement (`14` §8). */

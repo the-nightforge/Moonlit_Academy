@@ -29,6 +29,7 @@ export function createProfile(data: GameData): Profile {
     weapons: {},
     relics: {},
     pity: {},
+    epitomized: {},
     missions: emptyMissions(),
     shop: { weekKey: "", bought: {} },
     honorShop: { weekKey: "", monthKey: "", bought: {}, boughtMonth: {} },
@@ -198,6 +199,15 @@ export function parseProfile(data: GameData, raw: unknown): { profile: Profile; 
       const group = profile.pity[banner.pityGroup!];
       if (!group || legacy.sinceLegendary > group.sinceLegendary) profile.pity[banner.pityGroup!] = legacy;
       delete profile.pity[banner.id];
+    }
+  }
+  if (isRecord(raw.epitomized)) {
+    for (const [bannerId, entry] of Object.entries(raw.epitomized)) {
+      const banner = data.banners[bannerId];
+      if (!banner?.epitomized || !isRecord(entry)) continue;
+      const targetId = typeof entry.targetId === "string" ? entry.targetId : "";
+      if (!banner.pool.legendary.includes(targetId)) continue;
+      profile.epitomized[bannerId] = { targetId, points: Math.min(banner.epitomized.maxPoints, count(entry.points)) };
     }
   }
   if (isRecord(raw.missions)) {

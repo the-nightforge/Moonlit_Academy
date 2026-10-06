@@ -1,11 +1,13 @@
 import type { FastifyInstance } from "fastify";
-import { pullMany } from "rules";
+import { clearEpitomizedTarget, pullMany, setEpitomizedTarget } from "rules";
 import { z } from "zod";
 import type { AppContext } from "../context";
 
 export const HISTORY_PAGE_SIZE = 20;
 
 const pullBody = z.object({ count: z.union([z.literal(1), z.literal(10)]) });
+/** `null` clears the path; a string locks that legendary as the target (spec P6). */
+const pathBody = z.object({ targetId: z.string().max(64).nullable() });
 const historyQuery = z.object({
   banner: z.string().max(64).optional(),
   page: z.coerce.number().int().min(0).max(10_000).default(0),
@@ -42,7 +44,18 @@ export function registerGachaRoutes(app: FastifyInstance, ctx: AppContext): void
       gacha: data.economyConfig.gacha,
       pullCost: data.economyConfig.pullCost,
       pity: profile.pity,
+      epitomized: profile.epitomized,
     };
+  });
+
+  app.post<{ Params: { bannerId: string } }>("/api/gacha/:bannerId/path", async (request) => {
+    const accountId = await ctx.requireAccount(request);
+    const { targetId } = ctx.parseBody(pathBody, request.body ?? {});
+    const { bannerId } = request.params;
+    return ctx.mutateProfile(accountId, request, (profile) =>
+      targetId === null
+        ? clearEpitomizedTarget(data, profile, bannerId)
+        : setEpitomizedTarget(data, profile, bannerId, targetId));
   });
 
   app.post<{ Params: { bannerId: string } }>("/api/gacha/:bannerId/pull", async (request) => {

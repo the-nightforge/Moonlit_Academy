@@ -36,7 +36,10 @@ describe("phase 7a heroes — wave 1", () => {
       expect(hero.cardIds).toHaveLength(6);
       expect(hero.lockedCardIds).toHaveLength(6);
       expect(data.pvpConfig.heroStats[id]).toBeDefined();
-      expect(data.banners.banner_heroes!.pool[hero.rarity]).toContain(id);
+      // Legendary wave heroes are either base pool or weekly rotating slots.
+      const rotation = data.banners.banner_nguyet_tuong!.featured!.rotation.map((entry) => entry.heroId);
+      const inPool = data.banners.banner_heroes!.pool[hero.rarity].includes(id) || rotation.includes(id);
+      expect(inPool).toBe(true);
     }
     expect(data.cards.f01_nguyet_hoa_chieu_the!.token).toBe(true);
   });

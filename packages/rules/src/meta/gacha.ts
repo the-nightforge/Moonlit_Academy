@@ -48,6 +48,8 @@ export interface PullResult {
   outcome: "newHero" | "constellation" | "moonStar" | "newWeapon" | "refinement" | "newRelic" | "resonance" | "maxed";
   /** True when a featured banner's rate-up gave the week's hero. */
   featuredHit?: boolean;
+  /** True when an Epitomized Path guarantee gave the locked target (spec P6). */
+  epitomizedHit?: boolean;
   /** Constellation after a duplicate raised it. */
   constellation?: number;
   /** Refinement / resonance after a duplicate raised it (`14` §13.1). */
@@ -223,6 +225,11 @@ function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: 
 
   let itemId: string;
   let featuredHit = false;
+  let epitomizedHit = false;
+  const path = rarity === "legendary" && banner.epitomized
+    ? profile.epitomized[banner.id]
+    : undefined;
+  const pathValid = path !== undefined && heroPool.legendary.includes(path.targetId);
   if (rarity === "legendary" && entry) {
     const fallback = heroPool.legendary;
     if (fallback.length === 0 || draw() < banner.featured!.rateUp) {
@@ -231,6 +238,10 @@ function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: 
     } else {
       itemId = fallback[Math.floor(draw() * fallback.length)]!;
     }
+  } else if (path && pathValid && path.points >= banner.epitomized!.maxPoints) {
+    itemId = path.targetId;
+    epitomizedHit = true;
+    path.points = 0;
   } else {
     let candidates = (rarity === "legendary" ? heroPool : lowerPool)[rarity]!;
     if (gacha.newPlayerEpicHero && banner.kind === "hero" && rarity === "epic") {
@@ -238,11 +249,41 @@ function pullOnce(data: GameData, profile: Profile, bannerId: string, rngState: 
       if (unowned.length > 0) candidates = unowned;
     }
     itemId = candidates[Math.floor(draw() * candidates.length)]!;
+    if (path && pathValid) path.points = itemId === path.targetId ? 0 : path.points + 1;
   }
   const result = banner.kind === "hero"
     ? grantHero(data, profile, itemId, rarity)
     : grantGear(data, profile, banner.kind, itemId, rarity);
-  return { result: featuredHit ? { ...result, featuredHit: true } : result, rngState: rng };
+  return { result: featuredHit || epitomizedHit ? { ...result, featuredHit: featuredHit || undefined, epitomizedHit: epitomizedHit || undefined } : result, rngState: rng };
+}
+
+/** Locks an Epitomized Path target on a banner; switching targets resets points (spec P6). */
+export function setEpitomizedTarget(
+  data: GameData,
+  profile: Profile,
+  bannerId: string,
+  targetId: string,
+): { ok: true; profile: Profile } | { ok: false; error: string } {
+  const banner = data.banners[bannerId];
+  if (!banner?.epitomized) return { ok: false, error: "banner has no epitomized path" };
+  if (!banner.pool.legendary.includes(targetId)) return { ok: false, error: "unknown target" };
+  const next = clone(profile);
+  const current = next.epitomized[bannerId];
+  next.epitomized[bannerId] = { targetId, points: current?.targetId === targetId ? current.points : 0 };
+  return { ok: true, profile: next };
+}
+
+/** Drops the Epitomized Path on a banner; accumulated points are lost (spec P6). */
+export function clearEpitomizedTarget(
+  data: GameData,
+  profile: Profile,
+  bannerId: string,
+): { ok: true; profile: Profile } | { ok: false; error: string } {
+  const banner = data.banners[bannerId];
+  if (!banner?.epitomized) return { ok: false, error: "banner has no epitomized path" };
+  const next = clone(profile);
+  delete next.epitomized[bannerId];
+  return { ok: true, profile: next };
 }
 
 /** Pays for and performs `count` pulls (1 or 10) with the server's seed (`14` §9). */

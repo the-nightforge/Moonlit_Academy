@@ -88,6 +88,9 @@ export interface Profile {
   weapons: Record<string, { refinement: number }>;
   relics: Record<string, { resonance: number }>;
   pity: Record<string, { sinceEpic: number; sinceLegendary: number }>;
+  /** Epitomized Path per banner (spec P6): locked legendary target and the
+   *  count of legendary rolls that missed it. Keyed by banner id, not pityGroup. */
+  epitomized: Record<string, { targetId: string; points: number }>;
   missions: MissionState;
   /** Moon star shop purchases this week (`14` §11). */
   shop: { weekKey: string; bought: Record<string, number> };
