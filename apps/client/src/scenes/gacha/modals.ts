@@ -225,23 +225,36 @@ export class GachaModals {
     s.text(layer, 640, 108, `Trượt ${banner.epitomized.maxPoints} lần → Legendary kế chắc chắn là mục tiêu. Đổi/hủy mục tiêu mất điểm.`, 13, "#a8bbd2").setOrigin(0.5);
     const path = session.profile.epitomized[s.bannerId];
     s.text(layer, 640, 136, path ? `Đang khóa: ${itemName(data, path.targetId)} — ${path.points}/${banner.epitomized.maxPoints} điểm` : "Chưa khóa mục tiêu nào", 14, path ? "#f3d98c" : "#8fa2bd").setOrigin(0.5);
-    const rows = s.add.container(0, 0); layer.add(rows);
-    banner.pool.legendary.forEach((id, index) => {
-      const y = 196 + index * 62, locked = path?.targetId === id;
-      const row = roundedPanel(s, 640, y, 680, 52, locked ? 0x2c3a55 : 0x14243a, 0.95, locked ? 0xe8c784 : 0x53627d, 10);
-      rows.add(row);
-      const thumb = s.image(row, `weapons:${id}`, -298, 0, 40, 40);
-      if (!thumb) s.image(row, "ui:gear", -298, 0, 40, 40);
-      s.text(row, -266, -10, itemName(data, id), 15, locked ? "#f4dfb2" : COLORS.text);
-      s.text(row, -266, 12, session.profile.weapons[id] ? `Tinh Luyện ${session.profile.weapons[id]!.refinement}` : "Chưa sở hữu", 11, "#8fa2bd");
-      if (locked) s.text(row, 300, 0, "● MỤC TIÊU", 12, "#e8c784").setOrigin(1, 0.5);
-      const hit = s.add.rectangle(0, 0, 680, 52, 0, 0);
-      row.add(hit);
+    // Grid: 4 columns, second row centered when it isn't full.
+    const cols = 4, cw = 168, ch = 186, gapX = 14, gapY = 12;
+    const ids = banner.pool.legendary;
+    ids.forEach((id, index) => {
+      const gridRow = Math.floor(index / cols), gridCol = index % cols;
+      const inRow = Math.min(cols, ids.length - gridRow * cols);
+      const rowW = inRow * cw + (inRow - 1) * gapX;
+      const x = 640 - rowW / 2 + gridCol * (cw + gapX) + cw / 2;
+      const y = 280 + gridRow * (ch + gapY);
+      const locked = path?.targetId === id;
+      const cell = roundedPanel(s, x, y, cw, ch, locked ? 0x2c3a55 : 0x14243a, 0.95, locked ? 0xe8c784 : 0x53627d, 12);
+      layer.add(cell);
+      const thumb = s.image(cell, `weapons:${id}`, 0, -18, 116, 116);
+      if (!thumb) s.image(cell, "ui:gear", 0, -18, 60, 60);
+      if (locked) {
+        const tag = s.add.graphics();
+        tag.fillStyle(0xe8c784, 0.92);
+        tag.fillRoundedRect(-cw * 0.33, -ch / 2 + 5, cw * 0.66, 18, 8);
+        cell.add(tag);
+        s.text(cell, 0, -ch / 2 + 14, "MỤC TIÊU", 10, "#151c30").setOrigin(0.5);
+      }
+      s.text(cell, 0, 52, itemName(data, id), 13, locked ? "#f4dfb2" : COLORS.text, cw - 12).setOrigin(0.5).setAlign("center");
+      s.text(cell, 0, 72, session.profile.weapons[id] ? `Tinh Luyện ${session.profile.weapons[id]!.refinement}` : "Chưa sở hữu", 11, "#8fa2bd").setOrigin(0.5);
+      const hit = s.add.rectangle(0, 0, cw, ch, 0, 0);
+      cell.add(hit);
       if (!locked) {
         hit.setInteractive({ useHandCursor: true });
         hit.on("pointerup", () => void this.selectPath(id));
-        hit.on("pointerover", () => row.setAlpha(0.85));
-        hit.on("pointerout", () => row.setAlpha(1));
+        hit.on("pointerover", () => cell.setAlpha(0.85));
+        hit.on("pointerout", () => cell.setAlpha(1));
       }
     });
     s.button(layer, 512, 622, 170, "Đóng", () => { this.close(); s.render(); });
