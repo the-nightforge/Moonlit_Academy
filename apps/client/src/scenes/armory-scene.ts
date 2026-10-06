@@ -4,11 +4,16 @@ import type { CardDef, UpgradeKind } from "rules";
 import { errorText, mutate } from "../account";
 import { session } from "../session";
 import { showCardTooltip } from "../ui/card-tooltip";
+import { addEquipmentArt, preloadEquipmentArt } from "../ui/equipment-art";
+import { roundedPanel } from "../ui/rounded-panel";
 import { COLORS, RARITY_COLORS, RARITY_LABELS, TEXT_BASE, useDesignCamera } from "../ui/theme";
 import { addButton, addScreenHeader, addTabs, addText, showToast } from "../ui/widgets";
 
 const WIDTH = 1280;
 const MAX_LEVEL = 5;
+const PAGE_SIZE = 10;
+const DETAIL_X = 770;
+const DETAIL_WIDTH = 460;
 type Tab = "weapons" | "relics";
 
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -18,6 +23,7 @@ export class ArmoryScene extends Phaser.Scene {
   private root!: Phaser.GameObjects.Container;
   private tab: Tab = "weapons";
   private selected = "";
+  private page = 0;
   private tooltip: Phaser.GameObjects.Container | null = null;
   /** An upgrade request is in flight (the button stays disabled). */
   private busy = false;
@@ -25,6 +31,8 @@ export class ArmoryScene extends Phaser.Scene {
   constructor() {
     super("armory");
   }
+
+  preload() { preloadEquipmentArt(this); }
 
   create() {
     useDesignCamera(this);
@@ -39,6 +47,7 @@ export class ArmoryScene extends Phaser.Scene {
   }
 
   private selectFirst() {
+    this.page = 0;
     this.selected = this.ids()[0] ?? "";
   }
 
@@ -68,7 +77,10 @@ export class ArmoryScene extends Phaser.Scene {
       },
     })));
 
-    this.ids().forEach((id, index) => {
+    const ids = this.ids();
+    const pages = Math.max(1, Math.ceil(ids.length / PAGE_SIZE));
+    this.page = Math.min(this.page, pages - 1);
+    ids.slice(this.page * PAGE_SIZE, (this.page + 1) * PAGE_SIZE).forEach((id, index) => {
       const def = this.tab === "weapons" ? data.weapons[id]! : data.relics[id]!;
       const level = this.level(id);
       const y = 132 + index * 50;
@@ -81,12 +93,24 @@ export class ArmoryScene extends Phaser.Scene {
         this.render();
       });
       this.root.add(row);
-      addText(this, this.root, 55, y, def.name, 15).setOrigin(0, 0.5);
+      addEquipmentArt(this, this.root, this.tab, id, 65, y, 32, 36)?.setAlpha(level ? 1 : 0.55);
+      addText(this, this.root, 90, y, def.name, 14).setOrigin(0, 0.5);
       const tag = this.tab === "weapons" ? "R" : "CM";
       addText(this, this.root, 405, y, level ? `${tag}${level}` : "chưa có", 13, level ? COLORS.gold : COLORS.dimText).setOrigin(1, 0.5);
     });
+    if (pages > 1) {
+      const move = (delta: number) => { this.page += delta; this.render(); };
+      addButton(this, this.root, 95, 640, 105, "Trước", () => move(-1), this.page > 0);
+      addText(this, this.root, 230, 640, `${this.page + 1}/${pages}`, 14, COLORS.dimText).setOrigin(0.5);
+      addButton(this, this.root, 365, 640, 105, "Sau", () => move(1), this.page < pages - 1);
+    }
 
     if (this.selected) {
+      this.root.add(roundedPanel(this, 610, 427, 280, 432, 0x101b2c, 1, COLORS.panelBorder, 18));
+      if (!addEquipmentArt(this, this.root, this.tab, this.selected, 610, 427, 256, 408)) {
+        addText(this, this.root, 610, 416, "Chưa có art", 17, COLORS.dimText).setOrigin(0.5);
+        addText(this, this.root, 610, 450, this.tab === "weapons" ? "Binh Khí" : "Nguyệt Bảo", 13, COLORS.dimText).setOrigin(0.5);
+      }
       if (this.tab === "weapons") this.renderWeapon(this.selected);
       else this.renderRelic(this.selected);
     }
@@ -96,8 +120,8 @@ export class ArmoryScene extends Phaser.Scene {
   private header(name: string, rarity: keyof typeof RARITY_LABELS, subtitle: string, level: number | undefined, tag: string) {
     const x = 470;
     addText(this, this.root, x, 118, name, 24, COLORS.gold);
-    addText(this, this.root, x, 150, `${RARITY_LABELS[rarity]}  ·  ${subtitle}`, 14, COLORS.dimText);
-    addText(this, this.root, x, 174, level ? `Đang có: ${tag} ${level}/${MAX_LEVEL}` : "Chưa sở hữu", 15, level ? COLORS.gold : "#ff8080");
+    addText(this, this.root, x, 153, `${RARITY_LABELS[rarity]}  ·  ${subtitle}`, 13, COLORS.dimText).setWordWrapWidth(760);
+    addText(this, this.root, x, 190, level ? `Đang có: ${tag} ${level}/${MAX_LEVEL}` : "Chưa sở hữu", 14, level ? COLORS.gold : "#ff8080");
   }
 
   private renderWeapon(id: string) {
@@ -109,10 +133,10 @@ export class ArmoryScene extends Phaser.Scene {
       ? `Bản mệnh: ${data.heroes[def.signatureHeroId]?.name ?? def.signatureHeroId} (nội tại mạnh hơn khi Hero này mang)`
       : `Vũ khí chung (${capitalize(def.archetype ?? "")})`;
     this.header(def.name, def.rarity, subtitle, owned, "Tinh Luyện");
-    const x = 470;
+    const x = DETAIL_X;
     const card = weaponAt(def, shown).card;
     const cardDef: CardDef = { ...card, id: def.id, ownerId: def.signatureHeroId ?? "" };
-    const row = this.add.rectangle(x, 214, 700, 36, 0x1f3a2a).setOrigin(0, 0.5).setStrokeStyle(1, 0xe08a3c);
+    const row = this.add.rectangle(x, 232, DETAIL_WIDTH, 40, 0x1f3a2a).setOrigin(0, 0.5).setStrokeStyle(1, 0xe08a3c);
     row.setInteractive();
     row.on("pointerover", () => {
       this.tooltip?.destroy();
@@ -123,35 +147,39 @@ export class ArmoryScene extends Phaser.Scene {
       this.tooltip = null;
     });
     this.root.add(row);
-    addText(this, this.root, x + 12, 214, `⚔ Lá Binh Khí R${shown}: ${card.cost} · ${card.name} ×${card.copies}  (di chuột để xem)`, 14).setOrigin(0, 0.5);
+    addText(this, this.root, x + 12, 232, `⚔ R${shown}: ${card.cost} · ${card.name} ×${card.copies}\nDi chuột để xem lá Binh Khí`, 13).setOrigin(0, 0.5).setWordWrapWidth(DETAIL_WIDTH - 24);
 
-    addText(this, this.root, x, 256, "Tinh Luyện (quay trùng để tăng)", 15);
+    addText(this, this.root, x, 266, "Tinh Luyện (quay trùng để tăng)", 14);
+    let y = 296;
     const levels = [`Lá: ${def.card.text} — Nội tại: ${def.text}`, ...def.refinement.map((entry) => entry.text)];
     levels.forEach((text, index) => {
       const reached = owned !== undefined && owned > index;
-      const line = this.add.text(x, 284 + index * 48, `${reached ? "★" : "☆"} R${index + 1}. ${text}`, {
-        ...TEXT_BASE, fontSize: "13px", color: reached ? COLORS.gold : COLORS.dimText, wordWrap: { width: 760 },
+      const line = this.add.text(x, y, `${reached ? "★" : "☆"} R${index + 1}. ${text}`, {
+        ...TEXT_BASE, fontSize: "13px", color: reached ? COLORS.gold : COLORS.dimText, wordWrap: { width: DETAIL_WIDTH },
       });
       this.root.add(line);
+      y += Math.max(40, line.height + 12);
     });
-    this.renderUpgrade(id, "weapon", 284 + levels.length * 48 + 12);
+    this.renderUpgrade(id, "weapon", y + 8);
   }
 
   private renderRelic(id: string) {
     const def = session.data.relics[id]!;
     const owned = this.level(id);
     this.header(def.name, def.rarity, "Mang 2 Nguyệt Bảo mỗi deck; có hiệu lực mọi trận", owned, "Cộng Minh");
-    const x = 470;
-    addText(this, this.root, x, 214, "Cộng Minh (quay trùng để tăng; mỗi cấp thay hẳn cấp trước)", 15);
+    const x = DETAIL_X;
+    addText(this, this.root, x, 220, "Cộng Minh (quay trùng để tăng; mỗi cấp thay hẳn cấp trước)", 14).setWordWrapWidth(DETAIL_WIDTH);
+    let y = 272;
     def.resonance.forEach((level, index) => {
       const current = owned === index + 1;
       const reached = owned !== undefined && owned > index;
-      const line = this.add.text(x, 244 + index * 52, `${current ? "▶" : reached ? "★" : "☆"} CM${index + 1}. ${level.text}`, {
-        ...TEXT_BASE, fontSize: "13px", color: current ? COLORS.gold : reached ? COLORS.text : COLORS.dimText, wordWrap: { width: 760 },
+      const line = this.add.text(x, y, `${current ? "▶" : reached ? "★" : "☆"} CM${index + 1}. ${level.text}`, {
+        ...TEXT_BASE, fontSize: "13px", color: current ? COLORS.gold : reached ? COLORS.text : COLORS.dimText, wordWrap: { width: DETAIL_WIDTH },
       });
       this.root.add(line);
+      y += Math.max(44, line.height + 12);
     });
-    this.renderUpgrade(id, "relic", 244 + def.resonance.length * 52 + 12);
+    this.renderUpgrade(id, "relic", y + 8);
   }
 
   /**
@@ -162,7 +190,7 @@ export class ArmoryScene extends Phaser.Scene {
   private renderUpgrade(id: string, kind: UpgradeKind, y: number) {
     const level = this.level(id);
     if (level === undefined) return;
-    const x = 470;
+    const x = DETAIL_X;
     const cost = upgradeCost(session.data, kind, id, level);
     if (cost === null) {
       addText(this, this.root, x, y, "Đã đạt cấp tối đa", 15, COLORS.gold);
@@ -175,8 +203,8 @@ export class ArmoryScene extends Phaser.Scene {
     addText(
       this, this.root, x, y,
       `Nâng Cấp → ${nextTag} · giá ${cost} ${material} · đang có ${have}`,
-      14, enough ? COLORS.text : "#ff8080",
-    );
+      13, enough ? COLORS.text : "#ff8080",
+    ).setWordWrapWidth(DETAIL_WIDTH);
     addButton(this, this.root, x + 90, y + 34, 180, "Nâng Cấp", () => this.upgrade(kind, id), session.online && enough && !this.busy);
   }
 

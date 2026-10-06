@@ -7,6 +7,7 @@ import { api } from "../api";
 import { session } from "../session";
 import { loadCombatSettings } from "../ui/combat-settings";
 import { roundedPanel } from "../ui/rounded-panel";
+import { preloadEquipmentArt } from "../ui/equipment-art";
 import { COLORS, CURRENCY_LABELS, RARITY_COLORS, RARITY_LABELS, useDesignCamera, visibleWorld } from "../ui/theme";
 import { addText, alertModal, isModalOpen, showToast } from "../ui/widgets";
 
@@ -44,6 +45,7 @@ export class GachaScene extends Phaser.Scene {
   constructor() { super("gacha"); }
 
   preload() {
+    preloadEquipmentArt(this);
     const heroes = new Set(Object.values(session.data.banners)
       .filter(banner => banner.kind === "hero")
       .flatMap(banner => [...Object.values(banner.pool).flat(), ...(banner.featured?.rotation ?? []).map(entry => entry.heroId)]));
@@ -375,14 +377,16 @@ export class GachaScene extends Phaser.Scene {
     root.add(this.add.rectangle(0, -h/2 + 17, w - 16, 24, color, 0.22));
     this.text(root, 0, -h/2 + 17, RARITY_LABELS[result.rarity], single ? 18 : 14, `#${color.toString(16).padStart(6,"0")}`).setOrigin(0.5);
     const hero = data.heroes[result.itemId], weapon = data.weapons[result.itemId];
-    const artKey = hero ? `heroes:${result.itemId}` : weapon ? "gacha:weapon_banner" : "gacha:relic_banner";
+    const equipmentKey = `${weapon ? "weapons" : "relics"}:${result.itemId}`;
+    const hasEquipmentArt = !hero && this.textures.exists(equipmentKey);
+    const artKey = hero ? `heroes:${result.itemId}` : hasEquipmentArt ? equipmentKey : weapon ? "gacha:weapon_banner" : "gacha:relic_banner";
     const artH = single ? 294 : hero ? 118 : 102, artY = -h/2 + 40 + artH/2;
     const art = this.image(root, artKey, 0, artY, w - 20, artH);
     if (!art) this.image(root, hero ? "ui:star" : "ui:gear", 0, artY, 60, 60);
     const nameY = single ? 126 : 44;
     this.text(root, 0, nameY, itemName(data,result.itemId), single ? 24 : 16, "#f3e5c7", w - 24).setOrigin(0.5,0).setAlign("center");
     this.text(root, 0, single ? 192 : 84, this.outcomeText(result), single ? 17 : 12, "#dbc28d", w - 20).setOrigin(0.5,0).setAlign("center");
-    if (!hero) this.text(root, 0, single ? 110 : 30, "Minh họa loại trang bị", single ? 12 : 10, "#9babc3").setOrigin(0.5);
+    if (!hero && !hasEquipmentArt) this.text(root, 0, single ? 110 : 30, "Minh họa loại trang bị", single ? 12 : 10, "#9babc3").setOrigin(0.5);
   }
 
   private rarityVfx(card: ResultCard) {

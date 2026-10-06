@@ -4,6 +4,7 @@ import type { CardDef } from "rules";
 import { errorText, mutate } from "../account";
 import { session } from "../session";
 import { showCardTooltip } from "../ui/card-tooltip";
+import { addEquipmentArt, preloadEquipmentArt, type EquipmentCategory } from "../ui/equipment-art";
 import { COLORS, OWNER_COLORS, RARITY_COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
 import { addButton, addScreenHeader, addText, alertModal, confirmModal, promptModal } from "../ui/widgets";
 import { describeDeckError } from "./deck-select-scene";
@@ -11,12 +12,14 @@ import { describeDeckError } from "./deck-select-scene";
 const WIDTH = 1280;
 const COLUMN_W = 400;
 const ROW_H = 30;
+const GEAR_PAGE_SIZE = 11;
 
 export class DeckBuilderScene extends Phaser.Scene {
   private root!: Phaser.GameObjects.Container;
   private tooltip: Phaser.GameObjects.Container | null = null;
   /** Open gear picker: a hero's weapon slot or a relic slot index. */
   private picker: { kind: "weapon"; heroId: string } | { kind: "relic"; slot: number } | null = null;
+  private gearPage = 0;
   /** "Xem theo luật PvP" (`17` §7.2): trial heroes, free gear, everything at R1/CM1. */
   private pvpView = false;
   /** The deck as it was on entry: leaving with changes asks first. */
@@ -25,6 +28,8 @@ export class DeckBuilderScene extends Phaser.Scene {
   constructor() {
     super("deck-builder");
   }
+
+  preload() { preloadEquipmentArt(this); }
 
   create() {
     useDesignCamera(this);
@@ -141,6 +146,7 @@ export class DeckBuilderScene extends Phaser.Scene {
   }
 
   private openPicker(picker: NonNullable<DeckBuilderScene["picker"]>) {
+    this.gearPage = 0;
     this.picker = picker;
     this.render();
   }
@@ -184,7 +190,9 @@ export class DeckBuilderScene extends Phaser.Scene {
     if (options.length === 0) {
       addText(this, layer, WIDTH / 2, 120, picker.kind === "weapon" ? "Chưa có vũ khí — quay ở Binh Khí Các" : "Chưa có Nguyệt Bảo — quay ở Nguyệt Bảo Các", 15, COLORS.dimText).setOrigin(0.5);
     }
-    options.forEach((id, index) => {
+    const pages = Math.max(1, Math.ceil(options.length / GEAR_PAGE_SIZE));
+    this.gearPage = Math.min(this.gearPage, pages - 1);
+    options.slice(this.gearPage * GEAR_PAGE_SIZE, (this.gearPage + 1) * GEAR_PAGE_SIZE).forEach((id, index) => {
       const y = 90 + index * 44;
       const free = freeIds.includes(id);
       if (picker.kind === "weapon") {
@@ -199,7 +207,7 @@ export class DeckBuilderScene extends Phaser.Scene {
           weapons[picker.heroId] = id;
           this.deck.weapons = weapons;
           close();
-        }, card, [`Nội tại R1: ${def.text}`, ...def.refinement.slice(0, refinement - 1).map((level, index) => `R${index + 2}: ${level.text}`)]);
+        }, card, [`Nội tại R1: ${def.text}`, ...def.refinement.slice(0, refinement - 1).map((level, index) => `R${index + 2}: ${level.text}`)], { category: "weapons", id });
       } else {
         const def = data.relics[id]!;
         const resonance = free ? 1 : session.profile.relics[id]!.resonance;
@@ -211,9 +219,15 @@ export class DeckBuilderScene extends Phaser.Scene {
           relicIds[picker.slot] = id;
           this.deck.relicIds = relicIds.filter((relicId) => relicId !== undefined && relicId !== null);
           close();
-        });
+        }, undefined, [], { category: "relics", id });
       }
     });
+    if (pages > 1) {
+      const move = (delta: number) => { this.gearPage += delta; this.render(); };
+      addButton(this, layer, WIDTH / 2 - 140, 612, 110, "Trước", () => move(-1), this.gearPage > 0);
+      addText(this, layer, WIDTH / 2, 612, `${this.gearPage + 1}/${pages}`, 14, COLORS.dimText).setOrigin(0.5);
+      addButton(this, layer, WIDTH / 2 + 140, 612, 110, "Sau", () => move(1), this.gearPage < pages - 1);
+    }
     addButton(this, layer, WIDTH / 2 - 110, 680, 200, "Bỏ trống", () => {
       if (picker.kind === "weapon") this.deck.weapons = { ...this.deck.weapons, [picker.heroId]: null };
       else this.deck.relicIds = (this.deck.relicIds ?? []).filter((_, slot) => slot !== picker.slot);
@@ -230,6 +244,7 @@ export class DeckBuilderScene extends Phaser.Scene {
     onPick: () => void,
     card?: CardDef,
     extra: string[] = [],
+    equipment?: { category: EquipmentCategory; id: string },
   ) {
     const row = this.add.rectangle(WIDTH / 2, y, 1000, 38, 0x141b33).setStrokeStyle(1, color);
     row.setInteractive({ useHandCursor: true });
@@ -247,7 +262,8 @@ export class DeckBuilderScene extends Phaser.Scene {
       });
     }
     layer.add(row);
-    layer.add(this.add.text(160, y, label, { ...TEXT_BASE, fontSize: "13px", color: COLORS.text, wordWrap: { width: 960 }, maxLines: 2 }).setOrigin(0, 0.5));
+    if (equipment) addEquipmentArt(this, layer, equipment.category, equipment.id, 174, y, 30, 32);
+    layer.add(this.add.text(202, y, label, { ...TEXT_BASE, fontSize: "13px", color: COLORS.text, wordWrap: { width: 914 }, maxLines: 2 }).setOrigin(0, 0.5));
   }
 
   private renderRow(heroId: string, cardId: string, x: number, y: number) {

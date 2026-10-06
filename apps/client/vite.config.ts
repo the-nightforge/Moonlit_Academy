@@ -20,7 +20,7 @@ function assetsManifest(): Plugin {
         if (!dir.isDirectory()) continue;
         const files: Record<string, string> = {};
         for (const file of readdirSync(join(root, dir.name))) {
-          if (file.startsWith(".")) continue;
+          if (file.startsWith(".") || !/\.(png|jpe?g|webp|svg)$/i.test(file)) continue;
           const key = file.replace(/\.[^.]+$/, "");
           // Prefer raster art (webp) while retaining any original SVG source.
           if (file.endsWith(".svg") && files[key]?.endsWith(".webp")) continue;
