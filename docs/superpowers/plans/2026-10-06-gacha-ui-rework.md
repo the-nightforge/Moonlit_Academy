@@ -78,12 +78,12 @@ Quy ước có sẵn: art `.webp` painterly, icon `ui/` có thể `.webp`/`.svg`
 | **P0** | `gacha/banner_nguyet_tuong_m01.webp`, `gacha/banner_nguyet_tuong_m08.webp`, `gacha/banner_nguyet_tuong_f08.webp` | 16:9, 1280×720 **mỗi file** | Splash riêng theo tướng tuần — mỗi file là một tác phẩm hoàn chỉnh (nền cổng trăng + tướng đó làm chủ thể). Scene map `featuredEntry.heroId → gacha:banner_nguyet_tuong_<heroId>` |
 | **P0** | `gacha/meteor_head.webp` + `gacha/meteor_tail.webp` | head ~96×96 đuôi vệt ~512×64, **grayscale sáng để tint** | Vệt sáng cinematic — tint lam `#7fb4ff` / tím `#c89cff` / kim `#ffcf6e` theo rarity, không cần 3 file |
 | **P0** | `gacha/frame_rare.webp`, `frame_epic.webp`, `frame_legendary.webp` | 2:3, ~550×825 | Khung thẻ kết quả theo rarity (hiện tô màu phẳng bằng graphics) |
-| **P1** | `gacha/halo_legendary.webp` | 512×512, radial | Vòng sáng/rune sau thẻ legendary khi reveal |
+| **P1** | `gacha/halo_legendary.webp` | 512×512, radial | Vòng sáng/rune sau thẻ legendary khi reveal — **đã gen 2026-10-06** |
 | **P1** | `gacha/banner_weapons.webp`, `gacha/banner_relics.webp` | upscale/redraw 16:9 1280×720 | `weapon_banner.webp`/`relic_banner.webp` hiện tồn tại nhưng chỉ ~khung nhỏ; cần bản full-screen |
 | **P1** | `ui/icon_history.webp`, `ui/icon_shop.webp`, `ui/icon_drawer.webp`, `ui/icon_camera.webp` | 48×48 | Icon nút nav/drawer/chụp ảnh (nếu §5 duyệt) |
-| **P2** | `gacha/dust_mote.webp` | 32×32 glow tròn | Hạt sáng nổi nền (hiện `spark` tạm dùng được, file riêng đẹp hơn) |
+| **P2** | `gacha/dust_mote.webp` | 32×32 glow tròn | Hạt sáng nổi nền — **đã gen 2026-10-06**, scene ưu tiên sprite mới, fallback `spark` |
 | **P2** | `audio/gacha_cast.mp3`, `audio/rarity_rare.mp3`, `audio/rarity_epic.mp3`, `audio/rarity_legendary.mp3`, `audio/ui_flip.mp3` | <1s–2s | SFX quay + sting theo rarity — **chưa có thư mục audio**, cần confirm thêm `audio/` vào pipeline |
-| **P2** | `ui/epitomized_moon.webp` | 96×96 | Icon "Nguyệt Ước" nếu duyệt §5e |
+| **P2** | `ui/epitomized_moon.webp` | 96×96 | Icon "Nguyệt Ước" — **đã gen 2026-10-06**, dùng trong panel và modal chọn mục tiêu |
 
 Tổng: **9 file P0** (banner ×4 gồm 3 splash xoay tua, meteor ×2, frame ×3). Halo thuộc P1 theo bảng trên. Nếu muốn giảm nhanh: bộ asset P0 đủ làm đầu vào cho P1–P3; frame rarity có thể giữ graphics-tô-màu tạm thời.
 
@@ -105,6 +105,14 @@ P0 chỉ chuẩn bị asset. Các thay đổi scene để sử dụng banner, ci
 - Trang xem: `output/gacha-p1-banners/index.html`; PNG nguồn và prompt nằm trong cùng thư mục.
 
 Phạm vi bổ sung này chỉ gồm hai banner được yêu cầu; các asset P1 khác và phần triển khai bố cục P1 vẫn theo phase riêng.
+
+### Halo, icon Nguyệt Ước và hạt sáng — hoàn tất 2026-10-06
+
+- [x] `gacha/halo_legendary.webp`: vòng sáng vàng radial 512×512 có tâm rỗng và alpha trong suốt, thay fallback `ui:moon_full` tại các điểm render Legendary đã có trên nhánh hiện tại.
+- [x] `ui/epitomized_moon.webp`: icon trăng vàng ôm tinh thạch xanh tím 96×96; preload và hiển thị ở tiêu đề panel Nguyệt Ước, modal chọn mục tiêu.
+- [x] `gacha/dust_mote.webp`: glow tròn 32×32 có alpha; thay sprite hạt nền bằng ảnh mới, giữ fallback `gacha:spark` khi chưa có texture.
+- Trang xem: `output/gacha-missing-assets/index.html`; PNG nguồn, prompt và thông tin kích thước/alpha nằm trong cùng thư mục.
+- Kiểm tra: WebP đúng kích thước và alpha; client TypeScript không có lỗi. Không thay rules/API của Nguyệt Ước.
 
 ## 5. Đề xuất ngoài layout — **đã duyệt** (2026-10-06)
 

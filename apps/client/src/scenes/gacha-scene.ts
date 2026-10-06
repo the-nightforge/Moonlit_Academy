@@ -62,7 +62,7 @@ export class GachaScene extends Phaser.Scene {
         ...Object.keys(session.data.banners), ...rotationSplashes,
         "meteor_head", "meteor_tail", "frame_rare", "frame_epic", "frame_legendary", "halo_legendary", "dust_mote"],
       heroes: [...heroes],
-      ui: ["cur_moonJade", "cur_moonStar", "cur_honor", "seal", "moon_full", "star", "gear"],
+      ui: ["cur_moonJade", "cur_moonStar", "cur_honor", "seal", "moon_full", "star", "gear", "epitomized_moon"],
     };
     for (const [category, ids] of Object.entries(selected)) {
       for (const id of ids) {
@@ -92,11 +92,12 @@ export class GachaScene extends Phaser.Scene {
     this.root = this.add.container(0, 0);
     this.enteredOnce = false;
     this.ambient = this.add.container(0, 0).setDepth(-1);
-    if (this.textures.exists("gacha:spark")) {
+    const ambientTexture = this.textures.exists("gacha:dust_mote") ? "gacha:dust_mote" : "gacha:spark";
+    if (this.textures.exists(ambientTexture)) {
       const bounds = visibleWorld(this);
       for (let i = 0; i < 12; i++) {
         const size = 14 + Math.random() * 22;
-        const spark = this.add.image(bounds.x + 60 + Math.random() * (bounds.w - 120), 110 + Math.random() * 420, "gacha:spark");
+        const spark = this.add.image(bounds.x + 60 + Math.random() * (bounds.w - 120), 110 + Math.random() * 420, ambientTexture);
         spark.setDisplaySize(size, size).setAlpha(0.25);
         this.ambient.add(spark);
         if (!this.reducedMotion) {
@@ -263,7 +264,8 @@ export class GachaScene extends Phaser.Scene {
     }
     if (epitomized) {
       const pathColor = path && path.points >= epitomized.maxPoints - 1 ? "#f3d98c" : "#aebed3";
-      this.text(this.root, 978, 364, "NGUYỆT ƯỚC", 12, "#bfad85");
+      this.image(this.root, "ui:epitomized_moon", 987, 371, 20, 20);
+      this.text(this.root, 1002, 364, "NGUYỆT ƯỚC", 12, "#bfad85");
       this.text(this.root, 978, 384, path ? `${itemName(data, path.targetId)} · ${path.points}/${epitomized.maxPoints}` : "Chưa khóa mục tiêu — chạm để chọn", 13, path ? pathColor : "#8fa2bd", 216);
       this.text(this.root, 1210, 378, "›", 18, "#8fa2bd").setOrigin(1, 0);
       const pathHit = this.add.rectangle(1092, 384, 264, 44, 0, 0);
@@ -741,6 +743,7 @@ export class GachaScene extends Phaser.Scene {
     const view = visibleWorld(this);
     layer.add(this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x030914, 0.8).setInteractive());
     layer.add(roundedPanel(this, 640, 360, 760, 620, 0x0f1e34, 0.99, 0xbba172, 20));
+    this.image(layer, "ui:epitomized_moon", 538, 76, 30, 30);
     this.text(layer, 640, 76, "NGUYỆT ƯỚC", 24, "#f3dfb5").setOrigin(0.5);
     this.text(layer, 640, 108, `Trượt ${banner.epitomized.maxPoints} lần → Legendary kế chắc chắn là mục tiêu. Đổi/hủy mục tiêu mất điểm.`, 13, "#a8bbd2").setOrigin(0.5);
     const path = session.profile.epitomized[this.bannerId];
