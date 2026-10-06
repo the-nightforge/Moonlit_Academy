@@ -239,13 +239,6 @@ export class GachaModals {
       layer.add(cell);
       const thumb = s.image(cell, `weapons:${id}`, 0, -18, 116, 116);
       if (!thumb) s.image(cell, "ui:gear", 0, -18, 60, 60);
-      if (locked) {
-        const tag = s.add.graphics();
-        tag.fillStyle(0xe8c784, 0.92);
-        tag.fillRoundedRect(-cw * 0.33, -ch / 2 + 5, cw * 0.66, 18, 8);
-        cell.add(tag);
-        s.text(cell, 0, -ch / 2 + 14, "MỤC TIÊU", 10, "#151c30").setOrigin(0.5);
-      }
       s.text(cell, 0, 52, itemName(data, id), 13, locked ? "#f4dfb2" : COLORS.text, cw - 12).setOrigin(0.5).setAlign("center");
       s.text(cell, 0, 72, session.profile.weapons[id] ? `Tinh Luyện ${session.profile.weapons[id]!.refinement}` : "Chưa sở hữu", 11, "#8fa2bd").setOrigin(0.5);
       const hit = s.add.rectangle(0, 0, cw, ch, 0, 0);
@@ -270,7 +263,7 @@ export class GachaModals {
       if (!s.alive) return;
       this.converting = false;
       this.pathPicker();
-      showToast(s, [targetId === null ? "Đã hủy Nguyệt Ước" : `Đã khóa mục tiêu: ${itemName(session.data, targetId)}`], 94);
+      showToast(s, [targetId === null ? "Đã hủy Nguyệt Ước" : `Đã khóa mục tiêu: ${itemName(session.data, targetId)}`], 695);
     } catch (error) {
       this.converting = false;
       if (!s.alive) return;

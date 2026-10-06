@@ -255,9 +255,14 @@ export class RowScroller {
   }
 }
 
-/** A message that fades out by itself (gifts, achievements). */
+/** A message that fades out by itself (gifts, achievements). A new toast replaces the previous one. */
 export function showToast(scene: Phaser.Scene, lines: string[], y = 110): void {
   if (lines.length === 0) return;
+  const previous = scene.data.get("toastObjects") as Phaser.GameObjects.GameObject[] | undefined;
+  previous?.forEach((obj) => {
+    scene.tweens.killTweensOf(obj);
+    obj.destroy();
+  });
   const text = scene.add
     .text(640, y, lines.join("\n"), { ...TEXT_BASE, fontSize: "15px", color: COLORS.gold, align: "center", lineSpacing: 4 })
     .setOrigin(0.5)
@@ -266,9 +271,12 @@ export function showToast(scene: Phaser.Scene, lines: string[], y = 110): void {
     .rectangle(640, y, text.width + 40, text.height + 20, 0x101830, 0.95)
     .setStrokeStyle(1, COLORS.goldFill)
     .setDepth(1000);
-  scene.tweens.add({ targets: [text, box], alpha: 0, delay: 2800, duration: 600, onComplete: () => {
+  const current = [text, box];
+  scene.data.set("toastObjects", current);
+  scene.tweens.add({ targets: current, alpha: 0, delay: 2800, duration: 600, onComplete: () => {
     text.destroy();
     box.destroy();
+    if (scene.data.get("toastObjects") === current) scene.data.remove("toastObjects");
   } });
 }
 
