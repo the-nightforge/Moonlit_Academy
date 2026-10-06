@@ -26,7 +26,6 @@ export class GachaScene extends Phaser.Scene {
   private modal: Phaser.GameObjects.Container | null = null;
   private modalCleanup: (() => void) | null = null;
   private bannerId = "";
-  private spotlightHeroId = "";
   private phase: "idle" | "pending" | "revealing" | "complete" = "idle";
   private alive = false;
   private generation = 0;
@@ -39,6 +38,9 @@ export class GachaScene extends Phaser.Scene {
   private ambient: Phaser.GameObjects.Container | null = null;
   private artTween: Phaser.Tweens.Tween | null = null;
   private enteredOnce = false;
+  private drawer: Phaser.GameObjects.Container | null = null;
+  private drawerPanel: Phaser.GameObjects.Container | null = null;
+  private countdownText: Phaser.GameObjects.Text | null = null;
 
   private get busy() { return this.phase !== "idle"; }
 
@@ -49,8 +51,12 @@ export class GachaScene extends Phaser.Scene {
     const heroes = new Set(Object.values(session.data.banners)
       .filter(banner => banner.kind === "hero")
       .flatMap(banner => [...Object.values(banner.pool).flat(), ...(banner.featured?.rotation ?? []).map(entry => entry.heroId)]));
+    const rotationSplashes = Object.values(session.data.banners)
+      .flatMap(banner => (banner.featured?.rotation ?? []).map(entry => `${banner.id}_${entry.heroId}`));
     const selected = {
-      gacha: ["altar", "card_back", "weapon_banner", "relic_banner", "spark"],
+      gacha: ["altar", "card_back", "weapon_banner", "relic_banner", "spark",
+        ...Object.keys(session.data.banners), ...rotationSplashes,
+        "meteor_head", "meteor_tail", "frame_rare", "frame_epic", "frame_legendary", "halo_legendary", "dust_mote"],
       heroes: [...heroes],
       ui: ["cur_moonJade", "cur_moonStar", "cur_honor", "seal", "moon_full", "star", "gear"],
     };
@@ -77,9 +83,10 @@ export class GachaScene extends Phaser.Scene {
     this.enteredOnce = false;
     this.ambient = this.add.container(0, 0).setDepth(-1);
     if (this.textures.exists("gacha:spark")) {
-      for (let i = 0; i < 9; i++) {
+      const bounds = visibleWorld(this);
+      for (let i = 0; i < 12; i++) {
         const size = 14 + Math.random() * 22;
-        const spark = this.add.image(360 + Math.random() * 560, 120 + Math.random() * 460, "gacha:spark");
+        const spark = this.add.image(bounds.x + 60 + Math.random() * (bounds.w - 120), 110 + Math.random() * 420, "gacha:spark");
         spark.setDisplaySize(size, size).setAlpha(0.25);
         this.ambient.add(spark);
         if (!this.reducedMotion) {
@@ -91,17 +98,31 @@ export class GachaScene extends Phaser.Scene {
       }
     }
     this.bannerId = Object.keys(session.data.banners)[0]!;
-    const spotlightPool = (session.data.banners[this.bannerId]?.pool.legendary ?? []).filter(id => session.data.heroes[id]);
-    this.spotlightHeroId = spotlightPool[Math.floor(Math.random() * spotlightPool.length)] ?? "";
     const onEsc = () => { if (!isModalOpen()) this.back(); };
+    const onArrows = (event: KeyboardEvent) => {
+      if (this.busy || this.modal || this.drawer || !this.alive) return;
+      const ids = Object.keys(session.data.banners);
+      const step = event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : event.key === "ArrowUp" || event.key === "ArrowLeft" ? -1 : 0;
+      if (!step) return;
+      const index = Math.max(0, ids.indexOf(this.bannerId));
+      this.bannerId = ids[(index + step + ids.length) % ids.length]!;
+      this.render();
+    };
     this.input.keyboard?.on("keydown-ESC", onEsc);
+    this.input.keyboard?.on("keydown", onArrows);
+    this.time.addEvent({ delay: 30_000, loop: true, callback: () => { if (this.alive && !this.modal) this.updateCountdown(); } });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.alive = false;
       this.generation++;
       this.historyRequest++;
       this.cancelReveal();
       this.closeModal();
+      this.drawer?.destroy();
+      this.drawer = null;
+      this.drawerPanel = null;
+      this.countdownText = null;
       this.input.keyboard?.off("keydown-ESC", onEsc);
+      this.input.keyboard?.off("keydown", onArrows);
       this.tweens.killAll();
       this.cards = [];
       this.results = null;
@@ -151,9 +172,19 @@ export class GachaScene extends Phaser.Scene {
     const enabled = !this.busy && !this.modal;
     const view = visibleWorld(this);
     this.root.add(this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x071222));
-    const altar = this.image(this.root, "gacha:altar", view.x + view.w / 2, view.y + view.h / 2, view.w, view.h);
-    if (altar) altar.setScale(Math.max(view.w / altar.width, view.h / altar.height)).setAlpha(0.86);
-    this.root.add(this.add.rectangle(640, 43, view.w, 86, 0x091425, 0.96));
+    const splash = this.image(this.root, this.splashKey(banner, featured), view.x + view.w / 2, view.y + view.h / 2, view.w, view.h);
+    if (splash) {
+      splash.setScale(Math.max(view.w / splash.width, view.h / splash.height));
+      if (!this.reducedMotion) {
+        this.artTween = this.tweens.add({ targets: splash, scaleX: splash.scaleX * 1.02, scaleY: splash.scaleY * 1.02, duration: 9000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+      }
+    }
+    const scrim = this.add.graphics();
+    scrim.fillGradientStyle(0x050c18, 0x050c18, 0x050c18, 0x050c18, 0, 0, 0.9, 0.9);
+    scrim.fillRect(0, 360, view.w, view.h - 360);
+    this.root.add(scrim);
+
+    this.root.add(this.add.rectangle(640, 43, view.w, 86, 0x091425, 0.92));
     this.button(this.root, 92, 42, 142, "◂ Quay lại", () => this.back(), enabled);
     this.text(this.root, 204, 23, "TRIỆU HỒI", 25, "#f3dfb1");
     this.text(this.root, 205, 54, "Dưới ánh trăng, duyên mới khởi sinh", 13, "#afbfd4");
@@ -164,109 +195,166 @@ export class GachaScene extends Phaser.Scene {
       this.text(this.root, currencyX + 22, 41, String(profile.currencies[key] ?? 0), 20, "#f3dfb1");
       currencyX += 168;
     }
-    const leftCol = this.add.container(0, 0), centerCol = this.add.container(0, 0), rightCol = this.add.container(0, 0);
-    this.root.add([leftCol, centerCol, rightCol]);
-    const KIND_ACCENT = { hero: 0xe8c784, weapon: 0x7f9cc4, relic: 0xb08ee0 } as const;
 
-    leftCol.add(roundedPanel(this, 170, 400, 284, 580, 0x0b192e, 0.91, 0x69748a, 16));
-    this.text(leftCol, 52, 126, "CHỌN DUYÊN TRIỆU HỒI", 13, "#bfad85");
-    Object.values(data.banners).forEach((entry, index) => {
-      const y = 208 + index * 89, selected = entry.id === this.bannerId;
-      const panel = roundedPanel(this, 170, y, 244, 72, selected ? 0x34405a : 0x14243a, 0.96, selected ? 0xe8c784 : 0x53627d, 12);
-      const hit = this.add.rectangle(0, 0, 244, 72, 0, 0);
-      panel.add(hit);
-      if (enabled && !selected) hit.setInteractive({ useHandCursor: true }).on("pointerup", () => {
-        if (this.busy || this.modal) return;
-        this.bannerId = entry.id; this.render();
-      });
-      const accent = this.add.graphics();
-      accent.fillStyle(KIND_ACCENT[entry.kind], 0.85);
-      accent.fillRoundedRect(-120.5, -34, 3, 68, 2);
-      panel.add(accent);
-      this.text(panel, -98, -13, entry.name, 18, selected ? "#f4dfb2" : COLORS.text);
-      this.text(panel, -98, 14, entry.featured ? "Tướng Legendary xoay tua tuần" : entry.kind === "hero" ? "Anh hùng trong thư viện" : entry.kind === "weapon" ? "Trang bị · Binh khí" : "Trang bị · Nguyệt bảo", 12, "#aab9d0");
-      leftCol.add(panel);
-    });
+    this.button(this.root, 140, 124, 176, "≡ Đổi duyên", () => this.toggleDrawer(), enabled);
+    this.text(this.root, 52, 448, banner.name, 30, "#f3dfb1").setStroke("#0a1424", 6);
+    const headline = featured
+      ? `★ ${itemName(data, featured.heroId)} — tướng tuần · ${percent(banner.featured!.rateUp)} Legendary`
+      : banner.kind === "hero" ? `${banner.pool.legendary.length} tướng Legendary thường trực`
+      : `${banner.pool.legendary.length} món Legendary trong banner`;
+    this.text(this.root, 52, 488, headline, 16, "#f0d9a8").setStroke("#0a1424", 5);
+    this.text(this.root, 52, 512, featured ? "Trượt rate-up: rơi đều vào 3 tướng Legendary cơ bản" : "Xem danh sách vật phẩm trong Tỉ lệ & vật phẩm", 13, "#aebed4").setStroke("#0a1424", 4);
 
-    rightCol.add(roundedPanel(this, 1110, 400, 284, 580, 0x0a192e, 0.93, 0x69748a, 16));
-    this.text(rightCol, 995, 143, "LỜI HẸN DƯỚI TRĂNG", 13, "#bfad85");
-    this.text(rightCol, 995, 178, banner.pityGroup ? "Bảo hiểm chung banner Hero" : "Bảo hiểm riêng banner", 18, "#f3dfb1");
+    const pityPanel = roundedPanel(this, 1092, 278, 264, 252, 0x0b192e, 0.8, 0x69748a, 14);
+    this.root.add(pityPanel);
+    this.text(this.root, 978, 170, "LỜI HẸN DƯỚI TRĂNG", 12, "#bfad85");
+    this.text(this.root, 978, 192, banner.pityGroup ? "Bảo hiểm chung banner Hero" : "Bảo hiểm riêng banner", 14, "#f3dfb1");
     const progress = (y: number, rarity: "epic" | "legendary", since: number, limit: number, softStart?: number) => {
-      this.text(rightCol, 995, y, RARITY_LABELS[rarity], 17, rarity === "epic" ? "#d4b6f7" : "#f3d98c");
-      this.text(rightCol, 1222, y, `${since} / ${limit}`, 15, "#c3cfdf").setOrigin(1, 0);
-      rightCol.add(roundedPanel(this, 1110, y + 38, 230, 8, 0x25334c, 1, 0x25334c, 4));
+      this.text(this.root, 978, y, RARITY_LABELS[rarity], 14, rarity === "epic" ? "#d4b6f7" : "#f3d98c");
+      this.text(this.root, 1210, y, `${since} / ${limit}`, 13, "#c3cfdf").setOrigin(1, 0);
+      this.root.add(roundedPanel(this, 1092, y + 26, 216, 7, 0x25334c, 1, 0x25334c, 4));
       const soft = softStart !== undefined && since >= softStart;
-      const w = 230 * Math.min(1, since / limit);
+      const w = 216 * Math.min(1, since / limit);
       if (w > 0) {
         const fill = this.add.graphics();
         fill.fillStyle(soft ? 0xffd977 : RARITY_COLORS[rarity], 1);
-        fill.fillRoundedRect(995, y + 35, w, 6, Math.min(3, w / 2));
-        rightCol.add(fill);
+        fill.fillRoundedRect(984, y + 23, w, 6, Math.min(3, w / 2));
+        this.root.add(fill);
         if (soft && !this.reducedMotion) this.tweens.add({ targets: fill, alpha: 0.55, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       }
       if (softStart !== undefined) {
-        rightCol.add(this.add.rectangle(995 + 230 * Math.min(1, softStart / limit), y + 38, 2, 12, 0xf3d98c, 0.7));
+        this.root.add(this.add.rectangle(984 + 216 * Math.min(1, softStart / limit), y + 26, 2, 11, 0xf3d98c, 0.7));
       }
-      this.text(rightCol, 995, y + 56, soft ? `Soft pity đang mở · còn ${Math.max(1, limit - since)}` : `Còn ${Math.max(1, limit - since)} lượt tới bảo hiểm`, 14, soft ? "#f3d98c" : "#aebed3");
+      this.text(this.root, 978, y + 38, soft ? `Soft pity mở · còn ${Math.max(1, limit - since)}` : `Còn ${Math.max(1, limit - since)} lượt tới bảo hiểm`, 12, soft ? "#f3d98c" : "#aebed3");
     };
-    progress(226, "epic", pity.sinceEpic, gacha.epicPity);
-    progress(342, "legendary", pity.sinceLegendary, gacha.legendaryPity, gacha.legendarySoftPityStart);
-    const rotationEnd = featuredRotationEnd(banner, Date.now());
-    if (rotationEnd !== undefined) {
-      const left = rotationEnd - Date.now(), days = Math.floor(left / 86_400_000), hours = Math.floor(left / 3_600_000) % 24, minutes = Math.floor(left / 60_000) % 60;
-      this.text(rightCol, 995, 426, `Đổi tướng sau ${days > 0 ? `${days}d ${hours}h` : `${hours}h ${minutes}m`}`, 13, "#adbed4");
-      const nextHero = featuredEntry(banner, Date.now() + 7 * 24 * 60 * 60 * 1000)?.heroId;
-      if (nextHero) this.text(rightCol, 995, 448, `Tuần sau: ${itemName(data, nextHero)}`, 13, "#8fa2bd");
+    progress(224, "epic", pity.sinceEpic, gacha.epicPity);
+    progress(306, "legendary", pity.sinceLegendary, gacha.legendaryPity, gacha.legendarySoftPityStart);
+    this.countdownText = this.text(this.root, 978, 364, "", 12, "#adbed4");
+    this.updateCountdown();
+    const nextHero = featured ? featuredEntry(banner, Date.now() + 7 * 24 * 60 * 60 * 1000)?.heroId : undefined;
+    if (nextHero) this.text(this.root, 978, 386, `Tuần sau: ${itemName(data, nextHero)}`, 12, "#8fa2bd");
+    this.text(this.root, 1210, 170, "›", 18, "#8fa2bd").setOrigin(1, 0);
+    const pityHit = this.add.rectangle(1092, 278, 264, 252, 0, 0);
+    this.root.add(pityHit);
+    if (enabled) {
+      pityHit.setInteractive({ useHandCursor: true });
+      pityHit.on("pointerup", () => this.showDetails());
+      pityHit.on("pointerover", () => pityPanel.setAlpha(0.85));
+      pityHit.on("pointerout", () => pityPanel.setAlpha(1));
     }
-    rightCol.add(this.add.rectangle(1110, 478, 236, 1, 0x69748a, 0.45));
-    this.button(rightCol, 1110, 525, 244, "Tỉ lệ & vật phẩm", () => this.showDetails(), enabled);
-    this.button(rightCol, 1110, 585, 244, "Nhật ký quay", () => void this.showHistory(0), enabled);
-    this.button(rightCol, 1110, 645, 244, "Cửa hàng Nguyệt Tinh", () => { if (!this.busy && !this.modal) this.scene.start("shop"); }, enabled);
 
-    const heroId = featured?.heroId ?? (banner.kind === "hero" ? this.spotlightHeroId : undefined) ?? banner.pool.legendary.find(id => data.heroes[id]) ?? banner.pool.epic.find(id => data.heroes[id]);
-    const artKey = banner.kind === "hero" ? `heroes:${heroId}` : `gacha:${banner.kind}_banner`;
-    centerCol.add(this.add.circle(640, 300, 215, 0xe8d9ae, 0.09));
-    centerCol.add(this.add.circle(640, 300, 185, 0xf4e2b0, 0.07));
-    const art = this.image(centerCol, artKey, 640, 300, 470, 380);
-    if (art) {
-      centerCol.add(roundedPanel(this, 640, 300, art.displayWidth + 14, art.displayHeight + 14, 0x0b172a, 0, 0x9a8965, 10));
-      if (!this.reducedMotion) {
-        this.artTween = this.tweens.add({ targets: art, scaleX: art.scaleX * 1.012, scaleY: art.scaleY * 1.012, duration: 3600, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-      }
-    } else { centerCol.add(this.add.circle(640, 295, 106, 0xded7b4, 0.15).setStrokeStyle(2, 0xc0aa78)); this.image(centerCol, "ui:moon_full", 640, 300, 160, 160); }
-    centerCol.add(roundedPanel(this, 640, 549, 640, 82, 0x0b172a, 0.94, 0x9a8965, 14));
-    this.text(centerCol, 640, 523, featured ? "TƯỚNG TUẦN NÀY" : banner.kind === "hero" ? "ANH HÙNG TRONG BANNER" : "MINH HỌA LOẠI TRANG BỊ", 12, "#bda77e").setOrigin(0.5);
-    this.text(centerCol, 640, 547, banner.kind === "hero" && heroId ? itemName(data, heroId) : banner.name, 25, "#f5e2ba").setOrigin(0.5);
-    this.text(centerCol, 640, 575, featured ? `Legendary: ${percent(banner.featured!.rateUp)} trúng tướng tuần · tuần sau đổi tướng` : banner.kind === "hero" ? "Xem toàn bộ anh hùng trong Tỉ lệ & vật phẩm" : "Vật phẩm nhận được theo danh sách trong banner", 13, "#adbed4").setOrigin(0.5);
-    centerCol.add(roundedPanel(this, 640, 646, 640, 86, 0x0c182b, 0.97, 0x6b6c77, 16));
+    this.root.add(this.add.rectangle(640, 677, view.w, 86, 0x091425, 0.95));
+    this.root.add(this.add.rectangle(640, 634, view.w, 1, 0x69748a, 0.4));
+    this.button(this.root, 124, 674, 190, "Tỉ lệ & vật phẩm", () => this.showDetails(), enabled);
+    this.button(this.root, 328, 674, 190, "Nhật ký quay", () => void this.showHistory(0), enabled);
+    this.button(this.root, 532, 674, 190, "Cửa hàng Nguyệt Tinh", () => { if (!this.busy && !this.modal) this.scene.start("shop"); }, enabled);
+    this.text(this.root, 722, 685, this.phase === "pending" ? "Đang kết nối · xin chờ hồi âm…" : `${pullCost} Ngọc / lượt · ↑↓ đổi duyên`, 12, "#b4c3d7").setOrigin(0.5);
     const jade = profile.currencies.moonJade;
-    for (const [count, x] of [[1, 490], [10, 790]] as const) {
+    for (const [count, x] of [[1, 928], [10, 1150]] as const) {
       const need = pullCost * count, afford = jade >= need;
-      this.button(centerCol, x, 637, 260, afford ? `Quay ${count}   ·   ${need}` : `Thiếu ${need - jade} ${CURRENCY_LABELS.moonJade}`, () => this.pull(count), enabled && afford, count === 10);
-      if (afford) this.image(centerCol, "ui:cur_moonJade", x + 101, 637, 24, 24);
+      this.button(this.root, x, 674, 208, afford ? `Quay ×${count} · ${need}` : `Thiếu ${need - jade} ${CURRENCY_LABELS.moonJade}`, () => this.pull(count), enabled && afford, count === 10);
+      if (afford) this.image(this.root, "ui:cur_moonJade", x - 80, 674, 20, 20);
     }
     if (enabled && jade >= pullCost * 10) {
-      const ring = roundedPanel(this, 790, 637, 268, 50, 0xe8c784, 0, 0xf3d98c, 12);
-      centerCol.add(ring);
+      const ring = roundedPanel(this, 1150, 674, 216, 50, 0xe8c784, 0, 0xf3d98c, 12);
+      this.root.add(ring);
       if (this.reducedMotion) ring.setAlpha(0.45);
       else this.tweens.add({ targets: ring, alpha: 0.3, duration: 1400, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     }
-    this.text(centerCol, 640, 675, this.phase === "pending" ? "Đang kết nối · xin chờ hồi âm…" : `${CURRENCY_LABELS.moonJade} · Mỗi lượt ${pullCost} · Tỉ lệ công khai trong Tỉ lệ & vật phẩm`, 13, "#b4c3d7").setOrigin(0.5);
 
     if (!this.enteredOnce) {
       this.enteredOnce = true;
       if (!this.reducedMotion) {
-        [leftCol, centerCol, rightCol].forEach((col, i) => {
-          col.setAlpha(0);
-          col.y = 16;
-          this.tweens.add({ targets: col, alpha: 1, y: 0, duration: 380, delay: 100 + i * 130, ease: "Sine.easeOut" });
-        });
+        this.root.setAlpha(0);
+        this.tweens.add({ targets: this.root, alpha: 1, duration: 420, ease: "Sine.easeOut" });
       }
     }
   }
 
+  /** Banner splash texture: featured banners get a per-hero splash, others use their own id art. */
+  private splashKey(banner: GameData["banners"][string], featured: ReturnType<typeof featuredEntry>): string {
+    const candidates = [
+      featured ? `gacha:${banner.id}_${featured.heroId}` : "",
+      `gacha:${banner.id}`,
+      "gacha:altar",
+      `gacha:${banner.kind}_banner`,
+    ];
+    return candidates.find(key => key !== "" && this.textures.exists(key)) ?? "";
+  }
+
+  /** Scale to cover w×h then crop the overflow so the image stays centered. */
+  private coverCrop(image: Phaser.GameObjects.Image, width: number, height: number) {
+    const scale = Math.max(width / image.width, height / image.height);
+    image.setScale(scale);
+    image.setCrop((image.width - width / scale) / 2, (image.height - height / scale) / 2, width / scale, height / scale);
+  }
+
+  private toggleDrawer() {
+    if (this.busy || this.modal) return;
+    if (this.drawer) { this.closeDrawer(); return; }
+    const view = visibleWorld(this), data = session.data;
+    const layer = this.add.container(0, 0).setDepth(480);
+    const panel = this.add.container(0, 0);
+    const scrim = this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x030914, 0.62);
+    scrim.setInteractive().on("pointerup", () => this.closeDrawer());
+    layer.add([scrim, panel]);
+    this.drawer = layer;
+    this.drawerPanel = panel;
+    panel.add(roundedPanel(this, 202, 360, 404, 700, 0x0b182b, 0.98, 0x9a8965, 18));
+    this.text(panel, 36, 34, "CHỌN DUYÊN TRIỆU HỒI", 14, "#bfad85");
+    this.text(panel, 36, 58, "Duyên đổi theo tuần — ↑↓ chuyển nhanh", 12, "#8fa2bd");
+    Object.values(data.banners).forEach((entry, index) => {
+      const y = 134 + index * 134, selected = entry.id === this.bannerId;
+      const card = roundedPanel(this, 202, y, 356, 116, selected ? 0x2c3a55 : 0x14243a, 0.95, selected ? 0xe8c784 : 0x53627d, 12);
+      const thumb = this.image(card, this.splashKey(entry, featuredEntry(entry, Date.now())), -102, 0, 128, 88);
+      if (thumb) this.coverCrop(thumb, 128, 88);
+      this.text(card, -30, -28, entry.name, 17, selected ? "#f4dfb2" : COLORS.text);
+      const entryFeatured = featuredEntry(entry, Date.now());
+      const caption = entryFeatured ? `Tuần này: ${itemName(data, entryFeatured.heroId)}` : entry.kind === "hero" ? "Anh hùng thường trực" : entry.kind === "weapon" ? "Trang bị · binh khí" : "Trang bị · nguyệt bảo";
+      this.text(card, -30, -2, caption, 12, "#aab9d0");
+      const end = featuredRotationEnd(entry, Date.now());
+      const status = selected ? "● ĐANG MỞ" : end !== undefined ? `Đổi sau ${Math.max(0, Math.floor((end - Date.now()) / 86_400_000))}d` : "";
+      this.text(card, -30, 24, status, 12, selected ? "#e8c784" : "#8fa2bd");
+      const hit = this.add.rectangle(0, 0, 356, 116, 0, 0);
+      card.add(hit);
+      if (!selected) {
+        hit.setInteractive({ useHandCursor: true });
+        hit.on("pointerup", () => { this.bannerId = entry.id; this.closeDrawer(); this.render(); });
+        hit.on("pointerover", () => card.setAlpha(0.85));
+        hit.on("pointerout", () => card.setAlpha(1));
+      }
+      panel.add(card);
+    });
+    if (!this.reducedMotion) {
+      panel.x = -440;
+      panel.setAlpha(0.6);
+      this.tweens.add({ targets: panel, x: 0, alpha: 1, duration: 260, ease: "Cubic.easeOut" });
+    }
+  }
+
+  private closeDrawer() {
+    const layer = this.drawer, panel = this.drawerPanel;
+    if (!layer) return;
+    this.drawer = null;
+    this.drawerPanel = null;
+    if (this.reducedMotion || !panel) { layer.destroy(); return; }
+    this.tweens.add({ targets: panel, x: -440, alpha: 0, duration: 180, ease: "Cubic.easeIn" });
+    this.tweens.add({ targets: layer, alpha: 0, delay: 140, duration: 80, onComplete: () => layer.destroy() });
+  }
+
+  private updateCountdown() {
+    if (!this.countdownText) return;
+    const banner = session.data.banners[this.bannerId];
+    const end = banner ? featuredRotationEnd(banner, Date.now()) : undefined;
+    if (end === undefined) { this.countdownText.setText(""); return; }
+    const left = Math.max(0, end - Date.now());
+    const days = Math.floor(left / 86_400_000), hours = Math.floor(left / 3_600_000) % 24, minutes = Math.floor(left / 60_000) % 60;
+    this.countdownText.setText(`Đổi tướng sau ${days > 0 ? `${days}d ${hours}h` : `${hours}h ${minutes}m`}`);
+  }
+
   private back() {
     if (this.modal) { this.closeModal(); this.render(); return; }
+    if (this.drawer) { this.closeDrawer(); return; }
     if (this.phase === "revealing") { this.skipReveal(); return; }
     if (this.phase === "complete") { this.closeResults(); return; }
     if (this.busy) return;
