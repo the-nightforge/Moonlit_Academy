@@ -167,9 +167,9 @@ export class GachaScene extends Phaser.Scene {
     const KIND_ACCENT = { hero: 0xe8c784, weapon: 0x7f9cc4, relic: 0xb08ee0 } as const;
 
     leftCol.add(roundedPanel(this, 170, 400, 284, 580, 0x0b192e, 0.91, 0x69748a, 16));
-    this.text(leftCol, 52, 132, "CHỌN DUYÊN TRIỆU HỒI", 13, "#bfad85");
+    this.text(leftCol, 52, 142, "CHỌN DUYÊN TRIỆU HỒI", 13, "#bfad85");
     Object.values(data.banners).forEach((entry, index) => {
-      const y = 186 + index * 89, selected = entry.id === this.bannerId;
+      const y = 226 + index * 128, selected = entry.id === this.bannerId;
       const panel = roundedPanel(this, 170, y, 244, 72, selected ? 0x34405a : 0x14243a, 0.96, selected ? 0xe8c784 : 0x53627d, 12);
       const hit = this.add.rectangle(0, 0, 244, 72, 0, 0);
       panel.add(hit);
@@ -177,14 +177,14 @@ export class GachaScene extends Phaser.Scene {
         if (this.busy || this.modal) return;
         this.bannerId = entry.id; this.render();
       });
-      panel.add(this.add.rectangle(-119, 0, 4, 56, KIND_ACCENT[entry.kind], 0.85));
-      this.text(panel, -105, -13, entry.name, 18, selected ? "#f4dfb2" : COLORS.text);
-      this.text(panel, -105, 14, entry.featured ? "Tướng Legendary xoay tua tuần" : entry.kind === "hero" ? "Anh hùng trong thư viện" : entry.kind === "weapon" ? "Trang bị · Binh khí" : "Trang bị · Nguyệt bảo", 12, "#aab9d0");
+      const accent = this.add.graphics();
+      accent.fillStyle(KIND_ACCENT[entry.kind], 0.85);
+      accent.fillRoundedRect(-122, -36, 10, 72, { tl: 12, bl: 12, tr: 0, br: 0 });
+      panel.add(accent);
+      this.text(panel, -98, -13, entry.name, 18, selected ? "#f4dfb2" : COLORS.text);
+      this.text(panel, -98, 14, entry.featured ? "Tướng Legendary xoay tua tuần" : entry.kind === "hero" ? "Anh hùng trong thư viện" : entry.kind === "weapon" ? "Trang bị · Binh khí" : "Trang bị · Nguyệt bảo", 12, "#aab9d0");
       leftCol.add(panel);
     });
-    leftCol.add(this.add.rectangle(170, 504, 236, 1, 0x69748a, 0.45));
-    this.button(leftCol, 170, 585, 244, "Nhật ký quay", () => void this.showHistory(0), enabled);
-    this.button(leftCol, 170, 645, 244, "Cửa hàng Nguyệt Tinh", () => { if (!this.busy && !this.modal) this.scene.start("shop"); }, enabled);
 
     rightCol.add(roundedPanel(this, 1110, 400, 284, 580, 0x0a192e, 0.93, 0x69748a, 16));
     this.text(rightCol, 995, 143, "LỜI HẸN DƯỚI TRĂNG", 13, "#bfad85");
@@ -216,7 +216,10 @@ export class GachaScene extends Phaser.Scene {
       const nextHero = featuredEntry(banner, Date.now() + 7 * 24 * 60 * 60 * 1000)?.heroId;
       if (nextHero) this.text(rightCol, 995, 448, `Tuần sau: ${itemName(data, nextHero)}`, 13, "#8fa2bd");
     }
-    this.button(rightCol, 1110, 645, 244, "Tỉ lệ & vật phẩm", () => this.showDetails(), enabled);
+    rightCol.add(this.add.rectangle(1110, 478, 236, 1, 0x69748a, 0.45));
+    this.button(rightCol, 1110, 525, 244, "Tỉ lệ & vật phẩm", () => this.showDetails(), enabled);
+    this.button(rightCol, 1110, 585, 244, "Nhật ký quay", () => void this.showHistory(0), enabled);
+    this.button(rightCol, 1110, 645, 244, "Cửa hàng Nguyệt Tinh", () => { if (!this.busy && !this.modal) this.scene.start("shop"); }, enabled);
 
     const heroId = featured?.heroId ?? (banner.kind === "hero" ? this.spotlightHeroId : undefined) ?? banner.pool.legendary.find(id => data.heroes[id]) ?? banner.pool.epic.find(id => data.heroes[id]);
     const artKey = banner.kind === "hero" ? `heroes:${heroId}` : `gacha:${banner.kind}_banner`;
