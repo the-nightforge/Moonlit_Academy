@@ -26,6 +26,25 @@ async function click(page: Page, prefix: string) {
   await page.mouse.click(box.x+point.x*box.width/point.width,box.y+point.y*box.height/point.height);
 }
 
+/** Banner tiles live inside the "Đổi duyên" drawer since the P1 layout rework. */
+async function selectBanner(page: Page, name: string) {
+  await click(page, "≡ Đổi duyên");
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").drawerPanel?.x ?? -1)).toBe(0); // slide-in done
+  const point = await page.evaluate(name => {
+    const s = (window as any).__vn.game.scene.getScene("gacha"), nodes: any[] = [];
+    const walk = (list: any[]) => list.forEach(n => { nodes.push(n); if (n.list) walk(n.list); });
+    walk(s.children.list);
+    const text = nodes.filter(n => n.type === "Text" && n.text.startsWith(name))
+      .find(n => n.getBounds().centerX < 410); // drawer panel column
+    if (!text) throw new Error("Missing drawer entry: " + name);
+    const b = text.getBounds(), cam = s.cameras.main;
+    return { x: (b.centerX - cam.worldView.x) * cam.zoom + cam.x, y: (b.centerY - cam.worldView.y) * cam.zoom + cam.y,
+      width: s.game.canvas.width, height: s.game.canvas.height };
+  }, name);
+  const box = (await page.locator("canvas").boundingBox())!;
+  await page.mouse.click(box.x + point.x * box.width / point.width, box.y + point.y * box.height / point.height);
+}
+
 async function probe(page: Page) {
   return page.evaluate(() => {
     const s=(window as any).__vn.game.scene.getScene("gacha"), nodes:any[]=[];
@@ -50,17 +69,17 @@ for (const viewport of [{width:1280,height:720},{width:1920,height:1080}]) {
     });
     expect(sizes).toEqual([["altar",1600,900],["card_back",512,768],["weapon_banner",512,512],["relic_banner",512,512],["spark",128,128]]);
     await page.screenshot({path:`../../.sdd-work/gacha-redesign/hero-${viewport.width}.png`});
-    await click(page,"Binh Khí Các");
+    await selectBanner(page,"Binh Khí Các");
     await expect.poll(()=>page.evaluate(()=>(window as any).__vn.game.scene.getScene("gacha").bannerId)).toBe("banner_weapons");
     await page.screenshot({path:`../../.sdd-work/gacha-redesign/weapon-${viewport.width}.png`});
     await click(page,"Tỉ lệ & vật phẩm");
     await expect.poll(async()=>(await probe(page)).texts.includes("Binh Khí Các · Tỉ lệ & vật phẩm")).toBe(true);
     await page.screenshot({path:`../../.sdd-work/gacha-redesign/details-${viewport.width}.png`});
     await page.keyboard.press("Escape");
-    await click(page,"Nguyệt Bảo Các");
+    await selectBanner(page,"Nguyệt Bảo Các");
     await expect.poll(()=>page.evaluate(()=>(window as any).__vn.game.scene.getScene("gacha").bannerId)).toBe("banner_relics");
     await page.screenshot({path:`../../.sdd-work/gacha-redesign/relic-${viewport.width}.png`});
-    await click(page,"Triệu Hồi Anh Hùng");
+    await selectBanner(page,"Triệu Hồi Anh Hùng");
     let requestBody:unknown,requestRevision:string|undefined,requestPath="";
     await page.route("**/api/gacha/*/pull",async route=>{
       requestBody=route.request().postDataJSON();requestRevision=route.request().headers()["if-match"];requestPath=new URL(route.request().url()).pathname;
@@ -78,7 +97,7 @@ for (const viewport of [{width:1280,height:720},{width:1920,height:1080}]) {
       });
       await route.fulfill({json:body});
     });
-    await click(page,"Quay 10");
+    await click(page,"Quay ×10");
     await expect.poll(async()=>(await probe(page)).phase,{timeout:15000}).toBe("revealing");
     await page.screenshot({path:`../../.sdd-work/gacha-redesign/seal-${viewport.width}.png`});
     await expect.poll(async()=>(await probe(page)).vfx,{timeout:30000,intervals:[50]}).toBeGreaterThan(0);
@@ -97,7 +116,7 @@ for (const viewport of [{width:1280,height:720},{width:1920,height:1080}]) {
 
 test("reduced motion single gear reveal preserves capped duplicate reward",async({page})=>{
   await page.setViewportSize({width:1280,height:720});await page.emulateMedia({reducedMotion:"reduce"});
-  await setup(page);await click(page,"Binh Khí Các");
+  await setup(page);await selectBanner(page,"Binh Khí Các");
   await page.route("**/api/gacha/banner_weapons/pull",async route=>{
     const body=await page.evaluate(()=>{
       const h=(window as any).__vn,profile=structuredClone(h.session.profile);
@@ -106,7 +125,7 @@ test("reduced motion single gear reveal preserves capped duplicate reward",async
       return {profile,rev:6,achievements:[],results:[{itemId:"w_han_tuyet_song_kiem",rarity:"epic",outcome:"maxed",moonStar:4,darkIron:1}]};
     });await route.fulfill({json:body});
   });
-  await click(page,"Quay 1");
+  await click(page,"Quay ×1");
   await expect.poll(async()=>(await probe(page)).phase,{timeout:30000,intervals:[100]}).toBe("complete");
   expect(await page.evaluate(()=>(window as any).__vn.game.scene.getScene("gacha").reducedMotion)).toBe(true);
   const p=await probe(page);expect(p.revealed).toBe(1);expect(p.vfx).toBe(0);expect(p.texts).toContain("+4 Nguyệt Tinh\n+1 Huyền Thiết");

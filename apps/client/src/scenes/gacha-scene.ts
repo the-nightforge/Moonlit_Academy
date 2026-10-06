@@ -33,7 +33,7 @@ export class GachaScene extends Phaser.Scene {
   private reducedMotion = false;
   private revealTweens: Phaser.Tweens.Tween[] = [];
   private cards: ResultCard[] = [];
-  private seal: Phaser.GameObjects.Container | null = null;
+  private cine: Phaser.GameObjects.Container | null = null;
   private transientVfx = new Set<Phaser.GameObjects.Container>();
   private ambient: Phaser.GameObjects.Container | null = null;
   private artTween: Phaser.Tweens.Tween | null = null;
@@ -127,7 +127,7 @@ export class GachaScene extends Phaser.Scene {
       this.cards = [];
       this.results = null;
       this.resultFooter = null;
-      this.seal = null;
+      this.cine = null;
     });
     this.render();
   }
@@ -414,25 +414,81 @@ export class GachaScene extends Phaser.Scene {
     });
     this.resultFooter = this.add.container(0, 0); this.results.add(this.resultFooter);
     this.renderResultFooter();
-    this.seal = this.add.container(640, 348);
-    const glow = this.add.circle(0, 0, 140, 0xdfc184, 0.09).setStrokeStyle(2, 0xcdb678, 0.55);
-    this.seal.add(glow);
-    this.image(this.seal, "ui:seal", 0, 0, 166, 166);
-    this.text(this.seal, 0, 185, "Tụ nguyệt quang · mở nguyệt ấn", 17, "#e6d3a9").setOrigin(0.5);
-    this.results.add(this.seal);
-    if (!this.reducedMotion) {
-      this.animate({ targets:glow, scale:1.18, alpha:0.65, duration:460, yoyo:true });
-      for (let i = 0; i < 12; i++) {
-        const angle = i * Math.PI / 6, x = Math.cos(angle)*210, y = Math.sin(angle)*160;
-        const spark = this.image(this.seal, "gacha:spark", x, y, 16, 16);
-        if (spark) this.animate({ targets:spark, x:x*0.25, y:y*0.25, alpha:0, duration:580, delay:i*15 });
+    this.playCinematic(results);
+  }
+
+  /** "Nguyệt tinh lạc": light streak(s) fall to the altar, tinted by the pull's top rarity. */
+  private playCinematic(results: PullResult[]) {
+    const rank = { common: 0, rare: 1, epic: 2, legendary: 3 } as const;
+    const rarity = (Object.keys(rank) as Rarity[])[results.reduce((m, r) => Math.max(m, rank[r.rarity]), 0)]!;
+    const tint = { common: 0xaec4de, rare: 0x7fb4ff, epic: 0xc89cff, legendary: 0xffcf6e }[rarity];
+    const layer = this.add.container(0, 0);
+    this.cine = layer;
+    this.results!.add(layer);
+    const view = visibleWorld(this);
+    const dim = this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x030914, 0);
+    layer.add(dim);
+    this.animate({ targets: dim, fillAlpha: 0.55, duration: 240 });
+    const count = results.length === 1 ? 1 : 4;
+    const hasMeteor = this.textures.exists("gacha:meteor_head") && this.textures.exists("gacha:meteor_tail");
+    const flight = this.reducedMotion ? 60 : rarity === "legendary" ? 780 : rarity === "epic" ? 660 : 540;
+    for (let i = 0; i < count; i++) {
+      const main = i === count - 1;
+      const delay = this.reducedMotion ? 0 : i * 130;
+      const sx = 940 + Math.random() * 380, sy = -20 + Math.random() * 130;
+      const ex = 480 + Math.random() * 280, ey = 270 + Math.random() * 100;
+      const streak = this.add.container(sx, sy);
+      if (hasMeteor) {
+        const tail = this.image(streak, "gacha:meteor_tail", -250, 0, 512, 64);
+        const head = this.image(streak, "gacha:meteor_head", 0, 0, 96, 96);
+        tail?.setFlipX(true).setTint(tint);
+        head?.setTint(tint);
+      } else {
+        streak.add(this.add.circle(0, 0, 30, tint, 0.9));
+        streak.add(this.add.circle(0, 0, 60, tint, 0.3));
       }
-    } else this.animate({ targets:this.seal, alpha:0.55, duration:250, yoyo:true });
-    this.later(this.reducedMotion ? 300 : 850, () => {
-      this.seal?.destroy(); this.seal = null;
+      streak.setRotation(Phaser.Math.Angle.Between(sx, sy, ex, ey));
+      streak.setScale(main ? (rarity === "legendary" ? 1.45 : 1.15) : 0.65);
+      layer.add(streak);
+      this.animate({ targets: streak, x: ex, y: ey, duration: flight, delay, ease: "Quad.easeIn",
+        onComplete: () => { streak.destroy(); this.impactBurst(ex, ey, tint, layer, main, rarity); } });
+    }
+    this.later(this.reducedMotion ? 480 : count * 130 + flight + 260, () => {
+      this.cine?.destroy();
+      this.cine = null;
       this.cards.forEach(card => card.root.setAlpha(1));
       this.revealNext(0);
     });
+  }
+
+  private impactBurst(x: number, y: number, tint: number, layer: Phaser.GameObjects.Container, big: boolean, rarity: Rarity) {
+    if (this.phase !== "revealing" || !this.alive) return;
+    const ring = this.add.circle(x, y, 16, tint, 0).setStrokeStyle(big ? 4 : 2, tint, 0.9);
+    layer.add(ring);
+    this.animate({ targets: ring, scale: big ? 7 : 3.5, alpha: 0, duration: big ? 460 : 280 });
+    for (let i = 0; i < (big ? 10 : 4); i++) {
+      const angle = Math.random() * Math.PI * 2, dist = 40 + Math.random() * 60;
+      const spark = this.image(layer, "gacha:spark", x, y, 14, 14);
+      if (spark) {
+        spark.setTint(tint);
+        this.animate({ targets: spark, x: x + Math.cos(angle) * dist, y: y + Math.sin(angle) * dist, alpha: 0, duration: 340 });
+      }
+    }
+    if (!big) return;
+    const flash = this.add.rectangle(640, 360, 1280, 720, 0xfff6dd, 0);
+    layer.add(flash);
+    this.animate({ targets: flash, fillAlpha: 0.38, duration: 80, yoyo: true });
+    if (rarity === "legendary") {
+      const halo = this.image(layer, "gacha:halo_legendary", x, y, 460, 460)
+        ?? this.image(layer, "ui:moon_full", x, y, 340, 340);
+      if (halo) {
+        halo.setTint(tint).setAlpha(0.8).setBlendMode(Phaser.BlendModes.ADD);
+        this.animate({ targets: halo, scale: 1.5, alpha: 0, duration: 620 });
+      }
+      if (!this.reducedMotion) this.cameras.main.shake(220, 0.007);
+    } else if (!this.reducedMotion) {
+      this.cameras.main.shake(150, 0.004);
+    }
   }
 
   private revealNext(index: number) {
@@ -504,7 +560,7 @@ export class GachaScene extends Phaser.Scene {
   private skipReveal() {
     if (this.phase !== "revealing") return;
     this.cancelReveal();
-    this.seal?.destroy(); this.seal = null;
+    this.cine?.destroy(); this.cine = null;
     this.cards.forEach(card => { card.root.setScale(1).setAlpha(1); this.drawCard(card); });
     this.finishReveal();
   }
@@ -519,7 +575,8 @@ export class GachaScene extends Phaser.Scene {
   private renderResultFooter() {
     this.resultFooter?.removeAll(true);
     if (!this.resultFooter) return;
-    this.button(this.resultFooter, 640, 650, 258, this.phase === "revealing" ? "Bỏ qua hiệu ứng" : "Tiếp tục", () => this.phase === "revealing" ? this.skipReveal() : this.closeResults(), true, true);
+    if (this.phase === "revealing") this.button(this.resultFooter, 1148, 58, 150, "Bỏ qua ≫", () => this.skipReveal(), true);
+    else this.button(this.resultFooter, 640, 650, 258, "Tiếp tục", () => this.closeResults(), true, true);
   }
 
   private closeResults() {

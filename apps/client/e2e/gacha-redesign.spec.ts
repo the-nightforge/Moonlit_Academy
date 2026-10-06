@@ -37,6 +37,24 @@ async function clickText(page: Page, startsWith: string) {
   await page.mouse.click(box.x + (box.width - 1280*s)/2 + p.x*s, box.y + (box.height - 720*s)/2 + p.y*s);
 }
 
+/** Banner tiles live in the "Đổi duyên" drawer since the P1 layout rework. */
+async function selectBanner(page: Page, name: string) {
+  await clickText(page, "≡ Đổi duyên");
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").drawerPanel?.x ?? -1)).toBe(0);
+  const p = await page.evaluate(prefix => {
+    const scene = (window as any).__vn.game.scene.getScene("gacha"), nodes: any[] = [];
+    const walk = (list: any[]) => list.forEach(n => { nodes.push(n); if(n.list) walk(n.list); });
+    walk(scene.children.list);
+    const n = nodes.filter(t => t.type === "Text" && t.text.startsWith(prefix))
+      .find(t => t.getBounds().centerX < 410); // drawer card column
+    if (!n) throw new Error(`Missing drawer entry: ${prefix}`);
+    const b = n.getBounds(); return { x: b.centerX, y: b.centerY };
+  }, name);
+  const box = (await page.locator("canvas").boundingBox())!;
+  const s = Math.min(box.width / 1280, box.height / 720);
+  await page.mouse.click(box.x + (box.width - 1280 * s) / 2 + p.x * s, box.y + (box.height - 720 * s) / 2 + p.y * s);
+}
+
 async function reply(page: Page, count = 1) {
   return page.evaluate(n => {
     const h = (window as any).__vn;
@@ -55,9 +73,11 @@ test("pending pull locks banner selection and back navigation", async ({ page })
   let request!: Route;
   await page.route("**/api/gacha/*/pull", route => { request = route; });
   await setup(page);
-  await clickText(page,"Quay 1");
+  await clickText(page,"Quay ×1");
   await expect.poll(() => Boolean(request)).toBe(true);
-  await clickText(page,"Binh Khí Các");
+  // Busy locks the drawer itself: the switcher never opens while a pull pends.
+  await clickText(page,"≡ Đổi duyên");
+  expect(await page.evaluate(() => Boolean((window as any).__vn.game.scene.getScene("gacha").drawer))).toBe(false);
   expect(await page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").bannerId)).toBe("banner_heroes");
   await page.keyboard.press("Escape");
   expect(await page.evaluate(() => (window as any).__vn.game.scene.isActive("gacha"))).toBe(true);
@@ -68,7 +88,7 @@ test("reveal keeps pulls locked and skip reveals all ten before closing", async 
   let request!: Route;
   await page.route("**/api/gacha/*/pull", route => { request = route; });
   await setup(page);
-  await clickText(page,"Quay 10");
+  await clickText(page,"Quay ×10");
   await expect.poll(() => Boolean(request)).toBe(true);
   await request.fulfill({ json:await reply(page,10) });
   await page.waitForFunction(() => (window as any).__vn.session.rev === 1);
@@ -86,7 +106,7 @@ test("a reply after shutdown updates profile without reviving scene UI", async (
   let request!: Route;
   await page.route("**/api/gacha/*/pull", route => { request = route; });
   await setup(page);
-  await clickText(page,"Quay 1");
+  await clickText(page,"Quay ×1");
   await expect.poll(() => Boolean(request)).toBe(true);
   const body = await reply(page);
   await page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").scene.start("login"));
@@ -102,14 +122,14 @@ test("an API error releases the pull lock and a retry completes normally", async
   let request!: Route;
   await page.route("**/api/gacha/*/pull", route => { request = route; });
   await setup(page);
-  await clickText(page,"Quay 1");
+  await clickText(page,"Quay ×1");
   await expect.poll(() => Boolean(request)).toBe(true);
   await request.fulfill({ status:503, json:{ error:"network" } });
   await expect.poll(async () => (await texts(page)).includes("Không kết nối được server")).toBe(true);
   await page.keyboard.press("Escape");
   expect(await page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").busy)).toBe(false);
   request = undefined as unknown as Route;
-  await clickText(page,"Quay 1");
+  await clickText(page,"Quay ×1");
   await expect.poll(() => Boolean(request)).toBe(true);
   await request.fulfill({ json:await reply(page) });
   await expect.poll(async () => (await texts(page)).some(text => text.startsWith("Bỏ qua"))).toBe(true);
@@ -136,7 +156,7 @@ test("a late reply from the previous scene run cannot overlay a fresh altar", as
   let request!: Route;
   await page.route("**/api/gacha/*/pull", route => { request = route; });
   await setup(page);
-  await clickText(page,"Quay 1");
+  await clickText(page,"Quay ×1");
   await expect.poll(() => Boolean(request)).toBe(true);
   const body = await reply(page);
   await page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").scene.restart());
@@ -155,7 +175,7 @@ test("high rarity reveal has local VFX that skip removes immediately", async ({ 
   let request!: Route;
   await page.route("**/api/gacha/*/pull", route => { request = route; });
   await setup(page);
-  await clickText(page,"Quay 10");
+  await clickText(page,"Quay ×10");
   await expect.poll(() => Boolean(request)).toBe(true);
   await request.fulfill({ json:await reply(page,10) });
   const vfxCount = () => page.evaluate(() => {
@@ -178,7 +198,7 @@ for (const lastRarity of ["rare", "epic"] as const) {
     let request!: Route;
     await page.route("**/api/gacha/*/pull", route => { request = route; });
     await setup(page);
-    await clickText(page,"Quay 10");
+    await clickText(page,"Quay ×10");
     await expect.poll(() => Boolean(request)).toBe(true);
     const body = await reply(page,10);
     if (lastRarity === "rare") {
@@ -235,7 +255,7 @@ async function wheelList(page: Page, dy:number) {
 
 test("details render only body rows inside the viewport and arrows reach the last item", async ({page}) => {
   await setup(page);
-  await clickText(page,"Binh Khí Các");
+  await selectBanner(page,"Binh Khí Các");
   await clickText(page,"Tỉ lệ & vật phẩm");
   await assertListViewport(page);
   await wheelList(page,500);
