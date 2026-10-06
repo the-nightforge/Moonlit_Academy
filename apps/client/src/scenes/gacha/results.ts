@@ -169,17 +169,19 @@ export class GachaResults {
     s.audio?.play(result.rarity === "legendary" ? "legendary" : result.rarity === "epic" ? "epic" : result.rarity === "rare" ? "rare" : "flip");
     const frameKey = `gacha:frame_${result.rarity}`;
     if (s.textures.exists(frameKey)) s.image(root, frameKey, 0, 0, w, h);
+    const badgeW = w * 0.52, badgeH = 17, badgeY = -h / 2 + 5;
     const ribbon = s.add.graphics();
     ribbon.fillStyle(color, 0.85);
-    ribbon.fillRoundedRect(-w * 0.31, -h / 2 + 6, w * 0.62, 20, 9);
+    ribbon.fillRoundedRect(-badgeW / 2, badgeY, badgeW, badgeH, 8);
     root.add(ribbon);
-    s.text(root, 0, -h / 2 + 9, RARITY_LABELS[result.rarity], single ? 15 : 11, "#fff8e8").setOrigin(0.5);
+    s.text(root, 0, badgeY + badgeH / 2, RARITY_LABELS[result.rarity], single ? 12 : 10, "#fff8e8").setOrigin(0.5);
     if (result.epitomizedHit) {
+      const tagW = w * 0.52, tagH = 16, tagY = h / 2 - 76;
       const tag = s.add.graphics();
       tag.fillStyle(0xe8c784, 0.92);
-      tag.fillRoundedRect(-w * 0.28, h / 2 - 78, w * 0.56, 20, 9);
+      tag.fillRoundedRect(-tagW / 2, tagY, tagW, tagH, 8);
       root.add(tag);
-      s.text(root, 0, h / 2 - 75, "NGUYỆT ƯỚC", single ? 13 : 10, "#151c30").setOrigin(0.5);
+      s.text(root, 0, tagY + tagH / 2, "NGUYỆT ƯỚC", single ? 12 : 9, "#151c30").setOrigin(0.5);
     }
     s.text(root, 0, h / 2 - 52, itemName(data, result.itemId), single ? 22 : 14, "#f7ecd2", w - 16).setOrigin(0.5).setAlign("center").setStroke("#0a1424", 4);
     s.text(root, 0, h / 2 - 24, outcomeText(result), single ? 16 : 11, "#ecd7a4", w - 14).setOrigin(0.5).setAlign("center").setStroke("#0a1424", 3);
