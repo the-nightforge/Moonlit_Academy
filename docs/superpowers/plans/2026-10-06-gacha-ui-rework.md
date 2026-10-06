@@ -51,22 +51,18 @@
 3. **Reveal**: x1 → card lật 1 thẻ lớn giữa màn; x10 → lưới 5×2 lật tuần tự (interval 120→70ms, legendary dừng 400ms + glow). Footer hiện tóm tắt `N Legendary · N Epic · N Rare · N Common` + tổng `moonDust` nhận được.
 4. Bấm bất kỳ / "Xong" → về màn chính, pity bar cập nhật.
 
-## 3. Tổ chức code (tách `gacha-scene.ts` ~1k dòng thành modules)
+## 3. Tổ chức code — **đã tách xong** (`gacha-scene.ts` 950 → ~350 dòng)
 
 ```
-src/scenes/gacha-scene.ts        # orchestrator: preload, selectBanner, doPull, Esc
-src/scenes/gacha/                # thư mục mới
-  banner-drawer.ts               # overlay chọn banner
-  banner-stage.ts                # nền splash + tên + caption + entrance anim
-  pull-cinematic.ts              # vệt sáng + flash + shake theo rarity
-  result-grid.ts                 # lưới x10 / card x1 + lật + summary footer
-  pity-widget.ts                 # mini panel + tick countdown (time.addEvent)
-  rates-modal.ts                 # modal "Tỉ lệ & vật phẩm" (port từ scene)
-  history-modal.ts               # modal Nhật ký + tab lọc banner
-  convert-modal.ts               # đổi moonStar→jade khi thiếu (đã duyệt)
+src/scenes/gacha-scene.ts        # orchestrator: lifecycle, render() layout, pull/back
+src/scenes/gacha/                # helpers chia sẻ state public của scene
+  shared.ts                      # types + pure helpers (itemName/percent/outcomeText/coverCrop/splashKey)
+  drawer.ts                      # GachaDrawer — slide-in banner switcher + mục Túi đồ
+  results.ts                     # GachaResults — cinematic meteor + reveal grid + VFX + summary footer + snapshot
+  modals.ts                      # GachaModals — openList scroll + details + history tabs + Nguyệt Ước picker + convert
 ```
 
-Scene giữ đúng contract API hiện tại (`api GET /gacha/state`, `POST /gacha/pull`, `GET /gacha/history?banner=`); mọi hàm render nhận `data + profile` thuần, không gọi API bên trong component.
+Scene giữ đúng contract API hiện tại; helper class nhận `GachaScene` qua `import type` (không vòng import runtime). Getter `drawer`/`drawerPanel`/`cards`/`modal`/`busy` giữ tên cũ cho e2e.
 
 ## 4. Asset còn thiếu — danh sách cho Codex gen
 
@@ -127,14 +123,15 @@ Phạm vi bổ sung này chỉ gồm hai banner được yêu cầu; các asset 
 | g | **SFX/BGM gacha** | backsound + playSfx | Nhỏ–vừa — Codex gen theo bảng asset P2, thêm thư mục `audio/` | P5 |
 | h | **Cinematic tăng kịch tính theo pity cao** — pity≥70 sao bay chậm, nổ to hơn, hint kết quả trước reveal | — (ý riêng) | Nhỏ | P5 |
 
-## 6. Phases implement (mỗi phase = 1 PR nhỏ, screenshot verify 1280×720)
+## 6. Phases implement — **toàn bộ hoàn tất** (2026-10-06)
 
-- **P1 — Nền & bố cục**: full-bleed splash + glass panels + footer mới + drawer banner. Banner xoay tua load `gacha:banner_nguyet_tuong_<heroId>` theo `featuredEntry`. *Phụ thuộc asset P0 banner ×4; tạm dùng art hiện có phóng to nếu chưa gen.*
-- **P2 — Cinematic**: meteor + skip + màu rarity + halo legendary. *Asset meteor/halo.*
-- **P3 — Result rework**: lưới 5×2, frame rarity (tạm graphics nếu chưa gen), summary footer, moonDust toast. *Asset frame.*
-- **P4 — Nav & history**: modal Nhật ký tab theo banner (5a), countdown tick mỗi phút, teaser tuần sau (5b).
-- **P5 — Tiện ích**: screenshot kết quả (5c), convert modal (5d), SFX (5g), cinematic nhạy pity (5h).
-- **P6 — Nguyệt Ước (5e) & Túi đồ (5f)**: phase riêng — viết spec rules/API/DB trước (epitomized-path spec doc + inventory endpoint), implement sau khi spec được duyệt.
+- ✅ **P1 — Nền & bố cục** (`0ba4c85`): full-bleed splash + glass panels + footer mới + drawer banner.
+- ✅ **P2 — Cinematic** (`3397851`): meteor + skip + màu rarity + halo legendary.
+- ✅ **P3 — Result rework** (`010c68a`): lưới 5×2, frame rarity, summary footer.
+- ✅ **P4 — Nav & history** (`8eaee73`): modal Nhật ký tab theo banner (5a), countdown tick + cảnh báo <24h (5b).
+- ✅ **P5 — Tiện ích** (`5dae6bc`): screenshot kết quả (5c), convert modal (5d), SFX procedural `gacha-audio.ts` thay mp3 (5g), cinematic nhạy pity (5h).
+- ✅ **P6 — Nguyệt Ước & Túi đồ**: spec `specs/2026-10-06-nguyet-uoc-inventory-design.md` → rules+route (`f6c2048`), picker UI (`726c724`), Túi đồ tái dùng Kho Hero/Kho đồ (`877a370`).
+- ✅ **Refactor §3** (`24b661b`): tách scene thành 4 module.
 
 ## 7. Test & verify
 
@@ -149,7 +146,8 @@ Phạm vi bổ sung này chỉ gồm hai banner được yêu cầu; các asset 
 - **Túi đồ (5f)**: scene riêng, không gộp Nhật ký.
 - **Audio (5g)**: Codex gen SFX theo bảng P2; thêm thư mục `audio/` vào pipeline.
 
-### Còn mở — chốt khi tới P6
+### Đã chốt tại P6 (2026-10-06)
 
-- **Nguyệt Ước**: cách chọn mục tiêu trong 7 legendary vũ khí (mặc định theo Genshin: chọn 1, trượt 2 lần → lần 3 chắc chắn) — chốt trong spec P6.
-- **Túi đồ**: cần endpoint `GET /api/profile/inventory` (hoặc tái dùng profile hiện có) — chốt trong spec P6.
+- **Nguyệt Ước**: chọn 1 trong 7 legendary vũ khí, trượt 2 lần → lần 3 chắc chắn; đổi/hủy mục tiêu mất điểm. Route `POST /api/gacha/:bannerId/path`.
+- **Túi đồ**: **không cần endpoint** — tái dùng `HeroesScene`/`ArmoryScene` (đã hiển thị đủ dup level + chưa sở hữu), điểm vào từ drawer gacha.
+- **Audio (5g)**: không dùng mp3 — `GachaAudio` procedural oscillator theo pattern `CombatAudio` (bảng P2 audio bỏ qua).
