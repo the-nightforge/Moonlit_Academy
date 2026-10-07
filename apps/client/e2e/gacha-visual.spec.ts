@@ -26,9 +26,24 @@ async function click(page: Page, prefix: string) {
   await page.mouse.click(box.x+point.x*box.width/point.width,box.y+point.y*box.height/point.height);
 }
 
+/** Icon nav buttons carry no text; they are found by their `btn:*` name. */
+async function clickNamed(page: Page, name: string) {
+  const point=await page.evaluate(target => {
+    const s=(window as any).__vn.game.scene.getScene("gacha"), nodes:any[]=[];
+    const walk=(list:any[])=>list.forEach(n=>{nodes.push(n);if(n.list)walk(n.list);});walk(s.children.list);
+    const node=nodes.find(n=>n.name===target);
+    if(!node)throw new Error("Missing control: "+target);
+    const b=node.getBounds(),cam=s.cameras.main;
+    return {x:(b.centerX-cam.worldView.x)*cam.zoom+cam.x,y:(b.centerY-cam.worldView.y)*cam.zoom+cam.y,
+      width:s.game.canvas.width,height:s.game.canvas.height};
+  },name);
+  const box=(await page.locator("canvas").boundingBox())!;
+  await page.mouse.click(box.x+point.x*box.width/point.width,box.y+point.y*box.height/point.height);
+}
+
 /** Banner tiles live inside the "Đổi duyên" drawer since the P1 layout rework. */
 async function selectBanner(page: Page, name: string) {
-  await click(page, "≡ Đổi duyên");
+  await clickNamed(page, "btn:banners");
   await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").drawerPanel?.x ?? -1)).toBe(0); // slide-in done
   const point = await page.evaluate(name => {
     const s = (window as any).__vn.game.scene.getScene("gacha"), nodes: any[] = [];
@@ -72,7 +87,7 @@ for (const viewport of [{width:1280,height:720},{width:1920,height:1080}]) {
     await selectBanner(page,"Binh Khí Các");
     await expect.poll(()=>page.evaluate(()=>(window as any).__vn.game.scene.getScene("gacha").bannerId)).toBe("banner_weapons");
     await page.screenshot({path:`../../.sdd-work/gacha-redesign/weapon-${viewport.width}.png`});
-    await click(page,"Tỉ lệ & vật phẩm");
+    await clickNamed(page,"btn:rates");
     await expect.poll(async()=>(await probe(page)).texts.includes("Binh Khí Các · Tỉ lệ & vật phẩm")).toBe(true);
     await page.screenshot({path:`../../.sdd-work/gacha-redesign/details-${viewport.width}.png`});
     await page.keyboard.press("Escape");

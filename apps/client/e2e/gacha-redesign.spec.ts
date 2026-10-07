@@ -23,6 +23,12 @@ async function texts(page: Page): Promise<string[]> {
   });
 }
 
+async function clickPoint(page: Page, p: { x: number; y: number }) {
+  const box = (await page.locator("canvas").boundingBox())!;
+  const s = Math.min(box.width / 1280, box.height / 720);
+  await page.mouse.click(box.x + (box.width - 1280*s)/2 + p.x*s, box.y + (box.height - 720*s)/2 + p.y*s);
+}
+
 async function clickText(page: Page, startsWith: string) {
   const p = await page.evaluate(prefix => {
     const scene = (window as any).__vn.game.scene.getScene("gacha"), nodes: any[] = [];
@@ -32,14 +38,25 @@ async function clickText(page: Page, startsWith: string) {
     if(!n) throw new Error(`Missing text: ${prefix}`);
     const b = n.getBounds(); return { x:b.centerX, y:b.centerY };
   }, startsWith);
-  const box = (await page.locator("canvas").boundingBox())!;
-  const s = Math.min(box.width / 1280, box.height / 720);
-  await page.mouse.click(box.x + (box.width - 1280*s)/2 + p.x*s, box.y + (box.height - 720*s)/2 + p.y*s);
+  await clickPoint(page, p);
+}
+
+/** Icon nav buttons carry no text; they are found by their `btn:*` name. */
+async function clickName(page: Page, name: string) {
+  const p = await page.evaluate(target => {
+    const scene = (window as any).__vn.game.scene.getScene("gacha"), nodes: any[] = [];
+    const walk = (list: any[]) => list.forEach(n => { nodes.push(n); if(n.list) walk(n.list); });
+    walk(scene.children.list);
+    const n = nodes.find(n => n.name === target);
+    if(!n) throw new Error(`Missing node: ${target}`);
+    const b = n.getBounds(); return { x:b.centerX, y:b.centerY };
+  }, name);
+  await clickPoint(page, p);
 }
 
 /** Banner tiles live in the "Đổi duyên" drawer since the P1 layout rework. */
 async function selectBanner(page: Page, name: string) {
-  await clickText(page, "≡ Đổi duyên");
+  await clickName(page, "btn:banners");
   await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").drawerPanel?.x ?? -1)).toBe(0);
   const p = await page.evaluate(prefix => {
     const scene = (window as any).__vn.game.scene.getScene("gacha"), nodes: any[] = [];
@@ -76,7 +93,7 @@ test("pending pull locks banner selection and back navigation", async ({ page })
   await clickText(page,"Quay ×1");
   await expect.poll(() => Boolean(request)).toBe(true);
   // Busy locks the drawer itself: the switcher never opens while a pull pends.
-  await clickText(page,"≡ Đổi duyên");
+  await clickName(page,"btn:banners");
   expect(await page.evaluate(() => Boolean((window as any).__vn.game.scene.getScene("gacha").drawer))).toBe(false);
   expect(await page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").bannerId)).toBe("banner_heroes");
   await page.keyboard.press("Escape");
@@ -143,7 +160,7 @@ test("closing a pending history modal prevents its late response reopening it", 
   let request!: Route;
   await page.route("**/api/gacha/history?*", route => { request = route; });
   await setup(page);
-  await clickText(page,"Nhật ký quay");
+  await clickName(page,"btn:history");
   await expect.poll(() => Boolean(request)).toBe(true);
   await page.keyboard.press("Escape");
   await request.fulfill({ json:{ entries:[] } });
@@ -256,7 +273,7 @@ async function wheelList(page: Page, dy:number) {
 test("details render only body rows inside the viewport and arrows reach the last item", async ({page}) => {
   await setup(page);
   await selectBanner(page,"Binh Khí Các");
-  await clickText(page,"Tỉ lệ & vật phẩm");
+  await clickName(page,"btn:rates");
   await assertListViewport(page);
   await wheelList(page,500);
   await assertListViewport(page);
@@ -272,7 +289,7 @@ test("twenty long history entries keep the footer clear and every wrapped result
   let request!:Route;
   await page.route("**/api/gacha/history?*",route=>{request=route;});
   await setup(page);
-  await clickText(page,"Nhật ký quay");
+  await clickName(page,"btn:history");
   await expect.poll(()=>Boolean(request)).toBe(true);
   const results=(await reply(page,10)).results;
   const entries=Array.from({length:20},(_,i)=>({bannerId:`Nhật ký ${i+1}`,createdAt:Date.UTC(2026,9,5,i),results}));

@@ -7,6 +7,7 @@ import { session } from "../session";
 import { loadCombatSettings } from "../ui/combat-settings";
 import { GachaAudio } from "../ui/gacha-audio";
 import { roundedPanel } from "../ui/rounded-panel";
+import { showTextTooltip } from "../ui/card-tooltip";
 import { preloadEquipmentArt } from "../ui/equipment-art";
 import { COLORS, CURRENCY_LABELS, RARITY_COLORS, RARITY_LABELS, useDesignCamera, visibleWorld } from "../ui/theme";
 import { addText, alertModal, isModalOpen, showToast } from "../ui/widgets";
@@ -25,6 +26,7 @@ export class GachaScene extends Phaser.Scene {
   private backdrop: Phaser.GameObjects.Container | null = null;
   private ambient: Phaser.GameObjects.Container | null = null;
   private artTween: Phaser.Tweens.Tween | null = null;
+  private navTooltip: Phaser.GameObjects.Container | null = null;
   private enteredOnce = false;
   private countdownText: Phaser.GameObjects.Text | null = null;
 
@@ -62,7 +64,8 @@ export class GachaScene extends Phaser.Scene {
         ...Object.keys(session.data.banners), ...rotationSplashes,
         "meteor_head", "meteor_tail", "frame_rare", "frame_epic", "frame_legendary", "halo_legendary", "dust_mote"],
       heroes: [...heroes],
-      ui: ["cur_moonJade", "cur_moonStar", "cur_honor", "seal", "moon_full", "star", "gear", "epitomized_moon"],
+      ui: ["cur_moonJade", "cur_moonStar", "cur_honor", "seal", "moon_full", "star", "gear", "epitomized_moon",
+        "nav_back", "nav_banners", "nav_rates", "nav_history", "nav_shop", "nav_exchange"],
     };
     for (const [category, ids] of Object.entries(selected)) {
       for (const id of ids) {
@@ -140,6 +143,8 @@ export class GachaScene extends Phaser.Scene {
       this.modals.close();
       this.drawerFx.close(true);
       this.countdownText = null;
+      this.navTooltip?.destroy();
+      this.navTooltip = null;
       this.audio?.dispose();
       this.audio = null;
       this.input.off("pointerdown", unlock);
@@ -178,16 +183,45 @@ export class GachaScene extends Phaser.Scene {
     parent.add(panel);
   }
 
+  /** 40px navigation icon with a hover tooltip; `name` is the e2e hook. */
+  iconButton(parent: Phaser.GameObjects.Container, x: number, y: number, icon: string, tip: string, name: string, action: () => void, enabled = true, fallback?: string) {
+    const panel = roundedPanel(this, x, y, 40, 40, enabled ? 0x16253e : 0x152033, 0.95, enabled ? 0xc8ad73 : 0x44536a, 10);
+    panel.setName(name);
+    const key = [`ui:${icon}`, fallback !== undefined ? `ui:${fallback}` : ""].find(k => k !== "" && this.textures.exists(k));
+    if (key) this.image(panel, key, 0, 0, 24, 24);
+    else this.text(panel, 0, 0, "◂", 18, enabled ? COLORS.text : COLORS.dimText).setOrigin(0.5);
+    const hit = this.add.rectangle(0, 0, 40, 40, 0, 0);
+    panel.add(hit);
+    if (enabled) {
+      const hideTip = () => { this.navTooltip?.destroy(); this.navTooltip = null; };
+      hit.setInteractive({ useHandCursor: true });
+      hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { hideTip(); if (pointer.button === 0) action(); });
+      hit.on("pointerover", () => {
+        panel.setAlpha(0.8);
+        hideTip();
+        this.navTooltip = showTextTooltip(this, x + 26, y + 18, [tip]);
+      });
+      hit.on("pointerout", () => { panel.setAlpha(1); hideTip(); });
+    }
+    parent.add(panel);
+  }
+
   render() {
     if (!this.alive) return;
     this.artTween?.stop();
     this.artTween = null;
+    this.navTooltip?.destroy();
+    this.navTooltip = null;
     this.root.removeAll(true);
     const data = session.data, profile = session.profile, banner = data.banners[this.bannerId]!;
     const { gacha, pullCost } = data.economyConfig;
     const featured = featuredEntry(banner, Date.now());
     const pity = profile.pity[banner.pityGroup ?? this.bannerId] ?? { sinceEpic: 0, sinceLegendary: 0 };
     const enabled = !this.busy && !this.modals.modal;
+    const jade = profile.currencies.moonJade;
+    const jadeItem = data.economyConfig.moonStarShop.find(item => item.item.type === "moonJade");
+    const jadeBought = jadeItem && profile.shop.weekKey === weekKey(data, Date.now()) ? (profile.shop.bought[jadeItem.id] ?? 0) : 0;
+    const canConvert = jadeItem !== undefined && jadeBought < jadeItem.limitPerWeek && profile.currencies.moonStar >= jadeItem.price;
     const view = visibleWorld(this);
     // Banner art window (~70% width) over the altar backdrop.
     const ART = { left: 24, top: 96, w: 880, h: 528 };
@@ -218,7 +252,7 @@ export class GachaScene extends Phaser.Scene {
     this.root.add(roundedPanel(this, artCx, artCy, ART.w, ART.h, 0x000000, 0, 0x9a8965, 16));
 
     this.root.add(this.add.rectangle(640, 43, view.w, 86, 0x091425, 0.92));
-    this.button(this.root, 92, 42, 142, "◂ Quay lại", () => this.back(), enabled);
+    this.iconButton(this.root, 52, 42, "nav_back", "Quay lại", "btn:back", () => this.back(), enabled);
     this.text(this.root, 204, 23, "TRIỆU HỒI", 25, "#f3dfb1");
     this.text(this.root, 205, 54, "Dưới ánh trăng, duyên mới khởi sinh", 13, "#afbfd4");
     let currencyX = 750;
@@ -228,8 +262,16 @@ export class GachaScene extends Phaser.Scene {
       this.text(this.root, currencyX + 22, 41, String(profile.currencies[key] ?? 0), 20, "#f3dfb1");
       currencyX += 168;
     }
+    this.iconButton(this.root, 1240, 42, "nav_shop", "Cửa hàng Nguyệt Tinh", "btn:shop", () => { if (!this.busy && !this.modals.modal) this.scene.start("shop"); }, enabled, "cur_moonStar");
+    if (this.phase !== "pending" && jade < pullCost * 10 && canConvert) {
+      this.iconButton(this.root, 704, 42, "nav_exchange", "Đổi Nguyệt Tinh lấy Ngọc", "btn:exchange", () => void this.modals.convert(), enabled, "cur_moonJade");
+    }
 
-    this.button(this.root, 140, 124, 176, "≡ Đổi duyên", () => this.drawerFx.toggle(), enabled);
+    // Nav icons live on the art window: banner drawer top-left, details and
+    // history top-right. Pull buttons stay text — they carry the cost.
+    this.iconButton(this.root, 52, 124, "nav_banners", "Đổi duyên (↑↓)", "btn:banners", () => this.drawerFx.toggle(), enabled, "moon_full");
+    this.iconButton(this.root, 808, 124, "nav_rates", "Tỉ lệ & vật phẩm", "btn:rates", () => this.modals.details(), enabled, "seal");
+    this.iconButton(this.root, 856, 124, "nav_history", "Nhật ký quay", "btn:history", () => void this.modals.history(0), enabled, "star");
     this.text(this.root, 56, 500, banner.name, 30, "#f3dfb1").setStroke("#0a1424", 6);
     const epitomized = banner.epitomized;
     const path = epitomized ? profile.epitomized[this.bannerId] : undefined;
@@ -300,19 +342,10 @@ export class GachaScene extends Phaser.Scene {
     this.text(this.root, COL.cx, 582, `Legendary ${percent(gacha.rates.legendary)} · Epic ${percent(gacha.rates.epic)}`, 12, "#aebed3").setOrigin(0.5);
     this.text(this.root, COL.cx, 602, "Chạm khung này để xem Tỉ lệ & vật phẩm", 11, "#778aa4").setOrigin(0.5);
 
-    this.root.add(this.add.rectangle(640, 677, view.w, 86, 0x091425, 0.95));
-    this.root.add(this.add.rectangle(640, 634, view.w, 1, 0x69748a, 0.4));
-    this.button(this.root, 124, 674, 190, "Tỉ lệ & vật phẩm", () => this.modals.details(), enabled);
-    this.button(this.root, 328, 674, 190, "Nhật ký quay", () => void this.modals.history(0), enabled);
-    this.button(this.root, 532, 674, 190, "Cửa hàng Nguyệt Tinh", () => { if (!this.busy && !this.modals.modal) this.scene.start("shop"); }, enabled);
-    const jade = profile.currencies.moonJade;
-    const jadeItem = data.economyConfig.moonStarShop.find(item => item.item.type === "moonJade");
-    const jadeBought = jadeItem && profile.shop.weekKey === weekKey(data, Date.now()) ? (profile.shop.bought[jadeItem.id] ?? 0) : 0;
-    const canConvert = jadeItem !== undefined && jadeBought < jadeItem.limitPerWeek && profile.currencies.moonStar >= jadeItem.price;
-    if (this.phase !== "pending" && jade < pullCost * 10 && canConvert) {
-      this.button(this.root, 722, 674, 190, "⇄ Đổi Tinh lấy Ngọc", () => void this.modals.convert(), enabled);
-    } else if (this.phase === "pending") {
-      this.text(this.root, 722, 685, "Đang kết nối · xin chờ hồi âm…", 12, "#b4c3d7").setOrigin(0.5);
+    // No footer band: the altar backdrop shows through below the panels. The
+    // pending note floats there as bare text while the pull request flies.
+    if (this.phase === "pending") {
+      this.text(this.root, 640, 682, "Đang kết nối · xin chờ hồi âm…", 12, "#b4c3d7").setOrigin(0.5);
     }
     // Pull buttons live inside the banner art window, bottom-right over the scrim.
     for (const [count, x] of [[1, 560], [10, 780]] as const) {
