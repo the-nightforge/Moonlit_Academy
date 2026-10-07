@@ -20,7 +20,7 @@ test("UI icon textures load and preserve combat display sizes", async ({ page })
       return { key, url, width:source.width, height:source.height };
     });
   });
-  expect(loaded).toHaveLength(54);
+  expect(loaded).toHaveLength(81);
   for (const icon of loaded) {
     expect(icon.url).toBe(`/assets/ui/${icon.key}.webp`);
     const response = responses.get(`/assets/ui/${icon.key}.webp`);
