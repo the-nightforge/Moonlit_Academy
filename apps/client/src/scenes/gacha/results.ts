@@ -37,7 +37,7 @@ export class GachaResults {
       const single = results.length === 1, width = single ? 330 : 178, height = single ? 495 : 267;
       const root = s.add.container(single ? 640 : 236 + (i % 5) * 202, single ? 360 : 230 + Math.floor(i / 5) * 274).setAlpha(0);
       root.add(roundedPanel(s, 0, 0, width, height, 0x15243e, 1, 0x97845f, 12));
-      const image = s.image(root, "gacha:card_back", 0, 0, width - 6, height - 6);
+      const image = s.image(root, "cards:card_back", 0, 0, width - 6, height - 6);
       if (!image) s.image(root, "ui:seal", 0, 0, 92, 92);
       this.layer!.add(root);
       return { root, result, width, height, revealed: false };

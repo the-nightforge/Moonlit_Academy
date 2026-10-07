@@ -2176,14 +2176,19 @@ export class CombatScene extends Phaser.Scene {
     const low = left <= 6;
     const tint = owner === "của bạn" ? 0xffffff : color;
     const layers = left === 0 ? 0 : Math.min(3, 1 + Math.floor(left / 10));
+    // The generated card back art; falls back to the procedural HUD back.
+    const backAt = (bx: number, by: number, scale: number) =>
+      this.textures.exists("cards:card_back")
+        ? this.add.image(bx, by, "cards:card_back").setDisplaySize(80 * scale, 116 * scale)
+        : hudImage(this, HUD.cardBack, bx, by, scale);
     for (let i = layers - 1; i >= 0; i--) {
-      parent.add(hudImage(this, HUD.cardBack, x + i * 4, y - i * 4, 0.82).setTint(tint).setAlpha(i === 0 ? 1 : 0.85));
+      parent.add(backAt(x + i * 4, y - i * 4, 0.82).setTint(tint).setAlpha(i === 0 ? 1 : 0.85));
     }
     if (layers === 0) parent.add(this.add.rectangle(x, y, 66, 95).setStrokeStyle(1, COLORS.panelBorder, 0.8));
     parent.add(hudImage(this, HUD.count, x, y + 50));
     this.text(x, y + 50, `${left}`, 13, low ? "#ff8a8a" : COLORS.gold, parent).setOrigin(0.5).setStroke("#05070f", 3);
     const discard = this.add.container(anchors.discard.x, anchors.discard.y);
-    discard.add(hudImage(this, HUD.cardBack, 0, 0, 0.42).setTint(0x8890a8).setAlpha(0.8));
+    discard.add(backAt(0, 0, 0.42).setTint(0x8890a8).setAlpha(0.8));
     discard.add(this.add.text(0, 0, `${seat.discardPile.length}`, { ...TEXT_BASE, fontSize: "12px", color: COLORS.text, stroke: "#05070f", strokeThickness: 3 }).setOrigin(0.5));
     parent.add(discard);
     // The hover zone spans whichever way this seat's discard sits from its draw.

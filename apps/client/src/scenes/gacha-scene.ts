@@ -60,10 +60,11 @@ export class GachaScene extends Phaser.Scene {
     const rotationSplashes = Object.values(session.data.banners)
       .flatMap(banner => (banner.featured?.rotation ?? []).map(entry => `${banner.id}_${entry.heroId}`));
     const selected = {
-      gacha: ["altar", "card_back", "weapon_banner", "relic_banner", "spark",
+      gacha: ["altar", "weapon_banner", "relic_banner", "spark",
         ...Object.keys(session.data.banners), ...rotationSplashes,
         "meteor_head", "meteor_tail", "frame_rare", "frame_epic", "frame_legendary", "halo_legendary", "dust_mote"],
       heroes: [...heroes],
+      cards: ["card_back"],
       ui: ["cur_moonJade", "cur_moonStar", "cur_honor", "seal", "moon_full", "star", "gear", "epitomized_moon",
         "nav_back", "nav_banners", "nav_rates", "nav_history", "nav_shop", "nav_exchange"],
     };

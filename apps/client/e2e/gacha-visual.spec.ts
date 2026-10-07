@@ -78,11 +78,13 @@ for (const viewport of [{width:1280,height:720},{width:1920,height:1080}]) {
     await setup(page);
     const sizes=await page.evaluate(()=>{
       const s=(window as any).__vn.game.scene.getScene("gacha");
-      return ["altar","card_back","weapon_banner","relic_banner","spark"].map(key=>{
+      const gachaSizes = ["altar","weapon_banner","relic_banner","spark"].map(key=>{
         const image=s.textures.get(`gacha:${key}`).getSourceImage();return [key,image.width,image.height];
       });
+      const back = s.textures.get("cards:card_back").getSourceImage();
+      return [...gachaSizes, ["card_back", back.width, back.height]];
     });
-    expect(sizes).toEqual([["altar",1600,900],["card_back",512,768],["weapon_banner",512,512],["relic_banner",512,512],["spark",128,128]]);
+    expect(sizes).toEqual([["altar",1600,900],["weapon_banner",512,512],["relic_banner",512,512],["spark",128,128],["card_back",512,768]]);
     await page.screenshot({path:`../../.sdd-work/gacha-redesign/hero-${viewport.width}.png`});
     await selectBanner(page,"Binh Khí Các");
     await expect.poll(()=>page.evaluate(()=>(window as any).__vn.game.scene.getScene("gacha").bannerId)).toBe("banner_weapons");
