@@ -458,6 +458,17 @@ export class CombatScene extends Phaser.Scene {
     this.latestState = view;
   }
 
+  /**
+   * A dispatched `playCard`/`chooseCard`/`mulligan` removes the hovered card from
+   * the board — destroy its tooltip immediately instead of waiting for a
+   * `pointerout` that never fires once the container is rebuilt.
+   */
+  private hideCardTooltipOn(action: Action): void {
+    if (action.type !== "playCard" && action.type !== "chooseCard" && action.type !== "mulligan") return;
+    this.tooltip?.destroy();
+    this.tooltip = null;
+  }
+
   private dispatch(action: Action): boolean {
     if (this.inputLocked) return false;
     if (this.netMatch) {
@@ -469,6 +480,7 @@ export class CombatScene extends Phaser.Scene {
         );
         return false;
       }
+      this.hideCardTooltipOn(action);
       this.syncInputLock();
       return true;
     }
@@ -494,6 +506,7 @@ export class CombatScene extends Phaser.Scene {
     session.state = newState;
     session.events.push(...result.events);
     this.targeting = null;
+    this.hideCardTooltipOn(action);
     const batch: PlaybackBatch = { before: this.latestState, after: newState, events: result.events };
     this.latestState = newState;
     // Post-commit: run graph transition or story verification (`18` §4.4).
@@ -968,14 +981,23 @@ export class CombatScene extends Phaser.Scene {
     }
     if (!this.turnClock) return;
     const frozen = this.inputLocked || isModalOpen();
-    const left = this.turnClock.tick(this.state.status === "playerTurn", frozen, delta);
+    // One clock per decision window: committed snapshots jump playerTurn →
+    // playerTurn across the synchronous enemy turn, so `round:activePlayer`
+    // (plus the mulligan flag for the pre-turn Chọn Pha) is the reset signal.
+    // `choosing` keeps the same clock running, matching the server deadline.
+    const acting = this.state.status === "playerTurn" || this.state.status === "choosing";
+    const turnKey = acting
+      ? `${this.state.round}:${this.state.activePlayer}:${this.state.players[this.mySeat]?.mulliganDone === true ? 1 : 0}`
+      : null;
+    const left = this.turnClock.tick(turnKey, frozen, delta);
     if (left === null) {
       this.timerText.setText("");
       return;
     }
     this.timerText.setText(`⏱ ${Math.ceil(left / 1000)}s`);
     this.timerText.setColor(left <= 10000 ? "#ff5a4e" : COLORS.gold);
-    if (left <= 0 && !frozen) this.dispatch({ type: "endTurn" });
+    // A pending Chiêm Bài answers first; the expiry fires once the seat can act.
+    if (left <= 0 && !frozen && this.state.status === "playerTurn") this.dispatch({ type: "endTurn" });
   }
 
   private restart(seed?: number, encounterId?: string): void {
