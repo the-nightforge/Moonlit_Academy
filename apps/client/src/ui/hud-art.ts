@@ -17,6 +17,7 @@ export const HUD = {
   medallion: "hud_medallion",
   hourglass: "hud_hourglass",
   cardFace: "hud_card_face",
+  cardFaceLg: "hud_card_face_lg",
   bannerAttack: "hud_banner_attack",
   bannerSkill: "hud_banner_skill",
   swap: "hud_swap",
@@ -30,7 +31,8 @@ const SIZE: Record<string, [number, number]> = {
   [HUD.count]: [38, 22],
   [HUD.medallion]: [108, 108],
   [HUD.hourglass]: [22, 30],
-  [HUD.cardFace]: [110, 160],
+  [HUD.cardFace]: [124, 180],
+  [HUD.cardFaceLg]: [186, 270],
   [HUD.bannerAttack]: [98, 20],
   [HUD.bannerSkill]: [98, 20],
   [HUD.swap]: [30, 30],
@@ -76,6 +78,38 @@ function highlight(ctx: CanvasRenderingContext2D, x: number, y: number, rx: numb
   ctx.ellipse(x, y, rx, ry, -0.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+}
+
+/** Lacquer card base shared by the compact and preview faces. */
+function lacquerCardFace(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  ctx.beginPath();
+  ctx.roundRect(0, 0, w, h, 9);
+  ctx.fillStyle = linear(ctx, 0, h, [[0, "#26306a"], [0.45, "#161d46"], [1, "#0a0e2a"]]);
+  ctx.fill();
+  // Faint lattice of the lacquer.
+  ctx.save();
+  ctx.clip();
+  ctx.strokeStyle = "rgba(160,180,255,0.05)";
+  ctx.lineWidth = 1;
+  for (let d = -h; d < w + h; d += 9) {
+    ctx.beginPath();
+    ctx.moveTo(d, 0);
+    ctx.lineTo(d + h, h);
+    ctx.stroke();
+  }
+  ctx.restore();
+  // One gold line, a stud in each corner.
+  ctx.strokeStyle = linear(ctx, 0, h, GOLD);
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.roundRect(3.5, 3.5, w - 7, h - 7, 7);
+  ctx.stroke();
+  ctx.fillStyle = "#f4d35e";
+  for (const [cx, cy] of [[7.5, 7.5], [w - 7.5, 7.5], [7.5, h - 7.5], [w - 7.5, h - 7.5]] as const) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number) => void> = {
@@ -204,63 +238,11 @@ const DRAW: Record<string, (ctx: CanvasRenderingContext2D, w: number, h: number)
     ctx.stroke();
     highlight(ctx, c - 18, c - 22, 16, 7);
   },
-  // Hand card frame (110×160): indigo lacquer, one gold line with corner
-  // studs, the round moon gate (center 55,50, r 30) and the parchment text
-  // panel (y 108–152). The scene adds the cost coin (top-left corner, clear
-  // of the gate), the title plate (y 85–105) and the owner jewel.
-  [HUD.cardFace]: (ctx, w, h) => {
-    ctx.beginPath();
-    ctx.roundRect(0, 0, w, h, 9);
-    ctx.fillStyle = linear(ctx, 0, h, [[0, "#26306a"], [0.45, "#161d46"], [1, "#0a0e2a"]]);
-    ctx.fill();
-    // Faint lattice of the lacquer.
-    ctx.save();
-    ctx.clip();
-    ctx.strokeStyle = "rgba(160,180,255,0.05)";
-    ctx.lineWidth = 1;
-    for (let d = -h; d < w + h; d += 9) {
-      ctx.beginPath();
-      ctx.moveTo(d, 0);
-      ctx.lineTo(d + h, h);
-      ctx.stroke();
-    }
-    ctx.restore();
-    // One gold line, a stud in each corner.
-    ctx.strokeStyle = linear(ctx, 0, h, GOLD);
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.roundRect(3.5, 3.5, w - 7, h - 7, 7);
-    ctx.stroke();
-    ctx.fillStyle = "#f4d35e";
-    for (const [cx, cy] of [[7.5, 7.5], [w - 7.5, 7.5], [7.5, h - 7.5], [w - 7.5, h - 7.5]] as const) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, 1.4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    // Moon gate: night sky disc, gold ring, inner hairline, four studs.
-    const gx = w / 2;
-    const gy = 50;
-    const gr = 21;
-    ctx.fillStyle = radial(ctx, gx, gy, gr, [[0, "#2a3878"], [0.7, "#0e1438"], [1, "#060920"]]);
-    ctx.beginPath();
-    ctx.arc(gx, gy, gr, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = linear(ctx, gy - gr, gy + gr, GOLD);
-    ctx.lineWidth = 2.4;
-    ctx.stroke();
-    ctx.strokeStyle = "rgba(244,211,94,0.45)";
-    ctx.lineWidth = 0.7;
-    ctx.beginPath();
-    ctx.arc(gx, gy, gr - 4, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.fillStyle = "#f4d35e";
-    for (let k = 0; k < 4; k++) {
-      const a = (Math.PI / 2) * k;
-      ctx.beginPath();
-      ctx.arc(gx + gr * Math.cos(a), gy + gr * Math.sin(a), 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  },
+  // Hand card face (124×180, preview 186×270): indigo lacquer, one gold
+  // line with corner studs — the artwork covers the interior; the scene
+  // draws the gradient band, name, keyword icons and rules text on top.
+  [HUD.cardFace]: (ctx, w, h) => lacquerCardFace(ctx, w, h),
+  [HUD.cardFaceLg]: (ctx, w, h) => lacquerCardFace(ctx, w, h),
   [HUD.bannerAttack]: (ctx, w, h) => banner(ctx, w, h, ["#c8424a", "#8a1a26", "#4a0a12"]),
   [HUD.bannerSkill]: (ctx, w, h) => banner(ctx, w, h, ["#4a78c8", "#1c3f7c", "#0c1f44"]),
   // Đổi Bài: two gold arrows chasing each other round a circle.

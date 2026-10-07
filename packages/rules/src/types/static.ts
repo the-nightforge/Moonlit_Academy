@@ -143,6 +143,8 @@ export interface CardDef {
   requiresBloodMoon?: boolean;
   /** Keyword ids (keywords.json) shown as explanations. */
   keywords?: string[];
+  /** Artwork variant — the client looks up `cards:art_<art>` first. */
+  art?: string;
   /** Constellation 4 version of this card id; never placed in a deck directly. */
   plusOf?: string;
   /** Created during combat only (`createCard`): never in a pool, deck or reward (`01` §4). */

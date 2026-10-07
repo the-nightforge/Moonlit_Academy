@@ -54,7 +54,6 @@ import { createAnimationRuntime } from "../ui/animation-runtime";
 import type { AnimationRuntime } from "../ui/animation-runtime";
 import { createPresentation } from "../ui/combat-presentation";
 import { HUD, hudImage } from "../ui/hud-art";
-import { cardColorOf, cardIconOf } from "../ui/attack-style";
 import { displayStatuses, heroTooltipLines, statusBadgeModels, unitAt, weaponForHero } from "../ui/combat-display";
 import type { SeatAnchors } from "../ui/combat-display";
 import { computeCombatLayout, endTurnAnchor, fitChoicePanel, handSlots } from "../ui/combat-layout";
@@ -63,7 +62,7 @@ import type { CombatLayout } from "../ui/combat-layout";
 import { moonHudModel, renderMoonHud } from "../ui/moon-hud";
 import { InspectorView, drawComposition, pileModel, relicHudEntries, triggerAnchorKey } from "../ui/combat-inspector";
 import type { RelicHudEntry } from "../ui/combat-inspector";
-import { CARD_DESCRIPTION, CARD_GATE, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES, combatCardModel, cardOwnerLabel, ellipsize } from "../ui/combat-card-view";
+import { COMPACT_CARD, combatCardModel, cardOwnerLabel, drawCardFace, ellipsize } from "../ui/combat-card-view";
 import { roundedPanel } from "../ui/rounded-panel";
 import { showCombatSettings } from "../ui/combat-settings-dialog";
 import {
@@ -90,8 +89,8 @@ const HEIGHT = 720;
  */
 const BG_MOON_SOCKET = { x: 836, y: 26, size: 52 };
 
-const CARD_W = 110;
-const CARD_H = 160;
+const CARD_W = COMPACT_CARD.w;
+const CARD_H = COMPACT_CARD.h;
 /** Unit cards are portrait (2:3): enemies / opponents on the top row, own heroes below. */
 const UNIT_W = 136;
 const UNIT_H = 196;
@@ -2231,50 +2230,26 @@ export class CombatScene extends Phaser.Scene {
 
     const isValidTarget = this.targeting === instanceId;
     const mulliganPicked = this.mulliganPicks.has(instanceId);
-    // Frame: lacquer, gold double line, moon gate, plaque, parchment; the owner's color is the border.
-    const grey = (img: Phaser.GameObjects.Image) => (broken ? img.setTint(0x80808a) : img);
-    container.add(grey(hudImage(this, HUD.cardFace, 0, 0)));
-    container.add(
-      this.roundBox(
-        CARD_W,
-        CARD_H,
-        null,
-        0,
-        isValidTarget || mulliganPicked ? 3 : 2,
-        broken ? COLORS.dead : isValidTarget || mulliganPicked ? COLORS.goldFill : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
-      ),
+    // LoR-style face: full-bleed art under a gradient band, keyword icons,
+    // auto-fitted full text, cost coin + tag emblem; the owner color frames it.
+    drawCardFace(
+      this,
+      {
+        title: model.title,
+        body: `${cardOwnerLabel(model)} ${model.fullText}`,
+        cost: model.effectiveCost,
+        costBase: model.baseCost,
+        emblem: model.iconKey,
+        keywordIds: model.keywordIds,
+        artKeys: model.artKeys,
+        border: broken ? COLORS.dead : isValidTarget || mulliganPicked ? COLORS.goldFill : (OWNER_COLORS[ownerId] ?? COLORS.panelBorder),
+        borderWidth: isValidTarget || mulliganPicked ? 3 : 2,
+        grey: broken,
+      },
+      "compact",
+      container,
     );
-    // Moon gate (center 0,-30): the card's own art if there is one, else its tag icon in a tag-colored sky.
-    const gateY = CARD_GATE.y;
-    const color = cardColorOf(card);
-    const cardArt = this.coverImage(`cards:${instance.cardId}`, 0, gateY, CARD_GATE.artSize, CARD_GATE.artSize, container);
-    cardArt?.setName("card_gate_art");
-    if (!cardArt) {
-      ensureTextures(this);
-      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(color).setScale(0.55).setAlpha(broken ? 0.15 : 0.5));
-      for (const [sx, sy, r] of [[-11, -7, 0.9], [9, -11, 0.7], [12, 5, 0.6], [-12, 6, 0.5]] as const) {
-        container.add(this.add.circle(sx, gateY + sy, r, 0xffffff, 0.7));
-      }
-      const iconKey = cardIconOf(card);
-      if (this.textures.exists(iconKey)) container.add(this.add.image(0, gateY, iconKey).setDisplaySize(CARD_GATE.glyphSize, CARD_GATE.glyphSize).setAlpha(broken ? 0.5 : 1).setName("card_category_icon"));
-    }
-    // Reclaim the description chrome for an owner header plus three lines.
-    container.add(roundedPanel(this,0,(CARD_DESCRIPTION.top+CARD_DESCRIPTION.bottom)/2,CARD_W-24,CARD_DESCRIPTION.bottom-CARD_DESCRIPTION.top,0xd2c18d,1,0x806b45,3));
-    // Title plate between the gate and the parchment (red lacquer: attack,
-    // blue: skill) — small and clearly above the description band.
-    const titleY = 8;
-    container.add(grey(hudImage(this, card.type === "attack" ? HUD.bannerAttack : HUD.bannerSkill, 0, titleY)));
-    const name = this.add
-      .text(0, titleY, model.title, {
-        ...TEXT_BASE,
-        fontSize: "10px",
-        fontStyle: "bold",
-        color: "#fff1d0",
-        stroke: "#1a0608",
-        strokeThickness: 2,
-      })
-      .setOrigin(0.5);
-    container.add(this.fitWidth(name, 82));
+
     if (weapon !== undefined) {
       // Weapon card (`01` §14.2): inner orange frame and the weapon's name.
       if (!broken && !isValidTarget) {
@@ -2295,73 +2270,24 @@ export class CombatScene extends Phaser.Scene {
       container.add(this.roundBox(CARD_W - 4, CARD_H - 4, null, 0, 2, 0xffe080, CARD_RADIUS - 1));
       container.add(
         this.add
-          .text(CARD_W / 2 - 30, -CARD_H / 2 + 11, "⚡ Hợp Kích", { ...TEXT_BASE, fontSize: "10px", color: "#ffe080", stroke: "#2a1a04", strokeThickness: 3 })
+          .text(0, -CARD_H / 2 + 12, "⚡ Hợp Kích", { ...TEXT_BASE, fontSize: "10px", color: "#ffe080", stroke: "#2a1a04", strokeThickness: 3 })
           .setOrigin(0.5),
-      );
-    }
-
-    const effectiveCost = model.effectiveCost;
-    // Inset so the coin's rim sits clear of the card border.
-    // Its own corner: clear of the gold line (≥ 3.5 px) and of the banner.
-    const coinX = -CARD_W / 2 + 19;
-    const coinY = -58;
-    container.add(hudImage(this, HUD.cost, coinX, coinY, 0.78));
-    container.add(
-      this.add
-        .text(coinX, coinY, `${effectiveCost}`, {
-          ...TEXT_BASE,
-          fontSize: "16px",
-          fontStyle: "bold",
-          color: effectiveCost < card.cost ? COLORS.costCheap : COLORS.gold,
-          stroke: "#05070f",
-          strokeThickness: 3,
-        })
-        .setOrigin(0.5),
-    );
-    if (effectiveCost < card.cost) {
-      container.add(
-        this.add
-          .text(coinX, coinY + 17, `${card.cost}`, {
-            ...TEXT_BASE,
-            fontSize: "10px",
-            color: COLORS.dimText,
-          })
-          .setOrigin(0.5),
-      );
-      container.add(
-        this.add.rectangle(coinX, coinY + 17, 9, 1, 0xffffff, 0.8),
       );
     }
     if (instance.heldTurns > 0 && card.keywords?.includes("tich_tu")) {
       container.add(
         this.add
-          .text(0, gateY + 22, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold, stroke: "#05070f", strokeThickness: 3 })
+          .text(0, -CARD_H / 2 + 40, `Tích Tụ ${instance.heldTurns}`, { ...TEXT_BASE, fontSize: "10px", color: COLORS.gold, stroke: "#05070f", strokeThickness: 3 })
           .setOrigin(0.5),
       );
     }
 
-    // 11px body, three measured lines with an ellipsis; the
-    // hover preview carries the full text (`05` review: readable at 1024×576).
-    // The owner reads as the text's subject — "Tô Dạ ẩn thân 1 vòng…". Three
-    // measured lines centered in the parchment; full text on hover.
-    const body = this.add
-      .text(0, (CARD_DESCRIPTION.top + CARD_DESCRIPTION.bottom) / 2, ellipsize(this, `${cardOwnerLabel(model)} ${model.fullText}`, CARD_W - 24, COMPACT_BODY_FONT, COMPACT_MAX_BODY_LINES), {
-        ...TEXT_BASE,
-        fontSize: `${COMPACT_BODY_FONT}px`,
-        color: "#3a2810",
-        align: "center",
-        lineSpacing: -1,
-        wordWrap: { width: CARD_W - 24 },
-      })
-      .setOrigin(0.5).setName("card_body");
-    container.add(body);
-
     if (mulliganPicked) {
       ensureTextures(this);
       container.add(this.roundBox(CARD_W - 4, CARD_H - 4, 0x05070f, 0.55, 0, 0, CARD_RADIUS - 1));
-      container.add(this.add.image(0, gateY, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e).setScale(0.46).setAlpha(0.6));
-      container.add(this.add.circle(0, gateY, CARD_GATE.radius, 0x0a0e26, 0.95).setStrokeStyle(1.5, COLORS.goldFill).setName("card_swap_gate"));
-      container.add(hudImage(this, HUD.swap, 0, gateY, 0.8).setName("card_swap_icon"));
+      container.add(this.add.image(0, -14, VFX_GLOW).setBlendMode("ADD").setTint(0xf4d35e).setScale(0.46).setAlpha(0.6));
+      container.add(this.add.circle(0, -14, 22, 0x0a0e26, 0.95).setStrokeStyle(1.5, COLORS.goldFill).setName("card_swap_gate"));
+      container.add(hudImage(this, HUD.swap, 0, -14, 0.8).setName("card_swap_icon"));
     }
     if (broken) {
       container.add(
@@ -2376,8 +2302,9 @@ export class CombatScene extends Phaser.Scene {
     // The selected card keeps its lift until cancel/commit (`05` review).
     if (this.targeting === instanceId) {
       const inHand = y === this.layout.hand.y + this.layout.hand.h / 2;
-      container.setScale(1.15);
-      container.y = inHand ? this.layout.hand.y + 66 : y - 18;
+      const scale = inHand ? 1.1 : 1.15;
+      container.setScale(scale);
+      container.y = inHand ? this.handLiftY(scale) : y - 18;
       container.setDepth(10);
       parent.bringToTop(container);
     }
@@ -2394,10 +2321,10 @@ export class CombatScene extends Phaser.Scene {
       this.tooltip?.destroy();
       const hintName =
         hintComboId !== undefined ? this.gameData.coopCombos[hintComboId]?.name : undefined;
-      // The raise stops short of the hero row's bottom edge (522) — raised
-      // top lands at 530, leaving the lift inside the 34px buffer.
+      // The raise stops short of the hero row's bottom edge — a 180-tall card
+      // tops out at 1.10× there; the tooltip preview carries the close read.
       const inHand = y === this.layout.hand.y + this.layout.hand.h / 2;
-      const liftY = inHand ? this.layout.hand.y + 66 : y - 18;
+      const liftScale = inHand ? 1.1 : 1.15;
       // The preview prefers a side clear of the own-hero row; a crowded mid
       // card keeps the roomier side instead of covering both neighbours.
       const row = this.state.heroes
@@ -2406,6 +2333,7 @@ export class CombatScene extends Phaser.Scene {
         .filter((r): r is { x: number; y: number; w: number; h: number } => r !== undefined);
       const rowLeft = Math.min(...row.map((r) => r.x), 1280);
       const rowRight = Math.max(...row.map((r) => r.x + r.w), 0);
+      const liftY = inHand ? this.handLiftY(liftScale) : y - 18;
       const rightX = x + CARD_W / 2 + 10;
       const leftX = x - CARD_W / 2 - 10 - 320;
       const rightFits = rightX + 320 <= 1272;
@@ -2434,7 +2362,7 @@ export class CombatScene extends Phaser.Scene {
         container.setDepth(10);
         // Depth does not reorder a container's children: lift the card over its neighbours.
         parent.bringToTop(container);
-        if (!this.inputLocked) this.liftCard(container, liftY, 1.15);
+        if (!this.inputLocked) this.liftCard(container, liftY, liftScale);
       }
     });
     container.on("pointerout", () => {
@@ -2453,6 +2381,18 @@ export class CombatScene extends Phaser.Scene {
       this.cardHoverTweens.delete(container);
     });
     return container;
+  }
+
+  /**
+   * The y a raised in-hand card lands at for `scale` — its top edge kisses
+   * the own-hero row's bottom, so the lift never covers the heroes.
+   */
+  private handLiftY(scale: number): number {
+    const rowBottom = this.state.heroes
+      .filter((h) => h.player === this.mySeat)
+      .map((h) => this.layout.units.get(h.id))
+      .reduce((m, r) => Math.max(m, (r?.y ?? 0) + (r?.h ?? 0)), 0);
+    return rowBottom + (CARD_H * scale) / 2;
   }
 
   /** A card's in-flight hover tween — a re-hover retweens from where it is. */

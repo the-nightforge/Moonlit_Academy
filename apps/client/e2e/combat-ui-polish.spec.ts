@@ -91,9 +91,9 @@ test(`current moon and card description geometry @ ${viewport.width}`,async({pag
     const walk=(list:any[])=>list.forEach(n=>{nodes.push(n);if(n.list)walk(n.list);});walk(s.children.list);
     const phases=nodes.filter(n=>/^moon_phase_\d$/.test(n.name));
     const cards=[...s.cardViews.values()].map((v:any)=>{
-      const body=v.list.find((n:any)=>n.name==="card_body");
+      const body=v.getByName("card_body") as any;
       const b=body?.getBounds();
-      return body&&b?{body:body.text,bodyTop:b.top,bodyBottom:b.bottom,parchmentTop:v.y+22,parchmentBottom:v.y+72}:null;
+      return body&&b?{body:body.text,bodyTop:b.top,bodyBottom:b.bottom,bandTop:v.y-25,bandBottom:v.y+84}:null;
     });
     return {phases:phases.map(n=>({x:n.x,y:n.y})),label:nodes.some(n=>n.name==="moon_label"),ring:nodes.some(n=>n.name==="moon_current_ring"),aura:nodes.some(n=>n.name==="moon_current_aura"),exit:nodes.some(n=>n.text==="✕"),cards};
   });
@@ -103,13 +103,13 @@ test(`current moon and card description geometry @ ${viewport.width}`,async({pag
   expect(probe.exit).toBe(true);
   // Offline player turns run on `combatConfig.turnSeconds` — the clock ticks per frame.
   await expect.poll(()=>page.evaluate(()=>{const s=(window as any).__vn.game.scene.getScene("combat"),nodes:any[]=[];const walk=(l:any[])=>l.forEach((n:any)=>{nodes.push(n);if(n.list)walk(n.list);});walk(s.children.list);return nodes.some((n:any)=>/^⏱ \d+s$/.test(n.text||""));})).toBe(true);
-  for(const card of probe.cards){expect(card).not.toBeNull();expect(card!.body.length).toBeGreaterThan(0);expect(card!.bodyTop).toBeGreaterThanOrEqual(card!.parchmentTop);expect(card!.bodyBottom).toBeLessThanOrEqual(card!.parchmentBottom-2);}
+  for(const card of probe.cards){expect(card).not.toBeNull();expect(card!.body.length).toBeGreaterThan(0);expect(card!.bodyTop).toBeGreaterThanOrEqual(card!.bandTop);expect(card!.bodyBottom).toBeLessThanOrEqual(card!.bandBottom);}
   await page.evaluate(()=>{
     const h=(window as any).__vn,s=h.game.scene.getScene("combat"),id=h.session.state.players[0].hand[0];
     const card=h.session.data.cards[h.session.state.cards[id].cardId];
     card.text="Một\nHai\nBa";s.requestRender();
   });
-  await expect.poll(()=>page.evaluate(()=>{const s=(window as any).__vn.game.scene.getScene("combat");return [...s.cardViews.values()].some((v:any)=>v.list.some((n:any)=>n.name==="card_body"&&n.text.endsWith(" Một\nHai\nBa")));})).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>{const s=(window as any).__vn.game.scene.getScene("combat");return [...s.cardViews.values()].some((v:any)=>(v.getByName("card_body")?.text.endsWith(" Một\nHai\nBa") ?? false));})).toBe(true);
   await page.screenshot({path:`../../.sdd-work/combat-ui-polish/screenshots/board-${viewport.width}.png`});
   const compact=await page.evaluate(async()=>{
     const h=(window as any).__vn,s=h.game.scene.getScene("combat");
@@ -119,10 +119,10 @@ test(`current moon and card description geometry @ ${viewport.width}`,async({pag
     return models.map((model:any,i:number)=>{
       const view=renderCombatCard(s,{...model,fullText:i===3?"Một Hai Ba Bốn Năm Sáu Bảy Tám Chín Mười":"Một\nHai\nBa\nBốn"},{x:410+i*120,y:400}).setDepth(1800);
       const body=view.getByName("card_body") as any;
-      return {body:body.text,expected:model.ownerNames,bodyTop:body.getBounds().top,bodyBottom:body.getBounds().bottom,bodyLeft:body.getBounds().left,bodyRight:body.getBounds().right,parchmentLeft:view.x-43,parchmentRight:view.x+43,parchmentTop:view.y+22,parchmentBottom:view.y+72,lines:body.getWrappedText(),font:body.style.fontSize};
+      return {body:body.text,expected:model.ownerNames,bodyTop:body.getBounds().top,bodyBottom:body.getBounds().bottom,bodyLeft:body.getBounds().left,bodyRight:body.getBounds().right,cardLeft:view.x-57,cardRight:view.x+57,bandTop:view.y-25,bandBottom:view.y+84,lines:body.getWrappedText(),font:body.style.fontSize};
     });
   });
-  for(const card of compact){const flat=card.body.replace(/\s+/g," ");for(const name of card.expected)expect(flat).toContain(name);expect(card.bodyTop).toBeGreaterThanOrEqual(card.parchmentTop);expect(card.bodyBottom).toBeLessThanOrEqual(card.parchmentBottom-2);expect(card.bodyLeft).toBeGreaterThanOrEqual(card.parchmentLeft);expect(card.bodyRight).toBeLessThanOrEqual(card.parchmentRight);expect(card.lines.length).toBeLessThanOrEqual(3);expect(card.font).toBe("11px");}
+  for(const card of compact){const flat=card.body.replace(/\s+/g," ");for(const name of card.expected)expect(flat).toContain(name);expect(card.bodyTop).toBeGreaterThanOrEqual(card.bandTop);expect(card.bodyBottom).toBeLessThanOrEqual(card.bandBottom);expect(card.bodyLeft).toBeGreaterThanOrEqual(card.cardLeft);expect(card.bodyRight).toBeLessThanOrEqual(card.cardRight);expect(card.lines.length).toBeLessThanOrEqual(7);expect(["11px","10px","9px"]).toContain(card.font);}
   expect(compact[1]!.body).toContain("∞");expect(compact[2]!.body).toContain("⚔");
   await page.screenshot({path:`../../.sdd-work/combat-ui-polish/screenshots/compact-categories-${viewport.width}.png`});
 });

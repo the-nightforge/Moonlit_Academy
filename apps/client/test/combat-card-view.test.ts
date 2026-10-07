@@ -7,7 +7,7 @@ vi.stubGlobal("window", {
   screen: { width: 1280, height: 720 },
 });
 
-const { combatCardModel, COMPACT_BODY_FONT, PREVIEW_BODY_FONT } = await import("../src/ui/combat-card-view");
+const { combatCardModel, COMPACT_BODY_FONTS, PREVIEW_BODY_FONTS } = await import("../src/ui/combat-card-view");
 const { OWNER_COLORS } = await import("../src/ui/theme");
 const { getEffectiveCost } = await import("rules");
 
@@ -150,8 +150,8 @@ describe("owner palette and fonts", () => {
     expect(Object.keys(OWNER_COLORS).sort()).toEqual(Object.keys(data.heroes).sort());
   });
 
-  it("compact body never shrinks under 11px; preview body is 14px", () => {
-    expect(COMPACT_BODY_FONT).toBe(11);
-    expect(PREVIEW_BODY_FONT).toBe(14);
+  it("compact body fits from 11px down to 9px; preview from 14px down", () => {
+    expect(COMPACT_BODY_FONTS).toEqual([11, 10, 9]);
+    expect(PREVIEW_BODY_FONTS).toEqual([14, 12, 11]);
   });
 });

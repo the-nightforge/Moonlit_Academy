@@ -46,14 +46,14 @@ const SUMMON_XS = [1000, 1100];
 const SUMMON_OWN_Y = 410;
 const ENEMY_BAND = { left: 330, right: 950 };
 
-export const HAND_AREA: Rect = { x: 130, y: 556, w: 1010, h: 160 };
+export const HAND_AREA: Rect = { x: 130, y: 534, w: 1010, h: 184 };
 const CONTROLS: Rect = { x: 1154, y: 48, w: 104, h: 652 };
 export const MOON: Point = { x: 640, y: 40 };
 
 const OWN_ANCHORS: SeatAnchors = {
   draw: { x: 54, y: 424 },
   discard: { x: 54, y: 540 },
-  hand: { x: 635, y: 636 },
+  hand: { x: 635, y: 620 },
   resource: { x: 1206, y: 104 },
   reserve: { x: 1206, y: 144 },
 };
@@ -170,7 +170,7 @@ export function computeCombatLayout(state: CombatState, mySeat: number): CombatL
  * clustered on the area's center instead of stretching edge to edge. `y` is
  * the area's vertical center; the caller lifts the hovered card itself.
  */
-export function handSlots(count: number, area: Rect, cardWidth = UNIT_W - 26): Point[] {
+export function handSlots(count: number, area: Rect, cardWidth = 124): Point[] {
   if (count <= 0) return [];
   const gap = count < 2 ? 0 : Math.min(120, (area.w - cardWidth) / (count - 1));
   const span = gap * (count - 1);

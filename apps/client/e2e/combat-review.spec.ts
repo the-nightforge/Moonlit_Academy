@@ -51,9 +51,9 @@ test(`selected card retains lift after pointerover/out and body stays clear of o
   const overlaps = await page.evaluate(() => {
     const scene = (window as any).__vn.game.scene.getScene("combat");
     return [...scene.cardViews.values()].flatMap((view: any) => {
-      const body = view.list.find((n: any) => n.name === "card_body");
+      const body = view.getByName("card_body");
       // The owner name is the body's subject line now — no separate header.
-      return !body || body.getBounds().top < view.y + 22 || body.getBounds().bottom > view.y + 70 ? [body?.text ?? "missing body"] : [];
+      return !body || body.getBounds().top < view.y - 25 || body.getBounds().bottom > view.y + 84 ? [body?.text ?? "missing body"] : [];
     });
   });
   expect(overlaps).toEqual([]);

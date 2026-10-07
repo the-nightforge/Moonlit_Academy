@@ -81,7 +81,7 @@ describe("computeCombatLayout", () => {
 
   it("pins the frame rects: hand area, controls column, moon header", () => {
     const layout = computeCombatLayout(state, 0);
-    expect(layout.hand).toEqual({ x: 130, y: 556, w: 1010, h: 160 });
+    expect(layout.hand).toEqual({ x: 130, y: 534, w: 1010, h: 184 });
     expect(layout.controls).toEqual({ x: 1154, y: 48, w: 104, h: 652 });
     expect(layout.moon).toEqual({ x: 640, y: 40 });
   });
@@ -92,7 +92,7 @@ describe("computeCombatLayout", () => {
     expect(layout.seats.get(0)).toEqual({
       draw: { x: 54, y: 424 },
       discard: { x: 54, y: 540 },
-      hand: { x: 635, y: 636 },
+      hand: { x: 635, y: 620 },
       resource: { x: 1206, y: 104 },
       reserve: { x: 1206, y: 144 },
     });
@@ -138,8 +138,8 @@ describe("handSlots", () => {
   it("keeps every card fully inside the hand area at full hand", () => {
     const slots = handSlots(10, layout.hand);
     expect(slots).toHaveLength(10);
-    expect(slots.every((p) => p.x - 55 >= 130 && p.x + 55 <= 1140)).toBe(true);
-    expect(slots.every((p) => p.y === 636)).toBe(true);
+    expect(slots.every((p) => p.x - 62 >= 130 && p.x + 62 <= 1140)).toBe(true);
+    expect(slots.every((p) => p.y === 626)).toBe(true);
   });
 
   it("caps the gap at 120 — a small hand stays centered on the area, not stretched", () => {
@@ -150,7 +150,7 @@ describe("handSlots", () => {
 
   it("handles the degenerate counts", () => {
     expect(handSlots(0, layout.hand)).toEqual([]);
-    expect(handSlots(1, layout.hand)).toEqual([{ x: 635, y: 636 }]);
+    expect(handSlots(1, layout.hand)).toEqual([{ x: 635, y: 626 }]);
   });
 });
 

@@ -20,13 +20,13 @@ test("UI icon textures load and preserve combat display sizes", async ({ page })
       return { key, url, width:source.width, height:source.height };
     });
   });
-  expect(loaded).toHaveLength(47);
+  expect(loaded).toHaveLength(54);
   for (const icon of loaded) {
     expect(icon.url).toBe(`/assets/ui/${icon.key}.webp`);
     const response = responses.get(`/assets/ui/${icon.key}.webp`);
     expect(response?.status).toBe(200);
     expect(response?.contentType).toContain("image/webp");
-    expect(icon.width).toBe(256); expect(icon.height).toBe(256);
+    expect([256, 96]).toContain(icon.width); expect(icon.height).toBe(icon.width);
   }
   await page.evaluate(() => {
     const h = (window as any).__vn, s = h.game.scene.getScene("combat");
@@ -39,12 +39,12 @@ test("UI icon textures load and preserve combat display sizes", async ({ page })
     const s = (window as any).__vn.game.scene.getScene("combat"), nodes:any[] = [];
     const walk=(list:any[])=>list.forEach(n=>{ nodes.push(n); if(n.list) walk(n.list); });
     walk(s.children.list);
-    const icon = nodes.find(n=>n.name === "card_category_icon");
+    const icon = nodes.find(n=>n.name === "card_emblem_icon");
     const emitter = nodes.find(n=>n.type === "ParticleEmitter" && n.texture?.key === "ui:status_charm");
     emitter.emitParticle(1);
     const particles = emitter.alive;
     return { glyph:icon?.displayWidth, particleWidth:particles.at(-1).scaleX * emitter.texture.getSourceImage().width };
   });
-  expect(sizes.glyph).toBe(24); expect(sizes.particleWidth).toBeCloseTo(14, 1);
+  expect(sizes.glyph).toBe(14); expect(sizes.particleWidth).toBeCloseTo(14, 1);
   await page.screenshot({ path:"../../.sdd-work/ui-icon-assets/combat-ui-icons.png" });
 });

@@ -193,6 +193,8 @@ export const cardDefSchema = z.object({
   text: z.string(),
   requiresBloodMoon: z.boolean().optional(),
   keywords: z.array(idSchema).optional(),
+  /** Artwork variant — resolves to the `cards:art_<art>` texture; absent falls back to keyword/type art. */
+  art: z.string().optional(),
   plusOf: idSchema.optional(),
   token: z.literal(true).optional(),
 });
