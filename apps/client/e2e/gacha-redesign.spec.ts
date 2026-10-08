@@ -1,16 +1,16 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { registerAccount, openSignedIn } from "./helpers/online";
 
 async function setup(page: Page) {
-  await page.route("**/api/health", route => route.fulfill({ status: 503, json: { ok: false } }));
-  await page.goto("http://127.0.0.1:5173");
-  await page.waitForFunction(() => (window as any).__vn?.game.scene.isActive("login"));
+  const account = await registerAccount();
+  await openSignedIn(page, account);
   await page.evaluate(() => {
     const h = (window as any).__vn;
     h.session.profile.currencies.moonJade = 10000;
     for (const id of ["m01", "m05", "f01", "m08", "f08", "f10", "m06", "f02", "f03", "m02"]) {
       h.session.profile.heroes[id] = { xp:0, unlockedCardIds:[], constellation:0, bonusUnlocks:0, levelUpForm:"base" };
     }
-    h.game.scene.getScene("login").scene.start("gacha");
+    h.game.scene.getScenes(true)[0]!.scene.start("gacha");
   });
   await page.waitForFunction(() => (window as any).__vn.game.scene.isActive("gacha"));
 }
@@ -107,8 +107,9 @@ test("reveal keeps pulls locked and skip reveals all ten before closing", async 
   await setup(page);
   await clickText(page,"Quay ×10");
   await expect.poll(() => Boolean(request)).toBe(true);
-  await request.fulfill({ json:await reply(page,10) });
-  await page.waitForFunction(() => (window as any).__vn.session.rev === 1);
+  const body = await reply(page,10);
+  await request.fulfill({ json:body });
+  await page.waitForFunction(rev => (window as any).__vn.session.rev === rev, body.rev);
   expect(await page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").busy)).toBe(true);
   await clickText(page,"Bỏ qua");
   await expect.poll(async () => (await texts(page)).filter(t => t === "Tinh Hồn 1").length).toBe(10);
@@ -127,12 +128,15 @@ test("a reply after shutdown updates profile without reviving scene UI", async (
   await expect.poll(() => Boolean(request)).toBe(true);
   const body = await reply(page);
   await page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").scene.start("login"));
-  await page.waitForFunction(() => (window as any).__vn.game.scene.isActive("login"));
+  // A valid token makes login resume straight into deck-select; the late reply
+  // must only update the profile, never resurrect the dead gacha overlay.
+  await page.waitForFunction(() => (window as any).__vn.game.scene.isActive("deck-select"), { timeout: 60_000 });
   await request.fulfill({ json:body });
-  await page.waitForFunction(() => (window as any).__vn.session.rev === 1);
+  await page.waitForFunction(rev => (window as any).__vn.session.rev === rev, body.rev);
   await page.waitForTimeout(800);
   expect(errors).toEqual([]);
-  expect(await page.evaluate(() => (window as any).__vn.game.scene.isActive("login"))).toBe(true);
+  expect(await page.evaluate(() => (window as any).__vn.game.scene.isActive("gacha"))).toBe(false);
+  expect(await page.evaluate(() => (window as any).__vn.game.scene.isActive("deck-select"))).toBe(true);
 });
 
 test("an API error releases the pull lock and a retry completes normally", async ({ page }) => {
@@ -179,7 +183,7 @@ test("a late reply from the previous scene run cannot overlay a fresh altar", as
   await page.evaluate(() => (window as any).__vn.game.scene.getScene("gacha").scene.restart());
   await page.waitForFunction(() => (window as any).__vn.game.scene.getScene("gacha").busy === false);
   await request.fulfill({ json:body });
-  await page.waitForFunction(() => (window as any).__vn.session.rev === 1);
+  await page.waitForFunction(rev => (window as any).__vn.session.rev === rev, body.rev);
   await page.waitForTimeout(600);
   expect((await texts(page)).includes("Tinh Hồn 1")).toBe(false);
   expect((await texts(page)).some(text => text.startsWith("Bỏ qua"))).toBe(false);

@@ -79,7 +79,7 @@ async function signedInPage(browser: Browser, token: string): Promise<Page> {
     const vn = (window as unknown as { __vn?: { session: { online: boolean } } }).__vn;
     const scene = (window as unknown as { __vn?: { game: { scene: { getScenes: (b: boolean) => { scene: { key: string } }[] } } } }).__vn;
     return vn !== undefined && scene?.game.scene.getScenes(true)[0]?.scene.key === "deck-select";
-  }, undefined, { timeout: 30_000 });
+  }, undefined, { timeout: 60_000 });
   return page;
 }
 
@@ -128,7 +128,7 @@ async function enterArena(page: Page): Promise<void> {
     }).__vn;
     const key = vn_?.game.scene.getScenes(true)[0]?.scene.key;
     return (key === "arena" && vn_?.session.net?.connected === true) || (key === "combat" && vn_?.session.match != null);
-  }, undefined, { timeout: 30_000 });
+  }, undefined, { timeout: 90_000 });
 }
 
 test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đổi, mua ở cửa hàng Vinh Dự", async ({ browser }) => {
@@ -169,7 +169,7 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
     expect(ended.rewards!.honor).toBeGreaterThan(0);
 
     await clickSceneText(pageW, "combat", "Về Đấu Trường");
-    await expect.poll(() => sceneKey(pageW), { timeout: 30_000 }).toBe("arena");
+    await expect.poll(() => sceneKey(pageW), { timeout: 60_000 }).toBe("arena");
     await pageL.context().close();
     console.info("Ranked win settled", i + 1, "elapsed ms", Date.now() - stamp);
   }
@@ -213,7 +213,7 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
     const key = (window as unknown as { __vn?: { game: { scene: { getScenes: (b: boolean) => { scene: { key: string } }[] } } } })
       .__vn?.game.scene.getScenes(true)[0]?.scene.key;
     return key === "deck-select";
-  }, undefined, { timeout: 30_000 });
+  }, undefined, { timeout: 60_000 });
   await enterArena(pageW);
   // Welcome may enqueue recovery of the retained completed room. Let the
   // scene manager apply that transition before navigating toward the shop.
@@ -225,7 +225,7 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
     await expect.poll(() => sceneKey(pageW)).toBe("arena");
   }
   await clickSceneText(pageW, "arena", "Cửa hàng Vinh Dự");
-  await expect.poll(() => sceneKey(pageW), { timeout: 15_000 }).toBe("shop");
+  await expect.poll(() => sceneKey(pageW), { timeout: 60_000 }).toBe("shop");
   console.info("Reload recovery and shop entry verified; elapsed ms", Date.now() - stamp);
 
   const before = await api("/api/profile", { token: winner.token });

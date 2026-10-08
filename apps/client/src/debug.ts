@@ -2,6 +2,11 @@ import { activePlayerState, cardDefOf, drawCards } from "rules";
 import type { CombatEvent, CombatState, GameData } from "rules";
 import { session } from "./session";
 
+/** The state the combat scene actually renders — the net match view when online. */
+function live(): CombatState {
+  return session.match?.view ?? session.state;
+}
+
 function unitName(state: CombatState, data: GameData, unitId: string): string {
   const hero = state.heroes.find((h) => h.id === unitId);
   if (hero) return data.heroes[hero.defId]?.name ?? unitId;
@@ -11,7 +16,7 @@ function unitName(state: CombatState, data: GameData, unitId: string): string {
 }
 
 function checkEnd(): void {
-  const state = session.state;
+  const state = live();
   if (state.status !== "playerTurn" && state.status !== "enemyTurn") return;
   if (state.enemies.every((enemy) => !enemy.alive)) {
     state.status = "won";
@@ -23,30 +28,30 @@ function checkEnd(): void {
 }
 
 export function debugAddMoonPower(amount = 3): void {
-  const seat = activePlayerState(session.state);
+  const seat = activePlayerState(live());
   seat.moonPower += amount;
   session.events.push({ type: "moonPowerChanged", value: seat.moonPower });
 }
 
 export function debugDrawCards(count = 1): void {
-  drawCards(session.data, session.state, activePlayerState(session.state), count, session.events);
+  drawCards(session.data, live(), activePlayerState(live()), count, session.events);
 }
 
 export function debugSetMoon(index: number): void {
   const phases = session.data.moonPhases;
-  const from = session.state.moonIndex;
-  session.state.moonIndex = ((index % phases.length) + phases.length) % phases.length;
-  session.events.push({ type: "moonShifted", from, to: session.state.moonIndex, cause: "card" });
+  const from = live().moonIndex;
+  live().moonIndex = ((index % phases.length) + phases.length) % phases.length;
+  session.events.push({ type: "moonShifted", from, to: live().moonIndex, cause: "card" });
 }
 
 export function debugSetBloodMoon(rounds: number): void {
-  if (session.state.bloodMoonRounds === rounds) return;
-  session.state.bloodMoonRounds = rounds;
+  if (live().bloodMoonRounds === rounds) return;
+  live().bloodMoonRounds = rounds;
   session.events.push({ type: "bloodMoonChanged", rounds, cause: "card" });
 }
 
 export function debugKillEnemy(index: number): void {
-  const enemy = session.state.enemies[index];
+  const enemy = live().enemies[index];
   if (!enemy?.alive) return;
   enemy.hp = 0;
   enemy.alive = false;
@@ -58,7 +63,7 @@ export function debugKillEnemy(index: number): void {
 
 /** Forces the level-up flag so leveled passives (Chọn Pha, …) engage next turn. */
 export function debugSetLeveledUp(index: number): void {
-  const hero = session.state.heroes[index];
+  const hero = live().heroes[index];
   if (!hero || hero.leveledUp) return;
   hero.leveledUp = true;
   const def = session.data.heroes[hero.defId];
@@ -66,7 +71,7 @@ export function debugSetLeveledUp(index: number): void {
 }
 
 export function debugAdjustHeroHp(index: number, delta: number): void {
-  const hero = session.state.heroes[index];
+  const hero = live().heroes[index];
   if (!hero?.alive) return;
   hero.hp = Math.max(0, Math.min(hero.maxHp, hero.hp + delta));
   if (hero.hp === 0) {

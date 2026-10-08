@@ -1,11 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { registerAccount, openSignedIn } from "./helpers/online";
+import { activeSceneKey } from "./helpers/combat";
 
 async function boot(page: Page, scene: string, withArt = true) {
-  await page.route("**/api/health", route => route.fulfill({ status: 503, json: { ok: false } }));
-  await page.goto("http://127.0.0.1:5173");
-  await page.getByRole("button", { name: "Chơi offline" }).waitFor();
+  const account = await registerAccount();
+  await openSignedIn(page, account);
   await page.evaluate(({ scene, withArt }) => {
     const h = (window as any).__vn;
     // Different aspect ratios catch accidental stretch/crop in full art and thumbnails.
@@ -21,9 +22,9 @@ async function boot(page: Page, scene: string, withArt = true) {
     for (const id of Object.keys(h.session.data.weapons)) h.session.profile.weapons[id] = { refinement: 1 };
     for (const id of Object.keys(h.session.data.relics)) h.session.profile.relics[id] = { resonance: 1 };
     h.session.editingDeck = { id: "", name: "Art test", heroIds: [...h.session.heroIds], cardIds: [...h.session.deckCardIds] };
-    h.game.scene.getScene("login").scene.start(scene);
+    h.game.scene.getScenes(true)[0]!.scene.start(scene);
   }, { scene, withArt });
-  await page.waitForFunction(key => (window as any).__vn.game.scene.isActive(key), scene);
+  await expect.poll(async () => activeSceneKey(page), { timeout: 15_000 }).toBe(scene);
 }
 
 async function probe(page: Page, key: string) {
@@ -72,6 +73,15 @@ test("armory displays each equipment's full art without stretching or overlappin
 test("equipment without art stays usable and does not load a missing texture", async ({ page }) => {
   const errors: string[] = []; page.on("pageerror", e => errors.push(e.message));
   await boot(page, "armory", false);
+  // Every shipped item has generated art; a synthetic def exercises the no-art path.
+  await page.evaluate(() => {
+    const h = (window as any).__vn, scene = h.game.scene.getScene("armory");
+    const def = h.session.data.weapons.w_xich_diem_thuong;
+    h.session.data.weapons.w_no_art_probe = { ...def, id: "w_no_art_probe", name: "Vô Hình Kiếm" };
+    h.session.profile.weapons.w_no_art_probe = { refinement: 1 };
+    scene.selected = "w_no_art_probe";
+    scene.render();
+  });
   const p = await probe(page, "armory");
   expect(p.texts.some(t => t.text === "Chưa có art")).toBe(true);
   expect(p.images.some(i => i.key === "__MISSING")).toBe(false);
@@ -97,12 +107,18 @@ for (const [itemId, key, withArt] of [
   ["w_xich_diem_thuong", "gacha:weapon_banner", false],
 ] as const) test(`gacha result uses ${key} (${withArt ? "specific art" : "fallback"})`, async ({ page }) => {
   await boot(page, "gacha", withArt);
-  await page.evaluate(itemId => {
-    const scene = (window as any).__vn.game.scene.getScene("gacha");
+  await page.evaluate(({ itemId, withArt }) => {
+    const h = (window as any).__vn, scene = h.game.scene.getScene("gacha");
+    if (!withArt) {
+      // Fallback art needs an item with no uploaded file; shipped items all have one.
+      const def = h.session.data.weapons[itemId];
+      h.session.data.weapons.w_no_art_probe = { ...def, id: "w_no_art_probe", name: "Vô Hình Kiếm" };
+      itemId = "w_no_art_probe";
+    }
     scene.phase = "revealing";
-    scene.reveal([{ itemId, rarity: "legendary", outcome: "new" }]);
-    scene.skipReveal();
-  }, itemId);
+    scene.resultsFx.start([{ itemId, rarity: "legendary", outcome: "new" }]);
+    scene.resultsFx.skip();
+  }, { itemId, withArt });
   const p = await probe(page, "gacha");
   expect(p.images.some(i => i.key === key)).toBe(true);
   expect(p.texts.some(t => t.text === "Minh họa loại trang bị")).toBe(!withArt);

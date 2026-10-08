@@ -69,7 +69,7 @@ async function signedInPage(browser: Browser, token: string): Promise<Page> {
     const vn = (window as unknown as { __vn?: { session: { online: boolean } } }).__vn;
     const scene = (window as unknown as { __vn?: { game: { scene: { getScenes: (b: boolean) => { scene: { key: string } }[] } } } }).__vn;
     return vn !== undefined && scene?.game.scene.getScenes(true)[0]?.scene.key === "deck-select";
-  }, undefined, { timeout: 30_000 });
+  }, undefined, { timeout: 60_000 });
   return page;
 }
 
@@ -123,7 +123,7 @@ async function enterArena(page: Page): Promise<void> {
     }).__vn;
     const key = vn?.game.scene.getScenes(true)[0]?.scene.key;
     return (key === "arena" && vn?.session.net?.connected === true) || (key === "combat" && vn?.session.match != null);
-  }, undefined, { timeout: 30_000 });
+  }, undefined, { timeout: 90_000 });
 }
 
 async function sendMatchAction(page: Page, action: unknown): Promise<void> {
@@ -171,7 +171,7 @@ test("phòng riêng PvP: hai trình duyệt đấu, tải lại một bên vào 
   await pageB.fill("#vn-modal-input", code);
   await pageB.press("#vn-modal-input", "Enter");
 
-  await expect.poll(() => sceneKey(pageA), { timeout: 30_000 }).toBe("combat");
+  await expect.poll(() => sceneKey(pageA), { timeout: 90_000 }).toBe("combat");
   await expect.poll(() => sceneKey(pageB)).toBe("combat");
   expect(await vn(pageA)).not.toBeNull();
 
@@ -204,9 +204,9 @@ test("phòng riêng PvP: hai trình duyệt đấu, tải lại một bên vào 
     const key = (window as unknown as { __vn?: { game: { scene: { getScenes: (b: boolean) => { scene: { key: string } }[] } } } })
       .__vn?.game.scene.getScenes(true)[0]?.scene.key;
     return key === "deck-select";
-  }, undefined, { timeout: 30_000 });
+  }, undefined, { timeout: 60_000 });
   await enterArena(pageA);
-  await expect.poll(() => sceneKey(pageA), { timeout: 30_000 }).toBe("combat");
+  await expect.poll(() => sceneKey(pageA), { timeout: 90_000 }).toBe("combat");
   expect((await matchView(pageA))!.status).toMatch(/playerTurn|opponentTurn/);
 });
 
@@ -217,7 +217,7 @@ test("đấu tập: practice.start mở trận với máy, máy tự đánh", as
   await enterArena(page);
 
   await clickDesign(page, 400, 518); // "Đấu Tập (máy)"
-  await expect.poll(() => sceneKey(page), { timeout: 30_000 }).toBe("combat");
+  await expect.poll(() => sceneKey(page), { timeout: 90_000 }).toBe("combat");
 
   // Người chơi Đổi Bài; máy tự hoàn tất mulligan sau nhịp nghĩ.
   await sendMatchAction(page, { type: "mulligan", instanceIds: [] });

@@ -1,10 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { setupOfflineCombat, clickDesign, sceneTexts } from "./helpers/combat";
+import { clickDesign, sceneTexts } from "./helpers/combat";
+import { openCombatScene } from "./helpers/online";
 import { applyAction, createCombat, createPvpCombat, createCoopCombat, starterDeck } from "rules";
-
-test.beforeEach(async({page})=>{
-  await page.route("**/api/health",route=>route.fulfill({status:503,contentType:"application/json",body:'{"ok":false}'}));
-});
 
 async function clickNamed(page:any,name:string) {
   const point=await page.evaluate((name:string)=>{
@@ -16,7 +13,7 @@ async function clickNamed(page:any,name:string) {
 }
 
 test("centered foes and independent actual pile clicks in PvE, PvP and co-op",async({page})=>{
-  await setupOfflineCombat(page);
+  await openCombatScene(page);
   for(const mode of ["pve","pvp","coop"] as const) {
     const data=await page.evaluate(()=>(window as any).__vn.session.data);
     const heroIds=["m05","f04","m06"] as [string,string,string];
@@ -54,7 +51,7 @@ test("centered foes and independent actual pile clicks in PvE, PvP and co-op",as
 
 for(const viewport of [{width:1280,height:720},{width:1024,height:576}]) {
 test(`settings controls fit, persist and keep combat blocked @ ${viewport.width}`,async({page})=>{
-  await page.setViewportSize(viewport);await setupOfflineCombat(page);
+  await page.setViewportSize(viewport);await openCombatScene(page);
   await clickDesign(page,1240,36);
   const bounds=await page.evaluate(()=>{
     const s=(window as any).__vn.game.scene.getScene("combat");
@@ -76,7 +73,7 @@ test(`settings controls fit, persist and keep combat blocked @ ${viewport.width}
     const walk=(list:any[])=>list.forEach(n=>{if(n.name==="moon_current_aura")old.push(n);if(n.list)walk(n.list);});walk(s.moonLayer.list);
     return old.length===0;
   })).toBe(true);
-  await page.keyboard.press("e");expect(await page.evaluate(()=>(window as any).__vn.session.state.round)).toBe(1);
+  await page.keyboard.press("e");expect(await page.evaluate(()=>(window as any).__vn.game.scene.getScene("combat").state.round)).toBe(1);
   await page.screenshot({path:`../../.sdd-work/combat-ui-polish/screenshots/settings-${viewport.width}.png`});
   await page.keyboard.press("Escape");
   expect((await sceneTexts(page,"combat")).includes("Thiết Lập")).toBe(false);
@@ -85,7 +82,7 @@ test(`settings controls fit, persist and keep combat blocked @ ${viewport.width}
 });
 
 test(`current moon and card description geometry @ ${viewport.width}`,async({page})=>{
-  await page.setViewportSize(viewport);await setupOfflineCombat(page);
+  await page.setViewportSize(viewport);await openCombatScene(page);
   const probe=await page.evaluate(()=>{
     const s=(window as any).__vn.game.scene.getScene("combat"),nodes:any[]=[];
     const walk=(list:any[])=>list.forEach(n=>{nodes.push(n);if(n.list)walk(n.list);});walk(s.children.list);
@@ -105,8 +102,8 @@ test(`current moon and card description geometry @ ${viewport.width}`,async({pag
   await expect.poll(()=>page.evaluate(()=>{const s=(window as any).__vn.game.scene.getScene("combat"),nodes:any[]=[];const walk=(l:any[])=>l.forEach((n:any)=>{nodes.push(n);if(n.list)walk(n.list);});walk(s.children.list);return nodes.some((n:any)=>/^⏱ \d+s$/.test(n.text||""));})).toBe(true);
   for(const card of probe.cards){expect(card).not.toBeNull();expect(card!.body.length).toBeGreaterThan(0);expect(card!.bodyTop).toBeGreaterThanOrEqual(card!.bandTop);expect(card!.bodyBottom).toBeLessThanOrEqual(card!.bandBottom);}
   await page.evaluate(()=>{
-    const h=(window as any).__vn,s=h.game.scene.getScene("combat"),id=h.session.state.players[0].hand[0];
-    const card=h.session.data.cards[h.session.state.cards[id].cardId];
+    const h=(window as any).__vn,s=h.game.scene.getScene("combat"),id=s.state.players[0].hand[0];
+    const card=h.session.data.cards[s.state.cards[id].cardId];
     card.text="Một\nHai\nBa";s.requestRender();
   });
   await expect.poll(()=>page.evaluate(()=>{const s=(window as any).__vn.game.scene.getScene("combat");return [...s.cardViews.values()].some((v:any)=>(v.getByName("card_body")?.text.endsWith(" Một\nHai\nBa") ?? false));})).toBe(true);
@@ -114,7 +111,7 @@ test(`current moon and card description geometry @ ${viewport.width}`,async({pag
   const compact=await page.evaluate(async()=>{
     const h=(window as any).__vn,s=h.game.scene.getScene("combat");
     const {combatCardModel,renderCombatCard}=await import("/src/ui/combat-card-view.ts");
-    const base=combatCardModel(h.session.data,h.session.state,h.session.state.players[0].hand[0]);
+    const base=combatCardModel(h.session.data,s.state,s.state.players[0].hand[0]);
     const models=[base,{...base,category:"bond",ownerNames:[h.session.data.heroes.f03.name,h.session.data.heroes.f04.name],ownerColors:[0xaaaaff,0xddbbff]},{...base,category:"weapon",ownerNames:[base.ownerNames[0]]},base];
     return models.map((model:any,i:number)=>{
       const view=renderCombatCard(s,{...model,fullText:i===3?"Một Hai Ba Bốn Năm Sáu Bảy Tám Chín Mười":"Một\nHai\nBa\nBốn"},{x:410+i*120,y:400}).setDepth(1800);

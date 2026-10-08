@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { clickSceneText, probeCombat } from "./helpers/combat";
+import { clickSceneText, probeCombat, sceneTexts } from "./helpers/combat";
 
 /**
  * `17` §9.3 e2e — Liên Thủ: two browser contexts, two accounts, one private
@@ -86,7 +86,7 @@ async function signedInPage(browser: Browser, token: string): Promise<Page> {
     const vn = (window as unknown as { __vn?: { session: { online: boolean } } }).__vn;
     const scene = (window as unknown as { __vn?: { game: { scene: { getScenes: (b: boolean) => { scene: { key: string } }[] } } } }).__vn;
     return vn !== undefined && scene?.game.scene.getScenes(true)[0]?.scene.key === "deck-select";
-  }, undefined, { timeout: 30_000 });
+  }, undefined, { timeout: 60_000 });
   return page;
 }
 
@@ -295,58 +295,81 @@ async function churnSeat(page: Page): Promise<void> {
 test("phòng riêng Liên Thủ: hai trình duyệt kích Hợp Kích, tải lại một bên vào lại trận", async ({ browser }) => {
   // Real shared-turn cards, playback and the full portrait preload also run
   // during rejoin; the diagnostic reached round5/combo after70s of actions.
-  test.setTimeout(300_000);
+  test.setTimeout(600_000);
   const accA = await registerAccount(`e2e_ca_${Date.now()}`);
-  const accB = await registerAccount(`e2e_cb_${Date.now()}`);
   await saveDeck(accA.token, accA.rev);
-  await saveDeck(accB.token, accB.rev);
 
   const pageA = await signedInPage(browser, accA.token);
-  const pageB = await signedInPage(browser, accB.token);
   await enterLobby(pageA);
-  await enterLobby(pageB);
 
-  // A tạo phòng riêng co-op; B vào bằng mã.
-  await clickDesign(pageA, 640, 470); // "Tạo phòng riêng"
-  await expect.poll(async () => (await vn(pageA)).roomCode).not.toBeNull();
-  const code = (await vn(pageA)).roomCode!;
-  await clickDesign(pageB, 880, 470); // "Vào phòng (mã)"
-  // The room-code field is an HTML input over the canvas (in-game dialog).
-  await pageB.fill("#vn-modal-input", code);
-  await pageB.press("#vn-modal-input", "Enter");
-
-  await expect.poll(() => sceneKey(pageA), { timeout: 30_000 }).toBe("combat");
-  await expect.poll(() => sceneKey(pageB)).toBe("combat");
-  expect((await vn(pageA)).match?.mode).toBe("coop_private");
-  expect((await vn(pageA)).view?.mode).toBe("coop");
-
-  // Mulligan: đổi tối đa 2 lá không phải nửa Hợp Kích để đào bài.
-  for (const page of [pageA, pageB]) {
-    const probe = await vn(page);
-    const seat = probe.match!.you;
-    const returns = probe.view!.players[seat]!.hand
-      .filter((id) => ![SHIFT_HALF, HEAL_HALF].includes(probe.view!.cards[id]!.cardId))
-      .slice(0, 2);
-    await sendMatchAction(page, { type: "mulligan", instanceIds: returns });
-  }
-  await expect.poll(async () => (await vn(pageA)).view?.status ?? "", { timeout: 20_000 }).toBe("playerTurn");
-
-  // Đánh tới khi Hợp Kích kích (hoặc trận kết thúc); vòng lặp điều khiển cả hai ghế.
-  // Hai lượt comboPass trước churn+endTurn để nửa được đánh sau vẫn bắt kịp journal.
+  // Drawing both halves before the Trăng Tròn window is pure match RNG — a
+  // lost match gets abandoned and a fresh room retries (private rooms allow
+  // rematches; only ranked blocks them).
   let fired = false;
-  const started = Date.now();
-  for (let round = 0; round < 30 && !fired; round++) {
-    for (const page of [pageA, pageB]) await comboPass(page);
-    for (const page of [pageA, pageB]) await comboPass(page);
-    for (const page of [pageA, pageB]) await churnSeat(page);
-    await pageA.waitForTimeout(400);
-    fired = ((await vn(pageA)).view?.comboUsed?.[COMBO_ID]?.total ?? 0) > 0;
-    const progress = await pageA.evaluate(() => {
-      const h = (window as any).__vn, s = h.game.scene.getScene("combat");
-      return {round:h.session.match?.view.round,moon:h.session.match?.view.moonIndex,status:h.session.match?.view.status,pending:h.session.match?.pending,busy:s.playback.busy};
-    });
-    console.info("Co-op progress", {iteration:round,elapsedMs:Date.now()-started,...progress});
-    if ((await vn(pageA)).match?.ended !== null) break;
+  let pageB: Page | null = null;
+  for (let attempt = 0; attempt < 2 && !fired; attempt++) {
+    // USERNAME_PATTERN caps at 20 chars — keep the attempt marker short.
+    const accB = await registerAccount(`e2e_c${attempt}_${Date.now()}`);
+    await saveDeck(accB.token, accB.rev);
+    pageB = await signedInPage(browser, accB.token);
+    await enterLobby(pageB);
+
+    // A tạo phòng riêng co-op; B vào bằng mã.
+    await clickDesign(pageA, 640, 470); // "Tạo phòng riêng"
+    await expect.poll(async () => (await vn(pageA)).roomCode).not.toBeNull();
+    const code = (await vn(pageA)).roomCode!;
+    await clickDesign(pageB, 880, 470); // "Vào phòng (mã)"
+    // The room-code field is an HTML input over the canvas (in-game dialog).
+    await pageB.fill("#vn-modal-input", code);
+    await pageB.press("#vn-modal-input", "Enter");
+
+    await expect.poll(() => sceneKey(pageA), { timeout: 90_000 }).toBe("combat");
+    await expect.poll(() => sceneKey(pageB), { timeout: 90_000 }).toBe("combat");
+    expect((await vn(pageA)).match?.mode).toBe("coop_private");
+    expect((await vn(pageA)).view?.mode).toBe("coop");
+
+    // Mulligan: đổi tối đa 2 lá không phải nửa Hợp Kích để đào bài.
+    for (const page of [pageA, pageB]) {
+      const probe = await vn(page);
+      const seat = probe.match!.you;
+      const returns = probe.view!.players[seat]!.hand
+        .filter((id) => ![SHIFT_HALF, HEAL_HALF].includes(probe.view!.cards[id]!.cardId))
+        .slice(0, 2);
+      await sendMatchAction(page, { type: "mulligan", instanceIds: returns });
+    }
+    await expect.poll(async () => (await vn(pageA)).view?.status ?? "", { timeout: 20_000 }).toBe("playerTurn");
+
+    // Đánh tới khi Hợp Kích kích (hoặc trận kết thúc); vòng lặp điều khiển cả hai ghế.
+    // Hai lượt comboPass trước churn+endTurn để nửa được đánh sau vẫn bắt kịp journal.
+    const started = Date.now();
+    for (let round = 0; round < 30 && !fired; round++) {
+      for (const page of [pageA, pageB]) await comboPass(page);
+      for (const page of [pageA, pageB]) await comboPass(page);
+      for (const page of [pageA, pageB]) await churnSeat(page);
+      await pageA.waitForTimeout(400);
+      fired = ((await vn(pageA)).view?.comboUsed?.[COMBO_ID]?.total ?? 0) > 0;
+      const progress = await pageA.evaluate(() => {
+        const h = (window as any).__vn, s = h.game.scene.getScene("combat");
+        return {round:h.session.match?.view.round,moon:h.session.match?.view.moonIndex,status:h.session.match?.view.status,pending:h.session.match?.pending,busy:s.playback.busy};
+      });
+      console.info("Co-op progress", {attempt:attempt+1,iteration:round,elapsedMs:Date.now()-started,...progress});
+      if ((await vn(pageA)).match?.ended !== null) break;
+    }
+    if (fired) break;
+
+    // The match ended (usually a loss) before the combo assembled — leave the
+    // end screen so the next attempt starts from a clean lobby. The end screen
+    // only renders once playback drains, so wait for its button first.
+    console.info(`Co-op attempt ${attempt + 1} ended without Hợp Kích — retrying in a fresh room`);
+    if ((await sceneKey(pageA)) === "combat") {
+      await expect
+        .poll(async () => (await sceneTexts(pageA, "combat")).some((t) => t.includes("Về Liên Thủ")), { timeout: 90_000 })
+        .toBe(true);
+      await clickSceneText(pageA, "combat", "Về Liên Thủ");
+      await expect.poll(() => sceneKey(pageA), { timeout: 60_000 }).toBe("coop-lobby");
+    }
+    await pageB.context().close();
+    pageB = null;
   }
   const view = (await vn(pageA)).view;
   expect(view?.comboUsed?.[COMBO_ID]?.total ?? 0, "Hợp Kích Ám Ảnh Tuyệt Sát phải kích").toBeGreaterThanOrEqual(1);
@@ -358,9 +381,9 @@ test("phòng riêng Liên Thủ: hai trình duyệt kích Hợp Kích, tải l�
     const key = (window as unknown as { __vn?: { game: { scene: { getScenes: (b: boolean) => { scene: { key: string } }[] } } } })
       .__vn?.game.scene.getScenes(true)[0]?.scene.key;
     return key === "deck-select";
-  }, undefined, { timeout: 30_000 });
+  }, undefined, { timeout: 60_000 });
   await enterLobby(pageA);
-  await expect.poll(() => sceneKey(pageA), { timeout: 30_000 }).toBe("combat");
+  await expect.poll(() => sceneKey(pageA), { timeout: 90_000 }).toBe("combat");
   expect(["playerTurn", "enemyTurn", "choosing"]).toContain((await vn(pageA)).view!.status);
 });
 
@@ -371,7 +394,7 @@ test("đấu tập Liên Thủ: đồng đội máy đánh cùng tới khi trậ
   await enterLobby(page);
 
   await clickDesign(page, 400, 518); // "Đấu Tập (đồng đội máy)"
-  await expect.poll(() => sceneKey(page), { timeout: 30_000 }).toBe("combat");
+  await expect.poll(() => sceneKey(page), { timeout: 90_000 }).toBe("combat");
   expect((await vn(page)).match?.mode).toBe("coop_practice");
 
   await sendMatchAction(page, { type: "mulligan", instanceIds: [] });

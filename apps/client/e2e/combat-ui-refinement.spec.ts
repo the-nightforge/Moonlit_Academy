@@ -1,12 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import { applyAction, createCoopCombat } from "rules";
-import { clickDesign, setupOfflineCombat, waitIdle } from "./helpers/combat";
+import { clickDesign, waitIdle } from "./helpers/combat";
+import { openCombatScene } from "./helpers/online";
 
 const OUT = "../../.sdd-work/combat-ui-refinement";
-test.beforeEach(async ({ page }) => {
-  await page.route("**/api/health", route => route.fulfill({ status: 503, contentType: "application/json", body: '{"ok":false}' }));
-});
-
 async function moveDesign(page: Page, x: number, y: number) {
   const box = (await page.locator("canvas").boundingBox())!;
   const scale = Math.min(box.width / 1280, box.height / 720);
@@ -58,7 +55,7 @@ async function assertFooter(page: Page, expectedWidth: number) {
 for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576 }]) {
   test(`mulligan, portraits, awakening details and current/next moon @ ${viewport.width}`, async ({ page }) => {
     await page.setViewportSize(viewport);
-    await setupOfflineCombat(page, "default", { keepMulligan: true });
+    await openCombatScene(page, "default", { keepMulligan: true });
     const opening = await page.evaluate(() => {
       const s = (window as any).__vn.game.scene.getScene("combat"), banner = s.root.getByName("mulligan_banner").getBounds();
       const rects = [...s.unitViews.values(), ...s.cardViews.values()].map((v: any) => v.getBounds());

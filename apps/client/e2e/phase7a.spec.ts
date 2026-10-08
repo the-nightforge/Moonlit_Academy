@@ -1,9 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
+import { registerAccount, openSignedIn } from "./helpers/online";
 
 /**
  * `18` §2.2 e2e — phase 7a client features: the Chọn Pha overlay. Offline
  * (no API server): only the Vite dev server on :5173 is needed — the client
- * falls back to "Chơi offline" when /api is unreachable.
+ * runs signed-in on the pg-mem test server (`dev:test`).
  *
  * The canvas UI is not DOM-readable, so the test drives Phaser through
  * `window.__vn` ({ session, game, debug }) and reads the rendered Text
@@ -96,19 +97,16 @@ test("7a: Chọn Pha mở khi M08 thăng cấp, chọn +2 đẩy Nguyệt Luân 
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(String(error)));
   page.on("console", (message) => {
-    // The API is down in this offline run — resource-load failures are expected.
+    // Resource-load failures tolerated (fonts, optional assets).
     if (message.type() === "error" && !message.text().includes("Failed to load resource")) {
       errors.push(message.text());
     }
   });
 
-  await page.goto(APP);
-  await expect.poll(async () => (await probe(page)).sceneKey, { timeout: 30_000 }).toBe("login");
+  const account = await registerAccount({ deck: false });
+  await openSignedIn(page, account);
 
-  await page.getByRole("button", { name: "Chơi offline", exact: true }).click({ timeout: 15_000 });
-  await expect.poll(async () => (await probe(page)).sceneKey, { timeout: 15_000 }).toBe("deck-select");
-
-  // Team M08 + M02 + F01 (the plan's manual check), straight into a Trận lẻ.
+  // Team M08 + M02 + F01 (the plan's manual check), straight into a signed-in synthetic combat.
   await page.evaluate(() => {
     interface Session {
       heroIds: string[];

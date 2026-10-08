@@ -1,13 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
+import { registerAccount, openSignedIn } from "./helpers/online";
 
 async function setup(page: Page) {
-  await page.route("**/api/health", route => route.fulfill({ status:503, json:{ok:false} }));
-  await page.goto("http://127.0.0.1:5173");
-  await page.waitForFunction(() => (window as any).__vn?.game.scene.isActive("login"));
+  const account = await registerAccount();
+  await openSignedIn(page, account);
   await page.evaluate(() => {
     const h=(window as any).__vn;
     h.session.profile.currencies.moonJade=10000; h.session.rev=5;
-    h.game.scene.getScene("login").scene.start("gacha");
+    h.game.scene.getScenes(true)[0]!.scene.start("gacha");
   });
   await page.waitForFunction(() => (window as any).__vn.game.scene.isActive("gacha"));
 }

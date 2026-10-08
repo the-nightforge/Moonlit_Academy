@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
-import { activeSceneKey, clickSceneText, waitIdle } from "./combat";
+import { activeSceneKey, applyScenario, clickSceneText, waitIdle, type CombatScenario } from "./combat";
 
 /**
  * Online e2e helpers: the app runs against the pg-mem test server on :8787
@@ -89,6 +89,9 @@ export async function registerAccount(options: { heroIds?: [string, string, stri
 export async function openSignedIn(page: Page, account: OnlineAccount): Promise<void> {
   await page.addInitScript((token) => {
     localStorage.setItem("vong-nguyet.token", token);
+    // Double playback speed + muted: halves online batch time (reducedMotion
+    // stays off — visual specs still see the full VFX set).
+    localStorage.setItem("vongnguyet.combatSettings.v1", JSON.stringify({ speed: 2, reducedMotion: false, volume: 0 }));
   }, account.token);
   await page.goto(API);
   await expect
@@ -97,13 +100,63 @@ export async function openSignedIn(page: Page, account: OnlineAccount): Promise<
 }
 
 /**
+ * Opens any scene on a signed-in session — for pure-visual specs that never
+ * need the wire (gacha armory, deck-builder, …). `page.on("route")` mocks in
+ * the spec still intercept API calls before the test server sees them.
+ */
+export async function openScene(page: Page, key: string, account?: OnlineAccount): Promise<void> {
+  const acc = account ?? (await registerAccount());
+  await openSignedIn(page, acc);
+  await page.evaluate((sceneKey) => {
+    const handle = (window as any).__vn;
+    handle.game.scene.getScenes(true)[0]!.scene.start(sceneKey);
+  }, key);
+  await expect.poll(async () => activeSceneKey(page), { timeout: 15_000 }).toBe(key);
+}
+
+/**
+ * Cheap combat-scene entry for purely visual specs: signs in online, then
+ * starts `combat` on the session's synthetic state (no server match). Specs
+ * that overwrite `scene.state`/`match.view` themselves should use this — they
+ * never touch the wire anyway. Real gameplay flows use `setupOnlineCombat`.
+ */
+export async function openCombatScene(
+  page: Page,
+  scenario: CombatScenario = "default",
+  options: { keepMulligan?: boolean; account?: OnlineAccount } = {},
+): Promise<void> {
+  const acc = options.account ?? (await registerAccount());
+  await openSignedIn(page, acc);
+  await page.evaluate(() => {
+    const handle = (window as any).__vn;
+    handle.game.scene.getScenes(true)[0]!.scene.start("combat");
+  });
+  await expect.poll(async () => activeSceneKey(page), { timeout: 15_000 }).toBe("combat");
+  await expect
+    .poll(async () => page.evaluate(() => (window as any).__vn?.session.state.status), { timeout: 15_000 })
+    .toBe("mulligan");
+  await waitIdle(page);
+  if (options.keepMulligan) return;
+  await page.evaluate(() => {
+    const handle = (window as any).__vn;
+    handle.game.scene.getScene("combat")!.dispatch({ type: "mulligan", instanceIds: [] });
+  });
+  await waitIdle(page);
+  await applyScenario(page, scenario);
+}
+
+/**
  * Reaches the combat scene online: signed-in deck-select → arena → "Đấu Tập
  * (máy)" starts a real server-side practice match vs the bot (`17` §5.4); the
  * `match.start` frame routes the client into combat. The mulligan answer is
  * kept so the board settles into the first player turn like the old helper.
  */
-export async function setupOnlineCombat(page: Page, account?: OnlineAccount): Promise<void> {
-  const acc = account ?? (await registerAccount());
+export async function setupOnlineCombat(
+  page: Page,
+  scenario: CombatScenario = "default",
+  options: { keepMulligan?: boolean; account?: OnlineAccount } = {},
+): Promise<void> {
+  const acc = options.account ?? (await registerAccount());
   await openSignedIn(page, acc);
   await clickSceneText(page, "deck-select", "Đấu Trường");
   await expect.poll(async () => activeSceneKey(page), { timeout: 15_000 }).toBe("arena");
@@ -121,9 +174,11 @@ export async function setupOnlineCombat(page: Page, account?: OnlineAccount): Pr
     .toBe("mulligan");
   // Intro reveal streams over the wire — noticeably slower than offline.
   await waitIdle(page, 30_000);
+  if (options.keepMulligan) return;
   await page.evaluate(() => {
     const handle = (window as any).__vn;
     handle.game.scene.getScene("combat")!.dispatch({ type: "mulligan", instanceIds: [] });
   });
   await waitIdle(page, 30_000);
+  await applyScenario(page, scenario);
 }

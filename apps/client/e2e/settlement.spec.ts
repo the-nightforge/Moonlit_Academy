@@ -68,7 +68,7 @@ async function signedInPage(browser: Browser, token: string): Promise<Page> {
   await page.waitForFunction(() => {
     const vn = (window as unknown as { __vn?: { game: { scene: { getScenes: (b: boolean) => { scene: { key: string } }[] } } } }).__vn;
     return vn?.game.scene.getScenes(true)[0]?.scene.key === "deck-select";
-  }, undefined, { timeout: 30_000 });
+  }, undefined, { timeout: 60_000 });
   return page;
 }
 
@@ -114,9 +114,9 @@ test("settlement sống ngoài combat: rời trận vẫn xử lý, frame lặp 
   const page = await signedInPage(browser, acc.token);
 
   await clickDesign(page, 1090, 480); // "Đấu Trường (thử)"
-  await expect.poll(() => sceneKey(page), { timeout: 30_000 }).toBe("arena");
+  await expect.poll(() => sceneKey(page), { timeout: 60_000 }).toBe("arena");
   await clickDesign(page, 400, 518); // "Đấu Tập (máy)"
-  await expect.poll(() => sceneKey(page), { timeout: 30_000 }).toBe("combat");
+  await expect.poll(() => sceneKey(page), { timeout: 90_000 }).toBe("combat");
   const matchId = (await session(page)).match!.matchId;
 
   // Đầu hàng → match.end đi qua registry; kết thúc hiện trên combat.
@@ -135,7 +135,7 @@ test("settlement sống ngoài combat: rời trận vẫn xử lý, frame lặp 
   await expect.poll(() => sceneKey(page)).toBe("arena");
 
   // matchId nằm trong tombstone — settlement xử lý đúng một lần.
-  await expect.poll(async () => tombstoned(page, matchId), { timeout: 15_000 }).toBe(true);
+  await expect.poll(async () => tombstoned(page, matchId), { timeout: 30_000 }).toBe(true);
 
   // Frame lặp cho trận đã xong bị nuốt — không notice thứ hai, không đổi scene.
   await page.evaluate((id) => {

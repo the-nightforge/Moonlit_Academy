@@ -1,12 +1,15 @@
 import { expect, test } from "@playwright/test";
-import { setupOfflineCombat } from "./helpers/combat";
+import { openCombatScene } from "./helpers/online";
+
+// Online setup + 15 renderer probes per test exceed the default 180 s budget.
+test.describe.configure({ timeout: 300_000 });
 
 // Runs the production renderer/runtime in Phaser; these are renderer probes,
 // while the phase7 and multi-hit tests exercise actual rules actions.
 const kinds = ["slash","spear","darts","bow","herb","fan","ink","music","ribbon","fire","star","moon","talisman","blood","spell"];
 for (const settings of [{speed:1,reducedMotion:false},{speed:2,reducedMotion:false},{speed:1,reducedMotion:true}]) {
   test(`all attack styles and spell with runtime cleanup @ speed${settings.speed} reduced${settings.reducedMotion}`, async ({page})=>{
-    await setupOfflineCombat(page);
+    await openCombatScene(page);
     for (const kind of kinds) {
       await page.evaluate(async ({kind,settings})=>{
         const {playAttack} = await import("/src/ui/vfx.ts");

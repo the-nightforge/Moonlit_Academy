@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { setupOfflineCombat, sceneTexts, clickDesign, waitIdle } from "./helpers/combat";
+import { sceneTexts, clickDesign, waitIdle } from "./helpers/combat";
+import { openCombatScene } from "./helpers/online";
 import { applyAction, createCombat, createCoopCombat, getEffectiveCost, starterDeck } from "rules";
 
 const viewports = [{ width:1280,height:720 },{ width:1366,height:768 },{ width:1024,height:576 },{ width:1280,height:900 }];
 
 test("reused combat scene owns no new controls through its destroyed previous root", async ({ page }) => {
-  await page.route("**/api/health", route => route.fulfill({status:503,contentType:"application/json",body:'{"ok":false}'}));
-  await setupOfflineCombat(page);
+  await openCombatScene(page);
   await page.evaluate(() => {
     const h = (window as any).__vn, s = h.game.scene.getScene("combat");
     (window as any).__reviewOldRoot = s.root;
@@ -32,7 +32,7 @@ test("reused combat scene owns no new controls through its destroyed previous ro
 });
 
 test("draw icon, lower edge and count open draw; discard opens discard", async ({ page }) => {
-  await setupOfflineCombat(page);
+  await openCombatScene(page);
   for (const y of [424, 455, 474]) {
     await clickDesign(page, 54, y);
     await expect.poll(async () => (await sceneTexts(page, "combat")).some(t => t.includes("Chồng rút"))).toBe(true);
@@ -47,7 +47,7 @@ test("draw icon, lower edge and count open draw; discard opens discard", async (
 for (const viewport of [viewports[0]!, viewports[2]!]) {
 test(`selected card retains lift after pointerover/out and body stays clear of owner @ ${viewport.width}x${viewport.height}`, async ({ page }) => {
   await page.setViewportSize(viewport);
-  await setupOfflineCombat(page, "hand10");
+  await openCombatScene(page, "hand10");
   const overlaps = await page.evaluate(() => {
     const scene = (window as any).__vn.game.scene.getScene("combat");
     return [...scene.cardViews.values()].flatMap((view: any) => {
@@ -81,7 +81,7 @@ test(`selected card retains lift after pointerover/out and body stays clear of o
 for (const viewport of viewports) {
   test(`co-op compact HUD and partner preview both seats @ ${viewport.width}x${viewport.height}`, async ({ page }) => {
     await page.setViewportSize(viewport);
-    await setupOfflineCombat(page);
+    await openCombatScene(page);
     for (const viewer of [0,1]) {
       const data = await page.evaluate(() => (window as any).__vn.session.data);
       const heroIds = ["m05","f04","m06"] as [string,string,string];
@@ -128,7 +128,7 @@ for (const viewport of viewports) {
 }
 
 test("end turn displays processing immediately, blocks repeat actions, then unlocks", async ({ page }) => {
-  await setupOfflineCombat(page);
+  await openCombatScene(page);
   const result = await page.evaluate(() => {
     const scene = (window as any).__vn.game.scene.getScene("combat");
     const accepted = scene.dispatch({ type: "endTurn" });
@@ -146,7 +146,7 @@ test("end turn displays processing immediately, blocks repeat actions, then unlo
 });
 
 test("real Bách Chiến resolves two hits through resize during cast and drains FX", async ({page}) => {
-  await setupOfflineCombat(page);
+  await openCombatScene(page);
   const data = await page.evaluate(()=>(window as any).__vn.session.data);
   const heroIds = ["m10","f04","m06"] as [string,string,string];
   let state = createCombat(data,{heroIds,encounterId:"enc_01",seed:42,deckCardIds:starterDeck(data,heroIds)}).state;
@@ -177,7 +177,7 @@ test("real Bách Chiến resolves two hits through resize during cast and drains
 
 test("actual Tiên Tri opens all four choices, blocks E and accepts the rendered choice",async({page})=>{
   await page.setViewportSize({width:1024,height:576});
-  await setupOfflineCombat(page);
+  await openCombatScene(page);
   const data=await page.evaluate(()=>(window as any).__vn.session.data);
   const heroIds=["m03","f04","m06"] as [string,string,string];
   let state=createCombat(data,{heroIds,encounterId:"enc_01",seed:42,deckCardIds:starterDeck(data,heroIds)}).state;

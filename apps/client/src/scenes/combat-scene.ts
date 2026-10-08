@@ -272,7 +272,13 @@ export class CombatScene extends Phaser.Scene {
     this.renderQueued = false;
     this.commitWork.clear();
     this.triggerAnchors.clear();
-    this.inspector = new InspectorView(this, registerModal);
+    // Opening the inspector drops the hover tooltip too — the modal layer
+    // swallows `pointerout`, so the pile/entry tooltip would linger forever.
+    this.inspector = new InspectorView(this, (cancel) => {
+      this.tooltip?.destroy();
+      this.tooltip = null;
+      return registerModal(cancel);
+    });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.inspector?.destroy());
     this.playback = new CombatPlayback({
       play: (batch, signal) => this.playBatch(batch, signal),

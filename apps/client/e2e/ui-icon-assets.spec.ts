@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { setupOfflineCombat } from "./helpers/combat";
+import { setupOnlineCombat } from "./helpers/online";
 
 test("UI icon textures load and preserve combat display sizes", async ({ page }) => {
   const responses = new Map<string, { status:number; contentType:string }>();
@@ -9,9 +9,8 @@ test("UI icon textures load and preserve combat display sizes", async ({ page })
       status:response.status(), contentType:response.headers()["content-type"] ?? "",
     });
   });
-  await page.route("**/api/health", route => route.fulfill({ status:503, contentType:"application/json", body:'{"ok":false}' }));
   await page.setViewportSize({ width:1280, height:720 });
-  await setupOfflineCombat(page);
+  await setupOnlineCombat(page);
   const loaded = await page.evaluate(async () => {
     const h = (window as any).__vn, s = h.game.scene.getScene("combat");
     const manifest = (await import("/@id/__x00__virtual:assets-manifest")).default;
@@ -30,9 +29,11 @@ test("UI icon textures load and preserve combat display sizes", async ({ page })
   }
   await page.evaluate(() => {
     const h = (window as any).__vn, s = h.game.scene.getScene("combat");
-    h.session.state.heroes[0].statuses = [{ id:"charm", value:2 }, { id:"strength", value:2 }];
-    h.session.state.heroes[1].statuses = [{ id:"freeze", value:1 }, { id:"guard", value:2 }];
-    h.session.state.heroes[2].statuses = [{ id:"regen", value:2 }, { id:"mark", value:1 }];
+    // Online the scene renders `match.view` — the seat's server-redacted state.
+    const state = h.session.match?.view ?? h.session.state;
+    state.heroes[0].statuses = [{ id:"charm", value:2 }, { id:"strength", value:2 }];
+    state.heroes[1].statuses = [{ id:"freeze", value:1 }, { id:"guard", value:2 }];
+    state.heroes[2].statuses = [{ id:"regen", value:2 }, { id:"mark", value:1 }];
     s.requestRender();
   });
   const sizes = await page.evaluate(() => {

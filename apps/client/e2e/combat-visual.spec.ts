@@ -4,14 +4,15 @@ import {
   clickDesign,
   probeCombat,
   sceneTexts,
-  setupOfflineCombat,
   waitIdle,
 } from "./helpers/combat";
+import { openCombatScene } from "./helpers/online";
 
 /**
  * `05` review U6 — visual/layout regression across the four pinned viewports.
- * Offline only (Vite :5173, API unreachable): the client takes the "Chơi
- * offline" path. Online PvP/co-op coverage lives in `pvp.spec.ts`/`coop.spec.ts`.
+ * Signed-in session on the synthetic session state — enough for layout, since
+ * these specs never dispatch wire actions. Real PvP/co-op coverage lives in
+ * `pvp.spec.ts`/`coop.spec.ts`.
  */
 const VIEWPORTS = [
   { name: "1280x720", width: 1280, height: 720 },
@@ -24,7 +25,7 @@ function collectErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(String(error)));
   page.on("console", (message) => {
-    // The API is down in offline runs — resource-load failures are expected.
+    // Resource-load failures are tolerated (fonts, optional assets).
     if (message.type() === "error" && !message.text().includes("Failed to load resource")) {
       errors.push(message.text());
     }
@@ -32,12 +33,12 @@ function collectErrors(page: Page): string[] {
   return errors;
 }
 
-test.describe("combat visual matrix (offline)", () => {
+test.describe("combat visual matrix (online session)", () => {
   for (const vp of VIEWPORTS) {
     test(`board + idle invariants @ ${vp.name}`, async ({ page }) => {
       const errors = collectErrors(page);
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await setupOfflineCombat(page, "default");
+      await openCombatScene(page, "default");
       const probe = await probeCombat(page);
       expect(probe.busy).toBe(false);
       expect(probe.inputLocked).toBe(false);
@@ -63,7 +64,7 @@ test.describe("combat visual matrix (offline)", () => {
         ["hand8", 8],
         ["hand10", 10],
       ] as const) {
-        await setupOfflineCombat(page, scenario);
+        await openCombatScene(page, scenario);
         const probe = await probeCombat(page);
         expect(probe.handCount, scenario).toBe(expected);
         expect(probe.temporaryFxCount).toBe(0);
@@ -76,7 +77,7 @@ test.describe("combat visual matrix (offline)", () => {
   test("denseStatus: 13 badges + seal overflow without clipping controls", async ({ page }) => {
     const errors = collectErrors(page);
     await page.setViewportSize({ width: 1280, height: 720 });
-    await setupOfflineCombat(page, "denseStatus");
+    await openCombatScene(page, "denseStatus");
     const probe = await probeCombat(page);
     // The hero carries the full status set; the badge row shows the +N overflow.
     expect(probe.texts.some((t) => /^\+\d+$/.test(t))).toBe(true);
@@ -90,7 +91,7 @@ test.describe("combat visual matrix (offline)", () => {
   test("longChoice: Chọn Pha panel opens, folds to banner, reopens", async ({ page }) => {
     const errors = collectErrors(page);
     await page.setViewportSize({ width: 1280, height: 720 });
-    await setupOfflineCombat(page, "longChoice");
+    await openCombatScene(page, "longChoice");
     let texts = await sceneTexts(page, "combat");
     expect(texts.some((t) => t.includes("Chọn Pha") || t.includes("Giữ pha"))).toBe(true);
     await captureCombat(page, "1280x720", "longChoice-open");
@@ -113,7 +114,7 @@ test.describe("combat visual matrix (offline)", () => {
   test("summonRevive: summon card + fallen hero render together", async ({ page }) => {
     const errors = collectErrors(page);
     await page.setViewportSize({ width: 1280, height: 720 });
-    await setupOfflineCombat(page, "summonRevive");
+    await openCombatScene(page, "summonRevive");
     const probe = await probeCombat(page);
     expect(probe.units.some((u) => u.id === "e2e_summon_1")).toBe(true);
     expect(probe.texts).toContain("Ngã");
@@ -127,7 +128,7 @@ test.describe("combat visual matrix (offline)", () => {
   test("playback lock: input stays down while a batch plays", async ({ page }) => {
     const errors = collectErrors(page);
     await page.setViewportSize({ width: 1280, height: 720 });
-    await setupOfflineCombat(page, "default");
+    await openCombatScene(page, "default");
     // endTurn enqueues the enemy-turn batch synchronously — reading the busy
     // flag in the same evaluate is deterministic (no sleep, no race).
     const locked = await page.evaluate(() => {
@@ -161,7 +162,7 @@ test.describe("combat visual matrix (offline)", () => {
   test("pile inspector: draw pile opens count-only, Esc closes", async ({ page }) => {
     const errors = collectErrors(page);
     await page.setViewportSize({ width: 1280, height: 720 });
-    await setupOfflineCombat(page, "default");
+    await openCombatScene(page, "default");
     // Own draw pile anchor per the shared layout (seat 0: 54,424).
     await clickDesign(page, 54, 424);
     await expect
@@ -182,7 +183,7 @@ test.describe("combat visual matrix (offline)", () => {
   test("bloodMoon: the lasting look — blood-moon icon, corona, edge vignette", async ({ page }) => {
     const errors = collectErrors(page);
     await page.setViewportSize({ width: 1280, height: 720 });
-    await setupOfflineCombat(page, "bloodMoon");
+    await openCombatScene(page, "bloodMoon");
     await waitIdle(page);
     // The surge has played out; only the persistent dressing remains.
     const dressed = await page.evaluate(() => {

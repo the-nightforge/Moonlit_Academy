@@ -203,7 +203,7 @@ export async function setupOfflineCombat(page: Page, scenario: CombatScenario = 
   await applyScenario(page, scenario);
 }
 
-async function applyScenario(page: Page, scenario: CombatScenario): Promise<void> {
+export async function applyScenario(page: Page, scenario: CombatScenario): Promise<void> {
   if (scenario === "default") return;
   await page.evaluate((sc) => {
     const handle = (window as unknown as { __vn: VnHandle }).__vn;
