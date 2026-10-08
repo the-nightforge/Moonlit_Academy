@@ -94,7 +94,7 @@ export class LoginScene extends Phaser.Scene {
     if (!this.current(generation)) return;
     const unfinished = savedRun();
     if (unfinished) {
-      const choice = await this.ask("Hành trình còn dang dở", "Có lượt chơi đang dở trên máy này.", ["Chơi tiếp", "Bỏ lượt này"], generation);
+      const choice = await this.ask("Hành trình còn dang dở", "Có Tầm Nguyệt đang dở trên máy này.", ["Chơi tiếp", "Bỏ hành trình"], generation);
       if (!this.current(generation)) return;
       if (choice === 0 && resumeRun(unfinished)) {
         this.scene.start(session.run!.status === "combat" ? "combat" : "run");
@@ -109,7 +109,9 @@ export class LoginScene extends Phaser.Scene {
   private showOffline(generation: number) {
     if (!this.current(generation)) return;
     session.online = false;
-    this.view!.showChoice("Tạm mất kết nối", "Không kết nối được server. Bạn vẫn có thể chơi Trận lẻ offline; lượt chơi và tiến độ cần kết nối server.", ["Thử lại", "Chơi offline"], index => {
+    // Production is online-only; the local session stays for dev/e2e tooling.
+    const options = import.meta.env.DEV ? ["Thử lại", "Chơi offline"] : ["Thử lại"];
+    this.view!.showChoice("Tạm mất kết nối", "Không kết nối được server. Vọng Nguyệt cần kết nối để chơi — kiểm tra mạng rồi thử lại.", options, index => {
       if (!this.current(generation)) return;
       if (index === 0) this.scene.restart();
       else this.scene.start("deck-select");

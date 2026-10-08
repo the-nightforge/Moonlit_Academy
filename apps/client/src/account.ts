@@ -1,5 +1,5 @@
 import type { Profile } from "rules";
-import { ApiError, api, auth, setToken } from "./api";
+import { ApiError, api, auth, setToken, setUsername } from "./api";
 import { MatchRegistry } from "./net/match-registry";
 import type { MatchSettlement } from "./net/protocol";
 import { session } from "./session";
@@ -84,6 +84,7 @@ export async function login(username: string, password: string, register: boolea
   });
   if (generation !== auth.generation) return;
   setToken(reply.token);
+  setUsername(username.trim().toLowerCase());
   applyServerProfile(reply);
   session.online = true;
   matchRegistry();
@@ -125,6 +126,7 @@ export async function logout(): Promise<void> {
   }
   if (generation !== auth.generation) return;
   setToken(null);
+  setUsername(null);
   session.online = false;
   session.registry?.dispose();
   session.registry = null;

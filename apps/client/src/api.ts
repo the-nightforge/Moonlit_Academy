@@ -2,6 +2,7 @@ import { dataVersion } from "data";
 import type { GameData } from "rules";
 
 const TOKEN_KEY = "vong-nguyet.token";
+const USERNAME_KEY = "vong-nguyet.username";
 
 /**
  * API origin prefix (`16` §7.6): empty in production builds (same origin behind
@@ -20,16 +21,22 @@ export class ApiError extends Error {
   }
 }
 
-function readToken(): string | null {
+function readStored(key: string): string | null {
   try {
-    return localStorage.getItem(TOKEN_KEY);
+    return localStorage.getItem(key);
   } catch {
     return null;
   }
 }
 
+function readToken(): string | null {
+  return readStored(TOKEN_KEY);
+}
+
 export const auth = {
   token: readToken(),
+  /** Last signed-in username (display only — the token proves identity). */
+  username: readStored(USERNAME_KEY),
   /** Invalidates requests at authentication boundaries, before a new token arrives. */
   generation: 0,
   /** Called on a current-session 401; the app goes back to the login screen. */
@@ -41,6 +48,16 @@ export function setToken(token: string | null): void {
   try {
     if (token === null) localStorage.removeItem(TOKEN_KEY);
     else localStorage.setItem(TOKEN_KEY, token);
+  } catch {
+    // Without storage the session lasts until the page is closed.
+  }
+}
+
+export function setUsername(username: string | null): void {
+  auth.username = username;
+  try {
+    if (username === null) localStorage.removeItem(USERNAME_KEY);
+    else localStorage.setItem(USERNAME_KEY, username);
   } catch {
     // Without storage the session lasts until the page is closed.
   }

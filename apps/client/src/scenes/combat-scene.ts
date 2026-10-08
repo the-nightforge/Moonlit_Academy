@@ -1250,7 +1250,7 @@ export class CombatScene extends Phaser.Scene {
         const prompt = this.isStory
           ? "Rời trận? Màn Cốt Truyện chưa hoàn thành."
           : session.run !== null
-            ? "Bỏ lượt chơi này? Toàn bộ tiến trình sẽ mất."
+            ? "Bỏ Tầm Nguyệt này? Toàn bộ tiến trình sẽ mất."
             : "Rời trận? Tiến trình trận đấu sẽ mất.";
         void confirmModal(this, prompt, { label: "Rời trận", danger: true }).then((ok) => {
           if (!ok) return;
@@ -2860,7 +2860,7 @@ export class CombatScene extends Phaser.Scene {
       y += 20;
     };
     line(`DEBUG — seed ${session.seed} · ${session.encounterId}`, 13);
-    if (session.run) line("⚠ Sửa trận trong lượt chơi: server sẽ không công nhận kết quả", 11);
+    if (session.run) line("⚠ Sửa trận trong Tầm Nguyệt: server sẽ không công nhận kết quả", 11);
     this.debugButton(x + 14, y + 10, 100, "Chơi lại", () => this.restart());
     this.debugButton(x + 124, y + 10, 80, "Seed +1", () => this.restart(session.seed + 1));
     this.debugButton(x + 214, y + 10, 90, "Trận kế ▸", () => {

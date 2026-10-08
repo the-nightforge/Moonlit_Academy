@@ -94,7 +94,7 @@ export class MasteryScene extends Phaser.Scene {
           });
         }, pending > 0, {
           variant: "primary",
-          disabledReason: "Chưa có lượt mở — lên cấp Tu Luyện bằng XP từ Lượt chơi",
+          disabledReason: "Chưa có lượt mở — lên cấp Tu Luyện bằng XP từ Tầm Nguyệt",
         });
       }
     });

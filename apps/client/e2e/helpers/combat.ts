@@ -161,48 +161,6 @@ export function probeCombat(page: Page): Promise<CombatProbe> {
   });
 }
 
-/**
- * Reaches the combat scene offline (no API server): login → "Chơi offline" →
- * deck-select, injects the default team + encounter, starts and settles the
- * scene, then applies the scenario through the debug harness and in-page
- * state edits (`05` review: e2e-only fixtures, no production cheat route).
- */
-export async function setupOfflineCombat(page: Page, scenario: CombatScenario = "default", options: { keepMulligan?: boolean } = {}): Promise<void> {
-  await page.goto(APP);
-  await expect.poll(async () => activeSceneKey(page), { timeout: 30_000 }).toBe("login");
-  // The login screen uses accessible DOM controls over the canvas.
-  await page.getByRole("button", { name: "Chơi offline", exact: true }).click({ timeout: 15_000 });
-  await expect.poll(async () => activeSceneKey(page), { timeout: 15_000 }).toBe("deck-select");
-  await page.evaluate(() => {
-    const handle = (window as unknown as { __vn: VnHandle }).__vn;
-    handle.session.heroIds = ["m05", "f04", "m06"];
-    handle.session.deckCardIds = handle.session.heroIds.flatMap((id) => handle.session.data.heroes[id]!.cardIds);
-    handle.session.encounterId = "enc_01";
-    handle.game.scene.getScenes(true)[0]!.scene.start("combat");
-  });
-  await expect.poll(async () => activeSceneKey(page), { timeout: 15_000 }).toBe("combat");
-  await expect
-    .poll(
-      async () =>
-        page.evaluate(
-          () => (window as unknown as { __vn: VnHandle }).__vn.session.state.status,
-        ),
-      { timeout: 15_000 },
-    )
-    .toBe("mulligan");
-  // The intro reveal batch still plays while the state reads "mulligan" —
-  // dispatches are rejected while input is locked, so drain it first.
-  await waitIdle(page);
-  if (options.keepMulligan) return;
-  // Keep the opening hand so the board settles into the first player turn.
-  await page.evaluate(() => {
-    const handle = (window as unknown as { __vn: VnHandle }).__vn;
-    handle.game.scene.getScene("combat")!.dispatch({ type: "mulligan", instanceIds: [] });
-  });
-  await waitIdle(page);
-  await applyScenario(page, scenario);
-}
-
 export async function applyScenario(page: Page, scenario: CombatScenario): Promise<void> {
   if (scenario === "default") return;
   await page.evaluate((sc) => {

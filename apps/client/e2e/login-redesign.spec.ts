@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { fileURLToPath } from "node:url";
-const app = "http://127.0.0.1:5173";
+const app = "http://localhost:5173";
 const previews = fileURLToPath(new URL("../../../output/login-redesign/", import.meta.url));
 
 async function openLogin(page: Page, online = true) {
@@ -133,6 +133,19 @@ test("saved token resumes its profile without displaying credential fields", asy
   await openLogin(page);
   const profile = await page.evaluate(() => (window as any).__vn.session.profile);
   await page.route("**/api/profile", route => route.fulfill({ json: { profile, rev: 12 } }));
+  // Home fetches the arena summary on entry — without a mock the fake token
+  // would 401 against the real server and bounce back to the login form.
+  await page.route("**/api/arena/me", route =>
+    route.fulfill({
+      json: {
+        arena: { rating: 1000, wins: 0, losses: 0, draws: 0, rankedGames: 0, honorDay: { dayKey: 0, gained: 0 } },
+        tier: { id: "dong_sinh", name: "Đồng Sinh", minRating: 0 },
+        honorToday: { gained: 0, cap: 0 },
+        honorShop: [],
+        tiers: [{ id: "dong_sinh", name: "Đồng Sinh", minRating: 0 }],
+      },
+    }),
+  );
   await page.evaluate(() => localStorage.setItem("vong-nguyet.token", "saved-token"));
   await page.reload();
   await page.waitForFunction(() => (window as any).__vn.game.scene.isActive("deck-select"));
@@ -164,7 +177,7 @@ for (const choice of ["Nhập", "Bỏ qua", "Lỗi nhập"] as const) {
   });
 }
 
-for (const choice of ["Chơi tiếp", "Bỏ lượt này"] as const) {
+for (const choice of ["Chơi tiếp", "Bỏ hành trình"] as const) {
   test(`saved run prompt preserves ${choice} flow`, async ({ page }) => {
     await openLogin(page);
     const profile = await page.evaluate(() => (window as any).__vn.session.profile);
@@ -180,7 +193,7 @@ for (const choice of ["Chơi tiếp", "Bỏ lượt này"] as const) {
     await page.getByRole("button", { name: choice, exact: true }).click();
     const scene = choice === "Chơi tiếp" ? "run" : "deck-select";
     await page.waitForFunction(scene => (window as any).__vn.game.scene.isActive(scene), scene);
-    expect(abandoned).toBe(choice === "Bỏ lượt này");
+    expect(abandoned).toBe(choice === "Bỏ hành trình");
     expect(await page.evaluate(() => localStorage.getItem("vong-nguyet.run") !== null)).toBe(choice === "Chơi tiếp");
     await expect(page.locator(".vn-login")).toHaveCount(0);
   });

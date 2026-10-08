@@ -14,7 +14,7 @@ import { describeDeckError } from "./deck-select-scene";
 const WIDTH = 1280;
 
 /** `GET /api/arena/me` (`16` §8.8). */
-interface ArenaMeReply {
+export interface ArenaMeReply {
   arena: ArenaStats;
   tier: { id: string; name: string; minRating: number } | null;
   honorToday: { gained: number; cap: number };

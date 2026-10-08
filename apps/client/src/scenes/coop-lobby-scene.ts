@@ -194,7 +194,7 @@ export class CoopLobbyScene extends Phaser.Scene {
       return;
     }
     this.deckIndex = Math.min(this.deckIndex, decks.length - 1);
-    addText(this, this.root, WIDTH / 2, 150, "Deck Liên Thủ (luật lượt chơi):", 13, COLORS.dimText).setOrigin(0.5);
+    addText(this, this.root, WIDTH / 2, 150, "Deck Liên Thủ (luật Tầm Nguyệt):", 13, COLORS.dimText).setOrigin(0.5);
     const data = session.data;
     decks.forEach((deck, index) => {
       const picked = index === this.deckIndex;
