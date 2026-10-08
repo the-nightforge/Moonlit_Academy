@@ -208,7 +208,10 @@ async function applyScenario(page: Page, scenario: CombatScenario): Promise<void
   await page.evaluate((sc) => {
     const handle = (window as unknown as { __vn: VnHandle }).__vn;
     const scene = handle.game.scene.getScene("combat")!;
-    const state = handle.session.state;
+    // Online matches render `match.view` (the server-redacted snapshot), not
+    // `session.state` — the scene's `this.state` is whichever source is live.
+    const session = handle.session as unknown as { match?: { view: VnHandle["session"]["state"] } };
+    const state = session.match?.view ?? handle.session.state;
     const seat = state.players[0]!;
     if (sc === "hand0" || sc === "hand1" || sc === "hand8" || sc === "hand10") {
       const target = sc === "hand0" ? 0 : sc === "hand1" ? 1 : sc === "hand8" ? 8 : 10;

@@ -6,6 +6,7 @@
   "scripts": {
     "build": "vite build --ssr src/main.ts --outDir dist",
     "dev": "vite build --ssr src/main.ts --outDir dist --watch & node --env-file-if-exists=.env --watch dist/main.js",
+    "dev:test": "vite build --ssr src/main-test.ts --outDir dist && node --watch dist/main-test.js",
     "start": "node --env-file-if-exists=.env dist/main.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json"
