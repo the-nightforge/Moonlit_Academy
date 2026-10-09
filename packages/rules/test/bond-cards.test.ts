@@ -1,20 +1,22 @@
 import { describe, expect, it } from "vitest";
-import type { CombatState, GameData } from "../src/index";
-import { applyAction, createCombat, getEffectiveCost, isCardPlayable } from "../src/index";
+import {
+  createCombat,
+  getEffectiveCost,
+  isCardPlayable,
+  type CombatState,
+  type GameData,
+} from "../src/index";
 import { stealthOneCard } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setHand, testData, p0 } from "./helpers";
-
-function play(data: GameData, state: CombatState, cardId: string, targetId?: string) {
-  return applyAction(data, state, {
-    type: "playCard",
-    instanceId: instanceIdOf(state, cardId),
-    ...(targetId !== undefined ? { targetId } : {}),
-  });
-}
-
-function hero(state: CombatState, defId: string) {
-  return state.heroes.find((h) => h.defId === defId)!;
-}
+import {
+  heroByDefId,
+  injectCard,
+  instanceIdOf,
+  makeTestCombat,
+  p0,
+  playCardById,
+  setHand,
+  testData,
+} from "./helpers";
 
 function deckIds(state: CombatState): string[] {
   return Object.keys(state.cards).sort();
@@ -76,11 +78,11 @@ describe("bond playability", () => {
       heroIds: ["m05", "f03", "m06"],
       setup: (s) => setHand(s, ["bond_bang_hoa_tranh_phong"]),
     });
-    const f03 = hero(state, "f03");
+    const f03 = heroByDefId(state, "f03");
     f03.hp = 0;
     f03.alive = false;
 
-    expect(play(data, state, "bond_bang_hoa_tranh_phong", "enemy:0")).toEqual({
+    expect(playCardById(data, state, "bond_bang_hoa_tranh_phong", "enemy:0")).toEqual({
       ok: false,
       error: "card is broken (owner is dead)",
     });
@@ -92,9 +94,9 @@ describe("bond playability", () => {
       heroIds: ["m05", "f03", "m06"],
       setup: (s) => setHand(s, ["bond_bang_hoa_tranh_phong"]),
     });
-    hero(state, "m05").statuses.push({ id: "freeze", value: 1 });
+    heroByDefId(state, "m05").statuses.push({ id: "freeze", value: 1 });
 
-    expect(play(data, state, "bond_bang_hoa_tranh_phong", "enemy:0")).toEqual({
+    expect(playCardById(data, state, "bond_bang_hoa_tranh_phong", "enemy:0")).toEqual({
       ok: false,
       error: "owner is frozen",
     });
@@ -111,19 +113,19 @@ describe("bond resolution", () => {
         setHand(s, ["bond_bang_hoa_tranh_phong"]);
       },
     });
-    hero(state, "m05").statuses.push({ id: "empower", value: 2 });
-    hero(state, "f03").statuses.push({ id: "empower", value: 2 });
+    heroByDefId(state, "m05").statuses.push({ id: "empower", value: 2 });
+    heroByDefId(state, "f03").statuses.push({ id: "empower", value: 2 });
 
-    const result = play(data, state, "bond_bang_hoa_tranh_phong", "enemy:0");
+    const result = playCardById(data, state, "bond_bang_hoa_tranh_phong", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.events).toContainEqual(
       expect.objectContaining({ type: "damageDealt", sourceId: "hero:m05", targetId: "enemy:0", amount: 10 }),
     );
     expect(result.state.enemies[0]?.statuses).toContainEqual({ id: "freeze", value: 1 });
-    expect(hero(result.state, "f03").levelUpCounter).toBe(1);
-    expect(hero(result.state, "m05").statuses).toEqual([]);
-    expect(hero(result.state, "f03").statuses).toEqual([{ id: "empower", value: 2 }]);
+    expect(heroByDefId(result.state, "f03").levelUpCounter).toBe(1);
+    expect(heroByDefId(result.state, "m05").statuses).toEqual([]);
+    expect(heroByDefId(result.state, "f03").statuses).toEqual([{ id: "empower", value: 2 }]);
     expect(p0(result.state).moonPower).toBe(7);
   });
 
@@ -137,12 +139,12 @@ describe("bond resolution", () => {
     });
     state.enemies[0]!.statuses.push({ id: "freeze", value: 1 });
 
-    const result = play(data, state, "bond_bang_hoa_tranh_phong", "enemy:0");
+    const result = playCardById(data, state, "bond_bang_hoa_tranh_phong", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 14);
     expect(result.events.some((e) => e.type === "statusApplied")).toBe(false);
-    expect(hero(result.state, "f03").levelUpCounter).toBe(0);
+    expect(heroByDefId(result.state, "f03").levelUpCounter).toBe(0);
   });
 
   it("T85: level-up passives do not apply to bond cards (M05 +3)", () => {
@@ -153,9 +155,9 @@ describe("bond resolution", () => {
         setHand(s, ["bond_bang_hoa_tranh_phong"]);
       },
     });
-    hero(state, "m05").leveledUp = true;
+    heroByDefId(state, "m05").leveledUp = true;
 
-    const result = play(data, state, "bond_bang_hoa_tranh_phong", "enemy:0");
+    const result = playCardById(data, state, "bond_bang_hoa_tranh_phong", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.enemies[0]?.hp).toBe(state.enemies[0]!.hp - 8);
@@ -172,12 +174,12 @@ describe("bond resolution", () => {
     });
     state.enemies[0]!.statuses.push({ id: "strength", value: 1 });
 
-    const result = play(data, state, "bond_anh_dau", "enemy:0");
+    const result = playCardById(data, state, "bond_anh_dau", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(hero(result.state, "f02").statuses).toEqual([{ id: "strength", value: 1 }]);
-    expect(hero(result.state, "f02").levelUpCounter).toBe(2); // 1 buff + 1 Đoạt Nguyệt (01 §8)
-    expect(hero(result.state, "m06").statuses).toEqual([{ id: "stealth", value: 1 }]);
+    expect(heroByDefId(result.state, "f02").statuses).toEqual([{ id: "strength", value: 1 }]);
+    expect(heroByDefId(result.state, "f02").levelUpCounter).toBe(2); // 1 buff + 1 Đoạt Nguyệt (01 §8)
+    expect(heroByDefId(result.state, "m06").statuses).toEqual([{ id: "stealth", value: 1 }]);
     expect(result.state.enemies[0]?.moonPower).toBe(2);
     expect(p0(result.state).moonPower).toBe(9);
   });
@@ -188,7 +190,7 @@ describe("bond resolution", () => {
       setup: (s) => setHand(s, ["bond_anh_dau"]),
     });
     const stealth = injectCard(state, data, { ...stealthOneCard, cost: 2 });
-    const m06 = hero(state, "m06");
+    const m06 = heroByDefId(state, "m06");
     m06.leveledUp = true;
     m06.firstCardDiscountActive = true;
 
@@ -201,14 +203,14 @@ describe("bond resolution", () => {
       heroIds: ["m05", "f03", "f04"],
       setup: (s) => setHand(s, ["bond_tuyet_trung_tong_than"]),
     });
-    hero(state, "f04").leveledUp = true;
+    heroByDefId(state, "f04").leveledUp = true;
 
-    const result = play(data, state, "bond_tuyet_trung_tong_than", "enemy:0");
+    const result = playCardById(data, state, "bond_tuyet_trung_tong_than", "enemy:0");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(hero(result.state, "f04").statuses).toEqual([{ id: "regen", value: 2 }]);
-    expect(hero(result.state, "m05").statuses).toEqual([]);
-    expect(hero(result.state, "f03").statuses).toEqual([]);
-    expect(hero(result.state, "f03").levelUpCounter).toBe(1);
+    expect(heroByDefId(result.state, "f04").statuses).toEqual([{ id: "regen", value: 2 }]);
+    expect(heroByDefId(result.state, "m05").statuses).toEqual([]);
+    expect(heroByDefId(result.state, "f03").statuses).toEqual([]);
+    expect(heroByDefId(result.state, "f03").levelUpCounter).toBe(1);
   });
 });

@@ -107,7 +107,8 @@ for (const [itemId, key, withArt] of [
   ["w_xich_diem_thuong", "gacha:weapon_banner", false],
 ] as const) test(`gacha result uses ${key} (${withArt ? "specific art" : "fallback"})`, async ({ page }) => {
   await boot(page, "gacha", withArt);
-  await page.evaluate(({ itemId, withArt }) => {
+  await page.evaluate(({ itemId: originalItemId, withArt }) => {
+    let itemId: string = originalItemId;
     const h = (window as any).__vn, scene = h.game.scene.getScene("gacha");
     if (!withArt) {
       // Fallback art needs an item with no uploaded file; shipped items all have one.

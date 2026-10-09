@@ -1,14 +1,24 @@
 import { describe, expect, it } from "vitest";
-import type { CombatState, GameData } from "../src/index";
-import { applyAction, bondCardsForTeam } from "../src/index";
-import { healFiveCard } from "./fixtures";
-import { idleEnemies, injectCard, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand, p0 } from "./helpers";
+import { applyAction, bondCardsForTeam, createProfile, type CardDef, validateDeck } from "../src/index";
+import { healFiveCard, testCard } from "./fixtures";
+import {
+  endTestTurn,
+  idleEnemies,
+  injectCard,
+  instanceIdOf,
+  makeEnemiesIdle,
+  makeTestCombat,
+  ownAllHeroes,
+  p0,
+  setHand,
+  testData,
+  withLevelUp,
+} from "./helpers";
 
-function end(data: GameData, state: CombatState) {
-  const result = applyAction(data, state, { type: "endTurn" });
-  if (!result.ok) throw new Error(result.error);
-  return result;
-}
+const tokenCard: CardDef = {
+  id: "test_token_ult", name: "Tối Thượng", ownerId: "f04", cost: 0, copies: 1, type: "attack",
+  tags: ["attack"], target: "enemy", effects: [{ type: "damage", amount: 9, to: "chosen" }], text: "", token: true,
+};
 
 const idle = { mutateData: makeEnemiesIdle, setup: idleEnemies };
 
@@ -17,13 +27,13 @@ describe("hand and draw pile", () => {
     const { data, state } = makeTestCombat(idle);
     const hand = [...p0(state).hand];
     expect(hand).toHaveLength(6);
-    const kept = end(data, state);
+    const kept = endTestTurn(data, state);
     expect(p0(kept.state).hand).toEqual(hand);
     expect(kept.events.some((e) => e.type === "cardsDrawn")).toBe(false);
 
     p0(kept.state).hand = p0(kept.state).hand.slice(0, 4);
     p0(kept.state).drawPile = p0(kept.state).drawPile.slice(0, 1);
-    const refilled = end(data, kept.state);
+    const refilled = endTestTurn(data, kept.state);
     expect(p0(refilled.state).hand).toHaveLength(5);
     expect(p0(refilled.state).drawPile).toHaveLength(0);
   });
@@ -43,7 +53,7 @@ describe("hand and draw pile", () => {
     const thaoDuoc = injectCard(state, data, healFiveCard);
     const hoGam = instanceIdOf(state, "m05_ho_gam");
     const pheHon = instanceIdOf(state, "f02_phe_hon");
-    const result = end(data, state);
+    const result = endTestTurn(data, state);
     expect(result.events).toContainEqual({ type: "cardDiscarded", instanceIds: [hoGam] });
     expect(p0(result.state).discardPile).toContain(hoGam);
     expect(p0(result.state).hand).toContain(thaoDuoc);
@@ -72,7 +82,7 @@ describe("hand and draw pile", () => {
     const { data, state } = makeTestCombat(idle);
     p0(state).discardPile.push(...p0(state).drawPile.splice(0, p0(state).drawPile.length - 1));
     p0(state).hand = p0(state).hand.slice(0, 3);
-    const result = end(data, state);
+    const result = endTestTurn(data, state);
     expect(p0(result.state).drawPile).toHaveLength(0);
     expect(p0(result.state).hand).toHaveLength(4);
     expect(result.events.some((e) => e.type === "deckShuffled")).toBe(false);
@@ -83,7 +93,7 @@ describe("hand and draw pile", () => {
     p0(state).discardPile.push(...p0(state).drawPile, ...p0(state).hand);
     p0(state).drawPile = [];
     p0(state).hand = [];
-    const result = end(data, state);
+    const result = endTestTurn(data, state);
     expect(result.state.status).toBe("lost");
     const types = result.events.map((e) => e.type);
     expect(types.slice(-2)).toEqual(["deckedOut", "combatEnded"]);
@@ -92,7 +102,7 @@ describe("hand and draw pile", () => {
     p0(other).discardPile.push(...p0(other).drawPile, ...p0(other).hand.slice(1));
     p0(other).drawPile = [];
     p0(other).hand = p0(other).hand.slice(0, 1);
-    expect(end(data, other).state.status).toBe("playerTurn");
+    expect(endTestTurn(data, other).state.status).toBe("playerTurn");
   });
 
   it("T136: a fallen hero's copies leave the draw pile; its hand cards go at turn end", () => {
@@ -110,15 +120,113 @@ describe("hand and draw pile", () => {
     const inHand = p0(state).hand.filter(ownedByM06);
     expect(inPile.length).toBeGreaterThan(0);
 
-    const died = end(data, state);
+    const died = endTestTurn(data, state);
     expect(died.events).toContainEqual({ type: "cardsPurged", heroId: "hero:m06", instanceIds: inPile });
     expect(p0(died.state).drawPile.some(ownedByM06)).toBe(false);
     for (const id of inHand) expect(p0(died.state).hand).toContain(id);
 
-    const next = end(data, died.state);
+    const next = endTestTurn(data, died.state);
     for (const id of inHand) {
       expect(p0(next.state).hand).not.toContain(id);
       expect(p0(next.state).discardPile).toContain(id);
     }
+  });
+});
+
+
+describe("lá tạo ra", () => {
+  it("T270: onLevelUp createCard puts a token in hand with a stable id; a full hand skips it", () => {
+    const { data, state } = makeTestCombat({
+      mutateData: (d) => {
+        d.cards[tokenCard.id] = tokenCard;
+        withLevelUp("f04", { counter: "damageTaken", threshold: 1, passive: { type: "none" } })(d);
+        d.heroes.f04!.levelUp.onLevelUp = [{ type: "createCard", cardId: tokenCard.id }];
+      },
+    });
+    const hurt = injectCard(state, data, {
+      id: "test_selfcut", name: "Tự Thương", ownerId: "f04", cost: 0, copies: 1, type: "skill", tags: [],
+      target: "none", effects: [{ type: "loseHp", amount: 1, to: "self" }], text: "",
+    });
+
+    // 8 cards in hand: after `hurt` leaves, 7 remain — above `handSize` but under `handLimit`.
+    const roomy = structuredClone(state);
+    p0(roomy).hand = [hurt, ...p0(roomy).drawPile.splice(0, 7)];
+    const result = applyAction(data, roomy, { type: "playCard", instanceId: hurt });
+    if (!result.ok) throw new Error(result.error);
+    expect(result.events).toContainEqual({ type: "cardCreated", cardId: tokenCard.id, instanceId: "t1" });
+    expect(p0(result.state).hand).toHaveLength(8);
+    expect(result.state.cards.t1).toMatchObject({ cardId: tokenCard.id, ownerIds: ["f04"], player: 0, heldTurns: 0 });
+
+    // 9 cards in hand: after `hurt` leaves, 8 remain = handLimit → no room.
+    const full = structuredClone(state);
+    p0(full).hand = [hurt, ...p0(full).drawPile.splice(0, 8)];
+    const skipped = applyAction(data, full, { type: "playCard", instanceId: hurt });
+    if (!skipped.ok) throw new Error(skipped.error);
+    expect(skipped.events).toContainEqual({ type: "cardCreated", cardId: tokenCard.id, instanceId: null });
+    expect(skipped.state.cards.t1).toBeUndefined();
+  });
+
+  it("T271: token cards cannot be deck-built and createCard must point at a token", () => {
+    const data = testData();
+    data.cards[tokenCard.id] = tokenCard;
+    const profile = ownAllHeroes(data, createProfile(data));
+    const deck = { heroIds: ["m05", "f04", "m06"] as [string, string, string], cardIds: [...data.heroes.m05!.cardIds, ...data.heroes.f04!.cardIds.slice(0, 5), tokenCard.id, ...data.heroes.m06!.cardIds] };
+    expect(validateDeck(data, profile, deck).length).toBeGreaterThan(0);
+  });
+});
+
+describe("giới hạn tay bài", () => {
+  const drawCard = (amount: number): CardDef => ({
+    id: `test_draw${amount}`, name: `Rút ${amount}`, ownerId: "m05", cost: 0, copies: 1,
+    type: "skill", tags: [], target: "none", effects: [{ type: "drawCards", amount }], text: "",
+  });
+
+  it("T277: drawCards draws blindly; cards past handLimit are discarded", () => {
+    const { data, state } = makeTestCombat({ setup: (s) => { p0(s).moonPower = 99; } });
+    const small = structuredClone(state);
+    const fit = injectCard(small, data, drawCard(3));
+    p0(small).hand = [fit];
+    const fitted = applyAction(data, small, { type: "playCard", instanceId: fit });
+    if (!fitted.ok) throw new Error(fitted.error);
+    expect(fitted.events).toContainEqual(expect.objectContaining({ type: "cardsDrawn" }));
+    expect(fitted.events.find((e) => e.type === "cardsDrawn")).toMatchObject({ instanceIds: expect.arrayContaining([expect.any(String)]) });
+    expect(p0(fitted.state).hand).toHaveLength(3);
+    expect(fitted.events.some((e) => e.type === "cardDiscarded")).toBe(false);
+
+    const crowded = structuredClone(state);
+    const over = injectCard(crowded, data, drawCard(3));
+    p0(crowded).hand = [over, ...p0(crowded).drawPile.splice(0, 7)];
+    const spilled = applyAction(data, crowded, { type: "playCard", instanceId: over });
+    if (!spilled.ok) throw new Error(spilled.error);
+    expect(p0(spilled.state).hand).toHaveLength(data.combatConfig.handLimit);
+    const drawn = spilled.events.find((e) => e.type === "cardsDrawn") as { instanceIds: string[] } | undefined;
+    const dropped = spilled.events.find((e) => e.type === "cardDiscarded") as { instanceIds: string[] } | undefined;
+    expect(drawn?.instanceIds).toHaveLength(1);
+    expect(dropped?.instanceIds).toHaveLength(2);
+    for (const id of dropped!.instanceIds) {
+      expect(p0(spilled.state).discardPile).toContain(id);
+      expect(p0(spilled.state).drawPile).not.toContain(id);
+    }
+  });
+
+  it("T279: a Chiêm Bài pick on a full hand is discarded; unchosen options still bottom", () => {
+    const { data, state } = makeTestCombat({ setup: (s) => { p0(s).moonPower = 99; } });
+    const peek = injectCard(state, data, testCard({
+      id: "test_peek", effects: [{ type: "chooseCard", look: 3 }],
+    }));
+    p0(state).hand = [peek, ...p0(state).drawPile.splice(0, data.combatConfig.handLimit)];
+    const opened = applyAction(data, state, { type: "playCard", instanceId: peek });
+    if (!opened.ok) throw new Error(opened.error);
+    const pending = p0(opened.state).pendingChoice;
+    if (pending?.kind !== "chooseCard") throw new Error("expected Chiêm Bài");
+    const picked = applyAction(data, opened.state, { type: "chooseCard", instanceId: pending.options[0]! });
+    if (!picked.ok) throw new Error(picked.error);
+    const seat = p0(picked.state);
+    expect(seat.hand).toHaveLength(data.combatConfig.handLimit);
+    expect(seat.hand).not.toContain(pending.options[0]);
+    expect(seat.discardPile).toContain(pending.options[0]);
+    expect(picked.events).toContainEqual(expect.objectContaining({ type: "cardChosen", instanceId: pending.options[0] }));
+    expect(picked.events).toContainEqual(expect.objectContaining({ type: "cardDiscarded", instanceIds: [pending.options[0]] }));
+    for (const other of pending.options.slice(1)) expect(seat.drawPile).toContain(other);
   });
 });

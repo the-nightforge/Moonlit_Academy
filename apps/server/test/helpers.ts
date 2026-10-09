@@ -237,3 +237,9 @@ export function playStory(data: GameData, setup: StorySetup, loadout?: Loadout):
   }
   return { state, actions };
 }
+
+export async function signedIn() {
+  const server = await testServer();
+  const { token } = await register(server);
+  return { server, token };
+}

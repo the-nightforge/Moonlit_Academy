@@ -100,7 +100,7 @@ export class FakeRuntime implements AnimationRuntime {
     this.scene = fakeScene(this.shakes, this.created, this.texts);
     const rects = this.rects;
     const baseRect = this.scene.add.rectangle;
-    this.scene.add.rectangle = ((...args: unknown[]) => {
+    this.scene.add.rectangle = ((...args: Parameters<typeof baseRect>) => {
       rects.push(args);
       return baseRect(...args);
     }) as typeof baseRect;

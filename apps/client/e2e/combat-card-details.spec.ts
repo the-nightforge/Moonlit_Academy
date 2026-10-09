@@ -1,3 +1,4 @@
+import { requireSuccess } from "../test/helpers/action-result";
 import { expect, test, type Page } from "@playwright/test";
 import { applyAction, createCoopCombat } from "rules";
 import { clickDesign, waitIdle } from "./helpers/combat";
@@ -182,12 +183,12 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
     const heroIds = ["m05", "f04", "m06"] as [string, string, string];
     const side = { heroIds, loadout: { heroes: Object.fromEntries(heroIds.map(id => [id, { constellation: 5, levelUpForm: "alt" as const, weaponId: id === "m05" ? "w_xich_diem_thuong" : null, refinement: id === "m05" ? 1 : 0 }])), relics: [] } };
     let coop = createCoopCombat(data, { seed: 42, players: [side, side], encounterId: data.coopConfig.encounterId }).state;
-    coop = applyAction(data, coop, { type: "mulligan", instanceIds: [], player: 0 }).state;
+    coop = requireSuccess(applyAction(data, coop, { type: "mulligan", instanceIds: [], player: 0 })).state;
     await page.evaluate(state => { const h = (window as any).__vn, s = h.game.scene.getScene("combat"); h.session.state = state; s.state = state; s.latestState = state; s.requestRender(); }, coop);
     await assertFooter(page, 100);
     expect(await page.evaluate(() => { const s = (window as any).__vn.game.scene.getScene("combat"), banner = s.root.getByName("mulligan_banner"); return banner.list.some((n: any) => n.text === "chờ đồng đội…"); })).toBe(true);
     await page.screenshot({ path: `${OUT}/coop-waiting-${viewport.width}.png` });
-    coop = applyAction(data, coop, { type: "mulligan", instanceIds: [], player: 1 }).state;
+    coop = requireSuccess(applyAction(data, coop, { type: "mulligan", instanceIds: [], player: 1 })).state;
     coop.heroes[0]!.leveledUp = true; coop.heroes[1]!.alive = false; coop.heroes[1]!.hp = 0;
     await page.evaluate(state => { const h = (window as any).__vn, s = h.game.scene.getScene("combat"); h.session.state = state; s.state = state; s.latestState = state; s.requestRender(); }, coop);
     await assertFooter(page, 100);

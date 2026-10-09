@@ -1,3 +1,4 @@
+import { requireSuccess } from "../test/helpers/action-result";
 import { expect, test } from "@playwright/test";
 import { clickDesign, sceneTexts } from "./helpers/combat";
 import { openCombatScene } from "./helpers/online";
@@ -19,8 +20,8 @@ test("centered foes and independent actual pile clicks in PvE, PvP and co-op",as
     const heroIds=["m05","f04","m06"] as [string,string,string];
     const side={heroIds,loadout:{heroes:Object.fromEntries(heroIds.map(id=>[id,{constellation:0,levelUpForm:"base" as const,weaponId:null,refinement:0}])),relics:[],...(mode==="pvp"?{pvp:true}:{})}};
     const opening=mode==="pve"?createCombat(data,{seed:42,heroIds,encounterId:"enc_01",deckCardIds:starterDeck(data,heroIds)}).state:mode==="pvp"?createPvpCombat(data,{seed:42,players:[side,side]}).state:createCoopCombat(data,{seed:42,players:[side,side],encounterId:data.coopConfig.encounterId}).state;
-    let state=applyAction(data,opening,{type:"mulligan",instanceIds:[],player:0}).state;
-    if(mode!=="pve") state=applyAction(data,state,{type:"mulligan",instanceIds:[],player:1}).state;
+    let state=requireSuccess(applyAction(data,opening,{type:"mulligan",instanceIds:[],player:0})).state;
+    if(mode!=="pve") state=requireSuccess(applyAction(data,state,{type:"mulligan",instanceIds:[],player:1})).state;
     await page.evaluate(async({state})=>{
       const h=(window as any).__vn,s=h.game.scene.getScene("combat");
       if(state.mode!=="pve") {

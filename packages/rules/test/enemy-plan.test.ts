@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
-import type { CombatState, EnemyIntentDef, GameData } from "../src/index";
-import { applyAction } from "../src/index";
+import { applyAction, type CombatState, type EnemyIntentDef } from "../src/index";
 import { planEnemyIntents } from "../src/intent";
 import { idleIntent, strike9Intent } from "./fixtures";
-import { instanceIdOf, makeTestCombat, pendingCardOptions, setIntent, setPlan, p0 } from "./helpers";
-
-function end(data: GameData, state: CombatState) {
-  const result = applyAction(data, state, { type: "endTurn" });
-  if (!result.ok) throw new Error(result.error);
-  return result;
-}
+import {
+  endTestTurn,
+  instanceIdOf,
+  makeTestCombat,
+  p0,
+  pendingCardOptions,
+  setIntent,
+  setPlan,
+} from "./helpers";
 
 const intent = (id: string, cost: number): EnemyIntentDef => ({ id, name: id, kind: "special", cost, effects: [] });
 
@@ -38,7 +39,7 @@ describe("enemy moon power plans", () => {
     expect(state.enemies[1]!.moonReserve).toBe(0);
 
     // Round 2: "top" led last round, so it is only a weighted candidate now.
-    const next = end(data, state);
+    const next = endTestTurn(data, state);
     expect(next.state.enemies[1]!.lastIntentIds).toContain("top");
     const ids = planIds(next.state, 1);
     expect(new Set(ids).size).toBe(ids.length);
@@ -66,7 +67,7 @@ describe("enemy moon power plans", () => {
     expect(state.enemies[1]!.moonReserve).toBe(1);
     expect(events).toContainEqual({ type: "intentsRevealed", enemyId: "enemy:1", moonPower: 1, intents: [] });
 
-    const next = end(data, state);
+    const next = endTestTurn(data, state);
     expect(next.state.enemies[1]!.moonPower).toBe(2 + 1);
     expect(planIds(next.state, 1)).toEqual(["big"]);
   });
@@ -93,7 +94,7 @@ describe("enemy moon power plans", () => {
       { intent: strike9Intent, targetId: "hero:m05" },
       { intent: strike9Intent, targetId: "hero:m05" },
     ]);
-    const died = end(data, state);
+    const died = endTestTurn(data, state);
     expect(died.events.filter((e) => e.type === "intentExecuted" && e.enemyId === "enemy:1")).toHaveLength(1);
 
     const retarget = makeTestCombat();
@@ -103,7 +104,7 @@ describe("enemy moon power plans", () => {
       { intent: strike9Intent, targetId: "hero:m06" },
       { intent: strike9Intent, targetId: "hero:m06" },
     ]);
-    const result = end(retarget.data, retarget.state);
+    const result = endTestTurn(retarget.data, retarget.state);
     const executed = result.events.filter((e) => e.type === "intentExecuted" && e.enemyId === "enemy:0");
     expect(executed).toHaveLength(2);
     const second = executed[1]!;
@@ -120,7 +121,7 @@ describe("enemy moon power plans", () => {
       { intent: strike9Intent, targetId: "hero:m05" },
     ]);
     setIntent(state, 1, idleIntent, null);
-    const result = end(data, state);
+    const result = endTestTurn(data, state);
     expect(result.events.filter((e) => e.type === "intentSkipped" && e.enemyId === "enemy:0")).toHaveLength(1);
     expect(result.events.some((e) => e.type === "intentExecuted" && e.enemyId === "enemy:0")).toBe(false);
     expect(result.events).toContainEqual({ type: "moonReserveChanged", side: "enemy", enemyId: "enemy:0", value: 0 });

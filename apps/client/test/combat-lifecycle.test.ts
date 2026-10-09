@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type Phaser from "phaser";
 import { cloneState, createPvpCombat } from "rules";
-import type { CombatEvent, CombatState } from "rules";
+import type { CombatEvent} from "rules";
 import { AnimationAbortedError } from "../src/ui/animation-runtime";
 import { applyPresentationEvent, createPresentation } from "../src/ui/combat-presentation";
 import type { PresentationBindings } from "../src/ui/combat-presentation";
@@ -49,7 +49,7 @@ function ctx(rt: FakeRuntime, overrides: Partial<AnimContext> = {}): AnimContext
 
 describe("buildIntroEvents", () => {
   it("keeps only the four intro beats from the real setup stream", () => {
-    const side = { heroIds: ["m05", "f04", "m06"], loadout: { heroes: {}, relics: [] } };
+    const side = { heroIds: ["m05", "f04", "m06"] as [string, string, string], loadout: { heroes: {}, relics: [] } };
     const { state, events } = createPvpCombat(data, { seed: 7, players: [side, side] });
     const intro = buildIntroEvents(state, events);
     expect(intro.length).toBeGreaterThan(0);

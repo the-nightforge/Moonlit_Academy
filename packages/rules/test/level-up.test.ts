@@ -1,7 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { applyAction, getEffectiveCost } from "../src/index";
-import { idleIntent, regenThreeCard, stealthOneCard, strike9Intent } from "./fixtures";
-import { injectCard, makeEnemiesIdle, makeTestCombat, setHand, setIntent, instanceIdOf, p0 } from "./helpers";
+import {
+  applyAction,
+  getEffectiveCost,
+  type CombatState,
+  type GameData,
+  type LevelUpCounter,
+  type LevelUpPassive,
+} from "../src/index";
+import { idleIntent, regenThreeCard, stealthOneCard, strike9Intent, testCard } from "./fixtures";
+import {
+  injectCard,
+  instanceIdOf,
+  makeEnemiesIdle,
+  makeTestCombat,
+  p0,
+  playTestCard,
+  setHand,
+  setIntent,
+  withLevelUp,
+} from "./helpers";
 
 describe("hero level up", () => {
   it("T46: damageTaken counter levels M05 up mid-card", () => {
@@ -196,5 +213,147 @@ describe("hero level up", () => {
     if (!result.ok) return;
     expect(result.state.heroes[0]?.levelUpCounter).toBe(15);
     expect(result.events.some((e) => e.type === "heroLeveledUp")).toBe(false);
+  });
+});
+
+
+describe("bộ đếm", () => {
+  const counterOn = (counter: LevelUpCounter) => withLevelUp("m05", { counter, threshold: 99 });
+
+  it("T272: every new counter bumps on its trigger", () => {
+    // schemeCardsPlayed: a scheme card by any teammate
+    let t = makeTestCombat({ mutateData: counterOn("schemeCardsPlayed") });
+    expect(playTestCard(t.data, t.state, testCard({ id: "s1", ownerId: "f04", tags: ["scheme"] })).state.heroes[0]!.levelUpCounter).toBe(1);
+
+    // studyPoints: +1 per own scheme card, +1 per player turn start alive — no
+    // round gate (`18` §2.1 gives the gate to turnsSurvived only)
+    t = makeTestCombat({ mutateData: (d) => { makeEnemiesIdle(d); counterOn("studyPoints")(d); } });
+    expect(t.state.heroes[0]!.levelUpCounter).toBe(1);
+    const s = playTestCard(t.data, t.state, testCard({ id: "s2", tags: ["scheme"] }));
+    expect(s.state.heroes[0]!.levelUpCounter).toBe(2);
+    const turn = applyAction(t.data, s.state, { type: "endTurn" });
+    if (!turn.ok) throw new Error(turn.error);
+    expect(turn.state.heroes[0]!.levelUpCounter).toBe(3);
+
+    // turnsSurvived: from round 2 on
+    t = makeTestCombat({ mutateData: (d) => { makeEnemiesIdle(d); counterOn("turnsSurvived")(d); } });
+    expect(t.state.heroes[0]!.levelUpCounter).toBe(0);
+    const r2 = applyAction(t.data, t.state, { type: "endTurn" });
+    if (!r2.ok) throw new Error(r2.error);
+    expect(r2.state.heroes[0]!.levelUpCounter).toBe(1);
+
+    // fullMoonsSeen: turn start on the full moon
+    t = makeTestCombat({ mutateData: (d) => { makeEnemiesIdle(d); counterOn("fullMoonsSeen")(d); }, setup: (st) => { st.moonIndex = 3; } });
+    const full = applyAction(t.data, t.state, { type: "endTurn" });
+    if (!full.ok) throw new Error(full.error);
+    expect(full.state.moonIndex).toBe(4);
+    expect(full.state.heroes[0]!.levelUpCounter).toBe(1);
+
+    // moonShifts: shiftMoon from the hero's card
+    t = makeTestCombat({ mutateData: counterOn("moonShifts") });
+    expect(playTestCard(t.data, t.state, testCard({ id: "s3", effects: [{ type: "shiftMoon", amount: 1 }] })).state.heroes[0]!.levelUpCounter).toBe(1);
+
+    // hpHealed: real HP healed by the hero's card
+    t = makeTestCombat({ mutateData: counterOn("hpHealed"), setup: (st) => { st.heroes[1]!.hp -= 4; } });
+    expect(playTestCard(t.data, t.state, testCard({ id: "s4", target: "ally", effects: [{ type: "heal", amount: 10, to: "chosen" }] }), "hero:f04").state.heroes[0]!.levelUpCounter).toBe(4);
+
+    // forbiddenHpLost: self loseHp from the hero's forbidden card
+    t = makeTestCombat({ mutateData: counterOn("forbiddenHpLost") });
+    expect(playTestCard(t.data, t.state, testCard({ id: "s5", tags: ["forbidden"], effects: [{ type: "loseHp", amount: 3, to: "self" }] })).state.heroes[0]!.levelUpCounter).toBe(3);
+
+    // cardsChosen: a Chiêm Bài pick by the seat
+    t = makeTestCombat({ mutateData: counterOn("cardsChosen") });
+    const opened = playTestCard(t.data, t.state, testCard({ id: "s6", effects: [{ type: "chooseCard", look: 3 }] }));
+    const pending = p0(opened.state).pendingChoice!;
+    const picked = applyAction(t.data, opened.state, { type: "chooseCard", instanceId: pending.options[0] as string });
+    if (!picked.ok) throw new Error(picked.error);
+    expect(picked.state.heroes[0]!.levelUpCounter).toBe(1);
+  });
+});
+
+describe("nội tại", () => {
+  const leveled = (heroId: string, passive: LevelUpPassive, extra?: (d: GameData) => void) => ({
+    mutateData: (d: GameData) => { makeEnemiesIdle(d); withLevelUp(heroId, { passive })(d); extra?.(d); },
+    setup: (s: CombatState) => { s.heroes.find((h) => h.defId === heroId)!.leveledUp = true; },
+  });
+
+  it("T273: cost passives — cheapest card discount, own-tag discount, extra Chiêm Bài look", () => {
+    const thienCo = makeTestCombat(leveled("m05", { type: "cheapestCardDiscount", amount: 1 }));
+    const turn = applyAction(thienCo.data, thienCo.state, { type: "endTurn" });
+    if (!turn.ok) throw new Error(turn.error);
+    const hand = p0(turn.state).hand;
+    const discounted = hand.filter((id) => turn.state.cards[id]!.turnDiscount === 1);
+    expect(discounted).toHaveLength(1);
+    const cost = (id: string) => getEffectiveCost(thienCo.data, turn.state, id);
+    for (const id of hand) expect(cost(id)).toBeGreaterThanOrEqual(cost(discounted[0]!));
+    const ended = applyAction(thienCo.data, turn.state, { type: "endTurn" });
+    if (!ended.ok) throw new Error(ended.error);
+    // Cleared at turn end, then set anew: never stacks across turns.
+    const after = Object.values(ended.state.cards).filter((c) => c.turnDiscount !== undefined);
+    expect(after).toHaveLength(1);
+    expect(after[0]!.turnDiscount).toBe(1);
+
+    const tuDo = makeTestCombat(leveled("m05", { type: "tagDiscountOwnCards", tag: "moon", amount: 1 }));
+    const moonCard = injectCard(tuDo.state, tuDo.data, testCard({ id: "mc", cost: 2, tags: ["moon"] }));
+    expect(getEffectiveCost(tuDo.data, tuDo.state, moonCard)).toBe(1);
+
+    const dinhCuc = makeTestCombat(leveled("m05", { type: "chooseCardExtraLook", amount: 1 }));
+    const opened = playTestCard(dinhCuc.data, dinhCuc.state, testCard({ id: "look", ownerId: "f04", effects: [{ type: "chooseCard", look: 3 }] }));
+    expect(p0(opened.state).pendingChoice!.options).toHaveLength(4);
+  });
+
+  it("T274: damage/heal passives — combo bonus, blood moon bonus, heal bonus, no forbidden self-loss, moon shift weakens", () => {
+    const combo = makeTestCombat(leveled("m05", { type: "comboAttackBonus", amount: 1 }));
+    const first = playTestCard(combo.data, combo.state, testCard({ id: "a2" }));
+    const hit = playTestCard(combo.data, first.state, testCard({ id: "a3", type: "attack", tags: ["attack"], target: "enemy", effects: [{ type: "damage", amount: 5, to: "chosen" }] }), "enemy:0");
+    expect(hit.events.find((e) => e.type === "damageDealt")).toMatchObject({ amount: 6 });
+
+    const phanSu = makeTestCombat(leveled("m05", { type: "bloodMoonAttackBonus", amount: 3 }, undefined));
+    phanSu.state.bloodMoonRounds = 1;
+    const bm = playTestCard(phanSu.data, phanSu.state, testCard({ id: "a4", type: "attack", tags: ["attack"], target: "enemy", effects: [{ type: "damage", amount: 5, to: "chosen" }] }), "enemy:0");
+    expect(bm.events.find((e) => e.type === "damageDealt")).toMatchObject({ amount: 8 });
+
+    const tamNhan = makeTestCombat(leveled("m05", { type: "healBonusOwnCards", amount: 2 }));
+    tamNhan.state.heroes[1]!.hp -= 10;
+    const healed = playTestCard(tamNhan.data, tamNhan.state, testCard({ id: "h1", target: "ally", effects: [{ type: "heal", amount: 3, to: "chosen" }] }), "hero:f04");
+    expect(healed.events).toContainEqual({ type: "healed", targetId: "hero:f04", amount: 5 });
+
+    const huyetPhuong = makeTestCombat(leveled("m05", { type: "forbiddenNoSelfHpLoss" }));
+    const f = playTestCard(huyetPhuong.data, huyetPhuong.state, testCard({ id: "f1", tags: ["forbidden"], effects: [{ type: "loseHp", amount: 3, to: "self" }, { type: "gainArmor", amount: 1, to: "self" }] }));
+    expect(f.state.heroes[0]!.hp).toBe(huyetPhuong.state.heroes[0]!.hp);
+
+    const tinhMenh = makeTestCombat(leveled("m05", { type: "moonShiftWeakensEnemies", amount: 1 }));
+    const shifted = playTestCard(tinhMenh.data, tinhMenh.state, testCard({ id: "sh", effects: [{ type: "shiftMoon", amount: 1 }] }));
+    for (const enemy of shifted.state.enemies.filter((e) => e.alive)) {
+      expect(enemy.statuses).toContainEqual({ id: "weak", value: 1 });
+    }
+  });
+
+  it("T275: turn-start passives — random buff from config (seeded), blood moon immunity, first scheme card resolves twice", () => {
+    const huyetMach = makeTestCombat(leveled("m05", { type: "randomBuffPerTurn" }));
+    const a = applyAction(huyetMach.data, huyetMach.state, { type: "endTurn" });
+    const b = applyAction(huyetMach.data, huyetMach.state, { type: "endTurn" });
+    if (!a.ok || !b.ok) throw new Error("endTurn failed");
+    const buffIds = huyetMach.data.combatConfig.levelUpRandomBuffs.map((x) => x.status);
+    const got = a.state.heroes[0]!.statuses.filter((st) => buffIds.includes(st.id));
+    expect(got).toHaveLength(1);
+    expect(b.state.heroes[0]!.statuses).toEqual(a.state.heroes[0]!.statuses);
+
+    const immune = makeTestCombat(leveled("m05", { type: "bloodMoonImmune" }));
+    immune.state.bloodMoonRounds = 2;
+    const bmTurn = applyAction(immune.data, immune.state, { type: "endTurn" });
+    if (!bmTurn.ok) throw new Error(bmTurn.error);
+    expect(bmTurn.events.some((e) => e.type === "hpLost" && e.cause === "bloodMoon" && e.targetId === "hero:m05")).toBe(false);
+    expect(bmTurn.events.some((e) => e.type === "hpLost" && e.cause === "bloodMoon" && e.targetId === "hero:f04")).toBe(true);
+
+    const bacHoc = makeTestCombat(leveled("m05", { type: "firstSchemeRepeats" }));
+    const once = playTestCard(bacHoc.data, bacHoc.state, testCard({ id: "sc1", tags: ["scheme"], effects: [{ type: "gainArmor", amount: 2, to: "self" }] }));
+    expect(once.state.heroes[0]!.armor).toBe(4);
+    const twice = playTestCard(bacHoc.data, once.state, testCard({ id: "sc2", tags: ["scheme"], effects: [{ type: "gainArmor", amount: 2, to: "self" }] }));
+    expect(twice.state.heroes[0]!.armor).toBe(6);
+    const withChoice = makeTestCombat(leveled("m05", { type: "firstSchemeRepeats" }));
+    const chooser = playTestCard(withChoice.data, withChoice.state, testCard({ id: "sc3", tags: ["scheme"], effects: [{ type: "gainArmor", amount: 1, to: "self" }, { type: "chooseCard", look: 3 }] }));
+    expect(chooser.state.heroes[0]!.armor).toBe(2);
+    expect(p0(chooser.state).pendingChoice!.options).toHaveLength(3);
   });
 });

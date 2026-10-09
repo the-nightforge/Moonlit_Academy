@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { CombatState } from "../src/index";
 import { applyAction, getEffectiveCost } from "../src/index";
 import { armorReflectCard, healFiveCard, idleIntent } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setHand, setIntent } from "./helpers";
-
-function hero(state: CombatState, defId: string) {
-  return state.heroes.find((h) => h.defId === defId)!;
-}
+import { heroByDefId, injectCard, instanceIdOf, makeTestCombat, setHand, setIntent } from "./helpers";
 
 describe("boss and blood moon intents", () => {
   it("T91: bloodMoonOverride wins over a matching moon override", () => {
@@ -50,7 +45,7 @@ describe("boss and blood moon intents", () => {
     expect(boss.armor).toBe(21);
 
     setHand(executed.state, ["f03_suong_tram"]);
-    const f03Hp = hero(executed.state, "f03").hp;
+    const f03Hp = heroByDefId(executed.state, "f03").hp;
     const played = applyAction(data, executed.state, {
       type: "playCard",
       instanceId: instanceIdOf(executed.state, "f03_suong_tram"),
@@ -58,7 +53,7 @@ describe("boss and blood moon intents", () => {
     });
     expect(played.ok).toBe(true);
     if (!played.ok) return;
-    expect(hero(played.state, "f03").hp).toBe(f03Hp - 3);
+    expect(heroByDefId(played.state, "f03").hp).toBe(f03Hp - 3);
 
     const next = applyAction(data, played.state, { type: "endTurn" });
     expect(next.ok).toBe(true);

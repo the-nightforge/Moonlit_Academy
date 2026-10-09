@@ -1,16 +1,16 @@
+import { waitForScene, clickDesign, sceneTexts } from "./helpers/combat";
 import { expect, test, type Page } from "@playwright/test";
 import { registerAccount, openSignedIn } from "./helpers/online";
 
 /**
- * `18` §3 e2e — phase 7b client features: Linh Thú panels and fallenAlly
- * targeting. Offline (no API server): only the Vite dev server on :5173 is
- * needed — the client runs signed-in on the pg-mem test server (`dev:test`).
+ * `18` §3 e2e — combat client features: Linh Thú panels and fallenAlly
+ * targeting. The client runs signed-in against the pg-mem test server (`dev:test`)
+ * through the Vite dev server on :5173.
  *
  * The canvas UI is not DOM-readable, so the test drives Phaser through
  * `window.__vn` ({ session, game, debug }) and reads the rendered Text
  * objects / unitAnchors out of the scene to confirm the panels are on screen.
  */
-const APP = "http://localhost:5173";
 
 /** Serializable snapshot of the bits the spec asserts on. */
 interface Probe {
@@ -79,18 +79,9 @@ function probe(page: Page): Promise<Probe> {
   });
 }
 
-/** Clicks a design-space coordinate on the fitted canvas. */
-async function clickDesign(page: Page, x: number, y: number): Promise<void> {
-  const box = await page.locator("canvas").boundingBox();
-  // EXPAND scale mode: the 1280×720 design area is centered at the smaller fit scale.
-  const s = Math.min(box!.width / 1280, box!.height / 720);
-  const left = box!.x + (box!.width - 1280 * s) / 2;
-  const top = box!.y + (box!.height - 720 * s) / 2;
-  await page.mouse.click(left + x * s, top + y * s);
-}
 
 /** Waits until the event queue finished and the seat can act again. */
-async function waitIdle(page: Page): Promise<void> {
+async function waitForPlayerTurn(page: Page): Promise<void> {
   await expect
     .poll(
       async () => {
@@ -102,34 +93,8 @@ async function waitIdle(page: Page): Promise<void> {
     .toBe(true);
 }
 
-/** Every Text object inside the active scene's (nested) display containers. */
-function sceneTexts(page: Page, key: string): Promise<string[]> {
-  return page.evaluate((sceneKey_) => {
-    interface Node {
-      type?: string;
-      text?: string;
-      list?: Node[];
-    }
-    const handle = (
-      window as unknown as {
-        __vn: { game: { scene: { getScenes(active: boolean): ({ scene: { key: string } } & Node)[] } } };
-      }
-    ).__vn;
-    const scene = handle.game.scene.getScenes(true)[0];
-    if (!scene || scene.scene.key !== sceneKey_) return [];
-    const texts: string[] = [];
-    const walk = (list: Node[] | undefined) => {
-      list?.forEach((node) => {
-        if (node.type === "Text" && typeof node.text === "string") texts.push(node.text);
-        if (Array.isArray(node.list)) walk(node.list);
-      });
-    };
-    walk((scene as Node & { root?: Node }).root?.list ?? scene.list ?? (scene as Node & { children: Node }).children.list);
-    return texts;
-  }, key);
-}
 
-test("7b: Linh Thú renders beside the hero row and a fallen Hero can be picked for Hồi Hồn", async ({ page }) => {
+test("Linh Thú renders beside the hero row and a fallen Hero can be picked for Hồi Hồn", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(String(error)));
   page.on("console", (message) => {
@@ -165,7 +130,7 @@ test("7b: Linh Thú renders beside the hero row and a fallen Hero can be picked 
     handle.session.encounterId = "enc_01";
     handle.game.scene.getScenes(true)[0]!.scene.start("combat");
   });
-  await expect.poll(async () => (await probe(page)).sceneKey, { timeout: 15_000 }).toBe("combat");
+  await waitForScene(page, "combat");
 
   // Rebuild the combat for the new team (same call as the debug "Chơi lại").
   await page.evaluate(() => {
@@ -240,7 +205,7 @@ test("7b: Linh Thú renders beside the hero row and a fallen Hero can be picked 
     })
     .toBe(true);
   expect((await probe(page)).anchors).toContain("summon:f09");
-  await waitIdle(page);
+  await waitForPlayerTurn(page);
 
   // Linh Thú is an `ally` target (`01` §17.3): Ngọc Đảo can click its panel.
   await page.evaluate(() => {
@@ -295,7 +260,7 @@ test("7b: Linh Thú renders beside the hero row and a fallen Hero can be picked 
       { timeout: 15_000 },
     )
     .toBe(true);
-  await waitIdle(page);
+  await waitForPlayerTurn(page);
 
   // F06 falls (debug hook), then Hồi Hồn must offer and accept its panel.
   await page.evaluate(() => {
@@ -345,7 +310,7 @@ test("7b: Linh Thú renders beside the hero row and a fallen Hero can be picked 
     })
     .toBe(true);
   expect((await probe(page)).eventTypes.some((e) => e.type === "heroRevived")).toBe(true);
-  await waitIdle(page);
+  await waitForPlayerTurn(page);
 
   // Ending the player turn lets Thỏ Ngọc act before the enemies.
   await page.evaluate(() => {

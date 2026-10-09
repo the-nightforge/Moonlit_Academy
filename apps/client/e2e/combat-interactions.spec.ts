@@ -1,3 +1,4 @@
+import { requireSuccess } from "../test/helpers/action-result";
 import { expect, test } from "@playwright/test";
 import { sceneTexts, clickDesign, waitIdle } from "./helpers/combat";
 import { openCombatScene } from "./helpers/online";
@@ -87,8 +88,8 @@ for (const viewport of viewports) {
       const heroIds = ["m05","f04","m06"] as [string,string,string];
       const side = {heroIds,loadout:{heroes:Object.fromEntries(heroIds.map(id=>[id,{constellation:0,levelUpForm:"base" as const,weaponId:null,refinement:0}])),relics:[]}};
       const {state:opening} = createCoopCombat(data,{seed:42,players:[side,side],encounterId:data.coopConfig.encounterId});
-      let state = applyAction(data, opening, {type:"mulligan",instanceIds:[],player:0}).state;
-      state = applyAction(data, state, {type:"mulligan",instanceIds:[],player:1}).state;
+      let state = requireSuccess(applyAction(data, opening, {type:"mulligan",instanceIds:[],player:0})).state;
+      state = requireSuccess(applyAction(data, state, {type:"mulligan",instanceIds:[],player:1})).state;
       state.summons = [0,1].map(player => ({id:`review_summon_${player}`,defId:"tho_ngoc",summonId:"tho_ngoc",side:"hero",player,ownerHeroId:state.heroes.find(h=>h.player===player)!.id,position:0,hp:12,maxHp:12,armor:7,statuses:[{id:"strength",value:3},{id:"weak",value:2},{id:"burn",value:1}],alive:true})) as any;
       const partner = 1-viewer;
       const instanceId = state.players[partner]!.hand[0]!;
@@ -150,7 +151,7 @@ test("real Bách Chiến resolves two hits through resize during cast and drains
   const data = await page.evaluate(()=>(window as any).__vn.session.data);
   const heroIds = ["m10","f04","m06"] as [string,string,string];
   let state = createCombat(data,{heroIds,encounterId:"enc_01",seed:42,deckCardIds:starterDeck(data,heroIds)}).state;
-  state = applyAction(data,state,{type:"mulligan",instanceIds:[]}).state;
+  state = requireSuccess(applyAction(data,state,{type:"mulligan",instanceIds:[]})).state;
   const id="review_multi";
   state.cards[id]={instanceId:id,cardId:"m10_bach_chien",ownerIds:["m10"],player:0,heldTurns:0};
   state.players[0]!.hand=[id];
@@ -181,7 +182,7 @@ test("actual Tiên Tri opens all four choices, blocks E and accepts the rendered
   const data=await page.evaluate(()=>(window as any).__vn.session.data);
   const heroIds=["m03","f04","m06"] as [string,string,string];
   let state=createCombat(data,{heroIds,encounterId:"enc_01",seed:42,deckCardIds:starterDeck(data,heroIds)}).state;
-  state=applyAction(data,state,{type:"mulligan",instanceIds:[]}).state;
+  state=requireSuccess(applyAction(data,state,{type:"mulligan",instanceIds:[]})).state;
   const id="review_choice";
   state.cards[id]={instanceId:id,cardId:"m03_tien_tri",ownerIds:["m03"],player:0,heldTurns:0};
   state.players[0]!.hand=[id];state.players[0]!.moonPower=9;

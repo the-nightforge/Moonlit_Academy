@@ -1,4 +1,42 @@
-import type { CardDef, IntentDef } from "../../src/index";
+import type { CardDef, GameData, IntentDef, SummonDef } from "../../src/index";
+
+export function testCard(partial: Partial<CardDef>, ownerId = "m05"): CardDef {
+  return {
+    id: "test_c", name: "C", ownerId, cost: 0, copies: 1, type: "skill", tags: [], target: "none",
+    effects: [{ type: "gainMoonPower", amount: 0 }], text: "", ...partial,
+  };
+}
+
+export const spiritCard = (partial: Partial<CardDef>): CardDef => testCard(partial, "f04");
+
+export const strike6: IntentDef = {
+  id: "t_strike6", name: "Đánh", kind: "attack", targeting: "front",
+  effects: [{ type: "damage", amount: 6, to: "chosen" }],
+};
+
+/** Damage followed by a buff, so Seal tests can distinguish stripped effects. */
+export const buffedStrike: IntentDef = {
+  id: "t_blade", name: "Múa Kiếm", kind: "attack", targeting: "front",
+  effects: [
+    { type: "damage", amount: 4, to: "chosen" },
+    { type: "applyStatus", status: "strength", amount: 1, to: "self" },
+  ],
+};
+
+export const rabbit: SummonDef = {
+  id: "test_rabbit", name: "Thỏ", maxHp: 12, targeting: "lowestHp",
+  action: [{ type: "damage", amount: 3, to: "chosen" }], awakenedId: "test_rabbit_up",
+};
+export const rabbitUp: SummonDef = {
+  id: "test_rabbit_up", name: "Thỏ", maxHp: 24, targeting: "lowestHp",
+  action: [{ type: "damage", amount: 6, to: "chosen" }],
+};
+export function withRabbits(data: GameData): void {
+  data.summons[rabbit.id] = rabbit;
+  data.summons[rabbitUp.id] = rabbitUp;
+}
+
+export const summonCard = spiritCard({ id: "test_summon", effects: [{ type: "summon", summonId: "test_rabbit" }] });
 
 export const idleIntent: IntentDef = {
   id: "idle",

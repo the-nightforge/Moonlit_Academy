@@ -1,8 +1,16 @@
 import { describe, expect, it } from "vitest";
-import type { CardDef, CombatState, GameData, Loadout } from "../src/index";
-import { applyAction, cardDefOf, getEffectiveCost, getPlayCardError, weaponAt } from "../src/index";
+import {
+  applyAction,
+  cardDefOf,
+  getEffectiveCost,
+  getPlayCardError,
+  type CardDef,
+  type CombatState,
+  type Loadout,
+  weaponAt,
+} from "../src/index";
 import { cloneState } from "../src/clone";
-import { idleEnemies, injectCard, makeTestCombat, p0 } from "./helpers";
+import { heroByDefId, idleEnemies, injectCard, makeTestCombat, p0, playCardInstance } from "./helpers";
 
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
 
@@ -17,15 +25,7 @@ function gear(weapons: Record<string, [string, number]>, relics: [string, number
   };
 }
 
-function hero(state: CombatState, defId: string) {
-  return state.heroes.find((unit) => unit.defId === defId)!;
-}
 
-function play(data: GameData, state: CombatState, instanceId: string, targetId?: string) {
-  const result = applyAction(data, state, { type: "playCard", instanceId, ...(targetId ? { targetId } : {}) });
-  if (!result.ok) throw new Error(result.error);
-  return result;
-}
 
 /** Moves a weapon card instance into the hand. */
 function draw(state: CombatState, instanceId: string): string {
@@ -48,47 +48,47 @@ describe("weapons and moon relics in combat", () => {
     expect(cardDefOf(data, state, state.cards["wpn_m05_1"]!)).toMatchObject({ id: "w_thiet_thuan", ownerId: "m05", cost: 2, name: "Thuẫn Kích" });
 
     idleEnemies(state);
-    const armorBefore = hero(state, "m05").armor;
-    const played = play(data, state, draw(state, "wpn_m05_1"));
-    expect(hero(played.state, "m05").armor).toBe(armorBefore + 6);
-    expect(hero(played.state, "m05").statuses).toContainEqual(expect.objectContaining({ id: "taunt" }));
+    const armorBefore = heroByDefId(state, "m05").armor;
+    const played = playCardInstance(data, state, draw(state, "wpn_m05_1"));
+    expect(heroByDefId(played.state, "m05").armor).toBe(armorBefore + 6);
+    expect(heroByDefId(played.state, "m05").statuses).toContainEqual(expect.objectContaining({ id: "taunt" }));
 
     const broken = cloneState(played.state);
-    Object.assign(hero(broken, "m05"), { hp: 0, alive: false });
+    Object.assign(heroByDefId(broken, "m05"), { hp: 0, alive: false });
     expect(getPlayCardError(data, broken, { type: "playCard", instanceId: draw(broken, "wpn_m05_2") })).toBe("card is broken (owner is dead)");
 
     // Tô Dạ finishing an enemy with a weapon card counts toward his level-up (enemiesKilled).
     const assassin = makeTestCombat({ loadout: gear({ m06: ["w_anh_nguyet_chuy", 1] }) });
     idleEnemies(assassin.state);
     assassin.state.enemies[0]!.hp = 3;
-    const kill = play(assassin.data, assassin.state, draw(assassin.state, "wpn_m06_1"), assassin.state.enemies[0]!.id);
+    const kill = playCardInstance(assassin.data, assassin.state, draw(assassin.state, "wpn_m06_1"), assassin.state.enemies[0]!.id);
     expect(kill.state.enemies[0]!.alive).toBe(false);
-    expect(hero(kill.state, "m06").leveledUp).toBe(true);
+    expect(heroByDefId(kill.state, "m06").leveledUp).toBe(true);
   });
 
   it("T199: weapon passives act as the wearer, filter on its cards and kills, use signature hooks, and stop when it falls", () => {
     const shield = makeTestCombat({ loadout: gear({ f04: ["w_thiet_thuan", 1] }) });
-    expect(hero(shield.state, "f04").armor).toBe(4);
+    expect(heroByDefId(shield.state, "f04").armor).toBe(4);
     expect(shield.events).toContainEqual({ type: "weaponTriggered", weaponId: "w_thiet_thuan", heroId: "f04" });
 
     const onSignature = makeTestCombat({ loadout: gear({ m05: ["w_xich_diem_thuong", 1], f04: ["w_han_tuyet_song_kiem", 1] }) });
-    const reflect = (defId: string) => hero(onSignature.state, defId).statuses.find((status) => status.id === "reflect")?.value;
+    const reflect = (defId: string) => heroByDefId(onSignature.state, defId).statuses.find((status) => status.id === "reflect")?.value;
     expect(reflect("m05")).toBe(3);
     const offSignature = makeTestCombat({ loadout: gear({ f04: ["w_xich_diem_thuong", 1] }) });
-    expect(hero(offSignature.state, "f04").statuses.find((status) => status.id === "reflect")?.value).toBe(2);
-    expect(hero(offSignature.state, "f04").statuses.some((status) => status.id === "strength")).toBe(false);
+    expect(heroByDefId(offSignature.state, "f04").statuses.find((status) => status.id === "reflect")?.value).toBe(2);
+    expect(heroByDefId(offSignature.state, "f04").statuses.some((status) => status.id === "strength")).toBe(false);
 
     // Ảnh Nguyệt Chủy on Tô Dạ: every 3rd assassin card of the wearer gives +2 moon power.
     const dagger = makeTestCombat({ loadout: gear({ m06: ["w_anh_nguyet_chuy", 1] }) });
     let state = dagger.state;
     idleEnemies(state);
     const other = injectCard(state, dagger.data, zeroCost("test_other_assassin", "m05", ["assassin"]));
-    state = play(dagger.data, state, other).state;
+    state = playCardInstance(dagger.data, state, other).state;
     const ids = [1, 2, 3].map((n) => injectCard(state, dagger.data, zeroCost(`test_own_assassin_${n}`, "m06", ["assassin"])));
-    state = play(dagger.data, state, ids[0]!).state;
-    state = play(dagger.data, state, ids[1]!).state;
+    state = playCardInstance(dagger.data, state, ids[0]!).state;
+    state = playCardInstance(dagger.data, state, ids[1]!).state;
     const power = p0(state).moonPower;
-    state = play(dagger.data, state, ids[2]!).state;
+    state = playCardInstance(dagger.data, state, ids[2]!).state;
     expect(p0(state).moonPower).toBe(power + 2);
     expect(p0(state).hookCounters["w_anh_nguyet_chuy@m06#0"]).toBe(3);
 
@@ -100,10 +100,10 @@ describe("weapons and moon relics in combat", () => {
     const hit = (ownerId: string, n: number) =>
       zeroCost(`test_hit_${n}`, ownerId, ["attack"], [{ type: "damage", amount: 5, to: "chosen" }]);
     const byM05 = injectCard(bow.state, bow.data, { ...hit("m05", 1), target: "enemy", type: "attack" });
-    const afterM05 = play(bow.data, bow.state, byM05, bow.state.enemies[0]!.id);
+    const afterM05 = playCardInstance(bow.data, bow.state, byM05, bow.state.enemies[0]!.id);
     expect(afterM05.events.some((event) => event.type === "weaponTriggered")).toBe(false);
     const byF04 = injectCard(afterM05.state, bow.data, { ...hit("f04", 2), target: "enemy", type: "attack" });
-    const afterF04 = play(bow.data, afterM05.state, byF04, afterM05.state.enemies[1]!.id);
+    const afterF04 = playCardInstance(bow.data, afterM05.state, byF04, afterM05.state.enemies[1]!.id);
     expect(afterF04.events).toContainEqual({ type: "weaponTriggered", weaponId: "w_liet_cung", heroId: "f04" });
     expect(p0(afterF04.state).moonPower).toBe(p0(afterM05.state).moonPower + 1);
 
@@ -117,7 +117,7 @@ describe("weapons and moon relics in combat", () => {
     const standing = applyAction(hairpin.data, first.state, { type: "endTurn" });
     if (!standing.ok) throw new Error(standing.error);
     expect(standing.events).toContainEqual({ type: "weaponTriggered", weaponId: "w_bach_hoa_tram", heroId: "f04" });
-    Object.assign(hero(hairpin.state, "f04"), { hp: 0, alive: false });
+    Object.assign(heroByDefId(hairpin.state, "f04"), { hp: 0, alive: false });
     const fallen = applyAction(hairpin.data, hairpin.state, { type: "endTurn" });
     if (!fallen.ok) throw new Error(fallen.error);
     expect(fallen.events.some((event) => event.type === "weaponTriggered")).toBe(false);
@@ -136,7 +136,7 @@ describe("weapons and moon relics in combat", () => {
     const r3 = makeTestCombat({ loadout: gear({ m05: ["w_xich_diem_thuong", 3] }) });
     expect(cardDefOf(r3.data, r3.state, r3.state.cards["wpn_m05_1"]!)?.cost).toBe(3);
     const r5 = makeTestCombat({ loadout: gear({ m05: ["w_xich_diem_thuong", 5] }) });
-    expect(hero(r5.state, "m05").statuses.find((status) => status.id === "reflect")?.value).toBe(5);
+    expect(heroByDefId(r5.state, "m05").statuses.find((status) => status.id === "reflect")?.value).toBe(5);
   });
 
   it("T201: moon relics use their resonance level; a bloodMoon cost modifier only works during blood moon", () => {
@@ -170,4 +170,3 @@ describe("weapons and moon relics in combat", () => {
     expect(events.slice(relicAt + 1).find((event) => event.type === "armorGained")).toBeDefined();
   });
 });
-

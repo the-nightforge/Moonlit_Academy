@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
-import { activeSceneKey, applyScenario, clickSceneText, waitIdle, type CombatScenario } from "./combat";
+import { activeSceneKey, applyScenario, clickSceneText, waitForScene, waitIdle, type CombatScenario } from "./combat";
 
 /**
  * Online e2e helpers: the app runs against the pg-mem test server on :8787
@@ -86,17 +86,22 @@ export async function registerAccount(options: { heroIds?: [string, string, stri
 }
 
 /** Boots the app signed in as `account` (token in localStorage → resumeSession). */
-export async function openSignedIn(page: Page, account: OnlineAccount): Promise<void> {
-  await page.addInitScript((token) => {
+export async function openSignedIn(
+  page: Page,
+  account: Pick<OnlineAccount, "token">,
+  options: { fastPlayback?: boolean; timeout?: number } = {},
+): Promise<void> {
+  await page.bringToFront();
+  await page.addInitScript(({ token, fastPlayback }) => {
     localStorage.setItem("vong-nguyet.token", token);
     // Double playback speed + muted: halves online batch time (reducedMotion
     // stays off — visual specs still see the full VFX set).
-    localStorage.setItem("vongnguyet.combatSettings.v1", JSON.stringify({ speed: 2, reducedMotion: false, volume: 0 }));
-  }, account.token);
+    if (fastPlayback) {
+      localStorage.setItem("vongnguyet.combatSettings.v1", JSON.stringify({ speed: 2, reducedMotion: false, volume: 0 }));
+    }
+  }, { token: account.token, fastPlayback: options.fastPlayback ?? true });
   await page.goto(API);
-  await expect
-    .poll(async () => activeSceneKey(page), { timeout: 30_000 })
-    .toBe("deck-select");
+  await waitForScene(page, "deck-select", options.timeout);
 }
 
 /**
@@ -131,7 +136,7 @@ export async function openCombatScene(
     const handle = (window as any).__vn;
     handle.game.scene.getScenes(true)[0]!.scene.start("combat");
   });
-  await expect.poll(async () => activeSceneKey(page), { timeout: 15_000 }).toBe("combat");
+  await waitForScene(page, "combat");
   await expect
     .poll(async () => page.evaluate(() => (window as any).__vn?.session.state.status), { timeout: 15_000 })
     .toBe("mulligan");
@@ -161,7 +166,7 @@ export async function setupOnlineCombat(
   await clickSceneText(page, "deck-select", "Đấu Trường");
   await expect.poll(async () => activeSceneKey(page), { timeout: 15_000 }).toBe("arena");
   await clickSceneText(page, "arena", "Đấu Tập (máy)");
-  await expect.poll(async () => activeSceneKey(page), { timeout: 15_000 }).toBe("combat");
+  await waitForScene(page, "combat");
   await expect
     .poll(
       async () =>

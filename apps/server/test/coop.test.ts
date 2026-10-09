@@ -1,62 +1,13 @@
-import type { WebSocket } from "ws";
-import type { FastifyInstance } from "fastify";
+import { Ws, hello, schedulerOf } from "./helpers/realtime";
 import type { Action, CombatState } from "rules";
 import { coopBot, getValidTargets, isCardPlayable } from "rules";
 import { describe, expect, it } from "vitest";
 import {
-  accountIdOf, call, giveStarterDeck, register, testServer, type FakeScheduler, type TestServer,
+  accountIdOf, call, giveStarterDeck, register, testServer, type TestServer,
 } from "./helpers";
 
-/** An injected `/api/ws` client collecting parsed server messages. */
-class Ws {
-  readonly inbox: Record<string, unknown>[] = [];
-  closeCode: number | null = null;
-  private constructor(private readonly socket: WebSocket) {}
 
-  static async connect(app: FastifyInstance): Promise<Ws> {
-    await app.ready();
-    const socket = await app.injectWS("/api/ws");
-    const ws = new Ws(socket);
-    socket.on("message", (raw: Buffer) => {
-      const message = JSON.parse(raw.toString()) as Record<string, unknown>;
-      ws.inbox.push(message);
-      if (message.type === "ping") socket.send(JSON.stringify({ type: "pong" }));
-    });
-    socket.on("close", (code: number) => {
-      ws.closeCode = code;
-    });
-    await ws.settle();
-    return ws;
-  }
 
-  send(message: unknown): void {
-    this.socket.send(typeof message === "string" ? message : JSON.stringify(message));
-  }
-
-  /** Waits until the inbox stays quiet for two ticks — async handlers (DB) need several macrotasks. */
-  async settle(): Promise<void> {
-    let quiet = 0;
-    let seen = -1;
-    for (let i = 0; i < 100 && (quiet < 3 || i < 10); i++) {
-      await new Promise((resolve) => setImmediate(resolve));
-      quiet = this.inbox.length === seen ? quiet + 1 : 0;
-      seen = this.inbox.length;
-    }
-  }
-
-  last<T = Record<string, unknown>>(type: string): T | undefined {
-    return [...this.inbox].reverse().find((m) => m.type === type) as T | undefined;
-  }
-}
-
-function schedulerOf(server: TestServer): FakeScheduler {
-  return server.deps.scheduler as FakeScheduler;
-}
-
-async function hello(server: TestServer, ws: Ws, token: string): Promise<void> {
-  ws.send({ type: "hello", token, dataVersion: server.version });
-  await ws.settle();
-}
 
 /**
  * A live co-op seat: the seat number, its next accepted `seq`, and the latest

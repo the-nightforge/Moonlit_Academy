@@ -26,7 +26,7 @@ describe("createPresentation", () => {
     applyPresentationEvent(data, visual, { type: "summoned", unitId: "reused", summonId, ownerHeroId: owner.id }, base);
     expect(visual.summons).toHaveLength(1);
     expect(target(visual, "reused")).toMatchObject({ alive: true, hp: data.summons[summonId]!.maxHp, armor: 0, statuses: [] });
-    applyPresentationEvent(data, visual, { type: "damageDealt", targetId: "reused", amount: 2, hpLost: 2, blocked: 0 }, base);
+    applyPresentationEvent(data, visual, { type: "damageDealt", sourceId: base.enemies[0]!.id, targetId: "reused", amount: 2, hpLost: 2, blocked: 0 }, base);
     expect(target(visual, "reused").hp).toBe(data.summons[summonId]!.maxHp - 2);
   });
 

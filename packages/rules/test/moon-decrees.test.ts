@@ -13,7 +13,7 @@ import {
 } from "../src/index";
 import type { CardDef, CombatEvent, CombatState, CoopSide, GameData, IntentDef, PvpSide } from "../src/index";
 import { aoeFiveCard, healFiveCard, idleIntent, stealthOneCard, strike9Intent } from "./fixtures";
-import { injectCard, makeEnemiesIdle, makeTestCombat, p0, pendingCardOptions, rawTestInput, setHand, setIntent, setPlan, testData, withLevelUp } from "./helpers";
+import { playCardAction as play, injectCard, makeEnemiesIdle, makeTestCombat, p0, pendingCardOptions, rawTestInput, setHand, setIntent, setPlan, testData, withLevelUp } from "./helpers";
 import { parseGameData } from "data";
 
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
@@ -55,17 +55,6 @@ const strike4Intent: IntentDef = {
   effects: [{ type: "damage", amount: 4, to: "chosen" }],
 };
 
-const play = (
-  data: GameData,
-  state: CombatState,
-  instanceId: string,
-  targetId?: string,
-) =>
-  applyAction(data, state, {
-    type: "playCard",
-    instanceId,
-    ...(targetId !== undefined ? { targetId } : {}),
-  });
 
 /** `damageDealt.amount` values in event order, optionally for one source. */
 const dealtAmounts = (events: CombatEvent[], sourceId?: string): number[] =>

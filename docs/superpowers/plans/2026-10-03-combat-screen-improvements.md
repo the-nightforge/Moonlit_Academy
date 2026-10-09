@@ -90,7 +90,7 @@ Modify: `combat-scene.ts`, `event-animator.ts`, `vfx.ts`, `attack-style.ts`, `th
 
 - [ ] Đọc spec + cả ba plan; không bỏ asset/audio thành “sẽ làm sau” khi báo hoàn thành toàn bộ.
 - [ ] Trong workspace implementation: chạy targeted tests của task, rồi `pnpm test`, `pnpm typecheck`, `pnpm build` tại gate cuối.
-- [ ] E2E offline: mở Vite `pnpm --filter client dev`; chạy `pnpm --filter client exec playwright test e2e/combat-visual.spec.ts e2e/phase7a.spec.ts e2e/phase7b.spec.ts`.
+- [ ] E2E offline: mở Vite `pnpm --filter client dev`; chạy `pnpm --filter client exec playwright test e2e/combat-visual.spec.ts e2e/moon-choice.spec.ts e2e/summon-revive.spec.ts`.
 - [ ] E2E online: server test/dev dùng DB dev hoặc fixture pg-mem, API :8787 + Vite :5173; chạy `pnpm --filter client exec playwright test e2e/pvp.spec.ts e2e/coop.spec.ts e2e/arena.spec.ts`. Xác minh DB đích trước chạy; không dùng production.
 - [ ] Nếu sandbox gặp EPERM của TEMP, đặt TEMP/TMP chỉ trong process sang thư mục scratch trong workspace; không đổi cấu hình máy.
 - [ ] Lưu ảnh `test-results/combat-visual/<viewport>/<scenario>.png` và số đo timeline; review hình thật ngoài assertion.

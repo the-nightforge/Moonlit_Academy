@@ -1,10 +1,8 @@
+import { flushMicrotasks } from "./helpers/async";
 import type Phaser from "phaser";
 import { describe, expect, it, vi } from "vitest";
 import { AnimationAbortedError, createAnimationRuntime } from "../src/ui/animation-runtime";
 
-async function flushMicrotasks(): Promise<void> {
-  for (let i = 0; i < 4; i++) await Promise.resolve();
-}
 
 interface FakeTimer {
   readonly removed: boolean;

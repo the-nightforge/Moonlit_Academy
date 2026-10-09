@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { CardDef, CombatState, GameData, Loadout } from "../src/index";
-import { applyAction, getEffectiveCost } from "../src/index";
-import { idleEnemies, injectCard, makeTestCombat } from "./helpers";
+import {
+  getEffectiveCost,
+  type CardDef,
+  type CombatState,
+  type GameData,
+  type Loadout,
+} from "../src/index";
+import { endTestTurn, heroByDefId, idleEnemies, injectCard, makeTestCombat, playCardState as play } from "./helpers";
 
 type Team = [string, string, string];
 
@@ -13,28 +18,17 @@ function forms(team: Team, form: "base" | "alt"): Loadout {
 function combat(team: Team, form: "base" | "alt", leveled: string[] = []) {
   const made = makeTestCombat({ heroIds: team, encounterId: "enc_06", loadout: forms(team, form) });
   idleEnemies(made.state);
-  for (const id of leveled) hero(made.state, id).leveledUp = true;
+  for (const id of leveled) heroByDefId(made.state, id).leveledUp = true;
   return made;
 }
 
-function hero(state: CombatState, defId: string) {
-  return state.heroes.find((unit) => unit.defId === defId)!;
-}
 
 function card(id: string, ownerId: string, effects: CardDef["effects"], extra: Partial<CardDef> = {}): CardDef {
   return { id, name: id, ownerId, cost: 0, copies: 1, type: "skill", tags: [], target: "none", effects, text: "", ...extra };
 }
 
-function play(data: GameData, state: CombatState, instanceId: string, targetId?: string): CombatState {
-  const result = applyAction(data, state, { type: "playCard", instanceId, ...(targetId ? { targetId } : {}) });
-  if (!result.ok) throw new Error(result.error);
-  return result.state;
-}
-
 function endTurn(data: GameData, state: CombatState): CombatState {
-  const result = applyAction(data, state, { type: "endTurn" });
-  if (!result.ok) throw new Error(result.error);
-  return result.state;
+  return endTestTurn(data, state).state;
 }
 
 const STRIKE = (ownerId: string) =>
@@ -56,7 +50,7 @@ describe("second level-up forms (Tinh Hồn 5)", () => {
     const levelsAt = (form: "base" | "alt", amount: number) => {
       const { data, state } = combat(["m05", "f04", "m06"], form);
       const selfHit = card("test_self_hit", "m05", [{ type: "loseHp", amount, to: "self" }]);
-      return hero(play(data, state, injectCard(state, data, selfHit)), "m05").leveledUp;
+      return heroByDefId(play(data, state, injectCard(state, data, selfHit)), "m05").leveledUp;
     };
     const threshold = makeTestCombat().data.heroes["m05"]!.levelUp.constellationThreshold;
     for (const form of ["base", "alt"] as const) {
@@ -69,20 +63,20 @@ describe("second level-up forms (Tinh Hồn 5)", () => {
     const { data, state } = combat(["m05", "f04", "m06"], "alt");
     const threshold = data.heroes["m05"]!.levelUp.constellationThreshold;
     const selfHit = card("test_self_hit", "m05", [{ type: "loseHp", amount: threshold, to: "self" }]);
-    const armorBefore = hero(state, "m05").armor;
+    const armorBefore = heroByDefId(state, "m05").armor;
     const leveled = play(data, state, injectCard(state, data, selfHit));
-    const m05 = hero(leveled, "m05");
+    const m05 = heroByDefId(leveled, "m05");
     expect(m05.leveledUp).toBe(true);
     expect(m05.armor).toBe(armorBefore + 12);
     expect(m05.statuses).toContainEqual(expect.objectContaining({ id: "taunt", value: 2 }));
 
     const guard = card("test_guard", "m05", [{ type: "gainArmor", amount: 5, to: "self" }]);
     const guarded = play(data, leveled, injectCard(leveled, data, guard));
-    expect(hero(guarded, "m05").armor).toBe(m05.armor + 8);
+    expect(heroByDefId(guarded, "m05").armor).toBe(m05.armor + 8);
     // A card of another hero giving M05 armor is not M05's card.
     const ally = card("test_ally_guard", "f04", [{ type: "gainArmor", amount: 5, to: "chosen" }], { target: "ally" });
     const helped = play(data, guarded, injectCard(guarded, data, ally), m05.id);
-    expect(hero(helped, "m05").armor).toBe(hero(guarded, "m05").armor + 5);
+    expect(heroByDefId(helped, "m05").armor).toBe(heroByDefId(guarded, "m05").armor + 5);
   });
 
   it("T208: Tĩnh Tâm cleanses heroes healed or given regen by F04's cards", () => {
@@ -90,14 +84,14 @@ describe("second level-up forms (Tinh Hồn 5)", () => {
     const regen = card("test_regen", "f04", [{ type: "applyStatus", status: "regen", amount: 2, to: "chosen" }], { target: "ally", tags: ["heal"] });
     for (const form of ["base", "alt"] as const) {
       const { data, state } = combat(["m05", "f04", "m06"], form, ["f04"]);
-      const m05 = hero(state, "m05");
+      const m05 = heroByDefId(state, "m05");
       m05.statuses.push({ id: "weak", value: 2 });
       m05.hp -= 10;
       const healed = play(data, state, injectCard(state, data, heal), m05.id);
-      expect(hero(healed, "m05").statuses.some((status) => status.id === "weak")).toBe(form === "base");
-      hero(healed, "m06").statuses.push({ id: "vulnerable", value: 2 });
-      const regened = play(data, healed, injectCard(healed, data, regen), hero(healed, "m06").id);
-      expect(hero(regened, "m06").statuses.some((status) => status.id === "vulnerable")).toBe(form === "base");
+      expect(heroByDefId(healed, "m05").statuses.some((status) => status.id === "weak")).toBe(form === "base");
+      heroByDefId(healed, "m06").statuses.push({ id: "vulnerable", value: 2 });
+      const regened = play(data, healed, injectCard(healed, data, regen), heroByDefId(healed, "m06").id);
+      expect(heroByDefId(regened, "m06").statuses.some((status) => status.id === "vulnerable")).toBe(form === "base");
     }
   });
 
@@ -108,18 +102,18 @@ describe("second level-up forms (Tinh Hồn 5)", () => {
     const armorAfter = (form: "base" | "alt") => {
       const { data, state } = combat(["m05", "f04", "m06"], form, ["m06"]);
       let next = play(data, state, injectCard(state, data, filler));
-      const start = hero(next, "m06").armor;
+      const start = heroByDefId(next, "m06").armor;
       next = play(data, next, injectCard(next, data, combo("test_combo_a", 2))); // 1 played (+1 with Tàn Ảnh)
-      const first = hero(next, "m06").armor - start;
-      const mid = hero(next, "m06").armor;
+      const first = heroByDefId(next, "m06").armor - start;
+      const mid = heroByDefId(next, "m06").armor;
       next = play(data, next, injectCard(next, data, combo("test_combo_b", 3))); // 2 played, no bonus left
-      return { first, second: hero(next, "m06").armor - mid, state: next, data };
+      return { first, second: heroByDefId(next, "m06").armor - mid, state: next, data };
     };
     expect(armorAfter("base")).toMatchObject({ first: 1, second: 1 });
     const alt = armorAfter("alt");
     expect(alt).toMatchObject({ first: 10, second: 1 });
-    expect(hero(alt.state, "m06").comboBonusUsedThisTurn).toBe(true);
-    expect(hero(endTurn(alt.data, alt.state), "m06").comboBonusUsedThisTurn).toBe(false);
+    expect(heroByDefId(alt.state, "m06").comboBonusUsedThisTurn).toBe(true);
+    expect(heroByDefId(endTurn(alt.data, alt.state), "m06").comboBonusUsedThisTurn).toBe(false);
   });
 
   it("T210: Hàn Kiếm makes the first hit each turn from F03's cards leave the enemy vulnerable", () => {
@@ -136,7 +130,7 @@ describe("second level-up forms (Tinh Hồn 5)", () => {
     after.enemies[1]!.hp = 99;
     const again = play(data, after, injectCard(after, data, STRIKE("f03")), after.enemies[1]!.id);
     expect(again.enemies[1]!.statuses.some((status) => status.id === "vulnerable")).toBe(false);
-    expect(hero(endTurn(data, again), "f03").firstHitUsedThisTurn).toBe(false);
+    expect(heroByDefId(endTurn(data, again), "f03").firstHitUsedThisTurn).toBe(false);
   });
 
   it("T211: Huyết Diện lowers F02's card costs by 1 during blood moon only", () => {

@@ -1,15 +1,11 @@
+import { signedIn } from "./helpers";
 import { describe, expect, it } from "vitest";
 import type { Profile, SavedDeck } from "rules";
 import { starterDeck } from "rules";
-import { call, register, testServer, type TestServer } from "./helpers";
+import { call, type TestServer } from "./helpers";
 
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
 
-async function signedIn() {
-  const server = await testServer();
-  const { token } = await register(server);
-  return { server, token };
-}
 
 async function setXp(server: TestServer, heroId: string, xp: number) {
   const row = (await server.db.prepare("SELECT profile_json FROM profiles").get()) as { profile_json: string };

@@ -36,6 +36,7 @@ describe("pileModel — Chồng rút stays a count in every mode (`05` review)",
     const seat = state.players[0]!;
     // The composition aggregates identities (never order): deck knowledge is the player's own.
     const composition = drawComposition(data, state, seat.index);
+    if (!composition) throw new Error("expected visible draw composition for own seat");
     expect(composition.reduce((sum, entry) => sum + entry.count, 0)).toBe(seat.drawPile.length);
   });
 });

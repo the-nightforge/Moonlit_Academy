@@ -13,7 +13,9 @@ test("UI icon textures load and preserve combat display sizes", async ({ page })
   await setupOnlineCombat(page);
   const loaded = await page.evaluate(async () => {
     const h = (window as any).__vn, s = h.game.scene.getScene("combat");
-    const manifest = (await import("/@id/__x00__virtual:assets-manifest")).default;
+    const manifestUrl = "/@id/__x00__virtual:assets-manifest";
+    const manifest = (await import(manifestUrl)).default as typeof import("virtual:assets-manifest").default;
+    if (!manifest.ui) throw new Error("UI assets missing from manifest");
     return Object.entries(manifest.ui).map(([key,url]) => {
       const source = s.textures.get(`ui:${key}`).getSourceImage();
       return { key, url, width:source.width, height:source.height };

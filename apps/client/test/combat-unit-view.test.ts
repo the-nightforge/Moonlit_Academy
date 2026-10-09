@@ -128,7 +128,8 @@ describe("layout — summon slots belong to their seat (`05` review)", () => {
     }));
     const withSummons = { ...state, summons: summons as never };
     const layout = computeCombatLayout(withSummons, seat);
-    const [a, b] = summons.map((s) => layout.units.get(s.id)!);
+    const [a, b] = summons.map((s) => layout.units.get(s.id));
+    if (!a || !b) throw new Error("expected layout positions for both summons");
     expect(a).toBeDefined();
     expect(overlap(a, b)).toBe(false);
     expect(a.x + a.w).toBeLessThanOrEqual(layout.controls.x);

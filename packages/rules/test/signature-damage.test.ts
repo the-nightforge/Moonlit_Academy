@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CardDef, CombatEvent, CombatState, Effect, GameData } from "../src/index";
-import { applyAction } from "../src/index";
-import { injectCard, makeTestCombat, p0 } from "./helpers";
+
+import { makeTestCombat, p0, playTestCard } from "./helpers";
 
 // Skill cards owned by f04 (team m05 + f04 + m06, enc_01): no attack bonuses apply.
 const card = (effects: Effect[], target: CardDef["target"] = "enemy"): CardDef => ({
@@ -9,10 +9,7 @@ const card = (effects: Effect[], target: CardDef["target"] = "enemy"): CardDef =
 });
 
 function play(data: GameData, state: CombatState, def: CardDef, targetId?: string): CombatEvent[] {
-  const instanceId = injectCard(state, data, def);
-  const result = applyAction(data, state, { type: "playCard", instanceId, ...(targetId ? { targetId } : {}) });
-  if (!result.ok) throw new Error(result.error);
-  return result.events;
+  return playTestCard(data, state, def, targetId).events;
 }
 
 function setup() {

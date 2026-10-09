@@ -1,3 +1,4 @@
+import { requireSuccess } from "./helpers/action-result";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import type Phaser from "phaser";
 import type { CombatEvent } from "rules";
@@ -178,10 +179,10 @@ async function playAndMeasure(events: CombatEvent[], settings: Partial<CombatSet
 describe("timeline budgets", () => {
   it("seed 42 encounter round 6 drains every cosmetic before the 3000 ms commit budget", async () => {
     let state = fixture().state;
-    state = applyAction(data, state, { type: "mulligan", instanceIds: [] }).state;
+    state = requireSuccess(applyAction(data, state, { type: "mulligan", instanceIds: [] })).state;
     for (let round = 1; round <= 6; round++) {
       const before = cloneState(state);
-      const result = applyAction(data, state, { type: "endTurn" });
+      const result = requireSuccess(applyAction(data, state, { type: "endTurn" }));
       state = result.state;
       if (round !== 6) continue;
       expect(result.events.some(e => ["unitDied", "heroLeveledUp", "coopComboTriggered"].includes(e.type))).toBe(false);

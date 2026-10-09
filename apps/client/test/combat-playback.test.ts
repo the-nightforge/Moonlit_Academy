@@ -1,25 +1,21 @@
+import { flushMicrotasks } from "./helpers/async";
 import { describe, expect, it, vi } from "vitest";
 import type { CombatState } from "rules";
 import { CombatPlayback, type PlaybackBatch, type PlaybackHooks } from "../src/ui/combat-playback";
 import { deferred, fixture } from "./helpers/combat-fixture";
 
-/** Four microtask hops — enough for the queue's pump to settle. */
-async function flushMicrotasks(): Promise<void> {
-  for (let i = 0; i < 4; i++) await Promise.resolve();
-}
 
 function batchOf(before: CombatState, round: number): PlaybackBatch {
   return { before, after: { ...before, round }, events: [] };
 }
 
-function hooksOf(overrides: Partial<PlaybackHooks> = {}): PlaybackHooks & { play: ReturnType<typeof vi.fn> } {
+function hooksOf(overrides: Partial<PlaybackHooks> = {}) {
   return {
-    play: vi.fn<(batch: PlaybackBatch, signal: AbortSignal) => Promise<void>>().mockResolvedValue(undefined),
-    commit: vi.fn(),
-    busy: vi.fn(),
-    failed: vi.fn(),
-    ...overrides,
-  } as PlaybackHooks & { play: ReturnType<typeof vi.fn> };
+    play: vi.fn<PlaybackHooks["play"]>(overrides.play ?? (async () => {})),
+    commit: vi.fn<PlaybackHooks["commit"]>(overrides.commit),
+    busy: vi.fn<PlaybackHooks["busy"]>(overrides.busy),
+    failed: vi.fn<PlaybackHooks["failed"]>(overrides.failed),
+  };
 }
 
 describe("CombatPlayback", () => {

@@ -1,29 +1,18 @@
-import { expect, test, type Browser, type Page } from "@playwright/test";
-import { clickSceneText, probeCombat, sceneTexts } from "./helpers/combat";
+import { waitForMatchPlayback, reloadSignedIn, closeMultiplayerPages, enterMultiplayer, registerAccount, saveDeck, signedInPage, sendMatchAction } from "./helpers/multiplayer";
+import { expect, test, type Page } from "@playwright/test";
+import { waitForScene, clickSceneText, probeCombat, sceneTexts, activeSceneKey as sceneKey, clickDesign } from "./helpers/combat";
+
+
+test.afterEach(closeMultiplayerPages);
 
 /**
  * `17` §9.3 e2e — Liên Thủ: two browser contexts, two accounts, one private
- * co-op room where a real Hợp Kích fires (`combo_am_anh_tuyet_sat` —
- * `m06_anh_bo` stealth half + `f02_huyet_tram` loseHp half, both starter
- * cards), plus a page reload mid-match and a bot-partner practice game.
+ * co-op room where Nguyệt Quang Phổ Chiếu fires (`combo_nguyet_quang_pho_chieu` —
+ * a moon-shift half + a heal half from the starter cards), plus a page reload mid-match and a bot-partner practice game.
  * The canvas UI is not DOM-readable, so the test drives Phaser through
  * `window.__vn` (main.ts dev handle).
  */
-const API = "http://localhost:8787";
-const APP = "http://localhost:5173";
 
-/** Starter heroes [m05, f04, m06] — every card is a starter (fresh accounts pass deck validation). */
-const DECK = {
-  heroIds: ["m05", "f04", "m06"],
-  cardIds: [
-    "m05_tran_bac_huyet_tinh", "m05_bat_khuat", "m05_liet_hoa_xung_phong",
-    "m05_ho_gam", "m05_bat_dong_nhu_son", "m05_thuong_pha",
-    "f04_bach_thao_huong", "f04_linh_chi_ho_the", "f04_hoi_xuan_tan",
-    "f04_bang_tam_quyet", "f04_tinh_tam_tra", "f04_nguyet_quang_dan",
-    "m06_anh_bo", "m06_am_tien", "m06_doat_menh",
-    "m06_phi_tieu", "m06_nguyet_anh_an", "m06_song_nhan_loan_vu",
-  ],
-};
 
 /**
  * Hợp Kích halves (`coop-combos.json` → `combo_nguyet_quang_pho_chieu` —
@@ -35,70 +24,6 @@ const SHIFT_HALF = "f04_nguyet_quang_dan";
 const HEAL_HALF = "f04_tinh_tam_tra";
 const COMBO_ID = "combo_nguyet_quang_pho_chieu";
 const FULL_MOON = 4;
-
-let version = "";
-async function api(path: string, init: RequestInit & { token?: string } = {}) {
-  if (version === "") {
-    const health = await fetch(`${API}/api/health`);
-    version = ((await health.json()) as { dataVersion: string }).dataVersion;
-  }
-  const { headers: extra, ...rest } = init;
-  const response = await fetch(`${API}${path}`, {
-    ...rest,
-    headers: {
-      "content-type": "application/json",
-      "x-data-version": version,
-      ...(init.token ? { authorization: `Bearer ${init.token}` } : {}),
-      ...(extra as Record<string, string> | undefined),
-    },
-  });
-  return { status: response.status, body: (await response.json()) as Record<string, unknown> };
-}
-
-async function registerAccount(name: string): Promise<{ token: string; rev: number }> {
-  const res = await api("/api/auth/register", {
-    method: "POST",
-    body: JSON.stringify({ username: name, password: "mk-test-1234" }),
-  });
-  expect(res.status).toBe(201);
-  return { token: res.body.token as string, rev: res.body.rev as number };
-}
-
-async function saveDeck(token: string, rev: number): Promise<void> {
-  const res = await api("/api/profile/decks", {
-    method: "PUT",
-    token,
-    headers: { "if-match": String(rev) } as never,
-    body: JSON.stringify({ draft: { id: "", name: "Liên Thủ", ...DECK } }),
-  });
-  expect(res.status).toBe(200);
-}
-
-/** A signed-in page sitting on the deck-select scene. */
-async function signedInPage(browser: Browser, token: string): Promise<Page> {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  page.on("framenavigated", frame => { if (frame === page.mainFrame()) console.info("Co-op main-frame navigation", frame.url()); });
-  page.on("pageerror", error => console.info("Co-op page error", error.message));
-  await page.addInitScript((value) => localStorage.setItem("vong-nguyet.token", value), token);
-  await page.goto(APP);
-  await page.waitForFunction(() => {
-    const vn = (window as unknown as { __vn?: { session: { online: boolean } } }).__vn;
-    const scene = (window as unknown as { __vn?: { game: { scene: { getScenes: (b: boolean) => { scene: { key: string } }[] } } } }).__vn;
-    return vn !== undefined && scene?.game.scene.getScenes(true)[0]?.scene.key === "deck-select";
-  }, undefined, { timeout: 60_000 });
-  return page;
-}
-
-/** Clicks a design-space coordinate on the fitted canvas. */
-async function clickDesign(page: Page, x: number, y: number): Promise<void> {
-  const box = await page.locator("canvas").boundingBox();
-  // EXPAND scale mode: the 1280×720 design area is centered at the smaller fit scale.
-  const s = Math.min(box!.width / 1280, box!.height / 720);
-  const left = box!.x + (box!.width - 1280 * s) / 2;
-  const top = box!.y + (box!.height - 720 * s) / 2;
-  await page.mouse.click(left + x * s, top + y * s);
-}
 
 interface ViewProbe {
   mode: string;
@@ -147,45 +72,17 @@ const vn = (page: Page): Promise<Probe> =>
     };
   });
 
-async function sceneKey(page: Page): Promise<string> {
-  return page.evaluate(
-    () =>
-      (window as unknown as { __vn?: { game: { scene: { getScenes: (b: boolean) => { scene: { key: string } }[] } } } })
-        .__vn?.game.scene.getScenes(true)[0]?.scene.key ?? "",
-  );
-}
-
-async function enterLobby(page: Page): Promise<void> {
-  await clickSceneText(page, "deck-select", "Liên Thủ");
-  // Reconnecting with a live match bounces straight into "combat" instead.
-  await page.waitForFunction(() => {
-    const vn = (window as unknown as {
-      __vn?: {
-        session: { net: { connected: boolean } | null; match: unknown };
-        game: { scene: { getScenes: (b: boolean) => { scene: { key: string } }[] } };
-      };
-    }).__vn;
-    const key = vn?.game.scene.getScenes(true)[0]?.scene.key;
-    return (key === "coop-lobby" && vn?.session.net?.connected === true) || (key === "combat" && vn?.session.match != null);
-  }, undefined, { timeout: 60_000 });
-}
-
-async function sendMatchAction(page: Page, action: unknown): Promise<void> {
-  await page.evaluate(async (act) => {
-    const session = (window as unknown as {
-      __vn: { session: { match: { sendAction: (a: unknown) => boolean } | null } };
-    }).__vn.session;
-    // One pending action at a time (`16` §8.3) — wait for the server ack like
-    // the real UI's input lock does; a dropped send is retried, not lost.
-    for (let i = 0; i < 100; i++) {
-      if (session.match === null || session.match.sendAction(act)) return;
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-  }, action);
-}
-
 const cardIds = (probe: Probe, seat: number): string[] =>
   probe.view!.players[seat]!.hand.map((id) => probe.view!.cards[id]!.cardId);
+
+/** Use Chiêm Bài to find a missing combo half instead of blindly taking the first card. */
+function chooseComboCard(probe: Probe, seat: number, options: string[]): string {
+  const hand = cardIds(probe, seat);
+  return options.find(id => {
+    const cardId = probe.view!.cards[id]!.cardId;
+    return [SHIFT_HALF, HEAL_HALF].includes(cardId) && !hand.includes(cardId);
+  }) ?? options[0]!;
+}
 
 /**
  * Shared-turn pass one (`17` §8.3): resolves a pending Chiêm Bài and plays this
@@ -203,7 +100,7 @@ async function comboPass(page: Page): Promise<void> {
   const me = view.players[seat]!;
   if (me.done) return;
   if (me.pendingChoice !== null) {
-    await sendMatchAction(page, { type: "chooseCard", instanceId: me.pendingChoice.options[0] });
+    await sendMatchAction(page, { type: "chooseCard", instanceId: chooseComboCard(probe, seat, me.pendingChoice.options) });
     return;
   }
   const other = 1 - seat;
@@ -226,7 +123,7 @@ async function comboPass(page: Page): Promise<void> {
       await page.waitForTimeout(150);
       const after = await vn(page);
       const choice = after.view?.players[seat]?.pendingChoice;
-      if (choice) await sendMatchAction(page, { type: "chooseCard", instanceId: choice.options[0] });
+      if (choice) await sendMatchAction(page, { type: "chooseCard", instanceId: chooseComboCard(after, seat, choice.options) });
     }
     return;
   }
@@ -244,7 +141,7 @@ async function comboPass(page: Page): Promise<void> {
     // The shift card carries Chiêm Bài — clear it so the seat stays free to act.
     const after = await vn(page);
     const choice = after.view?.players[seat]?.pendingChoice;
-    if (choice) await sendMatchAction(page, { type: "chooseCard", instanceId: choice.options[0] });
+    if (choice) await sendMatchAction(page, { type: "chooseCard", instanceId: chooseComboCard(after, seat, choice.options) });
   }
 }
 
@@ -257,15 +154,18 @@ async function churnSeat(page: Page): Promise<void> {
   const me = view.players[seat]!;
   if (me.done) return;
   if (me.pendingChoice !== null) {
-    await sendMatchAction(page, { type: "chooseCard", instanceId: me.pendingChoice.options[0] });
+    await sendMatchAction(page, { type: "chooseCard", instanceId: chooseComboCard(probe, seat, me.pendingChoice.options) });
     return;
   }
   let played = 0;
+  // Reserve one copy of each half; duplicate halves can still heal or dig.
+  const reserved = new Set([SHIFT_HALF, HEAL_HALF].map(cardId =>
+    me.hand.find(id => view.cards[id]!.cardId === cardId),
+  ));
   const affordable = me.hand
     .map((id) => ({ id, def: probe.cards[view.cards[id]!.cardId]! }))
     .filter(({ id, def }) => {
-      const cardId = view.cards[id]!.cardId;
-      return def.cost <= me.moonPower && cardId !== SHIFT_HALF && cardId !== HEAL_HALF;
+      return def.cost <= me.moonPower && !reserved.has(id);
     })
     .sort((a, b) => a.def.cost - b.def.cost);
   for (const { id, def } of affordable) {
@@ -285,7 +185,7 @@ async function churnSeat(page: Page): Promise<void> {
     const after = await vn(page);
     const choice = after.view?.players[seat]?.pendingChoice;
     if (choice) {
-      await sendMatchAction(page, { type: "chooseCard", instanceId: choice.options[0] });
+      await sendMatchAction(page, { type: "chooseCard", instanceId: chooseComboCard(after, seat, choice.options) });
       await page.waitForTimeout(120);
     }
   }
@@ -297,10 +197,10 @@ test("phòng riêng Liên Thủ: hai trình duyệt kích Hợp Kích, tải l�
   // during rejoin; the diagnostic reached round5/combo after70s of actions.
   test.setTimeout(600_000);
   const accA = await registerAccount(`e2e_ca_${Date.now()}`);
-  await saveDeck(accA.token, accA.rev);
+  await saveDeck(accA.token, accA.rev, "Liên Thủ");
 
-  const pageA = await signedInPage(browser, accA.token);
-  await enterLobby(pageA);
+  const pageA = await signedInPage(browser, accA.token, "Co-op");
+  await enterMultiplayer(pageA, "coop-lobby");
 
   // Drawing both halves before the Trăng Tròn window is pure match RNG — a
   // lost match gets abandoned and a fresh room retries (private rooms allow
@@ -310,9 +210,9 @@ test("phòng riêng Liên Thủ: hai trình duyệt kích Hợp Kích, tải l�
   for (let attempt = 0; attempt < 2 && !fired; attempt++) {
     // USERNAME_PATTERN caps at 20 chars — keep the attempt marker short.
     const accB = await registerAccount(`e2e_c${attempt}_${Date.now()}`);
-    await saveDeck(accB.token, accB.rev);
-    pageB = await signedInPage(browser, accB.token);
-    await enterLobby(pageB);
+    await saveDeck(accB.token, accB.rev, "Liên Thủ");
+    pageB = await signedInPage(browser, accB.token, "Co-op");
+    await enterMultiplayer(pageB, "coop-lobby");
 
     // A tạo phòng riêng co-op; B vào bằng mã.
     await clickDesign(pageA, 640, 470); // "Tạo phòng riêng"
@@ -323,8 +223,8 @@ test("phòng riêng Liên Thủ: hai trình duyệt kích Hợp Kích, tải l�
     await pageB.fill("#vn-modal-input", code);
     await pageB.press("#vn-modal-input", "Enter");
 
-    await expect.poll(() => sceneKey(pageA), { timeout: 90_000 }).toBe("combat");
-    await expect.poll(() => sceneKey(pageB), { timeout: 90_000 }).toBe("combat");
+    await waitForScene(pageA, "combat");
+    await waitForScene(pageB!, "combat");
     expect((await vn(pageA)).match?.mode).toBe("coop_private");
     expect((await vn(pageA)).view?.mode).toBe("coop");
 
@@ -346,7 +246,7 @@ test("phòng riêng Liên Thủ: hai trình duyệt kích Hợp Kích, tải l�
       for (const page of [pageA, pageB]) await comboPass(page);
       for (const page of [pageA, pageB]) await comboPass(page);
       for (const page of [pageA, pageB]) await churnSeat(page);
-      await pageA.waitForTimeout(400);
+      await waitForMatchPlayback(pageA, pageB);
       fired = ((await vn(pageA)).view?.comboUsed?.[COMBO_ID]?.total ?? 0) > 0;
       const progress = await pageA.evaluate(() => {
         const h = (window as any).__vn, s = h.game.scene.getScene("combat");
@@ -372,29 +272,24 @@ test("phòng riêng Liên Thủ: hai trình duyệt kích Hợp Kích, tải l�
     pageB = null;
   }
   const view = (await vn(pageA)).view;
-  expect(view?.comboUsed?.[COMBO_ID]?.total ?? 0, "Hợp Kích Ám Ảnh Tuyệt Sát phải kích").toBeGreaterThanOrEqual(1);
+  expect(view?.comboUsed?.[COMBO_ID]?.total ?? 0, "Hợp Kích Nguyệt Quang Phổ Chiếu phải kích").toBeGreaterThanOrEqual(1);
   expect(view?.status, "trận co-op vẫn đang diễn ra").toBe("playerTurn");
 
   // Tải lại trang của A → vào lại Liên Thủ → snapshot trả về trận.
-  await pageA.reload();
-  await pageA.waitForFunction(() => {
-    const key = (window as unknown as { __vn?: { game: { scene: { getScenes: (b: boolean) => { scene: { key: string } }[] } } } })
-      .__vn?.game.scene.getScenes(true)[0]?.scene.key;
-    return key === "deck-select";
-  }, undefined, { timeout: 60_000 });
-  await enterLobby(pageA);
-  await expect.poll(() => sceneKey(pageA), { timeout: 90_000 }).toBe("combat");
+  await reloadSignedIn(pageA);
+  await enterMultiplayer(pageA, "coop-lobby");
+  await waitForScene(pageA, "combat");
   expect(["playerTurn", "enemyTurn", "choosing"]).toContain((await vn(pageA)).view!.status);
 });
 
 test("đấu tập Liên Thủ: đồng đội máy đánh cùng tới khi trận kết thúc", async ({ browser }) => {
   const acc = await registerAccount(`e2e_cc_${Date.now()}`);
-  await saveDeck(acc.token, acc.rev);
-  const page = await signedInPage(browser, acc.token);
-  await enterLobby(page);
+  await saveDeck(acc.token, acc.rev, "Liên Thủ");
+  const page = await signedInPage(browser, acc.token, "Co-op");
+  await enterMultiplayer(page, "coop-lobby");
 
   await clickDesign(page, 400, 518); // "Đấu Tập (đồng đội máy)"
-  await expect.poll(() => sceneKey(page), { timeout: 90_000 }).toBe("combat");
+  await waitForScene(page, "combat");
   expect((await vn(page)).match?.mode).toBe("coop_practice");
 
   await sendMatchAction(page, { type: "mulligan", instanceIds: [] });
@@ -404,6 +299,7 @@ test("đấu tập Liên Thủ: đồng đội máy đánh cùng tới khi trậ
 
   // U6: co-op layout — six heroes across two rows, none spilling into the
   // right control band, and no leftover FX once the board settles.
+  await waitForMatchPlayback(page);
   const board = await probeCombat(page);
   expect(board.units.length).toBeGreaterThanOrEqual(6);
   expect(board.units.every((u) => u.bounds.x + u.bounds.w <= 1160)).toBe(true);

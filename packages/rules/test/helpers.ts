@@ -155,16 +155,68 @@ export function makeEnemiesIdle(data: GameData): void {
   }
 }
 
-export function injectCard(state: CombatState, data: GameData, card: CardDef): string {
+export function injectCard(state: CombatState, data: GameData, card: CardDef, seat = 0): string {
   data.cards[card.id] = card;
   const instanceId = `test_${card.id}`;
   const ownerIds = card.bond ? [...card.bond.owners] : [card.ownerId!];
-  state.cards[instanceId] = { instanceId, cardId: card.id, ownerIds, player: 0, heldTurns: 0 };
-  p0(state).hand.push(instanceId);
+  state.cards[instanceId] = { instanceId, cardId: card.id, ownerIds, player: seat, heldTurns: 0 };
+  state.players[seat]!.hand.push(instanceId);
   return instanceId;
 }
 
-/** Rewrites an existing hero's level-up so a phase-7 mechanic can be tested before its hero exists. */
+/** Plays a definition already in the combat; retains rejected results for failure assertions. */
+export function playCardById(data: GameData, state: CombatState, cardId: string, targetId?: string) {
+  return playCardAction(data, state, instanceIdOf(state, cardId), targetId);
+}
+
+/** Plays an instance without narrowing the result, for intentional rejection assertions. */
+export function playCardAction(data: GameData, state: CombatState, instanceId: string, targetId?: string) {
+  return applyAction(data, state, {
+    type: "playCard", instanceId,
+    ...(targetId !== undefined ? { targetId } : {}),
+  });
+}
+
+/** Plays an instance and fails immediately when the fixture cannot perform the action. */
+export function playCardInstance(data: GameData, state: CombatState, instanceId: string, targetId?: string) {
+  const result = playCardAction(data, state, instanceId, targetId || undefined);
+  if (!result.ok) throw new Error(result.error);
+  return result;
+}
+
+export function playCardState(data: GameData, state: CombatState, instanceId: string, targetId?: string): CombatState {
+  return playCardInstance(data, state, instanceId, targetId).state;
+}
+
+export function playTestCard(data: GameData, state: CombatState, card: CardDef, targetId?: string) {
+  return playCardInstance(data, state, injectCard(state, data, card), targetId);
+}
+
+export function endTestTurn(data: GameData, state: CombatState) {
+  const result = applyAction(data, state, { type: "endTurn" });
+  if (!result.ok) throw new Error(result.error);
+  return result;
+}
+
+export function heroByDefId(state: CombatState, defId: string) {
+  const hero = state.heroes.find((h) => h.defId === defId);
+  if (!hero) throw new Error(`test: no hero for "${defId}"`);
+  return hero;
+}
+
+export function cardsInHand(state: CombatState, cardId: string): string[] {
+  return p0(state).hand.filter((id) => state.cards[id]!.cardId === cardId);
+}
+
+/** Moves up to count copies from the draw pile, without synthesizing card instances. */
+export function takeCards(state: CombatState, cardId: string, count: number): string[] {
+  const ids = p0(state).drawPile.filter((id) => state.cards[id]!.cardId === cardId).slice(0, count);
+  p0(state).drawPile = p0(state).drawPile.filter((id) => !ids.includes(id));
+  p0(state).hand.push(...ids);
+  return ids;
+}
+
+/** Rewrites an existing hero's level-up to isolate a counter or passive. */
 export function withLevelUp(
   heroId: string,
   patch: { counter?: LevelUpCounter; threshold?: number; passive?: LevelUpPassive; altPassive?: LevelUpPassive },

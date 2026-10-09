@@ -1,5 +1,4 @@
-import type { WebSocket } from "ws";
-import type { FastifyInstance } from "fastify";
+import { Ws, hello, schedulerOf } from "./helpers/realtime";
 import type { Action } from "rules";
 import { pvpBot, replayMatch } from "rules";
 import { describe, expect, it } from "vitest";
@@ -7,68 +6,10 @@ import {
   accountIdOf, giveStarterDeck, register, testServer, type FakeScheduler, type TestServer,
 } from "./helpers";
 
-/** An injected `/api/ws` client collecting parsed server messages. */
-class Ws {
-  readonly inbox: Record<string, unknown>[] = [];
-  closeCode: number | null = null;
-  private constructor(private readonly socket: WebSocket) {}
-
-  static async connect(app: FastifyInstance, opts: { autoPong?: boolean } = {}): Promise<Ws> {
-    await app.ready();
-    const socket = await app.injectWS("/api/ws");
-    const ws = new Ws(socket);
-    const autoPong = opts.autoPong ?? true;
-    socket.on("message", (raw: Buffer) => {
-      const message = JSON.parse(raw.toString()) as Record<string, unknown>;
-      ws.inbox.push(message);
-      // A real client answers every heartbeat (`16` §8.1).
-      if (autoPong && message.type === "ping") socket.send(JSON.stringify({ type: "pong" }));
-    });
-    socket.on("close", (code: number) => {
-      ws.closeCode = code;
-    });
-    await ws.settle();
-    return ws;
-  }
-
-  send(message: unknown): void {
-    this.socket.send(typeof message === "string" ? message : JSON.stringify(message));
-  }
-
-  /** Abrupt disconnect: drops the socket like a lost network (`17` §5.5). */
-  close(): void {
-    this.socket.terminate();
-  }
-
-  /** Waits until the inbox stays quiet for two ticks — async handlers (DB) need several macrotasks. */
-  async settle(): Promise<void> {
-    let quiet = 0;
-    let seen = -1;
-    for (let i = 0; i < 100 && (quiet < 3 || i < 10); i++) {
-      await new Promise((resolve) => setImmediate(resolve));
-      quiet = this.inbox.length === seen ? quiet + 1 : 0;
-      seen = this.inbox.length;
-    }
-  }
-
-  /** Polls until `closeCode` is set (close frames travel several stream ticks). */
-  async waitForClose(): Promise<void> {
-    for (let i = 0; i < 100 && this.closeCode === null; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-  }
-
-  last<T = Record<string, unknown>>(type: string): T | undefined {
-    return [...this.inbox].reverse().find((m) => m.type === type) as T | undefined;
-  }
-}
 
 const HELLO_MS = 10_000;
 const PING_MS = 20_000;
 
-function schedulerOf(server: TestServer): FakeScheduler {
-  return server.deps.scheduler as FakeScheduler;
-}
 
 /**
  * Advances the fake scheduler while keeping sockets alive: each ≤15 s chunk is
@@ -81,10 +22,6 @@ async function advanceAlive(sched: FakeScheduler, ms: number, ...sockets: Ws[]):
   }
 }
 
-async function hello(server: TestServer, ws: Ws, token: string): Promise<void> {
-  ws.send({ type: "hello", token, dataVersion: server.version });
-  await ws.settle();
-}
 
 /** Two signed-in players with starter decks, connected and in a private match. */
 async function startPrivateMatch(server: TestServer) {

@@ -48,7 +48,7 @@ interface VnHandle {
   };
   game: {
     scene: {
-      getScenes(active: boolean): { scene: { key: string; start(key: string): void } }[];
+      getScenes(active: boolean): { scene: { key: string; start(key: string): void }; children: { list: SceneNode[] } }[];
       getScene(key: string): CombatSceneLike | undefined;
     };
   };
@@ -86,6 +86,31 @@ export function activeSceneKey(page: Page): Promise<string> {
     () =>
       (window as unknown as { __vn?: VnHandle }).__vn?.game.scene.getScenes(true)[0]?.scene.key ?? "",
   );
+}
+
+/** Scene preloads can exceed 15 seconds with full-resolution card and hero art. */
+export async function waitForScene(page: Page, key: string, timeout = 90_000): Promise<void> {
+  try {
+    await expect.poll(() => activeSceneKey(page), { timeout }).toBe(key);
+  } catch (error) {
+    const diagnostic = await page.evaluate(() => {
+      const game = (window as any).__vn?.game;
+      return {
+        visibility: document.visibilityState,
+        focused: document.hasFocus(),
+        loopRunning: game?.loop?.running,
+        fps: game?.loop?.actualFps,
+        scenes: game?.scene?.scenes.map((scene: any) => ({
+          key: scene.sys.settings.key,
+          status: scene.sys.settings.status,
+          loadProgress: scene.load?.progress,
+          inflight: scene.load?.inflight?.size,
+        })),
+      };
+    }).catch(reason => ({ diagnosticError: String(reason) }));
+    console.warn("Scene readiness failed", { expected: key, ...diagnostic });
+    throw error;
+  }
 }
 
 /** Clicks a design-space (1280×720) coordinate on the EXPAND-fitted canvas. */

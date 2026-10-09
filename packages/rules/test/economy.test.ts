@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
-import type { CombatState, GameData } from "../src/index";
 import { applyAction, getEffectiveCost } from "../src/index";
-import { idleEnemies, instanceIdOf, makeEnemiesIdle, makeTestCombat, setHand, p0 } from "./helpers";
-
-function end(data: GameData, state: CombatState) {
-  const result = applyAction(data, state, { type: "endTurn" });
-  if (!result.ok) throw new Error(result.error);
-  return result;
-}
+import {
+  endTestTurn,
+  idleEnemies,
+  instanceIdOf,
+  makeEnemiesIdle,
+  makeTestCombat,
+  p0,
+  setHand,
+} from "./helpers";
 
 describe("moon power economy", () => {
   it("T128: base moon power ramps by round and caps at the configured cap", () => {
@@ -18,7 +19,7 @@ describe("moon power economy", () => {
     const seen: number[] = [];
     for (let i = 0; i < 7; i++) {
       p0(current).moonPower = 0; // spend everything: no reserve
-      current = end(data, current).state;
+      current = endTestTurn(data, current).state;
       seen.push(p0(current).moonPower);
     }
     expect(seen).toEqual(
@@ -30,23 +31,23 @@ describe("moon power economy", () => {
     const { data, state } = makeTestCombat({ mutateData: makeEnemiesIdle, setup: idleEnemies });
     const { start, perRound, cap } = data.combatConfig.moonPower;
     const reserveMax = data.combatConfig.moonReserveMax;
-    const r2 = end(data, state);
+    const r2 = endTestTurn(data, state);
     expect(p0(r2.state).moonReserve).toBe(reserveMax);
     expect(p0(r2.state).moonPower).toBe(start + perRound + reserveMax);
     expect(r2.events).toContainEqual({ type: "moonReserveChanged", side: "hero", value: reserveMax });
 
     p0(r2.state).moonPower = 5; // more than the reserve max left unspent
-    const r3 = end(data, r2.state);
+    const r3 = endTestTurn(data, r2.state);
     expect(p0(r3.state).moonReserve).toBe(reserveMax);
     expect(p0(r3.state).moonPower).toBe(Math.min(cap, start + perRound * 2) + reserveMax);
 
     let current = r3.state;
-    for (let i = 0; i < 4; i++) current = end(data, current).state;
+    for (let i = 0; i < 4; i++) current = endTestTurn(data, current).state;
     expect(current.round).toBe(7);
     expect(p0(current).moonPower).toBe(Math.min(cap, start + perRound * 6) + reserveMax);
 
     p0(current).moonPower = 0;
-    const drained = end(data, current);
+    const drained = endTestTurn(data, current);
     expect(p0(drained.state).moonReserve).toBe(0);
     expect(drained.events).toContainEqual({ type: "moonReserveChanged", side: "hero", value: 0 });
   });

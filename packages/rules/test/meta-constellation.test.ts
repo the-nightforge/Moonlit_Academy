@@ -1,18 +1,25 @@
 import { describe, expect, it } from "vitest";
-import type { CardDef, CombatState, GameData, Loadout, Profile } from "../src/index";
 import {
-  applyAction, buildLoadout, buyShopItem, createCombat, createProfile, createRun, pendingUnlocks, starterDeck,
+  applyAction,
+  buildLoadout,
+  buyShopItem,
+  createCombat,
+  createProfile,
+  createRun,
+  pendingUnlocks,
+  starterDeck,
+  type CardDef,
+  type GameData,
+  type Loadout,
+  type Profile,
 } from "../src/index";
 import { idleIntent, strike9Intent } from "./fixtures";
-import { injectCard, instanceIdOf, makeTestCombat, setIntent, testData } from "./helpers";
+import { heroByDefId, injectCard, instanceIdOf, makeTestCombat, setIntent, testData } from "./helpers";
 
 const TEAM: [string, string, string] = ["m05", "f04", "m06"];
 const MONDAY = Date.UTC(2026, 8, 28, 12);
 const WEEK = 7 * 24 * 60 * 60 * 1000;
 
-function hero(state: CombatState, defId: string) {
-  return state.heroes.find((unit) => unit.defId === defId)!;
-}
 
 function loadout(constellations: Record<string, number>): Loadout {
   return {
@@ -46,11 +53,11 @@ describe("constellations, loadout and the moon star shop", () => {
     };
     const levelsAt = (constellation: number) => {
       const { data, state } = makeTestCombat();
-      hero(state, "m05").constellation = constellation;
+      heroByDefId(state, "m05").constellation = constellation;
       injectCard(state, data, selfHit);
       const result = applyAction(data, state, { type: "playCard", instanceId: instanceIdOf(state, selfHit.id) });
       if (!result.ok) throw new Error(result.error);
-      return hero(result.state, "m05").leveledUp;
+      return heroByDefId(result.state, "m05").leveledUp;
     };
     const data = testData();
     expect(data.heroes["m05"]!.levelUp.constellationThreshold).toBe(11);
@@ -59,7 +66,7 @@ describe("constellations, loadout and the moon star shop", () => {
 
     const reflectKill = (constellation: number) => {
       const { data: game, state } = makeTestCombat();
-      const m06 = hero(state, "m06");
+      const m06 = heroByDefId(state, "m06");
       m06.constellation = constellation;
       m06.statuses.push({ id: "reflect", value: 5 });
       state.enemies[0]!.hp = 3;
@@ -68,7 +75,7 @@ describe("constellations, loadout and the moon star shop", () => {
       const result = applyAction(game, state, { type: "endTurn" });
       if (!result.ok) throw new Error(result.error);
       expect(result.state.enemies[0]!.alive).toBe(false);
-      return hero(result.state, "m06").levelUpCounter;
+      return heroByDefId(result.state, "m06").levelUpCounter;
     };
     expect(reflectKill(0)).toBe(0);
     expect(reflectKill(2)).toBe(1);
@@ -90,7 +97,7 @@ describe("constellations, loadout and the moon star shop", () => {
     const cardIds = Object.values(state.cards).map((card) => card.cardId);
     expect(cardIds.filter((id) => id === plusCardId)).toHaveLength(data.cards[cardId]!.copies);
     expect(cardIds).not.toContain(cardId);
-    expect(hero(state, "m05").constellation).toBe(6);
+    expect(heroByDefId(state, "m05").constellation).toBe(6);
     expect(createCombat(data, { heroIds: TEAM, encounterId: "enc_01", seed: 3, deckCardIds: deck }).state.heroes[0]!.constellation).toBe(0);
   });
 
