@@ -25,7 +25,8 @@ async function clickText(page: Page, sceneKey: string, match: (text: string, arg
           else if (Array.isArray(node.list)) walk(node.list);
         }
       };
-      walk(scene.children.list);
+      if (scene.deckOverlay) walk([scene.deckOverlay]);
+      if (!found) walk(scene.children.list);
       if (!found) return null;
       const b = found.getBounds();
       return { x: b.centerX, y: b.centerY };
@@ -54,12 +55,12 @@ test.describe("home details", () => {
     let found = false;
     for (let i = 0; i < 30 && !found; i++) {
       await page.keyboard.press("Tab");
-      found = await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").controls.focused?.panel.list.some((node: any) => node.type === "Text" && node.text === "Sao chép") ?? false);
+      found = await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").controls.focused?.panel.list.some((node: any) => node.type === "Text" && node.text === "Sao chép & sửa") ?? false);
     }
     expect(found).toBe(true);
     await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").render());
     await page.keyboard.press("Enter");
-    await waitForScene(page, "deck-builder", 5000);
+    await waitForScene(page, "deck-builder", 15_000);
   });
 
   test("keyboard can reveal a truncated selected deck name", async ({ page }) => {
@@ -135,24 +136,35 @@ test.describe("home details", () => {
     }, full);
     await expect.poll(() => homeTexts(page).then((texts) => texts.some((text) => text === "Còn 100 điểm đến Tú Tài"))).toBe(true);
     await moveDesign(page, 670, 151);
-    await expect.poll(() => homeTexts(page).then((texts) => texts.includes(full))).toBe(true);
+    await expect.poll(() => homeTexts(page).then((texts) => texts.some((text) => text.includes(full)))).toBe(true);
   });
 
-  test("disabled overlay tooltip stays anchored above its actual button", async ({ page }) => {
+  test("starter hides direct editing; offline copy tooltip stays above its button", async ({ page }) => {
     await openSignedIn(page, await registerAccount());
     await clickText(page, "deck-select", (text) => text === "Đổi deck ▾");
+    await expect.poll(() => page.evaluate(() => {
+      const s = (window as any).__vn.game.scene.getScene("deck-select");
+      const walk = (nodes: any[]): any[] => nodes.flatMap((n) => [n, ...(n.list ? walk(n.list) : [])]);
+      return walk(s.overlayPanel.list).some((n) => n.type === "Text" && n.text === "Chỉnh sửa");
+    })).toBe(false);
+    await page.evaluate(() => {
+      const h = (window as any).__vn;
+      h.session.online = false;
+      const s = h.game.scene.getScene("deck-select");
+      s.renderDeckList(s.overlayPanel);
+    });
     const point = await page.evaluate(() => {
       const scene = (window as any).__vn.game.scene.getScene("deck-select");
-      const walk = (nodes: any[]): any => nodes.flatMap((node: any) => node.type === "Text" && node.text === "Sửa" ? [node] : Array.isArray(node.list) ? walk(node.list) : []);
+      const walk = (nodes: any[]): any => nodes.flatMap((node: any) => node.type === "Text" && node.text === "Sao chép & sửa" ? [node] : Array.isArray(node.list) ? walk(node.list) : []);
       const text = walk(scene.overlayPanel.list)[0];
       const b = text.getBounds();
       return { x: b.centerX, y: b.centerY };
     });
     await moveDesign(page, point.x, point.y);
-    await expect.poll(() => homeTexts(page).then((texts) => texts.some((text) => text.startsWith("Bộ cơ bản không sửa")))).toBe(true);
+    await expect.poll(() => homeTexts(page).then((texts) => texts.some((text) => text.startsWith("Cần đăng nhập và kết nối server")))).toBe(true);
     const tip = await page.evaluate(() => {
       const scene = (window as any).__vn.game.scene.getScene("deck-select");
-      const panel = scene.children.list.find((node: any) => node.type === "Container" && node.list.some((child: any) => child.type === "Text" && child.text.startsWith("Bộ cơ bản không sửa")));
+      const panel = scene.children.list.find((node: any) => node.type === "Container" && node.list.some((child: any) => child.type === "Text" && child.text.startsWith("Cần đăng nhập và kết nối server")));
       const b = panel.getBounds();
       return { bottom: b.bottom, x: b.centerX, depth: panel.depth };
     });
@@ -229,16 +241,16 @@ test.describe("home hierarchy", () => {
     await openSignedIn(page, account);
     await clickText(page, "deck-select", (text) => text === "Đổi deck ▾");
     await clickText(page, "deck-select", (text, arg) => text.startsWith(arg), 15_000, name);
-    await clickText(page, "deck-select", (text) => text === "Chọn deck này ▸");
+    await clickText(page, "deck-select", (text) => text === "Dùng deck này");
     expect(await homeTexts(page)).toContain(name);
     await clickText(page, "deck-select", (text) => text === "Chỉnh sửa");
     await waitForScene(page, "deck-builder");
     expect(await page.evaluate(() => (window as any).__vn.session.editingDeck.id)).toBe(id);
-    await clickText(page, "deck-builder", (text) => text === "◂ Chọn deck");
+    await clickText(page, "deck-builder", (text) => text === "‹ Trở về");
     await waitForScene(page, "deck-select");
     await clickText(page, "deck-select", (text) => text === "Đổi deck ▾");
     await clickText(page, "deck-select", (text) => text.startsWith("Bộ cơ bản"));
-    await clickText(page, "deck-select", (text) => text === "Chọn deck này ▸");
+    await clickText(page, "deck-select", (text) => text === "Dùng deck này");
     const before = await page.evaluate(() => (window as any).__vn.session.profile.decks.length);
     await clickText(page, "deck-select", (text) => text === "Sao chép & sửa");
     await waitForScene(page, "deck-builder");
@@ -338,13 +350,13 @@ function lobbyDeckId(page: Page, sceneKey: "arena" | "coop-lobby"): Promise<stri
 test.describe("deck selection survives navigation", () => {
   test("chosen deck persists through Home, gacha and both lobbies", async ({ page }) => {
     const account = await registerAccount();
-    const d2 = await saveDeck(account, "Núi Tuyết", ["m07", "f01", "m02"]);
+    const d2 = await saveDeck(account, "Núi Tuyết", ["m05", "f03", "f02"]);
     await openSignedIn(page, account);
 
     await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
     await clickText(page, "deck-select", (t) => t.startsWith("Núi Tuyết"));
+    await clickText(page, "deck-select", (t) => t === "Dùng deck này");
     await expect.poll(() => selectedDeckId(page)).toBe(d2);
-    await clickText(page, "deck-select", (t) => t === "Chọn deck này ▸");
 
     // Away to gacha and back: the selection is session state, not scene state.
     await clickText(page, "deck-select", (t) => t === "Triệu Hồi");
@@ -386,9 +398,9 @@ test.describe("deck selection survives navigation", () => {
     const account = await registerAccount();
     await openSignedIn(page, account);
     await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
-    await clickText(page, "deck-select", (t) => t === "Sao chép");
+    await clickText(page, "deck-select", (t) => t === "Sao chép & sửa");
     await waitForScene(page, "deck-builder", 15_000);
-    await clickText(page, "deck-builder", (t) => t === "Lưu");
+    await clickText(page, "deck-builder", (t) => t === "Lưu và dùng");
     await waitForScene(page, "deck-select", 15_000);
     const copyId = await page.evaluate(() => {
       const decks = (window as any).__vn.session.profile.decks as { id: string; name: string }[];
@@ -404,8 +416,8 @@ test.describe("deck selection survives navigation", () => {
     await openSignedIn(page, account);
     await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
     await clickText(page, "deck-select", (t) => t.startsWith("Núi Tuyết"));
+    await clickText(page, "deck-select", (t) => t === "Dùng deck này");
     await expect.poll(() => selectedDeckId(page)).toBe(d2);
-    await clickText(page, "deck-select", (t) => t === "Chọn deck này ▸");
 
     await clickDesign(page, 1240, 36); // Đăng xuất nav icon
     await waitForScene(page, "login", 15_000);
@@ -508,7 +520,7 @@ test.describe("request lifecycle", () => {
     await openSignedIn(page, account);
     await waitForScene(page, "deck-select");
     await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
-    await clickText(page, "deck-select", (t) => t === "Sao chép");
+    await clickText(page, "deck-select", (t) => t === "Sao chép & sửa");
     await waitForScene(page, "deck-builder");
 
     let release!: () => void;
@@ -523,11 +535,11 @@ test.describe("request lifecycle", () => {
       return route.continue();
     });
     try {
-      await clickText(page, "deck-builder", (t) => t === "Lưu");
+      await clickText(page, "deck-builder", (t) => t === "Lưu và dùng");
       await expect.poll(() => inFlight).toBe(1);
 
-      // Leave the editor, then sign out: both the scene run and the account die.
-      await clickText(page, "deck-builder", (t) => t === "◂ Chọn deck");
+      // External navigation invalidates the callback; normal Back is locked while saving.
+      await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-builder").scene.start("deck-select"));
       await waitForScene(page, "deck-select");
       await clickDesign(page, 1240, 36);
       await waitForScene(page, "login", 15_000);
@@ -775,39 +787,19 @@ test.describe("asset readiness", () => {
   });
 });
 
-/** Layout snapshot of the deck overlay: bounds of arrows, rows, footer and text columns (design coords). */
+/** Bounds of the redesigned library's six portrait rows and primary footer. */
 function overlayLayout(page: Page) {
   return page.evaluate(() => {
-    const scene = (window as any).__vn.game.scene.getScene("deck-select") as any;
-    const layer = scene?.deckOverlay;
-    if (!layer) return null;
-    const arrows: { top: number; bottom: number }[] = [];
-    const rows: { top: number; bottom: number }[] = [];
-    const footers: { top: number }[] = [];
-    const descs: { text: string; left: number; right: number; centerY: number }[] = [];
-    const statuses: { text: string; left: number; right: number; centerY: number }[] = [];
-    const walk = (nodes: any[]) => {
-      for (const node of nodes ?? []) {
-        const b = node.getBounds?.();
-        if (node.type === "Rectangle" && node.width === 920 && node.height === 24) arrows.push({ top: b.top, bottom: b.bottom });
-        else if (node.type === "Rectangle" && node.input && node.width === 920 && node.height === 32) rows.push({ top: b.top, bottom: b.bottom });
-        else if (node.type === "Rectangle" && node.input && node.height === 40) footers.push({ top: b.top });
-        else if (node.type === "Text" && typeof node.text === "string" && node.originX === 0) {
-          const cell = { text: node.text, left: b.left, right: b.right, centerY: b.centerY };
-          if (node.text.startsWith("⚠") || node.text === "✓") statuses.push(cell);
-          else descs.push(cell);
-        }
-        if (Array.isArray(node.list)) walk(node.list);
-      }
-    };
-    walk(layer.list ? [layer] : []);
+    const scene = (window as any).__vn.game.scene.getScene("deck-select");
+    if (!scene.deckOverlay) return null;
+    const walk = (nodes: any[]): any[] => nodes.flatMap((n) => [n, ...(n.list ? walk(n.list) : [])]);
+    const nodes = walk(scene.deckOverlay.list);
+    const bounds = (n: any) => ({ top: n.getBounds().top, bottom: n.getBounds().bottom, left: n.getBounds().left, right: n.getBounds().right });
     return {
-      scroll: scene.overlayScroll,
-      arrows: arrows.sort((a, b) => a.top - b.top),
-      rows: rows.sort((a, b) => a.top - b.top),
-      footerTop: footers.length ? Math.min(...footers.map((f) => f.top)) : null,
-      descs,
-      statuses,
+      rows: nodes.filter((n) => n.type === "Rectangle" && n.input && n.width === 424 && n.height === 60).map(bounds).sort((a, b) => a.top - b.top),
+      arrows: nodes.filter((n) => n.type === "Rectangle" && n.input && n.width === 424 && n.height === 20).map(bounds),
+      footer: bounds(nodes.find((n) => n.type === "Text" && n.text === "Dùng deck này")),
+      names: nodes.filter((n) => n.type === "Text" && n.style.fontSize === "16px").map((n) => ({ text: n.text, ...bounds(n) })),
     };
   });
 }
@@ -815,179 +807,95 @@ function overlayLayout(page: Page) {
 test.describe("deck overlay layout", () => {
   const seedDecks = async () => {
     const account = await registerAccount();
-    for (let i = 0; i < 11; i++) await saveDeck(account, `Deck Phụ ${i + 1}`);
+    for (let i = 0; i < 29; i++) await saveDeck(account, `Deck Phụ ${i + 1}`);
     return account;
   };
 
-  /** Opens the overlay after pushing one fake broken deck (the server never ships invalid decks). */
-  const openOverlayWithBrokenDeck = async (page: Page, account: { token: string }) => {
-    await openSignedIn(page, account);
-    await page.evaluate(() => {
-      const s = (window as any).__vn.session;
-      const team = s.profile.decks[0].heroIds;
-      const foreign = Object.values(s.data.heroes)
-        .filter((h: any) => !team.includes(h.id))
-        .flatMap((h: any) => h.cardIds);
-      // An unknown card id renders as-is in "Lá không thuộc đội: …" — a long id
-      // makes the error deterministically wider than the status column.
-      const fakeId = `la_gia_khong_ton_tai_${"x".repeat(60)}`;
-      s.profile.decks.push({
-        id: "broken",
-        name: "Deck Lỗi Với Tên Siêu Dài Để Kiểm Tra Cột Chữ",
-        heroIds: [...team],
-        cardIds: [fakeId, ...foreign.slice(0, s.data.metaConfig.deckSize - 1)],
-      });
-    });
+  test("portrait rows, arrows and footer stay in separate regions", async ({ page }, testInfo) => {
+    await openSignedIn(page, await seedDecks());
     await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
-  };
-
-  test("columns, arrows and footer keep ≥8px gaps; long text stays in its column", async ({ page }, testInfo) => {
-    const account = await seedDecks();
-    await openOverlayWithBrokenDeck(page, account);
     await page.screenshot({ path: testInfo.outputPath("home-deck-overlay.png") });
-
-    const layout = await page.evaluate(() => {
-      const scene = (window as any).__vn.game.scene.getScene("deck-select") as any;
-      return { scroll: scene.overlayScroll };
-    });
-    expect(layout.scroll).toBe(0);
     const snap = (await overlayLayout(page))!;
-    expect(snap).not.toBeNull();
-
-    // ▼ below the last row, footer below ▼ — every seam ≥8px.
-    expect(snap.rows).toHaveLength(11);
-    const down = snap.arrows.find((a) => a.top > snap.rows[0]!.top)!;
-    expect(down).toBeDefined();
+    expect(snap.rows).toHaveLength(6);
+    const down = snap.arrows.find((a) => a.top > snap.rows.at(-1)!.bottom)!;
     expect(down.top - snap.rows.at(-1)!.bottom).toBeGreaterThanOrEqual(8);
-    expect(snap.footerTop! - down.bottom).toBeGreaterThanOrEqual(8);
-
-    // Text columns: description ≤600 wide, status ≤276, and no overlap within a row.
-    for (const desc of snap.descs) {
-      expect(desc.right - desc.left).toBeLessThanOrEqual(602);
-      const status = snap.statuses.find((s) => Math.abs(s.centerY - desc.centerY) < 4);
-      if (status) expect(desc.right).toBeLessThanOrEqual(status.left);
-    }
-    for (const status of snap.statuses) {
-      expect(status.right - status.left).toBeLessThanOrEqual(278);
-    }
-
-    // At max scroll: ▲ sits ≥8px above the first row, and the broken deck's
-    // long error is truncated in its column (the tooltip holds the full text).
-    await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroller?.scrollBy?.(99));
-    await expect.poll(async () => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroll)).toBeGreaterThan(0);
+    expect(snap.footer.top - down.bottom).toBeGreaterThanOrEqual(8);
+    for (const name of snap.names) expect(name.right - name.left).toBeLessThanOrEqual(298);
+    await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroller.scrollBy(99));
     const tail = (await overlayLayout(page))!;
     const up = tail.arrows.find((a) => a.top < tail.rows[0]!.top)!;
-    expect(up).toBeDefined();
     expect(tail.rows[0]!.top - up.bottom).toBeGreaterThanOrEqual(8);
-    const broken = tail.statuses.find((s) => s.text.startsWith("⚠"))!;
-    expect(broken.text).toContain("…");
   });
 
-  test("long texts reveal their full content in the tooltip", async ({ page }) => {
-    const account = await seedDecks();
-    await openOverlayWithBrokenDeck(page, account);
-
-    // Hover the broken row (last row needs scrolling to the end first).
-    await page.evaluate(() => {
-      const scene = (window as any).__vn.game.scene.getScene("deck-select") as any;
-      scene.overlayScroller?.scrollBy?.(99);
-    });
-    await expect.poll(async () => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select")?.overlayScroll)).toBeGreaterThan(0);
+  test("long row names reveal full content above the modal", async ({ page }) => {
+    await openSignedIn(page, await registerAccount());
+    const full = "WWWWWWWWWWWWWWWWWWWWWWWW";
+    await page.evaluate((name) => { const h = (window as any).__vn; h.session.profile.decks[0].name = name; }, full);
+    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
     const snap = (await overlayLayout(page))!;
-    const lastRow = snap.rows.at(-1)!;
-    await page.mouse.move(0, 0);
-    // Move to the status column of the last row.
-    const statusCol = await page.evaluate((top) => {
-      const scene = (window as any).__vn.game.scene.getScene("deck-select") as any;
-      const world = scene.cameras.main.getWorldPoint(0, 0);
-      return { y: (top + 16), width: world.x };
-    }, lastRow.top);
-    const box = await page.locator("canvas").boundingBox();
-    const scale = Math.min(box!.width / 1280, box!.height / 720);
-    const left = box!.x + (box!.width - 1280 * scale) / 2;
-    const top = box!.y + (box!.height - 720 * scale) / 2;
-    await page.mouse.move(left + 300 * scale, top + statusCol.y * scale);
-    await expect.poll(() => sceneTexts(page, "deck-select").then((ts) => ts.some((t) => t.includes("Lá không thuộc đội") && !t.endsWith("…")))).toBe(true);
-    // Text-node presence is not enough — the tooltip must outdraw the overlay
-    // scrim (depth 900) or the player sees nothing under the dimmed screen.
-    const depths = await page.evaluate(() => {
-      const scene = (window as any).__vn.game.scene.getScene("deck-select") as any;
-      return { tooltip: scene.navTooltip?.depth ?? -1, overlay: scene.deckOverlay?.depth ?? -1 };
-    });
-    expect(depths.overlay).toBeGreaterThanOrEqual(0);
-    expect(depths.tooltip).toBeGreaterThan(depths.overlay);
+    const name = snap.names.find((n) => n.text.startsWith("WWW"))!;
+    expect(name.text).toMatch(/…$/);
+    await moveDesign(page, (name.left + name.right) / 2, (name.top + name.bottom) / 2);
+    await expect.poll(() => homeTexts(page).then((ts) => ts.some((text) => text.includes(full)))).toBe(true);
+    await expect.poll(() => page.evaluate(() => {
+      const s = (window as any).__vn.game.scene.getScene("deck-select");
+      return s.navTooltip?.depth > s.deckOverlay.depth;
+    })).toBe(true);
   });
 
-  test("scrolling reaches the last row; deleting it clamps the scroll", async ({ page }) => {
-    const account = await seedDecks();
-    await openSignedIn(page, account);
+  test("scrolling reaches the last row and deletion preserves the active deck", async ({ page }) => {
+    await openSignedIn(page, await seedDecks());
+    const before = await selectedDeckId(page);
     await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
-    // 13 rows (1 starter + 12 saved) → 2 hidden.
-    await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroller?.scrollBy?.(99));
-    await expect.poll(async () => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroll)).toBe(2);
-    // The last row is the newest saved deck — select then delete it.
-    await clickText(page, "deck-select", (t) => t === "Deck Phụ 11  ·  " || t.startsWith("Deck Phụ 11"), 15_000);
-    const lastId = await page.evaluate(() => (window as any).__vn.session.selectedDeckId);
-    expect(lastId).not.toBeNull();
-    await clickText(page, "deck-select", (t) => t === "Xóa");
+    await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroller.scrollBy(99));
+    await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroll)).toBe(25);
+    await clickText(page, "deck-select", (t) => t === "Deck Phụ 29");
+    const lastId = await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").previewDeckId);
+    expect(await selectedDeckId(page)).toBe(before);
+    await clickText(page, "deck-select", (t) => t === "⋯");
+    await clickText(page, "deck-select", (t) => t === "Xóa deck…");
     await clickText(page, "deck-select", (t) => t === "Xóa deck");
-    // Deleting the selected deck resolves selection to the first starter row.
-    await expect.poll(async () => page.evaluate(() => (window as any).__vn.session.selectedDeckId)).toMatch(/^starter:/);
-    await expect.poll(async () => page.evaluate(() => (window as any).__vn.session.selectedDeckId)).not.toBe(lastId);
-    await expect.poll(async () => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroll)).toBe(1);
+    await expect.poll(() => page.evaluate((id) => (window as any).__vn.session.profile.decks.some((d: any) => d.id === id), lastId)).toBe(false);
+    expect(await selectedDeckId(page)).toBe(before);
+    await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroll)).toBe(24);
   });
 
-  test("Esc closes the delete modal before the overlay; one wheel event scrolls once", async ({ page }) => {
-    const account = await seedDecks();
-    await openSignedIn(page, account);
+  test("Esc closes delete confirmation first; repeated opens retain one wheel listener", async ({ page }) => {
+    await openSignedIn(page, await seedDecks());
     await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
-    // The default selection is the starter row — pick a saved deck so "Xóa" is enabled.
-    await clickText(page, "deck-select", (t) => t.startsWith("Deck Phụ 1  ·"));
-    await clickText(page, "deck-select", (t) => t === "Xóa");
-    await expect.poll(() => sceneTexts(page, "deck-select").then((ts) => ts.includes("Xóa deck"))).toBe(true);
+    await clickText(page, "deck-select", (t) => t === "Deck Phụ 1");
+    await clickText(page, "deck-select", (t) => t === "⋯");
+    await clickText(page, "deck-select", (t) => t === "Xóa deck…");
+    await expect.poll(() => homeTexts(page)).toContain("Xóa deck");
     await page.keyboard.press("Escape");
-    // Modal closed, overlay survives.
-    await expect.poll(() => sceneTexts(page, "deck-select").then((ts) => ts.includes("Xóa deck"))).toBe(false);
-    await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").deckOverlay !== null)).toBe(true);
+    await expect.poll(() => homeTexts(page)).not.toContain("Xóa deck");
+    expect(await page.evaluate(() => !!(window as any).__vn.game.scene.getScene("deck-select").deckOverlay)).toBe(true);
     await page.keyboard.press("Escape");
-    await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").deckOverlay)).toBeNull();
-
-    // Ten open/close cycles — then exactly one row of scroll per wheel event.
-    for (let i = 0; i < 10; i++) {
-      await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
-      await page.keyboard.press("Escape");
-    }
+    for (let i = 0; i < 10; i++) { await clickText(page, "deck-select", (t) => t === "Đổi deck ▾"); await page.keyboard.press("Escape"); }
     await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
-    const box = await page.locator("canvas").boundingBox();
-    const scale = Math.min(box!.width / 1280, box!.height / 720);
-    const left = box!.x + (box!.width - 1280 * scale) / 2;
-    const top = box!.y + (box!.height - 720 * scale) / 2;
-    await page.mouse.move(left + 640 * scale, top + 360 * scale); // inside the list region
+    await moveDesign(page, 300, 360);
     await page.mouse.wheel(0, 300);
-    await expect.poll(async () => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroll)).toBe(1);
-    // Outside the list region — the wheel must not scroll.
-    await page.mouse.move(left + 640 * scale, top + 60 * scale);
+    await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroll)).toBe(1);
+    await moveDesign(page, 850, 360);
     await page.mouse.wheel(0, 300);
     await page.waitForTimeout(200);
     expect(await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroll)).toBe(1);
   });
 
-  test("layout holds at 1280x720, 1280x900 and 1920x1080", async ({ page }) => {
-    const account = await seedDecks();
-    await openSignedIn(page, account);
-    for (const size of [{ w: 1280, h: 720 }, { w: 1280, h: 900 }, { w: 1920, h: 1080 }]) {
-      await page.setViewportSize({ width: size.w, height: size.h });
+  test("layout holds at the three target viewports", async ({ page }) => {
+    await openSignedIn(page, await seedDecks());
+    for (const size of [{ width: 1280, height: 720 }, { width: 1280, height: 900 }, { width: 1920, height: 1080 }]) {
+      await page.setViewportSize(size);
       await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
       const snap = (await overlayLayout(page))!;
-      expect(snap.rows).toHaveLength(11);
-      const down = snap.arrows.find((a) => a.top > snap.rows[0]!.top)!;
-      expect(down.top - snap.rows.at(-1)!.bottom).toBeGreaterThanOrEqual(8);
-      expect(snap.footerTop! - down.bottom).toBeGreaterThanOrEqual(8);
+      expect(snap.rows).toHaveLength(6);
+      expect(snap.footer.bottom).toBeLessThanOrEqual(720);
+      expect(snap.rows[0]!.left).toBeGreaterThanOrEqual(100);
+      expect(snap.rows.at(-1)!.bottom).toBeLessThan(snap.footer.top - 8);
       await page.keyboard.press("Escape");
     }
   });
 });
-
 test.describe("home acceptance", () => {
   /** Returns to Home from whichever scene a route landed on. */
   const backHome = async (page: Page) => {
@@ -1091,7 +999,7 @@ test.describe("home acceptance", () => {
     // "Bộ cơ bản" is virtual: Sao chép opens the editor on a new draft, not the starter.
     await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
     await clickText(page, "deck-select", (t) => t.startsWith("Bộ cơ bản"));
-    await clickText(page, "deck-select", (t) => t === "Sao chép");
+    await clickText(page, "deck-select", (t) => t === "Sao chép & sửa");
     await waitForScene(page, "deck-builder");
     const draft = await page.evaluate(() => (window as any).__vn.session.editingDeck);
     expect(draft.id).toBe("");
@@ -1103,7 +1011,7 @@ test.describe("home acceptance", () => {
     // locked heroes never enter `picked`. Fresh accounts own only the starter
     // trio, so order is proven by deselect + re-pick landing at the tail.
     await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
-    await clickText(page, "deck-select", (t) => t === "Deck mới");
+    await clickText(page, "deck-select", (t) => t === "+ Deck mới");
     await expect.poll(() => homeTexts(page).then((ts) => ts.includes("Deck mới — chọn 3 Hero"))).toBe(true);
     await page.screenshot({ path: testInfo.outputPath("home-hero-picker.png") });
     const picker = await page.evaluate(() => {

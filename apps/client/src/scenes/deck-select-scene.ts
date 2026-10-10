@@ -16,13 +16,14 @@ import { coverCrop } from "./gacha/shared";
 import { showTextTooltip } from "../ui/card-tooltip";
 import { roundedPanel } from "../ui/rounded-panel";
 import { HomeControls } from "../ui/home-controls";
+import { matchesDeckText, summarizeDeck } from "../ui/deck-presentation";
 import { loadCombatSettings } from "../ui/combat-settings";
 import { COLORS, CURRENCY_LABELS, FACTION_LABELS, TEXT_BASE, useDesignCamera, visibleWorld } from "../ui/theme";
 import { addText, alertModal, confirmModal, isModalOpen, RowScroller, showToast, type ButtonOptions } from "../ui/widgets";
 import type { ArenaMeReply } from "./arena-scene";
 
 const WIDTH = 1280;
-const ROW_H = 36;
+const DECK_ROW_H = 64;
 /** Team picker grid: 5 columns, 4 rows on screen, the rest scroll. */
 const PICK_COLS = 5;
 const PICK_ROWS = 4;
@@ -44,13 +45,13 @@ export function describeDeckError(data: GameData, error: DeckError): string {
     case "unownedHero":
       return `Chưa sở hữu Hero: ${data.heroes[error.heroId]?.name ?? error.heroId}`;
     case "wrongSize":
-      return `Deck cần đúng ${data.metaConfig.deckSize} lá (đang ${error.size})`;
+      return `Deck cần đúng ${data.metaConfig.deckSize} ô (đang ${error.size})`;
     case "duplicateCard":
       return `Trùng lá: ${data.cards[error.cardId]?.name ?? error.cardId}`;
     case "foreignCard":
       return `Lá không thuộc đội: ${data.cards[error.cardId]?.name ?? error.cardId}`;
     case "tooFewForHero":
-      return `${data.heroes[error.heroId]?.name ?? error.heroId} cần ít nhất ${data.metaConfig.minCardsPerHero} lá (đang ${error.count})`;
+      return `${data.heroes[error.heroId]?.name ?? error.heroId} có ${error.count}/${data.metaConfig.minCardsPerHero} lá — thiếu ${data.metaConfig.minCardsPerHero - error.count} lá`;
     case "lockedCard":
       return `Lá chưa mở: ${data.cards[error.cardId]?.name ?? error.cardId}`;
     case "weaponSlot":
@@ -95,6 +96,14 @@ export class DeckSelectScene extends Phaser.Scene {
   private deckOverlay: Phaser.GameObjects.Container | null = null;
   private overlayPanel: Phaser.GameObjects.Container | null = null;
   private overlayScroll = 0;
+  /** Browsing never commits to the account's active selection. */
+  private previewDeckId: string | null = null;
+  private renderedPreviewDeckId: string | null = null;
+  private deckQuery = "";
+  private deckSearch: HTMLInputElement | null = null;
+  private deckMenuOpen = false;
+  private deletingDeck = false;
+  private failedDeckArt = new Set<string>();
   /** Wheel scroll scoped to the overlay's list region; `overlayScroll` mirrors `first` for specs. */
   private overlayScroller!: RowScroller;
   /** `null` while `/arena/me` is in flight or the player is offline. */
@@ -143,11 +152,13 @@ export class DeckSelectScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.generation++;
       this.hideTip();
+      this.closeDeckOverlay();
     });
     this.busy = false;
     this.rank = null;
     this.rankFailed = false;
     this.deckOverlay = null;
+    this.deletingDeck = false;
     this.overlayScroll = 0;
     this.pickingTeam = data?.newDeck === true && session.online;
     this.picked = this.pickingTeam ? [...session.heroIds] : [];
@@ -166,7 +177,7 @@ export class DeckSelectScene extends Phaser.Scene {
     // ten open/close cycles still leave a single wheel handler.
     this.overlayScroller = new RowScroller(
       this,
-      { x: cx - 460, y: cy - 183, width: 920, height: 392 },
+      { x: cx - 516, y: cy - 196, width: 424, height: 384 },
       () => {
         this.overlayScroll = this.overlayScroller.first;
         if (this.overlayPanel) this.renderDeckList(this.overlayPanel);
@@ -451,18 +462,9 @@ export class DeckSelectScene extends Phaser.Scene {
     panel.add(this.add.rectangle(0, -1, 340, 1, 0xb79b60, 0.3));
     const emblemKey = rank?.tierId && this.textures.exists(`ui:rank_${rank.tierId}`) ? `ui:rank_${rank.tierId}` : this.textures.exists("ui:seal") ? "ui:seal" : "";
     if (emblemKey && rank !== null) {
-      const glow = this.add.circle(-145, 33, 35, 0, 0).setStrokeStyle(2, 0xd3bb83, 0.6).setAlpha(0);
-      panel.add(glow);
       const emblem = this.add.image(-145, 33, emblemKey);
       emblem.setDisplaySize(64, 64);
       panel.add(emblem);
-      const light = (alpha: number) => {
-        this.tweens.killTweensOf(glow);
-        if (this.reducedMotion) glow.setAlpha(alpha);
-        else this.tweens.add({ targets: glow, alpha, duration: 140 });
-      };
-      source.on("pointerover", () => light(0.65)).on("pointerout", () => light(0));
-      glow.once(Phaser.GameObjects.Events.DESTROY, () => this.tweens.killTweensOf(glow));
     }
     if (this.rankFailed) {
       this.text(panel, -158, 22, "Không tải được xếp hạng", 12, "#ff8080").setOrigin(0, 0.5);
@@ -542,18 +544,24 @@ export class DeckSelectScene extends Phaser.Scene {
     this.edit(target);
   }
 
-  /** The deck library — the old deck strip as an overlay: pick, edit, copy, delete, create. */
+  /** Deck library: browsing is a preview, using it is an explicit transaction. */
   private openDeckOverlay() {
     this.closeDeckOverlay();
+    this.previewDeckId = this.selectedDeck().id;
+    this.renderedPreviewDeckId = null;
+    this.deckQuery = "";
+    this.deckMenuOpen = false;
+    this.failedDeckArt.clear();
+    this.overlayScroller.first = 0;
     const view = visibleWorld(this);
     const cx = view.x + view.w / 2, cy = view.y + view.h / 2;
     const layer = this.add.container(0, 0).setDepth(900);
     const scrim = this.add.rectangle(cx, cy, view.w, view.h, 0x03070f, 0.74).setInteractive();
-    scrim.on("pointerup", () => this.closeDeckOverlay());
+    scrim.on("pointerup", () => { if (!isModalOpen() && !this.deletingDeck) this.closeDeckOverlay(); });
     layer.add(scrim);
-    const panel = roundedPanel(this, cx, cy + 10, 980, 580, 0x0b1526, 0.98, 0x7d90b8, 16);
+    const panel = roundedPanel(this, cx, cy, 1080, 624, 0x0b1526, 1, 0x7d90b8, 16);
     // Swallow clicks on the panel so they don't reach the scrim's close handler.
-    panel.add(this.add.rectangle(0, 0, 980, 580, 0, 0).setInteractive());
+    panel.add(this.add.rectangle(0, 0, 1080, 624, 0, 0).setInteractive());
     const content = this.add.container(0, 0);
     panel.add(content);
     layer.add(panel);
@@ -561,37 +569,43 @@ export class DeckSelectScene extends Phaser.Scene {
     this.overlayPanel = content;
     this.controls.setLayer(layer);
     const onEsc = () => {
-      if (!isModalOpen()) this.closeDeckOverlay();
+      if (!isModalOpen() && !this.deletingDeck) this.closeDeckOverlay();
     };
     this.input.keyboard?.on("keydown-ESC", onEsc);
     layer.once(Phaser.GameObjects.Events.DESTROY, () => this.input.keyboard?.off("keydown-ESC", onEsc));
     this.renderDeckList(content);
+    this.createDeckSearch(cx, cy);
+    if (!this.reducedMotion) {
+      panel.setAlpha(0).setScale(0.985);
+      this.tweens.add({ targets: panel, alpha: 1, scale: 1, duration: 180, ease: "Sine.easeOut" });
+    }
   }
 
   private closeDeckOverlay() {
     this.hideTip();
+    this.deckSearch?.remove();
+    this.deckSearch = null;
     this.deckOverlay?.destroy();
     this.deckOverlay = null;
     this.overlayPanel = null;
+    this.previewDeckId = null;
+    this.overlayScroller?.range(0, 6);
     if (this.root) this.controls.setLayer(this.root);
   }
 
-  /** Slim ▲/▼ strip over the list — 920×24, thinner than `addButton`'s default row. */
+  /** Slim arrows remain in the list column. */
   private deckScrollArrow(
     panel: Phaser.GameObjects.Container,
     y: number,
     label: "▲" | "▼",
     onClick: () => void,
   ): void {
-    const bar = this.add.rectangle(0, y, 920, 24, COLORS.button, 0.8).setStrokeStyle(1, COLORS.panelBorder);
-    bar.setInteractive({ useHandCursor: true });
-    bar.on("pointerover", () => bar.setFillStyle(0x3a5090, 1));
-    bar.on("pointerout", () => bar.setFillStyle(COLORS.button, 0.8));
-    bar.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-      if (pointer.button === 0) onClick();
-    });
-    panel.add(bar);
-    addText(this, panel, 0, y, label, 11, COLORS.text).setOrigin(0.5);
+    const arrowPanel = roundedPanel(this, -304, y, 424, 20, 0x14243a, 1, COLORS.panelBorder, 6);
+    const bar = this.add.rectangle(0, 0, 424, 20, 0, 0);
+    arrowPanel.add(bar);
+    this.controls.bind(bar, arrowPanel, { enabled: true, activate: onClick, fill: 0x14243a, border: COLORS.panelBorder, radius: 6 });
+    panel.add(arrowPanel);
+    addText(this, arrowPanel, 0, 0, label, 11, COLORS.text).setOrigin(0.5);
   }
 
   /**
@@ -626,78 +640,282 @@ export class DeckSelectScene extends Phaser.Scene {
     this.hideTip();
     panel.removeAll(true);
     const data = session.data;
-    const online = session.online;
-    this.text(panel, 0, -266, "Deck của bạn", 20, COLORS.gold).setOrigin(0.5);
-    this.text(panel, 0, -240, "Chọn đội hình xuất trận", 13, "#aab4ca").setOrigin(0.5);
-
     const decks = this.decks();
-    const selectedId = this.selectedDeck().id;
-    const VISIBLE = 11;
-    const [first, end] = this.overlayScroller.range(decks.length, VISIBLE);
-    this.overlayScroll = first;
-    this.text(panel, 446, -240, `${first + 1}–${end} / ${decks.length}`, 12, COLORS.dimText).setOrigin(1, 0.5);
-
-    decks.slice(first, end).forEach((deck, index) => {
-      const y = -177 + index * ROW_H;
-      const errors = validateDeck(data, session.profile, deck);
-      const avg = deck.cardIds.reduce((sum, id) => sum + (data.cards[id]?.cost ?? 0), 0) / Math.max(1, deck.cardIds.length);
-      const isSelected = deck.id === selectedId;
-      const rowPanel = roundedPanel(this, 0, y, 920, 32, isSelected ? 0x2a3a70 : 0x141b33, 1, isSelected ? COLORS.goldFill : COLORS.panelBorder, 6);
-      const row = this.add.rectangle(0, 0, 920, 32, 0, 0);
-      rowPanel.add(row);
-      const select = () => {
-        session.selectedDeckId = deck.id;
-        this.renderDeckList(panel);
-        this.render();
-        this.queueHeroArt();
-      };
-      panel.add(rowPanel);
-      if (isSelected) this.text(rowPanel, -456, 0, "✓", 12, COLORS.gold).setOrigin(0.5);
-      const desc = `${deck.name}  ·  ${this.heroNames(deck.heroIds)}  ·  Nguyệt Lực TB ${avg.toFixed(1)}`;
-      const status = errors.length === 0 ? "✓" : `⚠ ${describeDeckError(data, errors[0]!)}`;
-      const descFit = this.fitColumn(rowPanel, -438, 0, desc, 592, 14, COLORS.text);
-      const statusFit = this.fitColumn(rowPanel, 170, 0, status, 276, 13, errors.length === 0 ? "#aad9c4" : "#ff8080");
-      this.controls.bind(row, rowPanel, { enabled: true, activate: select, fill: isSelected ? 0x2a3a70 : 0x141b33, border: isSelected ? COLORS.goldFill : COLORS.panelBorder, radius: 6,
-        showTip: descFit.truncated || statusFit.truncated ? () => this.tipAt(row, [desc, status], 520) : undefined, hideTip: () => this.hideTip() });
-    });
-    if (first > 0) this.deckScrollArrow(panel, -214, "▲", () => this.overlayScroller.scrollBy(-1));
-    if (end < decks.length) this.deckScrollArrow(panel, 220, "▼", () => this.overlayScroller.scrollBy(1));
-
-    const deck = this.selectedDeck();
-    const starter = deck.id.startsWith("starter:");
-    const starterReason = online ? "Bộ cơ bản không sửa hay xóa được — hãy Sao chép" : "Cần đăng nhập và kết nối server";
-    const y = 260;
-    this.button(panel, -330, y, 140, "Sửa", () => this.edit(deck), !starter && online, { disabledReason: starterReason });
-    this.button(panel, -170, y, 140, "Sao chép", () => this.edit({ ...deck, id: "", name: `${deck.name} (bản sao)`.slice(0, 24) }), online, {
-      disabledReason: "Cần đăng nhập và kết nối server",
-    });
-    this.button(panel, -10, y, 140, "Xóa", () => {
-      void confirmModal(this, `Xóa deck "${deck.name}"? Không hoàn tác được.`, { label: "Xóa deck", danger: true }).then((ok) => {
-        if (!ok) return;
-        const generation = this.generation;
-        mutate("DELETE", `/profile/decks/${deck.id}`).then(
-          () => {
-            if (!this.isCurrent(generation)) return;
-            session.selectedDeckId = this.selectedDeck().id;
-            if (this.overlayPanel) this.renderDeckList(this.overlayPanel);
-            this.render();
-          },
-          (error: unknown) => {
-            if (!this.isCurrent(generation)) return;
-            void alertModal(this, errorText(error));
-          },
-        );
-      });
-    }, !starter && online, { variant: "danger", disabledReason: starterReason });
-    this.button(panel, 150, y, 140, "Deck mới", () => {
+    const active = this.selectedDeck();
+    const deck = decks.find((entry) => entry.id === this.previewDeckId) ?? active;
+    this.previewDeckId = deck.id;
+    const ready = !this.deletingDeck;
+    const online = session.online;
+    this.text(panel, -516, -282, "Đổi đội hình", 23, COLORS.text).setOrigin(0, 0.5);
+    const search = roundedPanel(this, -304, -238, 424, 36, 0x111f34, 1, 0x65748e, 8);
+    const searchHit = this.add.rectangle(0, 0, 424, 36, 0, 0);
+    search.add(searchHit);
+    panel.add(search);
+    // Canvas keyboard navigation can enter the native text field via Enter.
+    this.controls.bind(searchHit, search, { enabled: ready, activate: () => this.deckSearch?.focus(), fill: 0x111f34, border: 0x65748e, radius: 8,
+      showTip: () => this.tipAt(searchHit, ["Tìm tên deck hoặc Hero · Enter để nhập"], 330), hideTip: () => this.hideTip() });
+    this.button(panel, -165, -280, 145, "+ Deck mới", () => {
       this.closeDeckOverlay();
       this.pickingTeam = true;
       this.teamScroll.first = 0;
       this.picked = [...session.heroIds];
       this.render();
       this.queueHeroArt();
-    }, online, { disabledReason: "Cần đăng nhập và kết nối server" });
-    this.button(panel, 330, y, 180, "Chọn deck này ▸", () => this.closeDeckOverlay(), true, { variant: "primary" });
+    }, online && ready, { disabledReason: "Cần đăng nhập và kết nối server" });
+    this.button(panel, 492, -280, 40, "×", () => this.closeDeckOverlay(), ready);
+    panel.add(this.add.rectangle(-68, -18, 1, 492, 0x43536c, 0.7));
+    panel.add(this.add.rectangle(0, 247, 1032, 1, 0x43536c, 0.7));
+
+    const filtered = decks.filter((entry) => matchesDeckText(this.deckQuery, entry.name, ...entry.heroIds.map((id) => data.heroes[id]?.name ?? id)));
+    const ordered = [...filtered].sort((a, b) => Number(b.id === active.id) - Number(a.id === active.id));
+    const [first, end] = this.overlayScroller.range(ordered.length, 6);
+    this.overlayScroll = first;
+    const shown = ordered.slice(first, end);
+    shown.forEach((entry, index) => {
+      const stats = summarizeDeck(data, entry, { profile: session.profile });
+      const ordinary = validateDeck(data, session.profile, entry);
+      const pvp = validateDeck(data, session.profile, entry, { mode: "pvp" });
+      const valid = ordinary.length === 0 || pvp.length === 0;
+      const previewing = entry.id === deck.id;
+      const fill = previewing ? 0x243854 : 0x111f34;
+      const border = previewing ? 0x8daabf : COLORS.panelBorder;
+      const rowPanel = roundedPanel(this, -304, -162 + index * DECK_ROW_H, 424, 60, fill, 1, border, 10);
+      entry.heroIds.forEach((id, slot) => this.deckPortrait(rowPanel, -186 + slot * 34, 0, 30, 44, id));
+      const current = entry.id === active.id;
+      const starter = entry.id.startsWith("starter:");
+      const tags = [current ? "Đang dùng" : "", starter ? "Bộ cơ bản" : ""].filter(Boolean);
+      const name = this.fitColumn(rowPanel, -96, -12, entry.name, 296 - tags.length * 82, 16, COLORS.text);
+      tags.forEach((tag, index) => {
+        const chip = roundedPanel(this, 162 - (tags.length - 1 - index) * 82, -12, 78, 19, tag === "Đang dùng" ? 0x244337 : 0x26364c, 1, 0x526881, 6);
+        rowPanel.add(chip);
+        this.text(chip, 0, 0, tag, 11, tag === "Đang dùng" ? "#a9d6c5" : "#c5cfdb").setOrigin(0.5);
+      });
+      this.fitColumn(rowPanel, -96, 12, `${stats.slots}/${data.metaConfig.deckSize} ô · ${valid ? ordinary.length ? "Sẵn sàng PvP" : "Sẵn sàng" : "Cần chỉnh sửa"}`, 296, 12, valid ? "#a9d6c5" : "#e0aaa6");
+      const hit = this.add.rectangle(0, 0, 424, 60, 0, 0);
+      rowPanel.add(hit);
+      panel.add(rowPanel);
+      this.controls.bind(hit, rowPanel, { enabled: ready, activate: () => {
+        this.previewDeckId = entry.id;
+        this.deckMenuOpen = false;
+        this.renderDeckList(panel);
+      }, fill, border, radius: 10, showTip: name.truncated ? () => this.tipAt(hit, [entry.name, this.heroNames(entry.heroIds)], 430) : undefined, hideTip: () => this.hideTip() });
+    });
+    if (first > 0) this.deckScrollArrow(panel, -210, "▲", () => this.overlayScroller.scrollBy(-1));
+    if (end < ordered.length) this.deckScrollArrow(panel, 206, "▼", () => this.overlayScroller.scrollBy(1));
+    this.text(panel, -516, 227, ordered.length ? `${first + 1}–${end} / ${ordered.length} đội hình` : "Không tìm thấy đội hình", 12, COLORS.dimText).setOrigin(0, 0.5);
+    if (!ordered.length) panel.add(this.add.text(-304, -78, "Không có deck phù hợp\nThử tên deck hoặc tên Hero khác", { ...TEXT_BASE, fontSize: "15px", color: COLORS.dimText, align: "center", wordWrap: { width: 360 } }).setOrigin(0.5));
+
+    const preview = this.add.container(0, 0);
+    panel.add(preview);
+    this.renderDeckPreview(preview, deck);
+    if (!this.reducedMotion && this.renderedPreviewDeckId !== null && this.renderedPreviewDeckId !== deck.id) {
+      preview.setAlpha(0);
+      this.tweens.add({ targets: preview, alpha: 1, duration: 120, ease: "Sine.easeOut" });
+    }
+    this.renderedPreviewDeckId = deck.id;
+    const starter = deck.id.startsWith("starter:");
+    const allowed = validateDeck(data, session.profile, deck).length === 0 || validateDeck(data, session.profile, deck, { mode: "pvp" }).length === 0;
+    if (!starter) {
+      this.button(panel, -442, 276, 148, "Chỉnh sửa", () => this.openDeckEditor(deck), online && ready, { disabledReason: "Cần đăng nhập và kết nối server" });
+      this.button(panel, -34, 276, 40, "⋯", () => {
+        this.deckMenuOpen = !this.deckMenuOpen;
+        this.renderDeckList(panel);
+      }, online && ready);
+    }
+    this.button(panel, starter ? -418 : -246, 276, 184, "Sao chép & sửa", () => this.openDeckEditor(deck, true), online && ready, { disabledReason: "Cần đăng nhập và kết nối server" });
+    if (this.deckMenuOpen && !starter) this.button(panel, -54, 223, 172, "Xóa deck…", () => this.deletePreviewDeck(deck), online && ready, { variant: "danger" });
+    this.button(panel, 416, 276, 200, "Dùng deck này", () => {
+      // Revalidate at activation too: deleting/profile refresh can change eligibility.
+      const current = this.decks().find((entry) => entry.id === deck.id);
+      if (!current || (validateDeck(data, session.profile, current).length && validateDeck(data, session.profile, current, { mode: "pvp" }).length)) return;
+      session.selectedDeckId = current.id;
+      this.closeDeckOverlay();
+      this.render();
+      this.queueHeroArt();
+    }, allowed && ready, { variant: "primary", disabledReason: "Deck cần chỉnh sửa để dùng ở Thường hoặc PvP" });
+    this.queueDeckArt(panel, [...shown, deck]);
+  }
+
+  private renderDeckPreview(panel: Phaser.GameObjects.Container, deck: SavedDeck) {
+    const data = session.data;
+    const stats = summarizeDeck(data, deck, { profile: session.profile });
+    const name = this.fitColumn(panel, -40, -239, deck.name, 552, 23, COLORS.gold);
+    if (name.truncated) this.controls.info(name.label, () => this.tipAt(name.label, [deck.name], 552, true), () => this.hideTip());
+    deck.heroIds.forEach((id, slot) => {
+      const x = 48 + slot * 184;
+      const hero = data.heroes[id];
+      const card = roundedPanel(this, x, -112, 168, 168, 0x14243a, 1, 0x526881, 12);
+      panel.add(card);
+      this.deckPortrait(card, 0, -20, 146, 112, id);
+      const label = this.fitColumn(card, -73, 47, `${slot + 1}. ${hero?.name ?? id}`, 146, 15, COLORS.text);
+      if (label.truncated) this.controls.info(label.label, () => this.tipAt(label.label, [hero?.name ?? id]), () => this.hideTip());
+      this.fitColumn(card, -73, 68, hero ? FACTION_LABELS[hero.faction] : "", 146, 12, COLORS.dimText);
+    });
+    const summary = roundedPanel(this, 236, 5, 552, 44, 0x16263a, 1, 0x43536c, 9);
+    panel.add(summary);
+    this.text(summary, -258, 0, `${stats.slots}/${data.metaConfig.deckSize} ô deck`, 15, stats.slots === data.metaConfig.deckSize ? "#a9d6c5" : "#e0aaa6").setOrigin(0, 0.5);
+    this.text(summary, -98, 0, `${stats.copies} bản trong chồng bài`, 13, COLORS.text).setOrigin(0, 0.5);
+    const pvpStats = summarizeDeck(data, deck, { profile: session.profile, mode: "pvp" });
+    const costLabel = Math.abs(stats.averageCost - pvpStats.averageCost) > 0.01 ? `NL TB ${stats.averageCost.toFixed(1)} / PvP ${pvpStats.averageCost.toFixed(1)}` : `NL TB ${stats.averageCost.toFixed(1)}`;
+    const cost = this.fitColumn(summary, 125, 0, costLabel, 137, 13, COLORS.text);
+    if (cost.truncated) this.controls.info(cost.label, () => this.tipAt(cost.label, [costLabel], 290, true), () => this.hideTip());
+    deck.heroIds.forEach((id, slot) => {
+      const weaponId = deck.weapons?.[id];
+      const weapon = weaponId ? data.weapons[weaponId] : undefined;
+      const rank = weaponId ? session.profile.weapons[weaponId]?.refinement : undefined;
+      this.deckGearTile(panel, 48 + slot * 184, 64, 168, weaponId ? `weapons:${weaponId}` : undefined, weapon?.name ?? "Vũ khí trống", weapon ? rank ? `R${rank}` : data.pvpConfig.freeWeaponIds.includes(weaponId!) ? "PvP · R1" : "Chưa sở hữu" : "Không trang bị");
+    });
+    for (let slot = 0; slot < data.metaConfig.maxRelics; slot++) {
+      const id = deck.relicIds?.[slot];
+      const relic = id ? data.relics[id] : undefined;
+      const resonance = id ? session.profile.relics[id]?.resonance : undefined;
+      this.deckGearTile(panel, 92 + slot * 280, 124, 264, id ? `relics:${id}` : undefined, relic?.name ?? "Nguyệt Bảo trống", relic ? resonance ? `CM${resonance}` : data.pvpConfig.freeRelicIds.includes(id!) ? "PvP · CM1" : "Chưa sở hữu" : "Không trang bị");
+    }
+    const ordinary = validateDeck(data, session.profile, deck);
+    const pvp = validateDeck(data, session.profile, deck, { mode: "pvp" });
+    this.text(panel, -40, 168, `Thường: ${ordinary.length ? `⚠ ${ordinary.length} vấn đề` : "Sẵn sàng"}`, 14, ordinary.length ? "#e0aaa6" : "#a9d6c5").setOrigin(0, 0.5);
+    this.text(panel, 238, 168, `PvP: ${pvp.length ? `⚠ ${pvp.length} vấn đề` : "Sẵn sàng"}`, 14, pvp.length ? "#e0aaa6" : "#a9d6c5").setOrigin(0, 0.5);
+    const errors = ordinary.length && pvp.length ? (ordinary.length <= pvp.length ? ordinary : pvp) : ordinary.length && !pvp.length ? ordinary : pvp.length && !ordinary.length ? pvp : [];
+    const explanation = errors.length
+      ? `${ordinary.length && !pvp.length ? "Dùng được ở PvP. " : pvp.length && !ordinary.length ? "Dùng được ở Thường. " : ""}${errors.slice(0, 2).map((error) => describeDeckError(data, error)).join(" · ")}${errors.length > 2 ? ` · +${errors.length - 2} vấn đề` : ""}`
+      : "Đội hình dùng được ở Thường và PvP.";
+    const explanationText = this.add.text(-40, 190, explanation, { ...TEXT_BASE, fontSize: "13px", color: errors.length ? "#c9bac0" : COLORS.dimText, wordWrap: { width: 552 }, maxLines: 3 }).setOrigin(0, 0);
+    panel.add(explanationText);
+    if (errors.length) this.controls.info(explanationText, () => this.tipAt(explanationText, [
+      `Thường: ${ordinary.length ? ordinary.map((error) => describeDeckError(data, error)).join("\n") : "Sẵn sàng"}`,
+      `PvP: ${pvp.length ? pvp.map((error) => describeDeckError(data, error)).join("\n") : "Sẵn sàng"}`,
+      "Chỉnh sửa hoặc Sao chép & sửa ở bên dưới để xử lý.",
+    ], 552, true), () => this.hideTip());
+  }
+
+  private deckPortrait(parent: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number, heroId: string) {
+    const portrait = roundedPanel(this, x, y, width, height, 0x20334b, 1, 0x4b617b, 6);
+    parent.add(portrait);
+    const key = this.heroArtKey(heroId);
+    if (this.textures.exists(key)) {
+      const image = this.add.image(0, 0, key);
+      coverCrop(image, width, height);
+      // Wide preview portraits frame the head and upper body of vertical Hero art.
+      if (width > height) {
+        image.setOrigin(0.5, 0).setY(-height / 2);
+        image.setCrop((image.width - width / image.scaleX) / 2, 0, width / image.scaleX, height / image.scaleY);
+      }
+      portrait.add(image);
+    } else this.text(portrait, 0, 0, "❖", Math.min(24, width * 0.6), COLORS.dimText).setOrigin(0.5);
+  }
+
+  private deckGearTile(parent: Phaser.GameObjects.Container, x: number, y: number, width: number, key: string | undefined, name: string, detail: string) {
+    const tile = roundedPanel(this, x, y, width, 54, 0x111f34, 1, 0x43536c, 9);
+    parent.add(tile);
+    if (key && this.textures.exists(key)) {
+      const image = this.add.image(-width / 2 + 27, 0, key);
+      image.setScale(Math.min(40 / image.width, 40 / image.height));
+      tile.add(image);
+    }
+    else this.text(tile, -width / 2 + 27, 0, key ? "❖" : "+", 21, COLORS.dimText).setOrigin(0.5);
+    const label = this.fitColumn(tile, -width / 2 + 52, -9, name, width - 62, 13, COLORS.text);
+    this.text(tile, -width / 2 + 52, 12, detail, 12, COLORS.dimText).setOrigin(0, 0.5);
+    if (label.truncated) this.controls.info(label.label, () => this.tipAt(label.label, [name, detail]), () => this.hideTip());
+  }
+
+  private queueDeckArt(panel: Phaser.GameObjects.Container, decks: SavedDeck[]) {
+    const generation = this.generation;
+    const accountGeneration = auth.generation;
+    const jobs: Promise<unknown>[] = [];
+    const keys = new Set<string>();
+    for (const deck of decks) {
+      deck.heroIds.forEach((id) => {
+        keys.add(`heroes:${id}`);
+        const owned = session.profile.heroes[id];
+        if (owned?.levelUpForm === "alt" && owned.constellation >= 5) keys.add(`heroes:${id}_up`);
+      });
+      // Equipment thumbnails belong to the preview, not every offscreen deck.
+      if (deck.id !== this.previewDeckId) continue;
+      Object.values(deck.weapons ?? {}).forEach((id) => { if (id) keys.add(`weapons:${id}`); });
+      (deck.relicIds ?? []).forEach((id) => keys.add(`relics:${id}`));
+    }
+    for (const key of keys) {
+      const [category, id] = key.split(":") as [string, string];
+      const url = manifest[category]?.[id];
+      if (!url || this.textures.exists(key) || this.failedDeckArt.has(key)) continue;
+      jobs.push(queueTexture(this, key, url).catch((error: unknown) => {
+        if (this.isCurrent(generation) && accountGeneration === auth.generation && this.overlayPanel === panel) this.failedDeckArt.add(key);
+        throw error;
+      }));
+    }
+    if (!jobs.length) return;
+    void Promise.allSettled(jobs).then((results) => {
+      if (this.isCurrent(generation) && accountGeneration === auth.generation && this.overlayPanel === panel && results.some((result) => result.status === "fulfilled")) this.renderDeckList(panel);
+    });
+  }
+
+  private createDeckSearch(cx: number, cy: number) {
+    const layer = this.deckOverlay;
+    const input = document.createElement("input");
+    input.id = "vn-deck-search";
+    input.type = "search";
+    input.placeholder = "Tìm tên deck hoặc Hero";
+    input.setAttribute("aria-label", "Tìm tên deck hoặc Hero");
+    input.style.cssText = "position:fixed;box-sizing:border-box;padding:0 12px;background:#111f34;color:#e8e0c8;border:1px solid #65748e;border-radius:8px;font-family:Segoe UI,sans-serif;z-index:9";
+    this.deckSearch = input;
+    const place = () => {
+      const canvas = this.game.canvas.getBoundingClientRect();
+      const view = visibleWorld(this);
+      const sx = canvas.width / view.w, sy = canvas.height / view.h;
+      input.style.left = `${canvas.left + (cx - 516 - view.x) * sx}px`;
+      input.style.top = `${canvas.top + (cy - 256 - view.y) * sy}px`;
+      input.style.width = `${424 * sx}px`;
+      input.style.height = `${36 * sy}px`;
+      input.style.fontSize = `${14 * sx}px`;
+    };
+    input.addEventListener("input", () => {
+      this.deckQuery = input.value;
+      this.overlayScroller.first = 0;
+      this.deckMenuOpen = false;
+      if (this.overlayPanel) this.renderDeckList(this.overlayPanel);
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") { event.stopPropagation(); if (!isModalOpen() && !this.deletingDeck) this.closeDeckOverlay(); }
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", " "].includes(event.key)) event.stopPropagation();
+    });
+    document.body.appendChild(input);
+    place();
+    this.scale.on("resize", place);
+    layer?.once(Phaser.GameObjects.Events.DESTROY, () => { input.remove(); this.scale.off("resize", place); });
+  }
+
+  private deletePreviewDeck(deck: SavedDeck) {
+    if (this.deletingDeck || deck.id.startsWith("starter:")) return;
+    const generation = this.generation;
+    const accountGeneration = auth.generation;
+    const panel = this.overlayPanel;
+    this.deckMenuOpen = false;
+    // Native input cannot cover the canvas confirmation dialog.
+    if (this.deckSearch) this.deckSearch.style.visibility = "hidden";
+    void confirmModal(this, `Xóa deck "${deck.name}"? Không hoàn tác được.`, { label: "Xóa deck", danger: true }).then(async (ok) => {
+      if (!this.isCurrent(generation) || accountGeneration !== auth.generation || this.overlayPanel !== panel) return;
+      if (this.deckSearch) this.deckSearch.style.visibility = "visible";
+      if (!ok) { if (panel) this.renderDeckList(panel); return; }
+      this.deletingDeck = true;
+      if (panel) this.renderDeckList(panel);
+      try {
+        await mutate("DELETE", `/profile/decks/${deck.id}`);
+        if (!this.isCurrent(generation) || accountGeneration !== auth.generation) return;
+        if (session.selectedDeckId === deck.id) session.selectedDeckId = this.selectedDeck().id;
+        this.previewDeckId = this.selectedDeck().id;
+      } catch (error) {
+        if (!this.isCurrent(generation) || accountGeneration !== auth.generation) return;
+        if (this.deckSearch) this.deckSearch.style.visibility = "hidden";
+        await alertModal(this, errorText(error));
+        if (this.deckSearch && this.isCurrent(generation) && accountGeneration === auth.generation) this.deckSearch.style.visibility = "visible";
+      } finally {
+        if (this.isCurrent(generation) && accountGeneration === auth.generation) {
+          this.deletingDeck = false;
+          if (this.overlayPanel) this.renderDeckList(this.overlayPanel);
+          this.render();
+        }
+      }
+    });
   }
 
   private render() {

@@ -11,7 +11,7 @@ export default defineConfig({
   timeout: 180_000,
   retries: 0,
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL: process.env.VN_E2E_URL ?? "http://localhost:5173",
     viewport: { width: 1280, height: 800 },
   },
 });

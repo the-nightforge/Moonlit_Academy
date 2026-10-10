@@ -60,6 +60,8 @@ export class HomeControls {
   }
 
   private onKey(event: KeyboardEvent) {
+    const active = typeof document === "undefined" ? null : document.activeElement as HTMLElement | null;
+    if (active && (active.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName))) return;
     if (this.blocked() || !["Tab", "ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) return;
     this.targets = this.targets.filter((target) => !!target.hit.scene);
     const targets = this.targets.filter((target) => {

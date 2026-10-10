@@ -13,7 +13,7 @@ import { activeSceneKey, applyScenario, clickDesign, clickSceneText, waitForScen
  * parse the JSON imports inside `data`), so the helpers read the two fields
  * they need from `heroes.json` directly.
  */
-export const API = "http://localhost:5173";
+export const API = process.env.VN_E2E_URL ?? "http://localhost:5173";
 
 const HEROES = Object.fromEntries(
   (JSON.parse(

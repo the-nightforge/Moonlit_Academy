@@ -212,6 +212,7 @@ export class RowScroller {
     private readonly scene: Phaser.Scene,
     private readonly area: { x: number; y: number; width: number; height: number },
     private readonly onScroll: () => void,
+    private readonly enabled: () => boolean = () => true,
   ) {
     const bounds = new Phaser.Geom.Rectangle(area.x, area.y, area.width, area.height);
     const onWheel = (pointer: Phaser.Input.Pointer, _over: unknown, _dx: number, dy: number) => {
@@ -231,6 +232,7 @@ export class RowScroller {
   }
 
   scrollBy(rows: number): void {
+    if (!this.enabled()) return;
     const next = Phaser.Math.Clamp(this.first + rows, 0, Math.max(0, this.total - this.visible));
     if (next === this.first) return;
     this.first = next;

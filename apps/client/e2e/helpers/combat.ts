@@ -5,7 +5,7 @@ import { expect, type Page } from "@playwright/test";
  * tests drive Phaser through the `window.__vn` dev handle and read rendered
  * objects out of the live scene — never a parallel fixture of the rules.
  */
-export const APP = "http://localhost:5173";
+export const APP = process.env.VN_E2E_URL ?? "http://localhost:5173";
 
 /** Scenario presets reachable through the debug harness + in-page state edits (e2e only). */
 export type CombatScenario = "default" | "hand0" | "hand1" | "hand8" | "hand10" | "denseStatus" | "longChoice" | "summonRevive" | "multiHit" | "bloodMoon";
