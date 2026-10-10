@@ -118,3 +118,16 @@ Theo `docs/superpowers/plans/2026-10-10-home-ui-hierarchy.md`: thanh điều hư
 Kết quả này bổ sung nghiệm thu Home; không thay đổi trạng thái các lỗi playback/reload multiplayer đã ghi ở trên.
 
 Review toàn nhánh sau khi xong Task 5 sửa thêm: tooltip của hàng overlay nâng lên depth 1500 (trước đây nằm dưới scrim overlay depth 900 — e2e cũ chỉ đọc text node nên xanh giả; giờ có assertion `navTooltip.depth > deckOverlay.depth`); `net.onRecovery` ở hai lobby route qua scene đang sống và chặn socket cũ (`session.net !== net`) thay vì `this.scene` đã shutdown; `queueHeroArt` repaint một lần khi art tải xong thay vì một render mỗi file; tile mode báo "Đang chuẩn bị…" khi busy thay vì nhắc đăng nhập; hàng deck chỉ chọn bằng chuột trái; `session.editingDeck` reset cùng `selectedDeckId`; `setStatus` bỏ qua text đã destroy.
+
+## Nghiệm thu polish chi tiết Home ngày 2026-10-10
+
+Theo `docs/reviews/2026-10-10-home-ui-detail-review.md`, giữ bố cục đã duyệt và chỉnh chữ, nút, tooltip, phản hồi, icon, overlay/picker.
+
+- Client unit **256/256 đạt**, typecheck và build đạt. Build vẫn có cảnh báo bundle lớn đã tồn tại.
+- Home + online smoke **41/41 đạt**, không skip, 12,7 phút (pg-mem, một worker). Bổ sung 7 ca: shortcut offline, thông tin Hero/copy, bàn phím/reduced-motion, tên dài/rank, tooltip disabled, focus overlay qua render nền và tooltip tên dài bằng bàn phím.
+- Hai regression bàn phím và bốn ca UX đầu tiên đã được chạy đỏ trước sửa, rồi xanh sau sửa. Một lượt targeted gặp HMR do chỉnh source trong lúc chạy; chạy lại khi source ổn định đạt.
+- Review độc lập phát hiện hai lỗi bàn phím; đã sửa và review lại không còn finding trong phạm vi hai fix.
+- Xem ảnh Home ở ba viewport, Hero tooltip, keyboard focus, overlay và picker. Tinh chỉnh cuối tăng độ đặc nền disabled/picker để chữ không chìm trên vùng trăng sáng; **4/4 ca liên quan đạt** sau tinh chỉnh (1,1 phút), typecheck/build đạt lại.
+- Bằng chứng cục bộ: `output/home-ui-details/` (ignored), gồm log đỏ/xanh, ảnh nghiệm thu và thông số alpha/size của 4 icon PNG. Asset và prompt ghi tại `docs/home-assets.md`.
+
+Không thay đổi trạng thái các lỗi multiplayer baseline đã ghi phía trên.

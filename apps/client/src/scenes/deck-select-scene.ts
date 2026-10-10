@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { bondCardsForTeam, claimMission, pendingUnlocks, starterDeck, validateDeck } from "rules";
+import { bondCardsForTeam, claimMission, masteryLevel, pendingUnlocks, starterDeck, validateDeck } from "rules";
 import type { DeckError, GameData, SavedDeck } from "rules";
 import manifest from "virtual:assets-manifest";
 import { errorText, logout, mutate } from "../account";
@@ -15,8 +15,10 @@ import type { Team } from "../session";
 import { coverCrop } from "./gacha/shared";
 import { showTextTooltip } from "../ui/card-tooltip";
 import { roundedPanel } from "../ui/rounded-panel";
-import { COLORS, CURRENCY_LABELS, OWNER_COLORS, TEXT_BASE, useDesignCamera, visibleWorld } from "../ui/theme";
-import { addButton, addText, alertModal, confirmModal, isModalOpen, RowScroller, showToast } from "../ui/widgets";
+import { HomeControls } from "../ui/home-controls";
+import { loadCombatSettings } from "../ui/combat-settings";
+import { COLORS, CURRENCY_LABELS, FACTION_LABELS, TEXT_BASE, useDesignCamera, visibleWorld } from "../ui/theme";
+import { addText, alertModal, confirmModal, isModalOpen, RowScroller, showToast, type ButtonOptions } from "../ui/widgets";
 import type { ArenaMeReply } from "./arena-scene";
 
 const WIDTH = 1280;
@@ -100,6 +102,9 @@ export class DeckSelectScene extends Phaser.Scene {
   /** `/arena/me` failed on this run of the scene — shows the retry state (`home-ui-redesign` §4). */
   private rankFailed = false;
   private navTooltip: Phaser.GameObjects.Container | null = null;
+  private controls!: HomeControls;
+  private reducedMotion = false;
+  private busyStage = "Đang tải tài nguyên…";
 
   constructor() {
     super("deck-select");
@@ -115,6 +120,7 @@ export class DeckSelectScene extends Phaser.Scene {
         "cur_moonJade", "cur_moonStar", "cur_honor",
         "moon_full", "star", "gear", "check", "bolt", "seal", "nav_back",
         "epitomized_moon", "nav_banners", "nav_shop", "intent_buff",
+        "nav_heroes", "nav_inventory", "nav_mastery", "nav_logout", "lock",
         // Interim mode glyphs until the ui:mode_* set ships (`docs/home-assets.md`).
         "node_combat", "moon_waxingCrescent", "nav_exchange", "nav_history",
       ],
@@ -131,6 +137,8 @@ export class DeckSelectScene extends Phaser.Scene {
   /** `newDeck`: open straight on the team picker (Đấu Trường / Liên Thủ with no saved deck). */
   create(data?: { newDeck?: boolean }) {
     useDesignCamera(this);
+    this.reducedMotion = loadCombatSettings(localStorage, window.matchMedia("(prefers-reduced-motion: reduce)").matches).reducedMotion;
+    this.controls = new HomeControls(this, this.reducedMotion, isModalOpen);
     this.generation++;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.generation++;
@@ -180,6 +188,10 @@ export class DeckSelectScene extends Phaser.Scene {
     }
     this.root = this.add.container(0, 0);
     this.render();
+    if (!this.reducedMotion) {
+      this.root.setAlpha(0);
+      this.tweens.add({ targets: this.root, alpha: 1, duration: 220, ease: "Sine.easeOut" });
+    }
     this.queueHeroArt();
     if (session.online) this.fetchRank();
     showToast(this, session.notices.splice(0), 610);
@@ -201,6 +213,8 @@ export class DeckSelectScene extends Phaser.Scene {
    * goes silent; failures unlock the controls so a click retries.
    */
   private async withCombatAssets(generation: number, next: () => void): Promise<void> {
+    this.busyStage = "Đang tải tài nguyên…";
+    this.render();
     const { failed } = await prepareCombatAssets(this).catch(() => ({ loaded: 0, failed: ["loader"] }));
     if (!this.isCurrent(generation)) return;
     if (failed.length > 0) {
@@ -209,6 +223,8 @@ export class DeckSelectScene extends Phaser.Scene {
       void alertModal(this, `Lỗi tải hình trận (${failed.length} tệp) — nhấn lại để thử lại`);
       return;
     }
+    this.busyStage = "Đang tạo lượt chơi…";
+    this.render();
     next();
   }
 
@@ -255,7 +271,7 @@ export class DeckSelectScene extends Phaser.Scene {
   private queueHeroArt() {
     const generation = this.generation;
     const jobs: Promise<unknown>[] = [];
-    for (const heroId of this.selectedDeck().heroIds) {
+    for (const heroId of this.pickingTeam ? Object.keys(session.profile.heroes) : this.selectedDeck().heroIds) {
       for (const stem of [heroId, `${heroId}_up`]) {
         const url = manifest.heroes?.[stem];
         if (!url || this.textures.exists(`heroes:${stem}`)) continue;
@@ -277,6 +293,25 @@ export class DeckSelectScene extends Phaser.Scene {
     return addText(this, parent, x, y, message, size, color);
   }
 
+  private tipAt(source: Phaser.GameObjects.GameObject & { getBounds(): Phaser.Geom.Rectangle }, lines: string[], width = 320, above = false) {
+    this.hideTip();
+    const bounds = source.getBounds();
+    const view = visibleWorld(this);
+    const tip = showTextTooltip(this, bounds.centerX - width / 2, bounds.bottom + 10, lines, width, 13).setDepth(1500);
+    const height = tip.getBounds().height;
+    if (above || bounds.bottom + height + 10 > view.y + view.h - 8) tip.y = Math.max(view.y + 8, bounds.top - height - 10);
+    this.navTooltip = tip;
+  }
+
+  private button(parent: Phaser.GameObjects.Container, x: number, y: number, width: number, label: string, action: () => void, enabled = true, options: ButtonOptions = {}) {
+    const control = this.controls.button(parent, x, y, width, label, enabled, options);
+    this.controls.bind(control.hit, control.panel, {
+      enabled, activate: action, fill: control.fill, border: control.border, radius: 9,
+      showTip: !enabled && options.disabledReason ? () => this.tipAt(control.hit, [options.disabledReason!], 320, true) : undefined,
+      hideTip: () => this.hideTip(),
+    });
+  }
+
   /** 40px navigation icon with a hover tooltip and an optional alert dot. */
   private navIcon(x: number, y: number, icon: string, tip: string, action: () => void, enabled: boolean, dot = false, flipX = false) {
     const panel = roundedPanel(this, x, y, 40, 40, enabled ? 0x16253e : 0x152033, 0.95, enabled ? 0xc8ad73 : 0x44536a, 10);
@@ -291,22 +326,7 @@ export class DeckSelectScene extends Phaser.Scene {
     }
     const hit = this.add.rectangle(0, 0, 40, 40, 0, 0);
     panel.add(hit);
-    if (enabled) {
-      hit.setInteractive({ useHandCursor: true });
-      hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        this.hideTip();
-        if (pointer.button === 0) action();
-      });
-      hit.on("pointerover", () => {
-        panel.setAlpha(0.8);
-        this.hideTip();
-        this.navTooltip = showTextTooltip(this, x + 26, y + 18, [tip]);
-      });
-      hit.on("pointerout", () => {
-        panel.setAlpha(1);
-        this.hideTip();
-      });
-    }
+    this.controls.bind(hit, panel, { enabled, activate: action, showTip: () => this.tipAt(hit, [enabled ? tip : this.busyStage]), hideTip: () => this.hideTip(), fill: 0x16253e, border: 0xc8ad73, radius: 10 });
     if (dot) panel.add(this.add.circle(13, -13, 5, COLORS.goldFill).setStrokeStyle(1.5, 0x0b1426));
     this.root.add(panel);
   }
@@ -314,27 +334,21 @@ export class DeckSelectScene extends Phaser.Scene {
   /** A currency chip: icon + value, name on hover. Returns nothing — slots are fixed. */
   private currencyChip(x: number, icon: string, label: string, value: number) {
     const key = `ui:${icon}`;
-    const hasIcon = this.textures.exists(key);
-    if (hasIcon) {
-      const image = this.add.image(x, 36, key);
-      image.setDisplaySize(20, 20);
-      this.root.add(image);
-    }
-    this.text(this.root, x + (hasIcon ? 15 : 0), 36, `${value}`, 14, COLORS.gold).setOrigin(0, 0.5);
-    const zone = this.add.rectangle(x - 12, 36, 100, 30, 0, 0).setOrigin(0, 0.5);
-    zone.setInteractive();
-    zone.on("pointerover", () => {
-      this.hideTip();
-      this.navTooltip = showTextTooltip(this, x - 8, 54, [label]);
-    });
-    zone.on("pointerout", () => this.hideTip());
-    this.root.add(zone);
+    const panel = roundedPanel(this, x + 40, 36, 112, 36, 0x0b1729, 0.94, 0x536279, 10);
+    if (this.textures.exists(key)) panel.add(this.add.image(-38, 0, key).setDisplaySize(24, 24));
+    const number = new Intl.NumberFormat("vi-VN", { notation: value >= 10000 ? "compact" : "standard", maximumFractionDigits: 1 }).format(value);
+    this.text(panel, -20, 0, number, 15, COLORS.text).setOrigin(0, 0.5);
+    const zone = this.add.rectangle(0, 0, 112, 36, 0, 0);
+    panel.add(zone);
+    this.root.add(panel);
+    const show = () => this.tipAt(zone, [label, new Intl.NumberFormat("vi-VN").format(value)]);
+    this.controls.bind(zone, panel, { enabled: true, activate: show, showTip: show, hideTip: () => this.hideTip(), fill: 0x0b1729, border: 0x536279, radius: 10 });
   }
 
   private renderHeader() {
     const online = session.online;
     this.text(this.root, 44, 30, auth.username ?? "Vọng Nguyệt Thư Viện", 17, COLORS.gold).setOrigin(0, 0.5);
-    if (auth.username) this.text(this.root, 44, 52, "Vọng Nguyệt Thư Viện", 11, COLORS.dimText).setOrigin(0, 0.5);
+    if (auth.username) this.text(this.root, 44, 52, "Vọng Nguyệt Thư Viện", 13, COLORS.dimText).setOrigin(0, 0.5);
     if (online) {
       const currencies = session.profile.currencies;
       this.currencyChip(820, "cur_moonJade", CURRENCY_LABELS.moonJade, currencies.moonJade);
@@ -342,11 +356,11 @@ export class DeckSelectScene extends Phaser.Scene {
       this.currencyChip(1080, "cur_honor", CURRENCY_LABELS.honor, currencies.honor ?? 0);
     }
     if (online) {
-      this.navIcon(1240, 36, "nav_back", "Đăng xuất", () => {
+      this.navIcon(1240, 36, this.textures.exists("ui:nav_logout") ? "nav_logout" : "nav_back", "Đăng xuất", () => {
         void logout().then(() => this.scene.start("login"));
-      }, !this.busy, false, true);
+      }, !this.busy);
     } else {
-      addButton(this, this.root, 1180, 36, 160, "Đăng nhập", () => this.scene.start("login"));
+      this.button(this.root, 1180, 36, 160, "Đăng nhập", () => this.scene.start("login"));
     }
   }
 
@@ -362,32 +376,28 @@ export class DeckSelectScene extends Phaser.Scene {
     const canClaim = Object.keys(data.missions).some((id) => claimMission(data, session.profile, id, Date.now()).ok);
     const nav: [string, string, () => void, boolean][] = [
       ["epitomized_moon", "Triệu Hồi", () => this.scene.start("gacha"), false],
-      ["nav_banners", "Hero", () => this.scene.start("heroes"), false],
-      ["nav_shop", "Kho Đồ", () => this.scene.start("armory"), false],
+      ["nav_heroes", "Hero", () => this.scene.start("heroes"), false],
+      ["nav_inventory", "Kho Đồ", () => this.scene.start("armory"), false],
       ["nav_history", "Nhiệm Vụ", () => this.scene.start("missions"), canClaim],
-      ["intent_buff", "Tu Luyện", () => this.scene.start("mastery"), canUnlock],
+      ["nav_mastery", "Tu Luyện", () => this.scene.start("mastery"), canUnlock],
     ];
     nav.forEach(([icon, label, go, dot], index) => {
       const panel = roundedPanel(this, 236 + index * 202, 658, 184, 64, 0x15243b, enabled ? 0.95 : 0.6, 0x726449, 12);
       const key = `ui:${icon}`;
-      if (this.textures.exists(key)) panel.add(this.add.image(-61, 0, key).setDisplaySize(32, 32));
+      let image: Phaser.GameObjects.Image | undefined;
+      if (this.textures.exists(key)) { image = this.add.image(-61, 0, key).setDisplaySize(32, 32); panel.add(image); }
       else this.text(panel, -61, 0, "◇", 25, COLORS.gold).setOrigin(0.5);
       this.text(panel, -35, 0, label, 15, enabled ? COLORS.text : COLORS.dimText).setOrigin(0, 0.5);
-      const hit = this.add.rectangle(0, 0, 184, 64, 0, 0).setInteractive({ useHandCursor: enabled });
+      const hit = this.add.rectangle(0, 0, 184, 64, 0, 0);
       panel.add(hit);
-      hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        if (pointer.button === 0 && enabled) {
-          this.hideTip();
-          go();
-        }
-      });
-      hit.on("pointerover", () => {
-        this.hideTip();
-        if (enabled) panel.setAlpha(0.82);
-        else this.navTooltip = showTextTooltip(this, panel.x - 80, 586, [online ? "Đang chuẩn bị…" : "Cần đăng nhập và kết nối server"], 260);
-      });
-      hit.on("pointerout", () => { panel.setAlpha(1); this.hideTip(); });
-      if (dot) panel.add(this.add.circle(78, -20, 5, COLORS.goldFill).setStrokeStyle(1.5, 0x0b1426));
+      const reason = online ? this.busyStage : "Cần đăng nhập và kết nối server";
+      this.controls.bind(hit, panel, { enabled, activate: go, icon: image, showTip: !enabled || dot ? () => this.tipAt(hit, [enabled ? label === "Nhiệm Vụ" ? "Có thưởng để nhận" : "Có lá mới để mở khóa" : reason], 280) : undefined, hideTip: () => this.hideTip() });
+      if (dot) {
+        const badge = this.add.circle(78, -20, 5, COLORS.goldFill).setStrokeStyle(1.5, 0x0b1426);
+        panel.add(badge);
+        if (!this.reducedMotion) this.tweens.add({ targets: badge, alpha: 0.55, duration: 1400, yoyo: true, repeat: -1 });
+        badge.once(Phaser.GameObjects.Events.DESTROY, () => this.tweens.killTweensOf(badge));
+      }
       this.root.add(panel);
     });
   }
@@ -399,8 +409,9 @@ export class DeckSelectScene extends Phaser.Scene {
     const iconX = compact ? 0 : -width / 2 + 44;
     const iconY = compact ? -30 : arena ? -42 : 0;
     const key = [`ui:${icon}`, `ui:${fallback}`].find((k) => this.textures.exists(k));
+    let image: Phaser.GameObjects.Image | undefined;
     if (key) {
-      const image = this.add.image(iconX, iconY, key);
+      image = this.add.image(iconX, iconY, key);
       image.setDisplaySize(compact ? 38 : 48, compact ? 38 : 48);
       panel.add(image);
     } else {
@@ -409,69 +420,76 @@ export class DeckSelectScene extends Phaser.Scene {
     const textX = compact ? 0 : -width / 2 + 82;
     this.text(panel, textX, compact ? 8 : iconY - 12, name, compact ? 18 : 22, enabled ? COLORS.gold : COLORS.dimText).setOrigin(compact ? 0.5 : 0, 0.5);
     panel.add(
-      this.add.text(textX, compact ? 31 : iconY + 16, sub, { ...TEXT_BASE, fontSize: compact ? "11px" : "12px", color: COLORS.dimText, align: compact ? "center" : "left", wordWrap: { width: compact ? width - 20 : width - 100 }, maxLines: 2 }).setOrigin(compact ? 0.5 : 0, 0.5),
+      this.add.text(textX, compact ? 31 : iconY + 16, sub, { ...TEXT_BASE, fontSize: "13px", color: "#aab4ca", align: compact ? "center" : "left", wordWrap: { width: compact ? width - 20 : width - 100 }, maxLines: 2 }).setOrigin(compact ? 0.5 : 0, 0.5),
     );
     const hit = this.add.rectangle(0, 0, width, height, 0, 0);
     panel.add(hit);
-    hit.setInteractive({ useHandCursor: enabled });
-    if (enabled) {
-      hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        this.hideTip();
-        if (pointer.button === 0) action();
-      });
-      hit.on("pointerover", () => {
-        this.hideTip();
-        panel.setAlpha(0.85);
-      });
-      hit.on("pointerout", () => {
-        panel.setAlpha(1);
-        this.hideTip();
-      });
-    } else if (disabledReason) {
-      hit.on("pointerover", () => {
-        this.hideTip();
-        this.navTooltip = showTextTooltip(this, cx - width / 2, y + height / 2 + 8, [disabledReason], 300);
-      });
-      hit.on("pointerout", () => this.hideTip());
-    }
-    if (arena) this.renderArenaRank(panel);
+    this.controls.bind(hit, panel, { enabled, activate: action, icon: image, fill: 0x101c36, border: arena ? 0xb79b60 : 0x63779b, radius: 16,
+      showTip: disabledReason ? () => this.tipAt(hit, [disabledReason]) : arena && this.rank ? () => this.tipAt(hit, [`${this.rank!.tierName} · ${this.rank!.rating} điểm`, this.rankProgress()]) : undefined, hideTip: () => this.hideTip() });
+    if (arena) this.renderArenaRank(panel, hit);
     this.root.add(panel);
   }
 
+  private rankProgress(): string {
+    const rank = this.rank;
+    if (!rank) return "";
+    const next = [...(session.data.pvpConfig.tiers ?? [])].sort((a, b) => a.minRating - b.minRating).find((tier) => tier.minRating > rank.rating);
+    return next ? `Còn ${next.minRating - rank.rating} điểm đến ${next.name}` : "Đã đạt bậc cao nhất";
+  }
+
   /** Rank belongs to the Arena route; retry is above its parent hit area. */
-  private renderArenaRank(panel: Phaser.GameObjects.Container) {
+  private renderArenaRank(panel: Phaser.GameObjects.Container, source: Phaser.GameObjects.Rectangle) {
     const rank = this.rank;
     panel.add(this.add.rectangle(0, -1, 340, 1, 0xb79b60, 0.3));
     const emblemKey = rank?.tierId && this.textures.exists(`ui:rank_${rank.tierId}`) ? `ui:rank_${rank.tierId}` : this.textures.exists("ui:seal") ? "ui:seal" : "";
     if (emblemKey && rank !== null) {
+      const glow = this.add.circle(-145, 33, 35, 0, 0).setStrokeStyle(2, 0xd3bb83, 0.6).setAlpha(0);
+      panel.add(glow);
       const emblem = this.add.image(-145, 33, emblemKey);
-      emblem.setDisplaySize(76, 76);
+      emblem.setDisplaySize(64, 64);
       panel.add(emblem);
+      const light = (alpha: number) => {
+        this.tweens.killTweensOf(glow);
+        if (this.reducedMotion) glow.setAlpha(alpha);
+        else this.tweens.add({ targets: glow, alpha, duration: 140 });
+      };
+      source.on("pointerover", () => light(0.65)).on("pointerout", () => light(0));
+      glow.once(Phaser.GameObjects.Events.DESTROY, () => this.tweens.killTweensOf(glow));
     }
     if (this.rankFailed) {
       this.text(panel, -158, 22, "Không tải được xếp hạng", 12, "#ff8080").setOrigin(0, 0.5);
-      addButton(this, panel, 125, 48, 96, "Thử lại", () => {
+      this.button(panel, 125, 48, 96, "Thử lại", () => {
         this.rankFailed = false;
         this.fetchRank();
         this.render();
       }, session.online && !this.busy);
     } else {
-      this.text(panel, rank ? -92 : -158, 24, rank === null ? session.online ? "Đang tải xếp hạng…" : "Đăng nhập để xem xếp hạng" : `${rank.tierName} · ${rank.rating} điểm`, rank ? 14 : 12, rank ? COLORS.gold : COLORS.dimText).setOrigin(0, 0.5);
-      if (rank) this.text(panel, -92, 46, "Xếp hạng hiện tại", 11, COLORS.dimText).setOrigin(0, 0.5);
+      this.text(panel, rank ? -92 : -158, 24, rank === null ? session.online ? "Đang tải xếp hạng…" : "Đăng nhập để xem xếp hạng" : `${rank.tierName} · ${rank.rating} điểm`, rank ? 15 : 13, rank ? COLORS.gold : COLORS.dimText).setOrigin(0, 0.5);
+      if (rank) this.text(panel, -92, 47, this.rankProgress(), 13, "#aab4ca").setOrigin(0, 0.5);
     }
   }
 
   /** Selected-deck identity and explicit actions above the hero trio. */
   private renderTeam(deck: SavedDeck) {
     this.text(this.root, 506, 104, "Đội hình xuất trận", 19, COLORS.text).setOrigin(0, 0.5).setStroke("#07101f", 2);
-    this.fitColumn(this.root, 506, 151, deck.name, 405, 23, COLORS.gold);
-    addButton(this, this.root, 996, 160, 130, "Đổi deck ▾", () => this.openDeckOverlay(), !this.busy);
-    addButton(this, this.root, 1150, 160, 144, "Chỉnh sửa", () => this.openDeckEditor(deck, deck.id.startsWith("starter:")), session.online && !this.busy, {
-      disabledReason: session.online ? "Đang chuẩn bị…" : "Cần đăng nhập và kết nối server",
+    const starter = deck.id.startsWith("starter:");
+    const name = this.fitColumn(this.root, 506, 151, deck.name, 405, 23, COLORS.gold);
+    if (name.truncated) {
+      this.controls.info(name.label, () => this.tipAt(name.label, [deck.name], 440), () => this.hideTip());
+    }
+    this.button(this.root, 996, 160, 130, "Đổi deck ▾", () => this.openDeckOverlay(), !this.busy, { variant: "primary" });
+    this.button(this.root, 1150, 160, 144, starter ? "Sao chép & sửa" : "Chỉnh sửa", () => this.openDeckEditor(deck, starter), session.online && !this.busy, {
+      disabledReason: session.online ? this.busyStage : "Cần đăng nhập và kết nối server",
     });
     const errors = validateDeck(session.data, session.profile, deck);
-    const starter = deck.id.startsWith("starter:");
-    if (errors.length === 0) this.text(this.root, 506, 186, starter ? "✓ Deck hợp lệ · Bộ cơ bản — sửa sẽ tạo bản sao" : "✓ Deck hợp lệ", 12, COLORS.text).setStroke("#07101f", 2);
+    const avg = deck.cardIds.reduce((sum, id) => sum + (session.data.cards[id]?.cost ?? 0), 0) / Math.max(1, deck.cardIds.length);
+    const statusPanel = roundedPanel(this, 708.5, 194, 405, 28, 0x0a1727, 0.9, 0x47596a, 9);
+    this.root.add(statusPanel);
+    const status = this.text(statusPanel, -190.5, 0, errors.length ? "⚠ Cần chỉnh sửa" : `✓ Sẵn sàng · ${deck.cardIds.length} lá · Nguyệt Lực TB ${avg.toFixed(1).replace(".", ",")}`, 13, errors.length ? "#ff9f9f" : "#aad9c4").setOrigin(0, 0.5);
+    if (errors.length) {
+      const show = () => this.tipAt(status, errors.map((error) => describeDeckError(session.data, error)), 400);
+      this.controls.info(status, show, () => this.hideTip());
+    }
     deck.heroIds.forEach((heroId, index) => {
       const x = HERO_XS[index]!;
       const hero = session.data.heroes[heroId];
@@ -486,25 +504,18 @@ export class DeckSelectScene extends Phaser.Scene {
       }
       const namePlate = this.add.rectangle(0, HERO_H / 2 - 32, HERO_W - 10, 56, 0x0a1426, 0.88);
       card.add(namePlate);
-      this.text(card, 0, HERO_H / 2 - 44, hero?.name ?? heroId, 15, COLORS.gold).setOrigin(0.5);
-      this.text(card, 0, HERO_H / 2 - 22, hero ? `HP ${hero.maxHp}` : "", 11, COLORS.dimText).setOrigin(0.5);
+      this.text(card, 0, HERO_H / 2 - 44, hero?.name ?? heroId, 17, COLORS.text).setOrigin(0.5);
+      this.text(card, 0, HERO_H / 2 - 20, hero ? FACTION_LABELS[hero.faction] : "", 13, "#aab4ca").setOrigin(0.5);
       const hit = this.add.rectangle(0, 0, HERO_W, HERO_H, 0, 0);
       card.add(hit);
-      hit.setInteractive({ useHandCursor: !this.busy });
-      hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        this.hideTip();
-        if (pointer.button !== 0 || this.busy) return;
-        this.openDeckEditor(deck, starter);
-      });
-      hit.on("pointerover", () => {
-        card.setAlpha(0.88);
-        this.hideTip();
-        this.navTooltip = showTextTooltip(this, x - 80, HERO_Y + HERO_H / 2 + 10, [starter ? "Bộ cơ bản — chạm để sao chép & sửa" : "Chạm để sửa deck"], 220);
-      });
-      hit.on("pointerout", () => {
-        card.setAlpha(1);
-        this.hideTip();
-      });
+      const progress = session.profile.heroes[heroId];
+      const levelUp = progress?.levelUpForm === "alt" && progress.constellation >= 5 ? hero?.altLevelUp : hero?.levelUp;
+      this.controls.bind(hit, card, { enabled: session.online && !this.busy, activate: () => this.openDeckEditor(deck, starter), fill: 0x101c36, border: 0x7d90b8, radius: 14,
+        showTip: () => this.tipAt(hit, [hero?.name ?? heroId,
+          hero ? `${FACTION_LABELS[hero.faction]} · HP tối đa ${hero.maxHp}` : "",
+          `Tu Luyện ${masteryLevel(session.data, progress?.xp ?? 0)} · Tinh Hồn ${progress?.constellation ?? 0}/6`,
+          levelUp ? `Thăng cấp: ${levelUp.name}\n${levelUp.description}` : "",
+          !session.online ? "Cần đăng nhập và kết nối server" : this.busy ? this.busyStage : starter ? "Sao chép & sửa đội hình này" : "Chỉnh sửa đội hình này"], 330), hideTip: () => this.hideTip() });
       this.root.add(card);
     });
 
@@ -536,6 +547,7 @@ export class DeckSelectScene extends Phaser.Scene {
     layer.add(panel);
     this.deckOverlay = layer;
     this.overlayPanel = content;
+    this.controls.setLayer(layer);
     const onEsc = () => {
       if (!isModalOpen()) this.closeDeckOverlay();
     };
@@ -549,6 +561,7 @@ export class DeckSelectScene extends Phaser.Scene {
     this.deckOverlay?.destroy();
     this.deckOverlay = null;
     this.overlayPanel = null;
+    if (this.root) this.controls.setLayer(this.root);
   }
 
   /** Slim ▲/▼ strip over the list — 920×24, thinner than `addButton`'s default row. */
@@ -582,9 +595,9 @@ export class DeckSelectScene extends Phaser.Scene {
     maxWidth: number,
     size: number,
     color: string,
-  ): { truncated: boolean } {
+  ): { truncated: boolean; label: Phaser.GameObjects.Text } {
     const label = addText(this, panel, x, y, full, size, color).setOrigin(0, 0.5);
-    if (label.width <= maxWidth) return { truncated: false };
+    if (label.width <= maxWidth) return { truncated: false, label };
     let lo = 0;
     let hi = full.length;
     while (lo < hi) {
@@ -594,7 +607,7 @@ export class DeckSelectScene extends Phaser.Scene {
       else hi = mid;
     }
     label.setText(`${full.slice(0, Math.max(0, lo - 1))}…`);
-    return { truncated: true };
+    return { truncated: true, label };
   }
 
   private renderDeckList(panel: Phaser.GameObjects.Container) {
@@ -603,7 +616,7 @@ export class DeckSelectScene extends Phaser.Scene {
     const data = session.data;
     const online = session.online;
     this.text(panel, 0, -266, "Deck của bạn", 20, COLORS.gold).setOrigin(0.5);
-    this.text(panel, 0, -240, "Chọn deck xuất trận — Hero của deck hiện ở màn chính", 12, COLORS.dimText).setOrigin(0.5);
+    this.text(panel, 0, -240, "Chọn đội hình xuất trận", 13, "#aab4ca").setOrigin(0.5);
 
     const decks = this.decks();
     const selectedId = this.selectedDeck().id;
@@ -612,37 +625,28 @@ export class DeckSelectScene extends Phaser.Scene {
     this.overlayScroll = first;
     this.text(panel, 446, -240, `${first + 1}–${end} / ${decks.length}`, 12, COLORS.dimText).setOrigin(1, 0.5);
 
-    const view = visibleWorld(this);
-    const panelY = view.y + view.h / 2 + 10;
     decks.slice(first, end).forEach((deck, index) => {
       const y = -177 + index * ROW_H;
       const errors = validateDeck(data, session.profile, deck);
       const avg = deck.cardIds.reduce((sum, id) => sum + (data.cards[id]?.cost ?? 0), 0) / Math.max(1, deck.cardIds.length);
       const isSelected = deck.id === selectedId;
-      const row = this.add.rectangle(0, y, 920, 32, isSelected ? 0x2a3a70 : 0x141b33);
-      row.setStrokeStyle(1, isSelected ? COLORS.goldFill : COLORS.panelBorder);
-      row.setInteractive({ useHandCursor: true });
-      row.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        if (pointer.button !== 0) return;
+      const rowPanel = roundedPanel(this, 0, y, 920, 32, isSelected ? 0x2a3a70 : 0x141b33, 1, isSelected ? COLORS.goldFill : COLORS.panelBorder, 6);
+      const row = this.add.rectangle(0, 0, 920, 32, 0, 0);
+      rowPanel.add(row);
+      const select = () => {
         session.selectedDeckId = deck.id;
         this.renderDeckList(panel);
         this.render();
         this.queueHeroArt();
-      });
-      panel.add(row);
-      const desc = `${deck.name}  ·  ${this.heroNames(deck.heroIds)}  ·  cost TB ${avg.toFixed(1)}`;
+      };
+      panel.add(rowPanel);
+      if (isSelected) this.text(rowPanel, -456, 0, "✓", 12, COLORS.gold).setOrigin(0.5);
+      const desc = `${deck.name}  ·  ${this.heroNames(deck.heroIds)}  ·  Nguyệt Lực TB ${avg.toFixed(1)}`;
       const status = errors.length === 0 ? "✓" : `⚠ ${describeDeckError(data, errors[0]!)}`;
-      const descFit = this.fitColumn(panel, -446, y, desc, 600, 13, COLORS.text);
-      const statusFit = this.fitColumn(panel, 170, y, status, 276, 12, errors.length === 0 ? COLORS.gold : "#ff8080");
-      if (descFit.truncated || statusFit.truncated) {
-        row.on("pointerover", () => {
-          this.hideTip();
-          // Above the overlay (900), below modals (2000) — scene-root default is 200.
-          this.navTooltip = showTextTooltip(this, view.x + view.w / 2 - 260, panelY + y + 24, [desc, status], 520)
-            .setDepth(1500);
-        });
-        row.on("pointerout", () => this.hideTip());
-      }
+      const descFit = this.fitColumn(rowPanel, -438, 0, desc, 592, 14, COLORS.text);
+      const statusFit = this.fitColumn(rowPanel, 170, 0, status, 276, 13, errors.length === 0 ? "#aad9c4" : "#ff8080");
+      this.controls.bind(row, rowPanel, { enabled: true, activate: select, fill: isSelected ? 0x2a3a70 : 0x141b33, border: isSelected ? COLORS.goldFill : COLORS.panelBorder, radius: 6,
+        showTip: descFit.truncated || statusFit.truncated ? () => this.tipAt(row, [desc, status], 520) : undefined, hideTip: () => this.hideTip() });
     });
     if (first > 0) this.deckScrollArrow(panel, -214, "▲", () => this.overlayScroller.scrollBy(-1));
     if (end < decks.length) this.deckScrollArrow(panel, 220, "▼", () => this.overlayScroller.scrollBy(1));
@@ -651,11 +655,11 @@ export class DeckSelectScene extends Phaser.Scene {
     const starter = deck.id.startsWith("starter:");
     const starterReason = online ? "Bộ cơ bản không sửa hay xóa được — hãy Sao chép" : "Cần đăng nhập và kết nối server";
     const y = 260;
-    addButton(this, panel, -330, y, 140, "Sửa", () => this.edit(deck), !starter && online, { disabledReason: starterReason });
-    addButton(this, panel, -170, y, 140, "Sao chép", () => this.edit({ ...deck, id: "", name: `${deck.name} (bản sao)`.slice(0, 24) }), online, {
+    this.button(panel, -330, y, 140, "Sửa", () => this.edit(deck), !starter && online, { disabledReason: starterReason });
+    this.button(panel, -170, y, 140, "Sao chép", () => this.edit({ ...deck, id: "", name: `${deck.name} (bản sao)`.slice(0, 24) }), online, {
       disabledReason: "Cần đăng nhập và kết nối server",
     });
-    addButton(this, panel, -10, y, 140, "Xóa", () => {
+    this.button(panel, -10, y, 140, "Xóa", () => {
       void confirmModal(this, `Xóa deck "${deck.name}"? Không hoàn tác được.`, { label: "Xóa deck", danger: true }).then((ok) => {
         if (!ok) return;
         const generation = this.generation;
@@ -673,19 +677,21 @@ export class DeckSelectScene extends Phaser.Scene {
         );
       });
     }, !starter && online, { variant: "danger", disabledReason: starterReason });
-    addButton(this, panel, 150, y, 140, "Deck mới", () => {
+    this.button(panel, 150, y, 140, "Deck mới", () => {
       this.closeDeckOverlay();
       this.pickingTeam = true;
       this.teamScroll.first = 0;
       this.picked = [...session.heroIds];
       this.render();
+      this.queueHeroArt();
     }, online, { disabledReason: "Cần đăng nhập và kết nối server" });
-    addButton(this, panel, 330, y, 180, "Chọn deck này ▸", () => this.closeDeckOverlay(), true, { variant: "primary" });
+    this.button(panel, 330, y, 180, "Chọn deck này ▸", () => this.closeDeckOverlay(), true, { variant: "primary" });
   }
 
   private render() {
     this.hideTip();
     this.root.removeAll(true);
+    this.controls.setLayer(this.deckOverlay ?? this.root);
     if (this.pickingTeam) {
       this.renderPickTeam();
       return;
@@ -728,15 +734,15 @@ export class DeckSelectScene extends Phaser.Scene {
           ),
         );
       };
-      addButton(this, this.root, 234, 320, 240, "Vào trận", enter, errors.length === 0 && online && !this.busy, {
+      this.button(this.root, 234, 320, 240, "Vào trận", enter, errors.length === 0 && online && !this.busy, {
         variant: "primary",
         disabledReason: errors.length ? describeDeckError(data, errors[0]!) : "Cốt Truyện cần đăng nhập — server ghi nhận kết quả",
       });
-      addButton(this, this.root, 234, 368, 240, "Hủy", () => {
+      this.button(this.root, 234, 368, 240, "Hủy", () => {
         session.pendingStageId = null;
         this.scene.start("story");
       }, !this.busy);
-      if (this.busy) this.text(this.root, 234, 412, "Đang chuẩn bị…", 13, COLORS.gold).setOrigin(0.5);
+      if (this.busy) this.text(this.root, 234, 412, this.busyStage, 13, COLORS.gold).setOrigin(0.5);
     } else {
       const run = () => {
         if (this.busy) return;
@@ -758,12 +764,12 @@ export class DeckSelectScene extends Phaser.Scene {
       const errors = validateDeck(data, session.profile, deck);
       const needOnline = "Cần đăng nhập và kết nối server";
       const locked = this.busy;
-      const busyReason = locked ? "Đang chuẩn bị…" : undefined;
-      this.modeTile({ x: 234, y: 190, width: 380, height: 156, arena: true }, "mode_arena", "node_combat", "Đấu Trường", "Xếp hạng · Đấu Tập · Phòng riêng", () => this.scene.start("arena"), online && !locked, online ? busyReason : needOnline);
-      this.modeTile({ x: 234, y: 338, width: 380, height: 112 }, "mode_run", "moon_waxingCrescent", "Tầm Nguyệt", "Hành trình roguelike · Nguyệt Bảo", run, online && errors.length === 0 && !locked, online ? (busyReason ?? (errors.length ? describeDeckError(data, errors[0]!) : undefined)) : needOnline);
-      this.modeTile({ x: 136, y: 465, width: 184, height: 114, compact: true }, "mode_coop", "nav_exchange", "Liên Thủ", "Co-op 2 người", () => this.scene.start("coop-lobby"), online && !locked, online ? busyReason : needOnline);
-      this.modeTile({ x: 332, y: 465, width: 184, height: 114, compact: true }, "mode_story", "nav_history", "Cốt Truyện", "Hành trình theo chương", () => this.scene.start("story"), online && !locked, online ? busyReason : needOnline);
-      if (this.busy) this.text(this.root, 234, 554, "Đang chuẩn bị…", 13, COLORS.gold).setOrigin(0.5);
+      const busyReason = locked ? this.busyStage : undefined;
+      this.modeTile({ x: 234, y: 190, width: 380, height: 156, arena: true }, "mode_arena", "node_combat", "Đấu Trường", "Xếp hạng · Đấu tập · Phòng riêng", () => this.scene.start("arena"), online && !locked, online ? busyReason : needOnline);
+      this.modeTile({ x: 234, y: 338, width: 380, height: 112 }, "mode_run", "moon_waxingCrescent", "Tầm Nguyệt", "Vượt ải · Thu thập Nguyệt Bảo", run, online && errors.length === 0 && !locked, online ? (busyReason ?? (errors.length ? describeDeckError(data, errors[0]!) : undefined)) : needOnline);
+      this.modeTile({ x: 136, y: 465, width: 184, height: 114, compact: true }, "mode_coop", "nav_exchange", "Liên Thủ", "Phối hợp 2 người", () => this.scene.start("coop-lobby"), online && !locked, online ? busyReason : needOnline);
+      this.modeTile({ x: 332, y: 465, width: 184, height: 114, compact: true }, "mode_story", "nav_history", "Cốt Truyện", "Khám phá chương truyện", () => this.scene.start("story"), online && !locked, online ? busyReason : needOnline);
+      if (this.busy) this.text(this.root, 234, 554, this.busyStage, 13, COLORS.gold).setOrigin(0.5);
       else if (!online) {
         this.text(this.root, 234, 554, "Offline — mọi chế độ cần kết nối server", 12, "#ff8080").setOrigin(0.5);
       }
@@ -777,7 +783,7 @@ export class DeckSelectScene extends Phaser.Scene {
   private renderPickTeam() {
     const data = session.data;
     addText(this, this.root, WIDTH / 2, 40, "Deck mới — chọn 3 Hero", 24, COLORS.gold).setOrigin(0.5);
-    addText(this, this.root, WIDTH / 2, 74, "Thứ tự chọn là vị trí trong đội", 13, COLORS.dimText).setOrigin(0.5);
+    addText(this, this.root, WIDTH / 2, 74, `Đã chọn ${this.picked.length}/3 · Thứ tự chọn là vị trí trong đội`, 14, COLORS.text).setOrigin(0.5);
     // Owned heroes first: they are the only ones the player can pick.
     const heroes = Object.values(data.heroes).sort(
       (a, b) => Number(session.profile.heroes[b.id] !== undefined) - Number(session.profile.heroes[a.id] !== undefined),
@@ -790,40 +796,49 @@ export class DeckSelectScene extends Phaser.Scene {
       const y = PICK_TOP + PICK_H / 2 + Math.floor(index / PICK_COLS) * PICK_STEP_Y;
       const slot = this.picked.indexOf(hero.id);
       const owned = session.profile.heroes[hero.id] !== undefined;
-      const panel = this.add.rectangle(x, y, PICK_W, PICK_H, COLORS.panelHero).setAlpha(owned ? 1 : 0.45);
-      panel.setStrokeStyle(slot >= 0 ? 3 : 1, slot >= 0 ? COLORS.goldFill : (OWNER_COLORS[hero.id] ?? COLORS.panelBorder));
-      panel.setInteractive({ useHandCursor: owned });
-      panel.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-        if (pointer.button !== 0 || !owned) return;
+      const panel = roundedPanel(this, x, y, PICK_W, PICK_H, COLORS.panelHero, owned ? 1 : 0.92, slot >= 0 ? COLORS.goldFill : COLORS.panelBorder, 10);
+      const artKey = this.heroArtKey(hero.id);
+      if (this.textures.exists(artKey)) {
+        const art = this.add.image(-69, 0, artKey);
+        coverCrop(art, 62, 76);
+        panel.add(art);
+      } else if (this.textures.exists("ui:nav_heroes")) panel.add(this.add.image(-69, 0, "ui:nav_heroes").setDisplaySize(48, 48).setAlpha(owned ? 1 : 0.45));
+      const hit = this.add.rectangle(0, 0, PICK_W, PICK_H, 0, 0);
+      panel.add(hit);
+      const select = () => {
         if (this.picked.includes(hero.id)) this.picked = this.picked.filter((id) => id !== hero.id);
         else if (this.picked.length < 3) this.picked.push(hero.id);
         this.render();
-      });
+      };
+      this.controls.bind(hit, panel, { enabled: owned, activate: select, fill: COLORS.panelHero, border: slot >= 0 ? COLORS.goldFill : COLORS.panelBorder, radius: 10,
+        showTip: !owned ? () => this.tipAt(hit, ["Chưa sở hữu Hero này"]) : undefined, hideTip: () => this.hideTip() });
       this.root.add(panel);
-      if (slot >= 0) addText(this, this.root, x + PICK_W / 2 - 14, y - PICK_H / 2 + 14, `${slot + 1}`, 16, COLORS.gold).setOrigin(0.5);
-      addText(this, this.root, x, y - 28, hero.name, 17).setOrigin(0.5);
-      addText(this, this.root, x, y - 6, owned ? `HP ${hero.maxHp}` : "Chưa sở hữu", 12, COLORS.dimText).setOrigin(0.5);
-      this.root.add(
+      if (slot >= 0) {
+        panel.add(this.add.circle(-90, -31, 10, 0x162139).setStrokeStyle(1, COLORS.goldFill));
+        this.text(panel, -90, -31, `${slot + 1}`, 13, COLORS.gold).setOrigin(0.5);
+      }
+      this.text(panel, -27, -27, hero.name, 15, owned ? COLORS.text : "#b7bfd0").setOrigin(0, 0.5);
+      this.text(panel, -27, -4, owned ? FACTION_LABELS[hero.faction] : "Chưa sở hữu", 12, "#aab4ca").setOrigin(0, 0.5);
+      panel.add(
         this.add
-          .text(x, y + 8, hero.branches.map((b) => b.name).join(" / "), { ...TEXT_BASE, fontSize: "11px", color: COLORS.dimText, align: "center", wordWrap: { width: PICK_W - 20 }, maxLines: 2 })
-          .setOrigin(0.5, 0),
+          .text(-27, 12, hero.branches.map((b) => b.name).join(" / "), { ...TEXT_BASE, fontSize: "12px", color: "#aab4ca", wordWrap: { width: 130 }, maxLines: 2 }),
       );
     });
     this.teamScroll.addArrows(this.root);
     const bonds = bondCardsForTeam(data, this.picked);
-    addText(
-      this, this.root, WIDTH / 2, 590,
-      bonds.length === 0 ? "Lá Song Hành: — không có —" : `Lá Song Hành: ${bonds.map((c) => c.name).join(" · ")}`,
-      13, bonds.length > 0 ? COLORS.gold : COLORS.dimText,
-    ).setOrigin(0.5);
+    const bondText = bonds.length === 0 ? "Lá Song Hành: — không có —" : `Lá Song Hành: ${bonds.map((c) => c.name).join(" · ")}`;
+    const bond = this.fitColumn(this.root, 80, 590, bondText, 1120, 13, bonds.length > 0 ? COLORS.gold : COLORS.dimText);
+    if (bond.truncated) {
+      this.controls.info(bond.label, () => this.tipAt(bond.label, [bondText], 520), () => this.hideTip());
+    }
     const ready = this.picked.length === 3;
-    addButton(this, this.root, WIDTH / 2 - 110, 640, 200, ready ? "Tạo deck" : `Chọn thêm ${3 - this.picked.length} Hero`, () => {
+    this.button(this.root, WIDTH / 2 - 110, 640, 200, ready ? "Tạo deck" : `Chọn thêm ${3 - this.picked.length} Hero`, () => {
       if (!ready) return;
       const heroIds = [...this.picked] as Team;
       session.editingDeck = { id: "", name: "Deck mới", heroIds, cardIds: starterDeck(session.data, heroIds) };
       this.scene.start("deck-builder");
     }, ready, { variant: "primary" });
-    addButton(this, this.root, WIDTH / 2 + 110, 640, 200, "Hủy", () => {
+    this.button(this.root, WIDTH / 2 + 110, 640, 200, "Hủy", () => {
       this.pickingTeam = false;
       this.render();
     });

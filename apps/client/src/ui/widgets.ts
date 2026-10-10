@@ -62,7 +62,8 @@ export function addButton(
     button.setInteractive();
     button.on("pointerover", () => {
       hide();
-      tip = hoverNote(scene, x, y - 30, reason);
+      const bounds = button.getBounds();
+      tip = hoverNote(scene, bounds.centerX, bounds.top - 10, reason);
     });
     button.on("pointerout", hide);
     // A re-render destroys the button under the pointer: take the note with it.
@@ -75,13 +76,14 @@ export function addButton(
 /** A one-line note in a dark box, centered at (x, y), kept on screen. */
 function hoverNote(scene: Phaser.Scene, x: number, y: number, message: string): Phaser.GameObjects.Container {
   const text = scene.add
-    .text(0, 0, message, { ...TEXT_BASE, fontSize: "12px", color: COLORS.text, wordWrap: { width: 360 }, align: "center" })
+    .text(0, 0, message, { ...TEXT_BASE, fontSize: "13px", color: COLORS.text, wordWrap: { width: 360 }, align: "center" })
     .setOrigin(0.5);
   const width = text.width + 20;
   const height = text.height + 12;
   const box = roundedPanel(scene,0,0,width,height,0x0a0e20,0.96,COLORS.panelBorder,10);
-  const left = Phaser.Math.Clamp(x, width / 2 + 8, DESIGN_WIDTH - width / 2 - 8);
-  const top = Phaser.Math.Clamp(y, height / 2 + 8, DESIGN_HEIGHT - height / 2 - 8);
+  const view = visibleWorld(scene);
+  const left = Phaser.Math.Clamp(x, view.x + width / 2 + 8, view.x + view.w - width / 2 - 8);
+  const top = Phaser.Math.Clamp(y - height / 2, view.y + height / 2 + 8, view.y + view.h - height / 2 - 8);
   return scene.add.container(left, top, [box, text]).setDepth(1500);
 }
 

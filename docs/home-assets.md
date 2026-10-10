@@ -212,3 +212,29 @@ Generate ONE NEW rank emblem for anime/gufeng fantasy card game Vong Nguyet impe
 | `ui/rank_trang_nguyen.webp` | 512×512 | RGBA WebP | 95256 |
 
 Total new payload: **1,170,504 bytes** (~1.12 MiB). Runtime selection uses the existing Home manifest/fallback paths; no asset-loader or game-rule changes.
+
+## Home detail icons — 2026-10-10
+
+Generated with the built-in `image_gen.imagegen` tool in new-image mode, one asset per call, `transparent_background=true`. `ui/nav_history.webp` was used only as a style reference. Each generated raster was exported with Pillow/Lanczos to 512×512 RGBA PNG; no old asset was overwritten.
+
+| Saved file | Runtime key | Purpose | Bytes |
+| --- | --- | --- | --- |
+| `apps/client/public/assets/ui/nav_heroes.png` | `ui:nav_heroes` | Hero portrait | 314782 |
+| `apps/client/public/assets/ui/nav_inventory.png` | `ui:nav_inventory` | Equipment chest | 236379 |
+| `apps/client/public/assets/ui/nav_mastery.png` | `ui:nav_mastery` | Cultivation book | 228070 |
+| `apps/client/public/assets/ui/nav_logout.png` | `ui:nav_logout` | Exit door | 224130 |
+
+All four files have transparent exterior pixels. Total payload: **1,003,361 bytes**. Home renders the footer icons at 32px and retains its existing fallback glyphs if an asset fails.
+
+### Prompt set
+
+Each call used the following common prompt plus one subject below:
+
+```text
+Generate ONE NEW transparent raster UI icon for anime gufeng fantasy card game Vong Nguyet. Reference image is STYLE REFERENCE ONLY, not an edit target. Match clean 2D CEL-SHADED anime icon, bold dark-indigo outline, antique gold, ivory, restrained jade, simple broad planes readable at 32px. Center one compact glyph filling 80% of square 512x512, consistent top-front view, very little tiny ornament. No photorealism, no 3D, no background plate, no external glow, no floor/shadow, no text letters numbers watermark. Outside glyph fully transparent alpha. Subject:
+```
+
+- `nav_heroes`: one ivory silhouette BUST of a long-haired anime hero in gold high-collar shoulder armor. Head and shoulders clearly read as one bust; no face details or weapons.
+- `nav_inventory`: one closed deep-navy equipment CHEST with gold edges and a large ivory crescent clasp. No shop awning or coins.
+- `nav_mastery`: one open ivory BOOK with thick gold edges and one small ivory crescent floating immediately above; navy cover, no writing or scroll background.
+- `nav_logout`: one ornate navy/gold open DOORWAY with a bold ivory ARROW exiting to the right, clearly an exit icon; no landscape.

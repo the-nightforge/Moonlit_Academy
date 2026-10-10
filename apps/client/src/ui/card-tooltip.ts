@@ -144,8 +144,9 @@ export function showTextTooltip(
   y: number,
   lines: string[],
   width = 240,
+  fontSize = 12,
 ): Phaser.GameObjects.Container {
-  const { height, parts, text } = tooltipBox(scene, lines, width);
+  const { height, parts, text } = tooltipBox(scene, lines, width, fontSize);
   const view = visibleWorld(scene);
   const left = Phaser.Math.Clamp(x, view.x + 8, view.x + view.w - width - 8);
   const viewH = Math.min(height, view.h - 16);
