@@ -35,6 +35,8 @@ export interface CombatSession {
   /** Verified result of the last story stage (drives the rewards toast). */
   lastStory: { won: boolean; rewards: StoryRewards } | null;
   editingDeck: SavedDeck | null;
+  /** Deck picked on Home — starters keep their `starter:` pseudo-id; account-scoped (`home-ui-redesign` §4). */
+  selectedDeckId: string | null;
   lastGains: MasteryGain[] | null;
   /** Moon jade and achievements from the last accepted run. */
   lastRewards: RunRewards | null;
@@ -69,7 +71,7 @@ export function newCombatSession(
   return {
     data, state, events, seed, encounterId, heroIds, deckCardIds: deck, run: null,
     profile: createProfile(data), rev: 0, online: false, ticket: null, story: null, pendingStageId: null,
-    lastStory: null, editingDeck: null, lastGains: null,
+    lastStory: null, editingDeck: null, selectedDeckId: null, lastGains: null,
     lastRewards: null, notices: [], runSubmitted: false, loadout,
     net: null, registry: null, match: null, roomCode: null, emotesMuted: false,
   };

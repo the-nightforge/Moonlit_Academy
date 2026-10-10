@@ -83,3 +83,38 @@ Hai lỗi E2E còn lại giữ nguyên test và assertion:
 2. `pvp.spec.ts`: phòng riêng PvP — bước chọn bài đã được xử lý, nhưng sau reload trang không vào `deck-select` trong 90 giây. Lượt cuối chưa có `window.__vn.game` tại thời điểm timeout. Chưa xác định nguyên nhân khởi động lại; không tăng timeout tiếp hoặc bỏ assertion.
 
 Source production không thay đổi trong đợt rà soát này. Kết quả unit/integration cuối xác minh theo từng package; server đạt 60/60 khi chạy một worker sau một timeout do chạy cạnh suite khác.
+
+## Nghiệm thu home-ui-redesign ngày 2026-10-10
+
+Nghiệm thu P0 của plan Home UI: deck dùng chung, request guard theo scene/tài khoản, queue texture + cổng asset trước trận, overlay deck có vùng scroll. Các lệnh chạy từ root với `pnpm --filter server dev:test` (pg-mem :8787) và `pnpm --filter client dev` (:5173, `API_PROXY_TARGET=http://localhost:8787`):
+
+- `pnpm --filter client typecheck`: sạch (gồm src, unit, E2E qua `tsconfig.test.json`).
+- `pnpm --filter client test --maxWorkers=2`: **256/256 đạt**.
+- `pnpm --filter server test --maxWorkers=1`: **60/60 đạt**.
+- `pnpm --filter client exec playwright test e2e/home.spec.ts e2e/online-smoke.spec.ts --workers=1`: **25/25 đạt** — deck selection 4, request lifecycle 4, asset readiness 5, deck overlay layout 5, home acceptance 5, online smoke 2.
+- `COMBAT_REVIEW_FIXTURE=1 pnpm --filter client exec playwright test e2e/arena.spec.ts e2e/coop.spec.ts e2e/pvp.spec.ts --workers=1`: **2 đạt, 3 chưa đạt** (chi tiết dưới).
+- Screenshot ba viewport (1280×720, 1280×900, 1920×1080) xác nhận header, mode tile, đội hình, overlay 11 row đầu/cuối và modal Xóa không chồng nhau; `git diff --check` sạch.
+
+Số đo asset (test `asset readiness`, dev server không nén): manifest combat **210 file ≈152 MB**; gate cold tới `ready` **7,4 s (Arena) / 7,0 s (Liên Thủ)**; vào combat trên texture đã cache **1,2 s / 1,4 s** với **0 request `/assets/` sau ready**.
+
+Ba lỗi E2E giữ nguyên test và assertion:
+
+1. `coop.spec.ts:195` private Liên Thủ — playback `busy` sau 60 s, `queuedBatches: 2`, fps ~2. **Baseline đã ghi nhận 2026-10-09**, cùng chữ ký.
+2. `pvp.spec.ts:41` private PvP — sau reload không vào `deck-select` trong 90 s. **Baseline đã ghi nhận 2026-10-09**.
+3. `coop.spec.ts:285` đấu tập Liên Thủ — playback `busy` sau 60 s, `queuedBatches: 1`, `pendingAction: false`, fps ~3; chạy riêng lẻ vẫn tái hiện. **Cùng chữ ký stall playback với baseline (1)** — `drain()` chờ một op không settle (tween/timer bị hủy trước `onComplete`); đợt này không đụng `event-animator`/`animation-runtime`/`combat-playback`. Đánh dấu cùng lớp lỗi nền, cần chẩn đoán riêng — không sửa trong phạm vi Home.
+
+Helper E2E được điều chỉnh tối thiểu cho hai contract mới: `enterMultiplayer`/`setupOnlineCombat` chọn hàng deck đã lưu (Task 1 bắt buộc chọn lưu) và chờ `assetState === "ready"` trước các nút bắt đầu trận (Task 3). Poll lifecycle tăng lên 60 s vì POST run/story chờ manifest — assertion giữ nguyên.
+
+## Nghiệm thu phân cấp Home ngày 2026-10-10
+
+Theo `docs/superpowers/plans/2026-10-10-home-ui-hierarchy.md`: thanh điều hướng dưới có nhãn; rank trong ô Đấu Trường; tên deck + nút đổi/sửa rõ ràng; hai ô chính trên hai ô phụ.
+
+- Client typecheck và build đạt; client unit **256/256 đạt**.
+- Home + online smoke **34/34 đạt**, không skip, 10,4 phút (pg-mem, một worker). Bao gồm 4 ca hierarchy mới, 5 ca art và 25 ca P0/smoke trước đó.
+- Đo rank với hit rectangle thật; tên deck dài có ellipsis và không đè nút; lỗi deck nằm trên footer. Nút footer/sửa bị khóa khi chờ trận; thử lại rank không mở Đấu Trường.
+- Xem ảnh thực tế ở 1280×720, 1280×900, 1920×1080; review độc lập không có lỗi P0–P2 trong phạm vi thay đổi.
+- Bằng chứng cục bộ: `output/home-ui-hierarchy/` (ignored). Lượt targeted đầu có một 502 khi backend tự khởi động lại ở bước đăng ký; lượt đầy đủ sau đó đạt cả ca này.
+
+Kết quả này bổ sung nghiệm thu Home; không thay đổi trạng thái các lỗi playback/reload multiplayer đã ghi ở trên.
+
+Review toàn nhánh sau khi xong Task 5 sửa thêm: tooltip của hàng overlay nâng lên depth 1500 (trước đây nằm dưới scrim overlay depth 900 — e2e cũ chỉ đọc text node nên xanh giả; giờ có assertion `navTooltip.depth > deckOverlay.depth`); `net.onRecovery` ở hai lobby route qua scene đang sống và chặn socket cũ (`session.net !== net`) thay vì `this.scene` đã shutdown; `queueHeroArt` repaint một lần khi art tải xong thay vì một render mỗi file; tile mode báo "Đang chuẩn bị…" khi busy thay vì nhắc đăng nhập; hàng deck chỉ chọn bằng chuột trái; `session.editingDeck` reset cùng `selectedDeckId`; `setStatus` bỏ qua text đã destroy.

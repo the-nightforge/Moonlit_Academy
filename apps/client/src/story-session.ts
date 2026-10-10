@@ -2,6 +2,7 @@ import { createStoryCombat } from "rules";
 import type { Action, Loadout, StoryRewards, StorySetup } from "rules";
 import { mutate, type ProfileReply } from "./account";
 import { ApiError, api, auth } from "./api";
+import { assertCurrentRequest, type RequestGuard } from "./request-context";
 import { session, type Team } from "./session";
 
 /**
@@ -18,9 +19,12 @@ export interface StoryTicket {
 }
 
 /** Asks the server for a stage ticket, then builds the combat locally from its setup (`18` §4.4). */
-export async function startStoryTicket(stageId: string, deck: { id: string; heroIds: Team }): Promise<void> {
+export async function startStoryTicket(stageId: string, deck: { id: string; heroIds: Team }, options?: { guard?: RequestGuard }): Promise<void> {
+  const generation = auth.generation;
   const body = deck.id.startsWith("starter:") ? { deckId: "starter", heroIds: deck.heroIds } : { deckId: deck.id };
   const reply = await api<{ ticketId: string; setup: StorySetup; loadout: Loadout }>("POST", `/story/${stageId}/tickets`, { body });
+  // The ticket may exist server-side; a stale caller drops it here (server expiry handles the rest).
+  assertCurrentRequest(generation, options?.guard);
   session.story = { ticketId: reply.ticketId, setup: reply.setup, loadout: reply.loadout, deck, actions: [] };
   session.run = null;
   session.heroIds = reply.setup.heroIds;

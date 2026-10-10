@@ -44,6 +44,7 @@ import {
 import manifest from "virtual:assets-manifest";
 import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
 import { confirmModal, isModalOpen, registerModal } from "../ui/widgets";
+import { combatTextureEntries } from "../ui/combat-assets";
 import { CombatAudio } from "../ui/combat-audio";
 import { loadCombatSettings, saveCombatSettings, DEFAULT_COMBAT_SETTINGS } from "../ui/combat-settings";
 import type { CombatSettings } from "../ui/combat-settings";
@@ -237,12 +238,11 @@ export class CombatScene extends Phaser.Scene {
   }
 
   preload() {
-    for (const [category, files] of Object.entries(manifest)) {
-      for (const [key, url] of Object.entries(files)) {
-        // SVG icons rasterize at the canvas scale so they stay sharp under the zoomed camera.
-        if (url.endsWith(".svg")) this.load.svg(`${category}:${key}`, url, { scale: RENDER_SCALE });
-        else this.load.image(`${category}:${key}`, url);
-      }
+    for (const { key, url } of combatTextureEntries(manifest)) {
+      if (this.textures.exists(key)) continue; // warmed by the lobby/Home gate (`home-ui-redesign` Task 3)
+      // SVG icons rasterize at the canvas scale so they stay sharp under the zoomed camera.
+      if (url.endsWith(".svg")) this.load.svg(key, url, { scale: RENDER_SCALE });
+      else this.load.image(key, url);
     }
   }
 

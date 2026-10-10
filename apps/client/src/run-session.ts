@@ -1,7 +1,8 @@
 import { applyRunAction, createRun, replayRun } from "rules";
 import type { Loadout, MasteryGain, RunAction, RunActionResult, RunRewards, RunSetup } from "rules";
 import { mutate, type ProfileReply } from "./account";
-import { ApiError, api } from "./api";
+import { ApiError, api, auth } from "./api";
+import { assertCurrentRequest, type RequestGuard } from "./request-context";
 import { session, type Team } from "./session";
 import { abandonStory } from "./story-session";
 
@@ -27,9 +28,12 @@ function persist(ticket: RunTicket | null): void {
 }
 
 /** Asks the server for a ticket, then builds the run locally from its setup. */
-export async function startServerRun(deck: { id: string; heroIds: Team }): Promise<void> {
+export async function startServerRun(deck: { id: string; heroIds: Team }, options?: { guard?: RequestGuard }): Promise<void> {
+  const generation = auth.generation;
   const body = deck.id.startsWith("starter:") ? { deckId: "starter", heroIds: deck.heroIds } : { deckId: deck.id };
   const { runId, setup, loadout } = await api<{ runId: string; setup: RunSetup; loadout: Loadout }>("POST", "/runs", { body });
+  // The server may have opened a ticket — but a stale caller never commits it locally.
+  assertCurrentRequest(generation, options?.guard);
   const ticket: RunTicket = { runId, setup, loadout, actions: [] };
   session.ticket = ticket;
   // A run drops any open story ticket; close it on the server (fire-and-forget).

@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { deckWeapons, validateDeck, weaponCardDef } from "rules";
 import type { CardDef } from "rules";
-import { errorText, mutate } from "../account";
+import { auth } from "../api";
+import { errorText, mutate, type ProfileReply } from "../account";
 import { session } from "../session";
 import { showCardTooltip } from "../ui/card-tooltip";
 import { addEquipmentArt, preloadEquipmentArt, type EquipmentCategory } from "../ui/equipment-art";
@@ -24,6 +25,8 @@ export class DeckBuilderScene extends Phaser.Scene {
   private pvpView = false;
   /** The deck as it was on entry: leaving with changes asks first. */
   private initial = "";
+  /** Bumped on create() and shutdown — in-flight save callbacks captured against an older value go dead. */
+  private generation = 0;
 
   constructor() {
     super("deck-builder");
@@ -33,11 +36,20 @@ export class DeckBuilderScene extends Phaser.Scene {
 
   create() {
     useDesignCamera(this);
+    this.generation++;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.generation++;
+    });
     this.root = this.add.container(0, 0);
     this.picker = null;
     this.pvpView = false;
     this.initial = JSON.stringify(this.deck);
     this.render();
+  }
+
+  /** True while this run of the scene and this login still own the callback (`home-ui-redesign` Task 2). */
+  private isCurrent(authGeneration: number, generation: number): boolean {
+    return auth.generation === authGeneration && this.generation === generation && this.scene.isActive();
   }
 
   private get deck() {
@@ -119,12 +131,19 @@ export class DeckBuilderScene extends Phaser.Scene {
       });
     });
     addButton(this, this.root, WIDTH - 150, 660, 140, "Lưu", () => {
-      mutate("PUT", "/profile/decks", { draft: this.deck }).then(
-        () => {
+      const generation = this.generation;
+      const authGeneration = auth.generation;
+      mutate<ProfileReply & { deckId: string }>("PUT", "/profile/decks", { draft: this.deck }).then(
+        (reply) => {
+          if (!this.isCurrent(authGeneration, generation)) return;
           session.editingDeck = null;
+          session.selectedDeckId = reply.deckId;
           this.scene.start("deck-select");
         },
-        (error: unknown) => void alertModal(this, errorText(error)),
+        (error: unknown) => {
+          if (!this.isCurrent(authGeneration, generation)) return;
+          void alertModal(this, errorText(error));
+        },
       );
     }, true, { variant: "primary" });
     this.renderPicker();

@@ -16,6 +16,8 @@ export function resetAccount(): void {
   session.registry?.dispose();
   session.registry = null;
   session.match = null;
+  session.selectedDeckId = null;
+  session.editingDeck = null;
 }
 
 /** Replaces the local copy of the profile with the server's (`16` §2). */
@@ -86,6 +88,8 @@ export async function login(username: string, password: string, register: boolea
   setToken(reply.token);
   setUsername(username.trim().toLowerCase());
   applyServerProfile(reply);
+  session.selectedDeckId = null;
+  session.editingDeck = null;
   session.online = true;
   matchRegistry();
   // New accounts receive the starter gift with registration (`14` §5).
@@ -131,6 +135,8 @@ export async function logout(): Promise<void> {
   session.registry?.dispose();
   session.registry = null;
   session.match = null;
+  session.selectedDeckId = null;
+  session.editingDeck = null;
 }
 
 /** Vietnamese text for an error from the API (or anything else). */

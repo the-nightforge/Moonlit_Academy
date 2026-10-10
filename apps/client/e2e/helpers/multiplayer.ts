@@ -1,6 +1,6 @@
 import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { openSignedIn } from "./online";
-import { clickSceneText, waitForScene } from "./combat";
+import { clickDesign, clickSceneText, waitForScene } from "./combat";
 
 const contexts = new Set<BrowserContext>();
 
@@ -97,6 +97,26 @@ export async function enterMultiplayer(page: Page, mode: "arena" | "coop-lobby")
     return (key === mode && handle?.session.net?.connected === true)
       || (key === "combat" && handle?.session.match != null);
   }, mode, { timeout: mode === "arena" ? 90_000 : 60_000 });
+  // Landing on a restored match skips the lobby entirely — only a lobby needs
+  // the deck pick + art gate (`home-ui-redesign` Tasks 1 & 3): lobbies never
+  // auto-pick (`deckIndex` resolves to -1) and match-start sends stay disabled
+  // until `assetState` flips to "ready".
+  const inLobby = await page.evaluate((sceneKey) => {
+    const handle = (window as any).__vn;
+    return handle?.game.scene.getScenes(true)[0]?.scene.key === sceneKey;
+  }, mode);
+  if (!inLobby) return;
+  await clickDesign(page, 640, 182); // first saved deck row
+  await expect
+    .poll(async () => page.evaluate((key) => (window as any).__vn?.game.scene.getScene(key)?.deckIndex, mode), {
+      timeout: 15_000,
+    })
+    .toBeGreaterThanOrEqual(0);
+  await expect
+    .poll(async () => page.evaluate((key) => (window as any).__vn?.game.scene.getScene(key)?.assetState, mode), {
+      timeout: 60_000,
+    })
+    .toBe("ready");
 }
 
 export async function sendMatchAction(page: Page, action: unknown): Promise<void> {

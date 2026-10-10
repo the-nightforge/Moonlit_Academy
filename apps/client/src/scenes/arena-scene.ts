@@ -3,10 +3,12 @@ import { validateDeck } from "rules";
 import type { ArenaStats, HonorShopItemDef } from "rules";
 import { errorText } from "../account";
 import { api } from "../api";
+import { savedLobbyDeckIndex } from "../home-selection";
 import { NetMatch } from "../net/match";
 import { NetSocket } from "../net/socket";
 import type { ServerMessage } from "../net/protocol";
 import { session } from "../session";
+import { prepareCombatAssets } from "../ui/combat-assets";
 import { COLORS, TEXT_BASE, useDesignCamera } from "../ui/theme";
 import { addButton, addScreenHeader, addText, promptModal, showToast } from "../ui/widgets";
 import { describeDeckError } from "./deck-select-scene";
@@ -64,6 +66,11 @@ export class ArenaScene extends Phaser.Scene {
   private panel: "history" | "leaderboard" | null = null;
   private history: ArenaHistoryEntry[] | null = null;
   private leaderboard: { entries: LeaderboardEntry[]; me: LeaderboardEntry | null } | null = null;
+  /** Combat art gate (`home-ui-redesign` Task 3): match-start sends wait for "ready". */
+  private assetState: "idle" | "loading" | "ready" | "error" = "idle";
+  private assetFailed = 0;
+  /** Bumped on create() and shutdown — callbacks captured against an older value go dead. */
+  private generation = 0;
 
   constructor() {
     super("arena");
@@ -71,8 +78,14 @@ export class ArenaScene extends Phaser.Scene {
 
   create() {
     useDesignCamera(this);
+    this.generation++;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.generation++;
+    });
     this.root = this.add.container(0, 0);
-    this.deckIndex = 0;
+    this.assetState = "idle";
+    this.assetFailed = 0;
+    this.deckIndex = savedLobbyDeckIndex(this.decks(), session.selectedDeckId);
     this.roomCode = session.roomCode;
     this.roomPlayers = 0;
     this.me = null;
@@ -90,11 +103,13 @@ export class ArenaScene extends Phaser.Scene {
       this.render();
     };
     net.onRecovery = (snapshot) => {
-      if (snapshot === null) return; // no room — nothing to rejoin
+      if (session.net !== net || snapshot === null) return; // no room — nothing to rejoin
       // registry.recover already rejoined a known match — never twice (`16` §8.4).
       if (session.match?.matchId !== snapshot.matchId) session.match = new NetMatch(net, snapshot);
       session.registry?.retain(session.match!);
-      this.scene.start("combat");
+      // This binding can outlive the lobby that made it — route from whichever
+      // scene is live so a reconnect on Home still drops back into the match.
+      (this.game.scene.getScenes(true)[0] ?? this).scene.start("combat");
     };
     net.connect();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -106,10 +121,35 @@ export class ArenaScene extends Phaser.Scene {
     this.render();
     showToast(this, session.notices.splice(0));
     this.refreshArena();
+    this.prepareAssets();
+  }
+
+  /** True while this run of the scene is still the live one. */
+  private isCurrent(generation: number): boolean {
+    return this.generation === generation && this.scene.isActive();
+  }
+
+  /**
+   * Warms the §7 combat manifest so `match.start` lands on loaded textures.
+   * The gate only blocks *new* match-start sends — `onRecovery` keeps its
+   * straight path to combat so a reconnect still sees the first snapshot.
+   */
+  private prepareAssets(): void {
+    if (this.assetState === "loading" || this.assetState === "ready") return;
+    this.assetState = "loading";
+    this.render();
+    const generation = this.generation;
+    prepareCombatAssets(this).then(({ failed }) => {
+      if (!this.isCurrent(generation)) return;
+      this.assetFailed = failed.length;
+      this.assetState = failed.length ? "error" : "ready";
+      this.render();
+    });
   }
 
   private setStatus(text: string): void {
-    this.status?.setText(text);
+    if (this.status === null || this.status.scene === undefined) return;
+    this.status.setText(text);
   }
 
   private refreshArena(): void {
@@ -129,7 +169,7 @@ export class ArenaScene extends Phaser.Scene {
 
   private selectedDeck() {
     const decks = this.decks();
-    if (decks.length === 0) return null;
+    if (this.deckIndex < 0 || decks.length === 0) return null;
     return decks[Math.min(this.deckIndex, decks.length - 1)]!;
   }
 
@@ -230,7 +270,8 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     this.deckIndex = Math.min(this.deckIndex, decks.length - 1);
-    addText(this, this.root, WIDTH / 2, 150, "Deck đấu (kiểm tra theo luật PvP):", 13, COLORS.dimText).setOrigin(0.5);
+    const hint = this.deckIndex < 0 ? "Chọn deck đã lưu để xuất trận" : "Deck đấu (kiểm tra theo luật PvP):";
+    addText(this, this.root, WIDTH / 2, 150, hint, 13, this.deckIndex < 0 ? COLORS.gold : COLORS.dimText).setOrigin(0.5);
     const data = session.data;
     decks.forEach((deck, index) => {
       const picked = index === this.deckIndex;
@@ -242,6 +283,7 @@ export class ArenaScene extends Phaser.Scene {
       row.setInteractive({ useHandCursor: true });
       row.on("pointerup", () => {
         this.deckIndex = index;
+        session.selectedDeckId = deck.id;
         this.render();
       });
       this.root.add(row);
@@ -252,10 +294,30 @@ export class ArenaScene extends Phaser.Scene {
 
   private renderActions(): void {
     const deck = this.selectedDeck();
-    const valid = deck !== null && this.pvpErrors(deck.id).length === 0;
+    const assetsReady = this.assetState === "ready";
+    const valid = deck !== null && this.pvpErrors(deck.id).length === 0 && assetsReady;
     const deckId = deck?.id ?? "";
     const send = (msg: unknown) => session.net?.send(msg);
-    const needDeck = { disabledReason: deck === null ? "Cần một deck đã lưu" : "Deck chưa hợp lệ — xem lỗi bên cạnh deck" };
+    const needDeck = {
+      disabledReason:
+        deck === null
+          ? "Chọn deck đã lưu để xuất trận"
+          : this.assetState === "loading"
+            ? "Đang tải hình trận…"
+            : this.assetState === "error"
+              ? "Lỗi tải hình — nhấn Thử lại"
+              : "Deck chưa hợp lệ — xem lỗi bên cạnh deck",
+    };
+
+    if (this.assetState === "loading") {
+      addText(this, this.root, 640, 428, "Đang tải hình trận…", 14, COLORS.gold).setOrigin(0.5);
+    } else if (this.assetState === "error") {
+      addText(this, this.root, 580, 428, `Lỗi tải hình (${this.assetFailed} tệp)`, 14, "#ff8080").setOrigin(0.5);
+      addButton(this, this.root, 780, 428, 120, "Thử lại", () => {
+        this.assetState = "idle";
+        this.prepareAssets();
+      });
+    }
 
     if (this.queued) {
       const seconds = Math.floor(this.waitingSeconds % 60).toString().padStart(2, "0");

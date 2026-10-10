@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
-import { activeSceneKey, applyScenario, clickSceneText, waitForScene, waitIdle, type CombatScenario } from "./combat";
+import { activeSceneKey, applyScenario, clickDesign, clickSceneText, waitForScene, waitIdle, type CombatScenario } from "./combat";
 
 /**
  * Online e2e helpers: the app runs against the pg-mem test server on :8787
@@ -85,6 +85,17 @@ export async function registerAccount(options: { heroIds?: [string, string, stri
   return account;
 }
 
+/** Saves another legal deck on the account and returns the id the server assigned (`d2`, `d3`, …). */
+export async function saveDeck(account: OnlineAccount, name: string, heroIds: [string, string, string] = ["m05", "f04", "m06"]): Promise<string> {
+  const reply = await call<{ rev: number; deckId: string }>("PUT", "/profile/decks", {
+    token: account.token,
+    rev: account.rev,
+    body: { draft: { id: "", name, heroIds, cardIds: heroIds.flatMap((id) => HEROES[id]!.cardIds) } },
+  });
+  account.rev = reply.rev;
+  return reply.deckId;
+}
+
 /** Boots the app signed in as `account` (token in localStorage → resumeSession). */
 export async function openSignedIn(
   page: Page,
@@ -165,6 +176,21 @@ export async function setupOnlineCombat(
   await openSignedIn(page, acc);
   await clickSceneText(page, "deck-select", "Đấu Trường");
   await expect.poll(async () => activeSceneKey(page), { timeout: 15_000 }).toBe("arena");
+  // The lobby never auto-picks (`home-ui-redesign` Task 1): select the first
+  // saved deck row — fresh accounts resolve to deckIndex -1 otherwise.
+  await clickDesign(page, 640, 182);
+  await expect
+    .poll(async () => page.evaluate(() => (window as any).__vn?.game.scene.getScene("arena")?.deckIndex), {
+      timeout: 15_000,
+    })
+    .toBeGreaterThanOrEqual(0);
+  // Combat art gate (`home-ui-redesign` Task 3): the practice button is
+  // disabled until `assetState` flips to "ready" — a click before then drops.
+  await expect
+    .poll(async () => page.evaluate(() => (window as any).__vn?.game.scene.getScene("arena")?.assetState), {
+      timeout: 60_000,
+    })
+    .toBe("ready");
   await clickSceneText(page, "arena", "Đấu Tập (máy)");
   await waitForScene(page, "combat");
   await expect

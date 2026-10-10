@@ -4,7 +4,11 @@ import type { DeckError, GameData, SavedDeck } from "rules";
 import manifest from "virtual:assets-manifest";
 import { errorText, logout, mutate } from "../account";
 import { api, auth } from "../api";
+import { homeDecks, resolveHomeDeck } from "../home-selection";
+import { StaleRequestError, type RequestGuard } from "../request-context";
 import { startServerRun } from "../run-session";
+import { prepareCombatAssets } from "../ui/combat-assets";
+import { queueTexture } from "../ui/texture-queue";
 import { startStoryTicket } from "../story-session";
 import { session } from "../session";
 import type { Team } from "../session";
@@ -28,8 +32,8 @@ const PICK_TOP = 110;
 /** Hero portraits of the selected deck on the right column. */
 const HERO_W = 200;
 const HERO_H = 288;
-const HERO_Y = 428;
-const HERO_XS = [596, 830, 1064] as const;
+const HERO_Y = 365;
+const HERO_XS = [606, 840, 1074] as const;
 
 export function describeDeckError(data: GameData, error: DeckError): string {
   switch (error.code) {
@@ -66,8 +70,6 @@ export function describeDeckError(data: GameData, error: DeckError): string {
   }
 }
 
-const teamKey = (heroIds: readonly string[]) => [...heroIds].sort().join("+");
-
 interface RankInfo {
   tierId: string | null;
   tierName: string;
@@ -76,22 +78,27 @@ interface RankInfo {
 
 /**
  * Home screen (`deck-select` key kept for scene routing): a splash-driven hub —
- * mode tiles on the left, the selected deck's hero trio + ranked emblem on the
- * right, deck management behind the "Đổi deck" overlay (`16` §7).
+ * mode tiles and Arena rank on the left, the selected deck's hero trio on the
+ * right, labeled quick navigation below and deck management in an overlay.
  */
 export class DeckSelectScene extends Phaser.Scene {
   private root!: Phaser.GameObjects.Container;
-  private selected = "";
   private pickingTeam = false;
   private picked: string[] = [];
   private teamScroll!: RowScroller;
   /** A server request is in flight (run/story ticket). */
   private busy = false;
+  /** Bumped on every create() and shutdown — a captured value going stale means this run of the scene is dead. */
+  private generation = 0;
   private deckOverlay: Phaser.GameObjects.Container | null = null;
   private overlayPanel: Phaser.GameObjects.Container | null = null;
   private overlayScroll = 0;
+  /** Wheel scroll scoped to the overlay's list region; `overlayScroll` mirrors `first` for specs. */
+  private overlayScroller!: RowScroller;
   /** `null` while `/arena/me` is in flight or the player is offline. */
   private rank: RankInfo | null = null;
+  /** `/arena/me` failed on this run of the scene — shows the retry state (`home-ui-redesign` §4). */
+  private rankFailed = false;
   private navTooltip: Phaser.GameObjects.Container | null = null;
 
   constructor() {
@@ -107,6 +114,7 @@ export class DeckSelectScene extends Phaser.Scene {
         "rank_dong_sinh", "rank_tu_tai", "rank_cu_nhan", "rank_tien_si", "rank_trang_nguyen",
         "cur_moonJade", "cur_moonStar", "cur_honor",
         "moon_full", "star", "gear", "check", "bolt", "seal", "nav_back",
+        "epitomized_moon", "nav_banners", "nav_shop", "intent_buff",
         // Interim mode glyphs until the ui:mode_* set ships (`docs/home-assets.md`).
         "node_combat", "moon_waxingCrescent", "nav_exchange", "nav_history",
       ],
@@ -123,13 +131,20 @@ export class DeckSelectScene extends Phaser.Scene {
   /** `newDeck`: open straight on the team picker (Đấu Trường / Liên Thủ with no saved deck). */
   create(data?: { newDeck?: boolean }) {
     useDesignCamera(this);
+    this.generation++;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.generation++;
+      this.hideTip();
+    });
     this.busy = false;
     this.rank = null;
+    this.rankFailed = false;
     this.deckOverlay = null;
     this.overlayScroll = 0;
-    this.selected = `starter:${teamKey(session.heroIds)}`;
     this.pickingTeam = data?.newDeck === true && session.online;
     this.picked = this.pickingTeam ? [...session.heroIds] : [];
+    const view = visibleWorld(this);
+    const cx = view.x + view.w / 2, cy = view.y + view.h / 2;
     const gridW = (PICK_COLS - 1) * PICK_STEP_X + PICK_W;
     this.teamScroll = new RowScroller(
       this,
@@ -138,11 +153,20 @@ export class DeckSelectScene extends Phaser.Scene {
         if (this.pickingTeam) this.render();
       },
     );
+    // Wheel over the overlay's list region scrolls it; dead while the overlay is
+    // closed (`renderDeckList` needs `overlayPanel`). One instance per scene run —
+    // ten open/close cycles still leave a single wheel handler.
+    this.overlayScroller = new RowScroller(
+      this,
+      { x: cx - 460, y: cy - 183, width: 920, height: 392 },
+      () => {
+        this.overlayScroll = this.overlayScroller.first;
+        if (this.overlayPanel) this.renderDeckList(this.overlayPanel);
+      },
+    );
 
     // Splash backdrop: generated home art (or the library combat backdrop) with
     // a calm-left gradient so the mode tiles stay readable (`docs/home-assets.md`).
-    const view = visibleWorld(this);
-    const cx = view.x + view.w / 2, cy = view.y + view.h / 2;
     this.add.rectangle(cx, cy, view.w, view.h, 0x07101f).setDepth(-3);
     const bgKey = ["backgrounds:home", "backgrounds:background"].find((key) => this.textures.exists(key));
     if (bgKey) {
@@ -157,42 +181,62 @@ export class DeckSelectScene extends Phaser.Scene {
     this.root = this.add.container(0, 0);
     this.render();
     this.queueHeroArt();
-    if (session.online) {
-      api<ArenaMeReply>("GET", "/arena/me").then(
-        (me) => {
-          this.rank = { tierId: me.tier?.id ?? null, tierName: me.tier?.name ?? "—", rating: me.arena.rating };
-          if (this.scene.isActive()) this.render();
-        },
-        () => {
-          this.rank = { tierId: null, tierName: "—", rating: 0 };
-          if (this.scene.isActive()) this.render();
-        },
-      );
-    }
+    if (session.online) this.fetchRank();
     showToast(this, session.notices.splice(0), 610);
+  }
+
+  /** True while this run of the scene is still the live one (re-entering Home kills older callbacks). */
+  private isCurrent(generation: number): boolean {
+    return this.generation === generation && this.scene.isActive();
+  }
+
+  private requestGuard(): RequestGuard {
+    const generation = this.generation;
+    return { isCurrent: () => this.isCurrent(generation) };
+  }
+
+  /**
+   * Asset gate before a ticket POST (`home-ui-redesign` Task 3): the §7
+   * manifest must be in the TextureManager first. A stale run of this scene
+   * goes silent; failures unlock the controls so a click retries.
+   */
+  private async withCombatAssets(generation: number, next: () => void): Promise<void> {
+    const { failed } = await prepareCombatAssets(this).catch(() => ({ loaded: 0, failed: ["loader"] }));
+    if (!this.isCurrent(generation)) return;
+    if (failed.length > 0) {
+      this.busy = false;
+      this.render();
+      void alertModal(this, `Lỗi tải hình trận (${failed.length} tệp) — nhấn lại để thử lại`);
+      return;
+    }
+    next();
+  }
+
+  /** `/arena/me` for the emblem row; a stale response writes nothing (`home-ui-redesign` Task 2). */
+  private fetchRank() {
+    const generation = this.generation;
+    api<ArenaMeReply>("GET", "/arena/me").then(
+      (me) => {
+        if (!this.isCurrent(generation)) return;
+        this.rank = { tierId: me.tier?.id ?? null, tierName: me.tier?.name ?? "—", rating: me.arena.rating };
+        this.rankFailed = false;
+        this.render();
+      },
+      () => {
+        if (!this.isCurrent(generation)) return;
+        this.rankFailed = true;
+        this.render();
+      },
+    );
   }
 
   /** Starter row for every team seen in saved decks + the current team, then all saved decks. */
   private decks(): SavedDeck[] {
-    const starters = new Map<string, SavedDeck>();
-    const addStarter = (heroIds: readonly string[]) => {
-      const key = teamKey(heroIds);
-      if (starters.has(key)) return;
-      starters.set(key, {
-        id: `starter:${key}`,
-        name: "Bộ cơ bản",
-        heroIds: [...heroIds] as SavedDeck["heroIds"],
-        cardIds: starterDeck(session.data, heroIds as Team),
-      });
-    };
-    addStarter(session.heroIds);
-    for (const deck of session.profile.decks) addStarter(deck.heroIds);
-    return [...starters.values(), ...session.profile.decks];
+    return homeDecks(session.data, session.profile, session.heroIds);
   }
 
   private selectedDeck(): SavedDeck {
-    const decks = this.decks();
-    return decks.find((entry) => entry.id === this.selected) ?? decks[0]!;
+    return resolveHomeDeck(session.data, session.profile, session.heroIds, session.selectedDeckId);
   }
 
   private heroNames(heroIds: readonly string[]): string {
@@ -207,25 +251,21 @@ export class DeckSelectScene extends Phaser.Scene {
     return `heroes:${heroId}`;
   }
 
-  /** Portrait files not yet in the texture cache stream in, then re-render. */
+  /** Portrait files not yet in the texture cache stream in, then re-render once. */
   private queueHeroArt() {
-    let queued = false;
+    const generation = this.generation;
+    const jobs: Promise<unknown>[] = [];
     for (const heroId of this.selectedDeck().heroIds) {
       for (const stem of [heroId, `${heroId}_up`]) {
         const url = manifest.heroes?.[stem];
-        const key = `heroes:${stem}`;
-        if (url && !this.textures.exists(key)) {
-          this.load.image(key, url);
-          queued = true;
-        }
+        if (!url || this.textures.exists(`heroes:${stem}`)) continue;
+        jobs.push(queueTexture(this, `heroes:${stem}`, url));
       }
     }
-    if (queued) {
-      this.load.once(Phaser.Loader.Events.COMPLETE, () => {
-        if (this.scene.isActive()) this.render();
-      });
-      this.load.start();
-    }
+    // One repaint once every miss settles — cached keys need no redraw at all.
+    void Promise.allSettled(jobs).then((results) => {
+      if (this.isCurrent(generation) && results.some((result) => result.status === "fulfilled")) this.render();
+    });
   }
 
   private hideTip() {
@@ -297,50 +337,81 @@ export class DeckSelectScene extends Phaser.Scene {
     if (auth.username) this.text(this.root, 44, 52, "Vọng Nguyệt Thư Viện", 11, COLORS.dimText).setOrigin(0, 0.5);
     if (online) {
       const currencies = session.profile.currencies;
-      this.currencyChip(300, "cur_moonJade", CURRENCY_LABELS.moonJade, currencies.moonJade);
-      this.currencyChip(430, "cur_moonStar", CURRENCY_LABELS.moonStar, currencies.moonStar);
-      this.currencyChip(560, "cur_honor", CURRENCY_LABELS.honor, currencies.honor ?? 0);
+      this.currencyChip(820, "cur_moonJade", CURRENCY_LABELS.moonJade, currencies.moonJade);
+      this.currencyChip(950, "cur_moonStar", CURRENCY_LABELS.moonStar, currencies.moonStar);
+      this.currencyChip(1080, "cur_honor", CURRENCY_LABELS.honor, currencies.honor ?? 0);
     }
-    const data = session.data;
-    const canUnlock = Object.keys(data.heroes).some((id) => pendingUnlocks(data, session.profile, id) > 0);
-    // A dry run of the server's claim tells whether a reward is waiting (`14` §7).
-    const canClaim = Object.keys(data.missions).some((id) => claimMission(data, session.profile, id, Date.now()).ok);
-    const nav: [string, string, () => void, boolean][] = [
-      ["moon_full", "Triệu Hồi", () => this.scene.start("gacha"), false],
-      ["star", "Kho Hero", () => this.scene.start("heroes"), false],
-      ["gear", "Kho đồ", () => this.scene.start("armory"), false],
-      ["check", "Nhiệm vụ", () => this.scene.start("missions"), canClaim],
-      ["bolt", "Tu Luyện", () => this.scene.start("mastery"), canUnlock],
-    ];
-    nav.forEach(([icon, tip, go, dot], index) => {
-      this.navIcon(1000 + index * 48, 36, icon, tip, go, online, dot);
-    });
     if (online) {
       this.navIcon(1240, 36, "nav_back", "Đăng xuất", () => {
         void logout().then(() => this.scene.start("login"));
-      }, true, false, true);
+      }, !this.busy, false, true);
     } else {
       addButton(this, this.root, 1180, 36, 160, "Đăng nhập", () => this.scene.start("login"));
     }
   }
 
-  /** Mode tile: 360×80 rounded card with the mode icon, name and one-line pitch. */
-  private modeTile(y: number, icon: string, fallback: string, name: string, sub: string, action: () => void, enabled: boolean, disabledReason?: string) {
-    const cx = 234;
-    const panel = roundedPanel(this, cx, y, 360, 80, enabled ? 0x101c36 : 0x10182a, 0.94, enabled ? 0x7d90b8 : 0x37445c, 14);
+  /** Labeled quick routes stay visible without needing a hover tooltip. */
+  private renderFooter() {
+    const online = session.online;
+    const enabled = online && !this.busy;
+    const tray = roundedPanel(this, 640, 658, 1192, 88, 0x081321, 0.94, 0x46556c, 18);
+    this.root.add(tray);
+    const data = session.data;
+    const canUnlock = Object.keys(data.heroes).some((id) => pendingUnlocks(data, session.profile, id) > 0);
+    // A dry run of the server's claim tells whether a reward is waiting (`14` §7).
+    const canClaim = Object.keys(data.missions).some((id) => claimMission(data, session.profile, id, Date.now()).ok);
+    const nav: [string, string, () => void, boolean][] = [
+      ["epitomized_moon", "Triệu Hồi", () => this.scene.start("gacha"), false],
+      ["nav_banners", "Hero", () => this.scene.start("heroes"), false],
+      ["nav_shop", "Kho Đồ", () => this.scene.start("armory"), false],
+      ["nav_history", "Nhiệm Vụ", () => this.scene.start("missions"), canClaim],
+      ["intent_buff", "Tu Luyện", () => this.scene.start("mastery"), canUnlock],
+    ];
+    nav.forEach(([icon, label, go, dot], index) => {
+      const panel = roundedPanel(this, 236 + index * 202, 658, 184, 64, 0x15243b, enabled ? 0.95 : 0.6, 0x726449, 12);
+      const key = `ui:${icon}`;
+      if (this.textures.exists(key)) panel.add(this.add.image(-61, 0, key).setDisplaySize(32, 32));
+      else this.text(panel, -61, 0, "◇", 25, COLORS.gold).setOrigin(0.5);
+      this.text(panel, -35, 0, label, 15, enabled ? COLORS.text : COLORS.dimText).setOrigin(0, 0.5);
+      const hit = this.add.rectangle(0, 0, 184, 64, 0, 0).setInteractive({ useHandCursor: enabled });
+      panel.add(hit);
+      hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button === 0 && enabled) {
+          this.hideTip();
+          go();
+        }
+      });
+      hit.on("pointerover", () => {
+        this.hideTip();
+        if (enabled) panel.setAlpha(0.82);
+        else this.navTooltip = showTextTooltip(this, panel.x - 80, 586, [online ? "Đang chuẩn bị…" : "Cần đăng nhập và kết nối server"], 260);
+      });
+      hit.on("pointerout", () => { panel.setAlpha(1); this.hideTip(); });
+      if (dot) panel.add(this.add.circle(78, -20, 5, COLORS.goldFill).setStrokeStyle(1.5, 0x0b1426));
+      this.root.add(panel);
+    });
+  }
+
+  /** Primary and compact mode tiles share route and disabled-state handling. */
+  private modeTile(layout: { x: number; y: number; width: number; height: number; compact?: boolean; arena?: boolean }, icon: string, fallback: string, name: string, sub: string, action: () => void, enabled: boolean, disabledReason?: string) {
+    const { x: cx, y, width, height, compact = false, arena = false } = layout;
+    const panel = roundedPanel(this, cx, y, width, height, enabled ? 0x101c36 : 0x10182a, 0.94, enabled ? (arena ? 0xb79b60 : 0x63779b) : 0x37445c, 16);
+    const iconX = compact ? 0 : -width / 2 + 44;
+    const iconY = compact ? -30 : arena ? -42 : 0;
     const key = [`ui:${icon}`, `ui:${fallback}`].find((k) => this.textures.exists(k));
     if (key) {
-      const image = this.add.image(-148, 0, key);
-      image.setDisplaySize(52, 52);
+      const image = this.add.image(iconX, iconY, key);
+      image.setDisplaySize(compact ? 38 : 48, compact ? 38 : 48);
       panel.add(image);
     } else {
-      this.text(panel, -148, 0, "▣", 26, enabled ? COLORS.gold : COLORS.dimText).setOrigin(0.5);
+      this.text(panel, iconX, iconY, "▣", 26, enabled ? COLORS.gold : COLORS.dimText).setOrigin(0.5);
     }
-    this.text(panel, -112, -14, name, 19, enabled ? COLORS.gold : COLORS.dimText).setOrigin(0, 0.5);
+    const textX = compact ? 0 : -width / 2 + 82;
+    this.text(panel, textX, compact ? 8 : iconY - 12, name, compact ? 18 : 22, enabled ? COLORS.gold : COLORS.dimText).setOrigin(compact ? 0.5 : 0, 0.5);
     panel.add(
-      this.add.text(-112, 10, sub, { ...TEXT_BASE, fontSize: "12px", color: COLORS.dimText, wordWrap: { width: 268 }, maxLines: 2 }).setOrigin(0, 0.5),
+      this.add.text(textX, compact ? 31 : iconY + 16, sub, { ...TEXT_BASE, fontSize: compact ? "11px" : "12px", color: COLORS.dimText, align: compact ? "center" : "left", wordWrap: { width: compact ? width - 20 : width - 100 }, maxLines: 2 }).setOrigin(compact ? 0.5 : 0, 0.5),
     );
-    const hit = this.add.rectangle(0, 0, 360, 80, 0, 0);
+    const hit = this.add.rectangle(0, 0, width, height, 0, 0);
     panel.add(hit);
     hit.setInteractive({ useHandCursor: enabled });
     if (enabled) {
@@ -359,27 +430,48 @@ export class DeckSelectScene extends Phaser.Scene {
     } else if (disabledReason) {
       hit.on("pointerover", () => {
         this.hideTip();
-        this.navTooltip = showTextTooltip(this, cx - 120, y + 46, [disabledReason], 300);
+        this.navTooltip = showTextTooltip(this, cx - width / 2, y + height / 2 + 8, [disabledReason], 300);
       });
       hit.on("pointerout", () => this.hideTip());
     }
+    if (arena) this.renderArenaRank(panel);
     this.root.add(panel);
   }
 
-  /** Rank emblem + the selected deck's hero trio — clicking a hero edits the deck. */
-  private renderTeam(deck: SavedDeck) {
-    const online = session.online;
+  /** Rank belongs to the Arena route; retry is above its parent hit area. */
+  private renderArenaRank(panel: Phaser.GameObjects.Container) {
     const rank = this.rank;
+    panel.add(this.add.rectangle(0, -1, 340, 1, 0xb79b60, 0.3));
     const emblemKey = rank?.tierId && this.textures.exists(`ui:rank_${rank.tierId}`) ? `ui:rank_${rank.tierId}` : this.textures.exists("ui:seal") ? "ui:seal" : "";
-    if (emblemKey) {
-      const emblem = this.add.image(830, 148, emblemKey);
+    if (emblemKey && rank !== null) {
+      const emblem = this.add.image(-145, 33, emblemKey);
       emblem.setDisplaySize(76, 76);
-      this.root.add(emblem);
+      panel.add(emblem);
     }
-    this.text(this.root, 830, 202, rank === null ? "—" : `${rank.tierName} · ${rank.rating} điểm`, 16, COLORS.gold).setOrigin(0.5);
+    if (this.rankFailed) {
+      this.text(panel, -158, 22, "Không tải được xếp hạng", 12, "#ff8080").setOrigin(0, 0.5);
+      addButton(this, panel, 125, 48, 96, "Thử lại", () => {
+        this.rankFailed = false;
+        this.fetchRank();
+        this.render();
+      }, session.online && !this.busy);
+    } else {
+      this.text(panel, rank ? -92 : -158, 24, rank === null ? session.online ? "Đang tải xếp hạng…" : "Đăng nhập để xem xếp hạng" : `${rank.tierName} · ${rank.rating} điểm`, rank ? 14 : 12, rank ? COLORS.gold : COLORS.dimText).setOrigin(0, 0.5);
+      if (rank) this.text(panel, -92, 46, "Xếp hạng hiện tại", 11, COLORS.dimText).setOrigin(0, 0.5);
+    }
+  }
 
+  /** Selected-deck identity and explicit actions above the hero trio. */
+  private renderTeam(deck: SavedDeck) {
+    this.text(this.root, 506, 104, "Đội hình xuất trận", 19, COLORS.text).setOrigin(0, 0.5).setStroke("#07101f", 2);
+    this.fitColumn(this.root, 506, 151, deck.name, 405, 23, COLORS.gold);
+    addButton(this, this.root, 996, 160, 130, "Đổi deck ▾", () => this.openDeckOverlay(), !this.busy);
+    addButton(this, this.root, 1150, 160, 144, "Chỉnh sửa", () => this.openDeckEditor(deck, deck.id.startsWith("starter:")), session.online && !this.busy, {
+      disabledReason: session.online ? "Đang chuẩn bị…" : "Cần đăng nhập và kết nối server",
+    });
     const errors = validateDeck(session.data, session.profile, deck);
     const starter = deck.id.startsWith("starter:");
+    if (errors.length === 0) this.text(this.root, 506, 186, starter ? "✓ Deck hợp lệ · Bộ cơ bản — sửa sẽ tạo bản sao" : "✓ Deck hợp lệ", 12, COLORS.text).setStroke("#07101f", 2);
     deck.heroIds.forEach((heroId, index) => {
       const x = HERO_XS[index]!;
       const hero = session.data.heroes[heroId];
@@ -398,10 +490,10 @@ export class DeckSelectScene extends Phaser.Scene {
       this.text(card, 0, HERO_H / 2 - 22, hero ? `HP ${hero.maxHp}` : "", 11, COLORS.dimText).setOrigin(0.5);
       const hit = this.add.rectangle(0, 0, HERO_W, HERO_H, 0, 0);
       card.add(hit);
-      hit.setInteractive({ useHandCursor: true });
+      hit.setInteractive({ useHandCursor: !this.busy });
       hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
         this.hideTip();
-        if (pointer.button !== 0) return;
+        if (pointer.button !== 0 || this.busy) return;
         this.openDeckEditor(deck, starter);
       });
       hit.on("pointerover", () => {
@@ -416,9 +508,9 @@ export class DeckSelectScene extends Phaser.Scene {
       this.root.add(card);
     });
 
-    const statusText = errors.length === 0 ? "✓ Deck hợp lệ" : `⚠ ${describeDeckError(session.data, errors[0]!)}`;
-    this.text(this.root, 830, 604, statusText, 12, errors.length === 0 ? COLORS.gold : "#ff8080").setOrigin(0.5);
-    addButton(this, this.root, 830, 648, 240, "Đổi deck ▾", () => this.openDeckOverlay());
+    if (errors.length > 0) this.root.add(this.add.text(840, 546, `⚠ ${describeDeckError(session.data, errors[0]!)}`, {
+      ...TEXT_BASE, fontSize: "13px", color: "#ff8080", align: "center", wordWrap: { width: 680 }, maxLines: 3, stroke: "#07101f", strokeThickness: 2,
+    }).setOrigin(0.5, 0));
   }
 
   /** Starter decks cannot be edited — the portrait opens the deck-builder on a copy. */
@@ -459,7 +551,54 @@ export class DeckSelectScene extends Phaser.Scene {
     this.overlayPanel = null;
   }
 
+  /** Slim ▲/▼ strip over the list — 920×24, thinner than `addButton`'s default row. */
+  private deckScrollArrow(
+    panel: Phaser.GameObjects.Container,
+    y: number,
+    label: "▲" | "▼",
+    onClick: () => void,
+  ): void {
+    const bar = this.add.rectangle(0, y, 920, 24, COLORS.button, 0.8).setStrokeStyle(1, COLORS.panelBorder);
+    bar.setInteractive({ useHandCursor: true });
+    bar.on("pointerover", () => bar.setFillStyle(0x3a5090, 1));
+    bar.on("pointerout", () => bar.setFillStyle(COLORS.button, 0.8));
+    bar.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) onClick();
+    });
+    panel.add(bar);
+    addText(this, panel, 0, y, label, 11, COLORS.text).setOrigin(0.5);
+  }
+
+  /**
+   * One text cell clipped to `maxWidth`: if the full string doesn't fit, it is
+   * shortened with an ellipsis and reports `truncated` so the caller can offer
+   * the full text in a hover tooltip.
+   */
+  private fitColumn(
+    panel: Phaser.GameObjects.Container,
+    x: number,
+    y: number,
+    full: string,
+    maxWidth: number,
+    size: number,
+    color: string,
+  ): { truncated: boolean } {
+    const label = addText(this, panel, x, y, full, size, color).setOrigin(0, 0.5);
+    if (label.width <= maxWidth) return { truncated: false };
+    let lo = 0;
+    let hi = full.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      label.setText(`${full.slice(0, mid)}…`);
+      if (label.width <= maxWidth) lo = mid + 1;
+      else hi = mid;
+    }
+    label.setText(`${full.slice(0, Math.max(0, lo - 1))}…`);
+    return { truncated: true };
+  }
+
   private renderDeckList(panel: Phaser.GameObjects.Container) {
+    this.hideTip();
     panel.removeAll(true);
     const data = session.data;
     const online = session.online;
@@ -467,45 +606,51 @@ export class DeckSelectScene extends Phaser.Scene {
     this.text(panel, 0, -240, "Chọn deck xuất trận — Hero của deck hiện ở màn chính", 12, COLORS.dimText).setOrigin(0.5);
 
     const decks = this.decks();
+    const selectedId = this.selectedDeck().id;
     const VISIBLE = 11;
-    const maxScroll = Math.max(0, decks.length - VISIBLE);
-    this.overlayScroll = Phaser.Math.Clamp(this.overlayScroll, 0, maxScroll);
-    decks.slice(this.overlayScroll, this.overlayScroll + VISIBLE).forEach((deck, index) => {
-      const y = -206 + index * ROW_H;
+    const [first, end] = this.overlayScroller.range(decks.length, VISIBLE);
+    this.overlayScroll = first;
+    this.text(panel, 446, -240, `${first + 1}–${end} / ${decks.length}`, 12, COLORS.dimText).setOrigin(1, 0.5);
+
+    const view = visibleWorld(this);
+    const panelY = view.y + view.h / 2 + 10;
+    decks.slice(first, end).forEach((deck, index) => {
+      const y = -177 + index * ROW_H;
       const errors = validateDeck(data, session.profile, deck);
       const avg = deck.cardIds.reduce((sum, id) => sum + (data.cards[id]?.cost ?? 0), 0) / Math.max(1, deck.cardIds.length);
-      const isSelected = deck.id === this.selected;
+      const isSelected = deck.id === selectedId;
       const row = this.add.rectangle(0, y, 920, 32, isSelected ? 0x2a3a70 : 0x141b33);
       row.setStrokeStyle(1, isSelected ? COLORS.goldFill : COLORS.panelBorder);
       row.setInteractive({ useHandCursor: true });
-      row.on("pointerup", () => {
-        this.selected = deck.id;
+      row.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (pointer.button !== 0) return;
+        session.selectedDeckId = deck.id;
         this.renderDeckList(panel);
         this.render();
         this.queueHeroArt();
       });
       panel.add(row);
+      const desc = `${deck.name}  ·  ${this.heroNames(deck.heroIds)}  ·  cost TB ${avg.toFixed(1)}`;
       const status = errors.length === 0 ? "✓" : `⚠ ${describeDeckError(data, errors[0]!)}`;
-      this.text(panel, -446, y, `${deck.name}  ·  ${this.heroNames(deck.heroIds)}  ·  cost TB ${avg.toFixed(1)}`, 13).setOrigin(0, 0.5);
-      this.text(panel, 446, y, status, 12, errors.length === 0 ? COLORS.gold : "#ff8080").setOrigin(1, 0.5);
+      const descFit = this.fitColumn(panel, -446, y, desc, 600, 13, COLORS.text);
+      const statusFit = this.fitColumn(panel, 170, y, status, 276, 12, errors.length === 0 ? COLORS.gold : "#ff8080");
+      if (descFit.truncated || statusFit.truncated) {
+        row.on("pointerover", () => {
+          this.hideTip();
+          // Above the overlay (900), below modals (2000) — scene-root default is 200.
+          this.navTooltip = showTextTooltip(this, view.x + view.w / 2 - 260, panelY + y + 24, [desc, status], 520)
+            .setDepth(1500);
+        });
+        row.on("pointerout", () => this.hideTip());
+      }
     });
-    if (this.overlayScroll > 0) {
-      addButton(this, panel, 0, -206 - 18, 920, "▲", () => {
-        this.overlayScroll -= 1;
-        this.renderDeckList(panel);
-      });
-    }
-    if (this.overlayScroll < maxScroll) {
-      addButton(this, panel, 0, -206 + VISIBLE * ROW_H + 18, 920, "▼", () => {
-        this.overlayScroll += 1;
-        this.renderDeckList(panel);
-      });
-    }
+    if (first > 0) this.deckScrollArrow(panel, -214, "▲", () => this.overlayScroller.scrollBy(-1));
+    if (end < decks.length) this.deckScrollArrow(panel, 220, "▼", () => this.overlayScroller.scrollBy(1));
 
     const deck = this.selectedDeck();
     const starter = deck.id.startsWith("starter:");
     const starterReason = online ? "Bộ cơ bản không sửa hay xóa được — hãy Sao chép" : "Cần đăng nhập và kết nối server";
-    const y = 250;
+    const y = 260;
     addButton(this, panel, -330, y, 140, "Sửa", () => this.edit(deck), !starter && online, { disabledReason: starterReason });
     addButton(this, panel, -170, y, 140, "Sao chép", () => this.edit({ ...deck, id: "", name: `${deck.name} (bản sao)`.slice(0, 24) }), online, {
       disabledReason: "Cần đăng nhập và kết nối server",
@@ -513,13 +658,16 @@ export class DeckSelectScene extends Phaser.Scene {
     addButton(this, panel, -10, y, 140, "Xóa", () => {
       void confirmModal(this, `Xóa deck "${deck.name}"? Không hoàn tác được.`, { label: "Xóa deck", danger: true }).then((ok) => {
         if (!ok) return;
+        const generation = this.generation;
         mutate("DELETE", `/profile/decks/${deck.id}`).then(
           () => {
-            this.selected = `starter:${teamKey(session.heroIds)}`;
+            if (!this.isCurrent(generation)) return;
+            session.selectedDeckId = this.selectedDeck().id;
             if (this.overlayPanel) this.renderDeckList(this.overlayPanel);
             this.render();
           },
           (error: unknown) => {
+            if (!this.isCurrent(generation)) return;
             void alertModal(this, errorText(error));
           },
         );
@@ -566,46 +714,63 @@ export class DeckSelectScene extends Phaser.Scene {
       const enter = () => {
         if (this.busy) return;
         this.busy = true;
-        startStoryTicket(session.pendingStageId!, { id: deck.id, heroIds: [...deck.heroIds] as Team }).then(
-          () => this.scene.start("combat"),
-          (error: unknown) => {
-            this.busy = false;
-            void alertModal(this, errorText(error));
-          },
+        this.render();
+        const generation = this.generation;
+        void this.withCombatAssets(generation, () =>
+          startStoryTicket(session.pendingStageId!, { id: deck.id, heroIds: [...deck.heroIds] as Team }, { guard: this.requestGuard() }).then(
+            () => this.scene.start("combat"),
+            (error: unknown) => {
+              if (error instanceof StaleRequestError || !this.isCurrent(generation)) return;
+              this.busy = false;
+              this.render();
+              void alertModal(this, errorText(error));
+            },
+          ),
         );
       };
-      addButton(this, this.root, 234, 320, 240, "Vào trận", enter, errors.length === 0 && online, {
+      addButton(this, this.root, 234, 320, 240, "Vào trận", enter, errors.length === 0 && online && !this.busy, {
         variant: "primary",
         disabledReason: errors.length ? describeDeckError(data, errors[0]!) : "Cốt Truyện cần đăng nhập — server ghi nhận kết quả",
       });
       addButton(this, this.root, 234, 368, 240, "Hủy", () => {
         session.pendingStageId = null;
         this.scene.start("story");
-      });
+      }, !this.busy);
+      if (this.busy) this.text(this.root, 234, 412, "Đang chuẩn bị…", 13, COLORS.gold).setOrigin(0.5);
     } else {
       const run = () => {
         if (this.busy) return;
         this.busy = true;
-        startServerRun({ id: deck.id, heroIds: [...deck.heroIds] as Team }).then(
-          () => this.scene.start("run"),
-          (error: unknown) => {
-            this.busy = false;
-            void alertModal(this, errorText(error));
-          },
+        this.render();
+        const generation = this.generation;
+        void this.withCombatAssets(generation, () =>
+          startServerRun({ id: deck.id, heroIds: [...deck.heroIds] as Team }, { guard: this.requestGuard() }).then(
+            () => this.scene.start("run"),
+            (error: unknown) => {
+              if (error instanceof StaleRequestError || !this.isCurrent(generation)) return;
+              this.busy = false;
+              this.render();
+              void alertModal(this, errorText(error));
+            },
+          ),
         );
       };
       const errors = validateDeck(data, session.profile, deck);
       const needOnline = "Cần đăng nhập và kết nối server";
-      this.modeTile(120, "mode_arena", "node_combat", "Đấu Trường", "Xếp hạng · Đấu Tập · Phòng riêng", () => this.scene.start("arena"), online, needOnline);
-      this.modeTile(214, "mode_run", "moon_waxingCrescent", "Tầm Nguyệt", "Hành trình roguelike — leo tầng, nhặt Nguyệt Bảo", run, online && errors.length === 0, online ? (errors.length ? describeDeckError(data, errors[0]!) : undefined) : needOnline);
-      this.modeTile(308, "mode_coop", "nav_exchange", "Liên Thủ", "Co-op 2 người — kích Hợp Kích cùng đồng đội", () => this.scene.start("coop-lobby"), online, needOnline);
-      this.modeTile(402, "mode_story", "nav_history", "Cốt Truyện", "Hành trình theo chương — Arc 1–2", () => this.scene.start("story"), online, needOnline);
-      if (!online) {
-        this.text(this.root, 234, 470, "Offline — mọi chế độ cần kết nối server", 12, "#ff8080").setOrigin(0.5);
+      const locked = this.busy;
+      const busyReason = locked ? "Đang chuẩn bị…" : undefined;
+      this.modeTile({ x: 234, y: 190, width: 380, height: 156, arena: true }, "mode_arena", "node_combat", "Đấu Trường", "Xếp hạng · Đấu Tập · Phòng riêng", () => this.scene.start("arena"), online && !locked, online ? busyReason : needOnline);
+      this.modeTile({ x: 234, y: 338, width: 380, height: 112 }, "mode_run", "moon_waxingCrescent", "Tầm Nguyệt", "Hành trình roguelike · Nguyệt Bảo", run, online && errors.length === 0 && !locked, online ? (busyReason ?? (errors.length ? describeDeckError(data, errors[0]!) : undefined)) : needOnline);
+      this.modeTile({ x: 136, y: 465, width: 184, height: 114, compact: true }, "mode_coop", "nav_exchange", "Liên Thủ", "Co-op 2 người", () => this.scene.start("coop-lobby"), online && !locked, online ? busyReason : needOnline);
+      this.modeTile({ x: 332, y: 465, width: 184, height: 114, compact: true }, "mode_story", "nav_history", "Cốt Truyện", "Hành trình theo chương", () => this.scene.start("story"), online && !locked, online ? busyReason : needOnline);
+      if (this.busy) this.text(this.root, 234, 554, "Đang chuẩn bị…", 13, COLORS.gold).setOrigin(0.5);
+      else if (!online) {
+        this.text(this.root, 234, 554, "Offline — mọi chế độ cần kết nối server", 12, "#ff8080").setOrigin(0.5);
       }
     }
 
     this.renderTeam(deck);
+    this.renderFooter();
   }
 
   /** Compact team picker, only used to seed a brand-new deck's heroIds. */
