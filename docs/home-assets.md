@@ -238,3 +238,35 @@ Generate ONE NEW transparent raster UI icon for anime gufeng fantasy card game V
 - `nav_inventory`: one closed deep-navy equipment CHEST with gold edges and a large ivory crescent clasp. No shop awning or coins.
 - `nav_mastery`: one open ivory BOOK with thick gold edges and one small ivory crescent floating immediately above; navy cover, no writing or scroll background.
 - `nav_logout`: one ornate navy/gold open DOORWAY with a bold ivory ARROW exiting to the right, clearly an exit icon; no landscape.
+
+## Website / Home logo — 2026-10-10
+
+- Saved asset: `apps/client/public/assets/ui/logo_vong_nguyet.png` — **1200×383 RGBA PNG**, 422873 bytes, transparent exterior. Runtime key: `ui:logo_vong_nguyet`.
+- Built-in `image_gen.imagegen`, new-image mode with `transparent_background=true`; `ui/nav_mastery.png` is a style reference only. The generated 2172×724 PNG was trimmed to alpha bounds with a small safe margin and resized with Lanczos; no creative edits or repainted text.
+- Home preloads the logo and fits it proportionally within 300×86 at (44, 4), replacing the brand text. Account name remains below at y=100, truncated to 380px. Failed logo loading falls back to the original brand wording.
+- Typecheck/build passed. Browser verification passed at 1280×720, 1280×900, 1920×1080, offline, and blocked-logo fallback; no page errors. Logo bounds: (44, 4)–(313.45, 90). Screenshots and validation: `output/home-logo/` (ignored).
+
+### Final generation prompt
+
+```text
+Create ONE finished premium HORIZONTAL LOGO lockup for Vietnamese anime gufeng fantasy card game website. Reference image is STYLE REFERENCE ONLY, not an edit target. Brand lettering EXACTLY: primary line 'VỌNG NGUYỆT' (all Vietnamese diacritics correct, Ộ in VỌNG and Ệ in NGUYỆT); smaller second line 'THƯ VIỆN' (correct Ư and Ệ). Composition is a compact wide horizontal wordmark aspect about 4:1: one distinctive crescent moon embracing a small stylized open ivory book emblem on LEFT, large elegant readable custom serif title on RIGHT, centered smaller subtitle underneath title. Strong broad clean letter shapes with restrained tapered calligraphic endings, legible when the whole logo is displayed at 300px wide. Primary lettering ivory with antique-gold accents and bold deep-indigo outline, subtitle pale warm gold, cel-shaded 2D anime illustration, understated elegant Asian moon-library identity, cohesive with the reference navy/ivory/gold UI. Moon and book emblem simplified, about the total height of both title lines. Subtle jade gem accent at the emblem base optional. No photorealism, no 3D extrusion, no complex flourish surrounding letters, no ornate frame, no extra taglines, no Chinese characters, no watermark, no UI mockup, no background rectangle, no exterior halo. Fully transparent alpha outside the emblem and letterforms, including counters inside letters. Entire logo isolated; generous 5% safe margins, fill the width with the lockup; wide landscape canvas.
+```
+
+## Favicon — 2026-10-10
+
+Derived from the Home logo with built-in `image_gen.imagegen` in edit mode, transparent background. Retains the moon/book emblem and removes lettering. Generated source was resized/exported using Lanczos; all PNG files preserve alpha.
+
+| Saved file | Dimensions | Use |
+| --- | --- | --- |
+| `apps/client/public/favicon-512.png` | 512×512 RGBA | Standalone brand mark |
+| `apps/client/public/favicon.png` | 32×32 RGBA | Modern browser tab |
+| `apps/client/public/favicon.ico` | 16×16, 32×32, 48×48 | Browser favicon compatibility |
+| `apps/client/public/apple-touch-icon.png` | 180×180 RGBA | Add to home screen |
+
+The website head in `apps/client/index.html` references ICO, PNG and Apple touch icon. PNG dimensions and ICO embedded sizes verified; the 32px export was inspected at native size. Client build passed; Chromium loaded all three linked files with HTTP 200 and decoded them at 48×48, 32×32 and 180×180 respectively. Evidence: `output/favicon/validation.json` (ignored).
+
+### Final favicon prompt
+
+```text
+Edit the attached Vong Nguyet logo into ONE square standalone favicon emblem. KEEP the recognizable left-hand symbol: antique-gold and ivory crescent moon wrapping the open book, deep-indigo outlines, tiny blue diamond at the base, polished 2D anime cel-shaded art. REMOVE ALL lettering and wordmark, subtitle, and horizontal ornaments completely. Recompose only this moon/book emblem centered on a square canvas, filling 90% of the canvas with an even small transparent margin, keeping the complete crescent and book within safe bounds. Simplify tiny filigree and book page lines into broad clean shapes so the silhouette reads at 16px and 32px. Preserve the brand's moon/book arrangement, ivory-gold-navy palette and blue gem; no new symbols. Transparent alpha outside the emblem and inside the crescent gap. No background plate, glow, shadow, text, border around the canvas or additional objects. Output one finished favicon mark only.
+```

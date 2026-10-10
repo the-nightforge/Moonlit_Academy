@@ -35,7 +35,7 @@ const PICK_TOP = 110;
 const HERO_W = 200;
 const HERO_H = 288;
 const HERO_Y = 365;
-const HERO_XS = [606, 840, 1074] as const;
+const HERO_XS = [606, 871, 1136] as const;
 
 export function describeDeckError(data: GameData, error: DeckError): string {
   switch (error.code) {
@@ -120,7 +120,7 @@ export class DeckSelectScene extends Phaser.Scene {
         "cur_moonJade", "cur_moonStar", "cur_honor",
         "moon_full", "star", "gear", "check", "bolt", "seal", "nav_back",
         "epitomized_moon", "nav_banners", "nav_shop", "intent_buff",
-        "nav_heroes", "nav_inventory", "nav_mastery", "nav_logout", "lock",
+        "nav_heroes", "nav_inventory", "nav_mastery", "nav_logout", "logo_vong_nguyet", "lock",
         // Interim mode glyphs until the ui:mode_* set ships (`docs/home-assets.md`).
         "node_combat", "moon_waxingCrescent", "nav_exchange", "nav_history",
       ],
@@ -181,7 +181,7 @@ export class DeckSelectScene extends Phaser.Scene {
       const art = this.add.image(cx, cy, bgKey).setDepth(-3);
       art.setScale(Math.max(view.w / art.width, view.h / art.height));
       const scrim = this.add.graphics().setDepth(-2);
-      scrim.fillGradientStyle(0x050c18, 0x050c18, 0x050c18, 0x050c18, 0.88, 0.25, 0.88, 0.25);
+      scrim.fillGradientStyle(0x050c18, 0x050c18, 0x050c18, 0x050c18, 0.88, 0, 0.88, 0);
       scrim.fillRect(view.x, view.y, view.w * 0.55, view.h);
       scrim.fillGradientStyle(0x050c18, 0x050c18, 0x050c18, 0x050c18, 0, 0, 0.55, 0.55);
       scrim.fillRect(view.x, view.y + view.h * 0.62, view.w, view.h * 0.38);
@@ -347,8 +347,16 @@ export class DeckSelectScene extends Phaser.Scene {
 
   private renderHeader() {
     const online = session.online;
-    this.text(this.root, 44, 30, auth.username ?? "Vọng Nguyệt Thư Viện", 17, COLORS.gold).setOrigin(0, 0.5);
-    if (auth.username) this.text(this.root, 44, 52, "Vọng Nguyệt Thư Viện", 13, COLORS.dimText).setOrigin(0, 0.5);
+    const logoKey = "ui:logo_vong_nguyet";
+    if (this.textures.exists(logoKey)) {
+      const logo = this.add.image(44, 4, logoKey).setOrigin(0);
+      logo.setScale(Math.min(300 / logo.width, 86 / logo.height));
+      this.root.add(logo);
+      if (auth.username) this.fitColumn(this.root, 44, 100, auth.username, 380, 13, COLORS.dimText);
+    } else {
+      this.text(this.root, 44, 30, "Vọng Nguyệt Thư Viện", 17, COLORS.gold).setOrigin(0, 0.5);
+      if (auth.username) this.fitColumn(this.root, 44, 52, auth.username, 380, 13, COLORS.dimText);
+    }
     if (online) {
       const currencies = session.profile.currencies;
       this.currencyChip(820, "cur_moonJade", CURRENCY_LABELS.moonJade, currencies.moonJade);
@@ -382,7 +390,7 @@ export class DeckSelectScene extends Phaser.Scene {
       ["nav_mastery", "Tu Luyện", () => this.scene.start("mastery"), canUnlock],
     ];
     nav.forEach(([icon, label, go, dot], index) => {
-      const panel = roundedPanel(this, 236 + index * 202, 658, 184, 64, 0x15243b, enabled ? 0.95 : 0.6, 0x726449, 12);
+      const panel = roundedPanel(this, 152 + index * 244, 658, 184, 64, 0x15243b, enabled ? 0.95 : 0.6, 0x726449, 12);
       const key = `ui:${icon}`;
       let image: Phaser.GameObjects.Image | undefined;
       if (this.textures.exists(key)) { image = this.add.image(-61, 0, key).setDisplaySize(32, 32); panel.add(image); }
@@ -477,35 +485,39 @@ export class DeckSelectScene extends Phaser.Scene {
     if (name.truncated) {
       this.controls.info(name.label, () => this.tipAt(name.label, [deck.name], 440), () => this.hideTip());
     }
-    this.button(this.root, 996, 160, 130, "Đổi deck ▾", () => this.openDeckOverlay(), !this.busy, { variant: "primary" });
-    this.button(this.root, 1150, 160, 144, starter ? "Sao chép & sửa" : "Chỉnh sửa", () => this.openDeckEditor(deck, starter), session.online && !this.busy, {
+    this.button(this.root, 1015, 160, 130, "Đổi deck ▾", () => this.openDeckOverlay(), !this.busy, { variant: "primary" });
+    this.button(this.root, 1164, 160, 144, starter ? "Sao chép & sửa" : "Chỉnh sửa", () => this.openDeckEditor(deck, starter), session.online && !this.busy, {
       disabledReason: session.online ? this.busyStage : "Cần đăng nhập và kết nối server",
     });
     const errors = validateDeck(session.data, session.profile, deck);
-    const avg = deck.cardIds.reduce((sum, id) => sum + (session.data.cards[id]?.cost ?? 0), 0) / Math.max(1, deck.cardIds.length);
-    const statusPanel = roundedPanel(this, 708.5, 194, 405, 28, 0x0a1727, 0.9, 0x47596a, 9);
-    this.root.add(statusPanel);
-    const status = this.text(statusPanel, -190.5, 0, errors.length ? "⚠ Cần chỉnh sửa" : `✓ Sẵn sàng · ${deck.cardIds.length} lá · Nguyệt Lực TB ${avg.toFixed(1).replace(".", ",")}`, 13, errors.length ? "#ff9f9f" : "#aad9c4").setOrigin(0, 0.5);
-    if (errors.length) {
-      const show = () => this.tipAt(status, errors.map((error) => describeDeckError(session.data, error)), 400);
-      this.controls.info(status, show, () => this.hideTip());
-    }
     deck.heroIds.forEach((heroId, index) => {
       const x = HERO_XS[index]!;
       const hero = session.data.heroes[heroId];
       const card = roundedPanel(this, x, HERO_Y, HERO_W, HERO_H, 0x101c36, 0.9, 0x7d90b8, 14);
+      // Full-bleed art clipped to the card's exact rounded shape — the mask
+      // covers the panel chrome (incl. its border) so no second edge shows.
+      const clip = this.add.graphics();
+      clip.fillStyle(0xffffff).fillRoundedRect(-HERO_W / 2, -HERO_H / 2, HERO_W, HERO_H, 14);
+      clip.setVisible(false);
+      card.add(clip);
+      const cardMask = clip.createGeometryMask();
       const artKey = this.heroArtKey(heroId);
       if (this.textures.exists(artKey)) {
-        const art = this.add.image(0, -18, artKey);
-        coverCrop(art, HERO_W - 10, HERO_H - 62);
+        const art = this.add.image(0, 0, artKey).setMask(cardMask);
+        coverCrop(art, HERO_W, HERO_H);
         card.add(art);
       } else {
         this.text(card, 0, -18, "❖", 40, COLORS.dimText).setOrigin(0.5);
       }
-      const namePlate = this.add.rectangle(0, HERO_H / 2 - 32, HERO_W - 10, 56, 0x0a1426, 0.88);
-      card.add(namePlate);
-      this.text(card, 0, HERO_H / 2 - 44, hero?.name ?? heroId, 17, COLORS.text).setOrigin(0.5);
-      this.text(card, 0, HERO_H / 2 - 20, hero ? FACTION_LABELS[hero.faction] : "", 13, "#aab4ca").setOrigin(0.5);
+      // The name plate lives inside the art — a bottom band that fades in.
+      const plate = this.add.graphics().setMask(cardMask);
+      plate.fillGradientStyle(0x0a1426, 0x0a1426, 0x0a1426, 0x0a1426, 0, 0, 0.85, 0.85);
+      plate.fillRect(-HERO_W / 2, HERO_H / 2 - 80, HERO_W, 80);
+      card.add(plate);
+      this.text(card, 0, HERO_H / 2 - 50, hero?.name ?? heroId, 17, COLORS.text).setOrigin(0.5).setStroke("#07101f", 2);
+      this.text(card, 0, HERO_H / 2 - 24, hero ? FACTION_LABELS[hero.faction] : "", 13, "#aab4ca").setOrigin(0.5).setStroke("#07101f", 2);
+      // The frame sits on top of the art at the same edge the mask clips to.
+      card.add(this.add.graphics().lineStyle(1.5, 0x7d90b8, 0.9).strokeRoundedRect(-HERO_W / 2, -HERO_H / 2, HERO_W, HERO_H, 14));
       const hit = this.add.rectangle(0, 0, HERO_W, HERO_H, 0, 0);
       card.add(hit);
       const progress = session.profile.heroes[heroId];
@@ -707,7 +719,7 @@ export class DeckSelectScene extends Phaser.Scene {
     this.renderHeader();
 
     if (storyMode && storyStage) {
-      const panel = roundedPanel(this, 234, 280, 360, 320, 0x101c36, 0.94, 0x7d90b8, 14);
+      const panel = roundedPanel(this, 234, 280, 380, 320, 0x101c36, 0.94, 0x7d90b8, 14);
       this.text(panel, 0, -130, "Cốt Truyện", 15, COLORS.dimText).setOrigin(0.5);
       this.text(panel, 0, -102, storyStage.name, 21, COLORS.gold).setOrigin(0.5);
       panel.add(
