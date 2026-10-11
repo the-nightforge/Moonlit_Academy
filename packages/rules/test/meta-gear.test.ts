@@ -22,26 +22,28 @@ function gearDeck(data: GameData) {
 }
 
 describe("gear in decks, gacha and loadouts", () => {
-  it("T197: validateDeck checks weapon slots, ownership and relic limits; a weapon takes one of the 18 slots", () => {
+  it("T197: validateDeck checks weapon slots, ownership and relic limits; weapons stay outside the 18 slots", () => {
     const data = testData();
     const profile = withGear(data);
+    const full = { heroIds: TEAM, cardIds: starterDeck(data, TEAM) };
+    expect(validateDeck(data, profile, { ...full, weapons: { m05: "w_thiet_thuan" }, relicIds: ["r_huyen_vu_giap_phu"] })).toEqual([]);
+    // A carried weapon does not fill a missing slot — the count is cards only.
     const deck = gearDeck(data);
-    expect(validateDeck(data, profile, { ...deck, weapons: { m05: "w_thiet_thuan" }, relicIds: ["r_huyen_vu_giap_phu"] })).toEqual([]);
     expect(validateDeck(data, profile, deck)).toEqual([{ code: "wrongSize", size: 17 }]);
+    expect(validateDeck(data, profile, { ...deck, weapons: { m05: "w_thiet_thuan" } })).toEqual([{ code: "wrongSize", size: 17 }]);
     expect(validateDeck(data, profile, { ...deck, weapons: { m05: null } })).toEqual([{ code: "wrongSize", size: 17 }]);
-    // Five M06 cards is still at least minCardsPerHero; the weapon card is not counted per hero.
-    expect(validateDeck(data, profile, { ...deck, weapons: { m06: "w_thiet_thuan" } })).toEqual([]);
+    // A weapon on a full deck is still valid; its card never counts per hero.
+    expect(validateDeck(data, profile, { ...full, weapons: { m06: "w_thiet_thuan" } })).toEqual([]);
 
-    const base = { heroIds: TEAM, cardIds: starterDeck(data, TEAM).slice(0, 16) };
-    expect(validateDeck(data, profile, { ...base, weapons: { m05: "w_thiet_thuan", f04: "w_thiet_thuan" } })).toEqual([{ code: "weaponTwice", weaponId: "w_thiet_thuan" }]);
-    expect(validateDeck(data, profile, { ...deck, weapons: { f03: "w_thiet_thuan" } })).toEqual([{ code: "weaponSlot", heroId: "f03" }]);
-    expect(validateDeck(data, profile, { ...deck, weapons: { m05: "w_tinh_ban" } })).toEqual([{ code: "unownedWeapon", weaponId: "w_tinh_ban" }]);
-    expect(validateDeck(data, profile, { ...deck, weapons: { m05: "no_such_weapon" } })).toEqual([{ code: "unownedWeapon", weaponId: "no_such_weapon" }]);
+    expect(validateDeck(data, profile, { ...full, weapons: { m05: "w_thiet_thuan", f04: "w_thiet_thuan" } })).toEqual([{ code: "weaponTwice", weaponId: "w_thiet_thuan" }]);
+    expect(validateDeck(data, profile, { ...full, weapons: { f03: "w_thiet_thuan" } })).toEqual([{ code: "weaponSlot", heroId: "f03" }]);
+    expect(validateDeck(data, profile, { ...full, weapons: { m05: "w_tinh_ban" } })).toEqual([{ code: "unownedWeapon", weaponId: "w_tinh_ban" }]);
+    expect(validateDeck(data, profile, { ...full, weapons: { m05: "no_such_weapon" } })).toEqual([{ code: "unownedWeapon", weaponId: "no_such_weapon" }]);
 
-    const full = { ...deck, weapons: { m05: "w_thiet_thuan" } };
-    expect(validateDeck(data, profile, { ...full, relicIds: ["r_thien_sach"] })).toEqual([{ code: "unownedRelic", relicId: "r_thien_sach" }]);
-    expect(validateDeck(data, profile, { ...full, relicIds: ["r_tran_hon_linh", "r_tran_hon_linh"] })).toEqual([{ code: "duplicateRelic", relicId: "r_tran_hon_linh" }]);
-    expect(validateDeck(data, profile, { ...full, relicIds: ["r_tran_hon_linh", "r_huyen_vu_giap_phu", "r_loan_linh_an"] })).toEqual([{ code: "tooManyRelics", count: 3 }]);
+    const geared = { ...full, weapons: { m05: "w_thiet_thuan" } };
+    expect(validateDeck(data, profile, { ...geared, relicIds: ["r_thien_sach"] })).toEqual([{ code: "unownedRelic", relicId: "r_thien_sach" }]);
+    expect(validateDeck(data, profile, { ...geared, relicIds: ["r_tran_hon_linh", "r_tran_hon_linh"] })).toEqual([{ code: "duplicateRelic", relicId: "r_tran_hon_linh" }]);
+    expect(validateDeck(data, profile, { ...geared, relicIds: ["r_tran_hon_linh", "r_huyen_vu_giap_phu", "r_loan_linh_an"] })).toEqual([{ code: "tooManyRelics", count: 3 }]);
   });
 
   it("T203: weapon cards stay out of the run deck, join every combat and replay with the loadout", () => {

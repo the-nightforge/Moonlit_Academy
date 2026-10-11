@@ -80,7 +80,7 @@ test.describe("deck interactions", () => {
     await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("Liệt Diệm còn 3 Nguyệt Lực.");
     await page.keyboard.press("Escape");
     await clickNamed(page, "deck-builder", "deck_gear_equip");
-    await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("19/18 ô bộ bài");
+    await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("18/18 ô bộ bài");
     expect(await page.evaluate(() => (window as any).__vn.session.editingDeck.weapons.m05)).toBe("w_xich_diem_thuong");
     await page.screenshot({ path: testInfo.outputPath("editor-weapon.png") });
   });
@@ -257,7 +257,7 @@ test.describe("deck interactions", () => {
     } finally { release(); }
   });
 
-  test("weapon takes a slot and its battle copies appear in stats", async ({ page }) => {
+  test("weapon does not take a slot and its battle copies appear in stats", async ({ page }) => {
     await openSignedIn(page, await registerAccount());
     await copyStarter(page);
     const expected = await page.evaluate(() => {
@@ -273,9 +273,9 @@ test.describe("deck interactions", () => {
         weapon: weapon.card.copies as number,
       };
     });
-    await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("19/18");
+    await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("18/18");
     await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain(`${expected.cards} bản trong chồng bài · +${expected.weapon} binh khí`);
-    await expect.poll(() => texts(page)).toContain("Lưu bản nháp");
+    await expect.poll(() => texts(page)).toContain("Lưu và dùng");
   });
 
   test("relic tile tooltip lists every Cộng Minh level and highlights the current one", async ({ page }) => {

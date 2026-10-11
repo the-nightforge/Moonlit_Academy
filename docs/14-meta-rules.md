@@ -178,8 +178,9 @@ type DeckError =
   | { code: "tooManyRelics"; count: number };      // > maxRelics (2)
 ```
 
-**[GĐ4e]** `wrongSize`: `cardIds.length` + số Hero có vũ khí ≠ `deckSize` (mỗi vũ khí
-chiếm 1 ô dù lá có 2 bản). Lá Binh Khí **không** tính vào `minCardsPerHero`.
+**[GĐ4e]** `wrongSize`: `cardIds.length` ≠ `deckSize` — vũ khí **không** chiếm ô
+(lá Binh Khí vẫn trộn vào chồng rút lúc tạo trận, `01` §14.2). Lá Binh Khí
+**không** tính vào `minCardsPerHero`.
 `meta-config.json` thêm `maxRelics: 2`.
 
 `validateDeck(data, profile, deck): DeckError[]` — kiểm tra mọi luật, trả mọi lỗi theo thứ tự trên (rỗng = hợp lệ).

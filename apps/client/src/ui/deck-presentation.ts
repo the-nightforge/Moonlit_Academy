@@ -23,7 +23,8 @@ export function summarizeDeck(data: GameData, deck: SavedDeck, options?: { profi
   const heroCounts = Object.fromEntries(deck.heroIds.map((id) => [id, new Set(deck.cardIds.filter((cardId) => data.cards[cardId]?.ownerId === id)).size]));
   // `copies` is the honest draw pile (weapon cards join it, `01` §14.2);
   // `cardCopies` excludes them for the "bản trong chồng bài" counter.
-  return { slots: deck.cardIds.length + weapons.length, copies, cardCopies: copies - weaponCopies, weaponCopies, averageCost: copies ? totalCost / copies : 0, curve, heroCounts };
+  // Weapons cost no deck slots (`14` §3.1) — `slots` counts card defs only.
+  return { slots: deck.cardIds.length, copies, cardCopies: copies - weaponCopies, weaponCopies, averageCost: copies ? totalCost / copies : 0, curve, heroCounts };
 }
 
 export function matchesDeckText(query: string, ...values: string[]): boolean {

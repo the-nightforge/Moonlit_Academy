@@ -38,10 +38,9 @@ export function validateDeck(
   for (const heroId of heroIds) {
     if (!heroOwned(heroId)) errors.push({ code: "unownedHero", heroId });
   }
-  // Each carried weapon takes one of the deck's slots (`14` §3.1).
+  // Carried weapons ride along; only card definitions occupy slots (`14` §3.1).
   const weapons = deckWeapons(deck);
-  const size = cardIds.length + weapons.length;
-  if (size !== data.metaConfig.deckSize) errors.push({ code: "wrongSize", size });
+  if (cardIds.length !== data.metaConfig.deckSize) errors.push({ code: "wrongSize", size: cardIds.length });
   const unique = new Set<string>();
   for (const cardId of cardIds) {
     if (unique.has(cardId)) errors.push({ code: "duplicateCard", cardId });

@@ -119,14 +119,13 @@ describe("PvP loadout and deck rules", () => {
     expect(validateDeck(noTrial, profile, { heroIds: team, cardIds: cards }, PVP)).toContainEqual({ code: "unownedHero", heroId: "f03" });
 
     // Free weapon on an unowned-trial hero's slot: fine in pvp, unownedWeapon in pve.
-    const slots = cards.length - 1; // one slot freed for the weapon
-    const geared = { heroIds: team, cardIds: cards.slice(1), weapons: { m05: freeWeapon } };
-    expect(validateDeck(data, profile, { ...geared, cardIds: cards.slice(0, slots) }, PVP)).toEqual([]);
-    expect(validateDeck(data, profile, { ...geared, cardIds: cards.slice(0, slots) })).toContainEqual({ code: "unownedWeapon", weaponId: freeWeapon });
+    const geared = { heroIds: team, cardIds: cards, weapons: { m05: freeWeapon } };
+    expect(validateDeck(data, profile, geared, PVP)).toEqual([]);
+    expect(validateDeck(data, profile, geared)).toContainEqual({ code: "unownedWeapon", weaponId: freeWeapon });
     // A non-free unowned weapon stays an error in pvp too.
     const paidWeapon = Object.keys(data.weapons).find((id) => !data.pvpConfig.freeWeaponIds.includes(id))!;
     expect(
-      validateDeck(data, profile, { heroIds: team, cardIds: cards.slice(0, slots), weapons: { m05: paidWeapon } }, PVP),
+      validateDeck(data, profile, { ...geared, weapons: { m05: paidWeapon } }, PVP),
     ).toContainEqual({ code: "unownedWeapon", weaponId: paidWeapon });
 
     // Free relic / paid relic.

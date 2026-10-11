@@ -27,8 +27,8 @@ describe("deck presentation", () => {
     expect(pvp.averageCost).toBe(4);
     expect(pvp.curve[4]).toBe(2);
   });
-  it("counts weapon slots and fixed battle copies while relics use no slots", () => {
-    expect(summarizeDeck(data, deck)).toEqual({ slots: 4, copies: 8, cardCopies: 6, weaponCopies: 2, averageCost: 34 / 8, curve: [1, 0, 3, 0, 2, 0, 0, 0, 2], heroCounts: { h1: 2, h2: 1, h3: 0 } });
+  it("weapons add battle copies without occupying slots, relics use none", () => {
+    expect(summarizeDeck(data, deck)).toEqual({ slots: 3, copies: 8, cardCopies: 6, weaponCopies: 2, averageCost: 34 / 8, curve: [1, 0, 3, 0, 2, 0, 0, 0, 2], heroCounts: { h1: 2, h2: 1, h3: 0 } });
   });
   it("handles empty or unknown cards without NaN or changing a draft", () => {
     const draft = { ...deck, cardIds: ["missing"], weapons: {} };
