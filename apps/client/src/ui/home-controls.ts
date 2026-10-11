@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { COLORS, TEXT_BASE } from "./theme";
 import { roundedPanel } from "./rounded-panel";
+import { actionIcon, type ActionIcon } from "./action-icon";
 import type { ButtonOptions } from "./widgets";
 
 interface ControlOptions {
@@ -41,19 +42,24 @@ export class HomeControls {
   info(source: Phaser.GameObjects.Text, showTip: () => void, hideTip: () => void) {
     const background = source.style.backgroundColor;
     let hovered = false;
-    let timer: Phaser.Time.TimerEvent | null = null;
-    const cancel = () => { timer?.remove(false); timer = null; hideTip(); };
+    let timer: number | undefined;
+    const cancel = () => { if (timer !== undefined) { window.clearTimeout(timer); timer = undefined; } hideTip(); };
     const paint = (active: boolean) => source.setBackgroundColor(active ? "#243854" : background);
     const focus = () => { paint(true); cancel(); showTip(); };
     const blur = () => { paint(hovered); cancel(); };
     const target: Target = { hit: source, panel: source.parentContainer, focus, blur, activate: showTip };
     this.targets.push(target);
     source.setInteractive({ useHandCursor: true });
-    source.on("pointerover", () => { hovered = true; paint(true); cancel(); timer = this.scene.time.delayedCall(180, showTip); });
+    source.on("pointerover", () => {
+      hovered = true;
+      paint(true);
+      cancel();
+      timer = window.setTimeout(() => { timer = undefined; if (hovered && source.scene) showTip(); }, 180);
+    });
     source.on("pointerout", () => { hovered = false; paint(this.focused === target); cancel(); });
     source.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.button === 0) { cancel(); showTip(); } });
     source.once(Phaser.GameObjects.Events.DESTROY, () => {
-      timer?.remove(false);
+      if (timer !== undefined) window.clearTimeout(timer);
       if (this.focused === target) this.focused = null;
       this.targets = this.targets.filter((entry) => entry !== target);
     });
@@ -84,7 +90,7 @@ export class HomeControls {
     const { enabled, activate, showTip, hideTip, fill = 0x15243b, border = 0x726449, radius = 12, icon } = options;
     const chrome = panel.list[1] as Phaser.GameObjects.Graphics;
     let hovered = false;
-    let tipTimer: Phaser.Time.TimerEvent | null = null;
+    let tipTimer: number | undefined;
     const iconY = icon?.y ?? 0;
     const paint = (active: boolean) => {
       if (!chrome.scene) return;
@@ -97,7 +103,7 @@ export class HomeControls {
         this.scene.tweens.add({ targets: icon, y: iconY - (active && enabled ? 2 : 0), duration: 140, ease: "Sine.easeOut" });
       }
     };
-    const cancelTip = () => { tipTimer?.remove(false); tipTimer = null; hideTip?.(); };
+    const cancelTip = () => { if (tipTimer !== undefined) { window.clearTimeout(tipTimer); tipTimer = undefined; } hideTip?.(); };
     const focus = () => { paint(true); cancelTip(); showTip?.(); };
     const blur = () => { paint(hovered); cancelTip(); };
     const run = () => { cancelTip(); if (enabled) activate(); else showTip?.(); };
@@ -108,7 +114,7 @@ export class HomeControls {
       hovered = true;
       paint(true);
       cancelTip();
-      if (showTip) tipTimer = this.scene.time.delayedCall(180, showTip);
+      if (showTip) tipTimer = window.setTimeout(() => { tipTimer = undefined; if (hovered && hit.scene) showTip(); }, 180);
     });
     hit.on("pointerout", () => { hovered = false; paint(this.focused === target); cancelTip(); });
     hit.on("pointerdown", () => {
@@ -119,12 +125,26 @@ export class HomeControls {
     });
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.button === 0) run(); });
     hit.once(Phaser.GameObjects.Events.DESTROY, () => {
-      tipTimer?.remove(false);
+      if (tipTimer !== undefined) window.clearTimeout(tipTimer);
       if (icon) this.scene.tweens.killTweensOf(icon);
       this.scene.tweens.killTweensOf(chrome);
       if (this.focused === target) this.focused = null;
       this.targets = this.targets.filter((entry) => entry !== target);
     });
+  }
+
+  iconButton(parent: Phaser.GameObjects.Container, x: number, y: number, icon: ActionIcon, label: string, enabled = true, options: ButtonOptions = {}) {
+    const control = this.button(parent, x, y, 44, "", enabled, options);
+    const image = actionIcon(this.scene, icon);
+    if (image) {
+      image.setAlpha(enabled ? 1 : 0.45);
+      if (!enabled) image.setTint(0x8b93b8);
+      control.panel.add(image);
+    }
+    // Semantic labels survive redraws and let keyboard/tooling identify icon controls.
+    control.panel.setData("actionLabel", label);
+    control.hit.setData("actionLabel", label);
+    return { ...control, icon: image ?? undefined };
   }
 
   button(parent: Phaser.GameObjects.Container, x: number, y: number, width: number, label: string, enabled = true, options: ButtonOptions = {}) {

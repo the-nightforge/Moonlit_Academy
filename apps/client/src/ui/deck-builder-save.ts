@@ -23,10 +23,10 @@ export class DeckDraftSave {
 
   get dirty() { return JSON.stringify(this.deps.deck()) !== this.initial; }
   get disabledReason(): string {
-    if (this.busy) return "Đang lưu deck…";
-    if (!this.deps.online()) return "Cần kết nối để lưu deck";
+    if (this.busy) return "Đang lưu bộ bài…";
+    if (!this.deps.online()) return "Cần kết nối để lưu bộ bài";
     const name = this.deps.deck().name.trim();
-    if (!name || name.length > 24) return "Tên deck phải có 1–24 ký tự";
+    if (!name || name.length > 24) return "Tên bộ bài phải có 1–24 ký tự";
     return "";
   }
 
@@ -45,7 +45,7 @@ export class DeckDraftSave {
       deck.id = reply.deckId;
       deck.name = draft.name;
       this.initial = JSON.stringify(deck);
-      this.notice = use ? "Đã lưu deck" : "Đã lưu bản nháp";
+      this.notice = use ? "Đã lưu bộ bài" : "Đã lưu bản nháp";
       if (use) this.deps.activate(reply.deckId);
     } catch (error) {
       if (!this.deps.current()) return;

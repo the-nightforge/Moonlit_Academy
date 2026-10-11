@@ -2,6 +2,7 @@ import type { Profile } from "rules";
 import { ApiError, api, auth, setToken, setUsername } from "./api";
 import { MatchRegistry } from "./net/match-registry";
 import type { MatchSettlement } from "./net/protocol";
+import type { ArenaMeReply } from "./scenes/arena-scene";
 import { session } from "./session";
 import { API_ERROR_TEXT, CURRENCY_LABELS } from "./ui/theme";
 
@@ -10,14 +11,45 @@ export interface ProfileReply {
   rev: number;
 }
 
+/**
+ * Only the newest `/arena/me` request may fill `session.rank`: a slow reply
+ * issued before a newer fetch (or an account switch) must not overwrite it.
+ */
+let rankRequestSeq = 0;
+
+function rankInfo(me: ArenaMeReply) {
+  return { tierId: me.tier?.id ?? null, tierName: me.tier?.name ?? "—", rating: me.arena.rating };
+}
+
+/** Refreshes `session.rank`; resolves false when the fetch failed. */
+export async function fetchSessionRank(): Promise<boolean> {
+  const seq = ++rankRequestSeq;
+  const generation = auth.generation;
+  try {
+    const me = await api<ArenaMeReply>("GET", "/arena/me");
+    if (seq === rankRequestSeq && generation === auth.generation) session.rank = rankInfo(me);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** `/arena/me` data another caller already holds (arena lobby) feeds the same cache. */
+export function cacheArenaRank(me: ArenaMeReply): void {
+  rankRequestSeq++;
+  session.rank = rankInfo(me);
+}
+
 /** Invalidates old callbacks when authentication expires as well as on logout. */
 export function resetAccount(): void {
   auth.generation++;
+  rankRequestSeq++;
   session.registry?.dispose();
   session.registry = null;
   session.match = null;
   session.selectedDeckId = null;
   session.editingDeck = null;
+  session.rank = null;
 }
 
 /** Replaces the local copy of the profile with the server's (`16` §2). */
@@ -90,6 +122,9 @@ export async function login(username: string, password: string, register: boolea
   applyServerProfile(reply);
   session.selectedDeckId = null;
   session.editingDeck = null;
+  session.rank = null;
+  // Home shows its emblem row fully loaded: the rank arrives with the sign-in.
+  await fetchSessionRank();
   session.online = true;
   matchRegistry();
   // New accounts receive the starter gift with registration (`14` §5).
@@ -115,6 +150,9 @@ export async function resumeSession(): Promise<boolean> {
   const reply = await api<ProfileReply>("GET", "/profile");
   if (generation !== auth.generation || token !== auth.token) return false;
   applyServerProfile(reply);
+  // Sequential after the profile: a dead token fails there first, without a
+  // second `onUnauthorized` from a parallel rank request.
+  await fetchSessionRank();
   session.online = true;
   matchRegistry();
   return true;
@@ -137,6 +175,7 @@ export async function logout(): Promise<void> {
   session.match = null;
   session.selectedDeckId = null;
   session.editingDeck = null;
+  session.rank = null;
 }
 
 /** Vietnamese text for an error from the API (or anything else). */

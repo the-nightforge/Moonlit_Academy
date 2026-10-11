@@ -95,8 +95,8 @@ export class ArmoryScene extends Phaser.Scene {
       this.root.add(row);
       addEquipmentArt(this, this.root, this.tab, id, 65, y, 32, 36)?.setAlpha(level ? 1 : 0.55);
       addText(this, this.root, 90, y, def.name, 14).setOrigin(0, 0.5);
-      const tag = this.tab === "weapons" ? "R" : "CM";
-      addText(this, this.root, 405, y, level ? `${tag}${level}` : "chưa có", 13, level ? COLORS.gold : COLORS.dimText).setOrigin(1, 0.5);
+      const tag = this.tab === "weapons" ? "Tinh Luyện" : "Cộng Minh";
+      addText(this, this.root, 405, y, level ? `${tag} ${level}` : "chưa có", 13, level ? COLORS.gold : COLORS.dimText).setOrigin(1, 0.5);
     });
     if (pages > 1) {
       const move = (delta: number) => { this.page += delta; this.render(); };
@@ -147,14 +147,14 @@ export class ArmoryScene extends Phaser.Scene {
       this.tooltip = null;
     });
     this.root.add(row);
-    addText(this, this.root, x + 12, 232, `⚔ R${shown}: ${card.cost} · ${card.name} ×${card.copies}\nDi chuột để xem lá Binh Khí`, 13).setOrigin(0, 0.5).setWordWrapWidth(DETAIL_WIDTH - 24);
+    addText(this, this.root, x + 12, 232, `⚔ Tinh Luyện ${shown}: ${card.cost} · ${card.name} ×${card.copies}\nDi chuột để xem lá Binh Khí`, 13).setOrigin(0, 0.5).setWordWrapWidth(DETAIL_WIDTH - 24);
 
     addText(this, this.root, x, 266, "Tinh Luyện (quay trùng để tăng)", 14);
     let y = 296;
     const levels = [`Lá: ${def.card.text} — Nội tại: ${def.text}`, ...def.refinement.map((entry) => entry.text)];
     levels.forEach((text, index) => {
       const reached = owned !== undefined && owned > index;
-      const line = this.add.text(x, y, `${reached ? "★" : "☆"} R${index + 1}. ${text}`, {
+      const line = this.add.text(x, y, `${reached ? "★" : "☆"} Tinh Luyện ${index + 1}. ${text}`, {
         ...TEXT_BASE, fontSize: "13px", color: reached ? COLORS.gold : COLORS.dimText, wordWrap: { width: DETAIL_WIDTH },
       });
       this.root.add(line);
@@ -166,14 +166,14 @@ export class ArmoryScene extends Phaser.Scene {
   private renderRelic(id: string) {
     const def = session.data.relics[id]!;
     const owned = this.level(id);
-    this.header(def.name, def.rarity, "Mang 2 Nguyệt Bảo mỗi deck; có hiệu lực mọi trận", owned, "Cộng Minh");
+    this.header(def.name, def.rarity, "Mang 2 Nguyệt Bảo mỗi bộ bài; có hiệu lực mọi trận", owned, "Cộng Minh");
     const x = DETAIL_X;
     addText(this, this.root, x, 220, "Cộng Minh (quay trùng để tăng; mỗi cấp thay hẳn cấp trước)", 14).setWordWrapWidth(DETAIL_WIDTH);
     let y = 272;
     def.resonance.forEach((level, index) => {
       const current = owned === index + 1;
       const reached = owned !== undefined && owned > index;
-      const line = this.add.text(x, y, `${current ? "▶" : reached ? "★" : "☆"} CM${index + 1}. ${level.text}`, {
+      const line = this.add.text(x, y, `${current ? "▶" : reached ? "★" : "☆"} Cộng Minh ${index + 1}. ${level.text}`, {
         ...TEXT_BASE, fontSize: "13px", color: current ? COLORS.gold : reached ? COLORS.text : COLORS.dimText, wordWrap: { width: DETAIL_WIDTH },
       });
       this.root.add(line);
@@ -198,7 +198,7 @@ export class ArmoryScene extends Phaser.Scene {
     }
     const material = kind === "weapon" ? "Huyền Thiết" : "Nguyệt Trần";
     const have = session.profile.currencies[kind === "weapon" ? "darkIron" : "moonDust"];
-    const nextTag = kind === "weapon" ? `R${level + 1}` : `Cộng Minh ${level + 1}`;
+    const nextTag = kind === "weapon" ? `Tinh Luyện ${level + 1}` : `Cộng Minh ${level + 1}`;
     const enough = have >= cost;
     addText(
       this, this.root, x, y,

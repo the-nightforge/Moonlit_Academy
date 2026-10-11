@@ -296,6 +296,40 @@ function fitBody(scene: Phaser.Scene, spec: CardFaceSpec, p: FacePreset): Fitted
 }
 
 /**
+ * Cover-cropped art clipped to a rounded rect, baked once into a cached
+ * RENDER_SCALE canvas texture (no display mask — works on WebGL and Canvas).
+ * `band` adds a dark bottom gradient for text drawn over the art.
+ */
+export function roundedArtTexture(
+  scene: Phaser.Scene, artKey: string, w: number, h: number, radius: number, band = 0,
+): string {
+  const baked = `${artKey}@round-${w}x${h}r${radius}b${band}`;
+  if (!scene.textures.exists(artKey) || scene.textures.exists(baked)) return baked;
+  const source = scene.textures.get(artKey).getSourceImage() as CanvasImageSource & { width: number; height: number };
+  const scale = Math.max(w / source.width, h / source.height);
+  const cropW = Math.min(source.width, w / scale);
+  const cropH = Math.min(source.height, h / scale);
+  const canvas = scene.textures.createCanvas(baked, Math.ceil(w * RENDER_SCALE), Math.ceil(h * RENDER_SCALE));
+  if (canvas) {
+    const ctx = canvas.getContext();
+    ctx.scale(RENDER_SCALE, RENDER_SCALE);
+    ctx.beginPath();
+    ctx.roundRect(0, 0, w, h, radius);
+    ctx.clip();
+    ctx.drawImage(source, (source.width - cropW) / 2, (source.height - cropH) / 2, cropW, cropH, 0, 0, w, h);
+    if (band > 0) {
+      const fade = ctx.createLinearGradient(0, h - band, 0, h);
+      fade.addColorStop(0, "rgba(10, 20, 38, 0)");
+      fade.addColorStop(1, "rgba(10, 20, 38, 0.85)");
+      ctx.fillStyle = fade;
+      ctx.fillRect(0, h - band, w, band);
+    }
+    canvas.refresh();
+  }
+  return baked;
+}
+
+/**
  * Artwork sized to the rounded card interior: a cover-crop baked into a
  * clipped canvas texture (rounded corners come free — no display mask).
  */

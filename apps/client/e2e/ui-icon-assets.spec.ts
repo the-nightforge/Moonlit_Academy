@@ -21,13 +21,14 @@ test("UI icon textures load and preserve combat display sizes", async ({ page })
       return { key, url, width:source.width, height:source.height };
     });
   });
-  expect(loaded).toHaveLength(81);
+  expect(loaded).toHaveLength(102);
   for (const icon of loaded) {
     expect(icon.url).toBe(`/assets/ui/${icon.key}.webp`);
     const response = responses.get(`/assets/ui/${icon.key}.webp`);
     expect(response?.status).toBe(200);
     expect(response?.contentType).toContain("image/webp");
-    expect([256, 96]).toContain(icon.width); expect(icon.height).toBe(icon.width);
+    expect(icon.width).toBeGreaterThanOrEqual(96);
+    if (icon.key !== "logo_vong_nguyet") expect(icon.height).toBe(icon.width);
   }
   await page.evaluate(() => {
     const h = (window as any).__vn, s = h.game.scene.getScene("combat");

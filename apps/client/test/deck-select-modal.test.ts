@@ -26,7 +26,7 @@ class Node {
   removeAll() { this.list = []; return this; }
   setText(value: string) { this.text = value; this.width = value.length * 7; return this; }
   setOrigin() { return this; } setSize(w: number, h: number) { this.width = w; this.height = h; return this; }
-  setInteractive() { return this; } setStrokeStyle() { return this; }
+  setInteractive() { return this; } setStrokeStyle() { return this; } setStroke() { return this; }
   setDisplaySize(w: number, h: number) { this.displayWidth = w; this.displayHeight = h; return this; }
   setScale(scale: number) { this.displayWidth = this.width * scale; this.displayHeight = this.height * scale; return this; }
   setAlpha() { return this; } setDepth() { return this; } setVisible() { return this; }
@@ -61,7 +61,9 @@ function harness() {
   scene.textures = { exists: () => false };
   scene.controls = { bind: (_hit: Node, row: Node, options: { activate: () => void }) => rows.push({ panel: row, run: options.activate }), setLayer: () => undefined, info: () => undefined };
   scene.overlayScroller = { first: 0, range: (total: number, visible: number) => [0, Math.min(total, visible)], scrollBy: () => undefined };
-  scene.button = (_panel: Node, _x: number, _y: number, _w: number, label: string, run: () => void, enabled = true) => buttons.set(label, { run, enabled });
+  const captureControl = (_panel: Node, _x: number, _y: number, _sizeOrIcon: number | string, label: string, run: () => void, enabled = true) => buttons.set(label, { run, enabled });
+  scene.button = captureControl;
+  scene.iconButton = captureControl;
   scene.render = () => undefined;
   scene.queueHeroArt = () => undefined;
   scene.scene = { isActive: () => true, start: () => undefined };
@@ -98,7 +100,7 @@ describe("deck modal transaction", () => {
     modal.scene.closeDeckOverlay(); expect(session.selectedDeckId).toBe("d1");
   });
   it("confirmation alone applies the preview deck", () => {
-    const modal = harness(); modal.preview("Đội đang xem"); modal.click("Dùng deck này");
+    const modal = harness(); modal.preview("Đội đang xem"); modal.click("Dùng bộ bài này");
     expect(session.selectedDeckId).toBe("d2");
   });
   it("copy uses the preview and leaves the original and active deck intact", () => {
@@ -115,19 +117,19 @@ describe("deck modal transaction", () => {
     deck.cardIds = starterDeck(session.data, deck.heroIds);
     expect(validateDeck(session.data, session.profile, deck).length).toBeGreaterThan(0);
     expect(validateDeck(session.data, session.profile, deck, { mode: "pvp" })).toEqual([]);
-    const modal = harness(); modal.preview("Đội đang xem"); modal.click("Dùng deck này");
+    const modal = harness(); modal.preview("Đội đang xem"); modal.click("Dùng bộ bài này");
     expect(session.selectedDeckId).toBe("d2");
   });
   it("an invalid preview cannot be confirmed", () => {
     session.profile.decks[1]!.cardIds = [];
-    const modal = harness(); modal.preview("Đội đang xem"); modal.click("Dùng deck này");
+    const modal = harness(); modal.preview("Đội đang xem"); modal.click("Dùng bộ bài này");
     expect(session.selectedDeckId).toBe("d1");
   });
   it("portrait equipment art keeps its aspect ratio inside the thumbnail", () => {
     const modal = harness();
     modal.scene.textures = { exists: () => true };
-    modal.scene.deckGearTile(new Node(), 0, 0, 168, "weapons:w1", "Vũ khí", "R1");
-    expect(modal.images[0]?.displayWidth).toBe(20);
-    expect(modal.images[0]?.displayHeight).toBe(40);
+    modal.scene.deckGearTile(new Node(), 0, 0, 168, "weapons:w1", "Vũ khí", "Tinh Luyện 1");
+    expect(modal.images[0]?.displayWidth).toBeCloseTo(28);
+    expect(modal.images[0]?.displayHeight).toBeCloseTo(56);
   });
 });

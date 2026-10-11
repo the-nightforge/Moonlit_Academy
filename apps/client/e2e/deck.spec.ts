@@ -7,7 +7,7 @@ async function clickText(page: Page, key: string, label: string) {
     const scene = (window as any).__vn.game.scene.getScene(key);
     const walk = (nodes: any[]): any => {
       for (const node of nodes ?? []) {
-        if (node.type === "Text" && node.text === label) return node.getBounds();
+        if ((node.type === "Text" && node.text === label) || node.getData?.("actionLabel") === label) return node.getBounds();
         if (node.list) { const found = walk(node.list); if (found) return found; }
       }
       return null;
@@ -39,27 +39,23 @@ test.describe("deck interactions", () => {
   test("reduced motion keeps modal static and supports keyboard confirmation", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await openSignedIn(page, await registerAccount(), { fastPlayback: false });
-    await clickText(page, "deck-select", "Đổi deck ▾");
+    await clickText(page, "deck-select", "Đổi bộ bài ▾");
     expect(await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").reducedMotion)).toBe(true);
     let focused = false;
     for (let i = 0; i < 30 && !focused; i++) {
       await page.keyboard.press("Tab");
-      focused = await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").controls.focused?.panel.list.some((n: any) => n.type === "Text" && n.text === "Dùng deck này") ?? false);
+      focused = await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").controls.focused?.panel.list.some((n: any) => n.type === "Text" && n.text === "Dùng bộ bài này") ?? false);
     }
     expect(focused).toBe(true);
     await page.keyboard.press("Enter");
     await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").deckOverlay)).toBeNull();
   });
-  test("search and selection filters preserve the draft; native name typing works", async ({ page }) => {
+  test("native name typing preserves the draft", async ({ page }) => {
     await openSignedIn(page, await registerAccount());
     await copyStarter(page);
     const before = await page.evaluate(() => [...(window as any).__vn.session.editingDeck.cardIds]);
     await page.locator("#vn-deck-name").fill("Đội mới 12");
     expect(await page.evaluate(() => (window as any).__vn.session.editingDeck.name)).toBe("Đội mới 12");
-    await page.locator("#vn-deck-search").fill("khong co la nay");
-    await expect.poll(() => texts(page).then((t) => t.filter((s) => s === "Không có lá khớp bộ lọc").length)).toBe(3);
-    await clickNamed(page, "deck-builder", "deck_filter_reset");
-    await clickNamed(page, "deck-builder", "deck_filter_selected");
     expect(await page.evaluate(() => (window as any).__vn.session.editingDeck.cardIds)).toEqual(before);
     await clickNamed(page, "deck-builder", "deck_editor_back");
     await expect.poll(() => texts(page)).toContain("Bỏ thay đổi");
@@ -84,7 +80,7 @@ test.describe("deck interactions", () => {
     await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("Liệt Diệm còn 3 Nguyệt Lực.");
     await page.keyboard.press("Escape");
     await clickNamed(page, "deck-builder", "deck_gear_equip");
-    await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("19/18 ô deck");
+    await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("19/18 ô bộ bài");
     expect(await page.evaluate(() => (window as any).__vn.session.editingDeck.weapons.m05)).toBe("w_xich_diem_thuong");
     await page.screenshot({ path: testInfo.outputPath("editor-weapon.png") });
   });
@@ -96,7 +92,7 @@ test.describe("deck interactions", () => {
     await openSignedIn(page, await registerAccount());
     await copyStarter(page);
     await page.evaluate(() => { const h = (window as any).__vn; h.session.online = false; h.game.scene.getScene("deck-builder").render(); });
-    await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("Cần kết nối để lưu deck");
+    await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("Cần kết nối để lưu bộ bài");
     let saves = 0;
     await page.route("**/api/profile/decks", (route) => { saves++; return route.abort(); });
     await clickNamed(page, "deck-builder", "deck_editor_save");
@@ -139,7 +135,7 @@ test.describe("deck interactions", () => {
       const h = (window as any).__vn, s = h.game.scene.getScene("deck-builder");
       const allowed = new Set<string>();
       for (const heroId of h.session.editingDeck.heroIds) {
-        for (const row of s.catalog(heroId).slice(0, 8)) {
+        for (const row of s.catalog(heroId).slice(0, 9)) {
           if (!row.cardId) continue;
           const card = h.session.data.cards[row.cardId];
           if (card.art) allowed.add(`cards:art_${card.art}`);
@@ -158,14 +154,14 @@ test.describe("deck interactions", () => {
     const id = await saveDeck(account, "Nguyệt Đao");
     await openSignedIn(page, account);
     const before = await selected(page);
-    await clickText(page, "deck-select", "Đổi deck ▾");
+    await clickText(page, "deck-select", "Đổi bộ bài ▾");
     await clickText(page, "deck-select", "Nguyệt Đao");
     expect(await selected(page)).toBe(before);
     await page.keyboard.press("Escape");
     expect(await selected(page)).toBe(before);
-    await clickText(page, "deck-select", "Đổi deck ▾");
+    await clickText(page, "deck-select", "Đổi bộ bài ▾");
     await clickText(page, "deck-select", "Nguyệt Đao");
-    await clickText(page, "deck-select", "Dùng deck này");
+    await clickText(page, "deck-select", "Dùng bộ bài này");
     await expect.poll(() => selected(page)).toBe(id);
   });
 
@@ -174,7 +170,7 @@ test.describe("deck interactions", () => {
     await saveDeck(account, "Nguyệt Đao");
     await openSignedIn(page, account);
     const before = await selected(page);
-    await clickText(page, "deck-select", "Đổi deck ▾");
+    await clickText(page, "deck-select", "Đổi bộ bài ▾");
     const input = page.locator("#vn-deck-search");
     await input.fill("nguyet dao");
     await expect.poll(() => texts(page, "deck-select")).toContain("Nguyệt Đao");
@@ -190,7 +186,7 @@ test.describe("deck interactions", () => {
     const id = await saveDeck(account, "Đội mới");
     await openSignedIn(page, account);
     const before = await selected(page);
-    await clickText(page, "deck-select", "Đổi deck ▾");
+    await clickText(page, "deck-select", "Đổi bộ bài ▾");
     await clickText(page, "deck-select", "Đội mới");
     await clickText(page, "deck-select", "Sao chép & sửa");
     await waitForScene(page, "deck-builder");
@@ -272,11 +268,53 @@ test.describe("deck interactions", () => {
       h.session.profile.weapons[id] = { resonance: 1 };
       d.weapons = { [d.heroIds[0]]: id };
       h.game.scene.getScene("deck-builder").render();
-      return d.cardIds.reduce((n: number, cid: string) => n + h.session.data.cards[cid].copies, 0) + weapon.card.copies;
+      return {
+        cards: d.cardIds.reduce((n: number, cid: string) => n + h.session.data.cards[cid].copies, 0),
+        weapon: weapon.card.copies as number,
+      };
     });
     await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("19/18");
-    await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain(`${expected} bản`);
+    await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain(`${expected.cards} bản trong chồng bài · +${expected.weapon} binh khí`);
     await expect.poll(() => texts(page)).toContain("Lưu bản nháp");
+  });
+
+  test("relic tile tooltip lists every Cộng Minh level and highlights the current one", async ({ page }) => {
+    await openSignedIn(page, await registerAccount());
+    await copyStarter(page);
+    const relic = await page.evaluate(() => {
+      const h = (window as any).__vn;
+      const id = Object.keys(h.session.data.relics)[0]!;
+      h.session.profile.relics[id] = { resonance: 3 };
+      h.session.editingDeck.relicIds = [id];
+      h.game.scene.getScene("deck-builder").render();
+      return { name: h.session.data.relics[id].name as string };
+    });
+    await expect.poll(() => texts(page).then((t) => t.join("\n"))).toContain("Nguyệt Lực trung bình");
+    await expect.poll(() => texts(page)).toContain("Cộng Minh 3");
+    const canvas = (await page.locator("canvas").boundingBox())!;
+    const s = Math.min(canvas.width / 1280, canvas.height / 720);
+    const cx = canvas.x + (canvas.width - 1280 * s) / 2 + 1040 * s, cy = canvas.y + (canvas.height - 720 * s) / 2 + 258 * s;
+    await expect.poll(async () => {
+      await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + 40);
+      await page.mouse.move(cx, cy);
+      await page.waitForTimeout(400);
+      return page.evaluate(() => !!(window as any).__vn.game.scene.getScene("deck-builder").tooltip);
+    }, { timeout: 15_000 }).toBe(true);
+    const tip = await page.evaluate(() => {
+      const tooltip = (window as any).__vn.game.scene.getScene("deck-builder").tooltip;
+      const out: { text: string; color: string }[] = [];
+      const walk = (nodes: any[] | undefined) => nodes?.forEach((node) => {
+        if (node.type === "Text") out.push({ text: node.text, color: node.style?.color ?? "" });
+        if (node.list) walk(node.list);
+      });
+      walk(tooltip?.list);
+      return out;
+    });
+    expect(tip[0]?.text).toBe(relic.name);
+    expect(tip.filter((line) => /^▶ Cộng Minh 3\./.test(line.text))).toHaveLength(1);
+    expect(tip.filter((line) => /^★ Cộng Minh [12]\./.test(line.text))).toHaveLength(2);
+    expect(tip.filter((line) => /^☆ Cộng Minh [45]\./.test(line.text))).toHaveLength(2);
+    expect(tip.find((line) => line.text.startsWith("▶"))?.color).toBe("#f4d35e");
   });
 
   for (const viewport of [{ width: 1280, height: 720 }, { width: 1280, height: 900 }, { width: 1920, height: 1080 }]) {
@@ -285,7 +323,7 @@ test.describe("deck interactions", () => {
       const errors: string[] = [];
       page.on("pageerror", (e) => errors.push(e.message));
       await openSignedIn(page, await registerAccount());
-      await clickText(page, "deck-select", "Đổi deck ▾");
+      await clickText(page, "deck-select", "Đổi bộ bài ▾");
       await expect(page.locator("#vn-deck-search")).toBeVisible();
       await page.screenshot({ path: testInfo.outputPath(`modal-${viewport.width}x${viewport.height}.png`) });
       await page.keyboard.press("Escape");

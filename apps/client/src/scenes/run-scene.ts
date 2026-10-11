@@ -11,7 +11,7 @@ const HEIGHT = 720;
 
 const ERROR_LABELS: Record<string, string> = {
   "node is not reachable": "Không đi tới nút này được",
-  "deck is at minimum size": "Deck đã ở mức tối thiểu",
+  "deck is at minimum size": "Bộ bài đã ở mức tối thiểu",
 };
 
 export class RunScene extends Phaser.Scene {
@@ -125,7 +125,7 @@ export class RunScene extends Phaser.Scene {
     relicText.setInteractive({ useHandCursor: true });
     relicText.on("pointerover", () => this.showRelicTooltip());
     relicText.on("pointerout", () => this.hideRelicTooltip());
-    const deck = this.text(WIDTH - 24, 16, `Deck ${this.run.deck.length} lá ▾`, 14, COLORS.gold).setOrigin(1, 0);
+    const deck = this.text(WIDTH - 24, 16, `Bộ bài ${this.run.deck.length} lá ▾`, 14, COLORS.gold).setOrigin(1, 0);
     deck.setInteractive({ useHandCursor: true });
     deck.on("pointerup", () => {
       this.showDeck = !this.showDeck;
@@ -261,10 +261,10 @@ export class RunScene extends Phaser.Scene {
     this.text(WIDTH / 2, 222, summary, 13, COLORS.dimText).setOrigin(0.5);
     const { minDeckSize } = session.data.runConfig;
     if (this.run.deck.length <= minDeckSize) {
-      this.text(WIDTH / 2, 270, `Deck đã tối thiểu (${minDeckSize} lá) — không bỏ lá được`, 14, COLORS.dimText).setOrigin(0.5);
+      this.text(WIDTH / 2, 270, `Bộ bài đã tối thiểu (${minDeckSize} lá) — không bỏ lá được`, 14, COLORS.dimText).setOrigin(0.5);
       return;
     }
-    this.text(WIDTH / 2, 270, "…hoặc bỏ 1 lá khỏi deck:", 14, COLORS.dimText).setOrigin(0.5);
+    this.text(WIDTH / 2, 270, "…hoặc bỏ 1 lá khỏi bộ bài:", 14, COLORS.dimText).setOrigin(0.5);
     this.run.deck.forEach((cardId, index) => {
       const col = index % 5;
       const row = Math.floor(index / 5);
@@ -304,7 +304,7 @@ export class RunScene extends Phaser.Scene {
     this.text(
       WIDTH / 2,
       320,
-      `Tầng ${floor}/${session.data.runConfig.floors} · Deck ${this.run.deck.length} lá · ${this.run.runRelicIds.length} Kỳ Vật`,
+      `Tầng ${floor}/${session.data.runConfig.floors} · Bộ bài ${this.run.deck.length} lá · ${this.run.runRelicIds.length} Kỳ Vật`,
       16,
       COLORS.dimText,
     ).setOrigin(0.5);
@@ -333,7 +333,7 @@ export class RunScene extends Phaser.Scene {
       this.text(WIDTH / 2, 356 + gains.length * 24, lines.join("\n"), 15, COLORS.gold).setOrigin(0.5, 0).setAlign("center");
     }
     const canUnlock = session.heroIds.some((id) => pendingUnlocks(session.data, session.profile, id) > 0);
-    this.button(WIDTH / 2, 530, 240, "Về màn chọn deck", () => {
+    this.button(WIDTH / 2, 530, 240, "Về màn chọn bộ bài", () => {
       session.run = null;
       this.scene.start("deck-select");
     });
@@ -353,7 +353,7 @@ export class RunScene extends Phaser.Scene {
       this.render();
     });
     this.root.add(overlay);
-    this.text(WIDTH / 2, 60, `Deck (${this.run.deck.length} lá) — bấm để đóng`, 18, COLORS.gold).setOrigin(0.5);
+    this.text(WIDTH / 2, 60, `Bộ bài (${this.run.deck.length} lá) — bấm để đóng`, 18, COLORS.gold).setOrigin(0.5);
     this.run.deck.forEach((cardId, index) => {
       const card = session.data.cards[cardId]!;
       const col = index % 4;

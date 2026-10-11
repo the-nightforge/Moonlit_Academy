@@ -1,26 +1,26 @@
 import Phaser from "phaser";
 import { validateDeck, weaponCardDef } from "rules";
-import type { CardDef, DeckError } from "rules";
+import type { CardDef, DeckError, Rarity, RelicDef } from "rules";
 import manifest from "virtual:assets-manifest";
 import { auth } from "../api";
 import { errorText, mutate, type ProfileReply } from "../account";
 import { session } from "../session";
 import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
-import { cardArtCandidates, ellipsize } from "../ui/combat-card-view";
+import { cardArtCandidates, ellipsize, roundedArtTexture } from "../ui/combat-card-view";
 import { loadCombatSettings } from "../ui/combat-settings";
-import { DeckDraftSave } from "../ui/deck-builder-save";
-import { matchesBuilderCard, type BuilderFilters } from "../ui/deck-builder-filter";
-import { summarizeDeck } from "../ui/deck-presentation";
-import { addEquipmentArt, preloadEquipmentArt, type EquipmentCategory } from "../ui/equipment-art";
+import { DeckDraftSave } from "../ui/deck-builder-save";import { summarizeDeck } from "../ui/deck-presentation";
+import { addEquipmentArt, addRoundedEquipmentArt, preloadEquipmentArt, type EquipmentCategory } from "../ui/equipment-art";
 import { HomeControls } from "../ui/home-controls";
+import { preloadActionIcons, type ActionIcon } from "../ui/action-icon";
 import { roundedPanel } from "../ui/rounded-panel";
 import { queueTexture } from "../ui/texture-queue";
-import { COLORS, FACTION_LABELS, RARITY_COLORS, useDesignCamera, visibleWorld } from "../ui/theme";
+import { COLORS, FACTION_LABELS, RARITY_COLORS, RENDER_SCALE, TEXT_BASE, useDesignCamera, visibleWorld } from "../ui/theme";
 import { addText, confirmModal, isModalOpen, RowScroller, type ButtonOptions } from "../ui/widgets";
 import { describeDeckError } from "./deck-select-scene";
 
-const WIDTH = 1280, COLUMN_W = 296, COLUMN_STEP = 308, ROW_H = 42, LIST_Y = 250, VISIBLE_ROWS = 8, SIDEBAR_X = 964;
+const WIDTH = 1280, COLUMN_W = 296, COLUMN_STEP = 308, ROW_H = 52, LIST_Y = 200, VISIBLE_ROWS = 9, SIDEBAR_X = 964;
 const JADE = "#94d9bb";
+const RARITY_ORDER: Rarity[] = ["legendary", "epic", "rare", "common"];
 type Picker = { kind: "weapon"; heroId: string } | { kind: "relic"; slot: number };
 type CatalogRow = { branch: string } | { cardId: string };
 interface CardPreview { card: CardDef; sourceX: number; unlocked: boolean; extra: string[]; pinned: boolean }
@@ -31,14 +31,12 @@ export class DeckBuilderScene extends Phaser.Scene {
   private picker: Picker | null = null;
   private gearPage = 0;
   private gearPreview: string | null = null;
-  private pvpView = false;
   private generation = 0;
   private controls!: HomeControls;
   private saving!: DeckDraftSave;
-  private filters: BuilderFilters = { query: "", cost: null, unlockedOnly: false, selectedOnly: false };
   private scrolls: RowScroller[] = [];
   private errorsScroll!: RowScroller;
-  private fields: { name: HTMLInputElement; search: HTMLInputElement } | null = null;
+  private fields: { name: HTMLInputElement } | null = null;
   private collapsed = new Set<string>();
   private focusedHero: string | null = null;
   private artJobs = new Set<string>();
@@ -46,14 +44,19 @@ export class DeckBuilderScene extends Phaser.Scene {
   private cardPreview: CardPreview | null = null;
 
   constructor() { super("deck-builder"); }
-  preload() { preloadEquipmentArt(this); }
+  preload() {
+    preloadEquipmentArt(this); preloadActionIcons(this);
+    for (const id of ["home", "background"]) {
+      const key = `backgrounds:${id}`, url = manifest.backgrounds?.[id];
+      if (url && !this.textures.exists(key)) this.load.image(key, url);
+    }
+  }
   create() {
     useDesignCamera(this);
     if (!session.editingDeck) { this.scene.start("deck-select"); return; }
     this.generation++;
     const generation = this.generation, authGeneration = auth.generation;
-    this.picker = null; this.gearPage = 0; this.gearPreview = null; this.pvpView = false;
-    this.filters = { query: "", cost: null, unlockedOnly: false, selectedOnly: false };
+    this.picker = null; this.gearPage = 0; this.gearPreview = null;
     this.collapsed.clear(); this.focusedHero = null; this.artJobs.clear(); this.failedArt.clear(); this.cardPreview = null;
     const reduced = loadCombatSettings(localStorage, window.matchMedia("(prefers-reduced-motion: reduce)").matches).reducedMotion;
     this.controls = new HomeControls(this, reduced, () => isModalOpen() || this.saving?.busy || !!this.cardPreview?.pinned);
@@ -67,10 +70,9 @@ export class DeckBuilderScene extends Phaser.Scene {
     this.scrolls = this.deck.heroIds.map((_, index) => new RowScroller(this,
       { x: 32 + index * COLUMN_STEP, y: LIST_Y, width: COLUMN_W, height: ROW_H * VISIBLE_ROWS },
       () => this.render(), () => !this.picker && !this.saving.busy && !this.cardPreview?.pinned));
-    this.errorsScroll = new RowScroller(this, { x: SIDEBAR_X + 12, y: 379, width: 256, height: 126 }, () => this.render(), () => !this.picker && !this.saving.busy && !this.cardPreview?.pinned);
+    this.errorsScroll = new RowScroller(this, { x: SIDEBAR_X + 12, y: 420, width: 256, height: 176 }, () => this.render(), () => !this.picker && !this.saving.busy && !this.cardPreview?.pinned);
     this.root = this.add.container(0, 0).setName("deck_editor");
-    const view = visibleWorld(this);
-    this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x07101f).setDepth(-1);
+    this.createBackground();
     this.createFields();
     const onEsc = () => {
       if (isModalOpen()) return;
@@ -90,16 +92,31 @@ export class DeckBuilderScene extends Phaser.Scene {
       this.input.off("pointerdown", onOutside);
       this.scale.off(Phaser.Scale.Events.RESIZE, this.placeFields, this);
       this.events.off(Phaser.Scenes.Events.UPDATE, this.syncFields, this);
-      this.fields?.name.remove(); this.fields?.search.remove(); this.fields = null;
+      this.fields?.name.remove(); this.fields = null;
       this.hideTip(true);
     });
     this.render();
+  }
+  private createBackground() {
+    const base = this.add.rectangle(0, 0, 1, 1, 0x07101f).setDepth(-3);
+    const key = ["backgrounds:home", "backgrounds:background"].find((key) => this.textures.exists(key));
+    const art = key ? this.add.image(0, 0, key).setName("deck_editor_background").setDepth(-2) : null;
+    const shade = this.add.rectangle(0, 0, 1, 1, 0x07101f, 0.62).setName("deck_editor_background_shade").setDepth(-1);
+    const place = () => {
+      const view = visibleWorld(this), cx = view.x + view.w / 2, cy = view.y + view.h / 2;
+      base.setPosition(cx, cy).setSize(view.w, view.h);
+      shade.setPosition(cx, cy).setSize(view.w, view.h);
+      if (art) art.setPosition(cx, cy).setScale(Math.max(view.w / art.width, view.h / art.height));
+    };
+    place();
+    this.scale.on(Phaser.Scale.Events.RESIZE, place);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off(Phaser.Scale.Events.RESIZE, place));
   }
   private isCurrent(authGeneration: number, generation: number) {
     return auth.generation === authGeneration && this.generation === generation && this.scene.isActive();
   }
   private get deck() { return session.editingDeck!; }
-  private get errors() { return validateDeck(session.data, session.profile, this.deck, this.pvpView ? { mode: "pvp" } : undefined); }
+  private get errors() { return validateDeck(session.data, session.profile, this.deck); }
   private isUnlocked(heroId: string, cardId: string) {
     return session.data.heroes[heroId]!.cardIds.includes(cardId) || (session.profile.heroes[heroId]?.unlockedCardIds.includes(cardId) ?? false);
   }
@@ -112,11 +129,9 @@ export class DeckBuilderScene extends Phaser.Scene {
       input.addEventListener("pointerdown", () => this.hideTip(true));
       document.body.appendChild(input); return input;
     };
-    const name = field("vn-deck-name", this.deck.name, "Tên deck (tối đa 24 ký tự)", 24);
-    const search = field("vn-deck-search", "", "Tìm tên hoặc mô tả lá", 80);
+    const name = field("vn-deck-name", this.deck.name, "Tên bộ bài (tối đa 24 ký tự)", 24);
     name.addEventListener("input", () => { if (this.saving.busy) return; this.deck.name = name.value; this.render(); });
-    search.addEventListener("input", () => { this.filters.query = search.value; this.resetScroll(); this.render(); });
-    this.fields = { name, search };
+    this.fields = { name };
     this.scale.on(Phaser.Scale.Events.RESIZE, this.placeFields, this);
     this.events.on(Phaser.Scenes.Events.UPDATE, this.syncFields, this); this.placeFields();
   }
@@ -130,7 +145,7 @@ export class DeckBuilderScene extends Phaser.Scene {
       input.style.width = `${width * camera.zoom * sx}px`; input.style.height = `${36 * camera.zoom * sy}px`;
       input.style.fontSize = `${14 * camera.zoom * sx}px`;
     };
-    place(this.fields.name, 374, 18, 330); place(this.fields.search, 32, 90, 354);
+    place(this.fields.name, 918, 18, 330);
   }
   private syncFields() {
     if (!this.fields) return;
@@ -144,6 +159,26 @@ export class DeckBuilderScene extends Phaser.Scene {
     if (this.cardPreview?.pinned && !force) return;
     this.tooltip?.destroy(); this.tooltip = null; this.cardPreview = null;
   }
+  /** Relic hover: every resonance level, current one in gold (armory ▶/★/☆ marks). */
+  private showResonanceTip(relic: RelicDef, owned: number | undefined, bounds: Phaser.Geom.Rectangle, width: number) {
+    const view = visibleWorld(this);
+    const content = this.add.container(0, 0);
+    let y = 10;
+    const line = (value: string, size: number, color: string) => {
+      const node = this.add.text(12, y, value, { ...TEXT_BASE, fontSize: `${size}px`, color, wordWrap: { width: width - 24 } });
+      content.add(node); y += node.height + 6;
+    };
+    line(relic.name, 13, COLORS.gold);
+    relic.resonance.forEach((level, index) => {
+      const current = owned === index + 1, reached = owned !== undefined && owned > index;
+      line(`${current ? "▶" : reached ? "★" : "☆"} Cộng Minh ${index + 1}. ${level.text}`, 11, current ? COLORS.gold : reached ? COLORS.text : COLORS.dimText);
+    });
+    const height = y + 6;
+    const panel = roundedPanel(this, width / 2, height / 2, width, height, 0x0a0e20, 0.96);
+    const left = Phaser.Math.Clamp(bounds.centerX - width / 2, view.x + 8, view.x + view.w - width - 8);
+    const top = bounds.bottom + 8 + height <= view.y + view.h - 8 ? bounds.bottom + 8 : Math.max(view.y + 8, bounds.top - height - 8);
+    return this.add.container(left, top, [panel, content]).setDepth(1500).setName("text_tooltip");
+  }
   private text(parent: Phaser.GameObjects.Container, x: number, y: number, text: string, size = 14, color: string = COLORS.text, width?: number) {
     const label = addText(this, parent, x, y, text, size, color); if (width) label.setWordWrapWidth(width); return label;
   }
@@ -155,27 +190,31 @@ export class DeckBuilderScene extends Phaser.Scene {
       hideTip: () => this.hideTip() });
     return control;
   }
+  private iconButton(parent: Phaser.GameObjects.Container, x: number, y: number, icon: ActionIcon, label: string, action: () => void, enabled = true, name = "", reason?: string) {
+    const control = this.controls.iconButton(parent, x, y, icon, label, enabled);
+    control.panel.setName(name); control.hit.setName(name ? `${name}_hit` : "");
+    const show = () => {
+      if (this.cardPreview?.pinned) return;
+      this.hideTip();
+      const bounds = control.hit.getBounds(), view = visibleWorld(this), width = 260;
+      const left = Phaser.Math.Clamp(bounds.centerX - width / 2, view.x + 8, view.x + view.w - width - 8);
+      const tip = showTextTooltip(this, left, bounds.bottom + 8, [enabled ? label : this.saving.busy ? "Đang lưu…" : reason ?? label], width).setDepth(1500);
+      const height = tip.getBounds().height;
+      if (bounds.bottom + 8 + height > view.y + view.h - 8) tip.y = Math.max(view.y + 8, bounds.top - height - 8);
+      this.tooltip = tip;
+    };
+    this.controls.bind(control.hit, control.panel, { enabled, activate: action, icon: control.icon, fill: control.fill, border: control.border, radius: 9, showTip: icon === "close" ? undefined : show, hideTip: () => this.hideTip() });
+    return control;
+  }
   private render(preservePreview = false) {
     if (!this.root || !session.editingDeck) return;
     const preview = preservePreview ? this.cardPreview : null;
     this.hideTip(true); this.root.removeAll(true); this.controls.setLayer(this.root);
     const busy = this.saving.busy;
-    this.button(this.root, 90, 36, 116, "‹ Trở về", () => void this.back(), !busy, "deck_editor_back");
-    this.text(this.root, 166, 22, "Chỉnh sửa deck", 20, COLORS.gold);
-    this.text(this.root, 716, 29, `${this.deck.name.length}/24`, 12, COLORS.dimText);
-    const status = this.deck.id === "" ? "Bản sao mới · Chưa lưu" : this.saving.dirty ? "Có thay đổi chưa lưu" : "Đã lưu";
-    this.text(this.root, 32, 65, status, 12, this.saving.dirty || !this.deck.id ? COLORS.gold : JADE).setName("deck_dirty_status");
-    this.text(this.root, 770, 65, "Xem luật / chỉ số · không đổi nâng cấp tài khoản", 11, COLORS.dimText);
-    this.button(this.root, 1018, 36, 100, this.pvpView ? "Thường" : "● Thường", () => { this.pvpView = false; this.render(); }, !busy, "deck_mode_normal");
-    this.button(this.root, 1130, 36, 100, this.pvpView ? "● PvP" : "PvP", () => { this.pvpView = true; this.render(); }, !busy, "deck_mode_pvp");
-    const costLabel = this.filters.cost === null ? "Lực: Tất cả" : `Lực: ${this.filters.cost === 8 ? "8+" : this.filters.cost}`;
-    this.button(this.root, 466, 108, 142, costLabel, () => { this.filters.cost = this.filters.cost === null ? 0 : this.filters.cost === 8 ? null : this.filters.cost + 1; this.resetScroll(); this.render(); }, !busy, "deck_filter_cost");
-    this.button(this.root, 614, 108, 132, `${this.filters.unlockedOnly ? "● " : ""}Đã mở`, () => { this.filters.unlockedOnly = !this.filters.unlockedOnly; this.resetScroll(); this.render(); }, !busy, "deck_filter_unlocked");
-    this.button(this.root, 772, 108, 166, `${this.filters.selectedOnly ? "● " : ""}Đang trong deck`, () => { this.filters.selectedOnly = !this.filters.selectedOnly; this.resetScroll(); this.render(); }, !busy, "deck_filter_selected");
-    this.button(this.root, 918, 108, 96, "Xóa lọc", () => { this.filters = { query: "", cost: null, unlockedOnly: false, selectedOnly: false }; if (this.fields) this.fields.search.value = ""; this.resetScroll(); this.render(); }, !busy, "deck_filter_reset");
+    this.iconButton(this.root, 54, 36, "back", "Trở về", () => void this.back(), !busy, "deck_editor_back");
+    this.text(this.root, 94, 22, "Chỉnh sửa bộ bài", 20, COLORS.gold);
     this.deck.heroIds.forEach((heroId, column) => this.renderHero(heroId, column));
     this.renderSidebar();
-    this.text(this.root, 32, 697, "×N bản là số bản cố định trong chồng bài. Chọn / bỏ toàn bộ lá bằng một thao tác.", 12, COLORS.dimText);
     this.renderPicker(); this.syncFields();
     if (preview) this.showCard(preview.card, preview.sourceX, preview.unlocked, preview.extra, preview.pinned);
     this.queueArt();
@@ -183,7 +222,7 @@ export class DeckBuilderScene extends Phaser.Scene {
   private catalog(heroId: string): CatalogRow[] {
     const rows: CatalogRow[] = [];
     for (const branch of session.data.heroes[heroId]!.branches) {
-      const cards = branch.cardIds.filter((id) => matchesBuilderCard(session.data.cards[id]!, this.filters, this.isUnlocked(heroId, id), this.deck.cardIds.includes(id)));
+      const cards = branch.cardIds;
       if (!cards.length) continue;
       rows.push({ branch: branch.name });
       if (!this.collapsed.has(`${heroId}:${branch.name}`)) cards.forEach((cardId) => rows.push({ cardId }));
@@ -192,33 +231,29 @@ export class DeckBuilderScene extends Phaser.Scene {
   }
   private renderHero(heroId: string, column: number) {
     const data = session.data, hero = data.heroes[heroId]!, x = 32 + column * COLUMN_STEP;
-    const panel = roundedPanel(this, x + COLUMN_W / 2, 415, COLUMN_W, 540, 0x0e1a2e, 1, this.focusedHero === heroId ? 0xd3bb83 : 0x445770, 14);
+    const panel = roundedPanel(this, x + COLUMN_W / 2, 390, COLUMN_W, 590, 0x0e1a2e, 1, this.focusedHero === heroId ? 0xd3bb83 : 0x445770, 14);
     panel.setName(`deck_hero_${heroId}`); this.root.add(panel);
-    this.thumbnail(this.root, [`heroes:${heroId}`], x + 36, 181, 46, 54);
-    this.text(this.root, x + 72, 157, hero.name, 17);
-    this.text(this.root, x + 72, 183, FACTION_LABELS[hero.faction], 12, COLORS.dimText);
-    const count = this.deck.cardIds.filter((id) => data.cards[id]?.ownerId === heroId).length, min = data.metaConfig.minCardsPerHero;
-    this.text(this.root, x + 14, 215, count < min ? `${count}/${min} — thiếu ${min - count} lá` : `${count} lá · Tối thiểu ${min}`, 13, count < min ? "#ffa4a4" : JADE).setName(`deck_hero_count_${heroId}`);
+    const portrait = this.add.container(x + 46, 141).setName(`deck_hero_art_${heroId}`);
+    this.root.add(portrait);
+    portrait.add(roundedPanel(this, 0, 0, 64, 80, 0x20334b, 1, 0x20334b, 10));
+    const art = roundedArtTexture(this, `heroes:${heroId}`, 64, 80, 10);
+    if (this.textures.exists(art)) portrait.add(this.add.image(0, 0, art).setScale(1 / RENDER_SCALE));
+    else this.text(portrait, 0, 0, "✦", 24, COLORS.dimText).setOrigin(0.5);
+    portrait.add(this.add.graphics().lineStyle(1.5, 0x7d90b8, 0.9).strokeRoundedRect(-31, -39, 62, 78, 9));
+    this.text(this.root, x + 90, 126, hero.name, 18);
+    this.text(this.root, x + 90, 152, FACTION_LABELS[hero.faction], 12, COLORS.dimText);
     const rows = this.catalog(heroId), scroll = this.scrolls[column]!, [start, end] = scroll.range(rows.length, VISIBLE_ROWS);
-    if (!rows.length) this.text(this.root, x + 18, 279, "Không có lá khớp bộ lọc", 13, COLORS.dimText);
+    if (!rows.length) this.text(this.root, x + 18, 229, "Chưa có lá nào", 13, COLORS.dimText);
     rows.slice(start, end).forEach((row, index) => {
       const y = LIST_Y + index * ROW_H + ROW_H / 2;
       if ("branch" in row) {
         const key = `${heroId}:${row.branch}`, collapsed = this.collapsed.has(key);
         const control = this.button(this.root, x + COLUMN_W / 2, y, COLUMN_W - 20, "", () => { if (collapsed) this.collapsed.delete(key); else this.collapsed.add(key); this.render(); }, !this.saving.busy, `deck_branch_${heroId}_${start + index}`);
-        this.text(control.panel, -120, 0, `${collapsed ? "▸" : "▾"} ${row.branch}`, 12, COLORS.gold).setOrigin(0, 0.5);
+        this.text(control.panel, -118, 0, row.branch, 12, COLORS.gold).setOrigin(0, 0.5);
+        this.text(control.panel, 118, 0, collapsed ? "◂" : "▾", 12, COLORS.gold).setOrigin(1, 0.5);
       } else this.renderRow(heroId, row.cardId, x, y);
     });
-    this.button(this.root, x + 46, 609, 66, "↑", () => scroll.scrollBy(-3), !this.saving.busy && start > 0, `deck_cards_up_${heroId}`);
-    this.text(this.root, x + COLUMN_W / 2, 609, `${rows.length ? start + 1 : 0}–${end}/${rows.length}`, 11, COLORS.dimText).setOrigin(0.5);
-    this.button(this.root, x + COLUMN_W - 46, 609, 66, "↓", () => scroll.scrollBy(3), !this.saving.busy && end < rows.length, `deck_cards_down_${heroId}`);
-    this.renderWeaponSlot(heroId, x + 10, 658);
-  }
-  private thumbnail(parent: Phaser.GameObjects.Container, keys: string[], x: number, y: number, width: number, height: number) {
-    parent.add(roundedPanel(this, x, y, width, height, 0x20334b, 1, 0x586681, 5));
-    const key = keys.find((candidate) => this.textures.exists(candidate));
-    if (key) { const image = this.add.image(x, y, key); image.setScale(Math.min(width / image.width, height / image.height)); parent.add(image); }
-    else this.text(parent, x, y, "✦", 17, COLORS.dimText).setOrigin(0.5);
+    this.renderWeaponSlot(heroId, x + COLUMN_W - 46, 141);
   }
   private showCard(card: CardDef, sourceX: number, unlocked = true, extra: string[] = [], pinned = false) {
     if (this.cardPreview?.pinned && !pinned) return;
@@ -238,15 +273,21 @@ export class DeckBuilderScene extends Phaser.Scene {
     const panel = roundedPanel(this, x + COLUMN_W / 2, y, COLUMN_W - 20, ROW_H - 4, fill, 1, inDeck ? 0x6cbea3 : 0x425570, 8);
     this.root.add(panel); panel.setName(`deck_card_${cardId}`);
     const hit = this.add.rectangle(0, 0, COLUMN_W - 20, ROW_H - 4, 0, 0).setName(`deck_card_hit_${cardId}`); panel.add(hit);
-    this.thumbnail(panel, cardArtCandidates(session.data, card, cardId), -114, 0, 32, 32);
-    panel.add(this.add.circle(-88, 8, 10, 0x27374a).setStrokeStyle(1, 0xc9b074));
-    this.text(panel, -88, 8, `${card.cost}`, 11, COLORS.gold).setOrigin(0.5);
-    this.text(panel, -71, -14, ellipsize(this, card.name, 146, 14, 1), 14);
-    this.text(panel, -71, 5, unlocked ? `${inDeck ? "Đã chọn · " : ""}×${card.copies} bản` : "🔒 Mở qua Tu Luyện", 10, inDeck ? JADE : COLORS.dimText);
-    const info = this.text(panel, 88, 0, "ⓘ", 17, COLORS.dimText).setOrigin(0.5).setName(`deck_card_info_${cardId}`);
-    this.controls.info(info, () => this.showCard(card, x, unlocked), () => this.hideTip());
-    info.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.button === 0) this.showCard(card, x, unlocked, [], true); });
-    this.text(panel, 116, 0, unlocked ? inDeck ? "−" : "+" : "🔒", 17, inDeck ? JADE : COLORS.gold).setOrigin(0.5);
+    panel.add(roundedPanel(this, -112, 0, 32, 46, 0x20334b, 1, 0x20334b, 7));
+    const artKey = cardArtCandidates(session.data, card, cardId).find((k) => this.textures.exists(k));
+    const art = artKey ? roundedArtTexture(this, artKey, 32, 46, 7) : "";
+    if (this.textures.exists(art)) panel.add(this.add.image(-112, 0, art).setScale(1 / RENDER_SCALE));
+    else this.text(panel, -112, 0, "✦", 20, COLORS.dimText).setOrigin(0.5);
+    panel.add(this.add.graphics().lineStyle(1, 0x7d90b8, 0.9).strokeRoundedRect(-127.5, -22.5, 31, 45, 6));
+    panel.add(this.add.circle(-74, 0, 10, 0x27374a).setStrokeStyle(1, 0xc9b074));
+    this.text(panel, -74, 0, `${card.cost}`, 11, COLORS.gold).setOrigin(0.5);
+    this.text(panel, -56, unlocked ? 0 : -9, ellipsize(this, card.name, 128, 14, unlocked ? 2 : 1), 14).setOrigin(0, 0.5);
+    if (!unlocked) this.text(panel, -56, 10, "🔒 Mở qua Tu Luyện", 10, COLORS.dimText).setOrigin(0, 0.5);
+    const copies = this.text(panel, 98, 0, `×${card.copies}`, 12, COLORS.dimText).setOrigin(1, 0.5).setName(`deck_card_info_${cardId}`);
+    this.controls.info(copies, () => this.showCard(card, x, unlocked), () => this.hideTip());
+    copies.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.button === 0) this.showCard(card, x, unlocked, [], true); });
+    if (!unlocked) this.text(panel, 118, 0, "🔒", 15, COLORS.gold).setOrigin(0.5);
+    else if (!inDeck) this.text(panel, 118, 0, "+", 17, COLORS.gold).setOrigin(0.5);
     this.controls.bind(hit, panel, { enabled: unlocked && !this.saving.busy, activate: () => this.toggle(cardId), fill, border: inDeck ? 0x6cbea3 : 0x425570, radius: 8,
       showTip: () => this.showCard(card, x, unlocked), hideTip: () => this.hideTip() });
   }
@@ -258,47 +299,71 @@ export class DeckBuilderScene extends Phaser.Scene {
   }
   private renderWeaponSlot(heroId: string, x: number, y: number) {
     const weaponId = this.deck.weapons?.[heroId], weapon = weaponId ? session.data.weapons[weaponId] : undefined;
-    const level = this.pvpView ? 1 : weaponId ? session.profile.weapons[weaponId]?.refinement : undefined;
-    const control = this.button(this.root, x + 138, y, 276, "", () => this.openPicker({ kind: "weapon", heroId }), !this.saving.busy, `deck_weapon_${heroId}`);
-    if (weaponId) addEquipmentArt(this, control.panel, "weapons", weaponId, -108, 0, 40, 34);
-    this.text(control.panel, -78, -13, weapon ? ellipsize(this, weapon.name, 185, 12, 1) : "+ Gắn vũ khí", 12, weapon ? COLORS.text : COLORS.gold);
-    this.text(control.panel, -78, 5, weapon ? `R${level ?? "?"} · 1 ô deck · ×${weapon.card.copies} bản` : "Vũ khí chiếm 1 ô deck", 10, COLORS.dimText);
+    const level = weaponId ? session.profile.weapons[weaponId]?.refinement : undefined;
+    const panel = roundedPanel(this, x, y, 64, 80, 0x14263c, 1, weaponId ? 0x14263c : 0x5a6d88, 10);
+    this.root.add(panel); panel.setName(`deck_weapon_${heroId}`);
+    const hit = this.add.rectangle(0, 0, 64, 80, 0, 0).setName(`deck_weapon_${heroId}_hit`); panel.add(hit);
+    const art = weaponId ? roundedArtTexture(this, `weapons:${weaponId}`, 64, 80, 10) : "";
+    if (weaponId && this.textures.exists(art)) {
+      panel.add(this.add.image(0, 0, art).setScale(1 / RENDER_SCALE));
+      panel.add(this.add.graphics().lineStyle(1.5, 0x7d90b8, 0.9).strokeRoundedRect(-31, -39, 62, 78, 9));
+    } else this.text(panel, 0, 0, weaponId ? "⚔" : "+", weaponId ? 24 : 28, COLORS.gold).setOrigin(0.5);
+    this.controls.bind(hit, panel, { enabled: !this.saving.busy, activate: () => this.openPicker({ kind: "weapon", heroId }), radius: 10,
+      showTip: () => {
+        if (this.cardPreview?.pinned) return;
+        this.hideTip();
+        const bounds = hit.getBounds(), width = 280;
+        const lines = weapon
+          ? [weapon.name, `Tinh Luyện ${level ?? "?"} · 1 ô bộ bài · ×${weapon.card.copies} bản`, weapon.text]
+          : ["Chưa gắn vũ khí", "Vũ khí chiếm 1 ô bộ bài"];
+        this.tooltip = showTextTooltip(this, bounds.centerX - width / 2, bounds.bottom + 8, lines, width).setDepth(1500);
+      },
+      hideTip: () => this.hideTip() });
   }
   private renderSidebar() {
-    const data = session.data, summary = summarizeDeck(data, this.deck, { profile: session.profile, mode: this.pvpView ? "pvp" : undefined }), errors = this.errors, x = SIDEBAR_X;
-    this.root.add(roundedPanel(this, x + 140, 415, 280, 540, 0x101f34, 1, 0x726449, 14));
-    this.text(this.root, x + 16, 160, "Tổng quan", 17, COLORS.gold);
-    this.text(this.root, x + 16, 194, `${summary.slots}/${data.metaConfig.deckSize} ô deck`, 21, summary.slots === data.metaConfig.deckSize ? JADE : "#ffa4a4").setName("deck_slots");
-    this.text(this.root, x + 16, 225, `${summary.copies} bản trong chồng bài`, 13).setName("deck_copies");
-    this.text(this.root, x + 16, 247, `Nguyệt Lực TB ${summary.averageCost.toFixed(1)} · gồm vũ khí`, 12, COLORS.dimText);
-    this.text(this.root, x + 16, 269, "Đường cong · số bản", 12, COLORS.dimText);
-    const max = Math.max(1, ...summary.curve);
-    summary.curve.forEach((count, index) => {
-      const bx = x + 26 + index * 28, h = count ? Math.max(3, count / max * 29) : 1;
-      this.root.add(this.add.rectangle(bx, 332 - h / 2, 17, h, count ? 0x6dbb9f : 0x35445b));
-      this.text(this.root, bx, 328 - h, `${count}`, 9).setOrigin(0.5, 1);
-      this.text(this.root, bx, 340, index === 8 ? "8+" : `${index}`, 10, COLORS.dimText).setOrigin(0.5);
-    });
-    this.text(this.root, x + 16, 357, errors.length ? `${errors.length} mục cần chỉnh · ${this.pvpView ? "PvP" : "Thường"}` : `Sẵn sàng · ${this.pvpView ? "PvP" : "Thường"}`, 13, errors.length ? "#ffa4a4" : JADE).setName("deck_validation_status");
-    const [start, end] = this.errorsScroll.range(errors.length, 3);
-    errors.slice(start, end).forEach((error, index) => {
-      const control = this.button(this.root, x + 140, 395 + index * 42, 248, "", () => this.focusError(error), !this.saving.busy, `deck_error_${start + index}`);
-      this.text(control.panel, -114, 0, ellipsize(this, describeDeckError(data, error), 226, 11, 2), 11, "#ffb1a8", 226).setOrigin(0, 0.5);
-    });
-    if (errors.length > 3) {
-      this.button(this.root, x + 225, 520, 66, "↓ lỗi", () => this.errorsScroll.scrollBy(3), end < errors.length, "deck_errors_next");
-      this.button(this.root, x + 55, 520, 66, "↑ lỗi", () => this.errorsScroll.scrollBy(-3), start > 0, "deck_errors_previous");
-    } else this.text(this.root, x + 16, 504, errors.length ? "Chọn một lỗi để đến vị trí cần sửa" : "Có thể lưu và dùng đội hình này", 11, COLORS.dimText, 248);
+    const data = session.data, summary = summarizeDeck(data, this.deck, { profile: session.profile }), errors = this.errors, x = SIDEBAR_X;
+    this.root.add(roundedPanel(this, x + 140, 390, 280, 590, 0x101f34, 1, 0x726449, 14));
+    this.text(this.root, x + 16, 110, "Tổng quan", 17, COLORS.gold);
+    this.text(this.root, x + 16, 144, `${summary.slots}/${data.metaConfig.deckSize} ô bộ bài`, 21, summary.slots === data.metaConfig.deckSize ? JADE : "#ffa4a4").setName("deck_slots");
+    this.text(this.root, x + 16, 175, `${summary.cardCopies} bản trong chồng bài${summary.weaponCopies ? ` · +${summary.weaponCopies} binh khí` : ""}`, 13).setName("deck_copies");
+    this.text(this.root, x + 16, 197, `Nguyệt Lực trung bình ${summary.averageCost.toFixed(1)} · gồm vũ khí`, 12, COLORS.dimText);
     for (let slot = 0; slot < Math.min(2, data.metaConfig.maxRelics); slot++) {
       const id = this.deck.relicIds?.[slot], relic = id ? data.relics[id] : undefined;
-      const panel = roundedPanel(this, x + 76 + slot * 128, 584, 116, 86, 0x14263c, 1, 0x68778e, 10);
+      const panel = roundedPanel(this, x + 76 + slot * 128, 258, 116, 86, 0x14263c, 1, 0x68778e, 10);
       this.root.add(panel); panel.setName(`deck_relic_${slot}`);
       const hit = this.add.rectangle(0, 0, 116, 86, 0, 0); panel.add(hit);
       if (id) addEquipmentArt(this, panel, "relics", id, 0, -11, 46, 42); else this.text(panel, 0, -12, "+", 24, COLORS.gold).setOrigin(0.5);
       this.text(panel, 0, 17, relic ? ellipsize(this, relic.name, 106, 11, 1) : `Nguyệt Bảo ${slot + 1}`, 11).setOrigin(0.5);
-      if (id) this.text(panel, 0, 33, `CM${this.pvpView ? 1 : session.profile.relics[id]?.resonance ?? "?"}`, 10, COLORS.dimText).setOrigin(0.5);
-      this.controls.bind(hit, panel, { enabled: !this.saving.busy, activate: () => this.openPicker({ kind: "relic", slot }), radius: 10 });
+      if (id) this.text(panel, 0, 33, `Cộng Minh ${session.profile.relics[id]?.resonance ?? "?"}`, 10, COLORS.dimText).setOrigin(0.5);
+      this.controls.bind(hit, panel, { enabled: !this.saving.busy, activate: () => this.openPicker({ kind: "relic", slot }), radius: 10,
+        showTip: () => {
+          if (this.cardPreview?.pinned) return;
+          this.hideTip();
+          const bounds = hit.getBounds(), width = 340;
+          this.tooltip = relic
+            ? this.showResonanceTip(relic, session.profile.relics[id!]?.resonance ?? 1, bounds, width)
+            : showTextTooltip(this, bounds.centerX - width / 2, bounds.bottom + 8, ["Chưa gắn Nguyệt Bảo", "Nguyệt Bảo có hiệu lực mọi trận — tối đa 2 ô mỗi bộ bài"], width).setDepth(1500);
+        },
+        hideTip: () => this.hideTip() });
     }
+    this.text(this.root, x + 16, 316, "Đường cong · số bản", 12, COLORS.dimText);
+    const max = Math.max(1, ...summary.curve);
+    summary.curve.forEach((count, index) => {
+      const bx = x + 26 + index * 28, h = count ? Math.max(3, count / max * 29) : 1;
+      this.root.add(this.add.rectangle(bx, 378 - h / 2, 17, h, count ? 0x6dbb9f : 0x35445b));
+      this.text(this.root, bx, 374 - h, `${count}`, 9).setOrigin(0.5, 1);
+      this.text(this.root, bx, 386, index === 8 ? "8+" : `${index}`, 10, COLORS.dimText).setOrigin(0.5);
+    });
+    this.text(this.root, x + 16, 403, errors.length ? `${errors.length} mục cần chỉnh` : "Sẵn sàng", 13, errors.length ? "#ffa4a4" : JADE).setName("deck_validation_status");
+    const [start, end] = this.errorsScroll.range(errors.length, 4);
+    errors.slice(start, end).forEach((error, index) => {
+      const control = this.button(this.root, x + 140, 441 + index * 42, 248, "", () => this.focusError(error), !this.saving.busy, `deck_error_${start + index}`);
+      this.text(control.panel, -114, 0, ellipsize(this, describeDeckError(data, error), 226, 11, 2), 11, "#ffb1a8", 226).setOrigin(0, 0.5);
+    });
+    if (errors.length > 4) {
+      this.iconButton(this.root, x + 225, 608, "down", "Các lỗi tiếp theo", () => this.errorsScroll.scrollBy(3), !this.saving.busy && end < errors.length, "deck_errors_next", "Đã ở cuối danh sách lỗi");
+      this.iconButton(this.root, x + 55, 608, "up", "Các lỗi trước", () => this.errorsScroll.scrollBy(-3), !this.saving.busy && start > 0, "deck_errors_previous", "Đã ở đầu danh sách lỗi");
+    } else this.text(this.root, x + 16, 608, errors.length ? "Chọn một lỗi để đến vị trí cần sửa" : "Có thể lưu và dùng đội hình này", 11, COLORS.dimText, 248);
     const reason = this.saving.disabledReason;
     this.button(this.root, x + 140, 654, 248, this.saving.busy ? "Đang lưu…" : errors.length ? "Lưu bản nháp" : "Lưu và dùng", () => void this.saving.save(), !reason, "deck_editor_save", { variant: "primary" }, reason || (errors.length ? "Lưu bản nháp; giữ nguyên đội hình đang dùng" : "Lưu rồi dùng đội hình này trên Home"));
     this.text(this.root, x + 16, 684, this.saving.notice || reason, 11, this.saving.notice === "Đã lưu bản nháp" ? JADE : COLORS.dimText, 248).setName("deck_save_notice");
@@ -309,8 +374,7 @@ export class DeckBuilderScene extends Phaser.Scene {
     if ("weaponId" in error) { const heroId = Object.entries(this.deck.weapons ?? {}).find(([, id]) => id === error.weaponId)?.[0] ?? this.deck.heroIds[0]; this.openPicker({ kind: "weapon", heroId }); return; }
     if (error.code === "weaponSlot") { this.openPicker({ kind: "weapon", heroId: error.heroId }); return; }
     const heroId = "heroId" in error ? error.heroId : "cardId" in error ? session.data.cards[error.cardId]?.ownerId : this.deck.heroIds[0];
-    this.focusedHero = heroId ?? null; this.filters = { query: "", cost: null, unlockedOnly: false, selectedOnly: false };
-    if (this.fields) this.fields.search.value = "";
+    this.focusedHero = heroId ?? null;
     if ("cardId" in error && heroId) {
       this.collapsed.clear(); const index = this.deck.heroIds.indexOf(heroId);
       if (index >= 0) this.scrolls[index]!.first = Math.max(0, this.catalog(heroId).findIndex((row) => "cardId" in row && row.cardId === error.cardId) - 1);
@@ -320,7 +384,7 @@ export class DeckBuilderScene extends Phaser.Scene {
     if (this.saving.busy) return;
     if (this.picker) { this.picker = null; this.gearPreview = null; this.render(); return; }
     const generation = this.generation, authGeneration = auth.generation;
-    if (this.saving.dirty) { const answer = await confirmModal(this, "Deck có thay đổi chưa lưu. Bỏ các thay đổi này?", { label: "Bỏ thay đổi", danger: true }); if (!answer || !this.isCurrent(authGeneration, generation)) return; }
+    if (this.saving.dirty) { const answer = await confirmModal(this, "Bộ bài có thay đổi chưa lưu. Bỏ các thay đổi này?", { label: "Bỏ thay đổi", danger: true }); if (!answer || !this.isCurrent(authGeneration, generation)) return; }
     session.editingDeck = null; this.scene.start("deck-select");
   }
   private openPicker(picker: Picker) { if (this.saving.busy) return; this.picker = picker; this.gearPage = 0; this.gearPreview = null; this.render(); }
@@ -333,54 +397,67 @@ export class DeckBuilderScene extends Phaser.Scene {
     const close = () => { this.picker = null; this.gearPreview = null; this.render(); };
     this.text(layer, 148, 69, picker.kind === "weapon" ? `Vũ khí · ${data.heroes[picker.heroId]?.name ?? picker.heroId}` : `Nguyệt Bảo · ô ${picker.slot + 1}`, 20, COLORS.gold);
     this.text(layer, 148, 103, "Chọn hình để xem thông tin · Trang bị bằng nút xác nhận", 12, COLORS.dimText);
-    this.button(layer, 1108, 80, 48, "×", close, true, "deck_gear_close");
-    const owned = picker.kind === "weapon" ? Object.keys(session.profile.weapons).filter((id) => data.weapons[id]) : Object.keys(session.profile.relics).filter((id) => data.relics[id]);
-    const free = this.pvpView ? (picker.kind === "weapon" ? data.pvpConfig.freeWeaponIds : data.pvpConfig.freeRelicIds).filter((id) => !owned.includes(id)) : [];
-    const ids = [...owned, ...free], pages = Math.max(1, Math.ceil(ids.length / 6)); this.gearPage = Math.min(this.gearPage, pages - 1);
+    this.iconButton(layer, 1108, 80, "close", "Đóng", close, true, "deck_gear_close");
+    const category: EquipmentCategory = picker.kind === "weapon" ? "weapons" : "relics";
+    const rank = (id: string) => RARITY_ORDER.indexOf(data[category][id]!.rarity);
+    const ids = (picker.kind === "weapon" ? Object.keys(session.profile.weapons) : Object.keys(session.profile.relics))
+      .filter((id) => data[category][id])
+      .sort((a, b) => rank(a) - rank(b) || data[category][a]!.name.localeCompare(data[category][b]!.name, "vi"));
+    if (picker.kind === "weapon") ids.sort((a, b) => Number(data.weapons[b]?.signatureHeroId === picker.heroId) - Number(data.weapons[a]?.signatureHeroId === picker.heroId));
+    const pages = Math.max(1, Math.ceil(ids.length / 6)); this.gearPage = Math.min(this.gearPage, pages - 1);
     const currentId = picker.kind === "weapon" ? this.deck.weapons?.[picker.heroId] : this.deck.relicIds?.[picker.slot];
     if (!this.gearPreview) this.gearPreview = currentId ?? ids[this.gearPage * 6] ?? null;
     if (!ids.length) this.text(layer, 150, 150, picker.kind === "weapon" ? "Chưa có vũ khí — quay ở Binh Khí Các" : "Chưa có Nguyệt Bảo — quay ở Nguyệt Bảo Các", 14, COLORS.dimText, 540);
     ids.slice(this.gearPage * 6, this.gearPage * 6 + 6).forEach((id, index) => {
-      const category: EquipmentCategory = picker.kind === "weapon" ? "weapons" : "relics", def = data[category][id]!;
-      const px = 238 + index % 3 * 182, py = 242 + Math.floor(index / 3) * 184, preview = this.gearPreview === id, equipped = currentId === id;
-      const panel = roundedPanel(this, px, py, 168, 168, preview ? 0x27423f : 0x14263b, 1, preview ? 0x94d9bb : RARITY_COLORS[def.rarity], 12);
-      layer.add(panel); panel.setName(`deck_gear_${id}`); const hit = this.add.rectangle(0, 0, 168, 168, 0, 0); panel.add(hit);
-      addEquipmentArt(this, panel, category, id, 0, -19, 120, 98);
-      this.text(panel, 0, 45, ellipsize(this, def.name, 152, 13, 1), 13).setOrigin(0.5);
-      this.text(panel, 0, 66, equipped ? "Đang trang bị" : free.includes(id) ? "Miễn phí PvP · cấp 1" : "Đã sở hữu", 11, equipped ? JADE : COLORS.dimText).setOrigin(0.5);
+      const def = data[category][id]!;
+      const px = 238 + index % 3 * 194, py = 260 + Math.floor(index / 3) * 230, preview = this.gearPreview === id, equipped = currentId === id;
+      const panel = roundedPanel(this, px, py, 180, 220, preview ? 0x27423f : 0x14263b, 1, preview ? 0x94d9bb : RARITY_COLORS[def.rarity], 12);
+      layer.add(panel); panel.setName(`deck_gear_${id}`); const hit = this.add.rectangle(0, 0, 180, 220, 0, 0); panel.add(hit);
+      addRoundedEquipmentArt(this, panel, category, id, 0, -28, 156, 140, 10);
+      this.text(panel, 0, 52, ellipsize(this, def.name, 160, 13, 1), 13).setOrigin(0.5);
+      this.text(panel, 0, 72, equipped ? "Đang trang bị" : "Đã sở hữu", 11, equipped ? JADE : COLORS.dimText).setOrigin(0.5);
       this.controls.bind(hit, panel, { enabled: !this.saving.busy, activate: () => { this.gearPreview = id; this.render(); }, fill: preview ? 0x27423f : 0x14263b, border: preview ? 0x94d9bb : RARITY_COLORS[def.rarity], radius: 12 });
     });
-    this.button(layer, 240, 553, 100, "Trước", () => { this.gearPage--; this.render(); }, this.gearPage > 0, "deck_gear_previous");
-    this.text(layer, 420, 553, `${this.gearPage + 1}/${pages}`, 13, COLORS.dimText).setOrigin(0.5);
-    this.button(layer, 600, 553, 100, "Sau", () => { this.gearPage++; this.render(); }, this.gearPage < pages - 1, "deck_gear_next");
+    this.iconButton(layer, 370, 627, "left", "Trước", () => { this.gearPage--; this.render(); }, this.gearPage > 0, "deck_gear_previous", "Đã ở trang đầu");
+    this.text(layer, 432, 627, `${this.gearPage + 1}/${pages}`, 13, COLORS.dimText).setOrigin(0.5);
+    this.iconButton(layer, 494, 627, "right", "Sau", () => { this.gearPage++; this.render(); }, this.gearPage < pages - 1, "deck_gear_next", "Đã ở trang cuối");
     const previewId = this.gearPreview; layer.add(roundedPanel(this, 925, 367, 390, 442, 0x0b1729, 1, 0x52637a, 12));
     let canEquip = !!previewId;
     if (previewId) {
-      const category: EquipmentCategory = picker.kind === "weapon" ? "weapons" : "relics", def = data[category][previewId]!;
-      addEquipmentArt(this, layer, category, previewId, 925, 240, 170, 150);
+      const def = data[category][previewId]!;
+      addRoundedEquipmentArt(this, layer, category, previewId, 925, 240, 170, 150, 12);
       this.text(layer, 748, 328, def.name, 18, COLORS.gold, 350);
       if (picker.kind === "weapon") {
-        const weapon = data.weapons[previewId]!, refinement = this.pvpView ? 1 : session.profile.weapons[previewId]?.refinement ?? 1;
+        const weapon = data.weapons[previewId]!, refinement = session.profile.weapons[previewId]?.refinement ?? 1;
         const card = weaponCardDef(data, { heroId: picker.heroId, weaponId: previewId, refinement });
         const holder = Object.entries(this.deck.weapons ?? {}).find(([heroId, id]) => id === previewId && heroId !== picker.heroId)?.[0];
-        this.text(layer, 748, 363, `R${refinement} · ${card.cost} Nguyệt Lực · ×${card.copies} bản`, 13, JADE);
-        this.text(layer, 748, 394, weapon.text, 13, COLORS.text, 350);
-        const info = this.text(layer, 748, 477, `ⓘ Lá vũ khí: ${card.name}`, 13, COLORS.gold, 350);
-        const extra = [`Nội tại R1: ${weapon.text}`, ...weapon.refinement.slice(0, refinement - 1).map((level, index) => `R${index + 2}: ${level.text}`)];
+        this.text(layer, 748, 363, `Tinh Luyện ${refinement} · ${card.cost} Nguyệt Lực · ×${card.copies} bản`, 13, JADE);
+        let dy = 388;
+        [`Lá: ${weapon.card.text} — Nội tại: ${weapon.text}`, ...weapon.refinement.map((level) => level.text)].forEach((levelText, index) => {
+          const current = refinement === index + 1, reached = refinement > index + 1;
+          const line = this.text(layer, 748, dy, `${current ? "▶" : reached ? "★" : "☆"} Tinh Luyện ${index + 1}. ${levelText}`, 11, current ? COLORS.gold : reached ? COLORS.text : COLORS.dimText, 350);
+          dy += line.height + 4;
+        });
+        const info = this.text(layer, 748, dy + 6, `ⓘ Lá vũ khí: ${card.name}`, 13, COLORS.gold, 350);
+        const extra = [`Nội tại Tinh Luyện 1: ${weapon.text}`, ...weapon.refinement.slice(0, refinement - 1).map((level, index) => `Tinh Luyện ${index + 2}: ${level.text}`)];
         this.controls.info(info, () => this.showCard(card, 925, true, extra), () => this.hideTip());
         info.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.button === 0) this.showCard(card, 925, true, extra, true); });
-        if (holder) this.text(layer, 748, 518, `Đang gắn cho ${data.heroes[holder]?.name ?? holder}; trang bị sẽ chuyển vũ khí.`, 12, "#ffd6a2", 350);
+        if (holder) this.text(layer, 748, dy + 32, `Đang gắn cho ${data.heroes[holder]?.name ?? holder}; trang bị sẽ chuyển vũ khí.`, 12, "#ffd6a2", 350);
       } else {
-        const relic = data.relics[previewId]!, resonance = this.pvpView ? 1 : session.profile.relics[previewId]?.resonance ?? 1;
+        const relic = data.relics[previewId]!, resonance = session.profile.relics[previewId]?.resonance ?? 1;
         const used = (this.deck.relicIds ?? []).some((id, index) => id === previewId && index !== picker.slot); canEquip = !used;
         this.text(layer, 748, 363, `Cộng Minh ${resonance}`, 13, JADE);
-        this.text(layer, 748, 394, relic.resonance[resonance - 1]?.text ?? "", 13, COLORS.text, 350);
-        if (used) this.text(layer, 748, 518, "Đã trang bị ở ô Nguyệt Bảo khác", 12, "#ffa4a4", 350);
+        let dy = 390;
+        relic.resonance.forEach((level, index) => {
+          const current = resonance === index + 1, reached = resonance > index + 1;
+          const line = this.text(layer, 748, dy, `${current ? "▶" : reached ? "★" : "☆"} Cộng Minh ${index + 1}. ${level.text}`, 11, current ? COLORS.gold : reached ? COLORS.text : COLORS.dimText, 350);
+          dy += line.height + 6;
+        });
+        if (used) this.text(layer, 748, dy + 4, "Đã trang bị ở ô Nguyệt Bảo khác", 12, "#ffa4a4", 350);
       }
     } else this.text(layer, 750, 200, "Chọn một món để xem trước", 15, COLORS.dimText);
     this.button(layer, 925, 627, 350, currentId === previewId && !!previewId ? "Đang trang bị" : "Trang bị", () => { if (previewId) this.equip(picker, previewId); }, canEquip && currentId !== previewId, "deck_gear_equip", { variant: "primary" });
-    this.button(layer, 240, 627, 190, "Bỏ trống", () => this.equip(picker, null), true, "deck_gear_clear");
-    this.button(layer, 565, 627, 190, "Đóng", close, true, "deck_gear_done");
+    this.iconButton(layer, 170, 627, "remove", "Bỏ trống ô trang bị", () => this.equip(picker, null), true, "deck_gear_clear");
   }
   private equip(picker: Picker, id: string | null) {
     if (this.saving.busy) return;

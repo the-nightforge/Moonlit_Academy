@@ -2,8 +2,8 @@ import Phaser from "phaser";
 import { bondCardsForTeam, claimMission, masteryLevel, pendingUnlocks, starterDeck, validateDeck } from "rules";
 import type { DeckError, GameData, SavedDeck } from "rules";
 import manifest from "virtual:assets-manifest";
-import { errorText, logout, mutate } from "../account";
-import { api, auth } from "../api";
+import { errorText, fetchSessionRank, logout, mutate } from "../account";
+import { auth } from "../api";
 import { homeDecks, resolveHomeDeck } from "../home-selection";
 import { StaleRequestError, type RequestGuard } from "../request-context";
 import { startServerRun } from "../run-session";
@@ -11,17 +11,17 @@ import { prepareCombatAssets } from "../ui/combat-assets";
 import { queueTexture } from "../ui/texture-queue";
 import { startStoryTicket } from "../story-session";
 import { session } from "../session";
-import type { Team } from "../session";
+import type { RankInfo, Team } from "../session";
 import { coverCrop } from "./gacha/shared";
 import { showTextTooltip } from "../ui/card-tooltip";
 import { roundedPanel } from "../ui/rounded-panel";
 import { HomeControls } from "../ui/home-controls";
+import { preloadActionIcons, type ActionIcon } from "../ui/action-icon";
 import { matchesDeckText, summarizeDeck } from "../ui/deck-presentation";
+import { roundedArtTexture } from "../ui/combat-card-view";
 import { loadCombatSettings } from "../ui/combat-settings";
-import { COLORS, CURRENCY_LABELS, FACTION_LABELS, TEXT_BASE, useDesignCamera, visibleWorld } from "../ui/theme";
+import { COLORS, CURRENCY_LABELS, FACTION_LABELS, RENDER_SCALE, TEXT_BASE, useDesignCamera, visibleWorld } from "../ui/theme";
 import { addText, alertModal, confirmModal, isModalOpen, RowScroller, showToast, type ButtonOptions } from "../ui/widgets";
-import type { ArenaMeReply } from "./arena-scene";
-
 const WIDTH = 1280;
 const DECK_ROW_H = 64;
 /** Team picker grid: 5 columns, 4 rows on screen, the rest scroll. */
@@ -41,11 +41,11 @@ const HERO_XS = [606, 871, 1136] as const;
 export function describeDeckError(data: GameData, error: DeckError): string {
   switch (error.code) {
     case "badHeroes":
-      return "Deck phải có 3 Hero khác nhau";
+      return "Bộ bài phải có 3 Hero khác nhau";
     case "unownedHero":
       return `Chưa sở hữu Hero: ${data.heroes[error.heroId]?.name ?? error.heroId}`;
     case "wrongSize":
-      return `Deck cần đúng ${data.metaConfig.deckSize} ô (đang ${error.size})`;
+      return `Bộ bài cần đúng ${data.metaConfig.deckSize} ô (đang ${error.size})`;
     case "duplicateCard":
       return `Trùng lá: ${data.cards[error.cardId]?.name ?? error.cardId}`;
     case "foreignCard":
@@ -71,12 +71,6 @@ export function describeDeckError(data: GameData, error: DeckError): string {
       return String(exhaustive);
     }
   }
-}
-
-interface RankInfo {
-  tierId: string | null;
-  tierName: string;
-  rating: number;
 }
 
 /**
@@ -120,6 +114,7 @@ export class DeckSelectScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadActionIcons(this);
     const selected: Record<string, string[]> = {
       backgrounds: ["home", "background"],
       heroes: session.heroIds.flatMap((id) => [id, `${id}_up`]),
@@ -127,7 +122,7 @@ export class DeckSelectScene extends Phaser.Scene {
         "mode_arena", "mode_run", "mode_coop", "mode_story",
         "rank_dong_sinh", "rank_tu_tai", "rank_cu_nhan", "rank_tien_si", "rank_trang_nguyen",
         "cur_moonJade", "cur_moonStar", "cur_honor",
-        "moon_full", "star", "gear", "check", "bolt", "seal", "nav_back",
+        "moon_full", "star", "gear", "check", "bolt", "seal",
         "epitomized_moon", "nav_banners", "nav_shop", "intent_buff",
         "nav_heroes", "nav_inventory", "nav_mastery", "nav_logout", "logo_vong_nguyet", "lock",
         // Interim mode glyphs until the ui:mode_* set ships (`docs/home-assets.md`).
@@ -155,7 +150,7 @@ export class DeckSelectScene extends Phaser.Scene {
       this.closeDeckOverlay();
     });
     this.busy = false;
-    this.rank = null;
+    this.rank = session.rank;
     this.rankFailed = false;
     this.deckOverlay = null;
     this.deletingDeck = false;
@@ -239,22 +234,19 @@ export class DeckSelectScene extends Phaser.Scene {
     next();
   }
 
-  /** `/arena/me` for the emblem row; a stale response writes nothing (`home-ui-redesign` Task 2). */
+  /**
+   * Revalidates the emblem row against `/arena/me`; sign-in already seeded
+   * `session.rank`, so this only ever repaints fresher numbers. A stale
+   * response writes nothing (`home-ui-redesign` Task 2).
+   */
   private fetchRank() {
     const generation = this.generation;
-    api<ArenaMeReply>("GET", "/arena/me").then(
-      (me) => {
-        if (!this.isCurrent(generation)) return;
-        this.rank = { tierId: me.tier?.id ?? null, tierName: me.tier?.name ?? "—", rating: me.arena.rating };
-        this.rankFailed = false;
-        this.render();
-      },
-      () => {
-        if (!this.isCurrent(generation)) return;
-        this.rankFailed = true;
-        this.render();
-      },
-    );
+    void fetchSessionRank().then((ok) => {
+      if (!this.isCurrent(generation)) return;
+      if (ok) this.rank = session.rank;
+      this.rankFailed = !ok;
+      this.render();
+    });
   }
 
   /** Starter row for every team seen in saved decks + the current team, then all saved decks. */
@@ -308,7 +300,11 @@ export class DeckSelectScene extends Phaser.Scene {
     this.hideTip();
     const bounds = source.getBounds();
     const view = visibleWorld(this);
-    const tip = showTextTooltip(this, bounds.centerX - width / 2, bounds.bottom + 10, lines, width, 13).setDepth(1500);
+    // `width` is only the cap — the box hugs the widest line instead.
+    const probe = this.add.text(0, 0, lines.filter((line) => line.length > 0).join("\n"), { ...TEXT_BASE, fontSize: "13px", lineSpacing: 4 });
+    const fitted = Math.min(width, Math.ceil(probe.width) + 24);
+    probe.destroy();
+    const tip = showTextTooltip(this, bounds.centerX - fitted / 2, bounds.bottom + 10, lines, fitted, 13).setDepth(1500);
     const height = tip.getBounds().height;
     if (above || bounds.bottom + height + 10 > view.y + view.h - 8) tip.y = Math.max(view.y + 8, bounds.top - height - 10);
     this.navTooltip = tip;
@@ -321,6 +317,13 @@ export class DeckSelectScene extends Phaser.Scene {
       showTip: !enabled && options.disabledReason ? () => this.tipAt(control.hit, [options.disabledReason!], 320, true) : undefined,
       hideTip: () => this.hideTip(),
     });
+  }
+
+  private iconButton(parent: Phaser.GameObjects.Container, x: number, y: number, icon: ActionIcon, label: string, action: () => void, enabled = true, name = "", options: ButtonOptions = {}) {
+    const control = this.controls.iconButton(parent, x, y, icon, label, enabled, options);
+    control.panel.setName(name);
+    const show = () => this.tipAt(control.hit, [!enabled && options.disabledReason ? options.disabledReason : label], 280, Math.abs(y) > 200);
+    this.controls.bind(control.hit, control.panel, { enabled, activate: action, icon: control.icon, fill: control.fill, border: control.border, radius: 9, showTip: icon === "close" && enabled ? undefined : show, hideTip: () => this.hideTip() });
   }
 
   /** 40px navigation icon with a hover tooltip and an optional alert dot. */
@@ -342,18 +345,14 @@ export class DeckSelectScene extends Phaser.Scene {
     this.root.add(panel);
   }
 
-  /** A currency chip: icon + value, name on hover. Returns nothing — slots are fixed. */
-  private currencyChip(x: number, icon: string, label: string, value: number) {
+  /** A currency chip: icon + value. Read-only — no tooltip, the value is shown. */
+  private currencyChip(x: number, icon: string, value: number) {
     const key = `ui:${icon}`;
     const panel = roundedPanel(this, x + 40, 36, 112, 36, 0x0b1729, 0.94, 0x536279, 10);
     if (this.textures.exists(key)) panel.add(this.add.image(-38, 0, key).setDisplaySize(24, 24));
     const number = new Intl.NumberFormat("vi-VN", { notation: value >= 10000 ? "compact" : "standard", maximumFractionDigits: 1 }).format(value);
     this.text(panel, -20, 0, number, 15, COLORS.text).setOrigin(0, 0.5);
-    const zone = this.add.rectangle(0, 0, 112, 36, 0, 0);
-    panel.add(zone);
     this.root.add(panel);
-    const show = () => this.tipAt(zone, [label, new Intl.NumberFormat("vi-VN").format(value)]);
-    this.controls.bind(zone, panel, { enabled: true, activate: show, showTip: show, hideTip: () => this.hideTip(), fill: 0x0b1729, border: 0x536279, radius: 10 });
   }
 
   private renderHeader() {
@@ -363,16 +362,23 @@ export class DeckSelectScene extends Phaser.Scene {
       const logo = this.add.image(44, 4, logoKey).setOrigin(0);
       logo.setScale(Math.min(300 / logo.width, 86 / logo.height));
       this.root.add(logo);
-      if (auth.username) this.fitColumn(this.root, 44, 100, auth.username, 380, 13, COLORS.dimText);
     } else {
       this.text(this.root, 44, 30, "Vọng Nguyệt Thư Viện", 17, COLORS.gold).setOrigin(0, 0.5);
-      if (auth.username) this.fitColumn(this.root, 44, 52, auth.username, 380, 13, COLORS.dimText);
     }
     if (online) {
+      if (auth.username) {
+        const username = auth.username;
+        const account = roundedPanel(this, 658, 36, 244, 40, 0x0b1729, 0.94, 0x536279, 10);
+        account.add(this.add.circle(-100, 0, 13, 0x253650).setStrokeStyle(1, 0x9e8c64));
+        this.text(account, -100, 0, Array.from(username)[0]!.toLocaleUpperCase("vi-VN"), 14, COLORS.gold).setOrigin(0.5);
+        const name = this.fitColumn(account, -78, 0, username, 188, 15, COLORS.text);
+        if (name.truncated) this.controls.info(name.label, () => this.tipAt(name.label, [username]), () => this.hideTip());
+        this.root.add(account);
+      }
       const currencies = session.profile.currencies;
-      this.currencyChip(820, "cur_moonJade", CURRENCY_LABELS.moonJade, currencies.moonJade);
-      this.currencyChip(950, "cur_moonStar", CURRENCY_LABELS.moonStar, currencies.moonStar);
-      this.currencyChip(1080, "cur_honor", CURRENCY_LABELS.honor, currencies.honor ?? 0);
+      this.currencyChip(820, "cur_moonJade", currencies.moonJade);
+      this.currencyChip(950, "cur_moonStar", currencies.moonStar);
+      this.currencyChip(1080, "cur_honor", currencies.honor ?? 0);
     }
     if (online) {
       this.navIcon(1240, 36, this.textures.exists("ui:nav_logout") ? "nav_logout" : "nav_back", "Đăng xuất", () => {
@@ -444,7 +450,7 @@ export class DeckSelectScene extends Phaser.Scene {
     const hit = this.add.rectangle(0, 0, width, height, 0, 0);
     panel.add(hit);
     this.controls.bind(hit, panel, { enabled, activate: action, icon: image, fill: 0x101c36, border: arena ? 0xb79b60 : 0x63779b, radius: 16,
-      showTip: disabledReason ? () => this.tipAt(hit, [disabledReason]) : arena && this.rank ? () => this.tipAt(hit, [`${this.rank!.tierName} · ${this.rank!.rating} điểm`, this.rankProgress()]) : undefined, hideTip: () => this.hideTip() });
+      showTip: disabledReason ? () => this.tipAt(hit, [disabledReason]) : undefined, hideTip: () => this.hideTip() });
     if (arena) this.renderArenaRank(panel, hit);
     this.root.add(panel);
   }
@@ -479,6 +485,14 @@ export class DeckSelectScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Rounded hero art with the name band baked in — cached per art/size so cards
+   * repaint cheaply without per-frame masks. Returns the baked texture key.
+   */
+  private heroCardTexture(artKey: string, w: number, h: number, radius: number) {
+    return roundedArtTexture(this, artKey, w, h, radius, Math.min(80, Math.round(h * 0.28)));
+  }
+
   /** Selected-deck identity and explicit actions above the hero trio. */
   private renderTeam(deck: SavedDeck) {
     this.text(this.root, 506, 104, "Đội hình xuất trận", 19, COLORS.text).setOrigin(0, 0.5).setStroke("#07101f", 2);
@@ -487,7 +501,7 @@ export class DeckSelectScene extends Phaser.Scene {
     if (name.truncated) {
       this.controls.info(name.label, () => this.tipAt(name.label, [deck.name], 440), () => this.hideTip());
     }
-    this.button(this.root, 1015, 160, 130, "Đổi deck ▾", () => this.openDeckOverlay(), !this.busy, { variant: "primary" });
+    this.button(this.root, 1015, 160, 130, "Đổi bộ bài ▾", () => this.openDeckOverlay(), !this.busy, { variant: "primary" });
     this.button(this.root, 1164, 160, 144, starter ? "Sao chép & sửa" : "Chỉnh sửa", () => this.openDeckEditor(deck, starter), session.online && !this.busy, {
       disabledReason: session.online ? this.busyStage : "Cần đăng nhập và kết nối server",
     });
@@ -495,31 +509,19 @@ export class DeckSelectScene extends Phaser.Scene {
     deck.heroIds.forEach((heroId, index) => {
       const x = HERO_XS[index]!;
       const hero = session.data.heroes[heroId];
-      const card = roundedPanel(this, x, HERO_Y, HERO_W, HERO_H, 0x101c36, 0.9, 0x7d90b8, 14);
-      // Full-bleed art clipped to the card's exact rounded shape — the mask
-      // covers the panel chrome (incl. its border) so no second edge shows.
-      const clip = this.add.graphics();
-      clip.fillStyle(0xffffff).fillRoundedRect(-HERO_W / 2, -HERO_H / 2, HERO_W, HERO_H, 14);
-      clip.setVisible(false);
-      card.add(clip);
-      const cardMask = clip.createGeometryMask();
+      // Chrome border stays under the art — the frame is drawn on top instead.
+      const card = roundedPanel(this, x, HERO_Y, HERO_W, HERO_H, 0x101c36, 0.9, 0x101c36, 14);
       const artKey = this.heroArtKey(heroId);
-      if (this.textures.exists(artKey)) {
-        const art = this.add.image(0, 0, artKey).setMask(cardMask);
-        coverCrop(art, HERO_W, HERO_H);
-        card.add(art);
+      const baked = this.heroCardTexture(artKey, HERO_W, HERO_H, 14);
+      if (this.textures.exists(baked)) {
+        card.add(this.add.image(0, 0, baked).setScale(1 / RENDER_SCALE));
       } else {
         this.text(card, 0, -18, "❖", 40, COLORS.dimText).setOrigin(0.5);
       }
-      // The name plate lives inside the art — a bottom band that fades in.
-      const plate = this.add.graphics().setMask(cardMask);
-      plate.fillGradientStyle(0x0a1426, 0x0a1426, 0x0a1426, 0x0a1426, 0, 0, 0.85, 0.85);
-      plate.fillRect(-HERO_W / 2, HERO_H / 2 - 80, HERO_W, 80);
-      card.add(plate);
       this.text(card, 0, HERO_H / 2 - 50, hero?.name ?? heroId, 17, COLORS.text).setOrigin(0.5).setStroke("#07101f", 2);
       this.text(card, 0, HERO_H / 2 - 24, hero ? FACTION_LABELS[hero.faction] : "", 13, "#aab4ca").setOrigin(0.5).setStroke("#07101f", 2);
-      // The frame sits on top of the art at the same edge the mask clips to.
-      card.add(this.add.graphics().lineStyle(1.5, 0x7d90b8, 0.9).strokeRoundedRect(-HERO_W / 2, -HERO_H / 2, HERO_W, HERO_H, 14));
+      // The frame sits on top of the baked art, fully inside the card edge.
+      card.add(this.add.graphics().lineStyle(1.5, 0x7d90b8, 0.9).strokeRoundedRect(-HERO_W / 2 + 1, -HERO_H / 2 + 1, HERO_W - 2, HERO_H - 2, 13));
       const hit = this.add.rectangle(0, 0, HERO_W, HERO_H, 0, 0);
       card.add(hit);
       const progress = session.profile.heroes[heroId];
@@ -652,17 +654,16 @@ export class DeckSelectScene extends Phaser.Scene {
     search.add(searchHit);
     panel.add(search);
     // Canvas keyboard navigation can enter the native text field via Enter.
-    this.controls.bind(searchHit, search, { enabled: ready, activate: () => this.deckSearch?.focus(), fill: 0x111f34, border: 0x65748e, radius: 8,
-      showTip: () => this.tipAt(searchHit, ["Tìm tên deck hoặc Hero · Enter để nhập"], 330), hideTip: () => this.hideTip() });
-    this.button(panel, -165, -280, 145, "+ Deck mới", () => {
+    this.controls.bind(searchHit, search, { enabled: ready, activate: () => this.deckSearch?.focus(), fill: 0x111f34, border: 0x65748e, radius: 8 });
+    this.iconButton(panel, -114, -280, "add", "Bộ bài mới", () => {
       this.closeDeckOverlay();
       this.pickingTeam = true;
       this.teamScroll.first = 0;
       this.picked = [...session.heroIds];
       this.render();
       this.queueHeroArt();
-    }, online && ready, { disabledReason: "Cần đăng nhập và kết nối server" });
-    this.button(panel, 492, -280, 40, "×", () => this.closeDeckOverlay(), ready);
+    }, online && ready, "deck_new", { disabledReason: ready ? "Cần đăng nhập và kết nối server" : "Đang xóa bộ bài…" });
+    this.iconButton(panel, 492, -280, "close", "Đóng", () => this.closeDeckOverlay(), ready, "deck_overlay_close", { disabledReason: "Đang xóa bộ bài…" });
     panel.add(this.add.rectangle(-68, -18, 1, 492, 0x43536c, 0.7));
     panel.add(this.add.rectangle(0, 247, 1032, 1, 0x43536c, 0.7));
 
@@ -703,7 +704,7 @@ export class DeckSelectScene extends Phaser.Scene {
     if (first > 0) this.deckScrollArrow(panel, -210, "▲", () => this.overlayScroller.scrollBy(-1));
     if (end < ordered.length) this.deckScrollArrow(panel, 206, "▼", () => this.overlayScroller.scrollBy(1));
     this.text(panel, -516, 227, ordered.length ? `${first + 1}–${end} / ${ordered.length} đội hình` : "Không tìm thấy đội hình", 12, COLORS.dimText).setOrigin(0, 0.5);
-    if (!ordered.length) panel.add(this.add.text(-304, -78, "Không có deck phù hợp\nThử tên deck hoặc tên Hero khác", { ...TEXT_BASE, fontSize: "15px", color: COLORS.dimText, align: "center", wordWrap: { width: 360 } }).setOrigin(0.5));
+    if (!ordered.length) panel.add(this.add.text(-304, -78, "Không có bộ bài phù hợp\nThử tên bộ bài hoặc tên Hero khác", { ...TEXT_BASE, fontSize: "15px", color: COLORS.dimText, align: "center", wordWrap: { width: 360 } }).setOrigin(0.5));
 
     const preview = this.add.container(0, 0);
     panel.add(preview);
@@ -716,15 +717,15 @@ export class DeckSelectScene extends Phaser.Scene {
     const starter = deck.id.startsWith("starter:");
     const allowed = validateDeck(data, session.profile, deck).length === 0 || validateDeck(data, session.profile, deck, { mode: "pvp" }).length === 0;
     if (!starter) {
-      this.button(panel, -442, 276, 148, "Chỉnh sửa", () => this.openDeckEditor(deck), online && ready, { disabledReason: "Cần đăng nhập và kết nối server" });
-      this.button(panel, -34, 276, 40, "⋯", () => {
+      this.iconButton(panel, -494, 276, "edit", "Chỉnh sửa", () => this.openDeckEditor(deck), online && ready, "deck_edit", { disabledReason: ready ? "Cần đăng nhập và kết nối server" : "Đang xóa bộ bài…" });
+      this.iconButton(panel, -382, 276, "more", "Thao tác khác", () => {
         this.deckMenuOpen = !this.deckMenuOpen;
         this.renderDeckList(panel);
-      }, online && ready);
+      }, online && ready, "deck_more", { disabledReason: ready ? "Cần đăng nhập và kết nối server" : "Đang xóa bộ bài…" });
     }
-    this.button(panel, starter ? -418 : -246, 276, 184, "Sao chép & sửa", () => this.openDeckEditor(deck, true), online && ready, { disabledReason: "Cần đăng nhập và kết nối server" });
-    if (this.deckMenuOpen && !starter) this.button(panel, -54, 223, 172, "Xóa deck…", () => this.deletePreviewDeck(deck), online && ready, { variant: "danger" });
-    this.button(panel, 416, 276, 200, "Dùng deck này", () => {
+    this.iconButton(panel, starter ? -494 : -438, 276, "copy", "Sao chép & sửa", () => this.openDeckEditor(deck, true), online && ready, "deck_copy", { disabledReason: ready ? "Cần đăng nhập và kết nối server" : "Đang xóa bộ bài…" });
+    if (this.deckMenuOpen && !starter) this.button(panel, -318, 223, 172, "Xóa bộ bài…", () => this.deletePreviewDeck(deck), online && ready, { variant: "danger" });
+    this.button(panel, 416, 276, 200, "Dùng bộ bài này", () => {
       // Revalidate at activation too: deleting/profile refresh can change eligibility.
       const current = this.decks().find((entry) => entry.id === deck.id);
       if (!current || (validateDeck(data, session.profile, current).length && validateDeck(data, session.profile, current, { mode: "pvp" }).length)) return;
@@ -732,60 +733,65 @@ export class DeckSelectScene extends Phaser.Scene {
       this.closeDeckOverlay();
       this.render();
       this.queueHeroArt();
-    }, allowed && ready, { variant: "primary", disabledReason: "Deck cần chỉnh sửa để dùng ở Thường hoặc PvP" });
+    }, allowed && ready, { variant: "primary", disabledReason: "Bộ bài cần chỉnh sửa để dùng ở Thường hoặc PvP" });
     this.queueDeckArt(panel, [...shown, deck]);
+  }
+
+  /** Centered variant of `fitColumn` for labels drawn on card art. */
+  private fitCentered(
+    panel: Phaser.GameObjects.Container,
+    y: number,
+    full: string,
+    maxWidth: number,
+    size: number,
+    color: string,
+  ): { truncated: boolean; label: Phaser.GameObjects.Text } {
+    const label = this.text(panel, 0, y, full, size, color).setOrigin(0.5).setStroke("#07101f", 2);
+    if (label.width <= maxWidth) return { truncated: false, label };
+    let lo = 0;
+    let hi = full.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      label.setText(`${full.slice(0, mid)}…`);
+      if (label.width <= maxWidth) lo = mid + 1;
+      else hi = mid;
+    }
+    label.setText(`${full.slice(0, Math.max(0, lo - 1))}…`);
+    return { truncated: true, label };
   }
 
   private renderDeckPreview(panel: Phaser.GameObjects.Container, deck: SavedDeck) {
     const data = session.data;
-    const stats = summarizeDeck(data, deck, { profile: session.profile });
     const name = this.fitColumn(panel, -40, -239, deck.name, 552, 23, COLORS.gold);
     if (name.truncated) this.controls.info(name.label, () => this.tipAt(name.label, [deck.name], 552, true), () => this.hideTip());
     deck.heroIds.forEach((id, slot) => {
-      const x = 48 + slot * 184;
+      const x = 48 + slot * 188;
       const hero = data.heroes[id];
-      const card = roundedPanel(this, x, -112, 168, 168, 0x14243a, 1, 0x526881, 12);
+      // Same look as the Home trio: full-bleed art, name on the baked band, frame inside.
+      const card = roundedPanel(this, x, -74, 176, 260, 0x101c36, 0.9, 0x101c36, 12);
       panel.add(card);
-      this.deckPortrait(card, 0, -20, 146, 112, id);
-      const label = this.fitColumn(card, -73, 47, `${slot + 1}. ${hero?.name ?? id}`, 146, 15, COLORS.text);
+      const baked = this.heroCardTexture(this.heroArtKey(id), 176, 260, 12);
+      if (this.textures.exists(baked)) card.add(this.add.image(0, 0, baked).setScale(1 / RENDER_SCALE));
+      else this.text(card, 0, -18, "❖", 36, COLORS.dimText).setOrigin(0.5);
+      const label = this.fitCentered(card, 81, `${slot + 1}. ${hero?.name ?? id}`, 156, 15, COLORS.text);
       if (label.truncated) this.controls.info(label.label, () => this.tipAt(label.label, [hero?.name ?? id]), () => this.hideTip());
-      this.fitColumn(card, -73, 68, hero ? FACTION_LABELS[hero.faction] : "", 146, 12, COLORS.dimText);
+      this.text(card, 0, 104, hero ? FACTION_LABELS[hero.faction] : "", 12, "#aab4ca").setOrigin(0.5).setStroke("#07101f", 2);
+      card.add(this.add.graphics().lineStyle(1.5, 0x7d90b8, 0.9).strokeRoundedRect(-87, -129, 174, 258, 11));
     });
-    const summary = roundedPanel(this, 236, 5, 552, 44, 0x16263a, 1, 0x43536c, 9);
-    panel.add(summary);
-    this.text(summary, -258, 0, `${stats.slots}/${data.metaConfig.deckSize} ô deck`, 15, stats.slots === data.metaConfig.deckSize ? "#a9d6c5" : "#e0aaa6").setOrigin(0, 0.5);
-    this.text(summary, -98, 0, `${stats.copies} bản trong chồng bài`, 13, COLORS.text).setOrigin(0, 0.5);
-    const pvpStats = summarizeDeck(data, deck, { profile: session.profile, mode: "pvp" });
-    const costLabel = Math.abs(stats.averageCost - pvpStats.averageCost) > 0.01 ? `NL TB ${stats.averageCost.toFixed(1)} / PvP ${pvpStats.averageCost.toFixed(1)}` : `NL TB ${stats.averageCost.toFixed(1)}`;
-    const cost = this.fitColumn(summary, 125, 0, costLabel, 137, 13, COLORS.text);
-    if (cost.truncated) this.controls.info(cost.label, () => this.tipAt(cost.label, [costLabel], 290, true), () => this.hideTip());
     deck.heroIds.forEach((id, slot) => {
       const weaponId = deck.weapons?.[id];
       const weapon = weaponId ? data.weapons[weaponId] : undefined;
       const rank = weaponId ? session.profile.weapons[weaponId]?.refinement : undefined;
-      this.deckGearTile(panel, 48 + slot * 184, 64, 168, weaponId ? `weapons:${weaponId}` : undefined, weapon?.name ?? "Vũ khí trống", weapon ? rank ? `R${rank}` : data.pvpConfig.freeWeaponIds.includes(weaponId!) ? "PvP · R1" : "Chưa sở hữu" : "Không trang bị");
+      this.deckGearTile(panel, 48 + slot * 188, 102, 176, weaponId ? `weapons:${weaponId}` : undefined, weapon?.name ?? "Vũ khí trống", weapon ? rank ? `Tinh Luyện ${rank}` : data.pvpConfig.freeWeaponIds.includes(weaponId!) ? "PvP · Tinh Luyện 1" : "Chưa sở hữu" : "Không trang bị");
     });
-    for (let slot = 0; slot < data.metaConfig.maxRelics; slot++) {
+    const relicSlots = data.metaConfig.maxRelics;
+    const relicW = (552 - (relicSlots - 1) * 12) / relicSlots;
+    for (let slot = 0; slot < relicSlots; slot++) {
       const id = deck.relicIds?.[slot];
       const relic = id ? data.relics[id] : undefined;
       const resonance = id ? session.profile.relics[id]?.resonance : undefined;
-      this.deckGearTile(panel, 92 + slot * 280, 124, 264, id ? `relics:${id}` : undefined, relic?.name ?? "Nguyệt Bảo trống", relic ? resonance ? `CM${resonance}` : data.pvpConfig.freeRelicIds.includes(id!) ? "PvP · CM1" : "Chưa sở hữu" : "Không trang bị");
+      this.deckGearTile(panel, -40 + relicW / 2 + slot * (relicW + 12), 190, relicW, id ? `relics:${id}` : undefined, relic?.name ?? "Nguyệt Bảo trống", relic ? resonance ? `Cộng Minh ${resonance}` : data.pvpConfig.freeRelicIds.includes(id!) ? "PvP · Cộng Minh 1" : "Chưa sở hữu" : "Không trang bị");
     }
-    const ordinary = validateDeck(data, session.profile, deck);
-    const pvp = validateDeck(data, session.profile, deck, { mode: "pvp" });
-    this.text(panel, -40, 168, `Thường: ${ordinary.length ? `⚠ ${ordinary.length} vấn đề` : "Sẵn sàng"}`, 14, ordinary.length ? "#e0aaa6" : "#a9d6c5").setOrigin(0, 0.5);
-    this.text(panel, 238, 168, `PvP: ${pvp.length ? `⚠ ${pvp.length} vấn đề` : "Sẵn sàng"}`, 14, pvp.length ? "#e0aaa6" : "#a9d6c5").setOrigin(0, 0.5);
-    const errors = ordinary.length && pvp.length ? (ordinary.length <= pvp.length ? ordinary : pvp) : ordinary.length && !pvp.length ? ordinary : pvp.length && !ordinary.length ? pvp : [];
-    const explanation = errors.length
-      ? `${ordinary.length && !pvp.length ? "Dùng được ở PvP. " : pvp.length && !ordinary.length ? "Dùng được ở Thường. " : ""}${errors.slice(0, 2).map((error) => describeDeckError(data, error)).join(" · ")}${errors.length > 2 ? ` · +${errors.length - 2} vấn đề` : ""}`
-      : "Đội hình dùng được ở Thường và PvP.";
-    const explanationText = this.add.text(-40, 190, explanation, { ...TEXT_BASE, fontSize: "13px", color: errors.length ? "#c9bac0" : COLORS.dimText, wordWrap: { width: 552 }, maxLines: 3 }).setOrigin(0, 0);
-    panel.add(explanationText);
-    if (errors.length) this.controls.info(explanationText, () => this.tipAt(explanationText, [
-      `Thường: ${ordinary.length ? ordinary.map((error) => describeDeckError(data, error)).join("\n") : "Sẵn sàng"}`,
-      `PvP: ${pvp.length ? pvp.map((error) => describeDeckError(data, error)).join("\n") : "Sẵn sàng"}`,
-      "Chỉnh sửa hoặc Sao chép & sửa ở bên dưới để xử lý.",
-    ], 552, true), () => this.hideTip());
   }
 
   private deckPortrait(parent: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number, heroId: string) {
@@ -805,16 +811,16 @@ export class DeckSelectScene extends Phaser.Scene {
   }
 
   private deckGearTile(parent: Phaser.GameObjects.Container, x: number, y: number, width: number, key: string | undefined, name: string, detail: string) {
-    const tile = roundedPanel(this, x, y, width, 54, 0x111f34, 1, 0x43536c, 9);
+    const tile = roundedPanel(this, x, y, width, 76, 0x111f34, 1, 0x43536c, 9);
     parent.add(tile);
     if (key && this.textures.exists(key)) {
-      const image = this.add.image(-width / 2 + 27, 0, key);
-      image.setScale(Math.min(40 / image.width, 40 / image.height));
+      const image = this.add.image(-width / 2 + 36, 0, key);
+      image.setScale(Math.min(56 / image.width, 56 / image.height));
       tile.add(image);
     }
-    else this.text(tile, -width / 2 + 27, 0, key ? "❖" : "+", 21, COLORS.dimText).setOrigin(0.5);
-    const label = this.fitColumn(tile, -width / 2 + 52, -9, name, width - 62, 13, COLORS.text);
-    this.text(tile, -width / 2 + 52, 12, detail, 12, COLORS.dimText).setOrigin(0, 0.5);
+    else this.text(tile, -width / 2 + 36, 0, key ? "❖" : "+", 24, COLORS.dimText).setOrigin(0.5);
+    const label = this.fitColumn(tile, -width / 2 + 68, -13, name, width - 78, 14, COLORS.text);
+    this.text(tile, -width / 2 + 68, 13, detail, 12, COLORS.dimText).setOrigin(0, 0.5);
     if (label.truncated) this.controls.info(label.label, () => this.tipAt(label.label, [name, detail]), () => this.hideTip());
   }
 
@@ -854,8 +860,8 @@ export class DeckSelectScene extends Phaser.Scene {
     const input = document.createElement("input");
     input.id = "vn-deck-search";
     input.type = "search";
-    input.placeholder = "Tìm tên deck hoặc Hero";
-    input.setAttribute("aria-label", "Tìm tên deck hoặc Hero");
+    input.placeholder = "Tìm tên bộ bài hoặc Hero";
+    input.setAttribute("aria-label", "Tìm tên bộ bài hoặc Hero");
     input.style.cssText = "position:fixed;box-sizing:border-box;padding:0 12px;background:#111f34;color:#e8e0c8;border:1px solid #65748e;border-radius:8px;font-family:Segoe UI,sans-serif;z-index:9";
     this.deckSearch = input;
     const place = () => {
@@ -892,7 +898,7 @@ export class DeckSelectScene extends Phaser.Scene {
     this.deckMenuOpen = false;
     // Native input cannot cover the canvas confirmation dialog.
     if (this.deckSearch) this.deckSearch.style.visibility = "hidden";
-    void confirmModal(this, `Xóa deck "${deck.name}"? Không hoàn tác được.`, { label: "Xóa deck", danger: true }).then(async (ok) => {
+    void confirmModal(this, `Xóa bộ bài "${deck.name}"? Không hoàn tác được.`, { label: "Xóa bộ bài", danger: true }).then(async (ok) => {
       if (!this.isCurrent(generation) || accountGeneration !== auth.generation || this.overlayPanel !== panel) return;
       if (this.deckSearch) this.deckSearch.style.visibility = "visible";
       if (!ok) { if (panel) this.renderDeckList(panel); return; }
@@ -941,7 +947,7 @@ export class DeckSelectScene extends Phaser.Scene {
       this.text(panel, 0, -130, "Cốt Truyện", 15, COLORS.dimText).setOrigin(0.5);
       this.text(panel, 0, -102, storyStage.name, 21, COLORS.gold).setOrigin(0.5);
       panel.add(
-        this.add.text(0, -62, "Chọn deck vào màn — kết quả trận được server kiểm chứng", {
+        this.add.text(0, -62, "Chọn bộ bài vào màn — kết quả trận được server kiểm chứng", {
           ...TEXT_BASE, fontSize: "12px", color: COLORS.dimText, align: "center", wordWrap: { width: 320 },
         }).setOrigin(0.5, 0),
       );
@@ -1012,7 +1018,7 @@ export class DeckSelectScene extends Phaser.Scene {
   /** Compact team picker, only used to seed a brand-new deck's heroIds. */
   private renderPickTeam() {
     const data = session.data;
-    addText(this, this.root, WIDTH / 2, 40, "Deck mới — chọn 3 Hero", 24, COLORS.gold).setOrigin(0.5);
+    addText(this, this.root, WIDTH / 2, 40, "Bộ bài mới — chọn 3 Hero", 24, COLORS.gold).setOrigin(0.5);
     addText(this, this.root, WIDTH / 2, 74, `Đã chọn ${this.picked.length}/3 · Thứ tự chọn là vị trí trong đội`, 14, COLORS.text).setOrigin(0.5);
     // Owned heroes first: they are the only ones the player can pick.
     const heroes = Object.values(data.heroes).sort(
@@ -1040,8 +1046,7 @@ export class DeckSelectScene extends Phaser.Scene {
         else if (this.picked.length < 3) this.picked.push(hero.id);
         this.render();
       };
-      this.controls.bind(hit, panel, { enabled: owned, activate: select, fill: COLORS.panelHero, border: slot >= 0 ? COLORS.goldFill : COLORS.panelBorder, radius: 10,
-        showTip: !owned ? () => this.tipAt(hit, ["Chưa sở hữu Hero này"]) : undefined, hideTip: () => this.hideTip() });
+      this.controls.bind(hit, panel, { enabled: owned, activate: select, fill: COLORS.panelHero, border: slot >= 0 ? COLORS.goldFill : COLORS.panelBorder, radius: 10 });
       this.root.add(panel);
       if (slot >= 0) {
         panel.add(this.add.circle(-90, -31, 10, 0x162139).setStrokeStyle(1, COLORS.goldFill));
@@ -1062,10 +1067,10 @@ export class DeckSelectScene extends Phaser.Scene {
       this.controls.info(bond.label, () => this.tipAt(bond.label, [bondText], 520), () => this.hideTip());
     }
     const ready = this.picked.length === 3;
-    this.button(this.root, WIDTH / 2 - 110, 640, 200, ready ? "Tạo deck" : `Chọn thêm ${3 - this.picked.length} Hero`, () => {
+    this.button(this.root, WIDTH / 2 - 110, 640, 200, ready ? "Tạo bộ bài" : `Chọn thêm ${3 - this.picked.length} Hero`, () => {
       if (!ready) return;
       const heroIds = [...this.picked] as Team;
-      session.editingDeck = { id: "", name: "Deck mới", heroIds, cardIds: starterDeck(session.data, heroIds) };
+      session.editingDeck = { id: "", name: "Bộ bài mới", heroIds, cardIds: starterDeck(session.data, heroIds) };
       this.scene.start("deck-builder");
     }, ready, { variant: "primary" });
     this.button(this.root, WIDTH / 2 + 110, 640, 200, "Hủy", () => {

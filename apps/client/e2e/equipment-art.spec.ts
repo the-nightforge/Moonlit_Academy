@@ -33,7 +33,7 @@ async function probe(page: Page, key: string) {
     const walk = (nodes: any[]) => nodes.forEach(n => {
       const b = n.getBounds?.();
       if (n.type === "Image") images.push({ key: n.texture.key, w: b.width, h: b.height, x: b.x, y: b.y });
-      if (n.type === "Text") texts.push({ text: n.text, x: b.x, y: b.y, w: b.width, h: b.height });
+      if (n.type === "Text" || (n.type === "Rectangle" && n.getData?.("actionLabel"))) texts.push({ text: n.type === "Text" ? n.text : n.getData("actionLabel"), x: b.x, y: b.y, w: b.width, h: b.height });
       if (n.list) walk(n.list);
     });
     walk(scene.children.list); return { images, texts };
@@ -86,19 +86,56 @@ test("equipment without art stays usable and does not load a missing texture", a
   expect(p.texts.some(t => t.text === "Chưa có art")).toBe(true);
   expect(p.images.some(i => i.key === "__MISSING")).toBe(false);
   await clickText(page, "armory", "Nguyệt Bảo");
-  expect((await probe(page, "armory")).texts.some(t => t.text.includes("CM1."))).toBe(true);
+  expect((await probe(page, "armory")).texts.some(t => t.text.includes("Cộng Minh 1."))).toBe(true);
   expect(errors).toEqual([]);
 });
 
-test("gear picker shows thumbnails and lets the last weapon be equipped", async ({ page }) => {
+async function clickNamed(page: Page, scene: string, name: string) {
+  const node = await page.evaluate(({ scene, name }) => {
+    const s = (window as any).__vn.game.scene.getScene(scene), nodes: any[] = [];
+    const walk = (l: any[]) => (l ?? []).forEach((n: any) => { nodes.push(n); if (n.list) walk(n.list); });
+    walk(s.children.list);
+    const found = nodes.find((n) => n.name === name);
+    return found ? { x: found.getBounds().x, y: found.getBounds().y, w: found.getBounds().width, h: found.getBounds().height } : null;
+  }, { scene, name });
+  expect(node, `named node: ${name}`).toBeTruthy();
+  const box = (await page.locator("canvas").boundingBox())!;
+  const scale = Math.min(box.width / 1280, box.height / 720);
+  await page.mouse.click(box.x + (box.width - 1280 * scale) / 2 + (node!.x + node!.w / 2) * scale,
+    box.y + (box.height - 720 * scale) / 2 + (node!.y + node!.h / 2) * scale);
+}
+
+const gearIds = (page: Page) => page.evaluate(() => {
+  const s = (window as any).__vn.game.scene.getScene("deck-builder"), ids: string[] = [];
+  const skip = new Set(["deck_gear_picker", "deck_gear_close", "deck_gear_equip", "deck_gear_clear", "deck_gear_previous", "deck_gear_next"]);
+  const walk = (l: any[]) => (l ?? []).forEach((n: any) => { if (n.name?.startsWith("deck_gear_") && !n.name.endsWith("_hit") && !skip.has(n.name)) ids.push(n.name.slice(10)); if (n.list) walk(n.list); });
+  walk(s.children.list); return ids;
+});
+
+test("gear picker sorts by rarity with the signature weapon first and equips a choice", async ({ page }) => {
   await boot(page, "deck-builder");
-  await clickText(page, "deck-builder", "⚔ Vũ khí:");
-  expect((await probe(page, "deck-builder")).images.some(i => i.key === "weapons:w_xich_diem_thuong")).toBe(true);
-  await clickText(page, "deck-builder", "Sau"); await clickText(page, "deck-builder", "Sau");
-  await clickText(page, "deck-builder", "Dẫn Hồn Đăng");
-  expect(await page.evaluate(() => Object.values((window as any).__vn.session.editingDeck.weapons).includes("w_dan_hon_dang"))).toBe(true);
-  await clickText(page, "deck-builder", "☾ Nguyệt Bảo 1:");
-  expect((await probe(page, "deck-builder")).images.some(i => i.key === "relics:r_thien_sach")).toBe(true);
+  const heroId = await page.evaluate(() => (window as any).__vn.session.editingDeck.heroIds[0]);
+  const signature = await page.evaluate((heroId) => Object.keys((window as any).__vn.session.data.weapons).find((id) => (window as any).__vn.session.data.weapons[id].signatureHeroId === heroId), heroId);
+  await clickNamed(page, "deck-builder", `deck_weapon_${heroId}`);
+  const pageOne = await gearIds(page);
+  expect(pageOne[0]).toBe(signature);
+  const rank = { legendary: 0, epic: 1, rare: 2, common: 3 } as Record<string, number>;
+  const rarities = await page.evaluate((ids) => ids.map((id) => (window as any).__vn.session.data.weapons[id].rarity), pageOne);
+  expect(rarities.slice(1)).toEqual([...rarities.slice(1)].sort((a, b) => rank[a]! - rank[b]!));
+  expect((await probe(page, "deck-builder")).images.some(i => i.key.startsWith(`weapons:${signature}`))).toBe(true);
+  await clickText(page, "deck-builder", "Sau");
+  expect(await gearIds(page)).not.toEqual(pageOne);
+  await clickText(page, "deck-builder", "Trước");
+  // Equip the first non-signature entry on page one.
+  const pick = pageOne[1]!, pickName = await page.evaluate((id) => (window as any).__vn.session.data.weapons[id].name, pick);
+  await clickText(page, "deck-builder", pickName);
+  await clickText(page, "deck-builder", "Trang bị");
+  expect(await page.evaluate((id) => Object.values((window as any).__vn.session.editingDeck.weapons).includes(id), pick)).toBe(true);
+  await clickNamed(page, "deck-builder", "deck_relic_0");
+  const relicIds = await gearIds(page);
+  const relicRarities = await page.evaluate((ids) => ids.map((id) => (window as any).__vn.session.data.relics[id].rarity), relicIds);
+  expect(relicRarities).toEqual([...relicRarities].sort((a, b) => rank[a]! - rank[b]!));
+  expect((await probe(page, "deck-builder")).images.some(i => i.key.startsWith("relics:r_thien_sach"))).toBe(true);
 });
 
 for (const [itemId, key, withArt] of [

@@ -78,7 +78,7 @@ export class LoginScene extends Phaser.Scene {
   private async afterSignIn(generation: number) {
     const legacy = readLegacyProfile();
     if (legacy !== null && !session.profile.flags.localImportDone) {
-      const choice = await this.ask("Tiếp nối hành trình", "Có tiến độ cũ trên máy này (Tu Luyện, deck). Nhập vào tài khoản?", ["Nhập", "Bỏ qua"], generation);
+      const choice = await this.ask("Tiếp nối hành trình", "Có tiến độ cũ trên máy này (Tu Luyện, bộ bài). Nhập vào tài khoản?", ["Nhập", "Bỏ qua"], generation);
       if (!this.current(generation)) return;
       if (choice === 0) {
         try {

@@ -10,7 +10,7 @@ import { openSignedIn, registerAccount, saveDeck } from "./helpers/online";
 
 const selectedDeckId = (page: Page) => page.evaluate(() => (window as any).__vn.session.selectedDeckId);
 
-/** Finds a Text anywhere under the scene (root, overlay layers, modals) and clicks it. `arg` reaches the predicate as its second parameter. */
+/** Finds visible text or an icon's semantic label, prioritizing the open modal. `arg` reaches the predicate as its second parameter. */
 async function clickText(page: Page, sceneKey: string, match: (text: string, arg?: any) => boolean, timeout = 15_000, arg?: unknown): Promise<void> {
   const find = () =>
     page.evaluate(({ sceneKey, source, arg: predicateArg }) => {
@@ -21,7 +21,8 @@ async function clickText(page: Page, sceneKey: string, match: (text: string, arg
       const walk = (nodes: any[] | undefined) => {
         for (const node of nodes ?? []) {
           if (found) return;
-          if (node.type === "Text" && typeof node.text === "string" && matches(node.text, predicateArg)) found = node;
+          const label = node.type === "Text" ? node.text : node.getData?.("actionLabel");
+          if (typeof label === "string" && matches(label, predicateArg)) found = node;
           else if (Array.isArray(node.list)) walk(node.list);
         }
       };
@@ -51,11 +52,11 @@ const homeTexts = (page: Page) => sceneTexts(page, "deck-select");
 test.describe("home details", () => {
   test("overlay keyboard focus survives a background Home refresh", async ({ page }) => {
     await openSignedIn(page, await registerAccount());
-    await clickText(page, "deck-select", (text) => text === "Đổi deck ▾");
+    await clickText(page, "deck-select", (text) => text === "Đổi bộ bài ▾");
     let found = false;
     for (let i = 0; i < 30 && !found; i++) {
       await page.keyboard.press("Tab");
-      found = await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").controls.focused?.panel.list.some((node: any) => node.type === "Text" && node.text === "Sao chép & sửa") ?? false);
+      found = await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").controls.focused?.panel.getData("actionLabel") === "Sao chép & sửa");
     }
     expect(found).toBe(true);
     await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").render());
@@ -141,11 +142,11 @@ test.describe("home details", () => {
 
   test("starter hides direct editing; offline copy tooltip stays above its button", async ({ page }) => {
     await openSignedIn(page, await registerAccount());
-    await clickText(page, "deck-select", (text) => text === "Đổi deck ▾");
+    await clickText(page, "deck-select", (text) => text === "Đổi bộ bài ▾");
     await expect.poll(() => page.evaluate(() => {
       const s = (window as any).__vn.game.scene.getScene("deck-select");
       const walk = (nodes: any[]): any[] => nodes.flatMap((n) => [n, ...(n.list ? walk(n.list) : [])]);
-      return walk(s.overlayPanel.list).some((n) => n.type === "Text" && n.text === "Chỉnh sửa");
+      return walk(s.overlayPanel.list).some((n) => n.getData?.("actionLabel") === "Chỉnh sửa");
     })).toBe(false);
     await page.evaluate(() => {
       const h = (window as any).__vn;
@@ -155,7 +156,7 @@ test.describe("home details", () => {
     });
     const point = await page.evaluate(() => {
       const scene = (window as any).__vn.game.scene.getScene("deck-select");
-      const walk = (nodes: any[]): any => nodes.flatMap((node: any) => node.type === "Text" && node.text === "Sao chép & sửa" ? [node] : Array.isArray(node.list) ? walk(node.list) : []);
+      const walk = (nodes: any[]): any => nodes.flatMap((node: any) => node.type === "Rectangle" && node.getData?.("actionLabel") === "Sao chép & sửa" ? [node] : Array.isArray(node.list) ? walk(node.list) : []);
       const text = walk(scene.overlayPanel.list)[0];
       const b = text.getBounds();
       return { x: b.centerX, y: b.centerY };
@@ -239,18 +240,18 @@ test.describe("home hierarchy", () => {
     const name = "Đội hình Ánh Trăng";
     const id = await saveDeck(account, name);
     await openSignedIn(page, account);
-    await clickText(page, "deck-select", (text) => text === "Đổi deck ▾");
+    await clickText(page, "deck-select", (text) => text === "Đổi bộ bài ▾");
     await clickText(page, "deck-select", (text, arg) => text.startsWith(arg), 15_000, name);
-    await clickText(page, "deck-select", (text) => text === "Dùng deck này");
+    await clickText(page, "deck-select", (text) => text === "Dùng bộ bài này");
     expect(await homeTexts(page)).toContain(name);
     await clickText(page, "deck-select", (text) => text === "Chỉnh sửa");
     await waitForScene(page, "deck-builder");
     expect(await page.evaluate(() => (window as any).__vn.session.editingDeck.id)).toBe(id);
-    await clickText(page, "deck-builder", (text) => text === "‹ Trở về");
+    await clickText(page, "deck-builder", (text) => text === "Trở về");
     await waitForScene(page, "deck-select");
-    await clickText(page, "deck-select", (text) => text === "Đổi deck ▾");
+    await clickText(page, "deck-select", (text) => text === "Đổi bộ bài ▾");
     await clickText(page, "deck-select", (text) => text.startsWith("Bộ cơ bản"));
-    await clickText(page, "deck-select", (text) => text === "Dùng deck này");
+    await clickText(page, "deck-select", (text) => text === "Dùng bộ bài này");
     const before = await page.evaluate(() => (window as any).__vn.session.profile.decks.length);
     await clickText(page, "deck-select", (text) => text === "Sao chép & sửa");
     await waitForScene(page, "deck-builder");
@@ -283,7 +284,94 @@ async function homeArt(page: Page) {
   });
 }
 
+test.describe("home art resolution", () => {
+  test.use({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 2 });
+  test("rounded Hero art preserves native pixel detail on a high density screen", async ({ page }, testInfo) => {
+    await page.addInitScript(() => localStorage.setItem("vongnguyet.combatSettings.v1", JSON.stringify({ reducedMotion: true, volume: 0 })));
+    await openSignedIn(page, await registerAccount(), { fastPlayback: false });
+    await expect.poll(() => homeArt(page).then(({ images }) => images.filter(({ key }) => key.startsWith("heroes:")).length)).toBe(3);
+    const point = await page.evaluate(() => {
+      const scene = (window as any).__vn.game.scene.getScene("deck-select");
+      const walk = (nodes: any[]): any => {
+        for (const node of nodes) {
+          if (node.type === "Image" && node.texture.key.startsWith("heroes:")) return node;
+          if (node.list) { const found = walk(node.list); if (found) return found; }
+        }
+      };
+      const art = walk(scene.root.list);
+      const probe = scene.textures.createCanvas("hero-detail-probe", 400, 576);
+      const context = probe.context;
+      for (let x = 0; x < 400; x++) { context.fillStyle = x % 2 ? "#ffffff" : "#000000"; context.fillRect(x, 0, 1, 576); }
+      probe.refresh();
+      const parent = art.parentContainer.getWorldTransformMatrix();
+      art.setTexture("hero-detail-probe").setCrop().setDisplaySize(200 / parent.scaleX, 288 / parent.scaleY);
+      const bounds = art.getBounds(), canvas = scene.game.canvas.getBoundingClientRect(), camera = scene.cameras.main;
+      const width = camera.width / camera.zoom, height = camera.height / camera.zoom;
+      return { x: Math.round((canvas.left + (bounds.x + 50 - (640 - width / 2)) * canvas.width / width) * devicePixelRatio), y: Math.round((canvas.top + (bounds.y + 50 - (360 - height / 2)) * canvas.height / height) * devicePixelRatio) };
+    });
+    const png = await page.screenshot({ path: testInfo.outputPath("hero-detail.png") });
+    const contrast = await page.evaluate(async ({ png, point }) => {
+      const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${png}`)).blob());
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height), context = canvas.getContext("2d")!;
+      context.drawImage(bitmap, 0, 0);
+      const pixels = context.getImageData(point.x, point.y, 100, 1).data;
+      return Array.from({ length: 99 }, (_, index) => Math.abs(pixels[index * 4]! - pixels[(index + 1) * 4]!)).reduce((sum, value) => sum + value, 0) / 99;
+    }, { png: png.toString("base64"), point });
+    expect(contrast, "one-pixel details must not be downsampled to gray").toBeGreaterThan(160);
+  });
+});
+
 test.describe("home art", () => {
+  for (const viewport of [{ width: 1280, height: 720 }, { width: 1280, height: 900 }, { width: 1920, height: 1080 }, { width: 1280, height: 720, canvas: true }]) {
+    test(`hero art stays inside rounded corners at ${viewport.width}x${viewport.height}${"canvas" in viewport ? " using Canvas" : ""}`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      if ("canvas" in viewport) await page.addInitScript(() => {
+        const prototype = HTMLCanvasElement.prototype as any, original = prototype.getContext;
+        prototype.getContext = function (type: string, ...options: any[]) {
+          return type.includes("webgl") ? null : original.call(this, type, ...options);
+        };
+      });
+      await page.addInitScript(() => localStorage.setItem("vongnguyet.combatSettings.v1", JSON.stringify({ reducedMotion: true, volume: 0 })));
+      await openSignedIn(page, await registerAccount(), { fastPlayback: false });
+      await expect.poll(() => homeArt(page).then(({ images }) => images.filter(({ key }) => key.startsWith("heroes:")).length)).toBe(3);
+      await page.mouse.move(1, 1);
+      const points: { corners: { x: number; y: number }[]; interior: { x: number; y: number }[] }[] = await page.evaluate(() => {
+        const scene = (window as any).__vn.game.scene.getScene("deck-select");
+        const hasHeroArt = (node: any): boolean => (node.type === "Image" && node.texture.key.startsWith("heroes:")) || !!node.list?.some(hasHeroArt);
+        const cards = scene.root.list.filter(hasHeroArt);
+        const canvas = scene.game.canvas.getBoundingClientRect(), camera = scene.cameras.main;
+        const width = camera.width / camera.zoom, height = camera.height / camera.zoom;
+        const point = (x: number, y: number) => ({ x: Math.floor(canvas.left + (x - (640 - width / 2)) * canvas.width / width), y: Math.floor(canvas.top + (y - (360 - height / 2)) * canvas.height / height) });
+        return cards.map((card: any) => ({
+          // Two pixels from the rectangle corners is outside the rounded frame's
+          // antialiased border, so this detects art leakage rather than its stroke.
+          corners: [[-98, -142], [98, -142], [-98, 142], [98, 142]].map(([dx, dy]) => point(card.x + dx!, card.y + dy!)),
+          interior: [[0, -50], [-50, 0], [50, 20]].map(([dx, dy]) => point(card.x + dx!, card.y + dy!)),
+        }));
+      });
+      expect(points).toHaveLength(3);
+      const sample = async (png: Buffer) => page.evaluate(async ({ png, points }) => {
+        const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${png}`)).blob());
+        const canvas = new OffscreenCanvas(bitmap.width, bitmap.height), context = canvas.getContext("2d")!;
+        context.drawImage(bitmap, 0, 0);
+        const pixel = ({ x, y }: { x: number; y: number }) => Array.from(context.getImageData(x, y, 1, 1).data).slice(0, 3);
+        return points.map(({ corners, interior }) => ({ corners: corners.map(pixel), interior: interior.map(pixel) }));
+      }, { png: png.toString("base64"), points });
+      const shown = await sample(await page.screenshot({ path: testInfo.outputPath(`home-rounded-${viewport.width}x${viewport.height}.png`) }));
+      await page.evaluate(() => {
+        const scene = (window as any).__vn.game.scene.getScene("deck-select");
+        const hasHeroArt = (node: any): boolean => (node.type === "Image" && node.texture.key.startsWith("heroes:")) || !!node.list?.some(hasHeroArt);
+        scene.root.list.filter(hasHeroArt).forEach((card: any) => card.setVisible(false));
+      });
+      const background = await sample(await page.screenshot());
+      const delta = (a: number[], b: number[]) => Math.max(...a.map((value, index) => Math.abs(value - b[index]!)));
+      shown.forEach((card, index) => {
+        card.corners.forEach((pixel, corner) => expect(delta(pixel, background[index]!.corners[corner]!), `Hero ${index + 1}, corner ${corner + 1} leaks art`).toBeLessThanOrEqual(3));
+        expect(Math.max(...card.interior.map((pixel, point) => delta(pixel, background[index]!.interior[point]!))), `Hero ${index + 1} art remains visible`).toBeGreaterThan(30);
+      });
+    });
+  }
+
   for (const viewport of [{ width: 1280, height: 720 }, { width: 1280, height: 900 }, { width: 1920, height: 1080 }]) {
     test(`new art covers the viewport and keeps mode labels at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
       await page.setViewportSize(viewport);
@@ -353,9 +441,9 @@ test.describe("deck selection survives navigation", () => {
     const d2 = await saveDeck(account, "Núi Tuyết", ["m05", "f03", "f02"]);
     await openSignedIn(page, account);
 
-    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
+    await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
     await clickText(page, "deck-select", (t) => t.startsWith("Núi Tuyết"));
-    await clickText(page, "deck-select", (t) => t === "Dùng deck này");
+    await clickText(page, "deck-select", (t) => t === "Dùng bộ bài này");
     await expect.poll(() => selectedDeckId(page)).toBe(d2);
 
     // Away to gacha and back: the selection is session state, not scene state.
@@ -386,7 +474,7 @@ test.describe("deck selection survives navigation", () => {
     await clickSceneText(page, "deck-select", "Đấu Trường");
     await waitForScene(page, "arena", 15_000);
     expect(await lobbyDeckId(page, "arena")).toBeNull();
-    await expect.poll(() => sceneTexts(page, "arena").then((texts) => texts.includes("Chọn deck đã lưu để xuất trận"))).toBe(true);
+    await expect.poll(() => sceneTexts(page, "arena").then((texts) => texts.includes("Chọn bộ bài đã lưu để xuất trận"))).toBe(true);
 
     // Picking a row in the lobby writes back into the shared selection.
     await clickText(page, "arena", (t) => t.startsWith("E2E"));
@@ -397,7 +485,7 @@ test.describe("deck selection survives navigation", () => {
   test("saving a copy selects the id the server returned", async ({ page }) => {
     const account = await registerAccount();
     await openSignedIn(page, account);
-    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
+    await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
     await clickText(page, "deck-select", (t) => t === "Sao chép & sửa");
     await waitForScene(page, "deck-builder", 15_000);
     await clickText(page, "deck-builder", (t) => t === "Lưu và dùng");
@@ -414,9 +502,9 @@ test.describe("deck selection survives navigation", () => {
     const account = await registerAccount();
     const d2 = await saveDeck(account, "Núi Tuyết");
     await openSignedIn(page, account);
-    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
+    await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
     await clickText(page, "deck-select", (t) => t.startsWith("Núi Tuyết"));
-    await clickText(page, "deck-select", (t) => t === "Dùng deck này");
+    await clickText(page, "deck-select", (t) => t === "Dùng bộ bài này");
     await expect.poll(() => selectedDeckId(page)).toBe(d2);
 
     await clickDesign(page, 1240, 36); // Đăng xuất nav icon
@@ -483,9 +571,11 @@ test.describe("request lifecycle", () => {
     const firstGate = new Promise<void>((resolve) => {
       releaseFirst = resolve;
     });
+    // Call 1 is the sign-in fetch inside `resumeSession` — holding it would
+    // block the whole boot, so Home's own revalidation (call 2) is the held one.
     await page.route("**/api/arena/me", async (route) => {
       calls += 1;
-      if (calls === 1) {
+      if (calls === 2) {
         await firstGate;
         return route.fulfill({
           status: 200,
@@ -497,12 +587,12 @@ test.describe("request lifecycle", () => {
     try {
       await openSignedIn(page, account);
       await waitForScene(page, "deck-select");
-      await expect.poll(() => calls).toBe(1);
+      await expect.poll(() => calls).toBe(2);
 
-      // Re-open Home: the second fetch is this run's; the held one belongs to a dead run.
+      // Re-open Home: the third fetch is this run's; the held one belongs to a dead run.
       await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").scene.restart());
       await waitForScene(page, "deck-select");
-      await expect.poll(() => calls).toBe(2);
+      await expect.poll(() => calls).toBe(3);
       await expect.poll(() => sceneTexts(page, "deck-select").then((texts) => texts.some((t) => t.includes("điểm")))).toBe(true);
 
       releaseFirst();
@@ -519,7 +609,7 @@ test.describe("request lifecycle", () => {
     const account = await registerAccount();
     await openSignedIn(page, account);
     await waitForScene(page, "deck-select");
-    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
+    await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
     await clickText(page, "deck-select", (t) => t === "Sao chép & sửa");
     await waitForScene(page, "deck-builder");
 
@@ -745,7 +835,7 @@ test.describe("asset readiness", () => {
       await page.waitForTimeout(600);
       expect(posts).toHaveLength(0);
       release();
-      await expect.poll(() => posts, { timeout: 60_000 }).toEqual(["runs"]);
+      await expect.poll(() => posts, { timeout: 120_000 }).toEqual(["runs"]);
       await waitForScene(page, "run");
     } finally {
       release();
@@ -798,7 +888,7 @@ function overlayLayout(page: Page) {
     return {
       rows: nodes.filter((n) => n.type === "Rectangle" && n.input && n.width === 424 && n.height === 60).map(bounds).sort((a, b) => a.top - b.top),
       arrows: nodes.filter((n) => n.type === "Rectangle" && n.input && n.width === 424 && n.height === 20).map(bounds),
-      footer: bounds(nodes.find((n) => n.type === "Text" && n.text === "Dùng deck này")),
+      footer: bounds(nodes.find((n) => n.type === "Text" && n.text === "Dùng bộ bài này")),
       names: nodes.filter((n) => n.type === "Text" && n.style.fontSize === "16px").map((n) => ({ text: n.text, ...bounds(n) })),
     };
   });
@@ -813,7 +903,7 @@ test.describe("deck overlay layout", () => {
 
   test("portrait rows, arrows and footer stay in separate regions", async ({ page }, testInfo) => {
     await openSignedIn(page, await seedDecks());
-    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
+    await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
     await page.screenshot({ path: testInfo.outputPath("home-deck-overlay.png") });
     const snap = (await overlayLayout(page))!;
     expect(snap.rows).toHaveLength(6);
@@ -831,7 +921,7 @@ test.describe("deck overlay layout", () => {
     await openSignedIn(page, await registerAccount());
     const full = "WWWWWWWWWWWWWWWWWWWWWWWW";
     await page.evaluate((name) => { const h = (window as any).__vn; h.session.profile.decks[0].name = name; }, full);
-    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
+    await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
     const snap = (await overlayLayout(page))!;
     const name = snap.names.find((n) => n.text.startsWith("WWW"))!;
     expect(name.text).toMatch(/…$/);
@@ -846,15 +936,15 @@ test.describe("deck overlay layout", () => {
   test("scrolling reaches the last row and deletion preserves the active deck", async ({ page }) => {
     await openSignedIn(page, await seedDecks());
     const before = await selectedDeckId(page);
-    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
+    await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
     await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroller.scrollBy(99));
     await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroll)).toBe(25);
     await clickText(page, "deck-select", (t) => t === "Deck Phụ 29");
     const lastId = await page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").previewDeckId);
     expect(await selectedDeckId(page)).toBe(before);
-    await clickText(page, "deck-select", (t) => t === "⋯");
-    await clickText(page, "deck-select", (t) => t === "Xóa deck…");
-    await clickText(page, "deck-select", (t) => t === "Xóa deck");
+    await clickText(page, "deck-select", (t) => t === "Thao tác khác");
+    await clickText(page, "deck-select", (t) => t === "Xóa bộ bài…");
+    await clickText(page, "deck-select", (t) => t === "Xóa bộ bài");
     await expect.poll(() => page.evaluate((id) => (window as any).__vn.session.profile.decks.some((d: any) => d.id === id), lastId)).toBe(false);
     expect(await selectedDeckId(page)).toBe(before);
     await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroll)).toBe(24);
@@ -862,17 +952,17 @@ test.describe("deck overlay layout", () => {
 
   test("Esc closes delete confirmation first; repeated opens retain one wheel listener", async ({ page }) => {
     await openSignedIn(page, await seedDecks());
-    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
+    await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
     await clickText(page, "deck-select", (t) => t === "Deck Phụ 1");
-    await clickText(page, "deck-select", (t) => t === "⋯");
-    await clickText(page, "deck-select", (t) => t === "Xóa deck…");
-    await expect.poll(() => homeTexts(page)).toContain("Xóa deck");
+    await clickText(page, "deck-select", (t) => t === "Thao tác khác");
+    await clickText(page, "deck-select", (t) => t === "Xóa bộ bài…");
+    await expect.poll(() => homeTexts(page)).toContain("Xóa bộ bài");
     await page.keyboard.press("Escape");
-    await expect.poll(() => homeTexts(page)).not.toContain("Xóa deck");
+    await expect.poll(() => homeTexts(page)).not.toContain("Xóa bộ bài");
     expect(await page.evaluate(() => !!(window as any).__vn.game.scene.getScene("deck-select").deckOverlay)).toBe(true);
     await page.keyboard.press("Escape");
-    for (let i = 0; i < 10; i++) { await clickText(page, "deck-select", (t) => t === "Đổi deck ▾"); await page.keyboard.press("Escape"); }
-    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
+    for (let i = 0; i < 10; i++) { await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾"); await page.keyboard.press("Escape"); }
+    await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
     await moveDesign(page, 300, 360);
     await page.mouse.wheel(0, 300);
     await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("deck-select").overlayScroll)).toBe(1);
@@ -886,7 +976,7 @@ test.describe("deck overlay layout", () => {
     await openSignedIn(page, await seedDecks());
     for (const size of [{ width: 1280, height: 720 }, { width: 1280, height: 900 }, { width: 1920, height: 1080 }]) {
       await page.setViewportSize(size);
-      await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
+      await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
       const snap = (await overlayLayout(page))!;
       expect(snap.rows).toHaveLength(6);
       expect(snap.footer.bottom).toBeLessThanOrEqual(720);
@@ -982,7 +1072,7 @@ test.describe("home acceptance", () => {
       const nodes = flatten(scene.root.list);
       const find = (prefix: string) => nodes.find((node: any) => node.type === "Text" && node.text.startsWith(prefix));
       const name = find("WWW");
-      const change = find("Đổi deck");
+      const change = find("Đổi bộ bài");
       const error = nodes.find((node: any) => node.type === "Text" && node.text.startsWith("⚠") && node.text !== "⚠ Cần chỉnh sửa");
       return { name: name.text as string, nameRight: name.getBounds().right, changeLeft: change.getBounds().left, errorBottom: error.getBounds().bottom };
     });
@@ -997,7 +1087,7 @@ test.describe("home acceptance", () => {
     const deckCount = await page.evaluate(() => (window as any).__vn.session.profile.decks.length);
 
     // "Bộ cơ bản" is virtual: Sao chép opens the editor on a new draft, not the starter.
-    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
+    await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
     await clickText(page, "deck-select", (t) => t.startsWith("Bộ cơ bản"));
     await clickText(page, "deck-select", (t) => t === "Sao chép & sửa");
     await waitForScene(page, "deck-builder");
@@ -1010,9 +1100,9 @@ test.describe("home acceptance", () => {
     // Team picker: the current team is preseeded; pick order is slot order and
     // locked heroes never enter `picked`. Fresh accounts own only the starter
     // trio, so order is proven by deselect + re-pick landing at the tail.
-    await clickText(page, "deck-select", (t) => t === "Đổi deck ▾");
-    await clickText(page, "deck-select", (t) => t === "+ Deck mới");
-    await expect.poll(() => homeTexts(page).then((ts) => ts.includes("Deck mới — chọn 3 Hero"))).toBe(true);
+    await clickText(page, "deck-select", (t) => t === "Đổi bộ bài ▾");
+    await clickText(page, "deck-select", (t) => t === "Bộ bài mới");
+    await expect.poll(() => homeTexts(page).then((ts) => ts.includes("Bộ bài mới — chọn 3 Hero"))).toBe(true);
     await page.screenshot({ path: testInfo.outputPath("home-hero-picker.png") });
     const picker = await page.evaluate(() => {
       const s = (window as any).__vn.session;
@@ -1034,7 +1124,7 @@ test.describe("home acceptance", () => {
     const reordered = [picker.picked[1], picker.picked[2], picker.picked[0]];
     await expect.poll(pickedIds).toEqual(reordered);
 
-    await clickText(page, "deck-select", (t) => t === "Tạo deck");
+    await clickText(page, "deck-select", (t) => t === "Tạo bộ bài");
     await waitForScene(page, "deck-builder");
     expect(await page.evaluate(() => (window as any).__vn.session.editingDeck.heroIds)).toEqual(reordered);
   });
@@ -1059,9 +1149,11 @@ test.describe("home acceptance", () => {
   test("missing art falls back to glyphs; a rank failure retries instead of showing a fake rating", async ({ page }) => {
     const account = await registerAccount();
     let rankCalls = 0;
+    // Calls 1–2 fail: the sign-in fetch inside `resumeSession` and Home's own
+    // revalidation — the retry button then issues call 3 against the real server.
     await page.route("**/api/arena/me", (route) => {
       rankCalls += 1;
-      if (rankCalls === 1) void route.fulfill({ status: 500, body: "{}" });
+      if (rankCalls <= 2) void route.fulfill({ status: 500, body: "{}" });
       else void route.continue();
     });
     await page.route("**/assets/**", (route) => void route.abort());
@@ -1077,6 +1169,6 @@ test.describe("home acceptance", () => {
     await clickText(page, "deck-select", (t) => t === "Thử lại");
     await expect.poll(() => homeTexts(page).then((ts) => ts.some((t) => /điểm$/.test(t)))).toBe(true);
     expect(await activeSceneKey(page)).toBe("deck-select");
-    expect(rankCalls).toBe(2);
+    expect(rankCalls).toBe(3);
   });
 });

@@ -11,6 +11,13 @@ export type Team = [string, string, string];
 
 export const DEFAULT_TEAM: Team = ["m05", "f04", "m06"];
 
+/** Arena rank shown on the Home emblem row; fetched with the account session so Home never renders a loading state. */
+export interface RankInfo {
+  tierId: string | null;
+  tierName: string;
+  rating: number;
+}
+
 export interface CombatSession {
   data: GameData;
   state: CombatState;
@@ -37,6 +44,8 @@ export interface CombatSession {
   editingDeck: SavedDeck | null;
   /** Deck picked on Home — starters keep their `starter:` pseudo-id; account-scoped (`home-ui-redesign` §4). */
   selectedDeckId: string | null;
+  /** `/arena/me` summary cached at sign-in; `null` until fetched or while offline. */
+  rank: RankInfo | null;
   lastGains: MasteryGain[] | null;
   /** Moon jade and achievements from the last accepted run. */
   lastRewards: RunRewards | null;
@@ -71,7 +80,7 @@ export function newCombatSession(
   return {
     data, state, events, seed, encounterId, heroIds, deckCardIds: deck, run: null,
     profile: createProfile(data), rev: 0, online: false, ticket: null, story: null, pendingStageId: null,
-    lastStory: null, editingDeck: null, selectedDeckId: null, lastGains: null,
+    lastStory: null, editingDeck: null, selectedDeckId: null, rank: null, lastGains: null,
     lastRewards: null, notices: [], runSubmitted: false, loadout,
     net: null, registry: null, match: null, roomCode: null, emotesMuted: false,
   };

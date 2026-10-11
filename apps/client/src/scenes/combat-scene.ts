@@ -2780,7 +2780,7 @@ export class CombatScene extends Phaser.Scene {
       cycleEncounter(1);
       this.syncFromSession();
     });
-    this.endScreenButton(WIDTH / 2 + 180, HEIGHT / 2 + 90, "Chọn deck", () =>
+    this.endScreenButton(WIDTH / 2 + 180, HEIGHT / 2 + 90, "Chọn bộ bài", () =>
       this.scene.start("deck-select"),
     );
   }

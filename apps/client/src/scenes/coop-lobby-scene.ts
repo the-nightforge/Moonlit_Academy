@@ -192,7 +192,7 @@ export class CoopLobbyScene extends Phaser.Scene {
     this.root.removeAll(true);
     addScreenHeader(this, this.root, {
       title: "Liên Thủ",
-      back: { label: "Chọn deck", onBack: () => this.scene.start("deck-select") },
+      back: { label: "Chọn bộ bài", onBack: () => this.scene.start("deck-select") },
       currencies: session.profile.currencies,
     });
     addButton(this, this.root, 1180, 680, 160, "Ngắt kết nối", () => {
@@ -229,12 +229,12 @@ export class CoopLobbyScene extends Phaser.Scene {
   private renderDecks(): void {
     const decks = this.decks();
     if (decks.length === 0) {
-      addText(this, this.root, WIDTH / 2, 280, "Cần một deck đã lưu để vào trận.", 15, "#ff8080").setOrigin(0.5);
-      addButton(this, this.root, WIDTH / 2, 324, 220, "Tạo deck ▸", () => this.scene.start("deck-select", { newDeck: true }), true, { variant: "primary" });
+      addText(this, this.root, WIDTH / 2, 280, "Cần một bộ bài đã lưu để vào trận.", 15, "#ff8080").setOrigin(0.5);
+      addButton(this, this.root, WIDTH / 2, 324, 220, "Tạo bộ bài ▸", () => this.scene.start("deck-select", { newDeck: true }), true, { variant: "primary" });
       return;
     }
     this.deckIndex = Math.min(this.deckIndex, decks.length - 1);
-    const hint = this.deckIndex < 0 ? "Chọn deck đã lưu để xuất trận" : "Deck Liên Thủ (luật Tầm Nguyệt):";
+    const hint = this.deckIndex < 0 ? "Chọn bộ bài đã lưu để xuất trận" : "Bộ bài Liên Thủ (luật Tầm Nguyệt):";
     addText(this, this.root, WIDTH / 2, 150, hint, 13, this.deckIndex < 0 ? COLORS.gold : COLORS.dimText).setOrigin(0.5);
     const data = session.data;
     decks.forEach((deck, index) => {
@@ -265,12 +265,12 @@ export class CoopLobbyScene extends Phaser.Scene {
     const needDeck = {
       disabledReason:
         deck === null
-          ? "Chọn deck đã lưu để xuất trận"
+          ? "Chọn bộ bài đã lưu để xuất trận"
           : this.assetState === "loading"
             ? "Đang tải hình trận…"
             : this.assetState === "error"
               ? "Lỗi tải hình — nhấn Thử lại"
-              : "Deck chưa hợp lệ — xem lỗi bên cạnh deck",
+              : "Bộ bài chưa hợp lệ — xem lỗi bên cạnh",
     };
 
     if (this.assetState === "loading") {
