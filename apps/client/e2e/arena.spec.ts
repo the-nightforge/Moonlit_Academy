@@ -1,4 +1,5 @@
-import { reloadSignedIn, closeMultiplayerPages, enterMultiplayer, api, registerAccount, saveDeck, signedInPage } from "./helpers/multiplayer";
+import { clickArenaAction, enterArena } from "./helpers/arena";
+import { reloadSignedIn, closeMultiplayerPages, api, registerAccount, saveDeck, signedInPage } from "./helpers/multiplayer";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -44,7 +45,7 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
   const winner = await registerAccount(winnerName);
   await saveDeck(winner.token, winner.rev);
   const pageW = await signedInPage(browser, winner.token, "Arena");
-  await enterMultiplayer(pageW, "arena");
+  await enterArena(pageW);
 
   // Six ranked wins vs six fresh opponents — ranked blocks rematches for
   // 10 min, so every match needs a new account. 6 × 20 hits the 120/day cap.
@@ -54,10 +55,10 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
     const loser = await registerAccount(`e2e_l${i}_${stamp}`);
     await saveDeck(loser.token, loser.rev);
     const pageL = await signedInPage(browser, loser.token, "Arena");
-    await enterMultiplayer(pageL, "arena");
+    await enterArena(pageL);
 
-    await clickDesign(pageW, 400, 470); // "Xếp hạng"
-    await clickDesign(pageL, 400, 470);
+    await clickArenaAction(pageW, "arena_ranked_start"); // "Xếp hạng"
+    await clickArenaAction(pageL, "arena_ranked_start");
     await waitForScene(pageW, "combat");
     await waitForScene(pageL, "combat");
 
@@ -113,7 +114,7 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
 
   // Reload → fresh profile with the topped-up Vinh Dự → arena → Vinh Dự shop.
   await reloadSignedIn(pageW);
-  await enterMultiplayer(pageW, "arena");
+  await enterArena(pageW);
   // Welcome may enqueue recovery of the retained completed room. Let the
   // scene manager apply that transition before navigating toward the shop.
   await pageW.evaluate(() => new Promise<void>(resolve => (window as any).__vn.game.events.once("poststep", () => resolve())));
@@ -123,7 +124,7 @@ test("xếp hạng: vào hàng chờ, đấu xong trận, điểm + Vinh Dự đ
     await clickSceneText(pageW, "combat", "Về Đấu Trường");
     await expect.poll(() => sceneKey(pageW)).toBe("arena");
   }
-  await clickSceneText(pageW, "arena", "Cửa hàng Vinh Dự");
+  await clickArenaAction(pageW, "arena_honor_shop");
   await expect.poll(() => sceneKey(pageW), { timeout: 60_000 }).toBe("shop");
   console.info("Reload recovery and shop entry verified; elapsed ms", Date.now() - stamp);
 

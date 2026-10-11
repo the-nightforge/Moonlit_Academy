@@ -42,6 +42,7 @@ export class DeckBuilderScene extends Phaser.Scene {
   private artJobs = new Set<string>();
   private failedArt = new Set<string>();
   private cardPreview: CardPreview | null = null;
+  private returnScene: "deck-select" | "arena" = "deck-select";
 
   constructor() { super("deck-builder"); }
   preload() {
@@ -51,8 +52,9 @@ export class DeckBuilderScene extends Phaser.Scene {
       if (url && !this.textures.exists(key)) this.load.image(key, url);
     }
   }
-  create() {
+  create(data?: { back?: "arena" }) {
     useDesignCamera(this);
+    this.returnScene = data?.back === "arena" ? "arena" : "deck-select";
     if (!session.editingDeck) { this.scene.start("deck-select"); return; }
     this.generation++;
     const generation = this.generation, authGeneration = auth.generation;
@@ -64,7 +66,7 @@ export class DeckBuilderScene extends Phaser.Scene {
       deck: () => this.deck, online: () => session.online, valid: () => this.errors.length === 0,
       current: () => this.isCurrent(authGeneration, generation),
       request: (draft) => mutate<ProfileReply & { deckId: string }>("PUT", "/profile/decks", { draft }),
-      activate: (id) => { session.selectedDeckId = id; session.editingDeck = null; this.scene.start("deck-select"); },
+      activate: (id) => { session.selectedDeckId = id; session.editingDeck = null; this.scene.start(this.returnScene); },
       changed: () => this.render(), error: errorText,
     });
     this.scrolls = this.deck.heroIds.map((_, index) => new RowScroller(this,
@@ -392,7 +394,7 @@ export class DeckBuilderScene extends Phaser.Scene {
     if (this.picker) { this.picker = null; this.gearPreview = null; this.render(); return; }
     const generation = this.generation, authGeneration = auth.generation;
     if (this.saving.dirty) { const answer = await confirmModal(this, "Bộ bài có thay đổi chưa lưu. Bỏ các thay đổi này?", { label: "Bỏ thay đổi", danger: true }); if (!answer || !this.isCurrent(authGeneration, generation)) return; }
-    session.editingDeck = null; this.scene.start("deck-select");
+    session.editingDeck = null; this.scene.start(this.returnScene);
   }
   private openPicker(picker: Picker) { if (this.saving.busy) return; this.picker = picker; this.gearPage = 0; this.gearPreview = null; this.render(); }
   private renderPicker() {

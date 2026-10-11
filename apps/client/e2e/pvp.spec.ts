@@ -1,6 +1,7 @@
-import { resolveMatchChoice, reloadSignedIn, closeMultiplayerPages, enterMultiplayer, registerAccount, saveDeck, signedInPage, sendMatchAction } from "./helpers/multiplayer";
+import { clickArenaAction, enterArena } from "./helpers/arena";
+import { resolveMatchChoice, reloadSignedIn, closeMultiplayerPages, registerAccount, saveDeck, signedInPage, sendMatchAction, waitForMatchPlayback } from "./helpers/multiplayer";
 import { expect, test, type Page } from "@playwright/test";
-import { waitForScene, probeCombat, waitIdle, activeSceneKey as sceneKey, clickDesign } from "./helpers/combat";
+import { waitForScene, probeCombat, waitIdle } from "./helpers/combat";
 
 
 test.afterEach(closeMultiplayerPages);
@@ -50,18 +51,19 @@ test("phòng riêng PvP: hai trình duyệt đấu, tải lại một bên vào 
 
   const pageA = await signedInPage(browser, tokenA);
   const pageB = await signedInPage(browser, tokenB);
-  await enterMultiplayer(pageA, "arena");
-  await enterMultiplayer(pageB, "arena");
+  await enterArena(pageA);
+  await enterArena(pageB);
 
   // A tạo phòng; lấy mã từ session; B vào bằng mã.
-  await clickDesign(pageA, 640, 470); // "Tạo phòng riêng"
+  await clickArenaAction(pageA, "arena_mode_private");
+  await clickArenaAction(pageA, "arena_room_create"); // "Tạo phòng riêng"
   await expect.poll(async () => (await vn(pageA)).roomCode as string | null).not.toBeNull();
   const code = (await vn(pageA)).roomCode as string;
 
-  await clickDesign(pageB, 880, 470); // "Vào phòng (mã)"
+  await clickArenaAction(pageB, "arena_mode_private"); // "Vào phòng (mã)"
   // The room-code field is an HTML input over the canvas (in-game dialog).
-  await pageB.fill("#vn-modal-input", code);
-  await pageB.press("#vn-modal-input", "Enter");
+  await pageB.fill("#vn-arena-room-code", code);
+  await pageB.press("#vn-arena-room-code", "Enter");
 
   await waitForScene(pageA, "combat");
   await waitForScene(pageB, "combat");
@@ -69,7 +71,13 @@ test("phòng riêng PvP: hai trình duyệt đấu, tải lại một bên vào 
 
   // Hai bên Đổi Bài rồi đánh vài lượt qua API mạng (server vẫn authoritative).
   for (const page of [pageA, pageB]) {
+    await waitForMatchPlayback(page);
     await sendMatchAction(page, { type: "mulligan", instanceIds: [] });
+  }
+  for (const page of [pageA, pageB]) {
+    await waitForMatchPlayback(page);
+    await resolveMatchChoice(page);
+    await waitForMatchPlayback(page);
   }
   await expect.poll(async () => (await matchView(pageA))?.status ?? "").toMatch(/playerTurn|opponentTurn/);
 
@@ -83,19 +91,28 @@ test("phòng riêng PvP: hai trình duyệt đấu, tải lại một bên vào 
 
   for (let i = 0; i < 4; i++) {
     for (const page of [pageA, pageB]) {
+      await waitForMatchPlayback(page);
       await resolveMatchChoice(page);
+      await waitForMatchPlayback(page);
       if ((await matchView(page))?.status === "playerTurn") await sendMatchAction(page, { type: "endTurn" });
     }
     await pageA.waitForTimeout(400);
   }
-  for (const page of [pageA, pageB]) await resolveMatchChoice(page);
+  for (const page of [pageA, pageB]) {
+    await waitForMatchPlayback(page);
+    await resolveMatchChoice(page);
+    await waitForMatchPlayback(page);
+  }
   const viewA = await matchView(pageA);
   expect(["playerTurn", "opponentTurn"]).toContain(viewA!.status);
 
   // Tải lại trang của A → token còn → vào lại Đấu Trường → snapshot đưa về trận.
   await reloadSignedIn(pageA);
-  await enterMultiplayer(pageA, "arena");
+  await enterArena(pageA);
   await waitForScene(pageA, "combat");
+  await waitForMatchPlayback(pageA);
+  await resolveMatchChoice(pageA);
+  await waitForMatchPlayback(pageA);
   expect((await matchView(pageA))!.status).toMatch(/playerTurn|opponentTurn/);
 });
 
@@ -103,19 +120,27 @@ test("đấu tập: practice.start mở trận với máy, máy tự đánh", as
   const acc = await registerAccount(`e2e_c_${Date.now()}`);
   await saveDeck(acc.token, acc.rev);
   const page = await signedInPage(browser, acc.token);
-  await enterMultiplayer(page, "arena");
+  await enterArena(page);
 
-  await clickDesign(page, 400, 518); // "Đấu Tập (máy)"
+  await clickArenaAction(page, "arena_mode_practice");
+  await clickArenaAction(page, "arena_practice_start"); // "Đấu Tập (máy)"
   await waitForScene(page, "combat");
 
   // Người chơi Đổi Bài; máy tự hoàn tất mulligan sau nhịp nghĩ.
+  await waitForMatchPlayback(page);
   await sendMatchAction(page, { type: "mulligan", instanceIds: [] });
+  await waitForMatchPlayback(page);
+  await resolveMatchChoice(page);
+  await waitForMatchPlayback(page);
   await expect
     .poll(async () => (await matchView(page))?.status ?? "", { timeout: 15_000 })
     .toMatch(/playerTurn|opponentTurn/);
 
   // Vài lượt: người chơi kết thúc lượt khi tới lượt; máy tự đánh.
   for (let i = 0; i < 8; i++) {
+    await waitForMatchPlayback(page);
+    await resolveMatchChoice(page);
+    await waitForMatchPlayback(page);
     const view = await matchView(page);
     if (view?.status === "playerTurn") await sendMatchAction(page, { type: "endTurn" });
     await page.waitForTimeout(1_500); // nhịp "nghĩ" của máy

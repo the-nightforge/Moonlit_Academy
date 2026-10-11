@@ -13,6 +13,8 @@ interface ControlOptions {
   border?: number;
   radius?: number;
   icon?: Phaser.GameObjects.Image;
+  /** A native field can share the canvas focus order. */
+  onFocus?: () => void;
 }
 interface Target { hit: Phaser.GameObjects.GameObject; panel: Phaser.GameObjects.Container; focus: () => void; blur: () => void; activate: () => void }
 
@@ -36,6 +38,33 @@ export class HomeControls {
     this.focused?.blur();
     this.layer = layer;
     this.focused = null;
+  }
+
+  get focusedName(): string | null { return this.focused?.hit.name || null; }
+
+  private liveTargets() {
+    return this.targets.filter(target => {
+      if (!target.hit.scene) return false;
+      let parent: Phaser.GameObjects.Container | null = target.panel;
+      while (parent && parent !== this.layer) parent = parent.parentContainer;
+      return parent === this.layer;
+    });
+  }
+
+  /** Restore logical focus after a scene replaces its display objects. */
+  restoreFocus(name: string | null) {
+    if (!name) return;
+    const target = this.liveTargets().find(target => target.hit.name === name);
+    if (!target) return;
+    this.focused?.blur(); this.focused = target; target.focus();
+  }
+
+  /** Explicit Tab handoff from a native field to its adjacent canvas control. */
+  stepFocus(name: string, backwards = false) {
+    const targets = this.liveTargets(), index = targets.findIndex(target => target.hit.name === name);
+    if (index < 0 || !targets.length) return;
+    const target = targets[(index + (backwards ? -1 : 1) + targets.length) % targets.length]!;
+    this.focused?.blur(); this.focused = target; target.focus();
   }
 
   /** Informational text shares the same keyboard order as actionable controls. */
@@ -104,7 +133,7 @@ export class HomeControls {
       }
     };
     const cancelTip = () => { if (tipTimer !== undefined) { window.clearTimeout(tipTimer); tipTimer = undefined; } hideTip?.(); };
-    const focus = () => { paint(true); cancelTip(); showTip?.(); };
+    const focus = () => { paint(true); cancelTip(); showTip?.(); options.onFocus?.(); };
     const blur = () => { paint(hovered); cancelTip(); };
     const run = () => { cancelTip(); if (enabled) activate(); else showTip?.(); };
     const target = { hit, panel, focus, blur, activate: run };

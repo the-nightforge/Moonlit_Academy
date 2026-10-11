@@ -1,3 +1,4 @@
+import { clickArenaAction, selectArenaDeck } from "./helpers/arena";
 import { expect, test, type Page } from "@playwright/test";
 import { activeSceneKey, clickDesign, clickSceneText, sceneTexts, waitForScene } from "./helpers/combat";
 import { openSignedIn, registerAccount, saveDeck } from "./helpers/online";
@@ -456,9 +457,9 @@ test.describe("deck selection survives navigation", () => {
     await clickSceneText(page, "deck-select", "Đấu Trường");
     await waitForScene(page, "arena", 15_000);
     expect(await lobbyDeckId(page, "arena")).toBe(d2);
-    await expect.poll(() => sceneTexts(page, "arena").then((texts) => texts.some((t) => t.startsWith("◉ Núi Tuyết")))).toBe(true);
+    await expect.poll(() => sceneTexts(page, "arena").then((texts) => texts.some((t) => t === "Núi Tuyết"))).toBe(true);
 
-    await clickDesign(page, 90, 30);
+    await clickArenaAction(page, "arena_back");
     await waitForScene(page, "deck-select", 15_000);
     await clickSceneText(page, "deck-select", "Liên Thủ");
     await waitForScene(page, "coop-lobby", 15_000);
@@ -477,7 +478,7 @@ test.describe("deck selection survives navigation", () => {
     await expect.poll(() => sceneTexts(page, "arena").then((texts) => texts.includes("Chọn bộ bài đã lưu để xuất trận"))).toBe(true);
 
     // Picking a row in the lobby writes back into the shared selection.
-    await clickText(page, "arena", (t) => t.startsWith("E2E"));
+    await selectArenaDeck(page, "E2E");
     expect(await lobbyDeckId(page, "arena")).toBe("d1");
     expect(await selectedDeckId(page)).toBe("d1");
   });
@@ -695,7 +696,7 @@ const assetState = (page: Page, sceneKey: string) =>
 
 test.describe("asset readiness", () => {
   for (const { scene, tile, queueLabel } of [
-    { scene: "arena", tile: "Đấu Trường", queueLabel: "Xếp hạng" },
+    { scene: "arena", tile: "Đấu Trường", queueLabel: "Tìm trận xếp hạng" },
     { scene: "coop-lobby", tile: "Liên Thủ", queueLabel: "Vào hàng chờ" },
   ] as const) {
     test(`${scene}: match-start sends wait for the combat manifest`, async ({ page }, testInfo) => {
@@ -725,13 +726,25 @@ test.describe("asset readiness", () => {
       await clickSceneText(page, "deck-select", tile);
       await waitForScene(page, scene);
       await spySends(page);
-      await clickText(page, scene, (t) => t.startsWith("E2E")); // pick the seeded deck row
+      if (scene === "arena") await selectArenaDeck(page, "E2E");
+      else await clickText(page, scene, (t) => t.startsWith("E2E")); // pick the seeded deck row
 
       // The gate is loading: every match-start control swallows its click.
+      if (scene === "arena") {
+        await clickArenaAction(page, "arena_ranked_start");
+        await clickArenaAction(page, "arena_mode_private");
+        await clickArenaAction(page, "arena_room_create");
+        await page.fill("#vn-arena-room-code", "K7Q2MX");
+        await clickArenaAction(page, "arena_room_join");
+        await clickArenaAction(page, "arena_mode_practice");
+        await clickArenaAction(page, "arena_practice_start");
+        await clickArenaAction(page, "arena_mode_ranked");
+      } else {
       await clickDesign(page, 400, 470); // queue button
       await clickDesign(page, 640, 470); // Tạo phòng riêng
       await clickDesign(page, 880, 470); // Vào phòng (mã)
       await clickDesign(page, 400, 518); // Đấu Tập
+      }
       await page.waitForTimeout(400);
       const blocked = await sentTypes(page);
       expect(blocked.filter((type) => MATCH_START_TYPES.includes(type))).toHaveLength(0);
@@ -749,20 +762,31 @@ test.describe("asset readiness", () => {
       await expect.poll(async () => (await sentTypes(page)).filter((type) => type === "queue.leave").length).toBe(1);
 
       // room.create → Rời phòng (room.leave)
-      await clickDesign(page, 640, 470);
+      if (scene === "arena") { await clickArenaAction(page, "arena_mode_private"); await clickArenaAction(page, "arena_room_create"); }
+      else await clickDesign(page, 640, 470);
       await expect.poll(() => page.evaluate(() => (window as any).__vn.session.roomCode)).not.toBeNull();
-      await clickDesign(page, 880, 560);
+      if (scene === "arena") await clickArenaAction(page, "arena_room_leave");
+      else await clickDesign(page, 880, 560);
       await expect.poll(async () => (await sentTypes(page)).filter((type) => type === "room.leave").length).toBe(1);
 
       // room.join through the code modal (the code is wrong — the send is what counts).
-      await clickDesign(page, 880, 470);
-      await page.fill("#vn-modal-input", "K7Q2MX");
-      await page.press("#vn-modal-input", "Enter");
+      if (scene === "arena") {
+        await page.fill("#vn-arena-room-code", "K7Q2MX");
+        await page.press("#vn-arena-room-code", "Enter");
+      } else {
+        await clickDesign(page, 880, 470);
+        await page.fill("#vn-modal-input", "K7Q2MX");
+        await page.press("#vn-modal-input", "Enter");
+      }
       await expect.poll(async () => (await sentTypes(page)).filter((type) => type === "room.join").length).toBe(1);
 
       // practice.start → combat boots on already-cached textures.
       const warmStart = Date.now();
-      await clickDesign(page, 400, 518);
+      if (scene === "arena") {
+        await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").pending)).toBe(false);
+        await clickArenaAction(page, "arena_mode_practice");
+        await clickArenaAction(page, "arena_practice_start");
+      } else await clickDesign(page, 400, 518);
       await waitForScene(page, "combat");
       const warmMs = Date.now() - warmStart;
       await page.waitForTimeout(800);
@@ -794,17 +818,18 @@ test.describe("asset readiness", () => {
     await clickSceneText(page, "deck-select", "Đấu Trường");
     await waitForScene(page, "arena");
     await spySends(page);
-    await clickText(page, "arena", (t) => t.startsWith("E2E"));
+    await selectArenaDeck(page, "E2E");
 
     await expect.poll(() => assetState(page, "arena"), { timeout: 60_000 }).toBe("error");
-    await clickDesign(page, 400, 470); // Xếp hạng — blocked by the error gate
+    await clickArenaAction(page, "arena_ranked_start"); // blocked by the error gate
     await page.waitForTimeout(300);
     expect((await sentTypes(page)).filter((type) => MATCH_START_TYPES.includes(type))).toHaveLength(0);
 
     failCards = false;
     await clickSceneText(page, "arena", "Thử lại");
     await expect.poll(() => assetState(page, "arena"), { timeout: 60_000 }).toBe("ready");
-    await clickDesign(page, 400, 518); // Đấu Tập (máy)
+    await clickArenaAction(page, "arena_mode_practice");
+    await clickArenaAction(page, "arena_practice_start");
     await expect.poll(async () => (await sentTypes(page)).filter((type) => type === "practice.start").length).toBe(1);
     await waitForScene(page, "combat");
   });

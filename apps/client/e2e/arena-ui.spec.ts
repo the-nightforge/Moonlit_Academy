@@ -1,0 +1,124 @@
+import { expect, test } from "@playwright/test";
+import { registerAccount, saveDeck, signedInPage, closeMultiplayerPages } from "./helpers/multiplayer";
+import { clickArenaAction, enterArena } from "./helpers/arena";
+
+test.afterEach(closeMultiplayerPages);
+test("saved deck selector scrolls and selects by ID, queue locks edits and preserves errors", async ({ browser }) => {
+  const account = await registerAccount(`ui_${Date.now()}`);
+  await saveDeck(account.token, account.rev);
+  const page = await signedInPage(browser, account.token);
+  await enterArena(page);
+  await page.evaluate(() => {
+    const { session, game } = (window as any).__vn;
+    const deck = session.profile.decks[0];
+    session.profile.decks = Array.from({ length: 25 }, (_, i) => ({ ...structuredClone(deck), id: `ui${i}`, name: `Deck ${i} tên dài để kiểm tra khả năng đọc` }));
+    session.selectedDeckId = "ui0";
+    const arena = game.scene.getScene("arena"); arena.deckIndex = 0; arena.render();
+    session.net.send = (message: any) => { ((window as any).__arenaSent ??= []).push(message); };
+  });
+  await clickArenaAction(page, "arena_deck_change");
+  await expect(page.locator("#vn-arena-search")).toBeVisible();
+  await expect(page.locator("#vn-arena-search")).toBeFocused();
+  await clickArenaAction(page, "arena_scroll_next");
+  await clickArenaAction(page, "arena_deck_ui8");
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.session.selectedDeckId)).toBe("ui8");
+  await expect(page.locator("#vn-arena-search")).toHaveCount(0);
+  await clickArenaAction(page, "arena_ranked_start");
+  await clickArenaAction(page, "arena_deck_change");
+  await expect(page.locator("#vn-arena-search")).toHaveCount(0);
+  await page.evaluate(() => {
+    const scene = (window as any).__vn.game.scene.getScene("arena");
+    scene.onMessage({ type: "error", error: "already in queue" });
+    scene.onMessage({ type: "queue.status", waitingSeconds: 84, mode: "ranked" });
+  });
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").error)).toContain("hàng chờ");
+  await clickArenaAction(page, "arena_mode_practice");
+  expect(await page.evaluate(() => (window as any).__arenaSent.map((m: any) => m.type))).toEqual(["queue.join", "queue.leave"]);
+});
+
+test("modal rows remain reachable and room input cleans up on mode switch and shutdown", async ({ browser }) => {
+  const account = await registerAccount(`modal_${Date.now()}`);
+  await saveDeck(account.token, account.rev);
+  const page = await signedInPage(browser, account.token);
+  await page.route("**/api/arena/history", route => route.fulfill({ json: { entries: Array.from({ length: 40 }, (_, i) => ({ matchId: `${i}`, mode: "ranked", opponent: `Opponent ${i}`, result: "won", ratingDelta: 20, createdAt: Date.now() })) } }));
+  await enterArena(page);
+  await clickArenaAction(page, "arena_history");
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").history?.length)).toBe(40);
+  for (let i = 0; i < 4; i++) await clickArenaAction(page, "arena_scroll_next");
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").modalScroller.first)).toBeGreaterThan(20);
+  await clickArenaAction(page, "arena_modal_close");
+  await clickArenaAction(page, "arena_mode_private");
+  const input = page.locator("#vn-arena-room-code");
+  await expect(input).toBeFocused();
+  await input.fill("k7q2mxmore");
+  await expect(input).toHaveValue("K7Q2MX");
+  await page.keyboard.press("Escape");
+  await expect(input).toHaveCount(0);
+  await clickArenaAction(page, "arena_mode_private");
+  await page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").scene.start("deck-select"));
+  await expect(input).toHaveCount(0);
+});
+
+test("keyboard focus survives queue status and modal API redraws", async ({ browser }) => {
+  const account = await registerAccount(`focus_${Date.now()}`);
+  await saveDeck(account.token, account.rev);
+  const page = await signedInPage(browser, account.token);
+  await enterArena(page);
+  const focus = () => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").controls.focused?.hit.name ?? "");
+  const goTo = async (name: string) => {
+    for (let i = 0; i < 40 && await focus() !== name; i++) await page.keyboard.press("Tab");
+    await expect.poll(focus).toBe(name);
+  };
+  await goTo("arena_back");
+  await expect.poll(focus).toBe("arena_back");
+  await page.evaluate(() => {
+    const scene = (window as any).__vn.game.scene.getScene("arena");
+    scene.queued = true; scene.onMessage({ type: "queue.status", mode: "ranked", waitingSeconds: 84 });
+  });
+  await expect.poll(focus).toBe("arena_back");
+  await page.evaluate(() => { const scene = (window as any).__vn.game.scene.getScene("arena"); scene.queued = false; scene.render(); });
+  let release!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  await page.route("**/api/arena/history", async route => { await held; await route.fulfill({ json: { entries: [] } }); });
+  await clickArenaAction(page, "arena_history");
+  await page.keyboard.press("Tab");
+  await expect.poll(focus).toBe("arena_modal_close");
+  release();
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").history?.length)).toBe(0);
+  await expect.poll(focus).toBe("arena_modal_close");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").panel)).toBeNull();
+  await expect.poll(focus).toBe("arena_history");
+  await goTo("arena_deck_change");
+  await page.keyboard.press("Enter");
+  const search = page.locator("#vn-arena-search");
+  await expect(search).toBeFocused();
+  await page.keyboard.type("Đấu");
+  await page.keyboard.press("Tab");
+  await expect(search).not.toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(search).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(search).toHaveCount(0);
+  await expect.poll(focus).toBe("arena_deck_change");
+  await goTo("arena_mode_private");
+  await page.keyboard.press("Enter");
+  const code = page.locator("#vn-arena-room-code");
+  await expect(code).toBeFocused();
+  await page.keyboard.type("k7q2mx");
+  await expect(code).toHaveValue("K7Q2MX");
+  await page.keyboard.press("Tab");
+  await expect.poll(focus).toBe("arena_room_join");
+  await page.keyboard.press("Shift+Tab");
+  await expect(code).toBeFocused();
+  await page.evaluate(() => {
+    const { session } = (window as any).__vn;
+    session.net.send = (message: any) => { ((window as any).__keyboardSent ??= []).push(message); };
+  });
+  await page.keyboard.press("Enter");
+  expect(await page.evaluate(() => (window as any).__keyboardSent[0].type)).toBe("room.join");
+  await page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").onMessage({ type: "error", error: "room not found" }));
+  await expect(code).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(code).toHaveCount(0);
+});

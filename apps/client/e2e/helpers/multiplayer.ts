@@ -16,7 +16,7 @@ export async function reloadSignedIn(page: Page): Promise<void> {
 }
 
 /** Direct API access for multiplayer assertions, including rejected HTTP responses. */
-const API = "http://localhost:8787";
+const API = process.env.VN_E2E_URL ?? "http://localhost:8787";
 
 const DECK = {
   heroIds: ["m05", "f04", "m06"],

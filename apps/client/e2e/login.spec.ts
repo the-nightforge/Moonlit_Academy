@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { fileURLToPath } from "node:url";
-const app = "http://localhost:5173";
+const app = process.env.VN_E2E_URL ?? "http://localhost:5173";
 const previews = fileURLToPath(new URL("../../../output/login-redesign/", import.meta.url));
 
 async function openLogin(page: Page, online = true) {
