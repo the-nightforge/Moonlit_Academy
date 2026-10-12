@@ -47,7 +47,7 @@ export function addButton(
   options: ButtonOptions = {},
 ): void {
   const style = BUTTON_STYLES[options.variant ?? "secondary"];
-  const button = scene.add.rectangle(x, y, width, 34, enabled ? style.fill : 0x222633);
+  const button = scene.add.rectangle(x, y, width, options.height ?? 34, enabled ? style.fill : 0x222633);
   button.setStrokeStyle(1, enabled ? style.stroke : COLORS.panelBorder);
   if (enabled) {
     button.setInteractive({ useHandCursor: true });
@@ -74,7 +74,7 @@ export function addButton(
     button.once(Phaser.GameObjects.Events.DESTROY, hide);
   }
   parent.add(button);
-  addText(scene, parent, x, y, label, 13, enabled ? style.text : COLORS.dimText).setOrigin(0.5);
+  addText(scene, parent, x, y, label, options.fontSize ?? 13, enabled ? style.text : COLORS.dimText).setOrigin(0.5);
 }
 
 /** A one-line note in a dark box, centered at (x, y), kept on screen. */
