@@ -3286,9 +3286,9 @@
       },
       {
         "type": "scaledDamage",
-        "per": "moonPower",
-        "amount": 1,
-        "max": 6,
+        "per": "cardsPlayedThisTurn",
+        "amount": 2,
+        "max": 9,
         "to": "allEnemies"
       },
       {
@@ -3296,7 +3296,7 @@
         "look": 1
       }
     ],
-    "text": "Nhận 2 Nguyệt Lực, rồi gây 1 damage lên mọi kẻ địch cho mỗi Nguyệt Lực đang có (tối đa 6). Chiêm Bài 1.",
+    "text": "Nhận 2 Nguyệt Lực, rồi gây 2 damage lên mọi kẻ địch cho mỗi lá đã đánh trước đó trong lượt (tối đa 9). Chiêm Bài 1.",
     "keywords": [
       "chiem_bai"
     ]
@@ -3386,9 +3386,9 @@
     "effects": [
       {
         "type": "scaledDamage",
-        "per": "moonPower",
-        "amount": 1,
-        "max": 6,
+        "per": "cardsPlayedThisTurn",
+        "amount": 2,
+        "max": 9,
         "to": "chosen"
       },
       {
@@ -3396,7 +3396,7 @@
         "look": 2
       }
     ],
-    "text": "Gây 1 damage cho mỗi Nguyệt Lực đang có (tối đa 6). Chiêm Bài 2.",
+    "text": "Gây 2 damage cho mỗi lá đã đánh trước đó trong lượt (tối đa 9). Chiêm Bài 2.",
     "keywords": [
       "chiem_bai"
     ]
