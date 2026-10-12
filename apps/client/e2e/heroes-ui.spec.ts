@@ -41,7 +41,7 @@ test.describe("hero collection", () => {
 
   test("profile makes the trigger readable and form choices visible without scrolling", async ({ page }, testInfo) => {
     await openScene(page, "heroes");
-    await expect.poll(() => texts(page)).toContain("Mất tổng 15 HP trong trận");
+    await expect.poll(() => texts(page)).toContain("Mất tổng 15 máu trong trận");
     await page.screenshot({ path: testInfo.outputPath("hero-roster-v2.png") });
     await page.evaluate(() => {
       const h = (window as any).__vn;

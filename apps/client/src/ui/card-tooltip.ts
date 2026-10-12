@@ -5,12 +5,22 @@ import { cardArtCandidates, drawCardFace, PREVIEW_CARD } from "./combat-card-vie
 import { cardIconOf } from "./attack-style";
 import { roundedPanel } from "./rounded-panel";
 
+import { displayText } from "./display-text";
+
 const WIDTH = 340;
 /** Space above the text block the card preview occupies (plus padding). */
 const PREVIEW_TOP = 10;
 
+/** Phaser 4 uses filter masks in WebGL and geometry masks in Canvas. */
+function clipTooltip(scene:Phaser.Scene,content:Phaser.GameObjects.Container,shape:Phaser.GameObjects.Graphics){
+ let mask:Phaser.Display.Masks.GeometryMask|null=null;
+ if(scene.renderer.type===Phaser.WEBGL){content.enableFilters();content.filters!.external.addMask(shape,false,scene.cameras.main);}
+ else {mask=shape.createGeometryMask();content.setMask(mask);}
+ return ()=>{content.filters?.external.clear();content.clearMask();mask?.destroy();shape.destroy();};
+}
+
 function tooltipBox(scene: Phaser.Scene, lines: string[], width: number, fontSize = 12) {
-  const text = scene.add.text(12, 10, lines.filter((line) => line.length > 0).join("\n"), {
+  const text = scene.add.text(12, 10, lines.filter((line) => line.length > 0).map(displayText).join("\n"), {
     ...TEXT_BASE,
     fontSize: `${fontSize}px`,
     color: COLORS.text,
@@ -79,6 +89,7 @@ export function showCardTooltip(
       : `${card.name}  ·  ${card.cost} Nguyệt Lực  ·  ${card.copies} bản`;
   const lines = [
     costLine,
+    ...(preview.getByName("card_body")?.getData("rulesTruncated") ? [card.text] : []),
     ...(presentation?.disabledReason !== undefined ? [`⚠ ${presentation.disabledReason}`] : []),
     ...(card.keywords ?? []).map((id) => {
       const keyword = data.keywords[id];
@@ -87,9 +98,8 @@ export function showCardTooltip(
     ...(presentation?.costReasons.map((reason) => `· ${reason}`) ?? []),
     ...extraLines,
   ];
-  // Keyword lines carry the glossary — no duplication of the rules text, the
-  // preview card already shows it in full.
-  const text = scene.add.text(12, textY, lines.filter((line) => line.length > 0).join("\n"), {
+  // Add full rules only when the card face cannot show them all.
+  const text = scene.add.text(12, textY, lines.filter((line) => line.length > 0).map(displayText).join("\n"), {
     ...TEXT_BASE,
     fontSize: "12px",
     color: COLORS.text,
@@ -112,9 +122,9 @@ export function showCardTooltip(
   const top = view.y + 8;
   const container = scene.add.container(left, top);
   const panel = roundedPanel(scene, WIDTH / 2, viewH / 2, WIDTH, viewH, 0x0a0e20, 0.96);
-  const content = scene.add.container(0, 0, [text]);
-  const veil = scene.add.rectangle(left + WIDTH / 2, top + viewH / 2, WIDTH, viewH).setVisible(false);
-  content.setMask(veil.createGeometryMask());
+  const content = scene.add.container(0, 0, [text]).setName("tooltip_scroll_content");
+  const veil = scene.add.graphics().fillStyle(0xffffff).fillRect(left,top+textY,WIDTH,viewH-textY).setVisible(false);
+  const clearClip=clipTooltip(scene,content,veil);
   const scroll = (dy: number) => {
     const min = -(text.y + text.height + 12 - viewH);
     content.y = Phaser.Math.Clamp(content.y - dy, min, 0);
@@ -128,7 +138,7 @@ export function showCardTooltip(
   scene.input.on("wheel", onWheel);
   container.on(Phaser.GameObjects.Events.DESTROY, () => {
     scene.input.off("wheel", onWheel);
-    veil.destroy();
+    clearClip();
   });
   const hint = scene.add
     .text(WIDTH - 10, viewH - 8, "▼", { ...TEXT_BASE, fontSize: "10px", color: COLORS.dimText })
@@ -156,9 +166,8 @@ export function showTextTooltip(
   const container = scene.add.container(left, top).setDepth(200).setName("text_tooltip");
   const panel = roundedPanel(scene, width / 2, viewH / 2, width, viewH, 0x0a0e20, 0.96);
   const content = scene.add.container(0, 0, [text]).setName("tooltip_scroll_content");
-  const veil = scene.add.rectangle(left + width / 2, top + viewH / 2, width, viewH).setVisible(false);
-  const mask = veil.createGeometryMask();
-  content.setMask(mask);
+  const veil = scene.add.graphics().fillStyle(0xffffff).fillRect(left,top,width,viewH).setVisible(false);
+  const clearClip=clipTooltip(scene,content,veil);
   // Hover tooltips remain tied to their source: wheel works while hovering it.
   const onWheel = (_pointer: Phaser.Input.Pointer, _over: unknown, _dx: number, dy: number) => {
     content.y = Phaser.Math.Clamp(content.y - dy * 0.6, -(height - viewH), 0);
@@ -166,8 +175,7 @@ export function showTextTooltip(
   scene.input.on("wheel", onWheel);
   container.once(Phaser.GameObjects.Events.DESTROY, () => {
     scene.input.off("wheel", onWheel);
-    mask.destroy();
-    veil.destroy();
+    clearClip();
   });
   const hint = scene.add.text(width - 10, viewH - 8, "▼ Cuộn", { ...TEXT_BASE, fontSize: "10px", color: COLORS.dimText }).setOrigin(1, 1);
   container.add([panel, content, hint]);

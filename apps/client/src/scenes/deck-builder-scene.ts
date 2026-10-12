@@ -42,7 +42,7 @@ export class DeckBuilderScene extends Phaser.Scene {
   private artJobs = new Set<string>();
   private failedArt = new Set<string>();
   private cardPreview: CardPreview | null = null;
-  private returnScene: "deck-select" | "arena" = "deck-select";
+  private returnScene: "deck-select" | "arena" | "armory" = "deck-select";
 
   constructor() { super("deck-builder"); }
   preload() {
@@ -52,9 +52,9 @@ export class DeckBuilderScene extends Phaser.Scene {
       if (url && !this.textures.exists(key)) this.load.image(key, url);
     }
   }
-  create(data?: { back?: "arena" }) {
+  create(data?: { back?: "arena" | "armory"; equipment?: { kind: "weapons" | "relics"; id: string } }) {
     useDesignCamera(this);
-    this.returnScene = data?.back === "arena" ? "arena" : "deck-select";
+    this.returnScene = data?.back === "arena" ? "arena" : data?.back === "armory" ? "armory" : "deck-select";
     if (!session.editingDeck) { this.scene.start("deck-select"); return; }
     this.generation++;
     const generation = this.generation, authGeneration = auth.generation;
@@ -97,6 +97,12 @@ export class DeckBuilderScene extends Phaser.Scene {
       this.fields?.name.remove(); this.fields = null;
       this.hideTip(true);
     });
+    if (data?.back === "armory" && data.equipment) {
+      const gear = data.equipment;
+      if (gear.kind === "weapons") { const heroId = Object.entries(this.deck.weapons ?? {}).find(([, id]) => id === gear.id)?.[0]; if (heroId) this.picker = {kind:"weapon",heroId}; }
+      else { const slot = this.deck.relicIds?.indexOf(gear.id) ?? -1; if (slot >= 0) this.picker = {kind:"relic",slot}; }
+      if (this.picker) this.gearPreview = gear.id;
+    }
     this.render();
   }
   private createBackground() {
@@ -108,7 +114,7 @@ export class DeckBuilderScene extends Phaser.Scene {
       const view = visibleWorld(this), cx = view.x + view.w / 2, cy = view.y + view.h / 2;
       base.setPosition(cx, cy).setSize(view.w, view.h);
       shade.setPosition(cx, cy).setSize(view.w, view.h);
-      if (art) art.setPosition(cx, cy).setScale(Math.max(view.w / art.width, view.h / art.height));
+      if (art) art.setPosition(cx, cy).setScale(Math.min(view.w / art.width, view.h / art.height));
     };
     place();
     this.scale.on(Phaser.Scale.Events.RESIZE, place);
@@ -213,7 +219,7 @@ export class DeckBuilderScene extends Phaser.Scene {
     const preview = preservePreview ? this.cardPreview : null;
     this.hideTip(true); this.root.removeAll(true); this.controls.setLayer(this.root);
     const busy = this.saving.busy;
-    this.iconButton(this.root, 54, 36, "back", "Trở về", () => void this.back(), !busy, "deck_editor_back", undefined, false);
+    this.iconButton(this.root, 54, 36, "back", this.returnScene === "armory" ? "Về Kho đồ" : "Trở về", () => void this.back(), !busy, "deck_editor_back", undefined, false);
     this.text(this.root, 94, 22, "Chỉnh sửa bộ bài", 20, COLORS.gold);
     this.deck.heroIds.forEach((heroId, column) => this.renderHero(heroId, column));
     this.renderSidebar();

@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { framedImage } from "../ui/contained-art";
+import { displayText } from "../ui/display-text";
 import type { GameData } from "rules";
 import { pendingUnlocks } from "rules";
 import manifest from "virtual:assets-manifest";
@@ -157,12 +159,12 @@ export class HeroesScene extends Phaser.Scene {
   }
 
   private icon(parent: Phaser.GameObjects.Container, key: string, x: number, y: number, size: number) {
-    if (this.textures.exists(`ui:${key}`)) parent.add(this.add.image(x, y, `ui:${key}`).setDisplaySize(size, size));
+    if (this.textures.exists(`ui:${key}`)) framedImage(this,parent,`ui:${key}`,x,y,size,size,2);
   }
   private render() {
     this.hideTooltip(); this.clearMask(); this.root.removeAll(true); this.scrollThumb = null; this.scrollArrows = [];
     const view = visibleWorld(this);
-    if (this.textures.exists("backgrounds:home")) this.root.add(this.add.image(640, 360, "backgrounds:home").setDisplaySize(view.w, view.h));
+    if (this.textures.exists("backgrounds:home")) {const image=this.add.image(640,360,"backgrounds:home");image.setScale(Math.min(view.w/image.width,view.h/image.height));this.root.add(image);}
     this.root.add(this.add.rectangle(640, 360, view.w, view.h, COLORS.background, 0.8));
     addButton(this, this.root, 90, 30, 140, "Quay lại", () => this.scene.start("deck-select"), true, { height: 40 });
     this.icon(this.root, "nav_back", 40, 30, 22);
@@ -187,7 +189,7 @@ export class HeroesScene extends Phaser.Scene {
     addButton(this, this.root, 200, 666, 40, "‹", () => { this.page--; this.render(); }, range.page > 0, { height: 40 });
     for (let page = 0; page < range.pages; page++) {
       const x = 248 + page * 44, active = this.page === page;
-      const button = this.add.rectangle(x, 666, 36, 40, active ? 0x344b68 : 0x17243b).setStrokeStyle(1, active ? 0xc1ddf4 : 0x657590); this.root.add(button);
+      const button = this.add.rectangle(x, 666, 36, 40, active ? 0x344b68 : 0x17243b).setRounded(8).setStrokeStyle(1, active ? 0xc1ddf4 : 0x657590); this.root.add(button);
       addText(this, this.root, x, 666, String(page + 1), 14, active ? COLORS.text : MUTED).setOrigin(0.5);
       if (!active) { button.setInteractive({ useHandCursor: true }); button.on("pointerup", () => { this.page = page; this.render(); }); }
     }
@@ -204,11 +206,11 @@ export class HeroesScene extends Phaser.Scene {
 
   private art(parent: Phaser.GameObjects.Container, key: string, x: number, y: number, width: number, height: number, band: number, owned = true) {
     const baked = roundedArtTexture(this, key, width, height, 6, band, { x: 0.5, y: height < 200 ? 0.28 : 0.5 });
-    if (this.textures.exists(baked)) parent.add(this.add.image(x, y, baked).setScale(1 / RENDER_SCALE).setAlpha(owned ? 1 : 0.72));
+    if (this.textures.exists(baked)) {parent.add(this.add.image(x, y, baked).setScale(1 / RENDER_SCALE).setAlpha(owned ? 1 : 0.72));}
     else {
       parent.add(roundedPanel(this, x, y, width, height, COLORS.panelHero));
-      addText(this, parent, x, y - 26, "❖", 28, MUTED).setOrigin(0.5);
-      addText(this, parent, x, y, "Chưa tải được ảnh", 12, MUTED).setOrigin(0.5);
+      if(height<100)addText(this,parent,x,y,"Chưa có ảnh",11,MUTED).setOrigin(.5);
+      else {addText(this, parent, x, y - 26, "❖", 28, MUTED).setOrigin(0.5);addText(this, parent, x, y, "Chưa tải được ảnh", 12, MUTED).setOrigin(0.5);}
     }
   }
   private fit(parent: Phaser.GameObjects.Container, x: number, y: number, content: string, width: number, size = 14, color: string = COLORS.text) {
@@ -235,7 +237,7 @@ export class HeroesScene extends Phaser.Scene {
     const x = GRID.x + index % 4 * GRID.stepX + 64, y = GRID.y + Math.floor(index / 4) * GRID.stepY + 71;
     const owned = session.profile.heroes[hero.id], pending = owned ? pendingUnlocks(session.data, session.profile, hero.id) : 0;
     const tile = this.add.container(x, y).setName(`hero-tile:${hero.id}`); this.root.add(tile);
-    this.art(tile, `heroes:${hero.id}`, 0, 0, 128, 142, 60, owned !== undefined);
+    this.art(tile, `heroes:${hero.id}`, 0, -16, 128, 54, 0, owned !== undefined);
     tile.add(this.add.rectangle(0, 41, 128, 60, 0x101b30, 0.95));
     const border = owned?.constellation === MAX_CONSTELLATION ? COLORS.goldFill : COLORS.panelBorder;
     tile.add(this.add.graphics().lineStyle(owned?.constellation === MAX_CONSTELLATION ? 3 : 1, border).strokeRoundedRect(-64, -71, 128, 142, 6));
@@ -245,12 +247,12 @@ export class HeroesScene extends Phaser.Scene {
     const name = this.add.text(-54, 14, hero.name, { ...TEXT_BASE, fontSize: "14px", color: COLORS.text, wordWrap: { width: 110 }, lineSpacing: 0 }); tile.add(name);
     if (!owned) { this.icon(tile, "lock", -48, 58, 16); addText(this, tile, -35, 50, "Chưa sở hữu", 12, MUTED); }
     else addText(this, tile, -54, 50, `Tinh Hồn ${owned.constellation}/6`, 12, owned.constellation === 6 ? COLORS.gold : MUTED);
-    const hit = this.add.rectangle(0, 0, 128, 142, 0, 0).setInteractive({ useHandCursor: true }); tile.add(hit);
+    const hit = this.add.rectangle(0, 0, 128, 142, 0, 0).setRounded(6).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); tile.add(hit);
     hit.on("pointerover", () => hit.setFillStyle(0xffffff, 0.055)); hit.on("pointerout", () => hit.setFillStyle(0, 0));
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.button === 0) this.selectHero(hero.id); });
     if (pending) {
-      const badge = this.add.rectangle(47, -30, 24, 24, 0xb8912c).setInteractive({ useHandCursor: true }); tile.add(badge);
-      addText(this, tile, 47, -30, String(pending), 13, "#141024").setOrigin(0.5);
+      const badge = this.add.rectangle(47, -57, 24, 24, 0xb8912c).setRounded(6).setStrokeStyle(1,COLORS.goldFill).setInteractive({ useHandCursor: true }); tile.add(badge);
+      addText(this, tile, 47, -57, String(pending), 13, "#141024").setOrigin(0.5);
       badge.on("pointerover", () => { if (!this.tooltipPinned) this.tooltip = showTextTooltip(this, x - 55, y - 10, [`Có ${pending} lượt mở lá`], 200); });
       badge.on("pointerout", () => { if (!this.tooltipPinned) this.hideTooltip(); });
       badge.on("pointerup", () => this.selectHero(hero.id));
@@ -261,10 +263,10 @@ export class HeroesScene extends Phaser.Scene {
     const hero = session.data.heroes[this.heroId]!, owned = session.profile.heroes[hero.id];
     this.art(this.root, `heroes:${hero.id}${this.previewUp ? "_up" : ""}`, 731, 406, 270, 444, 80);
     this.root.add(this.add.rectangle(731, 593, 270, 70, 0x101b30, 0.93));
-    addText(this, this.root, 612, 565, "XEM ART", 12, MUTED);
+    addText(this, this.root, 612, 565, "HÌNH NHÂN VẬT", 12, MUTED);
     addButton(this, this.root, 659, 606, 110, this.previewUp ? "Thường" : "✓ Thường", () => { this.previewUp = false; this.render(); }, true, { height: 32 });
     addButton(this, this.root, 795, 606, 126, this.previewUp ? "✓ Thăng cấp" : "Thăng cấp", () => { this.previewUp = true; this.render(); }, true, { height: 32 });
-    const note = this.previewUp && owned?.levelUpForm === "alt" && owned.constellation >= 5 ? "Art thăng cấp cơ bản · Dạng thứ hai chưa có art riêng" : "Xem ảnh không thay đổi dạng đang dùng";
+    const note = this.previewUp && owned?.levelUpForm === "alt" && owned.constellation >= 5 ? "Ảnh thăng cấp cơ bản · Dạng thứ hai chưa có ảnh riêng" : "Xem ảnh không thay đổi dạng đang dùng";
     this.root.add(this.add.text(608, 648, note, { ...TEXT_BASE, fontSize: "12px", color: MUTED, wordWrap: { width: 248 } }).setName("art-preview-note"));
   }
 
@@ -274,7 +276,7 @@ export class HeroesScene extends Phaser.Scene {
     this.root.add(roundedPanel(this, 1070, 391, 380, 486, 0x101b30, 0.97, 0x3a4a65, 10));
     addText(this, this.root, 904, 160, `${FACTION_LABELS[hero.faction]}  ·  ${HERO_ROLE_LABELS[hero.archetype]}`, 13, MUTED);
     this.fit(this.root, 904, 184, hero.name, 332, 28, COLORS.text);
-    addText(this, this.root, 904, 223, `${HERO_RARITY_LABELS[hero.rarity]}  ·  HP ${hero.maxHp}`, 14, MUTED);
+    addText(this, this.root, 904, 223, `${HERO_RARITY_LABELS[hero.rarity]}  ·  Máu ${hero.maxHp}`, 14, MUTED);
     addText(this, this.root, 904, 247, owned ? `Đã sở hữu  ·  Tinh Hồn ${level}/6` : "Chưa sở hữu — nhận qua Triệu Hồi", 13, owned ? COLORS.text : MUTED);
     for (let i = 0; i < MAX_CONSTELLATION; i++) {
       const pip = this.add.circle(912 + i * 23, 284, 7, level > i ? COLORS.goldFill : 0x29394e).setStrokeStyle(1, level > i ? COLORS.goldFill : 0x7b8ba4).setInteractive({ useHandCursor: true }); this.root.add(pip);
@@ -286,9 +288,9 @@ export class HeroesScene extends Phaser.Scene {
     this.root.add(this.add.rectangle(1070, 310, 332, 1, 0x475671));
     ([["overview", "Tổng quan"], ["constellation", "Tinh Hồn"], ["cards", "Lá chủ lực"]] as const).forEach(([tab, label], index) => {
       const x = 958 + index * 111;
-      const hit = this.add.rectangle(x, 311, 106, 34, 0x283c55, this.tab === tab ? 0.6 : 0).setInteractive({ useHandCursor: true }); this.root.add(hit);
+      const hit = this.add.rectangle(x, 311, 106, 34, 0x283c55, this.tab === tab ? 0.6 : 0).setRounded(8).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.root.add(hit);
       addText(this, this.root, x, 310, label, 14, this.tab === tab ? COLORS.text : MUTED).setOrigin(0.5);
-      if (this.tab === tab) this.root.add(this.add.rectangle(x, 328, 100, 2, 0xd0e7fc));
+      if (this.tab === tab) this.root.add(this.add.rectangle(x, 328, 86, 2, 0xd0e7fc));
       hit.on("pointerup", () => { if (isModalOpen() || this.tooltipPinned) return; this.tab = tab; this.detailScroll = 0; this.render(); });
     });
     this.detailArea = { ...DETAIL };
@@ -298,7 +300,7 @@ export class HeroesScene extends Phaser.Scene {
     else { this.detailMask = this.maskShape.createGeometryMask(); this.detailContent.setMask(this.detailMask); }
     let y = 0;
     const paragraph = (text: string, size = 14, color: string = COLORS.text) => {
-      const label = this.add.text(0, y, text, { ...TEXT_BASE, fontSize: `${size}px`, color, wordWrap: { width: DETAIL.width - 12 }, lineSpacing: 4 }); this.detailContent.add(label); y += label.height + 12;
+      const label = this.add.text(0, y, displayText(text), { ...TEXT_BASE, fontSize: `${size}px`, color, wordWrap: { width: DETAIL.width - 12 }, lineSpacing: 4 }); this.detailContent.add(label); y += label.height + 12;
     };
     if (this.tab === "overview") {
       paragraph(owned ? "ĐIỀU KIỆN THĂNG CẤP" : "XEM TRƯỚC · TIẾN TRÌNH CƠ BẢN", 12, MUTED);
@@ -324,12 +326,12 @@ export class HeroesScene extends Phaser.Scene {
       [hero.signature.cardId, hero.signature.plusCardId].forEach((id, index) => {
         const card = session.data.cards[id]!, active = index === 0 ? level < 4 : level >= 4;
         const x = index * 170;
-        this.detailContent.add(this.add.rectangle(x + 77, y + 97, 154, 194, active ? 0x263d40 : 0x1c2b43).setStrokeStyle(1, active ? 0xaccbc2 : 0x52617e));
+        this.detailContent.add(this.add.rectangle(x + 77, y + 97, 154, 194, active ? 0x263d40 : 0x1c2b43).setRounded(8).setStrokeStyle(1, active ? 0xaccbc2 : 0x52617e));
         const face = drawCardFace(this, { title: card.name, body: card.text, cost: card.cost, costBase: card.cost, emblem: cardIconOf(card), keywordIds: card.keywords ?? [], artKeys: cardArtCandidates(session.data, card, id), border: COLORS.panelBorder }, "compact");
         face.setScale(0.56).setPosition(x + 77, y + 63); this.detailContent.add(face);
         const title = this.add.text(x + 8, y + 117, card.name, { ...TEXT_BASE, fontSize: "13px", color: COLORS.text, wordWrap: { width: 140 }, lineSpacing: 1 }); this.detailContent.add(title);
         addText(this, this.detailContent, x + 8, y + 161, active ? "✓ Đang dùng" : "Tinh Hồn 4", 12, active ? "#bde7d1" : MUTED);
-        const hit = this.add.rectangle(x + 77, y + 97, 154, 194, 0, 0).setName(`hero-card:${id}`).setInteractive({ useHandCursor: true }); this.detailContent.add(hit);
+        const hit = this.add.rectangle(x + 77, y + 97, 154, 194, 0, 0).setName(`hero-card:${id}`).setRounded(8).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.detailContent.add(hit);
         hit.on("pointerover", () => {
           if (this.tooltipPinned) return; this.hideTooltip();
           this.tooltipTimer = this.time.delayedCall(300, () => { this.tooltipTimer = null; if (this.inDetail(this.input.activePointer)) this.showCard(id, false); });
@@ -344,7 +346,7 @@ export class HeroesScene extends Phaser.Scene {
     if (y > DETAIL.height) {
       const trackHeight = DETAIL.height, thumbHeight = Math.max(28, trackHeight * DETAIL.height / y);
       this.root.add(this.add.rectangle(1245, DETAIL.y + trackHeight / 2, 4, trackHeight, 0x34435b));
-      this.scrollThumb = this.add.rectangle(1245, DETAIL.y + thumbHeight / 2, 6, thumbHeight, 0xc2d2e8).setInteractive({ useHandCursor: true }); this.root.add(this.scrollThumb);
+      this.scrollThumb = this.add.rectangle(1245, DETAIL.y + thumbHeight / 2, 6, thumbHeight, 0xc2d2e8).setRounded(3).setStrokeStyle(1,0x526580).setInteractive({ useHandCursor: true }); this.root.add(this.scrollThumb);
       this.input.setDraggable(this.scrollThumb);
       this.scrollThumb.on("drag", (_pointer: Phaser.Input.Pointer, _x: number, dragY: number) => {
         const ratio = Phaser.Math.Clamp((dragY - DETAIL.y - thumbHeight / 2) / (trackHeight - thumbHeight), 0, 1);
@@ -352,7 +354,7 @@ export class HeroesScene extends Phaser.Scene {
       });
       ([-1, 1] as const).forEach((direction, index) => {
         const x = 1141 + index * 72;
-        const button = this.add.rectangle(x, 617, 46, 28, COLORS.button).setStrokeStyle(1, COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.root.add(button);
+        const button = this.add.rectangle(x, 617, 46, 28, COLORS.button).setRounded(8).setStrokeStyle(1, COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.root.add(button);
         const label = addText(this, this.root, x, 617, direction < 0 ? "▲" : "▼", 13).setOrigin(0.5);
         button.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.button === 0) this.scrollDetail(direction * 120); });
         this.scrollArrows.push({ button, label, direction });
@@ -430,7 +432,7 @@ export class HeroesScene extends Phaser.Scene {
       const veil = this.add.rectangle(640, 360, view.w, view.h, 0x000000, 0.5).setInteractive(); layer.add(veil);
       veil.on("pointerup", () => this.hideTooltip());
       const card = showCardTooltip(this, 582, 628, session.data, id); layer.add(card);
-      const bounds = card.getBounds();
+      const bounds = (card.list[0] as Phaser.GameObjects.Container).getBounds();
       const shield = this.add.rectangle(bounds.centerX, bounds.centerY, bounds.width, bounds.height, 0, 0).setInteractive(); layer.add(shield);
       addButton(this, layer, bounds.right - 23, bounds.top + 22, 34, "×", () => this.hideTooltip(), true, { height: 34, fontSize: 20 });
     } else { this.tooltip = showCardTooltip(this, 582, 628, session.data, id); this.root.add(this.tooltip); }

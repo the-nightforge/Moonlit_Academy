@@ -11,12 +11,14 @@ import type { CardDef, CombatState, GameData } from "rules";
 import { COLORS, OWNER_COLORS, RENDER_SCALE, TEXT_BASE } from "./theme";
 import { cardIconOf } from "./attack-style";
 import { HUD, hudImage } from "./hud-art";
+import { containedRect, framedImage, paintContained } from "./contained-art";
+import { displayText } from "./display-text";
 import { ensureTextures, GLOW } from "./vfx";
 
 /** Body font ladder — the largest size that still shows the full text wins. */
 export const COMPACT_BODY_FONTS = [11, 10, 9] as const;
 export const PREVIEW_BODY_FONTS = [14, 12, 11] as const;
-/** Compact (in-hand) card: LoR-style 124×180 — full-bleed art over a text band. */
+/** Compact (in-hand) card: LoR-style 124×180 — contained art above a text band. */
 export const COMPACT_CARD = { w: 124, h: 180 } as const;
 /** Hover/inspect card: same face at 1.5× for readable full text. */
 export const PREVIEW_CARD = { w: 186, h: 270 } as const;
@@ -264,7 +266,7 @@ interface FittedBody {
 
 /**
  * Fits the full body text: try each font in `bodyFonts` and take the largest
- * whose band still leaves the top ~28% of the card as pure art. At the
+ * whose band still leaves the top ~42% of the card as pure art. At the
  * smallest font an exceptionally long text ellipsizes inside that cap.
  */
 function fitBody(scene: Phaser.Scene, spec: CardFaceSpec, p: FacePreset): FittedBody {
@@ -272,7 +274,7 @@ function fitBody(scene: Phaser.Scene, spec: CardFaceSpec, p: FacePreset): Fitted
   const bottom = p.h / 2 - 7;
   const nameH = p.nameFont + 6;
   const kwH = spec.keywordIds.length > 0 ? p.kwIcon + 8 : 2;
-  const bandTopMin = -p.h / 2 + Math.round(p.h * 0.28);
+  const bandTopMin = -p.h / 2 + Math.round(p.h * 0.42);
   const measure = (text: string, font: number): number => {
     const probe = scene.add.text(-4000, -4000, text, {
       ...TEXT_BASE, fontSize: `${font}px`, lineSpacing: -1, wordWrap: { width: wrapW },
@@ -296,68 +298,40 @@ function fitBody(scene: Phaser.Scene, spec: CardFaceSpec, p: FacePreset): Fitted
 }
 
 /**
- * Cover-cropped art clipped to a rounded rect, baked once into a cached
+ * Whole artwork with a tightly fitted border, baked once into a cached
  * RENDER_SCALE canvas texture (no display mask — works on WebGL and Canvas).
- * `band` adds a dark bottom gradient for text drawn over the art.
+ * `band` reserves an empty bottom region for text beside the artwork.
  */
 export function roundedArtTexture(
-  scene: Phaser.Scene, artKey: string, w: number, h: number, radius: number, band = 0, focal?: { x: number; y: number },
+  scene: Phaser.Scene, artKey: string, w: number, h: number, radius: number, band = 0, _focal?: { x: number; y: number },
 ): string {
-  const baked = `${artKey}@round-${w}x${h}r${radius}b${band}${focal ? `f${focal.x}-${focal.y}` : ""}`;
+  const baked = artKey+"@contain-fit-"+w+"x"+h+"r"+radius+"b"+band;
   if (!scene.textures.exists(artKey) || scene.textures.exists(baked)) return baked;
   const source = scene.textures.get(artKey).getSourceImage() as CanvasImageSource & { width: number; height: number };
-  const scale = Math.max(w / source.width, h / source.height);
-  const cropW = Math.min(source.width, w / scale);
-  const cropH = Math.min(source.height, h / scale);
   const canvas = scene.textures.createCanvas(baked, Math.ceil(w * RENDER_SCALE), Math.ceil(h * RENDER_SCALE));
-  if (canvas) {
-    const ctx = canvas.getContext();
-    ctx.scale(RENDER_SCALE, RENDER_SCALE);
-    ctx.beginPath();
-    ctx.roundRect(0, 0, w, h, radius);
-    ctx.clip();
-    ctx.drawImage(source, (source.width - cropW) * (focal?.x ?? 0.5), (source.height - cropH) * (focal?.y ?? 0.5), cropW, cropH, 0, 0, w, h);
-    if (band > 0) {
-      const fade = ctx.createLinearGradient(0, h - band, 0, h);
-      fade.addColorStop(0, "rgba(10, 20, 38, 0)");
-      fade.addColorStop(1, "rgba(10, 20, 38, 0.85)");
-      ctx.fillStyle = fade;
-      ctx.fillRect(0, h - band, w, band);
-    }
+  if(canvas){
+    const ctx=canvas.getContext();ctx.scale(RENDER_SCALE,RENDER_SCALE);
+    // Keep layout space transparent; the visible border hugs the complete image.
+    const artHeight=Math.max(2,h-band),r=containedRect(source.width,source.height,w,artHeight,1);
+    paintContained(ctx,source,w,artHeight,1);
+    ctx.strokeStyle="#526580";ctx.lineWidth=1;ctx.strokeRect(r.x-.5,r.y-.5,r.width+1,r.height+1);
     canvas.refresh();
   }
   return baked;
 }
 
 /**
- * Artwork sized to the rounded card interior: a cover-crop baked into a
- * clipped canvas texture (rounded corners come free — no display mask).
+ * Artwork centered with a border fitted to the source ratio.
  */
-function artImage(scene: Phaser.Scene, key: string, w: number, h: number, parent: Phaser.GameObjects.Container): Phaser.GameObjects.Image | null {
-  if (!scene.textures.exists(key)) return null;
-  const baked = `${key}@card-${w}x${h}`;
-  if (!scene.textures.exists(baked)) {
-    const source = scene.textures.get(key).getSourceImage() as CanvasImageSource & { width: number; height: number };
-    const scale = Math.max(w / source.width, h / source.height);
-    const cropW = Math.min(source.width, w / scale);
-    const cropH = Math.min(source.height, h / scale);
-    const canvas = scene.textures.createCanvas(baked, Math.ceil(w * RENDER_SCALE), Math.ceil(h * RENDER_SCALE));
-    if (!canvas) return null;
-    const ctx = canvas.getContext();
-    ctx.scale(RENDER_SCALE, RENDER_SCALE);
-    ctx.beginPath();
-    ctx.roundRect(0, 0, w, h, 7);
-    ctx.clip();
-    ctx.drawImage(source, (source.width - cropW) / 2, (source.height - cropH) / 2, cropW, cropH, 0, 0, w, h);
-    canvas.refresh();
-  }
-  const img = scene.add.image(0, 0, baked).setScale(1 / RENDER_SCALE).setName("card_art");
-  parent.add(img);
-  return img;
+function artImage(scene: Phaser.Scene,key:string,w:number,h:number,y:number,parent:Phaser.GameObjects.Container){
+ if(!scene.textures.exists(key))return null;
+ const img=framedImage(scene,parent,key,0,y,w,h);
+ if(img){parent.list[parent.list.length-2]!.setName('card_art_frame');img.setName('card_art');}
+ return img;
 }
 
 /**
- * The shared LoR-style card face: full-bleed art under a dark gradient band
+ * The shared LoR-style card face: contained art above a separate dark text band
  * carrying name, keyword icons, and auto-fitted full rules text. Cost coin
  * sits top-left, the tag/type emblem top-right. Caller adds gameplay
  * overlays (borders, mulligan, targeting) on top of the returned container.
@@ -368,6 +342,7 @@ export function drawCardFace(
   size: keyof typeof FACE_PRESET = "compact",
   into?: Phaser.GameObjects.Container,
 ): Phaser.GameObjects.Container {
+  spec={...spec,body:displayText(spec.body)};
   const p = FACE_PRESET[size];
   const { w, h } = p;
   const c = into ?? scene.add.container(0, 0);
@@ -375,22 +350,26 @@ export function drawCardFace(
 
   c.add(hudImage(scene, p.faceTex, 0, 0).setTint(tint));
 
+  const fit = fitBody(scene, spec, p);
+  const artTop=-h/2+38,artBottom=fit.bandTop-8,artHeight=Math.max(8,artBottom-artTop),artY=artTop+artHeight/2;
   const artKey = spec.artKeys.find((key) => scene.textures.exists(key));
   if (artKey !== undefined) {
-    artImage(scene, artKey, w - 10, h - 10, c)?.setTint(tint);
+    artImage(scene, artKey, w - 10, artHeight, artY, c)?.setTint(tint);
   } else {
-    // No artwork yet: the old glow + emblem cluster fills the art zone.
+    // Missing art uses the same framed region and never covers the text.
     ensureTextures(scene);
-    const glow = scene.add.image(0, -16, GLOW).setDisplaySize(w * 0.8, w * 0.8).setAlpha(0.5);
+    c.add(scene.add.rectangle(0,artY,w-10,artHeight,0x0c1628,1).setStrokeStyle(1,0x526580).setName("card_art_frame"));
+    const glow = scene.add.image(0,artY,GLOW).setAlpha(0.5);
+    const glowSize=Math.min(w-18,artHeight-8);glow.setScale(Math.min(glowSize/glow.width,glowSize/glow.height));
     c.add(glow);
-    const icon = scene.add.image(0, -18, spec.emblem).setDisplaySize(40, 40).setName("card_art_fallback_icon");
+    const icon = scene.add.image(0,artY,spec.emblem).setName("card_art_fallback_icon");
+    const iconSize=Math.min(40,artHeight-8);icon.setScale(Math.min(iconSize/icon.width,iconSize/icon.height));
     c.add(icon);
     if (spec.grey === true) { glow.setTint(tint); icon.setTint(tint); }
   }
 
-  const fit = fitBody(scene, spec, p);
   // Gradient band: transparent feather top → near-opaque dark bottom.
-  const gradTop = fit.bandTop - 14;
+  const gradTop = fit.bandTop - 6;
   const grad = scene.add.graphics();
   grad.fillGradientStyle(0x060a18, 0x060a18, 0x060a18, 0x060a18, 0, 0, 0.94, 0.94);
   grad.fillRect(-w / 2 + 5, gradTop, w - 10, h / 2 - 5 - gradTop);
@@ -418,11 +397,12 @@ export function drawCardFace(
   // Tag/type emblem medallion top-right (LoR's region-emblem slot).
   const embX = w / 2 - 17, embY = -h / 2 + 19;
   c.add(scene.add.circle(embX, embY, p.emblemRing, 0x0a0e26, 0.92).setStrokeStyle(1.5, COLORS.goldFill));
-  const emblem = scene.add.image(embX, embY, spec.emblem).setDisplaySize(p.emblemIcon, p.emblemIcon).setName("card_emblem_icon");
+  const emblem = scene.add.image(embX, embY, spec.emblem).setName("card_emblem_icon");
+  emblem.setScale(Math.min(p.emblemIcon/emblem.width,p.emblemIcon/emblem.height));
   c.add(emblem);
   if (spec.grey === true) emblem.setTint(tint);
 
-  // Card name printed on the gradient, over the art's lower edge.
+  // Card name is below the artwork in the text region.
   const name = scene.add.text(0, fit.bandTop + 3 + p.nameFont / 2, spec.title, {
     ...TEXT_BASE, fontSize: `${p.nameFont}px`, fontStyle: "bold", color: "#fff1d0",
     align: "center", stroke: "#0a0612", strokeThickness: 2,
@@ -438,7 +418,8 @@ export function drawCardFace(
     const ky = fit.bandTop + p.nameFont + 6 + p.kwIcon / 2;
     shown.forEach((kwId, i) => {
       const icon = scene.add.image(-rowW / 2 + step / 2 + i * step, ky, keywordIconKey(scene, kwId))
-        .setDisplaySize(p.kwIcon, p.kwIcon).setName("card_kw_icon");
+        .setName("card_kw_icon");
+      icon.setScale(Math.min(p.kwIcon/icon.width,p.kwIcon/icon.height));
       c.add(icon);
       if (spec.grey === true) icon.setTint(tint);
     });
@@ -455,7 +436,7 @@ export function drawCardFace(
     scene.add.text(0, fit.textY, fit.text, {
       ...TEXT_BASE, fontSize: `${fit.font}px`, color: "#efe4c8",
       align: "center", lineSpacing: -1, wordWrap: { width: w - 18 },
-    }).setOrigin(0.5).setName("card_body"),
+    }).setOrigin(0.5).setName("card_body").setData("rulesTruncated",fit.text!==spec.body),
   );
 
   // Owner-colored frame — the seat color stays readable at hand size.
