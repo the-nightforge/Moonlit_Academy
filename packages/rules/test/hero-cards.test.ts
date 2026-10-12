@@ -220,6 +220,34 @@ describe("core hero cards", () => {
     expect(current.heroes[0]!.leveledUp).toBe(true);
   });
 
+  it("T277: M03 Thám Báo scales with cards played this turn (liên hoàn)", () => {
+    const played: string[] = [];
+    const { data, state } = makeTestCombat({
+      heroIds: ["m03", "f04", "m06"],
+      setup: (s) => {
+        p0(s).moonPower = 0;
+        played.push(...takeCards(s, "m03_tieu_loi", 2), ...takeCards(s, "m03_tham_bao", 1));
+      },
+    });
+    let current = state;
+    for (const instanceId of played.slice(0, 2)) {
+      current = playCardState(data, current, instanceId, undefined);
+    }
+    const targetId = current.enemies.find((e) => e.alive)!.id;
+    const before = current.enemies.find((e) => e.id === targetId)!.hp;
+    current = playCardState(data, current, played[2]!, targetId);
+    const pending = p0(current).pendingChoice;
+    if (pending?.kind === "chooseCard") {
+      const picked = applyAction(data, current, { type: "chooseCard", instanceId: pending.options[0] as string });
+      if (!picked.ok) throw new Error(picked.error);
+      current = picked.state;
+    }
+    // State is immutable — re-find the enemy in the new state before asserting.
+    const after = current.enemies.find((e) => e.id === targetId)!.hp;
+    // 2 cheap cards before it → 2 × amount(2) = 4 damage. Old per:moonPower at mp 0 dealt 0.
+    expect(before - after).toBe(4);
+  });
+
   it("T276g: M04 levels after its cards heal twenty HP", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m04", "f04", "m06"],
