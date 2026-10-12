@@ -24,22 +24,24 @@
 ### Task 1: Equipment presentation
 **Files:** Create apps/client/src/ui/equipment-presentation.ts; test apps/client/test/equipment-presentation.test.ts.
 **Interfaces:** consumes GameData/Profile/rules upgradeCost/weaponAt/relicAt; produces EquipmentFilters, equipmentLevel, equipmentUpgrade, filterEquipment, initialEquipmentId, equipmentEffects, equipmentDecks.
-- [ ] Write tests: Vietnamese search + combined rarity/ownership; affordable upgrade excludes max/unowned/offline; stable sort and input immutability; effective weapon at 3/5 and relic at 2; initial owned preference and real deck references.
-- [ ] Run `pnpm --filter client test -- equipment-presentation.test.ts --maxWorkers=1`; expect missing-module failure before implementation.
-- [ ] Implement helpers using rules resolvers. Passive prose retains base and labelled changes, rather than presenting partial refinement text as a complete passive.
-- [ ] Re-run targeted tests; expect all pass.
-- [ ] Commit helper and tests.
+- [x] Write tests: Vietnamese search + combined rarity/ownership; affordable upgrade excludes max/unowned/offline; stable sort and input immutability; effective weapon at 3/5 and relic at 2; initial owned preference and real deck references.
+- [x] Run `pnpm --filter client test -- equipment-presentation.test.ts --maxWorkers=1`; expect missing-module failure before implementation.
+- [x] Implement helpers using rules resolvers. Passive prose retains base and labelled changes, rather than presenting partial refinement text as a complete passive.
+- [x] Re-run targeted tests; expect all pass.
+- [x] Commit helper and tests.
 
 ### Task 2: Production Armory scene
 **Files:** Modify apps/client/src/scenes/armory-scene.ts; create apps/client/e2e/armory-ui.spec.ts; update docs/inventory-ui/proposal.md with implementation evidence.
 **Interfaces:** consumes Task 1 helpers; retains upgrade endpoints and deck-builder session.editingDeck navigation.
-- [ ] Write browser tests for accent-insensitive empty/reset, per-category state, level preview vs cost, max/unowned/offline, server success/busy and late callback, clipped scrolling/overlay/keyboard/resize.
-- [ ] Run `pnpm --filter client exec playwright test e2e/armory-ui.spec.ts --workers=1`; expect failures for old UI.
-- [ ] Implement header/resources, counted category tabs, filters, grid, three detail tabs, fixed footer, real effective effects/deck references, pinned card/art overlays, keyboard and masked scroll. Guard late requests and clean HTML/listeners/masks on shutdown.
-- [ ] Run typecheck + client tests + focused browser tests; expect pass and inspect screenshots of both categories plus max/locked/overlay.
-- [ ] Run workspace unit suites with maxWorkers=1, typecheck and build; expect exit 0.
-- [ ] Commit scene/tests/docs, request whole-branch review and address consequential findings with regression checks.
-- [ ] Keep branch/worktree ready for review; no merge/push requested in this turn.
+- [x] Write browser tests for accent-insensitive empty/reset, per-category state, level preview vs cost, max/unowned/offline, server success/busy and late callback, clipped scrolling/overlay/keyboard/resize.
+- [x] Run `pnpm --filter client exec playwright test e2e/armory-ui.spec.ts --workers=1`; expect failures for old UI.
+- [x] Implement header/resources, counted category tabs, filters, grid, three detail tabs, fixed footer, real effective effects/deck references, pinned card/art overlays, keyboard and masked scroll. Guard late requests and clean HTML/listeners/masks on shutdown.
+- [x] Run typecheck + client tests + focused browser tests; expect pass and inspect screenshots of both categories plus max/locked/overlay.
+- [x] Run workspace unit suites with maxWorkers=1, typecheck and build; expect exit 0.
+- [x] Commit scene/tests/docs, request whole-branch review and address consequential findings with regression checks.
+- [x] Keep branch/worktree ready for review; no merge/push requested in this turn.
 
 ## Execution record
 The user already approved implementation; proceed without another plan approval. Run native PowerShell equivalents for shell-only bookkeeping when needed. Fresh review at end, no per-task agents.
+
+Execution notes: use `pnpm --filter client exec vitest run test/equipment-presentation.test.ts --maxWorkers=1` for focused helper tests; `test -- ...` forwarded a literal separator and ran the client suite, which still produced the expected missing-module RED. Whole-branch reviewer read committed + current working tree code so verification could continue without a premature completion commit. Reviewer P2 and additional WebGL visual regression fixed in one pass, each watched RED→GREEN. Remaining verification/commit is recorded in docs/inventory-ui/proposal.md.

@@ -78,11 +78,11 @@ Mỗi trang bị có một bản ghi sở hữu/cấp, không có inventory capa
 
 Giữ scene Home → Armory, hai nhóm Kho đồ và các API `/profile/weapons/:id/upgrade`, `/profile/relics/:id/upgrade`. Không đổi gacha, pity, schema, tỉ lệ quay hay màn Nguyệt Ước. Đề xuất phù hợp quyết định reuse Armory trong `docs/superpowers/specs/2026-10-06-nguyet-uoc-inventory-design.md`.
 
-## Mockup và phạm vi đã làm
+## Mockup ở giai đoạn đề xuất
 
 `mockup.html` là bản tương tác độc lập; đọc định nghĩa, tên, art và giá nâng trực tiếp từ JSON trong worktree. Profile minh họa gồm 4 Binh Khí, 3 Nguyệt Bảo, 96 Huyền Thiết, 18 Nguyệt Trần và ví dụ “Đội Hoắc Liệt”. Đây không phải tài khoản người chơi. Nút nâng chỉ mở hộp xem trước, không gọi API hay tiêu nguyên liệu. Responsive HTML không phải cam kết bố cục Phaser trên mobile.
 
-`preview.png` là ảnh mockup ở 1280 × 720. Chưa chỉnh production scene, chưa triển khai thay đổi gameplay. Chỉ có tài liệu, mockup và ảnh trong `docs/inventory-ui/`.
+`preview.png` là ảnh mockup ở 1280 × 720. Ở giai đoạn đề xuất chỉ có tài liệu, mockup và ảnh trong `docs/inventory-ui/`; trạng thái triển khai hiện tại ghi bên dưới.
 
 Đã kiểm tra thủ công trên trình duyệt: tìm `xich diem` trả đúng Xích Diệm Thương; kết hợp lọc chưa sở hữu ra empty state và xóa lọc khôi phục đủ danh sách; xem cấp 5 vẫn giữ sở hữu 3 và giá nâng 3 → 4 là 65 Huyền Thiết; hộp nâng minh họa đúng số dư còn 31; món cấp 5/chưa sở hữu không thể nâng; tab Nguyệt Bảo hiển thị Cộng Minh 2 → 3 giá 8 Nguyệt Trần và các cấp thay thế nhau. Chưa kiểm thử giao dịch thật/offline/busy vì mockup không nối API.
 
@@ -94,4 +94,22 @@ Giữ scene Home → Armory, hai nhóm Kho đồ và các API `/profile/weapons/
 4. Thêm card/art overlay, cuộn có mask và navigation tới bộ bài nếu luồng hiện có hỗ trợ; ưu tiên P0 trước phần phụ P1.
 5. Kiểm tra toàn bộ 41 món, tên dài và mô tả cấp 5; đủ/thiếu nguyên liệu, cấp tối đa, chưa có, tab đổi khi request đang chạy, rời/vào lại scene, keyboard/touch, assets thiếu và kích thước game thực tế. Sau đó chạy typecheck, unit tests liên quan và build; không dùng kết quả cũ để xác nhận implementation mới.
 
-Lệnh kiểm tra sản phẩm chưa chạy lại ở nhánh đề xuất vì không có thay đổi production. Kiểm chứng trong lượt này là tương tác mockup, đối chiếu data/assets và kiểm tra scope Git.
+Ở lượt đề xuất, kiểm chứng giới hạn ở mockup và assets. Lượt triển khai đã chạy kiểm tra sản phẩm như ghi bên dưới.
+
+## Triển khai trong game — 12/10/2026
+
+Đã thay `ArmoryScene` bằng lưới 12 món/trang, tìm tên không dấu, lọc sở hữu/độ hiếm/nâng được, sắp xếp, nhớ trạng thái riêng từng nhóm, chi tiết Hiệu ứng / Các cấp / Sử dụng và footer nâng cố định. Art/card có popup đóng bằng Esc hoặc click ngoài, có bàn phím chọn món, nút cuộn và scrollbar. Tab Sử dụng lấy bộ bài thật từ profile và mở bản clone vào deck builder.
+
+Hiệu ứng dùng `weaponAt` / `relicAt`; giá dùng `upgradeCost`; API và cơ chế trang bị giữ nguyên. Passive prose trình bày nội tại gốc kèm các thay đổi hooks theo cấp, vì mô tả refinement có thể chỉ là cập nhật một phần hoặc riêng bản mệnh. Đây là lựa chọn trình bày để giữ ngữ cảnh, không thay luật combat.
+
+Review độc lập phát hiện phản hồi thành công sau khi rời/vào lại scene có thể để lại giá cũ. Đã giữ generation/auth guard và bổ sung observer hồ sơ/revision của scene hiện tại, đồng thời từ chối gửi thao tác dựa trên giá đang cần refresh. Kiểm tra hồi quy đã tái hiện lỗi trước khi sửa và đạt sau sửa.
+
+Kiểm tra hình ảnh bổ sung phát hiện legacy geometry mask không che text dưới WebGL Phaser 4. Đã dùng external Mask filter theo pattern scene Hero, giữ geometry mask cho Canvas; vùng tab không đổi pixel khi cuộn text dài. Xem [Phaser Mask filter API](https://docs.phaser.io/api-documentation/class/filters-mask).
+
+Xác minh unit: data 50, rules 810 (4 skipped), client 294, server 68 đạt; client/server/data/rules typecheck và build workspace đạt. Lượt chạy gộp ban đầu có server story T305 timeout 5 giây khi có browser chạy đồng thời; chạy lại toàn bộ server riêng đạt 68/68. Không sửa server để xử lý timeout môi trường này.
+
+Bộ browser test trong `apps/client/e2e/armory-ui.spec.ts` dùng account trên test backend pg-mem và hồ sơ fixture để kiểm tra UI. Hai test giao dịch intercept HTTP ở ranh giới API, phản hồi đầy đủ profile/revision; không tác động tài khoản thật. Kết quả lượt cuối và ảnh UI thật được lưu sau khi chạy xong.
+
+Lượt browser cuối trên code ổn định: **11/11 đạt** (4,5 phút), không có `pageerror`. Bao gồm search/lọc/reset/phân trang, state riêng theo nhóm, xem cấp độc lập giá nâng, max/chưa có/offline, nâng qua API/busy, callback muộn thành công/lỗi, layout chi phí, bàn phím/card popup, mở bộ bài thật, resize và pixel regression của vùng tab khi cuộn. Ảnh `production-weapons.png`, `production-relics.png`, `production-card.png`, `production-art.png` là UI Phaser thật với hồ sơ test minh họa, không phải mockup.
+
+Branch/worktree được giữ để review, chưa merge hoặc push.

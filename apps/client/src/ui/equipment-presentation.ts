@@ -1,4 +1,4 @@
-import type { GameData, Profile, Rarity, SavedDeck, CardDef } from "rules";
+import type { GameData, Profile, Rarity, SavedDeck, CardDef, WeaponDef, RelicDef } from "rules";
 import { relicAt, upgradeCost, weaponAt } from "rules";
 import { matchesDeckText } from "./deck-presentation";
 
@@ -30,7 +30,8 @@ export function equipmentUpgrade(data: GameData, profile: Profile, kind: Equipme
   return { level, cost, have, missing, materialId, material, reason, enabled: cost !== null && !missing && online && !busy };
 }
 export function filterEquipment(data: GameData, profile: Profile, kind: EquipmentKind, filters: EquipmentFilters, online: boolean) {
-  return Object.values(data[kind]).filter(def => {
+  const definitions: (WeaponDef | RelicDef)[] = Object.values(data[kind]);
+  return definitions.filter(def => {
     const owned = equipmentLevel(profile, kind, def.id) !== undefined;
     return matchesDeckText(filters.query, def.name)
       && (filters.rarity === "all" || filters.rarity === def.rarity)
