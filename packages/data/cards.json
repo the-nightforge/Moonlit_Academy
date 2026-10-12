@@ -7721,7 +7721,7 @@
       {
         "type": "applyStatus",
         "status": "regen",
-        "amount": 2,
+        "amount": 3,
         "to": "chosen"
       },
       {
@@ -7730,7 +7730,7 @@
         "to": "chosen"
       }
     ],
-    "text": "Hồi Phục 2. Hồi 2 HP.",
+    "text": "Hồi Phục 3. Hồi 2 HP.",
     "keywords": [
       "hoi_phuc"
     ]
