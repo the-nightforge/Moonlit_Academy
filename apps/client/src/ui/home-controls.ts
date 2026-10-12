@@ -11,6 +11,7 @@ interface ControlOptions {
   hideTip?: () => void;
   fill?: number;
   border?: number;
+  hoverFill?: number;
   radius?: number;
   icon?: Phaser.GameObjects.Image;
   /** A native field can share the canvas focus order. */
@@ -123,7 +124,7 @@ export class HomeControls {
     const iconY = icon?.y ?? 0;
     const paint = (active: boolean) => {
       if (!chrome.scene) return;
-      chrome.clear().fillStyle(active && enabled ? 0x243854 : fill, enabled ? 0.96 : 0.92)
+      chrome.clear().fillStyle(active && enabled ? options.hoverFill ?? 0x243854 : fill, enabled ? 0.96 : 0.92)
         .fillRoundedRect(-panel.width / 2, -panel.height / 2, panel.width, panel.height, radius)
         .lineStyle(active ? 2 : 1, active ? 0xd3bb83 : border, 0.9)
         .strokeRoundedRect(-panel.width / 2, -panel.height / 2, panel.width, panel.height, radius);
@@ -178,12 +179,13 @@ export class HomeControls {
 
   button(parent: Phaser.GameObjects.Container, x: number, y: number, width: number, label: string, enabled = true, options: ButtonOptions = {}) {
     const danger = options.variant === "danger", primary = options.variant === "primary";
-    const fill = danger ? 0x40202a : primary ? 0x273c54 : 0x14243a;
+    const fill = danger ? 0x40202a : primary && options.strong && enabled ? 0xc8ad73 : primary ? 0x273c54 : 0x14243a;
     const border = danger ? 0x884455 : primary ? 0xc8ad73 : 0x65748e;
-    const panel = roundedPanel(this.scene, x, y, width, 40, fill, enabled ? 0.96 : 0.92, border, 9);
-    const hit = this.scene.add.rectangle(0, 0, width, 40, 0, 0);
+    const height = options.height ?? 40;
+    const panel = roundedPanel(this.scene, x, y, width, height, fill, enabled ? 0.96 : 0.92, border, 9);
+    const hit = this.scene.add.rectangle(0, 0, width, height, 0, 0);
     panel.add(hit);
-    panel.add(this.scene.add.text(0, 0, label, { ...TEXT_BASE, fontSize: "14px", color: enabled ? danger ? "#ffb0b0" : COLORS.text : COLORS.dimText }).setOrigin(0.5));
+    panel.add(this.scene.add.text(0, 0, label, { ...TEXT_BASE, fontSize: `${options.fontSize ?? 14}px`, color: enabled ? danger ? "#ffb0b0" : options.strong && primary ? "#111b2d" : COLORS.text : COLORS.dimText }).setOrigin(0.5));
     parent.add(panel);
     return { panel, hit, fill, border };
   }

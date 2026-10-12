@@ -3,6 +3,124 @@ import { registerAccount, saveDeck, signedInPage, closeMultiplayerPages } from "
 import { clickArenaAction, enterArena } from "./helpers/arena";
 
 test.afterEach(closeMultiplayerPages);
+test("private room preserves rejected codes and identifies the local player from welcome", async ({ browser }) => {
+  const account = await registerAccount(`room_${Date.now()}`);
+  await saveDeck(account.token, account.rev);
+  const page = await signedInPage(browser, account.token);
+  await enterArena(page);
+  await clickArenaAction(page, "arena_mode_private");
+  await page.locator("#vn-arena-room-code").fill("ABC123");
+  await page.evaluate(() => { (window as any).__vn.session.net.send = () => {}; });
+  await clickArenaAction(page, "arena_room_join");
+  await page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").onMessage({ type: "error", error: "room not found" }));
+  await expect(page.locator("#vn-arena-room-code")).toHaveValue("ABC123");
+  const labels = await page.evaluate(() => {
+    const scene = (window as any).__vn.game.scene.getScene("arena");
+    scene.onMessage({ type: "welcome", account: { id: 1, username: "local-player" }, serverTime: Date.now() });
+    scene.pending = true;
+    scene.onMessage({ type: "room.created", code: "ABC123", mode: "pvp", players: [
+      { username: "opponent", ready: false }, { username: "local-player", ready: false },
+    ] });
+    const body = scene.root.getByName("arena_mode_content");
+    const ownSlot = body.list.find((n: any) => n.list?.some((text: any) => text.text === "BẠN"));
+    return ownSlot.list.filter((n: any) => n.text).map((n: any) => n.text);
+  });
+  expect(labels).toEqual(["BẠN", "local-player"]);
+});
+
+test("hero and equipment previews explain PvP rules, history filters and validation opens editing", async ({ browser }) => {
+  const account = await registerAccount(`detail_${Date.now()}`);
+  await saveDeck(account.token, account.rev);
+  const page = await signedInPage(browser, account.token);
+  await page.route("**/api/arena/history", route => route.fulfill({ json: { entries: [
+    { matchId: "ranked", mode: "ranked", opponent: "Ranked opponent", result: "won", ratingDelta: 20, createdAt: Date.now() },
+    { matchId: "practice", mode: "practice", opponent: "Practice opponent", result: "lost", ratingDelta: null, createdAt: Date.now() },
+  ] } }));
+  await enterArena(page);
+  await page.evaluate(() => {
+    const { session, game } = (window as any).__vn;
+    const deck = session.profile.decks[0];
+    deck.weapons = { m05: "w_thiet_thuan" }; deck.relicIds = ["r_bach_lo_huong_nang"];
+    game.scene.getScene("arena").render();
+  });
+  const tip = () => page.evaluate(() => {
+    const s = (window as any).__vn.game.scene.getScene("arena");
+    const texts = (nodes: any[]): string[] => nodes.flatMap(n => n.text ? [n.text] : n.list ? texts(n.list) : []);
+    return texts(s.tooltip?.list ?? []).join("\n");
+  });
+  await clickArenaAction(page, "arena_hero_m05");
+  await expect.poll(tip).toContain("Máu PvP: 52");
+  await expect.poll(tip).toContain("Ngưỡng cơ bản: 15");
+  await page.keyboard.press("Escape");
+  await clickArenaAction(page, "arena_weapon_m05");
+  await expect.poll(tip).toContain("Tinh Luyện 1");
+  await page.keyboard.press("Escape");
+  await clickArenaAction(page, "arena_relic_0");
+  await expect.poll(tip).toContain("Cộng Minh 1");
+  await page.keyboard.press("Escape");
+  await clickArenaAction(page, "arena_history");
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").history?.length)).toBe(2);
+  await clickArenaAction(page, "arena_history_filter_practice");
+  const visible = await page.evaluate(() => {
+    const modal = (window as any).__vn.game.scene.getScene("arena").root.getByName("arena_modal");
+    const texts = (nodes: any[]): string[] => nodes.flatMap(n => n.text ? [n.text] : n.list ? texts(n.list) : []);
+    return texts(modal.list).join("\n");
+  });
+  expect(visible).toContain("Practice opponent"); expect(visible).not.toContain("Ranked opponent");
+  await clickArenaAction(page, "arena_modal_close");
+  await page.evaluate(() => {
+    const { session, game } = (window as any).__vn;
+    session.profile.decks[0].cardIds = []; game.scene.getScene("arena").render();
+  });
+  await clickArenaAction(page, "arena_deck_validation");
+  await clickArenaAction(page, "arena_validation_edit");
+  await page.waitForFunction(() => (window as any).__vn.game.scene.isActive("deck-builder"));
+});
+
+test("queue ticks preserve the lobby, open modal and tooltip across the practice threshold", async ({ browser }) => {
+  const account = await registerAccount(`tick_${Date.now()}`);
+  await saveDeck(account.token, account.rev);
+  const page = await signedInPage(browser, account.token);
+  await page.route("**/api/arena/history", route => route.fulfill({ json: { entries: [] } }));
+  await enterArena(page);
+  await page.evaluate(() => {
+    const scene = (window as any).__vn.game.scene.getScene("arena");
+    scene.reducedMotion = false;
+    scene.queued = true; scene.pending = false; scene.waitingSeconds = 84; scene.render();
+  });
+  await clickArenaAction(page, "arena_history");
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").history?.length)).toBe(0);
+  const result = await page.evaluate(() => {
+    const s = (window as any).__vn.game.scene.getScene("arena");
+    const back = s.root.list[0], modal = s.root.getByName("arena_modal");
+    const halo = s.queueBody.getByName("arena_queue_halo"), pulse = s.tweens.getTweensOf(halo)[0];
+    s.tip(back, ["Thông tin đang đọc"]);
+    const tooltip = s.tooltip;
+    for (const waitingSeconds of [89, 90, 94]) s.onMessage({ type: "queue.status", mode: "ranked", waitingSeconds });
+    return { sameBack: s.root.list[0] === back, sameModal: s.root.getByName("arena_modal") === modal,
+      sameTooltip: s.tooltip === tooltip && !!tooltip.scene, wait: s.waitingSeconds,
+      samePulse: !!pulse && s.tweens.getTweensOf(halo)[0] === pulse, pulses: s.tweens.getTweensOf(halo).length };
+  });
+  expect(result).toEqual({ sameBack: true, sameModal: true, sameTooltip: true, wait: 94, samePulse: true, pulses: 1 });
+  await clickArenaAction(page, "arena_modal_close");
+  await clickArenaAction(page, "arena_queue_practice");
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").mode)).toBe("practice");
+  const staticPulseCount = await page.evaluate(() => {
+    const s = (window as any).__vn.game.scene.getScene("arena");
+    s.reducedMotion = true; s.queued = true; s.render();
+    return s.tweens.getTweensOf(s.queueBody.getByName("arena_queue_halo")).length;
+  });
+  expect(staticPulseCount).toBe(0);
+  await page.evaluate(() => {
+    const s = (window as any).__vn.game.scene.getScene("arena");
+    s.pending = true; s.render();
+    s.onMessage({ type: "queue.status", mode: "ranked", waitingSeconds: 2 });
+    s.scene.start = (key: string) => { (window as any).__arenaRoute = key; };
+  });
+  await clickArenaAction(page, "arena_honor_shop");
+  await expect.poll(() => page.evaluate(() => (window as any).__arenaRoute)).toBe("shop");
+});
+
 test("saved deck selector scrolls and selects by ID, queue locks edits and preserves errors", async ({ browser }) => {
   const account = await registerAccount(`ui_${Date.now()}`);
   await saveDeck(account.token, account.rev);

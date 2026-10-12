@@ -1,7 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { arenaActionReason, formatQueueTime, rankProgress, RequestIdentity } from "../src/ui/arena-presentation";
+import { loadGameData } from "data";
+import { arenaActionReason, arenaHeroLines, formatArenaDate, formatQueueTime, rankProgress, RequestIdentity } from "../src/ui/arena-presentation";
 
 describe("arena presentation behavior", () => {
+  it("previews PvP health and both awakening effects with the base threshold", () => {
+    const data = loadGameData(), hero = data.heroes.m05!;
+    const lines = arenaHeroLines(data, hero.id);
+    expect(lines).toContain(`Máu PvP: ${data.pvpConfig.heroStats.m05!.maxHp}`);
+    expect(lines.join("\n")).toContain(hero.levelUp.description);
+    expect(lines.join("\n")).toContain(hero.altLevelUp.description);
+    expect(lines.join("\n")).toContain(`Ngưỡng cơ bản: ${hero.levelUp.threshold}`);
+    expect(arenaHeroLines(data, "missing")).toEqual(["Không có thông tin Hero"]);
+  });
+  it("formats local history dates and preserves years for old matches", () => {
+    const now = new Date(2026, 9, 12, 12).getTime();
+    expect(formatArenaDate(new Date(2026, 9, 12, 9, 5).getTime(), now)).toBe("Hôm nay · 09:05");
+    expect(formatArenaDate(new Date(2026, 9, 11, 9, 5).getTime(), now)).toBe("11/10 · 09:05");
+    expect(formatArenaDate(new Date(2025, 9, 11, 9, 5).getTime(), now)).toBe("11/10/2025 · 09:05");
+    expect(formatArenaDate(NaN, now)).toBe("—");
+  });
   it("uses the supplied tier thresholds and names the next goal", () => {
     const tiers = [{ id: "dong", name: "Đồng Sinh", minRating: 0 }, { id: "tu", name: "Tú Tài", minRating: 1100 }];
     expect(rankProgress(1000, tiers)).toEqual({ next: tiers[1], remaining: 100, fraction: 1000 / 1100 });

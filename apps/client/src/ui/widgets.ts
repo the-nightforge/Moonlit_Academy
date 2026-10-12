@@ -21,6 +21,10 @@ export type ButtonVariant = "primary" | "secondary" | "danger";
 
 export interface ButtonOptions {
   variant?: ButtonVariant;
+  /** Opt-in lobby sizing; existing controls keep their defaults. */
+  height?: number;
+  fontSize?: number;
+  strong?: boolean;
   /** Shown on hover while the button is disabled: why, and what unlocks it. */
   disabledReason?: string;
 }

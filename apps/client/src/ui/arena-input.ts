@@ -8,6 +8,9 @@ export function arenaInput(scene: Phaser.Scene, id: string, label: string, bound
   input.placeholder = label; input.setAttribute("aria-label", label);
   if (room) { input.maxLength = 6; input.autocomplete = "off"; input.spellcheck = false; }
   input.style.cssText = "position:fixed;box-sizing:border-box;padding:0 12px;background:#111f34;color:#e8e0c8;border:1px solid #65748e;border-radius:8px;font-family:Segoe UI,sans-serif;z-index:9";
+  if (room) { input.style.fontFamily = "monospace"; input.style.letterSpacing = "2px"; }
+  input.addEventListener("focus", () => { input.style.borderColor = "#d3bb83"; input.style.outline = "2px solid #d3bb8340"; input.style.outlineOffset = "2px"; });
+  input.addEventListener("blur", () => { input.style.borderColor = "#65748e"; input.style.outline = "none"; });
   const place = () => {
     const canvas = scene.game.canvas.getBoundingClientRect(), view = visibleWorld(scene);
     const sx = canvas.width / view.w, sy = canvas.height / view.h;

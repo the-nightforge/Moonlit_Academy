@@ -1,3 +1,24 @@
+import type { GameData } from "rules";
+
+export function arenaHeroLines(data: GameData, heroId: string): string[] {
+  const hero = data.heroes[heroId];
+  if (!hero) return ["Không có thông tin Hero"];
+  return [hero.name, `Máu PvP: ${data.pvpConfig.heroStats[heroId]?.maxHp ?? hero.maxHp}`,
+    `Ngưỡng cơ bản: ${hero.levelUp.threshold}`,
+    `${hero.levelUp.name} — dạng cơ bản`, hero.levelUp.description,
+    `${hero.altLevelUp.name} — dạng thứ hai`, hero.altLevelUp.description,
+    "Thông tin theo luật PvP; dạng Thức Tỉnh áp dụng theo lựa chọn được phép của bộ bài."];
+}
+
+export function formatArenaDate(timestamp: number, now = Date.now()): string {
+  const date = new Date(timestamp), today = new Date(now);
+  if (!Number.isFinite(date.getTime())) return "—";
+  const pad = (value: number) => String(value).padStart(2, "0");
+  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  if (date.toDateString() === today.toDateString()) return `Hôm nay · ${time}`;
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}${date.getFullYear() !== today.getFullYear() ? `/${date.getFullYear()}` : ""} · ${time}`;
+}
+
 export interface ArenaTier { id: string; name: string; minRating: number }
 export interface ArenaGate { connected: boolean; savedDeck: boolean; validDeck: boolean; assets: "idle" | "loading" | "ready" | "error"; queued: boolean; room: boolean; pending: boolean }
 export function rankProgress(rating: number, tiers: ArenaTier[]) {
