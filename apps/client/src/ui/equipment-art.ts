@@ -25,7 +25,7 @@ export function addEquipmentArt(
   return framedImage(scene,parent,category+":"+id,x,y,width,height);
 }
 
-/** Entire image in a padded canvas frame; band reserves separate caption space. */
+/** Entire image with a fitted border; band reserves separate caption space. */
 export function addRoundedEquipmentArt(
   scene: Phaser.Scene, parent: Phaser.GameObjects.Container, category: EquipmentCategory, id: string,
   x: number, y: number, width: number, height: number, radius: number, band = 0,

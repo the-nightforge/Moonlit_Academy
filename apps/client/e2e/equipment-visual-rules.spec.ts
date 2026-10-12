@@ -28,7 +28,7 @@ test('every collection image retains its source ratio inside its border across a
    for(const tile of s.root.list.filter((n:any)=>n.name?.startsWith("equipment-tile:"))){const name=tile.list.find((n:any)=>n.type==="Text"&&n.y===103&&n.visible),level=tile.list.find((n:any)=>n.type==="Text"&&n.y===129);if(name&&level&&name.getBounds().bottom>level.getBounds().top)failures.push(tile.name+": title overlaps level");}
    for(const image of walk(s.root.list).filter(n=>n.type==='Image'&&n.getData('imageFrame'))){
     const f=image.getData('imageFrame'),src=image.texture.getSourceImage();checked++;
-    if(Math.abs(image.scaleX-image.scaleY)>.0001||Math.abs(image.displayWidth/image.displayHeight-src.width/src.height)>.0001||image.displayWidth>f.width-4+.01||image.displayHeight>f.height-4+.01)failures.push(image.texture.key);
+    if(Math.abs(image.scaleX-image.scaleY)>.0001||Math.abs(image.displayWidth/image.displayHeight-src.width/src.height)>.0001||Math.abs(image.displayWidth-f.width)>2.01||Math.abs(image.displayHeight-f.height)>2.01)failures.push(image.texture.key);
    }
   }}return {checked,failures};
  });
@@ -67,4 +67,20 @@ test('missing hero artwork keeps its fallback fully inside the bordered image re
  await openScene(page,'heroes');
  const bounds=await page.evaluate(()=>{const h=(window as any).__vn,s=h.game.scene.getScene('heroes');for(const key of h.game.textures.getTextureKeys().filter((k:string)=>k.startsWith('heroes:m05')))h.game.textures.remove(key);s.heroId='m05';s.render();const tile=s.root.list.find((n:any)=>n.name==='hero-tile:m05');return tile.list.filter((n:any)=>n.type==='Text'&&n.x===0).map((n:any)=>({top:n.y-n.displayOriginY,bottom:n.y-n.displayOriginY+n.height}));});
  expect(bounds.length).toBeGreaterThan(0);expect(bounds.every((b:{top:number;bottom:number})=>b.top>=-43&&b.bottom<=11)).toBe(true);
+});
+
+for(const scene of ['armory','heroes'] as const)test(scene+' buttons have rounded visible borders',async({page})=>{
+ await openScene(page,scene);
+ const result=await page.evaluate((key)=>{const s=(window as any).__vn.game.scene.getScene(key);const walk=(n:any[]):any[]=>n.flatMap(x=>[x,...(x.list?walk(x.list):[])]);const hits=walk(s.root.list).filter(n=>n.type==='Rectangle'&&n.input);return {count:hits.length,square:hits.filter(n=>!n.isRounded||n.radius<=0||!n.isStroked).map(n=>({name:n.name,x:n.x,y:n.y,width:n.width,height:n.height}))};},scene);
+ expect(result.count).toBeGreaterThan(10);expect(result.square).toEqual([]);
+});
+for(const viewport of [{width:1280,height:800},{width:900,height:650}])test('artwork borders fit the image without side gutters in tiles, detail and popup @ '+viewport.width,async({page})=>{
+ await page.setViewportSize(viewport);await openScene(page,'armory');
+ const probe=()=>page.evaluate(()=>{const s=(window as any).__vn.game.scene.getScene('armory');const walk=(n:any[]):any[]=>n.flatMap(x=>[x,...(x.list?walk(x.list):[])]);return walk(s.children.list).filter(n=>n.type==='Image'&&n.getData('imageFrame')).map(n=>{const f=n.getData('imageFrame');return {key:n.texture.key,dx:Math.abs(f.width-n.displayWidth),dy:Math.abs(f.height-n.displayHeight)};});});
+ const detail=await probe();expect(detail.length).toBeGreaterThan(5);expect(detail.filter(n=>n.dx>2.01||n.dy>2.01)).toEqual([]);
+ const target=await page.evaluate(()=>{const s=(window as any).__vn.game.scene.getScene('armory'),art=s.root.list.find((n:any)=>n.type==='Image'&&n.x===768&&n.getData('imageFrame')),hit=s.root.list.find((n:any)=>n.type==='Rectangle'&&n.x===768&&n.y===346&&n.input);return {dx:Math.abs(art.displayWidth-hit.width),dy:Math.abs(art.displayHeight-hit.height)};});
+ expect(target.dx).toBeLessThanOrEqual(2.01);expect(target.dy).toBeLessThanOrEqual(2.01);
+ await page.getByRole('button',{name:'Phóng to hình trang bị',exact:true}).click();expect((await probe()).filter(n=>n.dx>2.01||n.dy>2.01)).toEqual([]);
+ await page.keyboard.press('Escape');await page.getByRole('button',{name:/^Nguyệt Bảo/}).click();await page.getByRole('button',{name:'Phóng to hình trang bị',exact:true}).click();expect((await probe()).filter(n=>n.dx>2.01||n.dy>2.01)).toEqual([]);await page.keyboard.press('Escape');
+ if(viewport.width===900)await page.screenshot({path:'../../docs/inventory-ui/rules-narrow.png'});
 });

@@ -18,13 +18,14 @@ export function paintContained(
 /** A visible frame and an unmasked, undistorted source image. */
 export function framedImage(
   scene:Phaser.Scene, parent:Phaser.GameObjects.Container, key:string,
-  x:number, y:number, w:number, h:number, padding=4,
+  x:number, y:number, w:number, h:number, padding=1,
 ) {
   if(!scene.textures.exists(key))return null;
-  parent.add(scene.add.rectangle(x,y,w,h,0x0c1628,.6).setStrokeStyle(1,0x526580));
   const image=scene.add.image(x,y,key);
   image.setScale(Math.min((w-padding*2)/image.width,(h-padding*2)/image.height));
-  image.setData("imageFrame",{x,y,width:w,height:h});
+  const frame=scene.add.rectangle(x,y,image.displayWidth+2,image.displayHeight+2,0x0c1628,.6).setStrokeStyle(1,0x526580);
+  image.setData("imageFrame",{x,y,width:frame.width,height:frame.height});
+  parent.add(frame);
   parent.add(image);
   return image;
 }

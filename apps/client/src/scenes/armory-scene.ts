@@ -221,8 +221,8 @@ export class ArmoryScene extends Phaser.Scene {
     const up=equipmentUpgrade(session.data,session.profile,this.tab,id,session.online,this.busy);
     const used=equipmentDecks(session.profile.decks,this.tab,id).length;
     if(level===5||up.enabled||used) {const key=level===5?"star":up.enabled?"bolt":"nav_inventory";this.icon(tile,key,136,136,14);}
-    if(id===this.selected){tile.add(this.add.rectangle(72,72,142,142,0,0).setStrokeStyle(2,COLORS.goldFill));addText(this,tile,137,2,"✓",14,COLORS.gold).setOrigin(1,0);}
-    tile.add(this.add.rectangle(72,72,150,150,0,0).setStrokeStyle(2,0xc1ddf4));
+    if(id===this.selected){tile.add(this.add.rectangle(72,72,142,142,0,0).setRounded(8).setStrokeStyle(2,COLORS.goldFill));addText(this,tile,137,2,"✓",14,COLORS.gold).setOrigin(1,0);}
+    tile.add(this.add.rectangle(72,72,150,150,0,0).setRounded(10).setStrokeStyle(2,0xc1ddf4));
     const focusRing=tile.list.at(-1) as Phaser.GameObjects.Rectangle; focusRing.setVisible(id===this.focused);
     this.controls.button(tile,72,72,144,"",()=>this.selectItem(id),{height:144,id:"tile:"+id,name:def.name+", "+HERO_RARITY_LABELS[def.rarity]+", "+(owned?equipmentTag(this.tab)+" "+level:"chưa sở hữu"),transparent:true,onFocus:()=>{this.focused=id;focusRing.setVisible(true);},onBlur:()=>focusRing.setVisible(false)});
   }
@@ -241,9 +241,9 @@ export class ArmoryScene extends Phaser.Scene {
     else if(Math.floor(index/12)!==this.state.page) this.control(this.root,1078,164,312,`Đang xem trang ${Math.floor(index/12)+1} · Đến món`,()=>{this.state.page=Math.floor(index/12);this.render();},true,{height:30,icon:"ui:nav_inventory",iconLabel:`Món ở trang ${Math.floor(index/12)+1}`});
     const used=equipmentDecks(session.profile.decks,this.tab,id);
     ([["effect","Hiệu ứng"],["levels","Các cấp"],["usage",`Bộ bài (${used.length})`]] as const).forEach(([tab,label],i)=>this.control(this.root,765+i*184,207,172,label,()=>{this.state.detailTab=tab;this.state.scroll=0;this.render();},true,{role:"tab",selected:this.detailTab===tab,height:38,id:`detail:${tab}`,icon:tab==="effect"?"ui:intent_special":tab==="levels"?"ui:star":"ui:nav_inventory",iconLabel:tab==="usage"?String(used.length):undefined}));
-    this.root.add(roundedPanel(this,768,346,186,212,0x0c1628,1,0x455570,8));
-    if(!addEquipmentArt(this,this.root,this.tab,id,768,346,178,208))addText(this,this.root,768,340,"Chưa có hình trang bị",14,MUTED).setOrigin(.5);
-    const artHit=this.control(this.root,768,346,186,"",()=>this.showArt(),true,{height:212,name:"Xem toàn bộ hình trang bị",id:"art:image",transparent:true});artHit.setFillStyle(0,0);
+    const artwork=addEquipmentArt(this,this.root,this.tab,id,768,346,186,212);
+    if(!artwork)addText(this,this.root,768,340,"Chưa có hình trang bị",14,MUTED).setOrigin(.5);
+    const artHit=this.control(this.root,768,346,artwork?artwork.displayWidth+2:186,"",()=>this.showArt(),true,{height:artwork?artwork.displayHeight+2:212,name:"Xem toàn bộ hình trang bị",id:"art:image",transparent:true});artHit.setRounded(2).setFillStyle(0,0);
     this.control(this.root,768,476,186,"Phóng to hình trang bị",()=>this.showArt(),true,{height:36,icon:"ui:action_more"});
     if(this.tab==="weapons"){
       const weapon=session.data.weapons[id]!,hero=weapon.signatureHeroId?session.data.heroes[weapon.signatureHeroId]:undefined;
@@ -307,7 +307,7 @@ export class ArmoryScene extends Phaser.Scene {
     if(y>INFO.height){
       const h=Math.max(28,INFO.height*INFO.height/y);
       this.root.add(this.add.rectangle(1238,INFO.y+INFO.height/2,4,INFO.height,0x34435b));
-      this.scrollThumb=this.add.rectangle(1238,INFO.y+h/2,22,h,0xc2d2e8,.65).setStrokeStyle(1,0x526580).setInteractive({useHandCursor:true});this.root.add(this.scrollThumb);this.input.setDraggable(this.scrollThumb);
+      this.scrollThumb=this.add.rectangle(1238,INFO.y+h/2,22,h,0xc2d2e8,.65).setRounded(8).setStrokeStyle(1,0x526580).setInteractive({useHandCursor:true});this.root.add(this.scrollThumb);this.input.setDraggable(this.scrollThumb);
       this.scrollThumb.on("drag",(_p:Phaser.Input.Pointer,_x:number,dragY:number)=>{const ratio=Phaser.Math.Clamp((dragY-INFO.y-h/2)/(INFO.height-h),0,1);this.scrollDetail(ratio*(this.detailHeight-INFO.height)-this.state.scroll);});this.updateScrollThumb();
       this.control(this.root,1172,542,42,"▲",()=>this.scrollDetail(-180),true,{height:40,name:"Cuộn lên",icon:"ui:nav_back",rotation:Math.PI/2});
       this.control(this.root,1218,542,42,"▼",()=>this.scrollDetail(180),true,{height:40,name:"Cuộn xuống",icon:"ui:nav_back",rotation:-Math.PI/2});

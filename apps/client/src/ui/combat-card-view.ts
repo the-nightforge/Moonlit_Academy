@@ -11,7 +11,7 @@ import type { CardDef, CombatState, GameData } from "rules";
 import { COLORS, OWNER_COLORS, RENDER_SCALE, TEXT_BASE } from "./theme";
 import { cardIconOf } from "./attack-style";
 import { HUD, hudImage } from "./hud-art";
-import { paintContained } from "./contained-art";
+import { containedRect, framedImage, paintContained } from "./contained-art";
 import { displayText } from "./display-text";
 import { ensureTextures, GLOW } from "./vfx";
 
@@ -298,34 +298,36 @@ function fitBody(scene: Phaser.Scene, spec: CardFaceSpec, p: FacePreset): Fitted
 }
 
 /**
- * Whole artwork contained in a rounded frame, baked once into a cached
+ * Whole artwork with a tightly fitted border, baked once into a cached
  * RENDER_SCALE canvas texture (no display mask — works on WebGL and Canvas).
  * `band` reserves an empty bottom region for text beside the artwork.
  */
 export function roundedArtTexture(
   scene: Phaser.Scene, artKey: string, w: number, h: number, radius: number, band = 0, _focal?: { x: number; y: number },
 ): string {
-  const baked = artKey+"@contain-"+w+"x"+h+"r"+radius+"b"+band;
+  const baked = artKey+"@contain-fit-"+w+"x"+h+"r"+radius+"b"+band;
   if (!scene.textures.exists(artKey) || scene.textures.exists(baked)) return baked;
   const source = scene.textures.get(artKey).getSourceImage() as CanvasImageSource & { width: number; height: number };
   const canvas = scene.textures.createCanvas(baked, Math.ceil(w * RENDER_SCALE), Math.ceil(h * RENDER_SCALE));
   if(canvas){
     const ctx=canvas.getContext();ctx.scale(RENDER_SCALE,RENDER_SCALE);
-    ctx.fillStyle="#0c1628";ctx.beginPath();ctx.roundRect(0,0,w,h,radius);ctx.fill();
-    // Reserve the caption band; neither the frame nor text cuts into the source.
-    paintContained(ctx,source,w,Math.max(radius*2,h-band),radius);
+    // Keep layout space transparent; the visible border hugs the complete image.
+    const artHeight=Math.max(2,h-band),r=containedRect(source.width,source.height,w,artHeight,1);
+    paintContained(ctx,source,w,artHeight,1);
+    ctx.strokeStyle="#526580";ctx.lineWidth=1;ctx.strokeRect(r.x-.5,r.y-.5,r.width+1,r.height+1);
     canvas.refresh();
   }
   return baked;
 }
 
 /**
- * Artwork centered inside a separate bordered canvas texture.
+ * Artwork centered with a border fitted to the source ratio.
  */
 function artImage(scene: Phaser.Scene,key:string,w:number,h:number,y:number,parent:Phaser.GameObjects.Container){
  if(!scene.textures.exists(key))return null;
- const frame=scene.add.rectangle(0,y,w,h,0x0c1628,1).setStrokeStyle(1,0x526580).setName('card_art_frame');parent.add(frame);
- const img=scene.add.image(0,y,roundedArtTexture(scene,key,w,h,4)).setScale(1/RENDER_SCALE).setName('card_art');parent.add(img);return img;
+ const img=framedImage(scene,parent,key,0,y,w,h);
+ if(img){parent.list[parent.list.length-2]!.setName('card_art_frame');img.setName('card_art');}
+ return img;
 }
 
 /**

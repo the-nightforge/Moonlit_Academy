@@ -47,7 +47,7 @@ export function addButton(
   options: ButtonOptions = {},
 ): void {
   const style = BUTTON_STYLES[options.variant ?? "secondary"];
-  const button = scene.add.rectangle(x, y, width, options.height ?? 34, enabled ? style.fill : 0x222633);
+  const button = scene.add.rectangle(x, y, width, options.height ?? 34, enabled ? style.fill : 0x222633).setRounded(8);
   button.setStrokeStyle(1, enabled ? style.stroke : COLORS.panelBorder);
   if (enabled) {
     button.setInteractive({ useHandCursor: true });
@@ -105,11 +105,11 @@ export function addTab(
   active: boolean,
   onClick: () => void,
 ): void {
-  const tab = scene.add.rectangle(x, y, width, 34, active ? 0x3a5090 : 0x1a2446);
+  const tab = scene.add.rectangle(x, y, width, 34, active ? 0x3a5090 : 0x1a2446).setRounded(8);
   tab.setStrokeStyle(1, active ? COLORS.goldFill : COLORS.panelBorder);
   parent.add(tab);
   if (active) {
-    parent.add(scene.add.rectangle(x, y + 15, width - 2, 3, COLORS.goldFill));
+    parent.add(scene.add.rectangle(x, y + 15, width - 20, 3, COLORS.goldFill));
   } else {
     tab.setInteractive({ useHandCursor: true });
     tab.on("pointerover", () => tab.setFillStyle(COLORS.button));
@@ -247,7 +247,7 @@ export class RowScroller {
   addArrows(parent: Phaser.GameObjects.Container): void {
     const { x, y, width, height } = this.area;
     const bar = (barY: number, label: string, rows: number) => {
-      const rect = this.scene.add.rectangle(x + width / 2, barY, width, 20, COLORS.button, 0.8);
+      const rect = this.scene.add.rectangle(x + width / 2, barY, width, 20, COLORS.button, 0.8).setRounded(6);
       rect.setStrokeStyle(1, COLORS.panelBorder);
       rect.setInteractive({ useHandCursor: true });
       rect.on("pointerover", () => rect.setFillStyle(0x3a5090, 1));

@@ -189,7 +189,7 @@ export class HeroesScene extends Phaser.Scene {
     addButton(this, this.root, 200, 666, 40, "‹", () => { this.page--; this.render(); }, range.page > 0, { height: 40 });
     for (let page = 0; page < range.pages; page++) {
       const x = 248 + page * 44, active = this.page === page;
-      const button = this.add.rectangle(x, 666, 36, 40, active ? 0x344b68 : 0x17243b).setStrokeStyle(1, active ? 0xc1ddf4 : 0x657590); this.root.add(button);
+      const button = this.add.rectangle(x, 666, 36, 40, active ? 0x344b68 : 0x17243b).setRounded(8).setStrokeStyle(1, active ? 0xc1ddf4 : 0x657590); this.root.add(button);
       addText(this, this.root, x, 666, String(page + 1), 14, active ? COLORS.text : MUTED).setOrigin(0.5);
       if (!active) { button.setInteractive({ useHandCursor: true }); button.on("pointerup", () => { this.page = page; this.render(); }); }
     }
@@ -206,7 +206,7 @@ export class HeroesScene extends Phaser.Scene {
 
   private art(parent: Phaser.GameObjects.Container, key: string, x: number, y: number, width: number, height: number, band: number, owned = true) {
     const baked = roundedArtTexture(this, key, width, height, 6, band, { x: 0.5, y: height < 200 ? 0.28 : 0.5 });
-    if (this.textures.exists(baked)) {parent.add(this.add.rectangle(x,y,width,height,0x101b30,1).setStrokeStyle(1,0x526580));parent.add(this.add.image(x, y, baked).setScale(1 / RENDER_SCALE).setAlpha(owned ? 1 : 0.72));}
+    if (this.textures.exists(baked)) {parent.add(this.add.image(x, y, baked).setScale(1 / RENDER_SCALE).setAlpha(owned ? 1 : 0.72));}
     else {
       parent.add(roundedPanel(this, x, y, width, height, COLORS.panelHero));
       if(height<100)addText(this,parent,x,y,"Chưa có ảnh",11,MUTED).setOrigin(.5);
@@ -247,11 +247,11 @@ export class HeroesScene extends Phaser.Scene {
     const name = this.add.text(-54, 14, hero.name, { ...TEXT_BASE, fontSize: "14px", color: COLORS.text, wordWrap: { width: 110 }, lineSpacing: 0 }); tile.add(name);
     if (!owned) { this.icon(tile, "lock", -48, 58, 16); addText(this, tile, -35, 50, "Chưa sở hữu", 12, MUTED); }
     else addText(this, tile, -54, 50, `Tinh Hồn ${owned.constellation}/6`, 12, owned.constellation === 6 ? COLORS.gold : MUTED);
-    const hit = this.add.rectangle(0, 0, 128, 142, 0, 0).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); tile.add(hit);
+    const hit = this.add.rectangle(0, 0, 128, 142, 0, 0).setRounded(6).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); tile.add(hit);
     hit.on("pointerover", () => hit.setFillStyle(0xffffff, 0.055)); hit.on("pointerout", () => hit.setFillStyle(0, 0));
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.button === 0) this.selectHero(hero.id); });
     if (pending) {
-      const badge = this.add.rectangle(47, -57, 24, 24, 0xb8912c).setStrokeStyle(1,COLORS.goldFill).setInteractive({ useHandCursor: true }); tile.add(badge);
+      const badge = this.add.rectangle(47, -57, 24, 24, 0xb8912c).setRounded(6).setStrokeStyle(1,COLORS.goldFill).setInteractive({ useHandCursor: true }); tile.add(badge);
       addText(this, tile, 47, -57, String(pending), 13, "#141024").setOrigin(0.5);
       badge.on("pointerover", () => { if (!this.tooltipPinned) this.tooltip = showTextTooltip(this, x - 55, y - 10, [`Có ${pending} lượt mở lá`], 200); });
       badge.on("pointerout", () => { if (!this.tooltipPinned) this.hideTooltip(); });
@@ -288,9 +288,9 @@ export class HeroesScene extends Phaser.Scene {
     this.root.add(this.add.rectangle(1070, 310, 332, 1, 0x475671));
     ([["overview", "Tổng quan"], ["constellation", "Tinh Hồn"], ["cards", "Lá chủ lực"]] as const).forEach(([tab, label], index) => {
       const x = 958 + index * 111;
-      const hit = this.add.rectangle(x, 311, 106, 34, 0x283c55, this.tab === tab ? 0.6 : 0).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.root.add(hit);
+      const hit = this.add.rectangle(x, 311, 106, 34, 0x283c55, this.tab === tab ? 0.6 : 0).setRounded(8).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.root.add(hit);
       addText(this, this.root, x, 310, label, 14, this.tab === tab ? COLORS.text : MUTED).setOrigin(0.5);
-      if (this.tab === tab) this.root.add(this.add.rectangle(x, 328, 100, 2, 0xd0e7fc));
+      if (this.tab === tab) this.root.add(this.add.rectangle(x, 328, 86, 2, 0xd0e7fc));
       hit.on("pointerup", () => { if (isModalOpen() || this.tooltipPinned) return; this.tab = tab; this.detailScroll = 0; this.render(); });
     });
     this.detailArea = { ...DETAIL };
@@ -326,12 +326,12 @@ export class HeroesScene extends Phaser.Scene {
       [hero.signature.cardId, hero.signature.plusCardId].forEach((id, index) => {
         const card = session.data.cards[id]!, active = index === 0 ? level < 4 : level >= 4;
         const x = index * 170;
-        this.detailContent.add(this.add.rectangle(x + 77, y + 97, 154, 194, active ? 0x263d40 : 0x1c2b43).setStrokeStyle(1, active ? 0xaccbc2 : 0x52617e));
+        this.detailContent.add(this.add.rectangle(x + 77, y + 97, 154, 194, active ? 0x263d40 : 0x1c2b43).setRounded(8).setStrokeStyle(1, active ? 0xaccbc2 : 0x52617e));
         const face = drawCardFace(this, { title: card.name, body: card.text, cost: card.cost, costBase: card.cost, emblem: cardIconOf(card), keywordIds: card.keywords ?? [], artKeys: cardArtCandidates(session.data, card, id), border: COLORS.panelBorder }, "compact");
         face.setScale(0.56).setPosition(x + 77, y + 63); this.detailContent.add(face);
         const title = this.add.text(x + 8, y + 117, card.name, { ...TEXT_BASE, fontSize: "13px", color: COLORS.text, wordWrap: { width: 140 }, lineSpacing: 1 }); this.detailContent.add(title);
         addText(this, this.detailContent, x + 8, y + 161, active ? "✓ Đang dùng" : "Tinh Hồn 4", 12, active ? "#bde7d1" : MUTED);
-        const hit = this.add.rectangle(x + 77, y + 97, 154, 194, 0, 0).setName(`hero-card:${id}`).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.detailContent.add(hit);
+        const hit = this.add.rectangle(x + 77, y + 97, 154, 194, 0, 0).setName(`hero-card:${id}`).setRounded(8).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.detailContent.add(hit);
         hit.on("pointerover", () => {
           if (this.tooltipPinned) return; this.hideTooltip();
           this.tooltipTimer = this.time.delayedCall(300, () => { this.tooltipTimer = null; if (this.inDetail(this.input.activePointer)) this.showCard(id, false); });
@@ -346,7 +346,7 @@ export class HeroesScene extends Phaser.Scene {
     if (y > DETAIL.height) {
       const trackHeight = DETAIL.height, thumbHeight = Math.max(28, trackHeight * DETAIL.height / y);
       this.root.add(this.add.rectangle(1245, DETAIL.y + trackHeight / 2, 4, trackHeight, 0x34435b));
-      this.scrollThumb = this.add.rectangle(1245, DETAIL.y + thumbHeight / 2, 6, thumbHeight, 0xc2d2e8).setStrokeStyle(1,0x526580).setInteractive({ useHandCursor: true }); this.root.add(this.scrollThumb);
+      this.scrollThumb = this.add.rectangle(1245, DETAIL.y + thumbHeight / 2, 6, thumbHeight, 0xc2d2e8).setRounded(3).setStrokeStyle(1,0x526580).setInteractive({ useHandCursor: true }); this.root.add(this.scrollThumb);
       this.input.setDraggable(this.scrollThumb);
       this.scrollThumb.on("drag", (_pointer: Phaser.Input.Pointer, _x: number, dragY: number) => {
         const ratio = Phaser.Math.Clamp((dragY - DETAIL.y - thumbHeight / 2) / (trackHeight - thumbHeight), 0, 1);
@@ -354,7 +354,7 @@ export class HeroesScene extends Phaser.Scene {
       });
       ([-1, 1] as const).forEach((direction, index) => {
         const x = 1141 + index * 72;
-        const button = this.add.rectangle(x, 617, 46, 28, COLORS.button).setStrokeStyle(1, COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.root.add(button);
+        const button = this.add.rectangle(x, 617, 46, 28, COLORS.button).setRounded(8).setStrokeStyle(1, COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.root.add(button);
         const label = addText(this, this.root, x, 617, direction < 0 ? "▲" : "▼", 13).setOrigin(0.5);
         button.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.button === 0) this.scrollDetail(direction * 120); });
         this.scrollArrows.push({ button, label, direction });
