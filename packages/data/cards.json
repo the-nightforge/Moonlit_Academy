@@ -3458,11 +3458,11 @@
         "type": "scaledDamage",
         "per": "moonPower",
         "amount": 2,
-        "max": 12,
+        "max": 16,
         "to": "chosen"
       }
     ],
-    "text": "Nhận 1 Nguyệt Lực, rồi gây 2 damage cho mỗi Nguyệt Lực đang có (tối đa 12)."
+    "text": "Nhận 1 Nguyệt Lực, rồi gây 2 damage cho mỗi Nguyệt Lực đang có (tối đa 16)."
   },
   {
     "id": "m03_than_toan",
