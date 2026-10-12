@@ -1,3 +1,4 @@
+import { displayText } from "../src/ui/display-text";
 import { requireSuccess } from "../test/helpers/action-result";
 import { expect, test, type Page } from "@playwright/test";
 import { applyAction, createCoopCombat } from "rules";
@@ -109,7 +110,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
     });
     expect(chrome.rail).toBe(0); expect(chrome.blood).toBe(true); expect(chrome.summonHp).toBe("7/12"); expect(chrome.summonHearts).toBe(0);
     expect(chrome.oldPaperPixel[0]).toBeLessThan(80);
-    for (const card of chrome.cards) { if (card.icon) expect(card.icon).toBe(14); if (card.art) expect(card.art).toBe(114); if (card.fallback) expect(card.fallback).toBe(40); expect(["11px","10px","9px"]).toContain(card.font); expect(card.ownerGone).toBe(true); expect(card.startsWithOwner).toBe(true); expect(card.bodyTop).toBeGreaterThanOrEqual(card.bandTop); expect(card.bodyBottom).toBeLessThanOrEqual(card.bandBottom); }
+    for (const card of chrome.cards) { if (card.icon) expect(card.icon).toBe(14); if (card.art) expect(card.art).toBe(114); if (card.fallback) {expect(card.fallback).toBeGreaterThan(0);expect(card.fallback).toBeLessThanOrEqual(40);} expect(["11px","10px","9px"]).toContain(card.font); expect(card.ownerGone).toBe(true); expect(card.startsWithOwner).toBe(true); expect(card.bodyTop).toBeGreaterThanOrEqual(card.bandTop); expect(card.bodyBottom).toBeLessThanOrEqual(card.bandBottom); }
     // The full rules text fits the band — "Một Hai Ba Bốn" shows unclipped.
     expect(chrome.cards.some(card => card.body.includes("Một") && card.body.includes("Bốn"))).toBe(true);
     await page.screenshot({ path: `${OUT}/battle-${viewport.width}.png` });
@@ -146,8 +147,8 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
     // The next phase still previews fully — name, rolled decree, tag bonus.
     const nextDecree = moon.next.decrees.find((d: any) => d.id === moon.nextId)!;
     expect(moonTip.text).toContain(moon.next.name);
-    expect(moonTip.text).toContain(nextDecree.name); expect(moonTip.text).toContain(nextDecree.text);
-    expect(moonTip.text).toContain(moon.next.tagBonusText);
+    expect(moonTip.text).toContain(nextDecree.name); expect(moonTip.text).toContain(displayText(nextDecree.text));
+    expect(moonTip.text).toContain(displayText(moon.next.tagBonusText));
     expect(moonTip.text).toContain("pha kế tiếp");
     await page.screenshot({ path: `${OUT}/moon-current-next-${viewport.width}.png` });
     await moveDesign(page, 40, 690);
@@ -159,11 +160,11 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 576
       await moveDesign(page, hero.x, hero.y);
       await expect.poll(async () => (await tooltipProbe(page))?.text).toContain("Đang chọn");
       const tip = (await tooltipProbe(page))!;
-      expect(tip.text).toContain(hero.def.levelUp.description); expect(tip.text).toContain(hero.def.altLevelUp.description);
+      expect(tip.text).toContain(displayText(hero.def.levelUp.description)); expect(tip.text).toContain(displayText(hero.def.altLevelUp.description));
       // Awakening-only tooltip — the unit-stat line is gone.
       expect(tip.text).not.toMatch(/HP \d/);
       expect(tip.text).toContain(`${(form === "base" ? hero.def.levelUp : hero.def.altLevelUp).name} — dạng ${form === "base" ? "cơ bản" : "thứ hai"} · Đang chọn`);
-      expect(tip.text).toContain(`Thức Tỉnh: mất HP · 2/${hero.def.levelUp.constellationThreshold}`);
+      expect(tip.text).toContain(`Thức Tỉnh: mất máu · 2/${hero.def.levelUp.constellationThreshold}`);
       expect(tip.panel.left).toBeGreaterThanOrEqual(tip.visible.left); expect(tip.panel.right).toBeLessThanOrEqual(tip.visible.right); expect(tip.panel.top).toBeGreaterThanOrEqual(tip.visible.top); expect(tip.panel.bottom).toBeLessThanOrEqual(tip.visible.bottom);
       await page.screenshot({ path: `${OUT}/hero-${form}-${viewport.width}.png` });
       await moveDesign(page, 40, 690);

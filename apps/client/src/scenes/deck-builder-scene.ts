@@ -114,7 +114,7 @@ export class DeckBuilderScene extends Phaser.Scene {
       const view = visibleWorld(this), cx = view.x + view.w / 2, cy = view.y + view.h / 2;
       base.setPosition(cx, cy).setSize(view.w, view.h);
       shade.setPosition(cx, cy).setSize(view.w, view.h);
-      if (art) art.setPosition(cx, cy).setScale(Math.max(view.w / art.width, view.h / art.height));
+      if (art) art.setPosition(cx, cy).setScale(Math.min(view.w / art.width, view.h / art.height));
     };
     place();
     this.scale.on(Phaser.Scale.Events.RESIZE, place);

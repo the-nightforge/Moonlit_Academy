@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { clickDesign, clickSceneText } from "./helpers/combat";
+import { clickDesign } from "./helpers/combat";
 import { openScene } from "./helpers/online";
 
 const browserErrors = new WeakMap<Page, string[]>();
@@ -34,13 +34,13 @@ test.describe("equipment collection", () => {
     await expect.poll(() => texts(page)).toContain("Hiển thị 1/25 · Trang 1/1");
     await page.getByRole("button", { name: /^Chưa sở hữu \(/ }).click();
     await expect.poll(() => texts(page)).toContain("Không tìm thấy trang bị phù hợp");
-    await expect.poll(() => texts(page)).toContain("Món nằm ngoài bộ lọc · Xóa lọc");
-    await clickSceneText(page, "armory", "Xóa bộ lọc");
+    await expect(page.getByRole("button",{name:"Món nằm ngoài bộ lọc · Xóa bộ lọc",exact:true})).toBeVisible();
+    await page.getByRole("button",{name:"Xóa bộ lọc",exact:true}).first().click();
     await expect(search).toHaveValue("");
     await expect.poll(() => texts(page)).toContain("Hiển thị 25/25 · Trang 1/3");
-    await clickSceneText(page, "armory", "›");
+    await page.getByRole("button",{name:"Trang sau",exact:true}).click();
     expect(await page.evaluate(() => (window as any).__vn.game.scene.getScene("armory").selected)).toBe("w_xich_diem_thuong");
-    await clickSceneText(page, "armory", "‹");
+    await page.getByRole("button",{name:"Trang trước",exact:true}).click();
     await page.screenshot({ path: info.outputPath("inventory-weapons.png") });
   });
   test("category switches remember separate filters and selections", async ({ page }, info) => {
@@ -55,7 +55,7 @@ test.describe("equipment collection", () => {
     await page.getByRole("button", { name: /^Nguyệt Bảo/ }).click();
     await clickDesign(page, 90, 260);
     await expect.poll(() => texts(page)).toContain("Mỗi lần trăng đổi pha: mọi Hero 3 giáp.");
-    await clickSceneText(page, "armory", "Các cấp");
+    await page.getByRole("tab",{name:"Các cấp",exact:true}).click();
     await expect.poll(() => texts(page)).toContain("Mỗi cấp thay thế toàn bộ cấp trước");
     await page.screenshot({ path: info.outputPath("inventory-relics.png") });
   });
@@ -113,11 +113,11 @@ test.describe("equipment collection", () => {
     await fixture(page);
     await page.evaluate(() => { const h = (window as any).__vn; h.session.data.weapons.w_xich_diem_thuong.text = h.session.data.weapons.w_xich_diem_thuong.text.repeat(30); h.game.scene.getScene("armory").state.history=true; h.game.scene.getScene("armory").render(); });
     await page.evaluate(() => (window as any).__vn.game.scene.getScene("armory").scrollDetail(800));
-    await clickSceneText(page, "armory", "Các cấp");
+    await page.getByRole("tab",{name:"Các cấp",exact:true}).click();
     await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("armory").detailTab)).toBe("levels");
     const footer = await page.evaluate(() => (window as any).__vn.game.scene.getScene("armory").root.list.find((n: any) => n.name === "equipment-actions").getBounds().bottom);
     expect(footer).toBeLessThanOrEqual(704);
-    await clickSceneText(page, "armory", "Xem art lớn");
+    await page.getByRole("button",{name:"Phóng to hình trang bị",exact:true}).click();
     await expect(page.getByRole("searchbox", { name: "Tìm trang bị" })).toBeHidden();
     await page.screenshot({ path: info.outputPath("inventory-art.png") });
     await page.keyboard.press("Escape");
@@ -147,7 +147,7 @@ test("keyboard selection, pinned card preview and real deck links remain usable"
   await page.keyboard.press("ArrowRight"); await page.keyboard.press("Enter");
   expect(await page.evaluate(() => (window as any).__vn.game.scene.getScene("armory").selected)).toBe("w_thiet_thuan");
   await page.evaluate(() => (window as any).__vn.game.scene.getScene("armory").selectItem("w_xich_diem_thuong"));
-  await clickSceneText(page, "armory", "Xem lá Binh Khí");
+  await page.getByRole("button",{name:"Xem lá Binh Khí",exact:true}).click();
   await expect(page.getByRole("searchbox", { name: "Tìm trang bị" })).toBeHidden();
   await page.screenshot({ path: info.outputPath("inventory-card.png") });
   await page.keyboard.press("Escape");
@@ -159,7 +159,7 @@ test("keyboard selection, pinned card preview and real deck links remain usable"
   });
   await page.getByRole("tab", {name:/Bộ bài/}).click();
   await expect.poll(() => texts(page)).toContain("Hoắc Liệt");
-  await clickSceneText(page, "armory", "Mở bộ bài");
+  await page.getByRole("button",{name:/Mở bộ bài/}).click();
   await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScenes(true)[0].sys.settings.key)).toBe("deck-builder");
   expect(await page.evaluate(() => (window as any).__vn.session.editingDeck.weapons.m05)).toBe("w_xich_diem_thuong");
   await expect(page.getByRole("searchbox", { name: "Tìm trang bị" })).toHaveCount(0);

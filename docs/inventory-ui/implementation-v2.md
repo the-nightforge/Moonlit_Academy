@@ -1,5 +1,7 @@
 # Kho đồ: cải thiện sau review 50 thành phần
 
+> Bản ghi lịch sử trước quy chuẩn mới. Phần hình ảnh, icon, tooltip và cách viết cấp được cập nhật trong [ui-rules-implementation.md](ui-rules-implementation.md).
+
 Triển khai phương án A trên `codex/inventory-ui`. Giữ lưới 4×3, tận dụng toàn bộ 25 artwork Binh Khí, 16 artwork Nguyệt Bảo và icon có sẵn. Không cần tạo bitmap mới.
 
 ## Những thay đổi đã chọn

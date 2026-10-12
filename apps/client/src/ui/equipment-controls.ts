@@ -19,13 +19,18 @@ export class EquipmentControls {
     this.restoreId = active?.dataset.equipmentControl ?? "";
     this.entries.forEach(c => c.element.remove()); this.entries = [];
   }
-  button(parent:Phaser.GameObjects.Container,x:number,y:number,width:number,label:string,action:()=>void,options:{enabled?:boolean;selected?:boolean;primary?:boolean;height?:number;id?:string;name?:string;role?:"tab";pinned?:boolean;clip?:Control["clip"];onFocus?:()=>void;onBlur?:()=>void;onEnter?:()=>void;onLeave?:()=>void;transparent?:boolean}={}) {
+  button(parent:Phaser.GameObjects.Container,x:number,y:number,width:number,label:string,action:()=>void,options:{enabled?:boolean;selected?:boolean;primary?:boolean;height?:number;id?:string;name?:string;role?:"tab";pinned?:boolean;clip?:Control["clip"];onFocus?:()=>void;onBlur?:()=>void;onEnter?:()=>void;onLeave?:()=>void;transparent?:boolean;icon?:string;rotation?:number;iconLabel?:string}={}) {
     const enabled=options.enabled ?? true, selected=options.selected ?? false, height=options.height ?? 40;
     const fill=selected?0x344b68:options.primary?0xb8912c:0x17263e;
     const panel=this.scene.add.rectangle(x,y,width,height,enabled||selected?fill:0x222c3b).setStrokeStyle(selected||options.primary?2:1, selected||options.primary?COLORS.goldFill:0x526580);
-    const text=addText(this.scene,parent,x,y,label,13,enabled||selected?options.primary?"#141024":COLORS.text:"#91a0b6").setOrigin(.5);
-    if(options.transparent) panel.setFillStyle(0,0).setStrokeStyle(0);
+    const text=addText(this.scene,parent,x,y,options.icon?(options.iconLabel??""):label,13,enabled||selected?options.primary?"#141024":COLORS.text:"#91a0b6").setOrigin(.5);
+    if(options.transparent) panel.setFillStyle(0,0);
     parent.add(panel); parent.bringToTop(text);
+    if(options.icon&&this.scene.textures.exists(options.icon)){
+      if(options.iconLabel)text.x=x+10;
+      const icon=this.scene.add.image(options.iconLabel?x-Math.min(width/2-24,text.width/2+20):x,y,options.icon).setName('equipment-control-icon');
+      icon.setScale(Math.min((width-12)/icon.width,(height-12)/icon.height)).setRotation(options.rotation??0);parent.add(icon);
+    }
     if(selected) parent.add(this.scene.add.rectangle(x,y+height/2-2,width-4,2,COLORS.goldFill));
     panel.setInteractive({useHandCursor:enabled}); if(enabled) panel.on("pointerup",(p:Phaser.Input.Pointer)=>{if(p.button===0)action();});
     const element=document.createElement("button"); element.type="button";element.textContent=label;element.setAttribute("aria-label",options.name??label);element.disabled=!enabled;

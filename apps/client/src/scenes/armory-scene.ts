@@ -12,6 +12,7 @@ import { roundedPanel } from "../ui/rounded-panel";
 import { COLORS, RARITY_COLORS, RENDER_SCALE, useDesignCamera, visibleWorld } from "../ui/theme";
 import { addText, isModalOpen, showToast } from "../ui/widgets";
 
+import { framedImage } from "../ui/contained-art";
 import { EquipmentControls } from "../ui/equipment-controls";
 import { clearEquipmentFilters, equipmentActionLabel, equipmentChange, equipmentCounts, equipmentNavigation, equipmentPassive, equipmentText } from "../ui/equipment-insights";
 const MUTED = "#abb6ce";
@@ -26,7 +27,6 @@ const initialState = (): CollectionState => ({ selected: "", filters: equipmentD
 export class ArmoryScene extends Phaser.Scene {
   private controls!: EquipmentControls;
   private error = "";
-  private hoverTimer: Phaser.Time.TimerEvent | null = null;
   private root!: Phaser.GameObjects.Container;
   private tab: EquipmentKind = "weapons";
   private states = { weapons: initialState(), relics: initialState() };
@@ -82,7 +82,7 @@ export class ArmoryScene extends Phaser.Scene {
       this.input.off("wheel", this.onWheel, this); this.input.keyboard?.off("keydown", this.onKey, this);
       this.events.off(Phaser.Scenes.Events.UPDATE, this.onUpdate, this); this.scale.off(Phaser.Scale.Events.RESIZE, this.render, this);
       this.fields.forEach(f => f.element.remove()); this.fields = []; this.fieldPlacement = "";
-      this.hoverTimer?.remove(); this.controls.destroy(); this.hideTooltip(); this.clearMask();
+      this.controls.destroy(); this.hideTooltip(); this.clearMask();
     });
     this.render();
   }
@@ -122,6 +122,8 @@ export class ArmoryScene extends Phaser.Scene {
     ([["all", "Tất cả"], ["owned", "Đã sở hữu"], ["upgrade", "Nâng cấp được"], ["locked", "Chưa sở hữu"]] as const).forEach(([value, label], i) => {
       const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.dataset.ownership = value;
       b.addEventListener("click", () => { this.state.filters.ownership = value; this.changeFilter(); }); add(b, label, 24 + i * 156, 146, 144, 32);
+      const asset=manifest.ui?.[({all:"nav_inventory",owned:"check",upgrade:"bolt",locked:"lock"} as const)[value]];
+      if(asset){const icon=document.createElement("img");icon.src=asset;icon.alt="";icon.style.cssText="width:20px;height:20px;object-fit:contain;margin-right:10px";const count=document.createElement("span");b.replaceChildren(icon,count);b.style.display="flex";b.style.alignItems="center";b.style.justifyContent="center";}
     });
   }
   private changeFilter() { this.state.page = 0; this.focused = ""; this.render(); }
@@ -137,7 +139,7 @@ export class ArmoryScene extends Phaser.Scene {
           const label = `${kind === "weapons" ? "Binh Khí" : "Nguyệt Bảo"} · Đã có ${count}/${defs.length}`;
           if (element.textContent !== label) { element.textContent = label; element.setAttribute("aria-label", label); }
         }
-        if (!kind) { const key = element.dataset.ownership as EquipmentFilters["ownership"]; const counts = equipmentCounts(session.data, session.profile, this.tab, this.state.filters, session.online); const label = ({all:"Tất cả",owned:"Đã sở hữu",upgrade:"Nâng cấp được",locked:"Chưa sở hữu"} as const)[key]; element.textContent = label + " (" + counts[key] + ")"; element.setAttribute("aria-label", element.textContent); }
+        if (!kind) { const key = element.dataset.ownership as EquipmentFilters["ownership"]; const counts = equipmentCounts(session.data, session.profile, this.tab, this.state.filters, session.online); const label = ({all:"Tất cả",owned:"Đã sở hữu",upgrade:"Nâng cấp được",locked:"Chưa sở hữu"} as const)[key]; const name=label + " (" + counts[key] + ")"; const count=element.querySelector("span");if(count)count.textContent=String(counts[key]);else element.textContent=name;element.setAttribute("aria-label", name); }
         element.style.boxShadow = active ? "inset 0 -2px #f4d35e" : "none";
         element.setAttribute("aria-pressed", String(active)); element.style.background = active ? "#344b68" : "#141e34"; element.style.borderColor = active ? "#c1ddf4" : "#52617e";
       } else {
@@ -156,7 +158,7 @@ export class ArmoryScene extends Phaser.Scene {
     }
   }
   private icon(parent: Phaser.GameObjects.Container, id: string, x: number, y: number, size: number) {
-    if (this.textures.exists(`ui:${id}`)) parent.add(this.add.image(x, y, `ui:${id}`).setDisplaySize(size, size));
+    if (this.textures.exists(`ui:${id}`)) framedImage(this,parent,`ui:${id}`,x,y,size,size,2);
   }
   private fit(parent: Phaser.GameObjects.Container, x: number, y: number, content: string, width: number, size = 14, color: string = COLORS.text) {
     const text = addText(this, parent, x, y, content, size, color);
@@ -169,12 +171,12 @@ export class ArmoryScene extends Phaser.Scene {
   }
   private render() {
     this.renderedProfile = session.profile; this.renderedRev = session.rev;
-    this.hoverTimer?.remove(); this.hideTooltip(); this.controls.clear(); this.clearMask(); this.root.removeAll(true); this.scrollThumb = null;
+    this.hideTooltip(); this.controls.clear(); this.clearMask(); this.root.removeAll(true); this.scrollThumb = null;
     const cam = this.cameras.main; cam.setZoom(Math.min(RENDER_SCALE, cam.width / 1280, cam.height / 720)).centerOn(640, 360); this.fieldPlacement = "";
     const view = visibleWorld(this);
-    if (this.textures.exists("backgrounds:home")) this.root.add(this.add.image(640, 360, "backgrounds:home").setDisplaySize(view.w, view.h));
+    if (this.textures.exists("backgrounds:home")) {const image=this.add.image(640,360,"backgrounds:home");image.setScale(Math.min(view.w/image.width,view.h/image.height));this.root.add(image);}
     this.root.add(this.add.rectangle(640, 360, view.w, view.h, COLORS.background, 0.82));
-    this.control(this.root, 82, 32, 116, "‹ Quay lại", () => this.scene.start("deck-select"), true, { height: 40 });
+    this.control(this.root, 82, 32, 116, "Quay lại", () => this.scene.start("deck-select"), true, { height: 40,icon:"ui:nav_back" });
     addText(this, this.root, 164, 8, "Kho đồ", 27); addText(this, this.root, 164, 42, "Bộ sưu tập trang bị", 12, MUTED);
     (["darkIron", "moonDust"] as const).forEach((id, i) => {
       const x = 1034 + i * 122; this.icon(this.root, `cur_${id}`, x, 40, 28);
@@ -188,20 +190,19 @@ export class ArmoryScene extends Phaser.Scene {
     if (!filtered.length) {
       addText(this, this.root, 330, 358, "Không tìm thấy trang bị phù hợp", 17).setOrigin(0.5);
       addText(this, this.root, 330, 389, this.state.filters.ownership === "upgrade" && !session.online ? "Đang mất kết nối" : "Thử tên khác hoặc bỏ bộ lọc", 13, MUTED).setOrigin(0.5);
-      this.control(this.root, 330, 435, 180, "Xóa bộ lọc", () => this.resetFilters(), true, { height: 40 });
+      this.control(this.root, 330, 435, 180, "Xóa bộ lọc", () => this.resetFilters(), true, { height: 40,icon:"ui:action_reset" });
     }
     addText(this, this.root, 24, 648, `Hiển thị ${filtered.length}/${Object.keys(session.data[this.tab]).length} · Trang ${range.page + 1}/${range.pages}`, 12, MUTED);
-    this.control(this.root, 280, 671, 40, "‹", () => { this.state.page--; this.render(); }, range.page > 0, { height: 40, name:"Trang trước" });
+    this.control(this.root, 280, 671, 40, "‹", () => { this.state.page--; this.render(); }, range.page > 0, { height: 40, name:"Trang trước",icon:"ui:nav_back" });
     for (let page=0;page<range.pages;page++) this.control(this.root, 324+page*44, 671, 40, String(page+1), () => {this.state.page=page;this.render();}, true, {selected:this.state.page===page,height:40,name:`Trang ${page+1}`});
-    this.control(this.root,324+range.pages*44,671,40,"›",()=>{this.state.page++;this.render();},this.state.page+1<range.pages,{height:40,name:"Trang sau"});
+    this.control(this.root,324+range.pages*44,671,40,"›",()=>{this.state.page++;this.render();},this.state.page+1<range.pages,{height:40,name:"Trang sau",icon:"ui:nav_back",rotation:Math.PI});
     const active = this.state.filters.query !== "" || this.state.filters.rarity !== "all" || this.state.filters.ownership !== "all";
-    this.control(this.root,574,671,120,"Xóa lọc",()=>this.resetFilters(),active,{height:40});
+    this.control(this.root,574,671,120,"Xóa bộ lọc",()=>this.resetFilters(),active,{height:40,icon:"ui:action_reset"});
     if(session.data[this.tab][this.selected]) this.renderDetails(filtered.findIndex(d=>d.id===this.selected));
-    addText(this,this.root,24,702,"Mũi tên / Enter · Tab để tới thao tác · Esc để quay lại",11,MUTED);
     this.controls.announce(`${filtered.length} kết quả. ${session.data[this.tab][this.selected]?.name ?? ""}. ${this.error}`);
     this.syncFields();this.controls.sync(false,isModalOpen());
   }
-  private control(parent: Phaser.GameObjects.Container,x:number,y:number,width:number,label:string,action:()=>void,enabled=true, options:{height?:number;selected?:boolean;primary?:boolean;name?:string;role?:"tab";id?:string;pinned?:boolean;clip?:typeof INFO;transparent?:boolean}={}) {
+  private control(parent: Phaser.GameObjects.Container,x:number,y:number,width:number,label:string,action:()=>void,enabled=true, options:{height?:number;selected?:boolean;primary?:boolean;name?:string;role?:"tab";id?:string;pinned?:boolean;clip?:typeof INFO;transparent?:boolean;icon?:string;rotation?:number;iconLabel?:string}={}) {
     return this.controls.button(parent,x,y,width,label,action,{...options,enabled});
   }
 
@@ -210,23 +211,20 @@ export class ArmoryScene extends Phaser.Scene {
     const x=GRID.x+index%4*GRID.stepX,y=GRID.y+Math.floor(index/4)*GRID.stepY;
     const tile=this.add.container(x,y).setName(`equipment-tile:${id}`);this.root.add(tile);
     tile.add(roundedPanel(this,72,72,144,144,0x15263c,1,id===this.selected?COLORS.goldFill:0x40536d,8));
-    const art=addEquipmentArt(this,tile,this.tab,id,72,50,132,92);if(art)art.setAlpha(owned?1:.4);
+    const art=addEquipmentArt(this,tile,this.tab,id,72,56,132,76);if(art)art.setAlpha(owned?1:.4);
     tile.add(this.add.rectangle(72,98,140,3,RARITY_COLORS[def.rarity]));
     const short=({common:"Phổ thông",rare:"Hiếm",epic:"Sử thi",legendary:"Truyền thuyết"} as const)[def.rarity];
     addText(this,tile,8,2,short,10,MUTED);
     const name=addText(this,tile,8,103,def.name,13).setWordWrapWidth(128).setLineSpacing(0);
     if(name.height>30){name.setVisible(false);this.fit(tile,8,103,def.name,128,13).setWordWrapWidth(128);} // Full name remains in the panel/semantic name.
-    addText(this,tile,8,129,owned?`${this.tab==="weapons"?"TL":"CM"} ${level}/5`:"Chưa có",11,MUTED);
+    addText(this,tile,8,129,owned?`${equipmentTag(this.tab)} ${level}/5`:"Chưa có",11,MUTED);
     const up=equipmentUpgrade(session.data,session.profile,this.tab,id,session.online,this.busy);
     const used=equipmentDecks(session.profile.decks,this.tab,id).length;
-    addText(this,tile,137,129,level===5?"Tối đa":up.enabled?"↑ Nâng được":used?`${used} bộ bài`:"",10,up.enabled?"#bde7d1":MUTED).setOrigin(1,0);
+    if(level===5||up.enabled||used) {const key=level===5?"star":up.enabled?"bolt":"nav_inventory";this.icon(tile,key,136,136,14);}
     if(id===this.selected){tile.add(this.add.rectangle(72,72,142,142,0,0).setStrokeStyle(2,COLORS.goldFill));addText(this,tile,137,2,"✓",14,COLORS.gold).setOrigin(1,0);}
     tile.add(this.add.rectangle(72,72,150,150,0,0).setStrokeStyle(2,0xc1ddf4));
     const focusRing=tile.list.at(-1) as Phaser.GameObjects.Rectangle; focusRing.setVisible(id===this.focused);
-    const hit=this.controls.button(tile,72,72,144,"",()=>this.selectItem(id),{height:144,id:`tile:${id}`,name:`${def.name}, ${HERO_RARITY_LABELS[def.rarity]}, ${owned?equipmentTag(this.tab)+" "+level:"chưa sở hữu"}`,transparent:true,onFocus:()=>{this.focused=id;focusRing.setVisible(true);},onBlur:()=>focusRing.setVisible(false),onEnter:()=>{this.hoverTimer?.remove();this.hoverTimer=this.time.delayedCall(300,()=>{if(!this.tooltipPinned)this.note(def.name,x,y+148);});},onLeave:()=>{this.hoverTimer?.remove();if(!this.tooltipPinned)this.hideTooltip();}});
-    hit.setFillStyle(0,0).setStrokeStyle(0); // Semantic overlay uses the art tile's own appearance.
-    hit.on("pointerover",()=>{this.hoverTimer?.remove();this.hoverTimer=this.time.delayedCall(300,()=>{if(!this.tooltipPinned)this.note(def.name,x,y+148);});});
-    hit.on("pointerout",()=>{this.hoverTimer?.remove();if(!this.tooltipPinned)this.hideTooltip();});
+    this.controls.button(tile,72,72,144,"",()=>this.selectItem(id),{height:144,id:"tile:"+id,name:def.name+", "+HERO_RARITY_LABELS[def.rarity]+", "+(owned?equipmentTag(this.tab)+" "+level:"chưa sở hữu"),transparent:true,onFocus:()=>{this.focused=id;focusRing.setVisible(true);},onBlur:()=>focusRing.setVisible(false)});
   }
   private selectItem(id: string) {
     if(!session.data[this.tab][id]) return;
@@ -239,19 +237,19 @@ export class ArmoryScene extends Phaser.Scene {
     addText(this,this.root,675,92,`${HERO_RARITY_LABELS[def.rarity]} · ${this.tab==="weapons"?"BINH KHÍ":"NGUYỆT BẢO"}`,12,rarityColor);
     this.fit(this.root,675,116,def.name,552,25);
     addText(this,this.root,675,155,owned===undefined?"Chưa sở hữu":`Đã có · ${tag} ${owned}/5`,13);
-    if(index<0) this.control(this.root,1056,164,356,"Món nằm ngoài bộ lọc · Xóa lọc",()=>this.resetFilters(),true,{height:30});
-    else if(Math.floor(index/12)!==this.state.page) this.control(this.root,1078,164,312,`Đang xem trang ${Math.floor(index/12)+1} · Đến món`,()=>{this.state.page=Math.floor(index/12);this.render();},true,{height:30});
+    if(index<0) this.control(this.root,1056,164,356,"Món nằm ngoài bộ lọc · Xóa bộ lọc",()=>this.resetFilters(),true,{height:30,icon:"ui:action_reset",iconLabel:"Ngoài bộ lọc"});
+    else if(Math.floor(index/12)!==this.state.page) this.control(this.root,1078,164,312,`Đang xem trang ${Math.floor(index/12)+1} · Đến món`,()=>{this.state.page=Math.floor(index/12);this.render();},true,{height:30,icon:"ui:nav_inventory",iconLabel:`Món ở trang ${Math.floor(index/12)+1}`});
     const used=equipmentDecks(session.profile.decks,this.tab,id);
-    ([["effect","Hiệu ứng"],["levels","Các cấp"],["usage",`Bộ bài (${used.length})`]] as const).forEach(([tab,label],i)=>this.control(this.root,765+i*184,207,172,label,()=>{this.state.detailTab=tab;this.state.scroll=0;this.render();},true,{role:"tab",selected:this.detailTab===tab,height:38,id:`detail:${tab}`}));
+    ([["effect","Hiệu ứng"],["levels","Các cấp"],["usage",`Bộ bài (${used.length})`]] as const).forEach(([tab,label],i)=>this.control(this.root,765+i*184,207,172,label,()=>{this.state.detailTab=tab;this.state.scroll=0;this.render();},true,{role:"tab",selected:this.detailTab===tab,height:38,id:`detail:${tab}`,icon:tab==="effect"?"ui:intent_special":tab==="levels"?"ui:star":"ui:nav_inventory",iconLabel:tab==="usage"?String(used.length):undefined}));
     this.root.add(roundedPanel(this,768,346,186,212,0x0c1628,1,0x455570,8));
-    if(!addEquipmentArt(this,this.root,this.tab,id,768,346,178,208))addText(this,this.root,768,340,"Chưa có art",14,MUTED).setOrigin(.5);
-    const artHit=this.control(this.root,768,346,186,"",()=>this.showArt(),true,{height:212,name:"Phóng to artwork",id:"art:image",transparent:true});artHit.setFillStyle(0,0).setStrokeStyle(0);
-    this.control(this.root,768,476,186,"Xem art lớn",()=>this.showArt(),true,{height:36});
+    if(!addEquipmentArt(this,this.root,this.tab,id,768,346,178,208))addText(this,this.root,768,340,"Chưa có hình trang bị",14,MUTED).setOrigin(.5);
+    const artHit=this.control(this.root,768,346,186,"",()=>this.showArt(),true,{height:212,name:"Xem toàn bộ hình trang bị",id:"art:image",transparent:true});artHit.setFillStyle(0,0);
+    this.control(this.root,768,476,186,"Phóng to hình trang bị",()=>this.showArt(),true,{height:36,icon:"ui:action_more"});
     if(this.tab==="weapons"){
       const weapon=session.data.weapons[id]!,hero=weapon.signatureHeroId?session.data.heroes[weapon.signatureHeroId]:undefined;
-      if(hero){if(this.textures.exists(`heroes:${hero.id}`))this.root.add(this.add.image(691,518,`heroes:${hero.id}`).setDisplaySize(32,38));this.fit(this.root,714,508,`Bản mệnh: ${hero.name}`,145,12,MUTED);}
+      if(hero){if(this.textures.exists(`heroes:${hero.id}`))framedImage(this,this.root,`heroes:${hero.id}`,691,518,32,38);this.fit(this.root,714,508,`Bản mệnh: ${hero.name}`,145,12,MUTED);}
       else addText(this,this.root,675,507,`Vũ khí chung · ${weapon.archetype?HERO_ROLE_LABELS[weapon.archetype]:""}`,12,MUTED).setWordWrapWidth(185);
-      this.control(this.root,768,545,186,"Xem lá Binh Khí",()=>this.showCard(true),true,{height:36});
+      this.control(this.root,768,545,186,"Xem lá Binh Khí",()=>this.showCard(true),true,{height:36,icon:"ui:nav_banners"});
     }else addText(this,this.root,675,507,"Nguyệt Bảo cho cả đội · tối đa 2 món/bộ bài.",13,MUTED).setWordWrapWidth(185);
     this.renderInfo();this.renderUpgrade();
   }
@@ -262,7 +260,7 @@ export class ArmoryScene extends Phaser.Scene {
     else {this.detailMask=this.maskShape.createGeometryMask();this.detailContent.setMask(this.detailMask);}
     let y=0;
     const paragraph=(text:string,size=14,color:string=COLORS.text)=>{const line=addText(this,this.detailContent,0,y,equipmentText(text),size,color).setWordWrapWidth(INFO.width-18).setLineSpacing(4);y+=line.height+12;return line;};
-    const button=(label:string,action:()=>void,width=224,selected=false,name=label)=>{this.control(this.detailContent,width/2,y+20,width,label,action,true,{height:40,selected,name,clip:INFO});y+=50;};
+    const button=(label:string,action:()=>void,width=224,selected=false,name=label,icon?:string)=>{this.control(this.detailContent,width/2,y+20,width,label,action,true,{height:40,selected,name,clip:INFO,icon});y+=50;};
     const level=equipmentLevel(session.profile,this.tab,this.selected),shown=this.state.preview,tag=equipmentTag(this.tab);
     const passive=(n:number)=>{
       const current=equipmentPassive(session.data,this.selected,n);
@@ -273,14 +271,14 @@ export class ArmoryScene extends Phaser.Scene {
     if(this.detailTab==="effect"){
       paragraph(`${level===undefined?"Xem trước":"Đang xem"} ${tag} ${shown}${level===shown?" · Đã có":""}`,12,shown!==level?"#e0bd7d":MUTED);
       for(let n=1;n<=5;n++) this.control(this.detailContent,22+(n-1)*48,y+20,42,String(n),()=>{this.state.preview=n;this.state.scroll=0;this.render();},true,{selected:n===shown,height:40,name:`Xem ${tag} ${n}`,id:`preview:${n}`,clip:INFO});
-      y+=50;if(level!==undefined&&shown!==level)button("Về cấp đang có",()=>{this.state.preview=level;this.state.scroll=0;this.render();});
+      y+=50;if(level!==undefined&&shown!==level)button("Về cấp đang có",()=>{this.state.preview=level;this.state.scroll=0;this.render();},44,false,"Về cấp đang có","ui:action_reset");
       const effect=equipmentEffects(session.data,this.tab,this.selected,shown);
       paragraph(effect.card?"LÁ BINH KHÍ":"HIỆU ỨNG CỦA ĐỘI",11,MUTED);paragraph(effect.title,17,COLORS.gold);
       if(effect.card)paragraph(`${effect.card.cost} Nguyệt Lực · ${effect.card.copies} lá trong bộ bài`,12,"#c1ddf4");
       paragraph(effect.text);
       if(this.tab==="weapons"){
         passive(shown);
-        button(this.state.history?"Ẩn lịch sử nội tại":"Xem lịch sử nội tại",()=>{this.state.history=!this.state.history;this.render();});
+        button(this.state.history?"Ẩn lịch sử nội tại":"Xem lịch sử nội tại",()=>{this.state.history=!this.state.history;this.render();},44,this.state.history,undefined,"ui:action_more");
         if(this.state.history){paragraph("Nội tại gốc / thay đổi đã áp dụng",12,MUTED);paragraph(effect.passive,13,MUTED);}
       }
       if(effect.card?.keywords?.length){paragraph("TỪ KHÓA",11,MUTED);for(const key of effect.card.keywords){const kw=session.data.keywords[key];if(kw)paragraph(`${kw.name}: ${kw.text}`,13,MUTED);}}
@@ -300,20 +298,19 @@ export class ArmoryScene extends Phaser.Scene {
       for(const deck of decks){
         paragraph(deck.name,16,COLORS.gold);
         const heroIds=this.tab==="weapons"?Object.entries(deck.weapons??{}).filter(([,weapon])=>weapon===this.selected).map(([hero])=>hero):deck.heroIds;
-        heroIds.forEach((hero,i)=>{if(this.textures.exists(`heroes:${hero}`))this.detailContent.add(this.add.image(16+i*36,y+18,`heroes:${hero}`).setDisplaySize(28,34));});y+=42;
+        heroIds.forEach((hero,i)=>{if(this.textures.exists(`heroes:${hero}`))framedImage(this,this.detailContent,`heroes:${hero}`,16+i*36,y+18,28,34);});y+=42;
         paragraph(this.tab==="weapons"?heroIds.map(hero=>session.data.heroes[hero]?.name??hero).join(", "):"Nguyệt Bảo của đội",12,MUTED);
-        button("Mở bộ bài",()=>{session.editingDeck=structuredClone(deck);this.scene.start("deck-builder",{back:"armory",equipment:{kind:this.tab,id:this.selected}});},172,false,`Mở bộ bài ${deck.name}`);
+        button("Mở bộ bài",()=>{session.editingDeck=structuredClone(deck);this.scene.start("deck-builder",{back:"armory",equipment:{kind:this.tab,id:this.selected}});},44,false,`Mở bộ bài ${deck.name}`,"ui:action_edit");
       }
     }
     this.detailHeight=y;this.state.scroll=Phaser.Math.Clamp(this.state.scroll,0,Math.max(0,y-INFO.height));this.detailContent.y-=this.state.scroll;this.clipDetailInput();
     if(y>INFO.height){
       const h=Math.max(28,INFO.height*INFO.height/y);
       this.root.add(this.add.rectangle(1238,INFO.y+INFO.height/2,4,INFO.height,0x34435b));
-      this.scrollThumb=this.add.rectangle(1238,INFO.y+h/2,22,h,0xc2d2e8,.65).setInteractive({useHandCursor:true});this.root.add(this.scrollThumb);this.input.setDraggable(this.scrollThumb);
+      this.scrollThumb=this.add.rectangle(1238,INFO.y+h/2,22,h,0xc2d2e8,.65).setStrokeStyle(1,0x526580).setInteractive({useHandCursor:true});this.root.add(this.scrollThumb);this.input.setDraggable(this.scrollThumb);
       this.scrollThumb.on("drag",(_p:Phaser.Input.Pointer,_x:number,dragY:number)=>{const ratio=Phaser.Math.Clamp((dragY-INFO.y-h/2)/(INFO.height-h),0,1);this.scrollDetail(ratio*(this.detailHeight-INFO.height)-this.state.scroll);});this.updateScrollThumb();
-      addText(this,this.root,INFO.x,538,"Cuộn để xem thêm",11,MUTED);
-      this.control(this.root,1172,542,42,"▲",()=>this.scrollDetail(-180),true,{height:40,name:"Cuộn lên"});
-      this.control(this.root,1218,542,42,"▼",()=>this.scrollDetail(180),true,{height:40,name:"Cuộn xuống"});
+      this.control(this.root,1172,542,42,"▲",()=>this.scrollDetail(-180),true,{height:40,name:"Cuộn lên",icon:"ui:nav_back",rotation:Math.PI/2});
+      this.control(this.root,1218,542,42,"▼",()=>this.scrollDetail(180),true,{height:40,name:"Cuộn xuống",icon:"ui:nav_back",rotation:-Math.PI/2});
     }
   }
   private renderUpgrade() {
@@ -326,9 +323,9 @@ export class ArmoryScene extends Phaser.Scene {
     this.icon(footer,`cur_${up.materialId}`,686,624,18);
     addText(this,footer,702,617,up.cost===null?up.material:`Cần ${up.cost.toLocaleString("vi-VN")} ${up.material}`,13);
     this.fit(footer,1235,617,up.cost===null?`Có ${up.have.toLocaleString("vi-VN")}`:up.missing?`Đang có ${up.have.toLocaleString("vi-VN")} · Thiếu ${up.missing.toLocaleString("vi-VN")}`:`Đang có ${up.have.toLocaleString("vi-VN")} · Sau nâng còn ${(up.have-up.cost).toLocaleString("vi-VN")}`,282,12,up.missing?"#f1a6a6":"#bde7d1").setOrigin(1,0);
-    this.control(footer,906,659,462,equipmentActionLabel(session.data,session.profile,this.tab,this.selected,session.online,this.busy),()=>void this.upgrade(),up.enabled,{height:42,primary:up.level!==undefined});
-    this.control(footer,1196,659,90,"Triệu Hồi",()=>this.scene.start("gacha"),!this.busy,{height:42,primary:up.level===undefined});
-    this.fit(footer,675,686,this.error||up.reason,558,12,this.error||up.missing?"#f1a6a6":MUTED);
+    this.control(footer,906,659,462,equipmentActionLabel(session.data,session.profile,this.tab,this.selected,session.online,this.busy),()=>void this.upgrade(),up.enabled,{height:42,primary:up.level!==undefined,icon:up.level===undefined?"ui:lock":up.level===5?"ui:star":!session.online?"ui:muted":up.missing?"ui:lock":"ui:bolt",iconLabel:up.enabled?"Nâng cấp":undefined});
+    this.control(footer,1196,659,90,"Triệu Hồi",()=>this.scene.start("gacha"),!this.busy,{height:42,primary:up.level===undefined,icon:"ui:nav_banners"});
+    this.fit(footer,675,686,this.error||(!up.enabled?up.reason:""),558,12,this.error||up.missing?"#f1a6a6":MUTED);
   }
   private async upgrade() {
     if (this.reconcileProfile()) return; // A fresh click must confirm the action after its displayed price changes.
@@ -395,9 +392,8 @@ export class ArmoryScene extends Phaser.Scene {
     layer.add(roundedPanel(this,cx,cy,width,height,0x101b30,1,0x657590,10));
     const shield=this.add.rectangle(cx,cy,width,height,0,0).setInteractive();layer.add(shield);
     this.fit(layer,cx-width/2+16,cy-height/2+14,session.data[this.tab][this.selected]!.name,width-80,18);
-    addEquipmentArt(this,layer,this.tab,this.selected,cx,cy+8,width-32,height-108);
-    this.control(layer,cx+width/2-28,cy-height/2+27,44,"×",()=>{this.hideTooltip();this.syncFields();},true,{height:44,pinned:true,name:"Đóng artwork",id:"popup:art-close"});
-    this.control(layer,cx,cy+height/2-28,168,"Đóng",()=>{this.hideTooltip();this.syncFields();},true,{height:40,pinned:true,name:"Đóng hình",id:"popup:art-footer"});
+    addEquipmentArt(this,layer,this.tab,this.selected,cx,cy+8,width-32,height-100);
+    this.control(layer,cx+width/2-28,cy-height/2+27,44,"×",()=>{this.hideTooltip();this.syncFields();},true,{height:44,pinned:true,name:"Đóng hình trang bị",id:"popup:art-close",icon:"ui:action_close"});
     this.controls.sync(true,isModalOpen());
   }
   private showCard(pinned:boolean) {
@@ -406,8 +402,8 @@ export class ArmoryScene extends Phaser.Scene {
     const extra=[`Xem Tinh Luyện ${this.state.preview}`,...(hero?[`Bản mệnh: ${hero.name}`]:[])];
     if(pinned){
       const layer=this.overlay();const preview=showCardTooltip(this,470,670,session.data,{...card,text:equipmentText(card.text)},extra);layer.add(preview);
-      const bounds=preview.getBounds();const shield=this.add.rectangle(bounds.centerX,bounds.centerY,bounds.width,bounds.height,0,0).setInteractive();layer.add(shield);
-      this.control(layer,bounds.right-25,bounds.top+25,44,"×",()=>{this.hideTooltip();this.syncFields();},true,{height:44,pinned:true,name:"Đóng lá bài",id:"popup:card-close"});this.controls.sync(true,isModalOpen());
+      const bounds=(preview.list[0] as Phaser.GameObjects.Container).getBounds();const shield=this.add.rectangle(bounds.centerX,bounds.centerY,bounds.width,bounds.height,0,0).setInteractive();layer.add(shield);
+      this.control(layer,bounds.right-25,bounds.top+25,44,"×",()=>{this.hideTooltip();this.syncFields();},true,{height:44,pinned:true,name:"Đóng lá bài",id:"popup:card-close",icon:"ui:action_close"});this.controls.sync(true,isModalOpen());
     }else{this.hideTooltip();this.tooltip=showCardTooltip(this,470,670,session.data,card,extra);}
   }
   private hideTooltip(){this.tooltip?.destroy();this.tooltip=null;this.tooltipPinned=false;this.controls?.removePinned();this.controls?.sync(false,isModalOpen());}

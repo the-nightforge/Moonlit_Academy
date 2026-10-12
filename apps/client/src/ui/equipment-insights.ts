@@ -1,3 +1,4 @@
+import { displayText } from "./display-text";
 import type { Effect, GameData, Profile, WeaponHook } from "rules";
 import { relicAt, weaponAt } from "rules";
 import { equipmentDefaults, equipmentTag, equipmentUpgrade, filterEquipment, type EquipmentFilters, type EquipmentKind } from "./equipment-presentation";
@@ -5,7 +6,7 @@ const TAGS: Record<string,string> = { attack: "tấn công", control: "khống c
 const STATUS_KEYS: Record<string,string> = { stealth:"an_than", taunt:"khieu_khich", weak:"suy_yeu", vulnerable:"de_vo", mark:"danh_dau", burn:"thieu_dot", regen:"hoi_phuc", strength:"suc_manh", empower:"cuong_hoa", freeze:"dong_bang", reflect:"phan_don", guard:"ho_ve", charm:"me_hoac" };
 const statusName = (data:GameData,id:string) => data.keywords[STATUS_KEYS[id] ?? ""]?.name;
 
-export const equipmentText = (text: string) => text.replace(/\bdamage\b/g, "sát thương");
+export const equipmentText = displayText;
 export function clearEquipmentFilters(filters: EquipmentFilters): EquipmentFilters { return { ...equipmentDefaults(), sort: filters.sort }; }
 export function equipmentCounts(data: GameData, profile: Profile, kind: EquipmentKind, filters: EquipmentFilters, online: boolean) {
   const base = { ...filters, ownership: "all" as const };
@@ -27,7 +28,7 @@ export function equipmentNavigation(index: number, key: string, count: number): 
   if (key === "ArrowDown") return Math.min(count - 1, i + 4);
   return i;
 }
-const labels: Record<string, string> = { damage: "Sát thương", gainArmor: "Giáp", heal: "Hồi HP", gainMoonPower: "Nguyệt Lực", gainMoonPowerPerTurn: "Nguyệt Lực mỗi lượt", drawCards: "Rút lá" };
+const labels: Record<string, string> = { damage: "Sát thương", gainArmor: "Giáp", heal: "Hồi phục", gainMoonPower: "Nguyệt Lực", gainMoonPowerPerTurn: "Nguyệt Lực mỗi lượt", drawCards: "Rút lá" };
 function numericDiff(data: GameData, before: readonly Effect[], after: readonly Effect[]): string[] | null {
   // Compare only complete, matching effects. Changed targets/conditions need their full prose.
   if (before.length !== after.length) return null;
@@ -85,7 +86,7 @@ function describeHook(data: GameData, hook: WeaponHook): string | null {
     }
     default: return null;
   }
-  const actor = ({ wearer: "người mang", each: "mọi Hero", lowestHp: "Hero ít HP nhất", front: "Hero tuyến đầu" } as Record<string, string>)[hook.actor];
+  const actor = ({ wearer: "người mang", each: "mọi Hero", lowestHp: "Hero ít máu nhất", front: "Hero tuyến đầu" } as Record<string, string>)[hook.actor];
   if (!actor) return null; // 'trigger' depends on event context: do not invent a target.
   const descriptions: string[] = [];
   for (const effect of hook.effects) {
@@ -97,7 +98,7 @@ function describeHook(data: GameData, hook: WeaponHook): string | null {
     else if ("amount" in effect && typeof effect.amount === "number") {
       if (effect.type === "applyStatus") { const name=statusName(data,effect.status); if(!name)return null;descriptions.push(`${target} ${name} ${effect.amount}`); }
       else if (effect.type === "gainArmor") descriptions.push(`${target} +${effect.amount} giáp`);
-      else if (effect.type === "heal") descriptions.push(`${target} hồi ${effect.amount} HP`);
+      else if (effect.type === "heal") descriptions.push(`${target} hồi ${effect.amount} máu`);
       else if (effect.type === "damage") descriptions.push(`${target} nhận ${effect.amount} sát thương`);
       else if (effect.type === "gainMoonPower") descriptions.push(`đội +${effect.amount} Nguyệt Lực`);
       else if (effect.type === "gainMoonPowerPerTurn") descriptions.push(`đội +${effect.amount} Nguyệt Lực mỗi lượt`);
