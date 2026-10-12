@@ -45,6 +45,23 @@ describe("equipment decision insights", () => {
     (copy.weapons.w_xich_diem_thuong!.hooks[0] as any).futureCondition = true;
     expect(equipmentPassive(copy, "w_xich_diem_thuong", 1)).toBeNull();
   });
+  it("keeps compound conditions and unknown status mechanics complete", () => {
+    const copy=structuredClone(data), hook=copy.weapons.w_xich_diem_thuong!.hooks[0]!;
+    (hook as any).on={type:"cardPlayed",owner:"wearer",tag:"attack",cardType:"skill"};
+    expect(equipmentPassive(copy,"w_xich_diem_thuong",1)).toBeNull();
+    (hook as any).on={type:"combatStart"};(hook.effects[0] as any).status="futureStatus";
+    expect(equipmentPassive(copy,"w_xich_diem_thuong",1)).toBeNull();
+  });
+  it("retains full change prose when a numeric summary cannot cover new effects", () => {
+    const copy=structuredClone(data), step=copy.weapons.w_xich_diem_thuong!.refinement[1]!;
+    (step as any).card={...step.card,effects:[{type:"drawCards",amount:2}]};step.text="Rút thêm 2 lá và giảm chi phí.";
+    expect(equipmentChange(copy,"weapons","w_xich_diem_thuong",2).join(" ")).toContain(step.text);
+  });
+  it("falls back for per-hero global effects rather than dropping repeated execution",()=>{
+    const copy=structuredClone(data),hook=copy.weapons.w_xich_diem_thuong!.hooks[0]!;hook.actor="each";hook.effects=[{type:"drawCards",amount:1}];
+    expect(equipmentPassive(copy,"w_xich_diem_thuong",1)).toBeNull();
+    hook.effects=[{type:"gainArmor",amount:1,to:"allAllies"}];expect(equipmentPassive(copy,"w_xich_diem_thuong",1)).toBeNull();
+  });
   it("labels actual upgrade eligibility instead of the preview level", () => {
     expect(equipmentActionLabel(data, profile, "weapons", "w_xich_diem_thuong", true, false)).toBe("Nâng lên Tinh Luyện 4");
     expect(equipmentActionLabel(data, profile, "weapons", "w_thiet_thuan", true, false)).toBe("Đã tối đa");

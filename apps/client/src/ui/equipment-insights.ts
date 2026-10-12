@@ -28,17 +28,17 @@ export function equipmentNavigation(index: number, key: string, count: number): 
   return i;
 }
 const labels: Record<string, string> = { damage: "Sát thương", gainArmor: "Giáp", heal: "Hồi HP", gainMoonPower: "Nguyệt Lực", gainMoonPowerPerTurn: "Nguyệt Lực mỗi lượt", drawCards: "Rút lá" };
-function numericDiff(data: GameData, before: readonly Effect[], after: readonly Effect[]): string[] {
+function numericDiff(data: GameData, before: readonly Effect[], after: readonly Effect[]): string[] | null {
   // Compare only complete, matching effects. Changed targets/conditions need their full prose.
-  if (before.length !== after.length) return [];
+  if (before.length !== after.length) return null;
   const result: string[] = [];
   for (let i = 0; i < before.length; i++) {
     const a = before[i]!, b = after[i]!;
     const plain = (effect: Effect) => JSON.stringify({ ...effect, amount: undefined });
-    if (plain(a) !== plain(b)) return [];
+    if (plain(a) !== plain(b)) return null;
     if (!("amount" in a) || !("amount" in b) || typeof a.amount !== "number" || typeof b.amount !== "number" || a.amount === b.amount) continue;
     const label = a.type === "applyStatus" ? statusName(data, a.status) : labels[a.type];
-    if (!label) return [];
+    if (!label) return null;
     const delta = b.amount - a.amount;
     result.push(`${label}: ${a.amount} → ${b.amount} (${delta > 0 ? "+" : "−"}${Math.abs(delta)})`);
   }
@@ -49,21 +49,24 @@ export function equipmentChange(data: GameData, kind: EquipmentKind, id: string,
   if (kind === "weapons") {
     const def = data.weapons[id]!, a = weaponAt(def, from), b = weaponAt(def, from + 1), change = def.refinement[from - 1]!;
     const diff = numericDiff(data, a.card.effects, b.card.effects);
+    if(!diff) return [equipmentText(change.text)];
     if (a.card.cost !== b.card.cost) diff.unshift(`Nguyệt Lực: ${a.card.cost} → ${b.card.cost} (${b.card.cost > a.card.cost ? "+" : "−"}${Math.abs(b.card.cost - a.card.cost)})`);
     if (change.hooks || change.signatureHooks) diff.push(`Nội tại: ${equipmentText(change.text)}`);
     return diff.length ? diff : [equipmentText(change.text)];
   }
   const def = data.relics[id]!, a = relicAt(def, from), b = relicAt(def, from + 1);
   const ah = a.hooks ?? [], bh = b.hooks ?? [];
-  if (ah.length === bh.length && ah.every((h, i) => JSON.stringify({ ...h, effects: undefined }) === JSON.stringify({ ...bh[i], effects: undefined }))) {
-    const diff = ah.flatMap((h, i) => numericDiff(data, h.effects, bh[i]!.effects));
-    if (diff.length) return diff;
+  if (JSON.stringify(a.modifiers) === JSON.stringify(b.modifiers) && ah.length === bh.length && ah.every((h, i) => JSON.stringify({ ...h, effects: undefined }) === JSON.stringify({ ...bh[i], effects: undefined }))) {
+    const parts = ah.map((h, i) => numericDiff(data, h.effects, bh[i]!.effects));
+    if(parts.every(p=>p!==null)){const diff=parts.flatMap(p=>p!);if(diff.length)return diff;}
   }
   return [equipmentText(b.text)];
 }
 function only(object: object, keys: string[]) { return Object.keys(object).every(k => keys.includes(k)); }
 function describeHook(data: GameData, hook: WeaponHook): string | null {
   if (!only(hook, ["on", "actor", "every", "effects"]) || !only(hook.on, ["type", "tag", "cardType", "owner", "killer", "phase"])) return null;
+  // Each actor resolves global/area effects again: incomplete totals must retain original prose.
+  if(hook.actor==="each"&&hook.effects.some(e=>!("to" in e)||e.to!=="self")) return null;
   const on = hook.on;
   let trigger: string;
   switch (on.type) {
@@ -75,6 +78,7 @@ function describeHook(data: GameData, hook: WeaponHook): string | null {
     case "enemyKilled": trigger = on.killer === "wearer" ? "Người mang hạ địch" : "Một địch bị hạ"; break;
     case "heroDied": trigger = "Một Hero bị hạ"; break;
     case "cardPlayed": {
+      if(on.tag && on.cardType) return null;
       const tag = on.tag ? TAGS[on.tag] : on.cardType === "attack" ? "Tấn công" : on.cardType === "skill" ? "Kỹ năng" : on.cardType ? null : "bất kỳ";
       if (!tag) return null;
       trigger = `${on.owner === "wearer" ? "Người mang" : "Đội"} chơi lá ${tag}`; break;
@@ -91,7 +95,7 @@ function describeHook(data: GameData, hook: WeaponHook): string | null {
     if (!target) return null;
     if (effect.type === "cleanse") descriptions.push(`${target} xóa hiệu ứng xấu`);
     else if ("amount" in effect && typeof effect.amount === "number") {
-      if (effect.type === "applyStatus") descriptions.push(`${target} ${statusName(data, effect.status)} ${effect.amount}`);
+      if (effect.type === "applyStatus") { const name=statusName(data,effect.status); if(!name)return null;descriptions.push(`${target} ${name} ${effect.amount}`); }
       else if (effect.type === "gainArmor") descriptions.push(`${target} +${effect.amount} giáp`);
       else if (effect.type === "heal") descriptions.push(`${target} hồi ${effect.amount} HP`);
       else if (effect.type === "damage") descriptions.push(`${target} nhận ${effect.amount} sát thương`);
