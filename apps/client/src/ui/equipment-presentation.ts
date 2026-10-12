@@ -54,7 +54,7 @@ export function equipmentEffects(data: GameData, kind: EquipmentKind, id: string
   // Refinement prose may describe only a changed frequency or signature effect.
   // Keep its base context and clearly label updates instead of claiming a partial sentence is the full passive.
   const changes = def.refinement.slice(0, level - 1).flatMap((change, index) => change.hooks !== undefined || change.signatureHooks !== undefined ? [`Tinh Luyện ${index + 2}: ${change.text}`] : []);
-  return { title: resolved.card.name, text: resolved.card.text, passive: [def.text, ...changes].join("\n"), card: { ...resolved.card, id, ownerId: def.signatureHeroId ?? "" } };
+  return { title: resolved.card.name, text: resolved.card.text, passive: [def.text, ...changes].join("\n"), card: { ...resolved.card, id } };
 }
 export function equipmentDecks(decks: readonly SavedDeck[], kind: EquipmentKind, id: string): SavedDeck[] {
   return decks.filter(deck => kind === "weapons" ? Object.values(deck.weapons ?? {}).includes(id) : deck.relicIds?.includes(id));
