@@ -7,7 +7,7 @@ import { buildManifest, loadProfilePool, parseExperimentConfig, sha256Hex } from
 import { recordKey, runExperiment } from "../../packages/rules/test/playtest/runner";
 import { buildBalanceReport, loadGates, reportCsv, reportMarkdown } from "../../packages/rules/test/playtest/report";
 import type { BalanceReport } from "../../packages/rules/test/playtest/report";
-import { parseCandidateExperiment, reviewCandidate } from "../../packages/rules/test/playtest/workflow";
+import { loadDataDir, parseCandidateExperiment, reviewCandidate } from "../../packages/rules/test/playtest/workflow";
 import type { ExperimentManifest, MatchRecord } from "../../packages/rules/test/playtest/types";
 import type { CalibrationArtifact } from "../../packages/rules/test/playtest/calibration";
 import { splitHumanCorpus, validateCorpus, type HumanReplay } from "../../packages/rules/test/playtest/human";
@@ -23,11 +23,18 @@ import { calibrateProfiles, loadCalibrationConfig, validateCalibration } from ".
  */
 function readRunDir(dir: string): { manifest: ExperimentManifest; records: MatchRecord[] } {
   const manifest = JSON.parse(readFileSync(resolve(dir, "manifest.json"), "utf8")) as ExperimentManifest;
-  const records = readFileSync(resolve(dir, "records.jsonl"), "utf8")
-    .split("\n")
-    .filter((line) => line.trim())
-    .map((line) => JSON.parse(line) as MatchRecord);
-  return { manifest, records };
+  // A reused output dir can hold records from an interrupted or different-
+  // sized run (records.jsonl is append-only for resume). Keep only records
+  // matching the current manifest's scenarios, last write wins per leg.
+  const scenarioIds = new Set(manifest.scenarios.map((s) => s.id));
+  const byLeg = new Map<string, MatchRecord>();
+  for (const line of readFileSync(resolve(dir, "records.jsonl"), "utf8").split("\n")) {
+    if (!line.trim()) continue;
+    const record = JSON.parse(line) as MatchRecord;
+    if (!scenarioIds.has(record.scenarioId)) continue;
+    byLeg.set(`${record.scenarioId}|${record.leg}`, record);
+  }
+  return { manifest, records: [...byLeg.values()] };
 }
 
 function commandReport(args: { base?: string; candidate?: string; gates?: string; output?: string; calibration?: string }): void {
@@ -168,6 +175,7 @@ function main(): void {
       candidate: { type: "string" },
       gates: { type: "string" },
       input: { type: "string" },
+      data: { type: "string" },
       profiles: { type: "string" },
       calibration: { type: "string" },
       experiment: { type: "string" },
@@ -227,7 +235,8 @@ function main(): void {
   }
   const config = parseExperimentConfig(rawConfig);
 
-  const data = loadGameData();
+  // `--data <dir>` loads a candidate data copy; without it the shipped set is used.
+  const data = args.values.data ? loadDataDir(resolve(args.values.data)) : loadGameData();
   // Rules sources for the engine hash — resolved from CWD; the bundle falls
   // back to ENGINE_FINGERPRINT when sources aren't on disk.
   const rulesSrc = resolve("packages/rules/src");

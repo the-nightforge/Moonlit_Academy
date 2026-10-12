@@ -151,6 +151,38 @@ describe("playtest runner", () => {
     expect(counts[shared]).toBeGreaterThanOrEqual(2);
   });
 
+  it("pve/story coverage rotates content across pool laps, not one per entry", () => {
+    // 8 entries × 8 encounters: bare `block % n` pinned every entry to a single
+    // boss for its whole share; the lap rotation must spread them.
+    const pveConfig: ExperimentConfig = { ...config, mode: "pve", blockCount: 32 };
+    const m = buildManifest(data, pveConfig, { rulesSrcDir: RULES_SRC, sourceRevision: "test" });
+    const perEntry = new Map<string, Set<string>>();
+    for (const s of m.scenarios) {
+      const setup = s.setup as { heroIds: string[]; encounterId: string };
+      const team = setup.heroIds.join("+");
+      const set = perEntry.get(team) ?? new Set<string>();
+      set.add(setup.encounterId);
+      perEntry.set(team, set);
+    }
+    for (const [team, encs] of perEntry) {
+      expect(encs.size, `${team} met only ${[...encs]}`).toBeGreaterThan(1);
+    }
+    // Same correlation class for profile assignment: bare `block % nProfiles`
+    // pins every single-seat entry to one profile whenever gcd(pool, profiles)
+    // > 1 — per-team numbers were really team×one-profile cells.
+    const teamProfiles = new Map<string, Set<string>>();
+    for (const s of m.scenarios) {
+      const setup = s.setup as { heroIds: string[] };
+      const team = setup.heroIds.join("+");
+      const set = teamProfiles.get(team) ?? new Set<string>();
+      for (const p of s.profiles) set.add(p.id);
+      teamProfiles.set(team, set);
+    }
+    for (const [team, profs] of teamProfiles) {
+      expect(profs.size, `${team} only played ${[...profs]}`).toBeGreaterThan(1);
+    }
+  });
+
   it("symmetric_scenarios_pair_into_blocks", () => {
     const m = manifest();
     const records = runExperiment(data, m);

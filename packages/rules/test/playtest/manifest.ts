@@ -219,7 +219,16 @@ export function generateScenarios(
     const seed = config.seedStart + block;
     const blockId = `blk${seed}`;
     const [a, b] = pair(block);
-    const prof = (k: number) => profiles[k % profiles.length]!;
+    // Decorrelate entry ↔ content: a bare `block % n` pairs each pool entry
+    // with one encounter/stage whenever |pool| shares a factor with |content|
+    // (8×8 locked every team to a single boss). +poolLap spreads each entry
+    // across all content ids over its share of blocks.
+    const lap = Math.floor(block / pool.length);
+    const content = (n: number) => (block + lap) % n;
+    // Same decorrelation for profiles: `k % n` alone pins each entry to one
+    // profile whenever gcd(pool, profiles) > 1 (single-seat modes always
+    // drove m03 with one style). +lap cycles every entry through all profiles.
+    const prof = (k: number) => profiles[(k + lap) % profiles.length]!;
 
     const push = (suffix: string, leg: ScenarioLeg, setup: Scenario["setup"], seatProfiles: BotProfile[], seats: number) => {
       scenarios.push({
@@ -251,7 +260,7 @@ export function generateScenarios(
           deckCardIds: [...entry.deckCardIds],
           loadout: entry.loadout ?? { heroes: {} },
         });
-        const encounterId = encounterIds![block % encounterIds!.length]!;
+        const encounterId = encounterIds![content(encounterIds!.length)]!;
         push("AB", "AB", { seed, players: [side(pool[a]!), side(pool[b]!)], encounterId }, [prof(block * 2), prof(block * 2 + 1)], 2);
         push("BA", "BA", { seed, players: [side(pool[b]!), side(pool[a]!)], encounterId }, [prof(block * 2 + 1), prof(block * 2)], 2);
         break;
@@ -260,7 +269,7 @@ export function generateScenarios(
         const entry = pool[a]!;
         push("single", "single", {
           heroIds: entry.heroIds,
-          encounterId: encounterIds![block % encounterIds!.length]!,
+          encounterId: encounterIds![content(encounterIds!.length)]!,
           seed,
           deckCardIds: [...entry.deckCardIds],
         }, [prof(block)], 1);
@@ -269,7 +278,7 @@ export function generateScenarios(
       case "story": {
         const entry = pool[a]!;
         push("single", "single", {
-          stageId: stageIds![block % stageIds!.length]!,
+          stageId: stageIds![content(stageIds!.length)]!,
           seed,
           heroIds: entry.heroIds,
           deckCardIds: [...entry.deckCardIds],
