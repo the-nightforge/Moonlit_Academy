@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "version": "example-profiles",
+  "note": "Two-profile subset for the example buff/nerf experiment — synthetic, not human-calibrated.",
+  "profiles": [
+    {
+      "id": "novice-aggressive",
+      "version": "1",
+      "skill": "novice",
+      "style": "aggressive",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": {
+        "damage": 3,
+        "lethal": 4,
+        "overkill": -0.2,
+        "control": 0.5,
+        "cost": -0.1,
+        "summon": 1
+      },
+      "search": {
+        "maxExpansions": 0,
+        "depth": 0,
+        "beamWidth": 0,
+        "samples": 0
+      }
+    },
+    {
+      "id": "novice-defensive",
+      "version": "1",
+      "skill": "novice",
+      "style": "defensive",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": {
+        "damage": 1.5,
+        "lethal": 3,
+        "heal": 2,
+        "preventLethal": 3,
+        "control": 1,
+        "cost": -0.1,
+        "summon": 1
+      },
+      "search": {
+        "maxExpansions": 0,
+        "depth": 0,
+        "beamWidth": 0,
+        "samples": 0
+      }
+    }
+  ]
+}

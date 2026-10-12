@@ -1,8 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import type { GameData, Loadout, Profile, RunAction, RunSetup, SavedDeck } from "rules";
-import { applyRunResult, applyRunRewards, buildLoadout, replayRun, starterDeck, summarizeRun, validateDeck } from "rules";
+import { applyRunResult, applyRunRewards, buildLoadout, ENGINE_FINGERPRINT, replayRun, starterDeck, summarizeRun, validateDeck } from "rules";
 import { z } from "zod";
 import { HttpError, type AppContext } from "../context";
+import { captureValidatedReplay } from "../playtest/replay-capture";
 
 /** A ticket accepts its result for this long after it is issued (`14` §4.1). */
 export const TICKET_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -116,6 +117,31 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
       throw new HttpError(422, "replay failed", { step: replay.step, reason: replay.reason });
     }
     if (replay.run.status !== "won" && replay.run.status !== "lost") throw new HttpError(422, "run not finished");
+
+    // Playtest capture (`20` §7): opt-in, never blocking — a capture failure
+    // is logged and the settlement still runs untouched.
+    if (ctx.config.playtestReplayCapture) {
+      try {
+        await captureValidatedReplay(ctx.db, "run", accountId, {
+          schemaVersion: 1,
+          id: `run:${run.id}`,
+          groupId: "server",
+          participantIds: [`acct:${accountId}`],
+          humanSeats: [0],
+          skillLabels: [],
+          mode: "run",
+          dataHash: ctx.dataVersion,
+          engineHash: ENGINE_FINGERPRINT,
+          setup,
+          actions,
+          actionSources: actions.map(() => "human" as const),
+          result: replay.run.status,
+          termination: "combat",
+        }, ctx.clock());
+      } catch (error) {
+        console.error("playtest capture failed (run):", error);
+      }
+    }
 
     const result = summarizeRun(data, replay.run);
     return db.transaction(async () => {

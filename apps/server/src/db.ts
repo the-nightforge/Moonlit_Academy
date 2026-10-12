@@ -120,6 +120,22 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX story_tickets_by_account ON story_tickets(account_id, status);
   `,
+  // 5 — playtest replay capture (opt-in, offline export; `20` §7).
+  `
+  CREATE TABLE playtest_replays (
+    id TEXT PRIMARY KEY,
+    source TEXT NOT NULL,
+    account_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    mode TEXT NOT NULL,
+    quality TEXT NOT NULL,
+    data_hash TEXT NOT NULL,
+    engine_hash TEXT NOT NULL,
+    replay_json TEXT,
+    reason TEXT,
+    created_at BIGINT NOT NULL
+  );
+  CREATE INDEX playtest_replays_by_account ON playtest_replays(account_id, created_at);
+  `,
 ];
 
 /** Rewrites `?` placeholders to `$1..$n`, skipping single-quoted literals. */

@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "version": "profiles.v1",
+  "note": "Tỷ trọng là kịch bản giả định để benchmark, KHÔNG phải ước lượng người chơi thật. mistakeRate/temperature giữ 0 cho đến khi pilot người thật biện minh được. Budget search là tổng expansions cho một quyết định (novice 0 = heuristic thuần).",
+  "profiles": [
+    {
+      "id": "novice-aggressive",
+      "version": "1",
+      "skill": "novice",
+      "style": "aggressive",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 3, "lethal": 4, "overkill": -0.2, "control": 0.5, "cost": -0.1, "summon": 1 },
+      "search": { "maxExpansions": 0, "depth": 0, "beamWidth": 0, "samples": 0 }
+    },
+    {
+      "id": "novice-defensive",
+      "version": "1",
+      "skill": "novice",
+      "style": "defensive",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 1.5, "lethal": 3, "heal": 2, "preventLethal": 3, "control": 1, "cost": -0.1, "summon": 1 },
+      "search": { "maxExpansions": 0, "depth": 0, "beamWidth": 0, "samples": 0 }
+    },
+    {
+      "id": "novice-combo",
+      "version": "1",
+      "skill": "novice",
+      "style": "combo",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 1.5, "lethal": 3, "synergy": 2, "draw": 1, "levelUp": 1, "cost": -0.1 },
+      "search": { "maxExpansions": 0, "depth": 0, "beamWidth": 0, "samples": 0 }
+    },
+    {
+      "id": "novice-tempo",
+      "version": "1",
+      "skill": "novice",
+      "style": "tempo",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 2, "lethal": 3, "moon": 1, "waste": -1, "cost": -0.2, "control": 0.8 },
+      "search": { "maxExpansions": 0, "depth": 0, "beamWidth": 0, "samples": 0 }
+    },
+    {
+      "id": "regular-aggressive",
+      "version": "1",
+      "skill": "regular",
+      "style": "aggressive",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 3, "lethal": 6, "overkill": -0.5, "heal": 0.5, "preventLethal": 2, "control": 1, "draw": 0.8, "waste": -0.5, "levelUp": 0.5, "moon": 0.5, "summon": 1.5, "synergy": 0.8, "cost": -0.1, "selfDamage": -0.5 },
+      "search": { "maxExpansions": 512, "depth": 3, "beamWidth": 6, "samples": 8 }
+    },
+    {
+      "id": "regular-defensive",
+      "version": "1",
+      "skill": "regular",
+      "style": "defensive",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 1.5, "lethal": 5, "overkill": -0.5, "heal": 2.5, "overheal": -0.5, "preventLethal": 5, "control": 1.5, "draw": 0.8, "waste": -0.5, "levelUp": 0.5, "moon": 0.5, "summon": 1.2, "synergy": 0.5, "cost": -0.1, "selfDamage": -1 },
+      "search": { "maxExpansions": 512, "depth": 3, "beamWidth": 6, "samples": 8 }
+    },
+    {
+      "id": "regular-combo",
+      "version": "1",
+      "skill": "regular",
+      "style": "combo",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 1.8, "lethal": 5, "overkill": -0.5, "heal": 1, "preventLethal": 2.5, "control": 1, "draw": 1.5, "waste": -0.5, "levelUp": 2, "moon": 1, "summon": 1, "synergy": 3, "cost": -0.1, "selfDamage": -0.5 },
+      "search": { "maxExpansions": 512, "depth": 3, "beamWidth": 6, "samples": 8 }
+    },
+    {
+      "id": "regular-tempo",
+      "version": "1",
+      "skill": "regular",
+      "style": "tempo",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 2.5, "lethal": 5, "overkill": -0.5, "heal": 0.8, "preventLethal": 2.5, "control": 1.2, "draw": 1, "reserve": 1, "waste": -1.5, "levelUp": 0.5, "moon": 2, "summon": 1, "synergy": 0.8, "cost": -0.3, "selfDamage": -0.5, "hold": 0.5 },
+      "search": { "maxExpansions": 512, "depth": 3, "beamWidth": 6, "samples": 8 }
+    },
+    {
+      "id": "advanced-aggressive",
+      "version": "1",
+      "skill": "advanced",
+      "style": "aggressive",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 3, "lethal": 8, "overkill": -1, "heal": 0.8, "overheal": -0.5, "preventLethal": 3, "control": 1.5, "draw": 1, "handCap": -0.5, "reserve": 0.5, "waste": -1, "levelUp": 1, "moon": 1, "summon": 2, "synergy": 1, "cost": -0.1, "selfDamage": -0.8, "convert": 1, "mulliganFix": 1 },
+      "search": { "maxExpansions": 2048, "depth": 6, "beamWidth": 12, "samples": 16 }
+    },
+    {
+      "id": "advanced-defensive",
+      "version": "1",
+      "skill": "advanced",
+      "style": "defensive",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 1.5, "lethal": 7, "overkill": -1, "heal": 3, "overheal": -1, "preventLethal": 8, "control": 2, "draw": 1, "handCap": -0.5, "reserve": 0.5, "waste": -1, "levelUp": 1, "moon": 1, "summon": 1.5, "synergy": 0.8, "cost": -0.1, "selfDamage": -1.5, "convert": 1, "mulliganFix": 1 },
+      "search": { "maxExpansions": 2048, "depth": 6, "beamWidth": 12, "samples": 16 }
+    },
+    {
+      "id": "advanced-combo",
+      "version": "1",
+      "skill": "advanced",
+      "style": "combo",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 1.8, "lethal": 7, "overkill": -1, "heal": 1.2, "overheal": -0.5, "preventLethal": 4, "control": 1.5, "draw": 2, "handCap": -0.5, "reserve": 0.5, "waste": -1, "levelUp": 2.5, "moon": 1.5, "summon": 1.5, "synergy": 4, "cost": -0.1, "selfDamage": -0.8, "convert": 1, "mulliganFix": 1 },
+      "search": { "maxExpansions": 2048, "depth": 6, "beamWidth": 12, "samples": 16 }
+    },
+    {
+      "id": "advanced-tempo",
+      "version": "1",
+      "skill": "advanced",
+      "style": "tempo",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": { "damage": 2.5, "lethal": 7, "overkill": -1, "heal": 1, "overheal": -0.5, "preventLethal": 4, "control": 1.5, "draw": 1.2, "handCap": -1, "reserve": 1.5, "waste": -2, "levelUp": 1, "moon": 2.5, "summon": 1.2, "synergy": 1, "cost": -0.3, "selfDamage": -0.8, "hold": 1, "convert": 1, "mulliganFix": 1 },
+      "search": { "maxExpansions": 2048, "depth": 6, "beamWidth": 12, "samples": 16 }
+    }
+  ]
+}

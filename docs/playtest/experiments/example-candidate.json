@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "example-thuong-pha-buff",
+  "baselineDataPath": "packages/data",
+  "candidateDataPath": "output/playtest/example-candidate/data",
+  "manifestPath": "docs/playtest/experiments/example-manifest.json",
+  "calibrationPath": null,
+  "declaredComparisons": ["pvp"],
+  "declaredHypothesis": "Tăng damage của Thương Phá (m05_thuong_pha) từ 3 lên 4 cải thiện winrate của team mang m05 trong PvP mà không đổi matchup khác một cách đáng kể.",
+  "patch": {
+    "file": "cards",
+    "selectId": "m05_thuong_pha",
+    "path": ["effects", 1, "amount"],
+    "from": 3,
+    "to": 4
+  }
+}

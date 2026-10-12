@@ -1,6 +1,7 @@
 export type * from "./types/index";
 export { cloneState } from "./clone";
 export { nextRandom, shuffle } from "./rng";
+export { ENGINE_FINGERPRINT } from "./version";
 export {
   activePlayerState,
   alliesOf,
@@ -33,6 +34,16 @@ export { replayMatch } from "./pvp/replay";
 export { redactEvents, viewFor } from "./pvp/view";
 export { coopRedactEvents, coopViewFor } from "./coop/view";
 export { chooseCombatAction } from "./bot";
+export { makeBotObservation } from "./bot/observation";
+export type { BotMode, BotObservation } from "./bot/observation";
+export { canonicalActionKey, enumerateBotActions } from "./bot/actions";
+export { actionFeatures, FEATURE_NAMES, incomingDamage } from "./bot/features";
+export type { FeatureName, FeatureVector } from "./bot/features";
+export { chooseBotAction, scoreBotAction } from "./bot/policy";
+export type { BotContext, BotDecision, BotProfile, Skill, Style } from "./bot/policy";
+export { chooseRunAction } from "./bot/run-policy";
+export { sampleBeliefStates } from "./bot/belief";
+export { searchBotAction, stateValue } from "./bot/search";
 export { displayDuration, DURATION_STATUSES, getStatus, hasStatus } from "./statuses";
 export { applyAction } from "./apply-action";
 export { autoChoiceAction } from "./choice";

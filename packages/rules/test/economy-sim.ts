@@ -211,6 +211,19 @@ export function botOutcomes(): Map<string, RunResult[]> {
 // separately in the report.
 const PVP_MATCHES_PER_DAY = 6;
 
+/**
+ * A versioned outcome series — measured experiment records replayed through
+ * the economy. The fixed schedules below are `scenario-assumption`: they say
+ * nothing about whether combat changes alter real income.
+ */
+export interface OutcomeSeries {
+  schemaVersion: 1;
+  source: "measured-series";
+  outcomes: readonly ("won" | "lost" | "draw")[];
+}
+
+export type ScheduleLabel = "scenario-assumption" | "measured-series";
+
 export interface PvpStats {
   honorPerDay: number;
   jadePerDay: number;
@@ -218,9 +231,12 @@ export interface PvpStats {
   relicTickets: number;
   heroTickets: number;
   honorLeft: number;
+  schedule: ScheduleLabel;
 }
 
-export function simulatePvp(data: GameData): PvpStats {
+export function simulatePvp(data: GameData, series?: OutcomeSeries): PvpStats {
+  const outcomeAt = (i: number): "won" | "lost" | "draw" =>
+    series ? series.outcomes[i % series.outcomes.length]! : i % 2 === 0 ? "won" : "lost";
   let profile = createProfile(data);
   let honor = 0;
   let pullsBought = 0;
@@ -230,7 +246,7 @@ export function simulatePvp(data: GameData): PvpStats {
     const now = START + day * DAY_MS + 14 * 60 * 60 * 1000;
     for (let game = 0; game < PVP_MATCHES_PER_DAY; game++) {
       const applied = applyPvpResult(data, profile, {
-        result: game % 2 === 0 ? "won" : "lost",
+        result: outcomeAt(game),
         reason: "combat",
         round: 9,
         now: now + game * 10 * 60_000,
@@ -269,11 +285,12 @@ export function simulatePvp(data: GameData): PvpStats {
     relicTickets,
     heroTickets,
     honorLeft: profile.currencies.honor,
+    schedule: series ? "measured-series" : "scenario-assumption",
   };
 }
 
 export function printPvp(stats: PvpStats, pveJadePerDay: number): void {
-  console.log(`\n=== Người chơi PvP: ${PVP_MATCHES_PER_DAY} trận xếp hạng/ngày, thắng 50% × ${DAYS} ngày ===`);
+  console.log(`\n=== Người chơi PvP: ${PVP_MATCHES_PER_DAY} trận xếp hạng/ngày, thắng 50% × ${DAYS} ngày [${stats.schedule}] ===`);
   console.table([{
     "Vinh Dự/ngày": stats.honorPerDay.toFixed(1),
     "Nguyệt Ngọc quy đổi/ngày (cửa hàng Vinh Dự)": stats.jadePerDay.toFixed(1),
@@ -294,16 +311,24 @@ const COOP_WINS_PER_5_DAYS = 2; // 40% — middle of the §8.8 target band.
 export interface CoopStats {
   jadePerDay: number;
   dustPerDay: number;
+  schedule: ScheduleLabel;
 }
 
-export function simulateCoop(data: GameData): CoopStats {
+export function simulateCoop(data: GameData, series?: OutcomeSeries): CoopStats {
+  const fixedOutcome = (day: number): "won" | "lost" => (day % 5 < COOP_WINS_PER_5_DAYS ? "won" : "lost");
+  // Co-op has no draw outcome — a draw entry in a measured series is data error.
+  const outcomeAt = (day: number): "won" | "lost" => {
+    const outcome = series ? series.outcomes[day % series.outcomes.length]! : fixedOutcome(day);
+    if (outcome === "draw") throw new Error("simulateCoop: 'draw' is not a co-op outcome");
+    return outcome;
+  };
   let profile = createProfile(data);
   let jade = 0;
   let dust = 0;
   for (let day = 0; day < DAYS; day++) {
     const now = START + day * DAY_MS + 20 * 60 * 60 * 1000;
     const applied = applyCoopResult(data, profile, {
-      result: day % 5 < COOP_WINS_PER_5_DAYS ? "won" : "lost",
+      result: outcomeAt(day),
       forfeited: false,
       now,
     });
@@ -313,11 +338,15 @@ export function simulateCoop(data: GameData): CoopStats {
     }
     profile = applied.profile;
   }
-  return { jadePerDay: jade / DAYS, dustPerDay: dust / DAYS };
+  return {
+    jadePerDay: jade / DAYS,
+    dustPerDay: dust / DAYS,
+    schedule: series ? "measured-series" : "scenario-assumption",
+  };
 }
 
 export function printCoop(stats: CoopStats, pveJadePerDay: number): void {
-  console.log(`\n=== Người chơi Liên Thủ: 1 trận hàng chờ/ngày, thắng ${COOP_WINS_PER_5_DAYS}/5 × ${DAYS} ngày ===`);
+  console.log(`\n=== Người chơi Liên Thủ: 1 trận hàng chờ/ngày, thắng ${COOP_WINS_PER_5_DAYS}/5 × ${DAYS} ngày [${stats.schedule}] ===`);
   console.table([{
     "Nguyệt Ngọc/ngày (co-op)": stats.jadePerDay.toFixed(1),
     "Nguyệt Trần/ngày": stats.dustPerDay.toFixed(1),

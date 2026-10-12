@@ -1,5 +1,5 @@
-import type { CombatState, GameData, Loadout, PvpSide } from "../src/index";
-import { applyAction, createPvpCombat, pvpBot, viewFor } from "../src/index";
+import type { CombatEvent, CombatState, GameData, Loadout, PvpSide } from "../src/index";
+import { applyAction, createPvpCombat, makeBotObservation, pvpBot, redactEvents } from "../src/index";
 import { nextRandom } from "../src/index";
 
 /** All 3-hero teams from the hero roster, in data order. */
@@ -72,6 +72,7 @@ function playMatch(
   sides: [PvpSide, PvpSide],
 ): { state: CombatState; playedCardIds: string[]; stats: PvpMatchStats } {
   let { state } = createPvpCombat(data, { seed, players: sides });
+  const history: [CombatEvent[], CombatEvent[]] = [[], []];
   const playedCardIds: string[] = [];
   const stats = emptyMatchStats();
   const charmMarks = new Map<string, number>();
@@ -83,9 +84,18 @@ function playMatch(
       state.status === "mulligan"
         ? state.players.find((s) => !s.mulliganDone)!.index
         : state.activePlayer;
-    const action = pvpBot(data, viewFor(state, seat), seat);
+    const obs = makeBotObservation(
+      data,
+      state,
+      seat,
+      "pvp",
+      history[seat]!,
+      sides[seat]!.deckCardIds ?? sides[seat]!.heroIds.flatMap((id) => data.heroes[id]!.cardIds),
+    );
+    const action = pvpBot(data, obs.visibleState, seat);
     const result = applyAction(data, state, action);
     if (!result.ok) throw new Error(`sim: action ${action.type} rejected: ${result.error}`);
+    for (const s of [0, 1] as const) history[s].push(...redactEvents(result.events, s));
     for (const event of result.events) {
       if (event.type === "cardPlayed") playedCardIds.push(state.cards[event.instanceId]?.cardId ?? event.instanceId);
       else if (event.type === "summoned") stats.summonsCreated += 1;

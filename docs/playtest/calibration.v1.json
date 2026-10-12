@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "seed": 20261012,
+  "resamples": 2000,
+  "grid": {
+    "mistakeRates": [0, 0.05, 0.1, 0.15, 0.2],
+    "temperatures": [0, 0.25, 0.5, 1],
+    "budgetScales": [0.5, 1, 2],
+    "weightScales": [0.8, 1, 1.25]
+  },
+  "floors": {
+    "minPlayers": 4,
+    "minReplays": 8,
+    "minDecisions": 20,
+    "minClusters": 4,
+    "scaleFloor": 1
+  },
+  "gates": {
+    "mae": { "estimateMax": 0.1, "upperMax": 0.15 },
+    "behavioral": { "estimateMax": 0.25, "upperMax": 0.4 }
+  },
+  "caps": { "maxRounds": 60, "maxActions": 4000 }
+}

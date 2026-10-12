@@ -1,5 +1,5 @@
-import type { CombatState, CoopSide, GameData, Loadout } from "../src/index";
-import { applyAction, coopBot, createCoopCombat } from "../src/index";
+import type { CombatEvent, CombatState, CoopSide, GameData, Loadout } from "../src/index";
+import { applyAction, coopBot, coopRedactEvents, createCoopCombat, makeBotObservation } from "../src/index";
 import { allTeams } from "./pvp-sim";
 
 const bareLoadout: Loadout = { heroes: {} };
@@ -42,6 +42,7 @@ export interface CoopMatchOutcome {
 /** Two bots share the turn until the match ends or the step cap hits. */
 function playMatch(data: GameData, seed: number, sides: [CoopSide, CoopSide]): CoopMatchOutcome {
   let { state } = createCoopCombat(data, { seed, players: sides, encounterId: "enc_coop_01" });
+  const history: [CombatEvent[], CombatEvent[]] = [[], []];
   const combos = new Set<string>();
   let phase4 = false;
   let revived = false;
@@ -50,9 +51,18 @@ function playMatch(data: GameData, seed: number, sides: [CoopSide, CoopSide]): C
       state.status === "mulligan"
         ? state.players.find((entry) => !entry.mulliganDone)!.index
         : (state.players.find((entry) => !entry.done) ?? state.players[0]!).index;
-    const action = coopBot(data, state, seat);
+    const obs = makeBotObservation(
+      data,
+      state,
+      seat,
+      "coop",
+      history[seat]!,
+      sides[seat]!.deckCardIds ?? sides[seat]!.heroIds.flatMap((id) => data.heroes[id]!.cardIds),
+    );
+    const action = coopBot(data, obs.visibleState, seat);
     const result = applyAction(data, state, action);
     if (!result.ok) throw new Error(`sim: action ${action.type} rejected: ${result.error}`);
+    for (const s of [0, 1] as const) history[s].push(...coopRedactEvents(result.events, s));
     for (const event of result.events) {
       if (event.type === "coopComboTriggered") combos.add(event.comboId);
       if (event.type === "bossPhaseChanged" && event.phase === 4) phase4 = true;

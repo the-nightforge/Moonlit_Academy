@@ -1,8 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import type { Action, Loadout, StorySetup } from "rules";
-import { applyStoryResult, buildLoadout, replayStoryCombat, storyStageUnlocked, unlockedStageIds, validateDeck } from "rules";
+import { applyStoryResult, buildLoadout, ENGINE_FINGERPRINT, replayStoryCombat, storyStageUnlocked, unlockedStageIds, validateDeck } from "rules";
 import { z } from "zod";
 import { HttpError, type AppContext } from "../context";
+import { captureValidatedReplay } from "../playtest/replay-capture";
 import { combatActionSchema, resolveDeck, startBody, TICKET_TTL_MS } from "./runs";
 
 export const MAX_STORY_ACTIONS = 2000;
@@ -78,6 +79,31 @@ export function registerStoryRoutes(app: FastifyInstance, ctx: AppContext): void
     }
     if (replay.state.status !== "won" && replay.state.status !== "lost") throw new HttpError(422, "combat not finished");
     const won = replay.state.status === "won";
+
+    // Playtest capture (`20` §7): opt-in and failure-isolated like runs.
+    if (ctx.config.playtestReplayCapture) {
+      try {
+        await captureValidatedReplay(ctx.db, "story", accountId, {
+          schemaVersion: 1,
+          id: `story:${row.id}`,
+          groupId: "server",
+          participantIds: [`acct:${accountId}`],
+          humanSeats: [0],
+          skillLabels: [],
+          mode: "story",
+          dataHash: ctx.dataVersion,
+          engineHash: ENGINE_FINGERPRINT,
+          setup,
+          actions: actions as Action[],
+          actionSources: actions.map(() => "human" as const),
+          result: replay.state.status,
+          termination: "combat",
+        }, ctx.clock());
+      } catch (error) {
+        console.error("playtest capture failed (story):", error);
+      }
+    }
+
     return db.transaction(async () => {
       const outcome = await ctx.mutateProfile(accountId, request, (profile) => applyStoryResult(data, profile, setup, won));
       await close.run("finished", clock(), JSON.stringify({ won }), row.id);

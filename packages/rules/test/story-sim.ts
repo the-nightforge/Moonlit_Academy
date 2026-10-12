@@ -1,7 +1,7 @@
 declare const console: { log(...args: unknown[]): void; table(...args: unknown[]): void };
 
-import type { CombatState, GameData } from "../src/index";
-import { applyAction, chooseCombatAction, createStoryCombat, starterDeck } from "../src/index";
+import type { CombatEvent, CombatState, GameData } from "../src/index";
+import { applyAction, chooseCombatAction, createStoryCombat, makeBotObservation, starterDeck } from "../src/index";
 
 const MAX_ROUNDS = 60;
 const MAX_STEPS = 4000;
@@ -27,12 +27,15 @@ export function runStoryCell(
   const cell: StoryCell = { runs: 0, won: 0, stalled: 0, roundSum: 0, deckedOut: 0 };
   for (const seed of seeds) {
     let state: CombatState = createStoryCombat(data, { stageId, seed, heroIds, deckCardIds }).state;
+    const history: CombatEvent[] = [];
     let out = false;
     let steps = 0;
     while (state.status !== "won" && state.status !== "lost" && steps < MAX_STEPS) {
-      const result = applyAction(data, state, chooseCombatAction(data, state, 0));
+      const obs = makeBotObservation(data, state, 0, "pve", history, deckCardIds);
+      const result = applyAction(data, state, chooseCombatAction(data, obs.visibleState, 0));
       if (!result.ok) throw new Error(`story-sim ${stageId} seed ${seed}: action rejected: ${result.error}`);
       state = result.state;
+      history.push(...result.events);
       if (result.events.some((event) => event.type === "deckedOut")) out = true;
       steps += 1;
       if (state.round > MAX_ROUNDS) break;

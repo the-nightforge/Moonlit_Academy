@@ -20,7 +20,7 @@ describe("gear routes", () => {
       profile.relics = { r_huyen_vu_giap_phu: { resonance: 3 } };
     });
     const draft: SavedDeck = {
-      id: "", name: "Có giáp", heroIds: TEAM, cardIds: starterDeck(server.data, TEAM).slice(0, 17),
+      id: "", name: "Có giáp", heroIds: TEAM, cardIds: starterDeck(server.data, TEAM),
       weapons: { m05: "w_thiet_thuan" }, relicIds: ["r_huyen_vu_giap_phu"],
     };
     const saved = await call(server, "PUT", "/api/profile/decks", { token, rev: 1, body: { draft } });

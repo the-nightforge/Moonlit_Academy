@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "note": "Balance gates from 2026-10-12-human-calibrated-playtest-design: error=0 required; truncated rate STRICTLY above 0.5% disqualifies; screen 128 / confirm 2000 fixed blocks — no sample-size changes after peeking at significance.",
+  "minBlocks": { "screen": 128, "confirm": 2000 },
+  "maxErrorRate": 0,
+  "maxTruncatedRateExclusive": 0.005,
+  "minPairedBlocks": 32,
+  "effectMinPoints": 0.03,
+  "precisionMaxPoints": 0.1,
+  "bootstrapResamples": 10000,
+  "signFlipResamples": 10000,
+  "alpha": 0.05
+}

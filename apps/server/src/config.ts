@@ -8,6 +8,7 @@ const envSchema = z.object({
   TRUST_PROXY: z.string().optional(),
   ALLOWED_ORIGINS: z.string().optional(),
   BACKUP_DIR: z.string().optional(),
+  PLAYTEST_REPLAY_CAPTURE: z.string().optional(),
 });
 
 export interface ServerConfig {
@@ -22,6 +23,8 @@ export interface ServerConfig {
   allowedOrigins: string[];
   /** `pg_dump` target directory; null disables scheduled backups. */
   backupDir: string | null;
+  /** Opt-in playtest replay capture on validated PvE finishes (`20` §7). */
+  playtestReplayCapture: boolean;
 }
 
 /** Development/test defaults: no Origin check, no backups, real loopback only. */
@@ -33,6 +36,7 @@ export const DEV_CONFIG: ServerConfig = {
   trustProxy: false,
   allowedOrigins: [],
   backupDir: null,
+  playtestReplayCapture: false,
 };
 
 /**
@@ -67,5 +71,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     trustProxy: e.TRUST_PROXY === "1" || e.TRUST_PROXY === "true",
     allowedOrigins: (e.ALLOWED_ORIGINS ?? "").split(",").map((o) => o.trim()).filter((o) => o !== ""),
     backupDir: e.BACKUP_DIR && e.BACKUP_DIR !== "" ? e.BACKUP_DIR : null,
+    playtestReplayCapture: e.PLAYTEST_REPLAY_CAPTURE === "1" || e.PLAYTEST_REPLAY_CAPTURE === "true",
   };
 }

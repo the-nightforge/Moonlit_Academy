@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "example-thuong-pha",
+  "stage": "screen",
+  "seedStart": 1,
+  "blockCount": 8,
+  "mode": "pvp",
+  "poolPath": "docs/playtest/scenarios.v1.json",
+  "profilePath": "docs/playtest/experiments/example-profiles.json"
+}

@@ -25,4 +25,20 @@ describe("economy simulation", () => {
     // 1 trận co-op/ngày thêm tối đa +20% Nguyệt Ngọc so với chỉ PvE (`17` §9.2).
     expect(coop.jadePerDay).toBeLessThanOrEqual(stats.jadePerDay * 0.2);
   });
+
+  it("win schedules are labelled scenario-assumption unless a measured series is given", () => {
+    const data = loadGameData();
+    const pvp = simulatePvp(data);
+    const coop = simulateCoop(data);
+    expect(pvp.schedule).toBe("scenario-assumption");
+    expect(coop.schedule).toBe("scenario-assumption");
+    // A measured series changes both the label and the outcome stream.
+    const allWins = { schemaVersion: 1 as const, source: "measured-series" as const, outcomes: ["won"] as const };
+    const measured = simulatePvp(data, allWins);
+    expect(measured.schedule).toBe("measured-series");
+    expect(measured.honorPerDay).toBeGreaterThan(pvp.honorPerDay);
+    const measuredCoop = simulateCoop(data, allWins);
+    expect(measuredCoop.schedule).toBe("measured-series");
+    expect(measuredCoop.jadePerDay).toBeGreaterThan(coop.jadePerDay);
+  });
 });

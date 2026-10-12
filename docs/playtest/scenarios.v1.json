@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "id": "pool-v1",
+  "note": "Roster pool for playtest experiments. Every entry is a mode-legal team: heroes exist, deck resolves to owned cards ('starter' = starterDeck). Tags are labels for coverage/slicing, not engine input.",
+  "entries": [
+    {
+      "id": "pool_m05_f03_f04",
+      "label": "Mộc Ảnh phòng thủ (sàn mạnh)",
+      "tags": ["starter", "defensive", "veteran"],
+      "heroIds": ["m05", "f03", "f04"],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_f06_m09_f03",
+      "label": "Mê Hoặc giấy (sàn yếu)",
+      "tags": ["starter", "control", "fragile"],
+      "heroIds": ["f06", "m09", "f03"],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_f10_f05_m04",
+      "label": "Song Hành tốc độ",
+      "tags": ["starter", "tempo", "fragile"],
+      "heroIds": ["f10", "f05", "m04"],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_m01_f01_m02",
+      "label": "Tam kiếm cân bằng",
+      "tags": ["starter", "balanced"],
+      "heroIds": ["m01", "f01", "m02"],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_f08_m07_f07",
+      "label": "Hộ tống ẩn thân",
+      "tags": ["starter", "defensive"],
+      "heroIds": ["f08", "m07", "f07"],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_m03_f09_m08",
+      "label": "Lôi ảnh liên hoàn",
+      "tags": ["starter", "combo"],
+      "heroIds": ["m03", "f09", "m08"],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_m10_f02_m06",
+      "label": "Nguyệt sát áp lực",
+      "tags": ["starter", "aggressive"],
+      "heroIds": ["m10", "f02", "m06"],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_f05_m04_f10",
+      "label": "Phong nguyệt nghịch",
+      "tags": ["starter", "tempo"],
+      "heroIds": ["f05", "m04", "f10"],
+      "deck": "starter"
+    }
+  ]
+}
