@@ -113,12 +113,13 @@ export interface HpLossLook {
   label: string;
 }
 
-const HP_LOSS_LOOKS: Record<"loseHp" | "burn" | "reflect" | "bloodMoon" | "decree" | "bloodPact", HpLossLook> = {
+const HP_LOSS_LOOKS: Record<"loseHp" | "burn" | "reflect" | "bloodMoon" | "decree" | "bloodPact" | "fatigue", HpLossLook> = {
   burn: { color: 0xff8a3c, label: "Đốt" },
   reflect: { color: 0x7fb4ff, label: "Phản" },
   bloodMoon: { color: 0xd03a4a, label: "Huyết" },
   bloodPact: { color: 0xd03a4a, label: "Tế" },
   decree: { color: 0xf4ead0, label: "Lệnh" },
+  fatigue: { color: 0x8a94a8, label: "Kiệt" },
   loseHp: { color: 0xb070e0, label: "Mất" },
 };
 

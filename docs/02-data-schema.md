@@ -313,6 +313,7 @@ theo `index`; `decrees` đúng 3 phần tử; id lệnh duy nhất toàn file;
   "maxMulligan": 2,
   "maxIntentsPerRound": 3,
   "bloodMoonHpLoss": 2,
+  "fatigue": { "startRound": 20 },
   "turnSeconds": 60,
   "levelUpRandomBuffs": [
     { "status": "strength", "amount": 1 },
@@ -333,6 +334,7 @@ export interface CombatConfig {
   maxMulligan: number;    // số lá đổi tối đa khi Đổi Bài
   maxIntentsPerRound: number;  // số chiêu tối đa trong chuỗi của một kẻ địch
   bloodMoonHpLoss: number;     // HP mỗi Hero mất đầu lượt khi Huyết Nguyệt
+  fatigue?: { startRound: number };  // Kiệt Sức (`01` §11): từ startRound, đơn vị mất `round − startRound + 1` HP đầu lượt bên mình
   turnSeconds: number;         // đồng hồ lượt offline/PvE — hết giờ tự endTurn (online dùng pvpConfig/coopConfig)
   levelUpRandomBuffs: { status: StatusId; amount: number }[];   // GĐ7: bảng buff của Huyết Mạch (M07), bốc bằng RNG của trận
 }

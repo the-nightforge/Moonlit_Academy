@@ -41,6 +41,8 @@
 | Xuyên (mục tiêu) | `pierceOwnAttacks` | GĐ7b: đòn đơn mục tiêu đánh thêm kẻ địch đứng ngay sau mục tiêu (`01` §5.6) |
 | Hàng sau | `isBackRow` | GĐ7b: kẻ địch còn sống không ở vị trí nhỏ nhất trong các kẻ địch còn sống (`01` §5.6) |
 | Cạn Bài | `deckedOut` | Chồng bài và tay đều rỗng đầu lượt → thua |
+| Kiệt Sức | `fatigue` | Quá `startRound`: đơn vị mất `round − startRound + 1` HP đầu lượt bên mình — trận không thể kẹt vô hạn (`01` §11) |
+| Đầu Hàng | action `surrender` | Người chơi solo (PvE) nhận thua, mọi trạng thái còn sống (`01` §11) |
 | Hiệu ứng | `effect` | |
 | Điều kiện | `condition` | |
 | Mục tiêu | `target` | |

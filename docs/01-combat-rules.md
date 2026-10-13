@@ -735,7 +735,9 @@ healed = min(maxHp − hp, floor(amount × hệ số hồi máu))
 - **Thắng:** mọi kẻ địch ngã → `status = "won"`.
 - **Thua:** mọi Hero ngã → `status = "lost"`.
 - **Thua — Cạn Bài:** đầu lượt người chơi, tay rỗng **và** `drawPile` rỗng → event `deckedOut`, rồi `status = "lost"` (mục 3.1 bước 9).
-- Kiểm tra sau **mỗi effect**, mỗi tick trạng thái. Trận kết thúc thì mọi hành động sau đó bị từ chối. Không còn giới hạn số vòng trong luật (mô phỏng vẫn giữ trần an toàn, `12` §8).
+- **Thua — Đầu Hàng:** action `surrender` (chỉ PvE — PvP/co-op bỏ cuộc qua `forfeit`, mục 15.6): chấp nhận ở mọi trạng thái còn sống của trận → `status = "lost"`.
+- **Kiệt Sức:** nếu `combatConfig.fatigue` có `startRound`, từ vòng đó mỗi đơn vị còn sống mất `round − startRound + 1` HP ngay sau tick trạng thái đầu lượt bên mình (`hpLost` cause `"fatigue"` — bỏ qua giáp). Hai bên chịu cùng lịch; Kiệt Sức có thể giết và kết thúc trận như mọi nguồn mất máu. Cài `startRound` xa hơn mốc thiết kế (vòng thường/Tinh Anh mục tiêu 8–12, `12` §8) nên trận bình thường không chạm.
+- Kiểm tra sau **mỗi effect**, mỗi tick trạng thái. Trận kết thúc thì mọi hành động sau đó bị từ chối. Không còn giới hạn số vòng trong luật — Kiệt Sức thay cho nó (mô phỏng vẫn giữ trần an toàn, `12` §8).
 - Nếu cả hai cùng xảy ra trong một effect (ví dụ damage lan): ưu tiên **thắng**.
 
 ---

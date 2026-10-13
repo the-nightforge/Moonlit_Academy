@@ -534,3 +534,7 @@ mục C). T213 ghi lại **một lần** sau khi đổi xong (golden có duyệt
 | T323 | **[Chiêm Bài]** Chiêm Tinh: `chooseCard` của người chơi xem thêm 2 lá. Bói Nguyệt: đầu lượt Chiêm Bài 3 miễn phí tại bước Chiêm Bài; có cả Vạn Kim → Vạn Kim mở trước, Bói Nguyệt sau |
 | T324 | **[Nguyệt tính]** `moonOverrides` của kẻ địch: chiêu trăng mới đứng **đầu chuỗi**, miễn phí, đúng pha; bot / `knownIntents` (công khai) gộp chiêu trăng của pha kế tiếp |
 | T325 | **[Nhiều ghế]** PvP / co-op: lệnh đầu lượt và ưu đãi áp theo ghế đang tới lượt; `viewFor` có `moonDecrees` (công khai, không lọc); server replay chấp nhận `discardCard` / `bloodPact` hợp lệ và từ chối (`409`/`422`) action gian lận hoặc sai lệnh |
+| T343 | `round 18` (< `fatigue.startRound`), kẻ địch nhàn | `endTurn` | Không `hpLost` cause `"fatigue"` nào — Kiệt Sức chưa mở |
+| T344 | `round 20`, kẻ địch nhàn | `endTurn` | Đầu lượt địch (vòng 20): mỗi địch `hpLost` 1 `"fatigue"`; lượt người kế (vòng 21): mỗi Hero `hpLost` 2 `"fatigue"` — cùng lịch, tăng +1/vòng |
+| T345 | `round 20`, cả hai kẻ địch HP 1 | `endTurn` | Kiệt Sức giết cả hai → `combatEnded result "won"` — trận kẹt tự kết |
+| T346 | `surrender` PvE: lượt người / đang Đổi Bài → `lost` + `combatEnded`; trận đã kết → từ chối; PvP → từ chối (`"only valid in pve"` — dùng `forfeit`) | | |
