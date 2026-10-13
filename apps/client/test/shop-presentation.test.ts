@@ -51,6 +51,9 @@ describe("shop offers", () => {
     p.relics.r_bach_lo_huong_nang = { resonance: 4 };
     const relic = shopOffers(data, p, "honor", now)[2]!.choices.find(x => x.id === "r_bach_lo_huong_nang");
     expect(relic?.outcome).toBe("Cộng Minh 4 → 5");
+    p.relics.r_bach_lo_huong_nang = { resonance: 5 };
+    expect(shopOffers(data, p, "honor", now)[2]!.choices.find(x => x.id === "r_bach_lo_huong_nang")?.outcome)
+      .toBe("Cộng Minh tối đa · nhận " + data.economyConfig.gearDupeMoonStar.rare + " Nguyệt Tinh");
   });
 });
 

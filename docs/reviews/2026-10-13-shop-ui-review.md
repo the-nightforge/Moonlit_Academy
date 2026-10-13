@@ -33,3 +33,20 @@ Không thêm tooltip lặp lại thông tin. Các nhãn “Epic”, “Rare” l
 - [Hộp chọn Nguyệt Bảo trên điện thoại](shop-ui/phone-choice.png)
 
 Kiểm tra trực tiếp ở 1280×720 và 450×800 bằng máy chủ thử nghiệm cục bộ: mua Nguyệt Ngọc, mua Nguyệt Bảo trùng để tăng Cộng Minh, hủy chọn Hero, lỗi hồ sơ cũ, hết lượt, thiếu tiền và ngoại tuyến. Ở 450×800 không có tràn ngang; ảnh trong hộp chọn giữ toàn bộ ảnh gốc và viền sát mép; mọi nút (kể cả vô hiệu hóa) có bo góc và viền.
+
+## Lượt rà soát chi tiết tiếp theo
+
+- Bỏ nhãn loại vật phẩm lặp lại tên phần thưởng và bỏ số dư sau mua khỏi thẻ hàng; số dư sau mua vẫn hiện trong bước xác nhận.
+- Giảm chiều cao thẻ ở màn rộng; hộp chọn dùng ba cột trên desktop để tên và kết quả Cộng Minh dễ đọc hơn. Giữ hai cột trên điện thoại, tăng cỡ chữ trạng thái lựa chọn.
+- Sửa lỗi khi cập nhật hồ sơ trong hộp chọn: từng thẻ, tên truy cập và dòng kết quả đều dùng Cộng Minh mới. Hero vừa được sở hữu được bỏ chọn, ghi “Đã sở hữu” và khóa mua; không giữ nhãn “Chưa sở hữu” cũ.
+- Sửa lỗi hàng trong lưới co chiều cao ở 375×667 khiến giá/nút bị hàng sau che. Hàng giờ lấy đủ chiều cao nội dung, phần danh sách cuộn riêng.
+- Thêm chuyển tab bằng các phím mũi tên, Home và End; chỉ tab đang chọn nằm trong thứ tự Tab, phần nội dung được liên kết với tab đang chọn cho trình đọc màn hình. Escape đóng hộp chọn và trả focus về nút mở hoặc danh sách nếu nút đã bị khóa.
+- Nút tải lại, tab và nút quyết định có kích thước tối thiểu 44 pixel, bo góc và viền trong cả trạng thái vô hiệu hóa.
+- Các chip số dư tự xuống hàng khi số dài; đã kiểm tra giá trị nguyên an toàn tối đa ở 375×667, vẫn hiện đầy đủ số và không tràn ngang.
+
+Các lỗi nhãn cũ và hàng bị co đã được tái hiện trước sửa bằng chính `ShopView`/dữ liệu game trong fixture cục bộ; fixture không mua vật phẩm hoặc dùng tài khoản thật. Sau sửa đã kiểm tra 1280×720, 900×720, 450×800, 375×667, lựa chọn Hero vừa sở hữu, Nguyệt Bảo đạt Cộng Minh tối đa, ngoại tuyến khi đang chọn, phím mũi tên/Home và Escape. Tại 375×667, không tràn ngang, ảnh giữ đúng tỉ lệ trong viền và nút mua nằm trọn trong thẻ. Bộ test client: 332/332; typecheck toàn repo và build client thành công.
+
+- [Nguyệt Tinh sau chỉnh chi tiết](shop-ui/polish-moon.png)
+- [Vinh Dự sau chỉnh chi tiết](shop-ui/polish-honor.png)
+- [Danh sách ở 375×667](shop-ui/polish-phone.png)
+- [Hộp chọn khi Cộng Minh cập nhật tới tối đa](shop-ui/polish-phone-choice.png)

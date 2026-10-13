@@ -37,11 +37,10 @@ function offerCard(offer: ShopOffer, state: ShopViewState): string {
   const accessibilityStatus = offer.status === "ready" ? "" : ", " + status(offer, state.currencies[offer.currency]);
   return '<article class="sh-offer ' + offer.status + '">' +
     '<div class="sh-offer-head"><div class="sh-art">' + image(offer.icon) + '</div>' +
-    '<div><span class="sh-kind">' + (offer.type === "moonJade" ? "Nguyệt Ngọc" : offer.type === "heroChoice" ? "Hero" : "Nguyệt Bảo") +
-    '</span><h2>' + escape(offer.title) + '</h2></div></div>' +
+    '<h2>' + escape(offer.title) + '</h2></div>' +
     '<div class="sh-offer-info"><span class="sh-price">' + image("ui:cur_" + offer.currency, labels[offer.currency]) + '<strong>' + number(offer.price) + '</strong></span>' +
     '<span class="sh-stock">' + icon("action_reset") + escape(stock(offer)) + '</span></div>' +
-    '<div class="sh-offer-footer">' + (offer.status === "ready" ? '<span class="sh-condition">Số dư sau mua: ' + number(state.currencies[offer.currency] - offer.price) + '</span>' : "") +
+    '<div class="sh-offer-footer">' +
     '<button type="button" class="sh-buy" data-buy="' + escape(offer.id) + '" data-control="buy-' + escape(offer.id) + '" aria-label="' + escape(actionName + ", giá " + priceLabel + accessibilityStatus) + '" ' + (disabled ? "disabled" : "") + '>' +
     icon(offer.type === "moonJade" ? "nav_exchange" : "nav_shop") + '<span>' + escape(status(offer, state.currencies[offer.currency])) + '</span></button></div></article>';
 }
@@ -77,6 +76,15 @@ export class ShopView {
       else if (button.dataset.buy) this.actions.buy(button.dataset.buy);
       else if (button.dataset.control === "back") this.actions.back();
       else if (button.dataset.control === "refresh") this.actions.refresh();
+    });
+    this.content.addEventListener("keydown", event => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-tab]");
+      if (!button || button.disabled || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      const next: ShopTab = event.key === "Home" ? "moon" : event.key === "End" ? "honor"
+        : button.dataset.tab === "moon" ? "honor" : "moon";
+      this.actions.tab(next);
+      this.restoreFocus("tab-" + next);
     });
     this.dialog.addEventListener("click", event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-choice]");
@@ -115,7 +123,7 @@ export class ShopView {
       '<span>' + (offer.type === "moonJade" ? "Nhận ngay sau khi đổi" : "Chọn một vật phẩm trước khi mua") + '</span></div></div>' +
       (offer.choices.length ? '<div class="sh-choices" role="group" aria-label="Chọn ' + (offer.type === "heroChoice" ? "Hero" : "Nguyệt Bảo") + '">' +
         offer.choices.map(choice => '<button type="button" class="sh-choice" data-choice="' + escape(choice.id) + '" aria-pressed="false" aria-label="' + escape("Chọn " + choice.name + ", " + choice.outcome) + '">' +
-          image(choice.art) + '<strong>' + escape(choice.name) + '</strong><span>' + escape(choice.outcome) + '</span></button>').join("") + '</div>' : "") +
+          image(choice.art) + '<strong data-choice-name>' + escape(choice.name) + '</strong><span data-choice-outcome>' + escape(choice.outcome) + '</span></button>').join("") + '</div>' : "") +
       '<p class="sh-choice-result" data-choice-result>' + (offer.choices.length ? "Chưa chọn vật phẩm" : "") + '</p>' +
       '<div class="sh-checkout"><span>Giá</span><strong>' + image("ui:cur_" + offer.currency, labels[offer.currency]) + number(offer.price) + '</strong>' +
       '<span>Số dư sau mua</span><strong data-after>' + number(Math.max(0, balance - offer.price)) + '</strong>' +
@@ -131,14 +139,24 @@ export class ShopView {
     if (!this.dialogOfferId || !this.state) return;
     const state = this.state, offer = state.offers.find(row => row.id === this.dialogOfferId);
     const selected = offer?.choices.find(choice => choice.id === this.choiceId);
+    if (this.choiceId && !selected) this.choiceId = "";
     const available = !!offer && offer.status === "ready" && state.online && !state.busy && !state.refreshing;
     this.dialog.querySelectorAll<HTMLButtonElement>("[data-choice]").forEach(button => {
+      const choice = offer?.choices.find(row => row.id === button.dataset.choice);
       const active = button.dataset.choice === this.choiceId;
       button.setAttribute("aria-pressed", String(active));
-      button.disabled = !available || !offer?.choices.some(choice => choice.id === button.dataset.choice);
+      button.disabled = !available || !choice;
+      const name = button.querySelector<HTMLElement>("[data-choice-name]");
+      const outcome = button.querySelector<HTMLElement>("[data-choice-outcome]");
+      const currentName = choice?.name ?? name?.textContent ?? "Vật phẩm";
+      const currentOutcome = choice?.outcome ?? (offer?.type === "heroChoice" ? "Đã sở hữu" : "Không còn lựa chọn");
+      if (name) name.textContent = currentName;
+      if (outcome) outcome.textContent = currentOutcome;
+      button.setAttribute("aria-label", "Chọn " + currentName + ", " + currentOutcome);
     });
     const result = this.dialog.querySelector<HTMLElement>("[data-choice-result]");
-    if (result && offer?.choices.length) result.textContent = selected ? selected.name + " · " + selected.outcome : "Chưa chọn vật phẩm";
+    if (result && offer?.type !== "moonJade") result.textContent = selected ? selected.name + " · " + selected.outcome
+      : offer?.status === "owned-all" ? "Đã sở hữu mọi Hero có thể chọn" : "Chưa chọn vật phẩm";
     const after = this.dialog.querySelector<HTMLElement>("[data-after]");
     if (after && offer) after.textContent = number(Math.max(0, state.currencies[offer.currency] - offer.price));
     const stockNode = this.dialog.querySelector<HTMLElement>("[data-stock]");
@@ -169,14 +187,14 @@ export class ShopView {
       (["moonJade", "moonStar", "honor"] as const).map(id => '<span aria-label="' + labels[id] + ": " + number(state.currencies[id]) + '">' +
         image("ui:cur_" + id) + number(state.currencies[id]) + '</span>').join("") + '</div></header>' +
       '<div class="sh-tabs" role="tablist" aria-label="Loại cửa hàng">' +
-      (["moon", "honor"] as const).map(tab => '<button type="button" role="tab" data-tab="' + tab + '" data-control="tab-' + tab +
-        '" aria-selected="' + (state.tab === tab) + '" ' + (state.busy ? "disabled" : "") + '>' +
+      (["moon", "honor"] as const).map(tab => '<button type="button" role="tab" id="shop-tab-' + tab + '" data-tab="' + tab + '" data-control="tab-' + tab +
+        '" aria-controls="shop-offers" tabindex="' + (state.tab === tab ? "0" : "-1") + '" aria-selected="' + (state.tab === tab) + '" ' + (state.busy ? "disabled" : "") + '>' +
         icon(tab === "moon" ? "cur_moonStar" : "cur_honor") + '<span>' + (tab === "moon" ? "Nguyệt Tinh" : "Vinh Dự") + '</span></button>').join("") + '</div>' +
       '<div class="sh-intro"><div class="sh-current">' + image("ui:cur_" + currency, currentLabel) + '<div><span>Đang có</span><strong>' + number(state.currencies[currency]) + ' ' + currentLabel + '</strong></div></div>' +
       '<p>' + (state.tab === "moon" ? "Nhận Nguyệt Tinh khi quay trùng Hero đã đủ Tinh Hồn." : "Nhận Vinh Dự từ Đấu Trường xếp hạng.") + '</p></div>' +
       (notice ? '<div class="sh-notice" role="status"><span>' + escape(notice) + '</span>' +
         (!state.busy && !state.refreshing ? '<button type="button" class="sh-icon-button" data-control="refresh" aria-label="Cập nhật lại cửa hàng">' + icon("action_reset") + '</button>' : "") + '</div>' : "") +
-      '<main class="sh-offers" tabindex="0" data-control="offers" aria-label="Vật phẩm ' + currentLabel + '">' +
+      '<main id="shop-offers" role="tabpanel" aria-labelledby="shop-tab-' + state.tab + '" class="sh-offers" tabindex="0" data-control="offers" aria-label="Vật phẩm ' + currentLabel + '">' +
       (state.offers.length ? state.offers.map(row => offerCard(row, state)).join("") :
         '<div class="sh-empty">' + icon("nav_shop") + '<p>Cửa hàng này chưa có vật phẩm.</p></div>') + '</main>' +
       '<p class="sh-receipt" role="status" aria-live="polite">' + escape(state.notice) + '</p>';
