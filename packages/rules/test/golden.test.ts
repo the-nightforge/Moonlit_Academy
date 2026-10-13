@@ -8,7 +8,7 @@ import type { Loadout, RunState } from "../src/index";
 import { replayRun, starterDeck } from "../src/index";
 import type { GoldenCombatRecord, GoldenRunRecord } from "./golden";
 import { combatProjection, recordCombat, recordRun, replayCombatRecord, replayRunRecord, sha256 } from "./golden";
-import { recordCombatMatrix, recordRunMatrix } from "./golden-record";
+import { ALL_TEAMS, recordCombatMatrix, recordRunMatrix } from "./golden-record";
 
 const data = loadGameData();
 const here = dirname(fileURLToPath(import.meta.url));
@@ -99,6 +99,14 @@ if (process.env.GOLDEN_RECORD === "1") {
 } else {
   const combats = readJson<GoldenCombatRecord[]>(join(GOLDEN_DIR, "combats.json"));
   const runs = readJson<GoldenRunRecord[]>(join(GOLDEN_DIR, "runs.json"));
+
+  describe("golden matrix coverage", () => {
+    it("ALL_TEAMS covers every hero in the data", () => {
+      const covered = new Set(ALL_TEAMS.flat());
+      const missing = Object.keys(data.heroes).filter((id) => !covered.has(id));
+      expect(missing).toEqual([]);
+    });
+  });
 
   describe("T213: golden PvE records replay identically after the state rework", () => {
     it.each(combats.map((r) => [r.label, r] as const))("combat %s", { timeout: 120_000 }, (_label, record) => {

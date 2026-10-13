@@ -3,7 +3,7 @@ import { shuffle, starterDeck } from "../src/index";
 import type { GoldenCombatRecord, GoldenRunRecord } from "./golden";
 import { recordCombat, recordRun } from "./golden";
 
-/** All 10 teams of 3 from the 5 heroes, in a fixed order. */
+/** All 10 teams of 3 from the 5 original heroes, plus the canonical pool trios so every hero in the data is exercised. */
 export const ALL_TEAMS: [string, string, string][] = [
   ["m05", "f04", "m06"],
   ["m05", "f04", "f03"],
@@ -15,6 +15,12 @@ export const ALL_TEAMS: [string, string, string][] = [
   ["f04", "m06", "f02"],
   ["f04", "f03", "f02"],
   ["m06", "f03", "f02"],
+  ["f06", "m09", "f03"],
+  ["f10", "f05", "m04"],
+  ["m01", "f01", "m02"],
+  ["f08", "m07", "f07"],
+  ["m03", "f09", "m08"],
+  ["m10", "f02", "m06"],
 ];
 
 function weaponFor(data: GameData, heroId: string, index: number): string {
