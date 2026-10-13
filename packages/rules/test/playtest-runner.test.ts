@@ -183,6 +183,31 @@ describe("playtest runner", () => {
     }
   });
 
+  it("pve coverage rotates every profile across every pool entry", () => {
+    // Residual correlation: `prof(block)` = (block+lap)%12 with block=a+8·lap
+    // gives (a+9·lap)%12 → gcd(9,12)=3 pins each entry to only 4 of 12
+    // profiles. The profile index must advance by the entry's own lap.
+    const dir = mkdtempSync(join(tmpdir(), "playtest-prof-"));
+    const p12 = join(dir, "profiles.json");
+    writeFileSync(p12, JSON.stringify({ profiles: Array.from({ length: 12 }, (_, i) => novice(`p${i}`)) }));
+    const m = buildManifest(
+      data,
+      { ...config, mode: "pve", blockCount: 96, profilePath: p12 },
+      { rulesSrcDir: RULES_SRC, sourceRevision: "test" },
+    );
+    const teamProfiles = new Map<string, Set<string>>();
+    for (const s of m.scenarios) {
+      const team = (s.setup as { heroIds: string[] }).heroIds.join("+");
+      const set = teamProfiles.get(team) ?? new Set<string>();
+      for (const p of s.profiles) set.add(p.id);
+      teamProfiles.set(team, set);
+    }
+    expect(teamProfiles.size).toBe(8);
+    for (const [team, profs] of teamProfiles) {
+      expect(profs.size, `${team} only played ${[...profs]}`).toBe(12);
+    }
+  });
+
   it("symmetric_scenarios_pair_into_blocks", () => {
     const m = manifest();
     const records = runExperiment(data, m);

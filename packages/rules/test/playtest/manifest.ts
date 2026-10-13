@@ -227,7 +227,9 @@ export function generateScenarios(
     const content = (n: number) => (block + lap) % n;
     // Same decorrelation for profiles: `k % n` alone pins each entry to one
     // profile whenever gcd(pool, profiles) > 1 (single-seat modes always
-    // drove m03 with one style). +lap cycles every entry through all profiles.
+    // drove m03 with one style). The index must advance by the entry's own
+    // occurrence (entry + lap), not by block — `block + lap` still leaves a
+    // residue class per entry whenever gcd(1+pool, profiles) > 1.
     const prof = (k: number) => profiles[(k + lap) % profiles.length]!;
 
     const push = (suffix: string, leg: ScenarioLeg, setup: Scenario["setup"], seatProfiles: BotProfile[], seats: number) => {
@@ -272,7 +274,7 @@ export function generateScenarios(
           encounterId: encounterIds![content(encounterIds!.length)]!,
           seed,
           deckCardIds: [...entry.deckCardIds],
-        }, [prof(block)], 1);
+        }, [prof(a)], 1);
         break;
       }
       case "story": {
@@ -282,12 +284,12 @@ export function generateScenarios(
           seed,
           heroIds: entry.heroIds,
           deckCardIds: [...entry.deckCardIds],
-        }, [prof(block)], 1);
+        }, [prof(a)], 1);
         break;
       }
       case "run": {
         const entry = pool[a]!;
-        push("single", "single", { heroIds: entry.heroIds, seed, deckCardIds: [...entry.deckCardIds] }, [prof(block)], 1);
+        push("single", "single", { heroIds: entry.heroIds, seed, deckCardIds: [...entry.deckCardIds] }, [prof(a)], 1);
         break;
       }
     }
