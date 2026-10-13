@@ -468,6 +468,41 @@ describe("spirit hero cards", () => {
     expect(shielded.summons![0]!.statuses).toContainEqual({ id: "taunt", value: 1 });
     expect(shielded.heroes[0]!.levelUpCounter).toBe(1);
   });
+
+  it("T341: debuff-scaled payoffs deal base + amount per debuff stack on the target", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: ["f06", "m09", "m05"],
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        p0(s).moonPower = 99;
+        takeCards(s, "f06_mat_ham", 1);
+        takeCards(s, "m09_cam_khuc", 1);
+        takeCards(s, "m09_doan_truong", 1);
+        s.enemies[0]!.statuses.push({ id: "weak", value: 1 }, { id: "burn", value: 1 });
+      },
+    });
+    const cardOf = (s: CombatState, cardId: string) =>
+      p0(s).hand.find((id) => s.cards[id]!.cardId === cardId)!;
+    const hp0 = state.enemies[0]!.hp;
+    // 2 debuff entries on enemy:0 (weak+burn); the card's own weak merges into the stack.
+    let current = playCardState(data, state, cardOf(state, "f06_mat_ham"), "enemy:0");
+    // mat_ham: base 2 + 2 per debuff → 6 (amount 3 dealt 8).
+    expect(current.enemies[0]!.hp).toBe(hp0 - 6);
+    const pending = p0(current).pendingChoice;
+    if (pending?.kind === "chooseCard") {
+      const picked = applyAction(data, current, { type: "chooseCard", instanceId: pending.options[0]! });
+      if (!picked.ok) throw new Error(picked.error);
+      current = picked.state;
+    }
+    const hp1 = current.enemies[1]!.hp;
+    current = playCardState(data, current, cardOf(current, "m09_doan_truong"));
+    // doan_truong: 1 per debuff → 2 on enemy:0, 1 on enemy:1 (its fresh weak) — was 4 / 2.
+    expect(current.enemies[0]!.hp).toBe(hp0 - 6 - 2);
+    expect(current.enemies[1]!.hp).toBe(hp1 - 1);
+    current = playCardState(data, current, cardOf(current, "m09_cam_khuc"), "enemy:0");
+    // cam_khuc: base 3 + 2 per debuff → 7 (amount 3 dealt 9); its charm lands after damage.
+    expect(current.enemies[0]!.hp).toBe(hp0 - 6 - 2 - 7);
+  });
 });
 
 describe("spirit hero leveling with real cards", () => {
