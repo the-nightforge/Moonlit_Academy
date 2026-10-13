@@ -1,6 +1,6 @@
 # Redesign đội `f08+m07+f07` (Huyết Nguyệt — tự hại đổi sức mạnh)
 
-**Ngày:** 2026-10-13 · **Trạng thái:** §4.1 đã triển khai (`phan_huyet` ratio 1.0 + T278); §4.4 đã triển khai (bot: estimate fix + moon unlock, T329/T330); §4.2/§4.3 REFUTED bằng probe · f08 31→36→**41.7%**, advanced 67% · evidence **synthetic** → `human-check-required` · **Nguồn:** `output/playtest/m03-exp/verification.md` + `output/playtest/rescreen/`
+**Ngày:** 2026-10-13 · **Trạng thái:** §4.1 đã triển khai (`phan_huyet` ratio 1.0 + T278); §4.4 đã triển khai (bot: estimate fix + moon unlock T329/T330 + gated keep-value T331); §4.2/§4.3 REFUTED bằng probe · f08 31→36→**41.7%**, advanced 67% · evidence **synthetic** → `human-check-required` · **Nguồn:** `output/playtest/m03-exp/verification.md` + `output/playtest/rescreen/`
 
 ## 1. Bằng chứng đo được
 
@@ -61,7 +61,7 @@ Payoff gated đều `locked` → không có trong starter PvE để hưởng upt
 
 - `missingHpDamage` estimate giờ đọc missing-HP thật của caster thay `target.maxHp × ratio` — payoff được timing đúng (plays 21→19 nhưng win tăng).
 - `bloodMoon` calls được chấm unlock value: +1 synergy/lá `requiresBloodMoon`, +0.5/rider `bloodMoonActive` trong tay. (Phát hiện: nhánh `bloodMoon→control` cũ là dead code — effect thiếu `to` nên không qua `selfEffects`; đã move sang resource walk.)
-- Deferred: "hold" gated cards trong mulligan/keepValue — gated cards đã illegal ngoài trăng nên chỉ ảnh hưởng giữ bài; giá trị nhỏ.
+- "Hold" gated cards (c): `cardKeepValue` discount lá `requiresBloodMoon` khi trăng tắt — ×0.5 nếu còn caller trong decklist (`ownDeckCardIds` — draw pile bị sanitize khỏi observation), ×0.25 nếu không có caller nào; mulligan trả lá gated khi `moonAccess === "none"`. T331 pin 3 tier. Không đo được trong rescreen vì gated cards `locked` khỏi starter PvE — chuẩn bị cho run-draft/PvP loadout.
 - Đo: f08 36.1→41.7% (paired run3↔cand-botfix), toàn pool +0.0pp.
 
 ### 4.5 Không làm
