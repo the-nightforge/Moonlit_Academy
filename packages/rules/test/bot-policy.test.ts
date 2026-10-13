@@ -321,4 +321,48 @@ describe("profiles.v1.json", () => {
     });
     expect(vec2.synergy ?? 0).toBe(0);
   });
+
+  it("T331: a gated card with no moon access is dead weight for keep/discard decisions", () => {
+    const gated = testCard({
+      id: "t_gated",
+      type: "attack",
+      target: "enemy",
+      requiresBloodMoon: true,
+      effects: [{ type: "damage", amount: 18, to: "chosen" }],
+    });
+    const caller = testCard({ id: "t_call", effects: [{ type: "bloodMoon", rounds: 1 }] });
+    const plain = testCard({ id: "t_plain3", effects: [{ type: "drawCards", amount: 1 }] });
+    const discardHold = (
+      data: GameData,
+      state: CombatState,
+      id: string,
+      deck: readonly string[] | null = null,
+    ) =>
+      actionFeatures(data, makeBotObservation(data, state, 0, "pve", [], deck), {
+        type: "discardCard",
+        instanceId: id,
+      }).hold ?? 0;
+
+    // Caller in hand → full keep value.
+    const a = makeTestCombat();
+    const [gA] = handOf(a.state, a.data, [gated, caller]);
+    expect(discardHold(a.data, a.state, gA!)).toBe(-18);
+
+    // Moon already up → full keep value even with no caller.
+    const b = makeTestCombat();
+    const [gB] = handOf(b.state, b.data, [gated, plain]);
+    b.state.bloodMoonRounds = 2;
+    expect(discardHold(b.data, b.state, gB!)).toBe(-18);
+
+    // Caller registered in the decklist but not in hand → halved.
+    const c = makeTestCombat();
+    c.data.cards[caller.id] = caller;
+    const [gC] = handOf(c.state, c.data, [gated, plain]);
+    expect(discardHold(c.data, c.state, gC!, [caller.id, gated.id, plain.id])).toBe(-9);
+
+    // Decklist without a caller → quartered.
+    const d = makeTestCombat();
+    const [gD] = handOf(d.state, d.data, [gated, plain]);
+    expect(discardHold(d.data, d.state, gD!, [gated.id, plain.id])).toBe(-4.5);
+  });
 });
