@@ -1,6 +1,6 @@
 # Redesign đội `f08+m07+f07` (Huyết Nguyệt — tự hại đổi sức mạnh)
 
-**Ngày:** 2026-10-13 · **Trạng thái:** §4.1 đã triển khai (`phan_huyet` ratio 1.0 + T278); §4.4 đã triển khai (bot: estimate fix + moon unlock T329/T330 + gated keep-value T331); §4.2/§4.3 REFUTED bằng probe · f08 31→36→**41.7%**, advanced 67% · evidence **synthetic** → `human-check-required` · **Nguồn:** `output/playtest/m03-exp/verification.md` + `output/playtest/rescreen/`
+**Ngày:** 2026-10-13 · **Trạng thái:** §4.1 đã triển khai (`phan_huyet` ratio 1.0 + T278); §4.4 đã triển khai (bot: estimate fix + moon unlock T329/T330 + gated keep-value T331); §4.2/§4.3 REFUTED bằng probe · f08 31→36→**41.7%**, advanced 67% · **design call §6: giữ hard archetype, spec đóng lever** · evidence **synthetic** → `human-check-required` · **Nguồn:** `output/playtest/m03-exp/verification.md` + `output/playtest/rescreen/`
 
 ## 1. Bằng chứng đo được
 
@@ -79,7 +79,7 @@ Payoff gated đều `locked` → không có trong starter PvE để hưởng upt
 
 ## 6. Mở
 
-- **Design call cần người**: f08 cố ý là "hard archetype" hay nên chơi được ở regular? Advanced 67% (post-4.1) đã đủ nếu intent là deck khó; overall 36% vẫn thấp nếu intent là deck phổ thông.
+- ~~**Design call cần người**~~ → **QUYẾT ĐỊNH (2026-10-13)**: f08 giữ nguyên "hard archetype" — khớp identity forbidden + advanced 67% đã đạt floor 55%. Không ép lên deck phổ thông (mọi data-lever đã refute). Spec đóng về mặt lever; còn `human-check-required` cho corpus người thật.
 - `enc_03`/`enc_elite_01` armor-wall counter cả class deck hit-nhỏ — vấn đề design-level riêng (đã note ở spec m03).
 - Trận stall r61 (2 trận truncated): sustain có thể deadlock — cân nhắc rules-level stall breaker nếu pattern lặp.
-- `missingHpDamage` estimate trong bot chưa chính xác (§4.4) — fix estimate có thể tự thay đổi playrate payoff, nên đo lại sau fix.
+- ~~`missingHpDamage` estimate trong bot chưa chính xác~~ → đã fix ở §4.4 (T329), playrate đo lại: `phan_huyet` 21→19 plays nhưng winrate tăng — timing đúng thay vì spam.
