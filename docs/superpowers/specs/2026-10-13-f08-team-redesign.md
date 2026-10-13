@@ -1,6 +1,6 @@
 # Redesign đội `f08+m07+f07` (Huyết Nguyệt — tự hại đổi sức mạnh)
 
-**Ngày:** 2026-10-13 · **Trạng thái:** §4.1 đã triển khai (`phan_huyet` ratio 1.0 + T278); §4.2 REFUTED bằng probe (−2.8pp — gated cards không nằm trong starter); §4.3 REFUTED; còn §4.4 bot-features mở · evidence **synthetic** → `human-check-required` · **Nguồn:** `output/playtest/m03-exp/verification.md` + `output/playtest/rescreen/`
+**Ngày:** 2026-10-13 · **Trạng thái:** §4.1 đã triển khai (`phan_huyet` ratio 1.0 + T278); §4.4 đã triển khai (bot: estimate fix + moon unlock, T329/T330); §4.2/§4.3 REFUTED bằng probe · f08 31→36→**41.7%**, advanced 67% · evidence **synthetic** → `human-check-required` · **Nguồn:** `output/playtest/m03-exp/verification.md` + `output/playtest/rescreen/`
 
 ## 1. Bằng chứng đo được
 
@@ -57,13 +57,12 @@ Payoff gated đều `locked` → không có trong starter PvE để hưởng upt
 
 `phan_menh` vào starter cho −8.3pp và 0 lần chơi — gating chết, không phải deck thiếu finisher theo nghĩa đơn giản. Chỉ xem lại sau khi §4.2 (uptime) và §4.4 (bot timing) có; hoặc làm payoff gated **rẻ hơn** (cost 5→3, loseHp 4→2) để cửa sổ hẹp vẫn fire được.
 
-### 4.4 Bot-feature gaps (rules-level, không phải data)
+### 4.4 Bot-feature gaps — **đã triển khai** (commit `8cefaea`, +5.6pp đo được)
 
-Nếu muốn gated payoff tồn tại được:
-
-- Chấm `bloodMoon` call theo gated cards đang trên tay ("unlock value").
-- `missingHpDamage` estimate nên đọc missing-HP thật của caster (`source.maxHp − source.hp`) thay `target.maxHp × ratio` — hiện estimate độc lập với trạng thái thật → bot không thấy payoff lớn dần khi f08 bị thương.
-- Feature "hold" cho `requiresBloodMoon` cards khi sắp gọi trăng.
+- `missingHpDamage` estimate giờ đọc missing-HP thật của caster thay `target.maxHp × ratio` — payoff được timing đúng (plays 21→19 nhưng win tăng).
+- `bloodMoon` calls được chấm unlock value: +1 synergy/lá `requiresBloodMoon`, +0.5/rider `bloodMoonActive` trong tay. (Phát hiện: nhánh `bloodMoon→control` cũ là dead code — effect thiếu `to` nên không qua `selfEffects`; đã move sang resource walk.)
+- Deferred: "hold" gated cards trong mulligan/keepValue — gated cards đã illegal ngoài trăng nên chỉ ảnh hưởng giữ bài; giá trị nhỏ.
+- Đo: f08 36.1→41.7% (paired run3↔cand-botfix), toàn pool +0.0pp.
 
 ### 4.5 Không làm
 
