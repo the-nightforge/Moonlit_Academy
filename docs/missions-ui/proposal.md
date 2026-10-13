@@ -2,7 +2,7 @@
 
 Ngày khảo sát: 13/10/2026. Worktree `missions-ui`, nhánh `codex/missions-ui`, nền `main` tại `c506f9f`.
 
-Mục tiêu: người chơi nhận ra ngay việc có thể nhận thưởng, biết phải làm gì tiếp theo và đọc được điều kiện thành tựu. Đây là tài liệu đề xuất cùng bản xem trước độc lập; chưa sửa màn hình game hay logic thưởng. Bản xem trước dùng dữ liệu minh họa, không gọi máy chủ.
+Mục tiêu: người chơi nhận ra ngay việc có thể nhận thưởng, biết phải làm gì tiếp theo và đọc được điều kiện thành tựu. Đây là tài liệu khảo sát và đề xuất ban đầu, trước khi triển khai. Màn hình game đã được thực hiện sau khi duyệt; xem [kết quả triển khai và kiểm chứng](implementation.md). Bản xem trước dùng dữ liệu minh họa, không gọi máy chủ.
 
 ## Tham chiếu và cách áp dụng
 

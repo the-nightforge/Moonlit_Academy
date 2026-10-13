@@ -1,118 +1,122 @@
 import Phaser from "phaser";
-import { claimMission, missionProgress } from "rules";
-import { errorText, mutate } from "../account";
+import { dayKey, weekKey } from "rules";
+import { applyServerProfile, errorText, mutate, type ProfileReply } from "../account";
+import { api, ApiError, auth } from "../api";
 import { session } from "../session";
-import { COLORS, CURRENCY_LABELS, useDesignCamera } from "../ui/theme";
-import { addButton, addScreenHeader, addTabs, addText, alertModal, showToast } from "../ui/widgets";
+import { achievementRows, claimReadyMissions, missionRows, type MissionTab } from "../ui/missions-presentation";
+import { MissionsView } from "../ui/missions-view";
+import { useDesignCamera } from "../ui/theme";
+import { isModalOpen } from "../ui/widgets";
 
-const WIDTH = 1280;
-type Tab = "daily" | "weekly" | "achievements";
-
-const TAB_LABELS: Record<Tab, string> = { daily: "Hằng ngày", weekly: "Hằng tuần", achievements: "Thành tựu" };
-
-/** Daily/weekly missions with a claim button, and one-time achievements (`14` §7–§8). */
+/** Server-authoritative rewards with a native, accessible mission list. */
 export class MissionsScene extends Phaser.Scene {
-  private root!: Phaser.GameObjects.Container;
-  private tab: Tab = "daily";
+  private view: MissionsView | null = null;
+  private tab: MissionTab = "daily";
   private busy = false;
+  private refreshing = false;
+  private networkLost = false;
+  private needsRefresh = false;
+  private generation = 0;
+  private error = "";
+  private notice = "";
+  private periodKey = "";
+  private renderedProfile = session.profile;
+  private renderedOnline = session.online;
 
-  constructor() {
-    super("missions");
-  }
+  constructor() { super("missions"); }
 
   create() {
     useDesignCamera(this);
-    this.busy = false;
-    this.root = this.add.container(0, 0);
+    this.generation++;
+    this.busy = false; this.refreshing = false; this.networkLost = false;
+    this.error = ""; this.notice = ""; this.needsRefresh = false;
+    this.periodKey = this.currentPeriods();
+    this.view = new MissionsView({
+      back: () => this.scene.start("deck-select"),
+      tab: tab => { this.tab = tab; this.render(); },
+      claim: ids => { void this.claim(ids); },
+      navigate: destination => this.scene.start(destination),
+      refresh: () => { void this.refresh(); },
+    });
+    const focus = () => { if (document.visibilityState !== "hidden") void this.refresh(); };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isModalOpen()) { event.preventDefault(); this.scene.start("deck-select"); }
+    };
+    window.addEventListener("focus", focus);
+    window.addEventListener("online", focus);
+    window.addEventListener("keydown", escape);
+    document.addEventListener("visibilitychange", focus);
+    this.time.addEvent({ delay: 1000, loop: true, callback: () => {
+      const key = this.currentPeriods();
+      if (key !== this.periodKey) { this.periodKey = key; this.needsRefresh = true; this.render(); }
+      if (this.needsRefresh && !this.busy && !this.refreshing) void this.refresh();
+    } });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.generation++;
+      window.removeEventListener("focus", focus); window.removeEventListener("online", focus);
+      window.removeEventListener("keydown", escape); document.removeEventListener("visibilitychange", focus);
+      this.view?.destroy(); this.view = null;
+    });
     this.render();
+    void this.refresh();
   }
 
+  update() {
+    if (this.view && (session.profile !== this.renderedProfile || session.online !== this.renderedOnline)) this.render();
+  }
+  private currentPeriods() { return `${dayKey(session.data, Date.now())}:${weekKey(session.data, Date.now())}`; }
+  private current(generation: number, account: number) { return this.view !== null && this.generation === generation && auth.generation === account; }
   private render() {
-    this.root.removeAll(true);
-    const data = session.data;
-    addScreenHeader(this, this.root, {
-      title: "Nhiệm vụ",
-      back: { onBack: () => this.scene.start("deck-select") },
-      currencies: session.profile.currencies,
-    });
-    addTabs(this, this.root, WIDTH / 2, 80, 170, (Object.keys(TAB_LABELS) as Tab[]).map((tab) => ({
-      label: TAB_LABELS[tab],
-      active: tab === this.tab,
-      onClick: () => {
-        this.tab = tab;
-        this.render();
-      },
-    })));
-    const resetHour = (data.economyConfig.resetUtcHour + 7) % 24;
-    const resetText = this.tab === "daily" ? `Làm mới lúc ${resetHour}:00 mỗi ngày (giờ Việt Nam)`
-      : this.tab === "weekly" ? `Làm mới lúc ${resetHour}:00 thứ Hai (giờ Việt Nam)`
-        : "Thành tựu tự nhận thưởng khi đạt";
-    addText(this, this.root, WIDTH / 2, 116, resetText, 13, COLORS.dimText).setOrigin(0.5);
-
-    if (this.tab === "achievements") this.renderAchievements();
-    else this.renderMissions(this.tab);
-  }
-
-  private renderMissions(period: "daily" | "weekly") {
-    const data = session.data;
-    const now = Date.now();
-    Object.values(data.missions).filter((mission) => mission.period === period).forEach((mission, index) => {
-      const y = 180 + index * 90;
-      const progress = Math.min(mission.goal.count, missionProgress(data, session.profile, mission.id, now));
-      // A dry run of the server's claim gives the button state.
-      const claim = claimMission(data, session.profile, mission.id, now);
-      const claimed = !claim.ok && claim.error === "already claimed";
-      this.row(y, claimed);
-      addText(this, this.root, 180, y - 20, mission.name, 16);
-      addText(this, this.root, 180, y + 6, mission.text, 13, COLORS.dimText);
-      this.bar(760, y, progress / mission.goal.count, `${progress}/${mission.goal.count}`);
-      addText(this, this.root, 900, y, `+${mission.reward.moonJade} ◆`, 14, COLORS.gold).setOrigin(0, 0.5);
-      if (claimed) addText(this, this.root, 1060, y, "Đã nhận", 13, COLORS.dimText).setOrigin(0.5);
-      else addButton(this, this.root, 1060, y, 120, "Nhận", () => this.claim(mission.id), claim.ok && !this.busy, {
-        variant: "primary",
-        disabledReason: this.busy ? undefined : "Chưa hoàn thành nhiệm vụ",
-      });
+    const now = Date.now(), data = session.data;
+    this.renderedProfile = session.profile; this.renderedOnline = session.online;
+    this.view?.render({
+      tab: this.tab, missions: { daily: missionRows(data, session.profile, "daily", now), weekly: missionRows(data, session.profile, "weekly", now) },
+      achievements: achievementRows(data, session.profile), currencies: session.profile.currencies,
+      online: session.online && !this.networkLost, busy: this.busy, refreshing: this.refreshing,
+      error: this.error, notice: this.notice, resetHour: (data.economyConfig.resetUtcHour + 7) % 24,
+      periodKey: this.tab === "achievements" ? "permanent" : this.tab === "daily" ? dayKey(data, now) : weekKey(data, now),
     });
   }
 
-  private renderAchievements() {
-    const data = session.data;
-    Object.values(data.achievements).forEach((achievement, index) => {
-      const y = 160 + index * 62;
-      const done = session.profile.achievements.includes(achievement.id);
-      this.row(y, done, 54);
-      addText(this, this.root, 180, y - 12, `${done ? "✓ " : ""}${achievement.name}`, 15, done ? COLORS.gold : COLORS.text);
-      addText(this, this.root, 180, y + 10, achievement.text, 12, COLORS.dimText);
-      addText(this, this.root, 900, y, `+${achievement.reward.moonJade} ◆`, 14, COLORS.gold).setOrigin(0, 0.5);
-      addText(this, this.root, 1060, y, done ? "Đã đạt" : "Chưa đạt", 13, COLORS.dimText).setOrigin(0.5);
+  private async refresh() {
+    if (!this.view || this.busy || this.refreshing || !session.online) { this.needsRefresh = false; return; }
+    const generation = this.generation, account = auth.generation;
+    this.refreshing = true; this.render();
+    try {
+      const reply = await api<ProfileReply>("GET", "/profile");
+      if (!this.current(generation, account)) return;
+      // A settlement can update the profile while this read is in flight.
+      if (reply.rev >= session.rev) applyServerProfile(reply);
+      this.networkLost = false; this.error = "";
+    } catch (error) {
+      if (!this.current(generation, account)) return;
+      this.networkLost = error instanceof ApiError && error.status === 0;
+      this.error = errorText(error);
+    } finally {
+      if (this.current(generation, account)) { this.refreshing = false; this.needsRefresh = false; this.render(); }
+    }
+  }
+
+  private async claim(ids: string[]) {
+    if (!this.view || this.busy || this.refreshing || !session.online || this.networkLost) return;
+    const generation = this.generation, account = auth.generation;
+    this.busy = true; this.error = ""; this.notice = ""; this.render();
+    const result = await claimReadyMissions(session.data, ids, {
+      profile: () => session.profile, now: () => Date.now(),
+      valid: () => this.current(generation, account) && session.online && !this.networkLost,
+      submit: id => mutate("POST", `/missions/${id}/claim`),
     });
-  }
-
-  private row(y: number, done: boolean, height = 76) {
-    const row = this.add.rectangle(WIDTH / 2, y, 1000, height, done ? 0x1f3a2a : 0x141b33).setStrokeStyle(1, COLORS.panelBorder);
-    this.root.add(row);
-  }
-
-  private bar(x: number, y: number, ratio: number, label: string) {
-    this.root.add(this.add.rectangle(x, y, 180, 14, COLORS.hpTrack).setStrokeStyle(1, COLORS.panelBorder));
-    if (ratio > 0) this.root.add(this.add.rectangle(x - 90, y, 180 * ratio, 14, COLORS.goldFill).setOrigin(0, 0.5));
-    addText(this, this.root, x, y - 18, label, 12).setOrigin(0.5);
-  }
-
-  private claim(missionId: string) {
-    if (this.busy) return;
-    this.busy = true;
-    mutate("POST", `/missions/${missionId}/claim`).then(
-      () => {
-        this.busy = false;
-        this.render();
-        showToast(this, [`+${session.data.missions[missionId]!.reward.moonJade} ${CURRENCY_LABELS.moonJade}`]);
-      },
-      (error: unknown) => {
-        this.busy = false;
-        void alertModal(this, errorText(error));
-        this.render();
-      },
-    );
+    if (!this.current(generation, account)) return;
+    this.busy = false;
+    if (result.received) this.notice = `+${result.received} Nguyệt Ngọc`;
+    if (result.error) {
+      this.networkLost = result.error instanceof ApiError && result.error.status === 0;
+      this.error = `${errorText(result.error)}. Bạn có thể thử lại phần thưởng còn lại.`;
+    }
+    this.render();
+    if (this.notice) {
+      const receipt = this.notice;
+      this.time.delayedCall(3500, () => { if (this.current(generation, account) && this.notice === receipt) { this.notice = ""; this.render(); } });
+    }
   }
 }
