@@ -1,6 +1,6 @@
 # Redesign đội `f08+m07+f07` (Huyết Nguyệt — tự hại đổi sức mạnh)
 
-**Ngày:** 2026-10-13 · **Trạng thái:** §4.1 đã triển khai (`f08_phan_huyet` ratio 1.0 + T278) — post-probe = verify chính, evidence **synthetic** → `human-check-required` · **Nguồn:** `output/playtest/m03-exp/verification.md` + `output/playtest/rescreen/`
+**Ngày:** 2026-10-13 · **Trạng thái:** §4.1 đã triển khai (`phan_huyet` ratio 1.0 + T278); §4.2 REFUTED bằng probe (−2.8pp — gated cards không nằm trong starter); §4.3 REFUTED; còn §4.4 bot-features mở · evidence **synthetic** → `human-check-required` · **Nguồn:** `output/playtest/m03-exp/verification.md` + `output/playtest/rescreen/`
 
 ## 1. Bằng chứng đo được
 
@@ -49,9 +49,9 @@ Giữ identity **"forbidden — trả giá HP lấy sức mạnh, high-skill"** 
 
 Payoff đã trong starter, không gating: damage = HP f08 đã mất — đúng identity "trả giá bằng máu". Đo: advanced 42→67% (vượt floor), plays 18→21/36, spillover 0. Single-lever, risk thấp nhất trong các options. Text cập nhật "50% số HP đã mất" → "bằng số HP đã mất".
 
-### 4.2 Moon uptime — chưa test (candidate kế nếu 4.1 không đủ)
+### 4.2 Moon uptime — **REFUTED bằng probe** (`huyet_trieu`+`trieu_huyet` 1→2 vòng: −2.8pp)
 
-`huyet_trieu` (f08) / `trieu_huyet` (m07) / `huyet_te` rounds +1: cửa sổ gated payoff rộng hơn — **điều kiện cần** để §4.3 hoạt động được. Đo trước bằng probe tương tự.
+Payoff gated đều `locked` → không có trong starter PvE để hưởng uptime; lever chỉ chạm conditional riders nhỏ (`huyet_anh` 5→8, `dong_huyet` 2→4) — counters xác nhận play rate flat. Uptime không phải bottleneck.
 
 ### 4.3 Finisher gated vào starter — **REFUTED ở form hiện tại**
 
