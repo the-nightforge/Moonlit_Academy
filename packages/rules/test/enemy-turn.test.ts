@@ -180,7 +180,26 @@ describe("enemy turn", () => {
     const result = applyAction(data, state, { type: "endTurn" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.enemies[0]?.armor).toBe(8);
+    expect(result.state.enemies[0]?.armor).toBe(6);
+  });
+
+  it("T342: puppet_guard defense package — nerfed armor wall values", () => {
+    const { data, state } = makeTestCombat();
+    const def = data.enemies["puppet_guard"]!;
+    const mirror = def.intents.find((i) => i.id === "puppet_mirror_guard")!;
+    const ward = def.moonOverrides!.find((o) => o.intent.id === "puppet_ward_order")!.intent;
+    setIntent(state, 0, mirror, null);
+    setIntent(state, 1, ward, null); // enc_01: puppet_guard + shadow_fox
+
+    const result = applyAction(data, state, { type: "endTurn" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const puppet = result.state.enemies[0]!;
+    // Phản Giáp: 4 armor + reflect 2 (was 5 + 3).
+    expect(puppet.armor).toBe(8); // mirror 4 + ward's 4 AoE
+    expect(puppet.statuses).toContainEqual({ id: "reflect", value: 2 });
+    // Canh Thư Lệnh also arms the ally (was 6).
+    expect(result.state.enemies[1]?.armor).toBe(4);
   });
 
   it("drainMoonPower intent drains the player's moon reserve once (01 §9.3.2)", () => {
