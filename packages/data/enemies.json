@@ -7,15 +7,15 @@
     "intents": [
       { "id": "guard_stance", "name": "Thủ Thế", "kind": "defend", "cost": 1,
         "effects": [
-          { "type": "gainArmor", "amount": 8, "to": "self" },
-          { "type": "applyStatus", "status": "regen", "amount": 2, "to": "self" }
+          { "type": "gainArmor", "amount": 6, "to": "self" },
+          { "type": "applyStatus", "status": "regen", "amount": 1, "to": "self" }
         ] },
       { "id": "heavy_strike", "name": "Trọng Kích", "kind": "attack", "targeting": "random", "cost": 1,
         "effects": [{ "type": "damage", "amount": 6, "to": "chosen" }] },
       { "id": "puppet_mirror_guard", "name": "Phản Giáp", "kind": "defend", "cost": 1,
         "effects": [
-          { "type": "gainArmor", "amount": 5, "to": "self" },
-          { "type": "applyStatus", "status": "reflect", "amount": 3, "to": "self" }
+          { "type": "gainArmor", "amount": 4, "to": "self" },
+          { "type": "applyStatus", "status": "reflect", "amount": 2, "to": "self" }
         ] },
       { "id": "puppet_quake", "name": "Chấn Địa", "kind": "attack", "cost": 2,
         "effects": [{ "type": "damage", "amount": 3, "to": "allEnemies" }] },
@@ -37,7 +37,7 @@
         "phase": "waningCrescent",
         "intent": {
           "id": "puppet_ward_order", "name": "Canh Thư Lệnh", "kind": "defend",
-          "effects": [{ "type": "gainArmor", "amount": 6, "to": "allAllies" }]
+          "effects": [{ "type": "gainArmor", "amount": 4, "to": "allAllies" }]
         }
       }
     ],
