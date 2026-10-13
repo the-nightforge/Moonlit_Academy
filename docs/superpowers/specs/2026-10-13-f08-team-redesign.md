@@ -1,6 +1,6 @@
 # Redesign đội `f08+m07+f07` (Huyết Nguyệt — tự hại đổi sức mạnh)
 
-**Ngày:** 2026-10-13 · **Trạng thái:** chẩn đoán hoàn tất, spec chờ duyệt · **Nguồn:** `output/playtest/m03-exp/verification.md` + `output/playtest/rescreen/` (evidence **synthetic** toàn bộ — không suy ra human-validated)
+**Ngày:** 2026-10-13 · **Trạng thái:** §4.1 đã triển khai (`f08_phan_huyet` ratio 1.0 + T278) — post-probe = verify chính, evidence **synthetic** → `human-check-required` · **Nguồn:** `output/playtest/m03-exp/verification.md` + `output/playtest/rescreen/`
 
 ## 1. Bằng chứng đo được
 
