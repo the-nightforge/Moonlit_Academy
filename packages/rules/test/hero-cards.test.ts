@@ -335,6 +335,25 @@ describe("lunar hero cards and bonds", () => {
     expect(current.heroes[0]!.levelUpCounter).toBe(12);
   });
 
+  it("T278: F08 Phẫn Huyết deals damage equal to all HP the caster has lost", () => {
+    const { data, state } = makeTestCombat({
+      heroIds: ["f08", "f04", "m06"],
+      mutateData: makeEnemiesIdle,
+      setup: (s) => {
+        p0(s).moonPower = 99;
+        s.heroes[0]!.hp = s.heroes[0]!.maxHp - 20;
+        takeCards(s, "f08_phan_huyet", 1);
+      },
+    });
+    const targetId = state.enemies.find((e) => e.alive)!.id;
+    const before = state.enemies.find((e) => e.id === targetId)!.hp;
+    const instanceId = p0(state).hand.find((id) => state.cards[id]!.cardId === "f08_phan_huyet")!;
+    const current = playCardState(data, state, instanceId, targetId);
+    const after = current.enemies.find((e) => e.id === targetId)!.hp;
+    // loseHp resolves first: missing 20 + 3 = 23 → ratio 1.0 deals 23 (0.5 dealt 11).
+    expect(before - after).toBe(23);
+  });
+
   it("T276k: M10 levels at five Khổ Học points; the first scheme card of the next turn resolves twice", () => {
     const { data, state } = makeTestCombat({
       heroIds: ["m10", "f04", "m06"],
