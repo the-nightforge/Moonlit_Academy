@@ -1,272 +1,163 @@
 import Phaser from "phaser";
-import { monthKey, weekKey } from "rules";
-import type { HonorShopItemDef, Rarity, ShopItemDef } from "rules";
-import { achievementNotices, errorText, mutate, type ProfileReply } from "../account";
+import { applyServerProfile, achievementNotices, errorText, mutate, type ProfileReply } from "../account";
+import { api, ApiError, auth } from "../api";
 import { session } from "../session";
-import { COLORS, CURRENCY_LABELS, RARITY_LABELS, SHOP_ITEM_LABELS, useDesignCamera } from "../ui/theme";
-import { addButton, addScreenHeader, addTabs, addText, alertModal, confirmModal, showToast } from "../ui/widgets";
+import { shopOffers, ShopPurchaseFlow, type ShopOffer, type ShopPick, type ShopTab } from "../ui/shop-presentation";
+import { ShopView } from "../ui/shop-view";
+import { useDesignCamera } from "../ui/theme";
+import { monthKey, weekKey } from "rules";
 
-const WIDTH = 1280;
-
-type Tab = "moon" | "honor";
-
-/** Item rows start below the tabs and the tab's one-line note. */
-const ROWS_TOP = 170;
-const ROW_STEP = 150;
-
-/** Open hero-choice picker: which rarity, and what buying one does. */
-interface HeroPick {
-  rarity: Rarity;
-  buy: (heroId: string) => void;
-}
-
-/** Shops (`14` §11, §14.4): Nguyệt Tinh with weekly limits, Vinh Dự with weekly/monthly limits. */
+/** Nguyệt Tinh and Vinh Dự share one server-authoritative storefront. */
 export class ShopScene extends Phaser.Scene {
-  private root!: Phaser.GameObjects.Container;
-  private busy = false;
-  private tab: Tab = "moon";
+  private view: ShopView | null = null;
+  private tab: ShopTab = "moon";
   private backScene = "gacha";
-  private heroPick: HeroPick | null = null;
+  private generation = 0;
+  private flow = new ShopPurchaseFlow();
+  private refreshing = false;
+  private networkLost = false;
+  private error = "";
+  private notice = "";
+  private renderedProfile = session.profile;
+  private renderedOnline = session.online;
+  private renderedPeriod = "";
 
-  constructor() {
-    super("shop");
-  }
+  constructor() { super("shop"); }
 
-  create(data?: { tab?: Tab; back?: string }) {
+  create(entry?: { tab?: ShopTab; back?: string }) {
     useDesignCamera(this);
-    this.busy = false;
-    this.tab = data?.tab === "honor" ? "honor" : "moon";
-    this.backScene = data?.back ?? "gacha";
-    this.heroPick = null;
-    this.root = this.add.container(0, 0);
-    this.render();
-  }
-
-  /** Purchases this week; last week's no longer count. */
-  private boughtThisWeek(itemId: string): number {
-    const shop = session.profile.shop;
-    return shop.weekKey === weekKey(session.data, Date.now()) ? (shop.bought[itemId] ?? 0) : 0;
-  }
-
-  private honorBought(item: HonorShopItemDef): { left: number | null; leftMonth: number | null } {
-    const shop = session.profile.honorShop;
-    const now = Date.now();
-    const week = shop.weekKey === weekKey(session.data, now) ? (shop.bought[item.id] ?? 0) : 0;
-    const month = shop.monthKey === monthKey(session.data, now) ? (shop.boughtMonth[item.id] ?? 0) : 0;
-    return {
-      left: item.limitPerWeek === undefined ? null : item.limitPerWeek - week,
-      leftMonth: item.limitPerMonth === undefined ? null : item.limitPerMonth - month,
+    this.generation++;
+    this.tab = entry?.tab === "honor" ? "honor" : "moon";
+    this.backScene = entry?.back ?? "gacha";
+    this.flow = new ShopPurchaseFlow();
+    this.refreshing = false;
+    this.networkLost = false;
+    this.error = "";
+    this.notice = "";
+    this.view = new ShopView({
+      back: () => this.scene.start(this.backScene),
+      tab: tab => { this.tab = tab; this.error = ""; this.notice = ""; this.render(); },
+      buy: id => { void this.buy(id); },
+      refresh: () => { void this.refresh(); },
+    });
+    const refreshOnFocus = () => { if (document.visibilityState !== "hidden") void this.refresh(); };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !this.view?.confirming) {
+        event.preventDefault();
+        this.scene.start(this.backScene);
+      }
     };
+    window.addEventListener("focus", refreshOnFocus);
+    window.addEventListener("online", refreshOnFocus);
+    window.addEventListener("keydown", escape);
+    document.addEventListener("visibilitychange", refreshOnFocus);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.generation++;
+      window.removeEventListener("focus", refreshOnFocus);
+      window.removeEventListener("online", refreshOnFocus);
+      window.removeEventListener("keydown", escape);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+      this.view?.destroy();
+      this.view = null;
+    });
+    this.render();
+    void this.refresh();
   }
 
-  private itemLabel(item: HonorShopItemDef["item"]): string {
-    switch (item.type) {
-      case "moonJade":
-        return SHOP_ITEM_LABELS.moonJade(item.amount);
-      case "heroChoice":
-        return SHOP_ITEM_LABELS.heroChoice(item.rarity);
-      case "relicChoice":
-        return SHOP_ITEM_LABELS.relicChoice(item.rarity);
-    }
+  update() {
+    if (!this.view) return;
+    const period = this.period();
+    if (session.profile !== this.renderedProfile || session.online !== this.renderedOnline || period !== this.renderedPeriod) this.render();
+  }
+
+  private period() {
+    const now = Date.now();
+    return weekKey(session.data, now) + "|" + monthKey(session.data, now);
+  }
+
+  private current(generation: number, account: number) {
+    return !!this.view && this.generation === generation && auth.generation === account;
   }
 
   private render() {
-    this.root.removeAll(true);
-    const data = session.data;
-    const profile = session.profile;
-    addScreenHeader(this, this.root, {
-      title: this.tab === "honor" ? "Cửa hàng Vinh Dự" : "Cửa hàng Nguyệt Tinh",
-      back: { onBack: () => this.back() },
-      currencies: profile.currencies,
+    if (!this.view) return;
+    this.renderedProfile = session.profile;
+    this.renderedOnline = session.online;
+    this.renderedPeriod = this.period();
+    this.view.render({
+      tab: this.tab,
+      offers: shopOffers(session.data, session.profile, this.tab, Date.now()),
+      currencies: session.profile.currencies,
+      online: session.online && !this.networkLost,
+      busy: this.flow.phase === "pending",
+      refreshing: this.refreshing,
+      error: this.error,
+      notice: this.notice,
     });
-    addTabs(this, this.root, WIDTH / 2, 70, 160, [
-      { label: "Nguyệt Tinh", active: this.tab === "moon", onClick: () => this.openTab("moon") },
-      { label: "Vinh Dự", active: this.tab === "honor", onClick: () => this.openTab("honor") },
-    ]);
-
-    if (this.tab === "moon") {
-      addText(this, this.root, WIDTH / 2, 100, `${CURRENCY_LABELS.moonStar} có từ Hero quay trùng khi Tinh Hồn đã 6 · giới hạn mua làm mới mỗi tuần`, 13, COLORS.dimText).setOrigin(0.5);
-      this.renderMoonShop();
-    } else {
-      addText(this, this.root, WIDTH / 2, 100, `${CURRENCY_LABELS.honor} kiếm từ trận xếp hạng · giới hạn làm mới mỗi tuần/tháng`, 13, COLORS.dimText).setOrigin(0.5);
-      this.renderHonorShop();
-    }
-
-    this.renderHeroPicker();
   }
 
-  private openTab(tab: Tab) {
-    this.tab = tab;
+  private async refresh() {
+    if (!this.view || this.refreshing || this.flow.phase === "pending" || !session.online) return;
+    const generation = this.generation, account = auth.generation;
+    this.refreshing = true;
+    this.render();
+    try {
+      const reply = await api<ProfileReply>("GET", "/profile");
+      if (!this.current(generation, account)) return;
+      if (reply.rev >= session.rev) applyServerProfile(reply);
+      this.networkLost = false;
+      this.error = "";
+    } catch (error) {
+      if (!this.current(generation, account)) return;
+      this.networkLost = error instanceof ApiError && (error.status === 0 || error.status === 503);
+      this.error = errorText(error);
+    } finally {
+      if (this.current(generation, account)) { this.refreshing = false; this.render(); }
+    }
+  }
+
+  private async buy(id: string) {
+    if (!this.view || this.refreshing) return;
+    const generation = this.generation, account = auth.generation, tab = this.tab;
+    const offer = shopOffers(session.data, session.profile, tab, Date.now()).find(row => row.id === id);
+    if (!offer) return;
+    const result = await this.flow.buy(session.data, tab, id, Date.now(), {
+      profile: () => session.profile,
+      online: () => session.online && !this.networkLost && !this.refreshing,
+      valid: () => this.current(generation, account),
+      now: () => Date.now(),
+      confirm: () => this.view?.confirm(offer) ?? Promise.resolve(false),
+      submit: (pick: ShopPick) => mutate<ProfileReply & { achievements?: string[] }>(
+        "POST", tab === "moon" ? "/shop/" + id + "/buy" : "/shop/honor/" + id + "/buy",
+        tab === "moon" ? (pick.heroId ? { heroId: pick.heroId } : {}) : pick,
+      ),
+      changed: () => { if (this.current(generation, account)) this.render(); },
+    });
+    if (!this.current(generation, account)) return;
+    if (result.status === "success") {
+      this.error = "";
+      this.networkLost = false;
+      this.notice = this.receipt(offer, result.pick) + " " + achievementNotices(result.reply.achievements).join(" ");
+      const notice = this.notice;
+      this.time.delayedCall(4500, () => {
+        if (this.current(generation, account) && this.notice === notice) { this.notice = ""; this.render(); }
+      });
+    } else if (result.status === "error") {
+      this.networkLost = result.error instanceof ApiError && (result.error.status === 0 || result.error.status === 503);
+      this.error = errorText(result.error);
+    } else if (result.status === "unavailable") {
+      this.error = "Số dư, giới hạn hoặc lựa chọn đã thay đổi. Cập nhật và thử lại.";
+    }
     this.render();
   }
 
-  /** Esc / ◂: close the hero picker first, then leave. */
-  private back() {
-    if (this.heroPick) {
-      this.heroPick = null;
-      this.render();
-      return;
+  private receipt(offer: ShopOffer, pick: ShopPick) {
+    const name = pick.heroId ? session.data.heroes[pick.heroId]?.name
+      : pick.relicId ? session.data.relics[pick.relicId]?.name : offer.reward;
+    if (pick.relicId) {
+      const outcome = offer.choices.find(choice => choice.id === pick.relicId)?.outcome;
+      if (outcome && outcome !== "Chưa sở hữu") return (name ?? offer.reward) + ": " + outcome + ".";
     }
-    this.scene.start(this.backScene);
-  }
-
-  /** Why a buy button is off: limit reached or not enough currency (null while a buy is in flight). */
-  private buyBlock(price: number, have: number, currency: string, limitsLeft: (number | null)[]): string | undefined {
-    if (this.busy) return undefined;
-    if (limitsLeft.some((left) => left !== null && left <= 0)) return "Đã hết lượt mua trong kỳ này";
-    if (have < price) return `Cần ${price} ${currency} (đang có ${have})`;
-    return undefined;
-  }
-
-  /** "Chọn Hero ▸" row control: unowned count + the button that opens the picker. */
-  private heroChoiceRow(y: number, rarity: Rarity, affordable: boolean, block: string | undefined, buy: (heroId: string) => void): void {
-    const count = this.unownedHeroes(rarity).length;
-    if (count === 0) {
-      addText(this, this.root, 160, y + 28, "Đã sở hữu mọi Hero có thể chọn", 13, COLORS.dimText);
-      return;
-    }
-    addText(this, this.root, 160, y + 28, `${count} Hero ${RARITY_LABELS[rarity]} chưa sở hữu`, 13, COLORS.dimText);
-    addButton(this, this.root, 1020, y, 160, "Chọn Hero ▸", () => {
-      this.heroPick = { rarity, buy };
-      this.render();
-    }, affordable, { disabledReason: block });
-  }
-
-  private unownedHeroes(rarity: Rarity) {
-    return Object.values(session.data.heroes).filter((hero) => hero.rarity === rarity && !session.profile.heroes[hero.id]);
-  }
-
-  /** Overlay grid of the heroes a hero-choice item can grant; picking one buys it. */
-  private renderHeroPicker(): void {
-    const pick = this.heroPick;
-    if (!pick) return;
-    const layer = this.add.container(0, 0).setDepth(300);
-    this.root.add(layer);
-    layer.add(this.add.rectangle(WIDTH / 2, 360, WIDTH, 720, 0x000000, 0.85).setInteractive());
-    addText(this, layer, WIDTH / 2, 60, `Chọn 1 Hero ${RARITY_LABELS[pick.rarity]} chưa sở hữu`, 22, COLORS.gold).setOrigin(0.5);
-    const close = () => {
-      this.heroPick = null;
-      this.render();
-    };
-    const columns = 4;
-    const stepX = 280;
-    const startX = WIDTH / 2 - ((columns - 1) * stepX) / 2;
-    this.unownedHeroes(pick.rarity).forEach((hero, index) => {
-      const x = startX + (index % columns) * stepX;
-      const y = 140 + Math.floor(index / columns) * 50;
-      addButton(this, layer, x, y, 260, hero.name, () => {
-        this.heroPick = null;
-        this.render();
-        pick.buy(hero.id);
-      });
-    });
-    addButton(this, layer, WIDTH / 2, 680, 200, "Đóng", close);
-  }
-
-  private renderMoonShop(): void {
-    const data = session.data;
-    const profile = session.profile;
-    data.economyConfig.moonStarShop.forEach((item, index) => {
-      const y = ROWS_TOP + index * ROW_STEP;
-      const row = this.add.rectangle(WIDTH / 2, y, 1000, 120, 0x141b33).setStrokeStyle(1, COLORS.panelBorder);
-      this.root.add(row);
-      const bought = this.boughtThisWeek(item.id);
-      const left = item.limitPerWeek - bought;
-      addText(this, this.root, 160, y - 30, this.itemLabel(item.item), 18);
-      addText(this, this.root, 160, y - 2, `Giá: ✦ ${item.price} ${CURRENCY_LABELS.moonStar}  ·  tuần này còn ${left}/${item.limitPerWeek}`, 13, COLORS.dimText);
-      const affordable = profile.currencies.moonStar >= item.price && left > 0 && !this.busy;
-      const block = this.buyBlock(item.price, profile.currencies.moonStar, CURRENCY_LABELS.moonStar, [left]);
-      if (item.item.type === "moonJade") {
-        addButton(this, this.root, 1020, y, 160, "Mua", () => void this.buyMoon(item), affordable, { disabledReason: block });
-        return;
-      }
-      this.heroChoiceRow(y, item.item.rarity, affordable, block, (heroId) => void this.buyMoon(item, heroId));
-    });
-  }
-
-  private renderHonorShop(): void {
-    const data = session.data;
-    const profile = session.profile;
-    const items = data.pvpConfig.honorShop ?? [];
-    if (items.length === 0) {
-      addText(this, this.root, WIDTH / 2, 320, "Cửa hàng Vinh Dự chưa mở.", 15, COLORS.dimText).setOrigin(0.5);
-      return;
-    }
-    items.forEach((item, index) => {
-      const y = ROWS_TOP + index * ROW_STEP;
-      const row = this.add.rectangle(WIDTH / 2, y, 1000, 120, 0x141b33).setStrokeStyle(1, COLORS.panelBorder);
-      this.root.add(row);
-      const { left, leftMonth } = this.honorBought(item);
-      const limits = [
-        left !== null ? `tuần còn ${left}/${item.limitPerWeek}` : null,
-        leftMonth !== null ? `tháng còn ${leftMonth}/${item.limitPerMonth}` : null,
-      ].filter(Boolean).join("  ·  ");
-      addText(this, this.root, 160, y - 30, this.itemLabel(item.item), 18);
-      addText(this, this.root, 160, y - 2, `Giá: ❖ ${item.cost} ${CURRENCY_LABELS.honor}${limits ? `  ·  ${limits}` : ""}`, 13, COLORS.dimText);
-      const affordable =
-        profile.currencies.honor >= item.cost && (left === null || left > 0) && (leftMonth === null || leftMonth > 0) && !this.busy;
-      const block = this.buyBlock(item.cost, profile.currencies.honor, CURRENCY_LABELS.honor, [left, leftMonth]);
-      if (item.item.type === "moonJade") {
-        addButton(this, this.root, 1020, y, 160, "Mua", () => void this.buyHonor(item), affordable, { disabledReason: block });
-        return;
-      }
-      if (item.item.type === "heroChoice") {
-        this.heroChoiceRow(y, item.item.rarity, affordable, block, (heroId) => void this.buyHonor(item, { heroId }));
-        return;
-      }
-      // relicChoice: any relic of the rarity — a duplicate just raises Cộng Minh.
-      const it = item.item;
-      const choices = Object.values(data.relics).filter((relic) => relic.rarity === it.rarity);
-      choices.forEach((relic, choice) => {
-        // Below the price line, left-aligned with the item text.
-        const x = 255 + (choice % 4) * 200;
-        const rowY = y + 34 + Math.floor(choice / 4) * 36;
-        addButton(this, this.root, x, rowY, 190, `${relic.name}`, () => void this.buyHonor(item, { relicId: relic.id }), affordable, { disabledReason: block });
-      });
-    });
-  }
-
-  private async buyMoon(item: ShopItemDef, heroId?: string) {
-    if (this.busy) return;
-    const what = heroId ? session.data.heroes[heroId]!.name : "vật phẩm này";
-    const ok = await confirmModal(this, `Dùng ${item.price} ${CURRENCY_LABELS.moonStar} để mua ${what}?`, { label: "Mua" });
-    if (!ok || this.busy) return;
-    this.busy = true;
-    mutate<ProfileReply & { achievements?: string[] }>("POST", `/shop/${item.id}/buy`, heroId ? { heroId } : {}).then(
-      (reply) => {
-        this.busy = false;
-        this.render();
-        showToast(this, [heroId ? `Đã nhận Hero ${what}!` : "Đã mua", ...achievementNotices(reply.achievements)]);
-      },
-      (error: unknown) => {
-        this.busy = false;
-        void alertModal(this, errorText(error));
-        this.render();
-      },
-    );
-  }
-
-  private async buyHonor(item: HonorShopItemDef, pick?: { heroId?: string; relicId?: string }) {
-    if (this.busy) return;
-    const what = pick?.heroId
-      ? session.data.heroes[pick.heroId]!.name
-      : pick?.relicId
-        ? session.data.relics[pick.relicId]!.name
-        : "vật phẩm này";
-    const ok = await confirmModal(this, `Dùng ${item.cost} ${CURRENCY_LABELS.honor} để mua ${what}?`, { label: "Mua" });
-    if (!ok || this.busy) return;
-    this.busy = true;
-    mutate<ProfileReply & { achievements?: string[] }>("POST", `/shop/honor/${item.id}/buy`, pick ?? {}).then(
-      (reply) => {
-        this.busy = false;
-        this.render();
-        showToast(this, [pick ? `Đã nhận ${what}!` : "Đã mua", ...achievementNotices(reply.achievements)]);
-      },
-      (error: unknown) => {
-        this.busy = false;
-        void alertModal(this, errorText(error));
-        this.render();
-      },
-    );
+    return "Đã nhận " + (name ?? offer.reward) + ".";
   }
 }
