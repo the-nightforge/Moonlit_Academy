@@ -140,6 +140,47 @@ function appliesStatus(effects: readonly Effect[], ...statuses: string[]): boole
   return false;
 }
 
+/**
+ * Whether this seat can raise Huyết Nguyệt (own info only): a caller already in
+ * hand, or one still reachable via draw/discard. Draw-pile contents are hidden
+ * from the seat, so the registered decklist is the legal channel — a caller
+ * copy stays reachable while fewer copies are visible than registered.
+ */
+function moonAccess(
+  data: GameData,
+  state: CombatState,
+  seat: number,
+  excludeId: string | undefined,
+  deckCardIds: readonly string[] | null,
+): "hand" | "deck" | "none" {
+  const player = state.players[seat]!;
+  const isCallerDef = (def: CardDef | undefined) =>
+    def !== undefined && hasEffect(def.effects, "bloodMoon");
+  const isCaller = (id: string) => {
+    if (id === excludeId) return false;
+    const inst = state.cards[id];
+    return isCallerDef(inst !== undefined ? cardDefOf(data, state, inst) : undefined);
+  };
+  if (player.hand.some(isCaller)) return "hand";
+  if (player.discardPile.some(isCaller)) return "deck";
+  if (deckCardIds !== null) {
+    const unseen = new Map<string, number>();
+    for (const id of deckCardIds) {
+      if (isCallerDef(data.cards[id])) unseen.set(id, (unseen.get(id) ?? 0) + 1);
+    }
+    for (const id of [...player.hand, ...player.discardPile]) {
+      const cardId = state.cards[id]?.cardId;
+      if (cardId !== undefined && unseen.has(cardId)) {
+        const left = unseen.get(cardId)! - 1;
+        if (left <= 0) unseen.delete(cardId);
+        else unseen.set(cardId, left);
+      }
+    }
+    if (unseen.size > 0) return "deck";
+  }
+  return "none";
+}
+
 /** True when the card has a `bloodMoonActive` conditional anywhere — a rider that empowers under Huyết Nguyệt. */
 function hasBloodMoonBonus(effects: readonly Effect[]): boolean {
   for (const e of effects) {
@@ -334,7 +375,13 @@ function sealValue(data: GameData, state: CombatState, unit: UnitState | undefin
 }
 
 /** Rough keep-value of a card in hand: usable benefit ignoring costs (for discard/mulligan trade-offs). */
-function cardKeepValue(data: GameData, state: CombatState, seat: number, instanceId: string): number {
+function cardKeepValue(
+  data: GameData,
+  state: CombatState,
+  seat: number,
+  instanceId: string,
+  deckCardIds: readonly string[] | null,
+): number {
   const instance = state.cards[instanceId];
   const card = instance ? cardDefOf(data, state, instance) : undefined;
   if (card === undefined) return 0;
@@ -370,6 +417,12 @@ function cardKeepValue(data: GameData, state: CombatState, seat: number, instanc
     }
   };
   walk(card.effects);
+  // A gated payoff with no moon and no caller in reach is dead weight.
+  if (card.requiresBloodMoon === true && state.bloodMoonRounds === 0) {
+    const access = moonAccess(data, state, seat, instanceId, deckCardIds);
+    if (access === "deck") value *= 0.5;
+    else if (access === "none") value *= 0.25;
+  }
   return value + (card.bond !== undefined ? 1 : 0) + card.cost * 0.1;
 }
 
@@ -397,15 +450,20 @@ export function actionFeatures(
     case "mulligan": {
       for (const id of action.instanceIds) {
         const card = cardDefOf(data, state, state.cards[id]!);
+        const deadGate =
+          card !== undefined &&
+          card.requiresBloodMoon === true &&
+          state.bloodMoonRounds === 0 &&
+          moonAccess(data, state, seat, id, obs.ownDeckCardIds) === "none";
         // Returning cards above the early curve fixes the opening hand;
-        // cheap cards are fine to keep.
-        put(vec, "mulliganFix", card !== undefined && card.cost > 5 ? 1 : -0.5);
+        // cheap cards are fine to keep — as are gated cards a caller can unlock.
+        put(vec, "mulliganFix", card !== undefined && (card.cost > 5 || deadGate) ? 1 : -0.5);
       }
       return vec;
     }
     case "chooseCard": {
       put(vec, "draw", 1);
-      put(vec, "hold", cardKeepValue(data, state, seat, action.instanceId));
+      put(vec, "hold", cardKeepValue(data, state, seat, action.instanceId, obs.ownDeckCardIds));
       return vec;
     }
     case "chooseMoon": {
@@ -415,7 +473,7 @@ export function actionFeatures(
     case "discardCard": {
       const rule = decreeModifier(data, state, "discardForMoonPower");
       put(vec, "convert", rule?.moonPower ?? 0);
-      put(vec, "hold", -cardKeepValue(data, state, seat, action.instanceId));
+      put(vec, "hold", -cardKeepValue(data, state, seat, action.instanceId, obs.ownDeckCardIds));
       return vec;
     }
     case "bloodPact": {
