@@ -50,6 +50,13 @@ export class NetSocket {
     else this.outbox.push(text);
   }
 
+  /** Lobby requests never enter the offline outbox. */
+  sendLobby(message: { type: "queue.join" | "queue.leave" | "room.create" | "room.join" | "room.leave" | "practice.start"; [key: string]: unknown }): boolean {
+    if (!this.connected || this.ws?.readyState !== WebSocket.OPEN) return false;
+    this.ws.send(JSON.stringify(message));
+    return true;
+  }
+
   /**
    * Match frames never queue offline: a stale `match.action` landing after a
    * reconnect could apply onto a new phase (`16` §8.3). Returns false when the

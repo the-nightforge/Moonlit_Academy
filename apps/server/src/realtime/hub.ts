@@ -219,7 +219,7 @@ export class RealtimeHub {
       case "room.join":
         this.queue.leave(accountId);
         this.coopQueue.leave(accountId);
-        await this.rooms.join(accountId, message.code, message.deckId);
+        await this.rooms.join(accountId, message.code, message.deckId, message.mode);
         return;
       case "room.leave":
         this.rooms.leave(accountId);

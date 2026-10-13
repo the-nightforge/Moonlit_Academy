@@ -118,10 +118,14 @@ export class RoomManager {
     this.sendTo(accountId, { type: "room.created", code, mode, players: this.publicMembers(room) });
   }
 
-  async join(accountId: number, code: string, deckId: string): Promise<void> {
+  async join(accountId: number, code: string, deckId: string, expectedMode?: "pvp" | "coop"): Promise<void> {
     const room = this.rooms.get(code.toUpperCase());
     if (!room || this.ctx.clock() >= room.expiresAt) {
       this.sendTo(accountId, { type: "error", error: "unknown room" });
+      return;
+    }
+    if (expectedMode && room.mode !== expectedMode) {
+      this.sendTo(accountId, { type: "error", error: "room mode mismatch" });
       return;
     }
     if (room.members.some((m) => m.accountId === accountId) || this.roomOf(accountId)) {

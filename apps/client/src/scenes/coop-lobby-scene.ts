@@ -1,327 +1,255 @@
 import Phaser from "phaser";
-import { validateDeck } from "rules";
+import { dayKey } from "rules";
 import { errorText } from "../account";
-import { api } from "../api";
-import { savedLobbyDeckIndex } from "../home-selection";
+import { api, auth } from "../api";
 import { NetMatch } from "../net/match";
 import { NetSocket } from "../net/socket";
 import type { ServerMessage } from "../net/protocol";
 import { session } from "../session";
 import { prepareCombatAssets } from "../ui/combat-assets";
-import { COLORS, useDesignCamera } from "../ui/theme";
-import { addButton, addScreenHeader, addText, promptModal, showToast } from "../ui/widgets";
+import { coopLobbyError, coopLobbyModel, CoopLobbyFlow, normalizeCoopRoomCode, type CoopAction, type CoopRewards } from "../ui/coop-lobby-presentation";
+import { CoopLobbyView } from "../ui/coop-lobby-view";
+import { useDesignCamera } from "../ui/theme";
 import { describeDeckError } from "./deck-select-scene";
 
-const WIDTH = 1280;
-
-/** `GET /api/coop/me` (`16` §8.9). */
-interface CoopMeReply {
-  clearsToday: number;
-  rewardClaimsLeft: number;
-}
-
-/**
- * Liên Thủ lobby (`17` §9.3): the shared-turn raid lobby — queue, private
- * rooms by code, a bot partner for practice, and today's remaining reward
- * claims. Decks are checked with PvE rules — co-op uses the run loadout.
- */
+/** Liên Thủ uses saved PvE decks, the existing protocol and combat asset gate. */
 export class CoopLobbyScene extends Phaser.Scene {
-  private root!: Phaser.GameObjects.Container;
-  private status: Phaser.GameObjects.Text | null = null;
-  private deckIndex = 0;
-  private roomCode: string | null = null;
-  private roomPlayers = 0;
-  private me: CoopMeReply | null = null;
-  private queued = false;
-  private waitingSeconds = 0;
-  /** Combat art gate (`home-ui-redesign` Task 3): match-start sends wait for "ready". */
+  private view: CoopLobbyView | null = null;
+  private flow = new CoopLobbyFlow();
+  private net: NetSocket | null = null;
+  private rewards: CoopRewards | null = null;
+  private rewardsLoading = false;
+  private rewardsError = "";
   private assetState: "idle" | "loading" | "ready" | "error" = "idle";
   private assetFailed = 0;
-  /** Bumped on create() and shutdown — callbacks captured against an older value go dead. */
+  private networkBlocked = false;
+  private connectionError = false;
+  private error = "";
+  private notice = "";
   private generation = 0;
+  private lastDay = "";
+  private tickSecond = -1;
+  private queueStamp = 0;
+  private renderedProfile = session.profile;
+  private renderedOnline = session.online;
 
-  constructor() {
-    super("coop-lobby");
-  }
+  constructor() { super("coop-lobby"); }
 
   create() {
-    useDesignCamera(this);
     this.generation++;
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.generation++;
-    });
-    this.root = this.add.container(0, 0);
+    useDesignCamera(this);
+    this.flow = new CoopLobbyFlow();
+    this.rewards = null;
+    this.rewardsLoading = false;
+    this.rewardsError = "";
     this.assetState = "idle";
     this.assetFailed = 0;
-    this.deckIndex = savedLobbyDeckIndex(this.decks(), session.selectedDeckId);
-    this.roomCode = session.roomCode;
-    this.roomPlayers = 0;
-    this.me = null;
-    this.queued = false;
-    this.waitingSeconds = 0;
+    this.networkBlocked = false;
+    this.connectionError = false;
+    this.error = "";
+    this.notice = session.notices.splice(0).join(" ");
+    this.tickSecond = -1;
+    this.queueStamp = Date.now();
+    const generation = this.generation, account = auth.generation;
     session.net ??= new NetSocket();
-    const net = session.net;
-    net.onMessage = (message) => this.onMessage(message);
-    net.onStatus = (connected) => {
-      if (!connected) this.queued = false; // the server drops the queue on disconnect
-      this.setStatus(connected ? "Đã kết nối." : "Mất kết nối — đang kết nối lại…");
+    const net = this.net = session.net;
+    // Leave a waiting room from a different lobby before a new Liên Thủ request.
+    let previousRoom = !!session.roomCode;
+    session.roomCode = null;
+    if (previousRoom && net.connected) { net.sendLobby({ type: "room.leave" }); previousRoom = false; }
+    this.lastDay = this.period();
+    this.view = new CoopLobbyView({
+      back: () => this.back(), selectDeck: id => this.selectDeck(id),
+      editDeck: () => this.editDeck(), createDeck: () => { if (this.flow.phase === "idle") this.scene.start("deck-select", { newDeck: true }); },
+      start: (action, code) => this.startRequest(action, code), leave: () => this.leave(),
+      reconnect: () => { if (session.online) net.connect(); },
+      retryAssets: () => { this.assetState = "idle"; this.prepareAssets(); },
+      retryRewards: () => { void this.refreshCoop(); },
+      deckError: error => describeDeckError(session.data, error),
+    });
+    const message = (message: ServerMessage) => { if (this.current(generation, account)) this.onMessage(message); };
+    const status = (connected: boolean) => {
+      if (!this.current(generation, account)) return;
+      if (connected) {
+        if (previousRoom) { net.sendLobby({ type: "room.leave" }); previousRoom = false; }
+        this.networkBlocked = false;
+        if (this.connectionError) { this.error = ""; this.connectionError = false; }
+      } else {
+        this.flow.disconnected();
+        session.roomCode = null;
+        this.networkBlocked = true;
+        this.connectionError = true;
+        this.error = "Mất kết nối — đang kết nối lại. Hãy tìm đồng đội hoặc vào phòng lại sau khi kết nối.";
+      }
       this.render();
     };
-    net.onRecovery = (snapshot) => {
-      if (session.net !== net || snapshot === null) return; // no room — nothing to rejoin
-      // registry.recover already rejoined a known match — never twice (`16` §8.4).
+    net.onMessage = message;
+    net.onStatus = status;
+    net.onRecovery = snapshot => {
+      if (session.net !== net || auth.generation !== account || snapshot === null) return;
       if (session.match?.matchId !== snapshot.matchId) session.match = new NetMatch(net, snapshot);
       session.registry?.retain(session.match!);
-      // This binding can outlive the lobby that made it — route from whichever
-      // scene is live so a reconnect on Home still drops back into the match.
       (this.game.scene.getScenes(true)[0] ?? this).scene.start("combat");
     };
-    net.connect();
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || this.view?.dialogOpen) return;
+      event.preventDefault();
+      if (["joining-queue", "queued", "room"].includes(this.flow.phase)) this.leave();
+      else this.back();
+    };
+    const focus = () => { if (document.visibilityState !== "hidden") void this.refreshCoop(); };
+    window.addEventListener("keydown", escape);
+    window.addEventListener("focus", focus);
+    document.addEventListener("visibilitychange", focus);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      net.onMessage = () => {};
-      net.onStatus = () => {};
-      if (this.queued) net.send({ type: "queue.leave" });
+      this.generation++;
+      const type = this.flow.leave();
+      if (type) net.sendLobby({ type });
+      session.roomCode = null;
+      if (net.onMessage === message) net.onMessage = () => {};
+      if (net.onStatus === status) net.onStatus = () => {};
+      window.removeEventListener("keydown", escape);
+      window.removeEventListener("focus", focus);
+      document.removeEventListener("visibilitychange", focus);
+      this.view?.destroy();
+      this.view = null;
     });
     this.render();
-    showToast(this, session.notices.splice(0));
-    this.refreshCoop();
+    if (session.online) net.connect();
+    void this.refreshCoop();
     this.prepareAssets();
   }
 
-  /** True while this run of the scene is still the live one. */
-  private isCurrent(generation: number): boolean {
-    return this.generation === generation && this.scene.isActive();
+  update() {
+    if (!this.view) return;
+    const second = Math.floor(Date.now() / 1000);
+    if (second !== this.tickSecond) {
+      this.tickSecond = second;
+      const day = this.period();
+      if (day !== this.lastDay) { this.lastDay = day; this.rewards = null; void this.refreshCoop(); this.render(); }
+      else if (this.flow.phase === "queued" || this.flow.phase === "joining-queue") this.render();
+    }
+    if (this.renderedProfile !== session.profile || this.renderedOnline !== session.online) this.render();
   }
 
-  /**
-   * Warms the §7 combat manifest so `match.start` lands on loaded textures.
-   * The gate only blocks *new* match-start sends — `onRecovery` keeps its
-   * straight path to combat so a reconnect still sees the first snapshot.
-   */
-  private prepareAssets(): void {
+  private current(generation: number, account: number) {
+    return !!this.view && this.generation === generation && auth.generation === account && this.net === session.net && this.scene.isActive();
+  }
+  private period() { return dayKey(session.data, this.net?.serverNow() ?? Date.now()); }
+  private gate() {
+    return { online: session.online, connected: !!this.net?.connected && !this.networkBlocked, assets: this.assetState, phase: this.flow.phase, rewards: this.rewards };
+  }
+  private model() { return coopLobbyModel(session.data, session.profile, session.selectedDeckId, this.gate()); }
+  private render() {
+    if (!this.view) return;
+    this.renderedProfile = session.profile;
+    this.renderedOnline = session.online;
+    const waitingSeconds = this.flow.waitingSeconds + Math.max(0, (Date.now() - this.queueStamp) / 1000);
+    this.view.render({ ...this.gate(), data: session.data, profile: session.profile, selectedDeckId: session.selectedDeckId,
+      username: auth.username ?? "Bạn", room: this.flow.room, waitingSeconds, error: this.error, notice: this.notice,
+      rewardsLoading: this.rewardsLoading, rewardsError: this.rewardsError, assetFailed: this.assetFailed });
+  }
+
+  private prepareAssets() {
     if (this.assetState === "loading" || this.assetState === "ready") return;
     this.assetState = "loading";
     this.render();
-    const generation = this.generation;
+    const generation = this.generation, account = auth.generation;
     prepareCombatAssets(this).then(({ failed }) => {
-      if (!this.isCurrent(generation)) return;
+      if (!this.current(generation, account)) return;
       this.assetFailed = failed.length;
       this.assetState = failed.length ? "error" : "ready";
       this.render();
+    }, () => {
+      if (!this.current(generation, account)) return;
+      this.assetFailed = 1;
+      this.assetState = "error";
+      this.render();
     });
   }
-
-  private setStatus(text: string): void {
-    if (this.status === null || this.status.scene === undefined) return;
-    this.status.setText(text);
-  }
-
-  private refreshCoop(): void {
-    api<CoopMeReply>("GET", "/coop/me").then(
-      (me) => {
-        this.me = me;
-        if (this.scene.isActive()) this.render();
-      },
-      (error: unknown) => this.setStatus(`Lỗi hồ sơ Liên Thủ: ${errorText(error)}`),
-    );
-  }
-
-  private decks() {
-    return session.profile.decks;
-  }
-
-  private selectedDeck() {
-    const decks = this.decks();
-    if (this.deckIndex < 0 || decks.length === 0) return null;
-    return decks[Math.min(this.deckIndex, decks.length - 1)]!;
-  }
-
-  /** Co-op decks follow run (PvE) rules (`17` §9.2 — server checks the same). */
-  private deckErrors(deckId: string) {
-    const deck = this.decks().find((d) => d.id === deckId);
-    if (!deck) return [{ code: "badHeroes" } as const];
-    return validateDeck(session.data, session.profile, deck);
-  }
-
-  private onMessage(message: ServerMessage): void {
-    switch (message.type) {
-      case "queue.status":
-        this.queued = true;
-        this.waitingSeconds = message.waitingSeconds;
-        this.render();
-        break;
-      case "room.created":
-      case "room.updated":
-        this.roomCode = message.code;
-        this.roomPlayers = message.players.length;
-        session.roomCode = message.code;
-        this.render();
-        break;
-      case "room.closed":
-        this.roomCode = null;
-        this.roomPlayers = 0;
-        session.roomCode = null;
-        this.setStatus("Phòng đã đóng.");
-        this.render();
-        break;
-      case "match.start":
-        this.queued = false;
-        session.roomCode = null;
-        session.match = new NetMatch(session.net!, message);
-        session.registry?.retain(session.match);
-        this.scene.start("combat");
-        break;
-      case "error":
-        if (message.error !== "already in queue") this.queued = false;
-        this.setStatus(`Lỗi: ${errorText(message.error)}`);
-        this.render();
-        break;
-      default:
-        if ("matchId" in message) session.match?.handle(message);
-        break;
+  private async refreshCoop() {
+    if (!this.view || this.rewardsLoading || !session.online) return;
+    const generation = this.generation, account = auth.generation, period = this.period();
+    this.rewardsLoading = true;
+    this.render();
+    try {
+      const reply = await api<CoopRewards>("GET", "/coop/me");
+      if (!this.current(generation, account) || period !== this.period()) return;
+      this.rewards = reply;
+      this.rewardsError = "";
+    } catch (error) {
+      if (this.current(generation, account) && period === this.period()) this.rewardsError = errorText(error);
+    } finally {
+      if (this.current(generation, account)) {
+        this.rewardsLoading = false;
+        if (period !== this.period()) { this.rewards = null; void this.refreshCoop(); }
+        else this.render();
+      }
     }
   }
 
-  private leaveQueue(): void {
-    this.queued = false;
-    session.net?.send({ type: "queue.leave" });
+  private selectDeck(id: string) {
+    if (!this.model().canEdit || !session.profile.decks.some(deck => deck.id === id)) return;
+    session.selectedDeckId = id;
+    this.error = "";
+    this.notice = "";
     this.render();
   }
-
-  private render(): void {
-    this.root.removeAll(true);
-    addScreenHeader(this, this.root, {
-      title: "Liên Thủ",
-      back: { label: "Chọn bộ bài", onBack: () => this.scene.start("deck-select") },
-      currencies: session.profile.currencies,
-    });
-    addButton(this, this.root, 1180, 680, 160, "Ngắt kết nối", () => {
-      session.net?.close();
-      session.net = null;
-      this.scene.start("deck-select");
-    }, true, { variant: "danger" });
-
-    const me = this.me;
-    const cap = session.data.coopConfig.rewardedMatchesPerDay;
-    addText(
-      this, this.root, 40, 70,
-      me === null
-        ? "Đang tải hồ sơ Liên Thủ…"
-        : `Hôm nay: ${me.clearsToday} trận thắng · còn ${me.rewardClaimsLeft}/${cap} lượt thưởng`,
-      15,
-      COLORS.gold,
-    );
-    addText(
-      this, this.root, 40, 96,
-      "Hai người cùng đánh Nguyệt Thực Ma Quân — lượt chung 45 giây, tay đồng đội lộ bài.",
-      13,
-      COLORS.dimText,
-    );
-    const emotes = (session.data.coopConfig.emotes ?? []).join(" · ");
-    addText(this, this.root, 40, 118, `Biểu cảm: ${emotes}`, 11, COLORS.dimText);
-
-    this.renderDecks();
-    this.renderActions();
-    this.status = addText(this, this.root, WIDTH / 2, 636, "", 14, COLORS.dimText).setOrigin(0.5);
-    this.setStatus(session.net?.connected ? "Đã kết nối." : "Đang kết nối…");
+  private editDeck() {
+    const model = this.model();
+    if (!model.canEdit || !model.selected) return;
+    session.editingDeck = JSON.parse(JSON.stringify(model.selected.deck));
+    this.scene.start("deck-builder", { back: "coop-lobby" });
   }
-
-  private renderDecks(): void {
-    const decks = this.decks();
-    if (decks.length === 0) {
-      addText(this, this.root, WIDTH / 2, 280, "Cần một bộ bài đã lưu để vào trận.", 15, "#ff8080").setOrigin(0.5);
-      addButton(this, this.root, WIDTH / 2, 324, 220, "Tạo bộ bài ▸", () => this.scene.start("deck-select", { newDeck: true }), true, { variant: "primary" });
+  private startRequest(action: CoopAction, rawCode?: string): boolean {
+    const model = this.model();
+    const code = action === "join-room" ? normalizeCoopRoomCode(rawCode ?? "") : null;
+    if (action === "join-room" && !code) { this.error = "Mã phòng cần đúng 6 chữ hoặc số"; this.render(); return false; }
+    if (!this.flow.begin(action, model.canStart)) { this.error = model.blockedReason; this.render(); return false; }
+    const deckId = model.selected!.deck.id;
+    this.error = "";
+    this.notice = "";
+    this.queueStamp = Date.now();
+    const type = { queue: "queue.join", "create-room": "room.create", "join-room": "room.join", practice: "practice.start" }[action] as "queue.join" | "room.create" | "room.join" | "practice.start";
+    if (!this.net?.sendLobby({ type, mode: "coop", deckId, ...(code ? { code } : {}) })) {
+      this.flow.disconnected();
+      this.networkBlocked = true;
+      this.connectionError = true;
+      this.error = "Kết nối vừa ngắt. Chờ kết nối lại trước khi vào trận.";
+      this.render();
+      return false;
+    }
+    this.render();
+    return true;
+  }
+  private leave() {
+    const type = this.flow.leave();
+    if (!type) return;
+    this.net?.sendLobby({ type });
+    session.roomCode = null;
+    this.notice = type === "queue.leave" ? "Đã hủy tìm đồng đội" : "Đã rời phòng";
+    this.error = "";
+    this.render();
+  }
+  private back() {
+    if (["creating-room", "joining-room", "starting-practice", "match"].includes(this.flow.phase)) return;
+    this.scene.start("deck-select");
+  }
+  private onMessage(message: ServerMessage) {
+    if (message.type === "match.start") {
+      this.flow.matchStarted();
+      session.roomCode = null;
+      session.match = new NetMatch(this.net!, message);
+      session.registry?.retain(session.match);
+      this.scene.start("combat");
       return;
     }
-    this.deckIndex = Math.min(this.deckIndex, decks.length - 1);
-    const hint = this.deckIndex < 0 ? "Chọn bộ bài đã lưu để xuất trận" : "Bộ bài Liên Thủ (luật Tầm Nguyệt):";
-    addText(this, this.root, WIDTH / 2, 150, hint, 13, this.deckIndex < 0 ? COLORS.gold : COLORS.dimText).setOrigin(0.5);
-    const data = session.data;
-    decks.forEach((deck, index) => {
-      const picked = index === this.deckIndex;
-      const y = 182 + index * 40;
-      const errors = this.deckErrors(deck.id);
-      const heroes = deck.heroIds.map((id) => data.heroes[id]?.name ?? id).join(" · ");
-      const row = this.add.rectangle(WIDTH / 2, y, 700, 34, picked ? 0x2a3a70 : 0x141b33);
-      row.setStrokeStyle(1, picked ? COLORS.goldFill : COLORS.panelBorder);
-      row.setInteractive({ useHandCursor: true });
-      row.on("pointerup", () => {
-        this.deckIndex = index;
-        session.selectedDeckId = deck.id;
-        this.render();
-      });
-      this.root.add(row);
-      addText(this, this.root, WIDTH / 2 - 336, y, `${picked ? "◉ " : ""}${deck.name} · ${heroes}`, 13).setOrigin(0, 0.5);
-      addText(this, this.root, WIDTH / 2 + 336, y, errors.length === 0 ? "✓" : `⚠ ${describeDeckError(data, errors[0]!)}`, 12, errors.length === 0 ? COLORS.gold : "#ff8080").setOrigin(1, 0.5);
-    });
-  }
-
-  private renderActions(): void {
-    const deck = this.selectedDeck();
-    const assetsReady = this.assetState === "ready";
-    const valid = deck !== null && this.deckErrors(deck.id).length === 0 && assetsReady;
-    const deckId = deck?.id ?? "";
-    const send = (msg: unknown) => session.net?.send(msg);
-    const needDeck = {
-      disabledReason:
-        deck === null
-          ? "Chọn bộ bài đã lưu để xuất trận"
-          : this.assetState === "loading"
-            ? "Đang tải hình trận…"
-            : this.assetState === "error"
-              ? "Lỗi tải hình — nhấn Thử lại"
-              : "Bộ bài chưa hợp lệ — xem lỗi bên cạnh",
-    };
-
-    if (this.assetState === "loading") {
-      addText(this, this.root, 640, 428, "Đang tải hình trận…", 14, COLORS.gold).setOrigin(0.5);
-    } else if (this.assetState === "error") {
-      addText(this, this.root, 580, 428, `Lỗi tải hình (${this.assetFailed} tệp)`, 14, "#ff8080").setOrigin(0.5);
-      addButton(this, this.root, 780, 428, 120, "Thử lại", () => {
-        this.assetState = "idle";
-        this.prepareAssets();
-      });
-    }
-
-    if (this.queued) {
-      const seconds = Math.floor(this.waitingSeconds % 60).toString().padStart(2, "0");
-      addText(this, this.root, 400, 428, `Đang tìm đồng đội · ${Math.floor(this.waitingSeconds / 60)}:${seconds}`, 15, COLORS.gold).setOrigin(0.5);
-      addButton(this, this.root, 400, 470, 220, "Hủy tìm trận", () => this.leaveQueue());
-    } else {
-      addButton(this, this.root, 400, 470, 220, "Vào hàng chờ", () => {
-        this.queued = true;
-        this.waitingSeconds = 0;
-        send({ type: "queue.join", mode: "coop", deckId });
-        this.render();
-      }, valid, { ...needDeck, variant: "primary" });
-    }
-    addButton(this, this.root, 640, 470, 220, "Tạo phòng riêng", () =>
-      send({ type: "room.create", mode: "coop", deckId }), valid, needDeck);
-    addButton(this, this.root, 880, 470, 220, "Vào phòng (mã)", () => {
-      void promptModal(this, "Nhập mã phòng 6 ký tự bạn bè gửi:", { maxLength: 6, placeholder: "VD: K7Q2MX", confirmLabel: "Vào phòng" }).then((code) => {
-        const trimmed = code?.trim().toUpperCase();
-        if (trimmed) send({ type: "room.join", code: trimmed, deckId });
-      });
-    }, valid, needDeck);
-
-    addButton(this, this.root, 400, 518, 220, "Đấu Tập (đồng đội máy)", () =>
-      send({ type: "practice.start", mode: "coop", deckId }), valid, needDeck);
-    addText(
-      this, this.root, 640, 522,
-      "Hàng chờ có thưởng · Phòng riêng và đồng đội máy không thưởng.",
-      12,
-      COLORS.dimText,
-    ).setOrigin(0, 0.5);
-
-    if (this.roomCode) {
-      addText(this, this.root, 640, 560, `Phòng ${this.roomCode} · ${this.roomPlayers}/2 — gửi mã cho bạn bè.`, 14, COLORS.gold).setOrigin(0.5);
-      addButton(this, this.root, 880, 560, 140, "Rời phòng", () => {
-        session.net?.send({ type: "room.leave" });
-        this.roomCode = null;
-        this.roomPlayers = 0;
-        session.roomCode = null;
-        this.render();
-      });
-    }
+    if (this.flow.handle(message)) {
+      if (message.type === "queue.status") this.queueStamp = Date.now();
+      else if (message.type === "room.created" || message.type === "room.updated") { session.roomCode = this.flow.room?.code ?? null; this.error = ""; }
+      else if (message.type === "room.closed") { session.roomCode = null; this.notice = "Phòng đã đóng"; }
+      else if (message.type === "error") this.error = coopLobbyError(message.error);
+      this.render();
+    } else if ("matchId" in message) session.match?.handle(message);
   }
 }
