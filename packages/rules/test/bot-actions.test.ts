@@ -321,6 +321,7 @@ describe("enumerateBotActions", () => {
     }
     // No system-only shapes.
     expect(actions.some((a) => a.type === "forfeit")).toBe(false);
+    expect(actions.some((a) => a.type === "surrender")).toBe(false);
     expect(
       actions.some((a) => a.type === "endTurn" && (a as { system?: boolean }).system === true),
     ).toBe(false);

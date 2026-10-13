@@ -1,4 +1,4 @@
-import { checkCombatEnd, resolveEffects, tickUnitStatuses } from "./effects";
+import { checkCombatEnd, loseHp, processDeaths, resolveEffects, tickUnitStatuses } from "./effects";
 import { chooseHeroTarget } from "./intent";
 import { checkLevelUps, sealFilteredEffects } from "./levelup";
 import { decreeModifier } from "./moon";
@@ -65,6 +65,17 @@ export function runEnemyTurn(data: GameData, state: CombatState, events: CombatE
     if (checkCombatEnd(state, events)) return;
     fireEventHooks(data, state, events, start, state.bloodMoonRounds);
     if (checkCombatEnd(state, events)) return;
+  }
+  // Kiệt Sức (`01` §11): the enemy side bleeds on the same schedule.
+  const fatigue = data.combatConfig.fatigue;
+  if (fatigue !== undefined && state.round >= fatigue.startRound) {
+    const amount = state.round - fatigue.startRound + 1;
+    for (const enemy of state.enemies) {
+      if (!enemy.alive) continue;
+      loseHp(data, enemy, amount, "fatigue", events);
+      processDeaths(data, state, events, undefined);
+      if (checkCombatEnd(state, events)) return;
+    }
   }
   // Mầm Sống / Đoàn Viên (`01` §9.3): the enemy side's turn-start heal.
   decreeTurnHeal(data, state, state.enemies, events);

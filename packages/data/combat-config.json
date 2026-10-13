@@ -7,6 +7,7 @@
   "maxMulligan": 2,
   "maxIntentsPerRound": 3,
   "bloodMoonHpLoss": 2,
+  "fatigue": { "startRound": 20 },
   "turnSeconds": 60,
   "levelUpRandomBuffs": [
     { "status": "strength", "amount": 1 },

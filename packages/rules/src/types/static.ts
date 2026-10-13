@@ -450,6 +450,11 @@ export interface CombatConfig {
   maxMulligan: number;
   maxIntentsPerRound: number;
   bloodMoonHpLoss: number;
+  /**
+   * Kiệt Sức (`01` §11): from `startRound`, every living unit loses
+   * `round - startRound + 1` HP at its side's turn start. Absent = no fatigue.
+   */
+  fatigue?: { startRound: number };
   /** Offline/PvE player-turn clock; the client auto-`endTurn`s at 0.
    *  Online modes use `pvpConfig.turnSeconds` / `coopConfig.turnSeconds` instead. */
   turnSeconds: number;

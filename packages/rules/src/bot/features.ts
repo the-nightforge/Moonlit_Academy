@@ -489,6 +489,7 @@ export function actionFeatures(
       return vec;
     }
     case "forfeit":
+    case "surrender":
       return vec;
   }
 

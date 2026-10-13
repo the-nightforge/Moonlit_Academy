@@ -61,6 +61,18 @@ export function startPlayerTurn(
     fireEventHooks(data, state, events, start, state.bloodMoonRounds);
     if (checkCombatEnd(state, events)) return;
   }
+  // Kiệt Sức (`01` §11): past the configured round, each side bleeds an
+  // escalating HP loss at its own turn start — a stall cannot deadlock forever.
+  const fatigue = data.combatConfig.fatigue;
+  if (fatigue !== undefined && state.round >= fatigue.startRound) {
+    const amount = state.round - fatigue.startRound + 1;
+    for (const unit of [...heroesOf(state, player.index), ...mySummons]) {
+      if (!unit.alive) continue;
+      loseHp(data, unit, amount, "fatigue", events);
+      processDeaths(data, state, events, undefined);
+      if (checkCombatEnd(state, events)) return;
+    }
+  }
   if (state.bloodMoonRounds > 0) {
     for (const hero of heroesOf(state, player.index)) {
       if (!hero.alive) continue;

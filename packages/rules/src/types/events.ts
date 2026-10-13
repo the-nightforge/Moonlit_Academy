@@ -11,6 +11,8 @@ export type Action =
   | { type: "bloodPact"; heroId: string; player?: number }
   /** `system` marks a server-forced end turn (co-op turn timer, `17` §8.3). */
   | { type: "endTurn"; player?: number; system?: true }
+  /** Đầu Hàng (`01` §11): the solo player concedes — the seat loses. PvE only; PvP/co-op resign via `forfeit`. */
+  | { type: "surrender"; player?: number }
   /**
    * [GĐ5] Server-only system action (`01` §15.6): the seat `player` loses the
    * match. Clients cannot send it — `applyAction` rejects it without `system`.
@@ -29,7 +31,7 @@ export type CombatEvent =
   /** [GĐ7] `createCard` put a token in hand; `instanceId: null` when the hand was full (`01` §4.6). */
   | { type: "cardCreated"; cardId: string; instanceId: string | null; player?: number }
   | { type: "damageDealt"; sourceId: string; targetId: string; amount: number; blocked: number; hpLost: number }
-  | { type: "hpLost"; targetId: string; amount: number; cause: "loseHp" | "burn" | "reflect" | "bloodMoon" | "decree" | "bloodPact" }
+  | { type: "hpLost"; targetId: string; amount: number; cause: "loseHp" | "burn" | "reflect" | "bloodMoon" | "decree" | "bloodPact" | "fatigue" }
   | { type: "healed"; targetId: string; amount: number }
   | { type: "armorGained"; targetId: string; amount: number }
   | { type: "armorRemoved"; targetId: string }

@@ -406,6 +406,11 @@ export const combatConfigSchema = z.object({
   maxMulligan: z.number().int().nonnegative(),
   maxIntentsPerRound: z.number().int().positive(),
   bloodMoonHpLoss: z.number().int().nonnegative(),
+  /**
+   * Kiệt Sức (`01` §11): from `startRound`, every living unit loses
+   * `round - startRound + 1` HP at its side's turn start. Absent = off.
+   */
+  fatigue: z.object({ startRound: z.number().int().positive() }).optional(),
   /** Offline/PvE player-turn clock in seconds; expiry auto-ends the turn. */
   turnSeconds: z.number().int().positive(),
   levelUpRandomBuffs: z.array(z.object({ status: statusIdSchema, amount: z.number().int().positive() })).min(1),

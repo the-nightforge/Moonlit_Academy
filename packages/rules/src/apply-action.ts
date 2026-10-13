@@ -372,6 +372,17 @@ export function applyAction(data: GameData, state: CombatState, action: Action):
     if (action.system !== true) return { ok: false, error: "forfeit is a system action" };
     return forfeit(data, state, action);
   }
+  if (action.type === "surrender") {
+    // Đầu Hàng (`01` §11): solo PvE concession at any point of a live combat —
+    // the client is the authority; PvP/co-op resigns go through server `forfeit`.
+    if (state.mode !== "pve") return { ok: false, error: "surrender is only valid in pve" };
+    if (state.status === "won" || state.status === "lost") {
+      return { ok: false, error: "match already ended" };
+    }
+    const next = cloneState(state);
+    next.status = "lost";
+    return { ok: true, state: next, events: [{ type: "combatEnded", result: "lost" }] };
+  }
   const seat = state.players[action.player ?? state.activePlayer];
   if (!seat) return { ok: false, error: "unknown player" };
   // Only the active seat acts (`17` §4.2) — except a seat that still owes its

@@ -9,7 +9,7 @@ import type { BotObservation } from "./observation";
  * plan). Reads only `obs.visibleState` — the sanitized seat view — so a policy
  * can enumerate without touching authoritative state. Mirrors `applyAction`'s
  * gates exactly: anything returned here applies, anything not returned does
- * not. System-only actions (`forfeit`, `endTurn.system`) are never produced.
+ * not. System-only/terminal actions (`forfeit`, `endTurn.system`, `surrender`) are never produced.
  */
 export function enumerateBotActions(data: GameData, obs: BotObservation): readonly Action[] {
   const state = obs.visibleState;
@@ -141,6 +141,8 @@ export function canonicalActionKey(action: Action): string {
       return `endTurn|${player}|${action.system === true ? "system" : ""}`;
     case "forfeit":
       return `forfeit|${player}|${action.reason}`;
+    case "surrender":
+      return `surrender|${player}`;
     default: {
       const exhaustive: never = action;
       return String(exhaustive);
