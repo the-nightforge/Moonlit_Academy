@@ -2,7 +2,7 @@
 
 Ngày khảo sát: 13/10/2026. Worktree `mastery-ui`, nhánh `codex/mastery-ui`, nền `main` tại `07522b0`.
 
-Mục tiêu: tìm Hero có lượt mở, đọc đủ hiệu ứng của lá trước khi chọn, hiểu tiêu hao và kết quả mở. Tài liệu dựa trên mã `mastery-scene.ts`, luật `meta/profile.ts`, cấu hình và dữ liệu hiện hành. [Bản xem trước tương tác](mockup.html) dùng dữ liệu minh họa; chưa thay đổi màn game hoặc API.
+Mục tiêu: tìm Hero có lượt mở, đọc đủ hiệu ứng của lá trước khi chọn, hiểu tiêu hao và kết quả mở. Tài liệu dựa trên mã `mastery-scene.ts`, luật `meta/profile.ts`, cấu hình và dữ liệu hiện hành. [Bản xem trước tương tác](mockup.html) dùng dữ liệu minh họa, được làm ở bước đề xuất. Màn game đã triển khai sau khi duyệt; xem [kết quả và kiểm chứng](implementation.md).
 
 ## Tham chiếu UI
 
