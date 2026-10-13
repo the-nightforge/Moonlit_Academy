@@ -140,11 +140,26 @@ function appliesStatus(effects: readonly Effect[], ...statuses: string[]): boole
   return false;
 }
 
-/** Damage estimate of one effect on `target` (≈ the old `effectDamage`). */
-function effectDamage(effect: Effect, target: UnitState | undefined, stat: number): number {
+/** True when the card has a `bloodMoonActive` conditional anywhere — a rider that empowers under Huyết Nguyệt. */
+function hasBloodMoonBonus(effects: readonly Effect[]): boolean {
+  for (const e of effects) {
+    if (e.type === "conditional") {
+      if (e.condition.type === "bloodMoonActive") return true;
+      if (hasBloodMoonBonus(e.then) || hasBloodMoonBonus(e.else ?? [])) return true;
+    }
+    if (e.type === "execute" && hasBloodMoonBonus(e.elseEffects ?? [])) return true;
+  }
+  return false;
+}
+
+/** Damage estimate of one effect on `target` (≈ the old `effectDamage`). `source` is the unit paying missing HP. */
+function effectDamage(effect: Effect, target: UnitState | undefined, stat: number, source?: UnitState): number {
   if (effect.type === "damage") return effect.amount * (effect.hits ?? 1);
-  if (effect.type === "missingHpDamage" && target !== undefined) {
-    return Math.floor(target.maxHp * effect.ratio) * (effect.hits ?? 1);
+  if (effect.type === "missingHpDamage") {
+    // `missingHpDamage` resolves off the caster's missing HP (effects.ts).
+    const unit = source ?? target;
+    if (unit === undefined) return 0;
+    return Math.floor((unit.maxHp - unit.hp) * effect.ratio) * (effect.hits ?? 1);
   }
   if (effect.type === "scaledDamage") {
     const base = effect.base ?? 0;
@@ -155,7 +170,7 @@ function effectDamage(effect: Effect, target: UnitState | undefined, stat: numbe
     const threshold = target.maxHp * effect.threshold;
     const execute = target.hp <= threshold ? target.hp + target.armor : 0;
     return execute + (effect.elseEffects ?? []).reduce(
-      (sum, sub) => sum + effectDamage(sub, target, stat),
+      (sum, sub) => sum + effectDamage(sub, target, stat, source),
       0,
     );
   }
@@ -248,13 +263,13 @@ export function incomingDamage(data: GameData, state: CombatState, unit: UnitSta
     const trait = def.moonOverrides?.find((entry) => entry.phase === nextPhase)?.intent;
     const kit = trait !== undefined ? [trait, ...affordable] : affordable;
     return kit.reduce(
-      (sum, intent) => sum + intent.effects.reduce((s, e) => s + effectDamage(e, unit, 0), 0),
+      (sum, intent) => sum + intent.effects.reduce((s, e) => s + effectDamage(e, unit, 0, unit), 0),
       0,
     );
   }
   if (isSummon(unit)) {
     return (data.summons[unit.summonId]?.action ?? []).reduce(
-      (sum, e) => sum + effectDamage(e, unit, 0),
+      (sum, e) => sum + effectDamage(e, unit, 0, unit),
       0,
     );
   }
@@ -262,7 +277,7 @@ export function incomingDamage(data: GameData, state: CombatState, unit: UnitSta
   if (def === undefined) return 0;
   return [...def.cardIds, ...def.lockedCardIds].reduce(
     (sum, cardId) =>
-      sum + (data.cards[cardId]?.effects ?? []).reduce((s, e) => s + effectDamage(e, unit, 0), 0),
+      sum + (data.cards[cardId]?.effects ?? []).reduce((s, e) => s + effectDamage(e, unit, 0, unit), 0),
     0,
   );
 }
@@ -323,6 +338,12 @@ function cardKeepValue(data: GameData, state: CombatState, seat: number, instanc
   const instance = state.cards[instanceId];
   const card = instance ? cardDefOf(data, state, instance) : undefined;
   if (card === undefined) return 0;
+  const owner =
+    instance !== undefined
+      ? instance.ownerIds
+          .map((id) => state.heroes.find((h) => h.defId === id && h.player === instance.player))
+          .find((h) => h !== undefined)
+      : undefined;
   let value = 0;
   const walk = (effects: readonly Effect[]) => {
     for (const effect of effects) {
@@ -332,7 +353,7 @@ function cardKeepValue(data: GameData, state: CombatState, seat: number, instanc
         continue;
       }
       if (effect.type === "damage" || effect.type === "missingHpDamage" || effect.type === "scaledDamage") {
-        value += effectDamage(effect, undefined, 1);
+        value += effectDamage(effect, undefined, 1, owner);
       } else if (effect.type === "heal" || effect.type === "gainArmor") {
         value += effect.amount * 0.8;
       } else if (effect.type === "drawCards" || effect.type === "chooseCard") {
@@ -436,7 +457,7 @@ export function actionFeatures(
   if (target !== undefined) {
     const stat = (e: Effect) =>
       e.type === "scaledDamage" ? scaleStat(e, state, seat, target) : 1;
-    const raw = chosen.reduce((sum, e) => sum + effectDamage(e, target, stat(e)), 0);
+    const raw = chosen.reduce((sum, e) => sum + effectDamage(e, target, stat(e), owners[0]), 0);
     const absorb = target.hp + target.armor;
     const effective = Math.min(raw, absorb);
     put(vec, "damage", effective);
@@ -481,7 +502,7 @@ export function actionFeatures(
   }
   for (const e of wide) {
     const hits = liveOpponents.length;
-    const per = effectDamage(e, undefined, 1);
+    const per = effectDamage(e, undefined, 1, owners[0]);
     put(vec, "damage", per * hits);
     put(vec, "lethal", liveOpponents.filter((u) => per >= u.hp + u.armor).length);
     if (e.type === "applyStatus") put(vec, "control", controlWeight(e) * hits);
@@ -501,8 +522,6 @@ export function actionFeatures(
       put(vec, "heal", e.amount * 0.8);
     } else if (e.type === "applyStatus") {
       put(vec, "control", controlWeight(e) * e.amount);
-    } else if (e.type === "bloodMoon") {
-      put(vec, "control", e.rounds);
     }
   }
 
@@ -518,6 +537,18 @@ export function actionFeatures(
         put(vec, "handCap", Math.max(0, e.amount - room - 1));
       } else if (e.type === "chooseCard") {
         put(vec, "draw", 1);
+      } else if (e.type === "bloodMoon") {
+        put(vec, "control", e.rounds);
+        // Unlock value: gated cards in hand become legal, riders empower (`01` Huyết Nguyệt).
+        let unlock = 0;
+        for (const id of player.hand) {
+          if (id === action.instanceId) continue;
+          const held = state.cards[id] !== undefined ? cardDefOf(data, state, state.cards[id]!) : undefined;
+          if (held === undefined) continue;
+          if (held.requiresBloodMoon === true) unlock += 1;
+          else if (hasBloodMoonBonus(held.effects)) unlock += 0.5;
+        }
+        if (unlock > 0) put(vec, "synergy", unlock);
       } else if (e.type === "gainMoonPower") {
         put(vec, "reserve", e.amount);
       } else if (e.type === "gainMoonPowerPerTurn") {

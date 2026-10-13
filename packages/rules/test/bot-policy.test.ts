@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Action, CardDef, CombatState, GameData } from "../src/index";
 import { applyAction, makeBotObservation } from "../src/index";
 import { canonicalActionKey, enumerateBotActions } from "../src/bot/actions";
-import type { FeatureName } from "../src/bot/features";
+import { actionFeatures, type FeatureName } from "../src/bot/features";
 import {
   chooseBotAction,
   scoreBotAction,
@@ -249,5 +249,76 @@ describe("profiles.v1.json", () => {
     expect(decision.actionScores).toHaveLength(legal.length);
     const keys = new Set(decision.actionScores.map((s) => s.key));
     for (const action of legal) expect(keys.has(canonicalActionKey(action))).toBe(true);
+  });
+
+  it("T329: missingHpDamage is valued by the caster's missing HP, not the target's", () => {
+    const rage = testCard({
+      id: "t_rage",
+      type: "attack",
+      target: "enemy",
+      effects: [
+        { type: "loseHp", amount: 3, to: "self" },
+        { type: "missingHpDamage", ratio: 1, to: "chosen" },
+      ],
+    });
+    const plain = testCard({
+      id: "t_plain",
+      type: "attack",
+      target: "enemy",
+      effects: [{ type: "damage", amount: 8, to: "chosen" }],
+    });
+    const aggro = profile("aggressive", { damage: 3, selfDamage: -0.5 });
+    const { data, state } = makeTestCombat();
+    const [rageId, plainId] = handOf(state, data, [rage, plain]) as [string, string];
+
+    // Full HP: the payoff resolves to ~loseHp ⇒ the plain 8 damage wins.
+    let decision = chooseBotAction(data, obs(data, state), aggro, CTX);
+    expect(decision!.action).toMatchObject({ type: "playCard", instanceId: plainId });
+
+    // Wounded by 30: the payoff reads ~30 and beats the plain hit.
+    state.heroes[0]!.hp = state.heroes[0]!.maxHp - 30;
+    decision = chooseBotAction(data, obs(data, state), aggro, CTX);
+    expect(decision!.action).toMatchObject({ type: "playCard", instanceId: rageId });
+  });
+
+  it("T330: calling blood moon gains synergy from gated cards and riders in hand", () => {
+    const call = testCard({
+      id: "t_call",
+      effects: [{ type: "bloodMoon", rounds: 1 }],
+    });
+    const gated = testCard({
+      id: "t_gated",
+      type: "attack",
+      target: "enemy",
+      requiresBloodMoon: true,
+      effects: [{ type: "damage", amount: 18, to: "chosen" }],
+    });
+    const rider = testCard({
+      id: "t_rider",
+      type: "attack",
+      target: "enemy",
+      effects: [
+        {
+          type: "conditional",
+          condition: { type: "bloodMoonActive" },
+          then: [{ type: "damage", amount: 8, to: "chosen" }],
+          else: [{ type: "damage", amount: 5, to: "chosen" }],
+        },
+      ],
+    });
+    const plain = testCard({ id: "t_plain2", effects: [{ type: "drawCards", amount: 1 }] });
+
+    const { data, state } = makeTestCombat();
+    const [callId] = handOf(state, data, [call, gated, rider]);
+    const vec = actionFeatures(data, obs(data, state), { type: "playCard", instanceId: callId! });
+    expect(vec.synergy).toBe(1.5); // gated card 1 + conditional rider 0.5
+
+    const bare = makeTestCombat();
+    const [callId2] = handOf(bare.state, bare.data, [call, plain]);
+    const vec2 = actionFeatures(bare.data, obs(bare.data, bare.state), {
+      type: "playCard",
+      instanceId: callId2!,
+    });
+    expect(vec2.synergy ?? 0).toBe(0);
   });
 });

@@ -353,7 +353,7 @@ function effectDamage(effects: Effect[], unit: UnitState): number {
   let total = 0;
   for (const effect of effects) {
     if (effect.type === "damage") total += effect.amount * (effect.hits ?? 1);
-    else if (effect.type === "missingHpDamage") total += Math.floor(unit.maxHp * effect.ratio) * (effect.hits ?? 1);
+    else if (effect.type === "missingHpDamage") total += Math.floor((unit.maxHp - unit.hp) * effect.ratio) * (effect.hits ?? 1);
     // Rough weight: the stat taken as `divisor` (one scaling step).
     else if (effect.type === "scaledDamage") total += (effect.base ?? 0) + effect.amount;
     else if (effect.type === "conditional") total += effectDamage(effect.then, unit) + effectDamage(effect.else ?? [], unit);
