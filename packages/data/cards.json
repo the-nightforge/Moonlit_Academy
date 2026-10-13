@@ -6918,7 +6918,7 @@
       {
         "type": "scaledDamage",
         "per": "targetDebuffs",
-        "amount": 3,
+        "amount": 2,
         "base": 2,
         "to": "chosen"
       },
@@ -6927,7 +6927,7 @@
         "look": 1
       }
     ],
-    "text": "Suy Yếu 2 vòng, rồi gây 2 damage, thêm 3 cho mỗi debuff trên mục tiêu. Chiêm Bài 1.",
+    "text": "Suy Yếu 2 vòng, rồi gây 2 damage, thêm 2 cho mỗi debuff trên mục tiêu. Chiêm Bài 1.",
     "keywords": [
       "suy_yeu",
       "chiem_bai"
@@ -8331,11 +8331,11 @@
       {
         "type": "scaledDamage",
         "per": "targetDebuffs",
-        "amount": 2,
+        "amount": 1,
         "to": "allEnemies"
       }
     ],
-    "text": "Suy Yếu mọi kẻ địch 1 vòng, rồi gây 2 damage lên mỗi kẻ địch cho mỗi debuff trên nó.",
+    "text": "Suy Yếu mọi kẻ địch 1 vòng, rồi gây 1 damage lên mỗi kẻ địch cho mỗi debuff trên nó.",
     "keywords": [
       "suy_yeu"
     ]
@@ -8508,7 +8508,7 @@
       {
         "type": "scaledDamage",
         "per": "targetDebuffs",
-        "amount": 3,
+        "amount": 2,
         "base": 3,
         "to": "chosen"
       },
@@ -8519,7 +8519,7 @@
         "to": "chosen"
       }
     ],
-    "text": "Gây 3 damage, thêm 3 cho mỗi debuff trên mục tiêu. Mê Hoặc 1 chiêu.",
+    "text": "Gây 3 damage, thêm 2 cho mỗi debuff trên mục tiêu. Mê Hoặc 1 chiêu.",
     "keywords": [
       "me_hoac"
     ]
