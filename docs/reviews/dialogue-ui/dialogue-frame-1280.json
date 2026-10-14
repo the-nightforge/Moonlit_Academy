@@ -1,0 +1,10 @@
+{
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "stages": 16,
+  "lines": 161,
+  "speakers": 18,
+  "failures": []
+}

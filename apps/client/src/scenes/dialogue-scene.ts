@@ -43,13 +43,7 @@ export class DialogueScene extends Phaser.Scene {
     this.lines = session.data.storyStages[this.stageId]?.[this.part] ?? [];
     if (this.lines.length === 0) { this.finish(); return; }
     this.view = new DialogueView({ next: () => this.next(), skip: () => this.finish() });
-    const key = (event: KeyboardEvent) => {
-      if (event.code !== "Space" && event.key !== "Enter") return;
-      if (event.repeat || (event.target as HTMLElement).closest("button,input,textarea,select")) return;
-      event.preventDefault(); this.next();
-    };
-    window.addEventListener("keydown", key);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { window.removeEventListener("keydown", key); this.view?.destroy(); this.view = null; });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.view?.destroy(); this.view = null; });
     this.render();
   }
   private next() {
@@ -66,5 +60,5 @@ export class DialogueScene extends Phaser.Scene {
     if (last?.won === true && last.rewards.firstClear) session.notices.push("Thưởng lần đầu:", ...rewardLines(last.rewards));
     this.scene.start("story");
   }
-  private render() { this.view?.render(session.data, session.data.storyStages[this.stageId]!.name, this.lines[this.index]!, this.index, this.lines.length); }
+  private render() { this.view?.render(session.data, session.data.storyStages[this.stageId]!.name, this.lines[this.index]!, this.index, this.lines.length, {stageId:this.stageId,part:this.part}); }
 }

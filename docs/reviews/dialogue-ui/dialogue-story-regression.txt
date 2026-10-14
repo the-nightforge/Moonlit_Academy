@@ -1,0 +1,11 @@
+PASS: Continue forwards the server-open stage
+PASS: Locked stage has no available start action
+PASS: Selecting a stage preserves focus
+PASS: Locked chapter explains its real prerequisite
+PASS: Cleared rewards are marked claimed
+PASS: Every stage has its own complete, correctly framed scene
+PASS: Retry is actionable in the load error state
+PASS: Dialogue portrait keeps its full natural ratio
+PASS: Dialogue next and skip fire once each
+PASS: Dialogue buttons have a rounded visible border
+PASS: Dialogue retains its live speech region and focused control

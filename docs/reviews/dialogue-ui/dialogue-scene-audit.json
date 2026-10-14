@@ -1,0 +1,50 @@
+[
+  {
+    "case": "before-complete",
+    "routes": [
+      "deck-select"
+    ],
+    "notices": [],
+    "lastStoryExists": true,
+    "profileUnchanged": true,
+    "overlay": false
+  },
+  {
+    "case": "after-complete",
+    "routes": [
+      "story"
+    ],
+    "notices": [
+      "Thưởng lần đầu:",
+      "+40 Nguyệt Ngọc",
+      "+1 Huyền Thiết"
+    ],
+    "lastStoryExists": false,
+    "profileUnchanged": true,
+    "overlay": false
+  },
+  {
+    "case": "after-skip",
+    "routes": [
+      "story"
+    ],
+    "notices": [
+      "Thưởng lần đầu:",
+      "+40 Nguyệt Ngọc",
+      "+1 Huyền Thiết"
+    ],
+    "lastStoryExists": false,
+    "profileUnchanged": true,
+    "overlay": false
+  },
+  {
+    "case": "empty-before",
+    "routes": [
+      "deck-select"
+    ],
+    "notices": [],
+    "lastStoryExists": true,
+    "profileUnchanged": true,
+    "overlay": false
+  }
+]
