@@ -21,6 +21,26 @@ export async function runStoryBrowserChecks(): Promise<string[]> {
     document.querySelector<HTMLButtonElement>('.vn-story [data-id="arc1"]')!.click();
     document.querySelector<HTMLButtonElement>('.vn-story [data-id="arc1_s01"]')!.click();
     check("Cleared rewards are marked claimed", document.querySelector(".st-rewards.claimed") !== null);
+    const sceneSources = new Set<string>();
+    let fullScenes = true;
+    for (const arc of Object.values(data.storyArcs)) {
+      document.querySelector<HTMLButtonElement>(`.vn-story [data-action="arc"][data-id="${arc.id}"]`)!.click();
+      for (const id of arc.stageIds) {
+        document.querySelector<HTMLButtonElement>(`.vn-story [data-action="stage"][data-id="${id}"]`)!.click();
+        const image = document.querySelector<HTMLImageElement>(".st-backdrop img");
+        if (!image) { fullScenes = false; continue; }
+        if (!image.complete) await new Promise<void>(resolve => { image.onload = () => resolve(); image.onerror = () => resolve(); });
+        const css = getComputedStyle(image), box = image.getBoundingClientRect();
+        const width = box.width - +css.borderLeftWidth.replace("px", "") - +css.borderRightWidth.replace("px", "");
+        const height = box.height - +css.borderTopWidth.replace("px", "") - +css.borderBottomWidth.replace("px", "");
+        const source = image.getAttribute("src") ?? "";
+        sceneSources.add(source);
+        fullScenes &&= image.naturalWidth > 0 && source.includes(`/story/${id}.webp`) && css.objectFit === "contain"
+          && css.padding === "0px" && +css.borderTopWidth.replace("px", "") > 0
+          && Math.abs(width / height - image.naturalWidth / image.naturalHeight) < 0.003;
+      }
+    }
+    check("Every stage has its own complete, correctly framed scene", fullScenes && sceneSources.size === Object.keys(data.storyStages).length);
     view.render({ ...state, error: "Không thể tải tiến độ" });
     document.querySelector<HTMLButtonElement>('.vn-story [data-action="retry"]')!.click();
     check("Retry is actionable in the load error state", retries === 1);

@@ -1,0 +1,125 @@
+{
+  "mode": "built-in image_gen",
+  "date": "2026-10-14",
+  "canonicalSource": "packages/data/story.json",
+  "format": {
+    "webpQuality": 88,
+    "effort": 6,
+    "resize": false,
+    "crop": false
+  },
+  "assets": [
+    {
+      "id": "arc1_s01",
+      "name": "Nhập Học",
+      "sourceFile": "exec-07fe5e8b-e988-421a-a9fd-7b0172c05aef.png",
+      "output": "apps/client/public/assets/story/arc1_s01.webp",
+      "prompt": "Use case: illustration-story. Asset: original environment background illustration for stage arc1_s01 'Nhập Học' in the Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. Scene: opening night at an ancient moon-themed scholarly academy. A partly open monumental stone gate, tiled curved roofs, pale moonlight, warm lanterns. A wooden guardian puppet stands watch before the entrance; the gate and puppet clearly readable at small card size. Atmosphere of entering a mysterious academy, inviting but a test awaits. Hand-painted high quality 2D fantasy environment concept art, elegant East Asian cổ phong architecture, textured brushwork, navy blue, muted jade and warm gold. Balanced complete scene, landscape is the main subject, no close-up human faces. Keep all important subjects within frame. No lettering, signs with readable words, symbols resembling UI, captions, logos, watermark, border, panels or interface elements. This image will be shown fully with its natural ratio, with labels and controls outside it. Output one finished illustration."
+    },
+    {
+      "id": "arc1_s02",
+      "name": "Thanh Loan Thí Luận",
+      "sourceFile": "exec-cb2405ef-5bd9-4332-99d8-1069348ac484.png",
+      "output": "apps/client/public/assets/story/arc1_s02.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc1_s02 'Thanh Loan Thí Luận'. Canonical scene: The examination hall of Thanh Loan Academy, devoted to literature and strategy. An elegant scholarly hall with tall bookshelves, brush pens, blank scrolls and an ordered debate platform. A magical examiner presence waits at the far end. Scholarly composure, intelligent challenge, jade and blue light. Output one finished illustration."
+    },
+    {
+      "id": "arc1_s03",
+      "name": "Huyền Vũ Thí Võ",
+      "sourceFile": "exec-e2159a4c-a0cb-496c-ba54-6494e5aa2141.png",
+      "output": "apps/client/public/assets/story/arc1_s03.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc1_s03 'Huyền Vũ Thí Võ'. Canonical scene: The martial training courtyard of Huyền Vũ Academy: golden sand, black armor, rows of spear racks stirred by wind. A black-armored examination guardian awaits at the arena. Strong stone geometry, restrained bronze gold, disciplined martial atmosphere. Output one finished illustration."
+    },
+    {
+      "id": "arc1_s04",
+      "name": "Bạch Lộ Thí Y",
+      "sourceFile": "exec-6c7a9cef-e382-468b-a7d9-cba51c37086d.png",
+      "output": "apps/client/public/assets/story/arc1_s04.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc1_s04 'Bạch Lộ Thí Y'. Canonical scene: The medicinal herb courtyard of Bạch Lộ Academy. Herb beds, drying bundles, ceramic medicine jars and gentle healing light. A healing examiner with a small rescued wounded fox companion, both at a distance. Quiet compassionate green and ivory atmosphere. Output one finished illustration."
+    },
+    {
+      "id": "arc1_s05",
+      "name": "Cấm Địa Xích Diên",
+      "sourceFile": "exec-d1265acf-0b19-4f19-b9bf-d6c8fc93eae8.png",
+      "output": "apps/client/public/assets/story/arc1_s05.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc1_s05 'Cấm Địa Xích Diên'. Canonical scene: The sealed forbidden sanctuary of Xích Diên Academy at night. An ancient door opens by a narrow crack, burned ash drifts from within, old magical seals on the threshold. A distinctly RED BLOOD MOON visible in the sky, crimson ominous light, dangerous secret magic. No readable seal lettering. Output one finished illustration."
+    },
+    {
+      "id": "arc1_s06",
+      "name": "Tàng Thư Các Có Ma",
+      "sourceFile": "exec-f131599c-89d0-4f07-9e7b-37e394d7f886.png",
+      "output": "apps/client/public/assets/story/arc1_s06.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc1_s06 'Tàng Thư Các Có Ma'. Canonical scene: The ancient academy library at night, haunted stacks where books tear their own pages. Towering shelves, floating loose blank pages, eerie book-shaped spectral wisps, one quiet desk with a lantern. Mysterious teal light against amber lantern glow, whispers implied visually. Output one finished illustration."
+    },
+    {
+      "id": "arc1_s07",
+      "name": "Dạ Tập",
+      "sourceFile": "exec-1b64947b-bb28-429a-9825-62b7984093ff.png",
+      "output": "apps/client/public/assets/story/arc1_s07.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc1_s07 'Dạ Tập'. Canonical scene: A cold-night bamboo forest path leading back toward academy dormitories. Three shadow-fox shapes moving between stalks in a triangular ambush formation, small bright teeth or eyes subtly visible. Dark blue mist, wind-blown bamboo, tense atmospheric night attack. Output one finished illustration."
+    },
+    {
+      "id": "arc1_s08",
+      "name": "Khảo Hạch Chi Linh",
+      "sourceFile": "exec-f51c9819-75fb-4ff2-babf-ed0de9629840.png",
+      "output": "apps/client/public/assets/story/arc1_s08.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc1_s08 'Khảo Hạch Chi Linh'. Canonical scene: The highest examination platform above the moon academy. The ancient spiritual guardian beast awakens on a grand stone dais, with the library rooftops and cloud sea below. Guardian has an original celestial ancient-beast silhouette, no copied franchise creature. Ceremonial grandeur, final first-year trial. Output one finished illustration."
+    },
+    {
+      "id": "arc2_s01",
+      "name": "Thư Tín Mất Tích",
+      "sourceFile": "exec-b67953e5-d013-46ee-8534-4b0a8c84e02e.png",
+      "output": "apps/client/public/assets/story/arc2_s01.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc2_s01 'Thư Tín Mất Tích'. Canonical scene: The academy's postal room at night: many small piles of envelopes and sealed mailbags, an open window onto tiled rooftops. A distant black-clad spy escaping across a roof with stolen envelopes. Quiet investigation scene, missing student letters, no readable writing on any paper. Output one finished illustration."
+    },
+    {
+      "id": "arc2_s02",
+      "name": "Mật Thám",
+      "sourceFile": "exec-2e1e3149-4b46-49e2-b2e4-aba21b5d8956.png",
+      "output": "apps/client/public/assets/story/arc2_s02.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc2_s02 'Mật Thám'. Canonical scene: An abandoned room beside the academy lake, discovered after tracing stolen mail. Binding cords, burned letter ashes and two face-down playing cards on a dusty table. An open doorway reveals still lake water and a distant watchful spy silhouette. Covert intrigue, abandoned hideout, navy and faint jade. Output one finished illustration."
+    },
+    {
+      "id": "arc2_s03",
+      "name": "Vô Nguyệt Ám Sát",
+      "sourceFile": "exec-aff18498-5782-498a-b2e1-4f0c20109558.png",
+      "output": "apps/client/public/assets/story/arc2_s03.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc2_s03 'Vô Nguyệt Ám Sát'. Canonical scene: At midnight three dark assassin silhouettes slip over an academy wall toward student dormitories. The alarm bell hangs silent. Thin moonlight fading behind rooflines, ink-like dark magical trails, no violence or blood. Stealth infiltration, cold oppressive atmosphere. Output one finished illustration."
+    },
+    {
+      "id": "arc2_s04",
+      "name": "Tô Dạ Dao Động",
+      "sourceFile": "exec-6625977d-2d19-4b2b-9344-9da4893dcca0.png",
+      "output": "apps/client/public/assets/story/arc2_s04.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc2_s04 'Tô Dạ Dao Động'. Canonical scene: A tense old-debt confrontation at the library threshold: one ominous robed emissary with two shadow assassins faces a distant solitary librarian silhouette. The librarian holds a closed book. An open door and a dim lantern divide warm library light from dark night. Moral hesitation and hidden past, no detailed named faces. Output one finished illustration."
+    },
+    {
+      "id": "arc2_s05",
+      "name": "Chợ Đêm Tin Tức",
+      "sourceFile": "exec-19914173-bb34-46e7-837f-63ba51840268.png",
+      "output": "apps/client/public/assets/story/arc2_s05.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc2_s05 'Chợ Đêm Tin Tức'. Canonical scene: The night market outside the city, secrets traded beneath red lanterns. Narrow stalls, bronze balance scales, small silver coins, blank folded messages, low rolling mist. A mysterious fox-spirit merchant presence retreats into fog in the distance. Lively yet secretive, warm red and gold against navy. Output one finished illustration."
+    },
+    {
+      "id": "arc2_s06",
+      "name": "Quan Tinh Đài",
+      "sourceFile": "exec-e7f4a88c-de85-41e2-afc1-fb01145d8743.png",
+      "output": "apps/client/public/assets/story/arc2_s06.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc2_s06 'Quan Tinh Đài'. Canonical scene: The mountaintop star observatory, a rotating domed roof and ornate astronomical instruments. It is NEW MOON: an inky dark sky with stars, NO visible moon disk or crescent anywhere. Dark infiltrator silhouettes climb the outer walls while thin starlight illuminates the observatory stones. Scholarly astronomy and an impending attack. Output one finished illustration."
+    },
+    {
+      "id": "arc2_s07",
+      "name": "Hắc Vệ",
+      "sourceFile": "exec-636e51c6-6846-41f5-81c9-5d7520354778.png",
+      "output": "apps/client/public/assets/story/arc2_s07.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc2_s07 'Hắc Vệ'. Canonical scene: The ruined old academy foundation beneath the observatory. A pitch-black tunnel gate like a deep well entrance. A single imposing black-armored royal guard stands watch, silhouetted against a dim lamp. Behind him a steep corridor descends into darkness. Ancient fallen masonry, forgotten royal armor, ominous guardian. Output one finished illustration."
+    },
+    {
+      "id": "arc2_s08",
+      "name": "Vô Nguyệt Ảnh Chủ",
+      "sourceFile": "exec-f30a1428-fd9b-4d44-968e-0027af613022.png",
+      "output": "apps/client/public/assets/story/arc2_s08.webp",
+      "prompt": "Use case: illustration-story. Asset: one original stage environment background for Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Wide landscape composition, aspect ratio 2:1. High-quality hand-painted 2D fantasy environment concept art, elegant East Asian cổ phong architecture, fine textured brushwork, rich but restrained detail, navy blue and muted jade with warm gold lighting where appropriate. Environment is the main subject, complete balanced scene readable at small card size. Any figures are distant silhouettes, no close-up named heroes. All important subjects remain fully within the frame. No lettering, readable signs, captions, UI elements, logos, watermark, border or panels. Image will be shown in full at its natural ratio, with interface labels and controls outside it.Stage arc2_s08 'Vô Nguyệt Ảnh Chủ'. Canonical scene: A vast underground moonless ceremonial hall. An ink-like humanoid shadow stands at the central dais, its form barely distinct from the dark robes or surrounding darkness. A single loose blank manuscript page glows faintly on the dais. The final hidden mastermind, cold obsidian architecture and subtle spectral jade light. No visible moon, no readable writing. Output one finished illustration."
+    }
+  ]
+}

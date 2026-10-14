@@ -1,6 +1,6 @@
 import type { GameData } from "rules";
 import { storyProgressModel, type StoryProgress, type StoryStageRow } from "./story-presentation";
-import { storyEscape as esc, storyIcon as icon, storyPortrait as portrait } from "./story-art";
+import { storyEscape as esc, storyIcon as icon, storyPortrait as portrait, storyImage } from "./story-art";
 import "./story.css";
 
 export interface StoryViewState {
@@ -69,6 +69,9 @@ export class StoryView {
     const stage = row.stage;
     const encounter = state.data.encounters[stage.encounterId];
     const enemies = [...new Set(encounter?.enemyIds ?? [])].map(id => `<figure>${portrait(state.data, id)}<figcaption>${esc(state.data.enemies[id]?.name ?? id)}${(encounter?.enemyIds.filter(enemy => enemy === id).length ?? 0) > 1 ? ` ×${encounter!.enemyIds.filter(enemy => enemy === id).length}` : ""}</figcaption></figure>`).join("");
+    const backdrop = storyImage("story", stage.id, `Khung cảnh ${stage.name}`, "st-backdrop-image");
+    const opponents = [...new Set(encounter?.enemyIds ?? [])].map(id => `<span>${icon("node_combat")}${esc(state.data.enemies[id]?.name ?? id)}${(encounter?.enemyIds.filter(enemy => enemy === id).length ?? 0) > 1 ? ` ×${encounter!.enemyIds.filter(enemy => enemy === id).length}` : ""}</span>`).join("");
+    const visual = backdrop ? `<figure class="st-backdrop">${backdrop}</figure><div class="st-opponents" aria-label="Đối thủ">${opponents}</div>` : `<div class="st-enemies">${enemies}</div>`;
     const reward = stage.firstClear;
     const rewards = [["cur_moonJade", "Nguyệt Ngọc", reward.moonJade], ["cur_darkIron", "Huyền Thiết", reward.darkIron], ["nav_mastery", "Kinh nghiệm Tu Luyện", reward.masteryXp]] as const;
     const loot = rewards.filter(([, , value]) => value).map(([key, label, value]) => `<span class="st-loot">${icon(key, label)}<strong>${value}</strong></span>`).join("");
@@ -77,7 +80,7 @@ export class StoryView {
     const arc = state.data.storyArcs[stage.arcId];
     const chapterDone = arc?.stageIds.every(id => state.progress?.cleared.includes(id));
     const chapterReward = arc ? `<div class="st-detail-chapter">${portrait(state.data, arc.rewardHeroId)}<p>${chapterDone ? "Đã nhận thưởng chương" : "Thưởng hoàn thành chương"}<strong>${esc(state.data.heroes[arc.rewardHeroId]?.name ?? "Hero")}</strong></p></div>` : "";
-    return `<aside class="st-detail" aria-label="Chi tiết màn"><span class="st-kicker">Màn ${row.index + 1}</span><h2>${esc(stage.name)}</h2><div class="st-enemies">${enemies}</div><section class="st-rewards ${row.status === "cleared" ? "claimed" : ""}"><h3>Thưởng lần đầu${row.status === "cleared" ? " · Đã nhận" : ""}</h3><div>${loot}</div></section>${button}${row.requirement ? `<p class="st-requirement">${esc(row.requirement)}</p>` : ""}${chapterReward}</aside>`;
+    return `<aside class="st-detail" aria-label="Chi tiết màn"><span class="st-kicker">Màn ${row.index + 1}</span><h2>${esc(stage.name)}</h2>${visual}<section class="st-rewards ${row.status === "cleared" ? "claimed" : ""}"><h3>Thưởng lần đầu${row.status === "cleared" ? " · Đã nhận" : ""}</h3><div>${loot}</div></section>${button}${row.requirement ? `<p class="st-requirement">${esc(row.requirement)}</p>` : ""}${chapterReward}</aside>`;
   }
   destroy() { this.shell.remove(); document.body.style.overflow = this.oldOverflow; }
 }
