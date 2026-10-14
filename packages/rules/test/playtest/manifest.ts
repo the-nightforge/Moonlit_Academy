@@ -224,7 +224,9 @@ export function generateScenarios(
     // (8×8 locked every team to a single boss). +poolLap spreads each entry
     // across all content ids over its share of blocks.
     const lap = Math.floor(block / pool.length);
-    const content = (n: number) => (block + lap) % n;
+    // A single-entry pool has nothing to decorrelate against — `block + lap`
+    // would stride by 2 and only sample gcd(2, n) of the content ids.
+    const content = (n: number) => (pool.length > 1 ? block + lap : block) % n;
     // Same decorrelation for profiles: `k % n` alone pins each entry to one
     // profile whenever gcd(pool, profiles) > 1 (single-seat modes always
     // drove m03 with one style). The index must advance by the entry's own

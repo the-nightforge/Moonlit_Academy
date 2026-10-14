@@ -183,6 +183,28 @@ describe("playtest runner", () => {
     }
   });
 
+  it("pve single-entry pool still covers every encounter", () => {
+    // pool=1 gives lap=block, so `block + lap` strides by 2 and only samples
+    // gcd(2, n) content ids — a one-team probe saw just 4 of 8 encounters.
+    const dir = mkdtempSync(join(tmpdir(), "playtest-solo-"));
+    const poolPath = join(dir, "pool.json");
+    writeFileSync(poolPath, JSON.stringify({
+      schemaVersion: 1,
+      id: "solo",
+      entries: [{ id: "t1", heroIds: ["m05", "f04", "m06"], deck: "starter" }],
+    }));
+    const encIds = Object.keys(data.encounters)
+      .filter((id) => ["normal", "elite"].includes(data.encounters[id]!.tier))
+      .slice(0, 8);
+    const m = buildManifest(
+      data,
+      { ...config, mode: "pve", blockCount: 32, poolPath, encounterIds: encIds },
+      { rulesSrcDir: RULES_SRC, sourceRevision: "test" },
+    );
+    const seen = new Set(m.scenarios.map((s) => (s.setup as { encounterId: string }).encounterId));
+    expect([...seen].sort()).toEqual([...encIds].sort());
+  });
+
   it("pve coverage rotates every profile across every pool entry", () => {
     // Residual correlation: `prof(block)` = (block+lap)%12 with block=a+8·lap
     // gives (a+9·lap)%12 → gcd(9,12)=3 pins each entry to only 4 of 12
