@@ -29,6 +29,7 @@ export class RunView {
     this.content.addEventListener("click",event=>{
       const button=(event.target as HTMLElement).closest<HTMLButtonElement>("button");if(!button||button.disabled||!this.state)return;
       const action=button.dataset.action;
+      if(action==='pan')this.content.querySelector('.rn-map-scroll')?.scrollBy({left:Number(button.dataset.direction)*260});
       if(action==="node") { this.selected=button.dataset.id!;this.render(this.state,button.dataset.control);if(matchMedia("(max-width:720px)").matches)this.content.querySelector(".rn-preview")?.scrollIntoView({block:"start"}); }
       if(action==="enter")this.dispatch({type:"chooseNode",nodeId:this.selected});
       if(action==="augment")this.dispatch({type:"pickAugment",augmentId:button.dataset.id!});
@@ -41,6 +42,10 @@ export class RunView {
       if(action==="back")this.actions.back();
       if(action==="mastery")this.actions.mastery();
     });
+    this.content.addEventListener('focusin',event=>{
+      const node=(event.target as HTMLElement).closest<HTMLElement>('.rn-node'),scroller=this.content.querySelector<HTMLElement>('.rn-map-scroll');
+      if(node&&scroller){const n=node.getBoundingClientRect(),s=scroller.getBoundingClientRect();if(n.left<s.left+8||n.right>s.right-8)scroller.scrollLeft=node.offsetLeft-scroller.clientWidth/2;}
+    });
     this.dialog.addEventListener("close",()=>{
       const cardId=this.removeId;this.removeId=null;
       if(this.dialog.returnValue==="remove"&&cardId)this.dispatch({type:"rest",choice:"removeCard",cardId});
@@ -51,8 +56,8 @@ export class RunView {
   private focus(control:string) { const button=Array.from(this.content.querySelectorAll<HTMLButtonElement>("[data-control]")).find(b=>b.dataset.control===control&&!b.disabled);if(!button)return false;button.focus({preventScroll:true});return true; }
   render(state:RunViewState,control?:string) {
     const active=document.activeElement as HTMLElement|null, focus=control??(this.content.contains(active)?active?.dataset.control:undefined),scroll=this.shell.scrollTop;
-    const previousStatus=this.state?.run.status,wasSubmitting=this.state?.submitting;this.state=state;
-    if(this.position!==state.run.position){this.selected="";this.position=state.run.position;}
+    const previousStatus=this.state?.run.status,wasSubmitting=this.state?.submitting,pan=this.content.querySelector('.rn-map-scroll')?.scrollLeft,changedPosition=this.position!==state.run.position;this.state=state;
+    if(changedPosition){this.selected="";this.position=state.run.position;}
     if(this.dialog.open&&this.removeId&&getRunActionError(state.data,state.run,{type:"rest",choice:"removeCard",cardId:this.removeId})!==null){this.removeId=null;this.dialog.close("cancel");}
     const {run}=state,model=runMapModel(run,state.visited,this.selected);this.selected=model.selectedId;
     const header=`<header class="rn-header">${icon("mode_run")}<div><h1>Tầm Nguyệt</h1><p>Tầng ${model.floor} / ${run.map.floors.length}</p></div><nav aria-label="Hành trang"><button class="rn-tool" data-action="effects" data-control="effects" aria-label="Xem ${run.runRelicIds.length} Kỳ Vật và ${run.augmentIds.length} Lõi">${icon("node_treasure")}<span>${run.runRelicIds.length+run.augmentIds.length}</span></button><button class="rn-tool" data-action="deck" data-control="deck" aria-label="Xem bộ bài, ${run.deck.length} lá">${icon("nav_heroes")}<span>${run.deck.length}</span></button></nav></header>`;
@@ -64,6 +69,8 @@ export class RunView {
     if(run.status==="treasure")body=this.treasure(state);
     if(run.status==="won"||run.status==="lost")body=this.end(state,model.floor);
     this.content.innerHTML=header+`<main class="rn-layout ${run.status==='map'?'':'rn-choices-layout'}">${team}${body}</main>`;
+    const scroller=this.content.querySelector<HTMLElement>('.rn-map-scroll'),selectedNode=this.content.querySelector<HTMLElement>('.rn-node.selected');
+    if(scroller)scroller.scrollLeft=changedPosition&&selectedNode?selectedNode.offsetLeft-scroller.clientWidth/2:pan??0;
     this.live.textContent=state.notice;
     if(!this.dialog.open&&((focus&&!this.focus(focus))||(previousStatus!==undefined&&previousStatus!==run.status)||(wasSubmitting&&!state.submitting&&!this.content.contains(document.activeElement)))){
       const next=this.content.querySelector<HTMLButtonElement>('.rn-primary:not(:disabled),[data-action="augment"]:not(:disabled)');
@@ -73,11 +80,13 @@ export class RunView {
   }
   private map(state:RunViewState,model:ReturnType<typeof runMapModel>) {
     const byId=new Map(model.nodes.map(n=>[n.id,n])),selected=byId.get(this.selected);
-    const lines=model.edges.map(edge=>{const a=byId.get(edge.from)!,b=byId.get(edge.to)!;return `<line class="${edge.active?'taken':a.id===state.run.position?'next':''}" x1="${a.x}" x2="${b.x}" y1="${a.y}" y2="${b.y}"/>`;}).join('');
-    const nodes=model.nodes.map(node=>`<button class="rn-node ${node.status} ${node.id===this.selected?'selected':''}" style="left:${node.x}%;top:${node.y}px" data-action="node" data-id="${node.id}" data-control="node-${node.id}" aria-pressed="${node.id===this.selected}" aria-label="Tầng ${node.floor}, đường ${node.lane+1}, ${RUN_NODE_LABELS[node.type]}, ${STATUS[node.status]}">${icon(`node_${node.type}`)}</button>`).join('');
-    const floors=state.run.map.floors.map((_,i)=>`<span class="rn-floor" style="top:${model.height-i*66-33}px">${i+1}</span>`).join('');
+    const lines=model.edges.map(edge=>{const a=byId.get(edge.from)!,b=byId.get(edge.to)!,mid=(a.x+b.x)/2;return `<path class="${edge.active?'taken':a.id===state.run.position?'next':''}" d="M ${a.x} ${a.y} C ${mid} ${a.y}, ${mid} ${b.y}, ${b.x} ${b.y}"/>`;}).join('');
+    const marks={visited:'✓',current:'◆',open:'•',upcoming:'·',blocked:'−'};
+    const nodes=model.nodes.map(node=>`<button class="rn-node rn-node-${node.type} ${node.status} ${node.id===this.selected?'selected':''}" style="left:${node.x}%;top:${node.y}px" data-action="node" data-id="${node.id}" data-control="node-${node.id}" aria-pressed="${node.id===this.selected}" aria-label="Tầng ${node.floor}, đường ${node.lane+1}, ${RUN_NODE_LABELS[node.type]}, ${STATUS[node.status]}">${icon(`node_${node.type}`)}<span class="rn-node-mark" aria-hidden="true">${marks[node.status]}</span></button>`).join('');
+    const floors=state.run.map.floors.map((_,i)=>`<span class="rn-floor ${i+1<=model.floor?'passed':''}" style="left:${6+i*88/Math.max(1,state.run.map.floors.length-1)}%">${i+1}</span>`).join('');
     const legend=Object.entries(RUN_NODE_LABELS).map(([type,label])=>`<span>${icon(`node_${type}`)}${label}</span>`).join('');
-    const journey=`<section class="rn-map-panel" aria-label="Bản đồ hành trình"><header><h2>Đường lên đỉnh</h2><span>${model.floor} / ${state.run.map.floors.length}</span></header><div class="rn-map" style="height:${model.height}px"><svg viewBox="0 0 100 ${model.height}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${floors}${nodes}</div><div class="rn-legend">${legend}</div></section>`;
+    const terrain=`<svg class="rn-terrain" viewBox="0 0 820 384" preserveAspectRatio="none" aria-hidden="true"><path d="M-20 330 Q110 235 206 290 T422 255 T640 260 T850 185 L850 400 H-20Z"/><path d="M-20 335 Q110 240 206 295 T422 260 T640 265 T850 190"/><path d="M-20 355 Q110 260 206 315 T422 280 T640 285 T850 210"/><path d="M-20 375 Q110 280 206 335 T422 300 T640 305 T850 230"/><path d="M-20 52 Q140 120 244 62 T460 74 T670 45 T850 100 L850 -20 H-20Z"/><path d="M-20 70 Q140 138 244 80 T460 92 T670 63 T850 118"/></svg>`;
+    const journey=`<section class="rn-map-panel" aria-label="Bản đồ hành trình"><header><div><span class="rn-kicker">Hành trình</span><h2>Đường lên đỉnh</h2></div><div class="rn-pan"><button data-action="pan" data-direction="-1" data-control="pan-back" aria-label="Xem phần trước của bản đồ">‹</button><button data-action="pan" data-direction="1" data-control="pan-next" aria-label="Xem phần sau của bản đồ">›</button></div></header><div class="rn-map-scroll" tabindex="0" aria-label="Bản đồ các tầng, cuộn ngang để xem đường đi"><div class="rn-map" style="height:${model.height}px;min-width:${model.width}px">${terrain}<svg class="rn-routes" viewBox="0 0 100 ${model.height}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${floors}${nodes}<span class="rn-map-caption" aria-hidden="true">Tầm Nguyệt</span></div></div><div class="rn-legend">${legend}</div></section>`;
     if(!selected)return journey;
     const enemyIds=state.data.encounters[selected.encounterId??'']?.enemyIds??[];
     const enemies=runDeckGroups(enemyIds).map(({id,count})=>`<figure>${portrait(state.data,id)}<figcaption>${esc(state.data.enemies[id]?.name??id)}${count>1?` ×${count}`:''}</figcaption></figure>`).join('');
@@ -88,7 +97,7 @@ export class RunView {
   private relic(state:RunViewState,id:string|undefined,label="Kỳ Vật đã nhận") { const relic=id?state.data.runRelics[id]:undefined;return relic?`<div class="rn-found">${icon('node_treasure')}<div><span class="rn-kicker">${label}</span><h3>${esc(relic.name)}</h3><p>${esc(displayText(relic.text))}</p></div></div>`:''; }
   private reward(state:RunViewState) {
     const reward=state.run.pendingReward;
-    return `<section class="rn-choice-panel"><span class="rn-kicker">Thưởng chiến thắng</span><h2>Chọn một Lõi</h2>${this.relic(state,reward?.runRelicId)}<div class="rn-augment-grid">${(reward?.augmentChoices??[]).map(id=>{const a=state.data.augments[id];return a?`<button class="rn-augment" data-action="augment" data-id="${esc(id)}" data-control="augment-${esc(id)}" aria-label="Chọn Lõi ${esc(a.name)}">${icon('moon_full')}<strong>${esc(a.name)}</strong><p>${esc(displayText(a.text))}</p><span class="rn-pick">${icon('check')}Chọn</span></button>`:''}).join('')}</div>${reward?.augmentChoices.length===0?'<p>Đã nhận tất cả Lõi có thể tìm thấy.</p><button class="rn-primary" data-action="reward-continue" data-control="reward-continue">'+icon('mode_run')+'Tiếp tục</button>':''}</section>`;
+    return `<section class="rn-choice-panel rn-reward"><span class="rn-kicker">Thưởng chiến thắng</span><h2>Chọn một Lõi</h2>${this.relic(state,reward?.runRelicId)}<div class="rn-augment-grid">${(reward?.augmentChoices??[]).map(id=>{const a=state.data.augments[id];return a?`<button class="rn-augment" data-action="augment" data-id="${esc(id)}" data-control="augment-${esc(id)}" aria-label="Chọn Lõi ${esc(a.name)}">${icon('moon_full')}<strong>${esc(a.name)}</strong><p>${esc(displayText(a.text))}</p><span class="rn-pick">${icon('check')}Chọn</span></button>`:''}).join('')}</div>${reward?.augmentChoices.length===0?'<p>Đã nhận tất cả Lõi có thể tìm thấy.</p><button class="rn-primary" data-action="reward-continue" data-control="reward-continue">'+icon('mode_run')+'Tiếp tục</button>':''}</section>`;
   }
   private rest(state:RunViewState) {
     const heals=restHealAmounts(state.data,state.run),canRemove=state.run.deck.length>state.data.runConfig.minDeckSize;

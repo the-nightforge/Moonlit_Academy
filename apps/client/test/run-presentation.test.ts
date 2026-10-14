@@ -36,3 +36,21 @@ it("repairs a removed selection and preserves map data during presentation", () 
 it("groups repeated cards without losing their exact count or first-seen order", () => {
   expect(runDeckGroups(['a','b','a','c','b','a'])).toEqual([{id:'a',count:3},{id:'b',count:2},{id:'c',count:1}]);
 });
+it("lays out a left-to-right adventure with separated medallions and room for a boss", () => {
+  const model=runMapModel(fresh()), byId=new Map(model.nodes.map(n=>[n.id,n]));
+  for(const edge of model.edges)expect(byId.get(edge.to)!.x).toBeGreaterThan(byId.get(edge.from)!.x);
+  for(const node of model.nodes){
+    expect(node.x * model.width / 100).toBeGreaterThan(40);
+    expect(node.x * model.width / 100).toBeLessThan(model.width-40);
+    expect(node.y).toBeGreaterThan(60);
+    expect(node.y).toBeLessThan(model.height-50);
+  }
+  for(let i=0;i<model.nodes.length;i++)for(let j=i+1;j<model.nodes.length;j++){
+    const a=model.nodes[i]!,b=model.nodes[j]!;
+    expect(Math.hypot((a.x-b.x)*model.width/100,a.y-b.y)).toBeGreaterThan(80);
+  }
+  const centers=fresh().map.floors.map(floor=>{
+    const nodes=floor.map(n=>byId.get(n.id)!);return nodes.reduce((sum,n)=>sum+n.y,0)/nodes.length;
+  });
+  expect(new Set(centers).size).toBeGreaterThan(3);
+});
