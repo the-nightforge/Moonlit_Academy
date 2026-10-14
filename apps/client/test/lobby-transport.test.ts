@@ -2,8 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 afterEach(() => vi.unstubAllGlobals());
 
-it("never sends a stale lobby request after reconnect, including the close-event race", async () => {
-  class FakeSocket {
+class FakeSocket {
     static OPEN = 1;
     static current: FakeSocket;
     readyState = 0;
@@ -19,10 +18,13 @@ it("never sends a stale lobby request after reconnect, including the close-event
       this.readyState = 1;
       this.onmessage?.({ data: JSON.stringify({ type: "welcome", account: { id: 1, username: "test" }, serverTime: Date.now() }) });
     }
-  }
-  vi.stubGlobal("WebSocket", FakeSocket);
-  vi.stubGlobal("window", { devicePixelRatio: 1, screen: { width: 1280, height: 720 }, location: { href: "http://localhost:5310" }, setTimeout, clearTimeout });
-  const { NetSocket } = await import("../src/net/socket");
+}
+vi.stubGlobal("WebSocket", FakeSocket);
+vi.stubGlobal("window", { devicePixelRatio: 1, screen: { width: 1280, height: 720 }, location: { href: "http://localhost:5310" }, setTimeout, clearTimeout });
+// Module loading is setup, not part of the transport assertion's timeout.
+const { NetSocket } = await import("../src/net/socket");
+
+it("never sends a stale lobby request after reconnect, including the close-event race", () => {
   const net = new NetSocket();
   net.connect();
   const ws = FakeSocket.current;

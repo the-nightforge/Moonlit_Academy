@@ -9,6 +9,15 @@ export interface CoopRoom { code: string; players: { username: string; ready: bo
 export interface CoopRewards { clearsToday: number; rewardClaimsLeft: number }
 export interface CoopDeck { deck: SavedDeck; errors: DeckError[]; copies: number; slots: number }
 export interface CoopGate { online: boolean; connected: boolean; assets: "idle" | "loading" | "ready" | "error"; phase: CoopPhase; rewards: CoopRewards | null }
+export function coopRewardSummary(data: GameData, gate: CoopGate): { eligible: boolean; firstWinJade: number | null } {
+  const eligible = ["idle", "joining-queue", "queued"].includes(gate.phase);
+  const firstWinJade = !eligible ? 0 : gate.rewards === null ? null
+    : gate.rewards.rewardClaimsLeft > 0 && gate.rewards.clearsToday === 0 ? data.coopConfig.rewards.firstWinOfDay.moonJade : 0;
+  return { eligible, firstWinJade };
+}
+export function coopRoomDialogState(phase: CoopPhase, hasRoom: boolean) {
+  return { busy: phase === "joining-room" || phase === "creating-room", complete: hasRoom || phase === "match" };
+}
 export function coopLobbyError(code: string): string {
   const messages: Record<string, string> = {
     "unknown room": "Mã phòng không tồn tại hoặc đã hết hạn. Kiểm tra lại mã.",
@@ -37,8 +46,8 @@ export function coopLobbyModel(data: GameData, profile: Profile, selectedId: str
     : selected.errors.length ? "Bộ bài chưa hợp lệ — kiểm tra đội hình"
     : !gate.online ? "Đăng nhập để vào Liên Thủ"
     : !gate.connected ? "Đang kết nối với Liên Thủ…"
-    : gate.assets === "error" ? "Chưa tải đủ hình trận — hãy thử lại"
-    : gate.assets !== "ready" ? "Đang tải hình trận…" : "";
+    : gate.assets === "error" ? "Chưa thể chuẩn bị trận. Hãy thử lại."
+    : gate.assets !== "ready" ? "Đang chuẩn bị trận…" : "";
   const claimsLeft = gate.rewards === null ? null
     : Math.max(0, Math.min(data.coopConfig.rewardedMatchesPerDay, gate.rewards.rewardClaimsLeft));
   return { decks, selected, canStart: !blockedReason, canEdit, blockedReason, claimsLeft };

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { loadGameData } from "data";
 import { createProfile, starterDeck } from "rules";
-import { CoopLobbyFlow, coopLobbyError, coopLobbyModel, coopWaitTime, normalizeCoopRoomCode, type CoopGate } from "../src/ui/coop-lobby-presentation";
+import { CoopLobbyFlow, coopLobbyError, coopLobbyModel, coopRewardSummary, coopRoomDialogState, coopWaitTime, normalizeCoopRoomCode, type CoopGate } from "../src/ui/coop-lobby-presentation";
 
 const data = loadGameData();
 function profile() {
@@ -13,6 +13,26 @@ function profile() {
 const ready: CoopGate = { online: true, connected: true, assets: "ready", phase: "idle", rewards: { clearsToday: 0, rewardClaimsLeft: 3 } };
 
 describe("coop lobby presentation", () => {
+  it("offers the first-win bonus only with loaded daily counters and a remaining reward claim", () => {
+    expect(coopRewardSummary(data, ready).firstWinJade).toBe(10);
+    expect(coopRewardSummary(data, { ...ready, rewards: null }).firstWinJade).toBeNull();
+    expect(coopRewardSummary(data, { ...ready, rewards: { clearsToday: 1, rewardClaimsLeft: 2 } }).firstWinJade).toBe(0);
+    expect(coopRewardSummary(data, { ...ready, rewards: { clearsToday: 0, rewardClaimsLeft: 0 } }).firstWinJade).toBe(0);
+  });
+  it("does not advertise matchmaking rewards inside a private room or while starting practice", () => {
+    for (const phase of ["creating-room", "joining-room", "room", "starting-practice"] as const) {
+      expect(coopRewardSummary(data, { ...ready, phase }).eligible).toBe(false);
+      expect(coopRewardSummary(data, { ...ready, phase }).firstWinJade).toBe(0);
+    }
+    expect(coopRewardSummary(data, { ...ready, phase: "queued" }).eligible).toBe(true);
+  });
+  it("keeps a room entry pending until the server accepts it, then permits correction after an error", () => {
+    expect(coopRoomDialogState("joining-room", false)).toEqual({ busy: true, complete: false });
+    expect(coopRoomDialogState("creating-room", false)).toEqual({ busy: true, complete: false });
+    expect(coopRoomDialogState("idle", false)).toEqual({ busy: false, complete: false });
+    expect(coopRoomDialogState("room", true)).toEqual({ busy: false, complete: true });
+    expect(coopRoomDialogState("match", false)).toEqual({ busy: false, complete: true });
+  });
   it("explains room failures without displaying raw server codes", () => {
     expect(coopLobbyError("unknown room")).toMatch(/Mã phòng/);
     expect(coopLobbyError("room mode mismatch")).toMatch(/Liên Thủ/);
