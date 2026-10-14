@@ -1,0 +1,23 @@
+{"height":720,"width":900}
+PASS: Initial controls are disabled until a line is ready
+PASS: Narrator, scenery and icons keep their entire image inside fitted borders
+PASS: First story line keeps Continue fully visible
+PASS: Actor and stage illustration occupy separate regions
+PASS: Speech never covers the actor image
+PASS: Next and skip each dispatch exactly once
+PASS: History contains only displayed lines
+PASS: History controls and images preserve the same frame rules
+PASS: Keyboard cannot advance the story behind history
+PASS: Closing history returns focus to its control
+PASS: Keyboard advances outside controls exactly once
+PASS: Holding Enter is prevented from skipping multiple lines
+PASS: Changing speakers keeps the live region and focused control
+PASS: Final before action names its real destination
+PASS: Final after action names its real destination
+PASS: After-dialogue clears the before transcript
+PASS: Every story stage reuses its own complete illustration
+PASS: Long dialogue remains complete and scrollable
+PASS: Narrator fallback never exposes an internal speaker identifier
+PASS: No horizontal page overflow
+PASS: All tested buttons retain rounded visible borders
+PASS: Closing the overlay removes its keyboard listener
