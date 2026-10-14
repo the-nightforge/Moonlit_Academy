@@ -244,8 +244,40 @@ describe("core hero cards", () => {
     }
     // State is immutable — re-find the enemy in the new state before asserting.
     const after = current.enemies.find((e) => e.id === targetId)!.hp;
-    // 2 cheap cards before it → 2 × amount(2) = 4 damage. Old per:moonPower at mp 0 dealt 0.
-    expect(before - after).toBe(4);
+    // 2 cheap cards before it → 2 × amount(3) = 6 damage. Old per:moonPower at mp 0 dealt 0.
+    expect(before - after).toBe(6);
+  });
+
+  it("T347: M03 payoff package scales at amount 3 (buff)", () => {
+    const played: string[] = [];
+    const { data, state } = makeTestCombat({
+      heroIds: ["m03", "f04", "m06"],
+      setup: (s) => {
+        p0(s).moonPower = 0;
+        played.push(...takeCards(s, "m03_tieu_loi", 1), ...takeCards(s, "m03_mau_dich", 1));
+      },
+    });
+    let current = playCardState(data, state, played[0]!, undefined);
+    // Mậu Dịch: 1 card before it → 3 × 1 = 3 damage on every enemy (and +2 MP).
+    const hps = current.enemies.filter((e) => e.alive).map((e) => e.hp);
+    current = playCardState(data, current, played[1]!, undefined);
+    for (const [i, e] of current.enemies.filter((e) => e.alive).entries()) {
+      expect(hps[i]! - e.hp).toBe(3);
+    }
+    const pending = p0(current).pendingChoice;
+    if (pending?.kind === "chooseCard") {
+      const picked = applyAction(data, current, { type: "chooseCard", instanceId: pending.options[0] as string });
+      if (!picked.ok) throw new Error(picked.error);
+      current = picked.state;
+    }
+    // Kim Tiền at MP 4: cost 2 → 2 left, +1 gain → 3, then 3 × 3 = 9 damage.
+    p0(current).moonPower = 4;
+    const kimTien = takeCards(current, "m03_kim_tien", 1)[0]!;
+    const targetId = current.enemies.find((e) => e.alive)!.id;
+    const before = current.enemies.find((e) => e.id === targetId)!.hp;
+    current = playCardState(data, current, kimTien, targetId);
+    const after = current.enemies.find((e) => e.id === targetId)!.hp;
+    expect(before - after).toBe(9);
   });
 
   it("T276g: M04 levels after its cards heal twenty HP", () => {
