@@ -1,0 +1,12 @@
+{
+  "mode": "built-in image_gen",
+  "sourceFile": "exec-14fd559c-b788-4459-b392-07a93107f64e.png",
+  "output": "apps/client/public/assets/run/journey.webp",
+  "prompt": "Use case: illustration-story. Asset type: one original scenic illustration for the Tầm Nguyệt roguelike journey screen in Vietnamese fantasy card game Vọng Nguyệt Thư Viện. Scene: a moonlit mountain pilgrimage with winding stone steps rising from a bamboo grove toward an ancient scholarly East Asian academy sanctuary. Along the winding path are a small lantern-lit resting pavilion and a distant sealed treasure pavilion, natural landscape first. The journey feels mysterious and hopeful, not a war battlefield. No close-up human characters. Hand-painted high-quality 2D cổ phong fantasy environment, navy blue and muted jade with restrained warm golden lanterns, fine brushwork matching an elegant fantasy card game. Wide horizontal 2:1 composition with every important subject fully within the frame, readable when reduced to a small illustration. No writing, captions, letters, signs, logos, watermark, border, UI panels, map node markers or interface elements. The image will be displayed completely at natural ratio inside its own border, with all interface labels outside the artwork. Output one finished illustration.",
+  "encoding": {
+    "quality": 88,
+    "effort": 6,
+    "resize": false,
+    "crop": false
+  }
+}

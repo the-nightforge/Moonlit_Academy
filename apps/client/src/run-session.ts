@@ -61,18 +61,22 @@ export function applyRecordedRunAction(action: RunAction): RunActionResult {
 /** Sends the finished run; the server replays it and returns the new profile and XP gains. */
 export async function submitRun(): Promise<MasteryGain[]> {
   const ticket = session.ticket!;
+  const generation = auth.generation, run = session.run;
+  const current = () => assertCurrentRequest(generation, { isCurrent: () => session.ticket === ticket && session.run === run });
   type FinishReply = ProfileReply & { gains: MasteryGain[]; rewards: RunRewards };
-  const send = () => mutate<FinishReply>("POST", `/runs/${ticket.runId}/finish`, { actions: ticket.actions });
+  const send = () => { current(); return mutate<FinishReply>("POST", `/runs/${ticket.runId}/finish`, { actions: ticket.actions }); };
   let reply: FinishReply;
   try {
     try {
       reply = await send();
     } catch (error) {
+      current();
       // The profile changed elsewhere: mutate() refreshed it, the ticket is still open.
       if (!(error instanceof ApiError && error.code === "stale profile")) throw error;
       reply = await send();
     }
   } catch (error) {
+    current();
     // The server closed this ticket for good; keeping it would only fail again.
     if (error instanceof ApiError && CLOSED_TICKET_ERRORS.has(error.code)) {
       session.ticket = null;
@@ -80,6 +84,7 @@ export async function submitRun(): Promise<MasteryGain[]> {
     }
     throw error;
   }
+  current();
   session.ticket = null;
   session.runSubmitted = true;
   session.lastGains = reply.gains;

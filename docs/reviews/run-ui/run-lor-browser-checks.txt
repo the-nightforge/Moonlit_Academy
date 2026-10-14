@@ -1,0 +1,21 @@
+PASS: Map artwork, portraits and icons keep their full ratio and fitted border
+PASS: Desktop map keeps the team health visible without page scrolling
+PASS: Keyboard focus reveals the entire distant encounter in the adventure map
+PASS: Distant node inspection cannot apply an action
+PASS: Inspecting an encounter preserves horizontal map position
+PASS: Selecting a node retains keyboard focus
+PASS: Continue applies the exact reachable node once
+PASS: Deck dialog shows grouped cards, full descriptions and fitted images
+PASS: Rest preview follows authoritative healing amounts including a fallen hero
+PASS: Cancel never removes a card
+PASS: Confirm removes exactly one selected card
+PASS: Minimum deck disables every remove control
+PASS: Desktop reward keeps every choice fully visible
+PASS: Reward choice applies the offered Lõi
+PASS: Finishing a choice moves keyboard focus to Continue
+PASS: An empty treasure never claims an old relic as newly earned
+PASS: Pending submission blocks leaving and hides unverified rewards
+PASS: Submission failure provides a working retry
+PASS: Verified results use a stable announcement region and show actual rewards
+PASS: Settling a keyboard retry restores focus to the end action
+PASS: All tested controls retain a rounded visible border

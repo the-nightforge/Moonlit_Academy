@@ -1,0 +1,68 @@
+[
+  {
+    "state": "map",
+    "buttons": [],
+    "images": [],
+    "overflow": false
+  },
+  {
+    "state": "path",
+    "buttons": [],
+    "images": [],
+    "overflow": false
+  },
+  {
+    "state": "reward",
+    "buttons": [],
+    "images": [],
+    "overflow": false
+  },
+  {
+    "state": "empty",
+    "buttons": [],
+    "images": [],
+    "overflow": false
+  },
+  {
+    "state": "rest",
+    "buttons": [],
+    "images": [],
+    "overflow": false
+  },
+  {
+    "state": "minimum",
+    "buttons": [],
+    "images": [],
+    "overflow": false
+  },
+  {
+    "state": "treasure",
+    "buttons": [],
+    "images": [],
+    "overflow": false
+  },
+  {
+    "state": "won",
+    "buttons": [],
+    "images": [],
+    "overflow": false
+  },
+  {
+    "state": "lost",
+    "buttons": [],
+    "images": [],
+    "overflow": false
+  },
+  {
+    "state": "sending",
+    "buttons": [],
+    "images": [],
+    "overflow": false
+  },
+  {
+    "state": "error",
+    "buttons": [],
+    "images": [],
+    "overflow": false
+  }
+]
