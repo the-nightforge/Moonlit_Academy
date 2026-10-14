@@ -452,21 +452,21 @@
   {
     "id": "huyen_vu_thi_quan",
     "name": "Huyền Vũ Thí Quan",
-    "maxHp": 48,
+    "maxHp": 36,
     "attackStyle": "spear",
     "moonPower": { "start": 1, "cap": 4 },
     "intents": [
       { "id": "hvq_thiet_chuong", "name": "Thiết Chưởng", "kind": "attack", "targeting": "front", "cost": 1,
         "effects": [{ "type": "damage", "amount": 5, "to": "chosen" }] },
       { "id": "hvq_quy_giap", "name": "Quy Giáp", "kind": "defend", "cost": 1,
-        "effects": [{ "type": "gainArmor", "amount": 7, "to": "self" }] },
+        "effects": [{ "type": "gainArmor", "amount": 5, "to": "self" }] },
       { "id": "hvq_phan_kich", "name": "Phản Kích", "kind": "defend", "cost": 1,
         "effects": [
           { "type": "gainArmor", "amount": 3, "to": "self" },
-          { "type": "applyStatus", "status": "reflect", "amount": 3, "to": "self" }
+          { "type": "applyStatus", "status": "reflect", "amount": 2, "to": "self" }
         ] },
       { "id": "hvq_truy_phong", "name": "Truy Phong", "kind": "attack", "targeting": "lowestHp", "cost": 2,
-        "effects": [{ "type": "damage", "amount": 8, "to": "chosen" }] },
+        "effects": [{ "type": "damage", "amount": 7, "to": "chosen" }] },
       { "id": "hvq_huyen_vu_bich", "name": "Huyền Vũ Bích", "kind": "defend", "cost": 3,
         "effects": [
           { "type": "gainArmor", "amount": 10, "to": "self" },
@@ -528,23 +528,16 @@
   {
     "id": "khao_hach_chi_linh",
     "name": "Khảo Hạch Chi Linh",
-    "maxHp": 72,
+    "maxHp": 60,
     "attackStyle": "talisman",
     "moonPower": { "start": 2, "cap": 7 },
     "intents": [
       { "id": "khl_thach_trao", "name": "Thạch Trảo", "kind": "attack", "targeting": "random", "cost": 2,
-        "effects": [{ "type": "damage", "amount": 8, "to": "chosen" }] },
-      { "id": "khl_khao_an", "name": "Khảo Ấn", "kind": "debuff", "targeting": "random", "cost": 2,
-        "effects": [
-          { "type": "applyStatus", "status": "vulnerable", "amount": 2, "to": "chosen" },
-          { "type": "applyStatus", "status": "weak", "amount": 1, "to": "chosen" }
-        ] },
+        "effects": [{ "type": "damage", "amount": 7, "to": "chosen" }] },
       { "id": "khl_tran_ap", "name": "Trấn Áp", "kind": "attack", "cost": 3,
-        "effects": [{ "type": "damage", "amount": 4, "to": "allEnemies" }] },
-      { "id": "khl_ngoc_bich", "name": "Ngọc Bích", "kind": "defend", "cost": 3,
-        "effects": [{ "type": "gainArmor", "amount": 10, "to": "self" }] },
+        "effects": [{ "type": "damage", "amount": 3, "to": "allEnemies" }] },
       { "id": "khl_lac_an", "name": "Lạc Ấn", "kind": "attack", "targeting": "lowestHp", "cost": 4,
-        "effects": [{ "type": "damage", "amount": 10, "to": "chosen" }] }
+        "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }] }
     ],
     "moonOverrides": [
       {
@@ -695,7 +688,7 @@
   {
     "id": "vo_nguyet_anh_chu",
     "name": "Vô Nguyệt Ảnh Chủ",
-    "maxHp": 75,
+    "maxHp": 68,
     "attackStyle": "blood",
     "moonPower": { "start": 2, "cap": 8 },
     "intents": [
@@ -719,7 +712,7 @@
           { "type": "damage", "amount": 2, "to": "chosen" }
         ] },
       { "id": "vac_vo_nguyet_tram", "name": "Vô Nguyệt Trảm", "kind": "attack", "targeting": "lowestHp", "cost": 5,
-        "effects": [{ "type": "damage", "amount": 9, "to": "chosen" }] }
+        "effects": [{ "type": "damage", "amount": 8, "to": "chosen" }] }
     ],
     "moonOverrides": [
       {
