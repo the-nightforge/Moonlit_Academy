@@ -19,7 +19,7 @@ export const clientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("queue.join"), mode: z.enum(["ranked", "coop"]), deckId: id }),
   z.object({ type: z.literal("queue.leave") }),
   z.object({ type: z.literal("room.create"), mode: z.enum(["pvp", "coop"]), deckId: id }),
-  z.object({ type: z.literal("room.join"), code: z.string().min(4).max(8), deckId: id }),
+  z.object({ type: z.literal("room.join"), code: z.string().min(4).max(8), deckId: id, mode: z.enum(["pvp", "coop"]).optional() }),
   z.object({ type: z.literal("room.leave") }),
   z.object({ type: z.literal("practice.start"), mode: z.enum(["pvp", "coop"]), deckId: id }),
   z.object({ type: z.literal("match.action"), matchId: id, seq: z.number().int().nonnegative(), action: combatAction }),

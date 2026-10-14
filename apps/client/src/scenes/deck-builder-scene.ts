@@ -42,7 +42,7 @@ export class DeckBuilderScene extends Phaser.Scene {
   private artJobs = new Set<string>();
   private failedArt = new Set<string>();
   private cardPreview: CardPreview | null = null;
-  private returnScene: "deck-select" | "arena" | "armory" = "deck-select";
+  private returnScene: "deck-select" | "arena" | "armory" | "coop-lobby" = "deck-select";
 
   constructor() { super("deck-builder"); }
   preload() {
@@ -52,9 +52,9 @@ export class DeckBuilderScene extends Phaser.Scene {
       if (url && !this.textures.exists(key)) this.load.image(key, url);
     }
   }
-  create(data?: { back?: "arena" | "armory"; equipment?: { kind: "weapons" | "relics"; id: string } }) {
+  create(data?: { back?: "arena" | "armory" | "coop-lobby"; equipment?: { kind: "weapons" | "relics"; id: string } }) {
     useDesignCamera(this);
-    this.returnScene = data?.back === "arena" ? "arena" : data?.back === "armory" ? "armory" : "deck-select";
+    this.returnScene = data?.back === "arena" || data?.back === "armory" || data?.back === "coop-lobby" ? data.back : "deck-select";
     if (!session.editingDeck) { this.scene.start("deck-select"); return; }
     this.generation++;
     const generation = this.generation, authGeneration = auth.generation;
