@@ -85,6 +85,10 @@ describe("loadGameData", () => {
       "m05_lo_luyen",
     ]);
     expect(data.encounters["enc_elite_01"]).toMatchObject({ tier: "elite", minFloor: 5 });
+    // Double-wall enc_03 measured ~36% for starter decks — gate it with the other wall-family encounters (enc_05 also minFloor 3).
+    expect(data.encounters["enc_03"]).toMatchObject({ tier: "normal", minFloor: 3 });
+    const floor1Normal = Object.values(data.encounters).filter((e) => e.tier === "normal" && (e.minFloor ?? 1) <= 1).map((e) => e.id);
+    expect(floor1Normal).not.toContain("enc_03");
 
     expect(data.moonPhases).toHaveLength(8);
     expect(data.moonPhases[0]?.id).toBe("new");
