@@ -103,6 +103,8 @@ export interface HeroBranch {
 export interface HeroDef {
   id: string;
   name: string;
+  /** Short player-facing lore blurb shown on the hero detail "Cốt truyện" tab. */
+  bio: string;
   faction: Faction;
   archetype: Archetype;
   /** Lore weapon; an equipped weapon's style wins. Missing = archetype default. */

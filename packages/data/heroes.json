@@ -2,6 +2,7 @@
   {
     "id": "m05",
     "name": "Hoắc Liệt",
+    "bio": "Con trai Trấn Bắc Đại Tướng, bị triều đình giữ ở học viện làm \"con tin\" để kiềm chế cha mình. Y ngông cuồng vì chỉ có ngông cuồng mới chứng minh được y không phải con cờ.",
     "faction": "huyenVu",
     "archetype": "vanguard",
     "attackStyle": "spear",
@@ -91,6 +92,7 @@
   {
     "id": "f04",
     "name": "Ôn Như Ý",
+    "bio": "Con gái thầy lang làng, thi trượt hai lần mới đỗ vào Bạch Lộ Viện. Nàng không cần mạnh nhất — chỉ cần là người duy nhất không bỏ cuộc khi người khác gặp nguy.",
     "faction": "bachLo",
     "archetype": "support",
     "attackStyle": "herb",
@@ -165,6 +167,7 @@
   {
     "id": "m06",
     "name": "Tô Dạ",
+    "bio": "Thủ thư Tàng Thư Các lười biếng ban ngày — sát thủ của \"Vô Nguyệt\" ban đêm. Hắn được giao theo dõi công chúa, nhưng mỗi báo cáo gửi đi đều thiếu một chi tiết.",
     "faction": "neutral",
     "archetype": "striker",
     "attackStyle": "darts",
@@ -241,6 +244,7 @@
   {
     "id": "f03",
     "name": "Tần Sương",
+    "bio": "Truyền nhân cuối cùng của kiếm phái Hàn Sơn bị diệt môn, vào học viện để truy kẻ đã hạ lệnh. Tha thứ là việc của trời — việc của nàng là trả nợ.",
     "faction": "huyenVu",
     "archetype": "striker",
     "attackStyle": "slash",
@@ -316,6 +320,7 @@
   {
     "id": "f02",
     "name": "Diệp Linh Lung",
+    "bio": "Con gái nuôi của Thái hậu, mật thám được đào tạo từ nhỏ, kết thân với công chúa theo lệnh. Mười năm sau nàng phạm một lỗi nghiệp dư: thật lòng thương mục tiêu.",
     "faction": "xichDien",
     "archetype": "specialist",
     "attackStyle": "darts",
@@ -391,6 +396,7 @@
   {
     "id": "m01",
     "name": "Tạ Vân Chiêu",
+    "bio": "Trưởng tôn nhà Tể tướng, thủ khoa ba năm liền, phò mã định sẵn của công chúa. Y tin trật tự là lòng nhân từ lớn nhất — cho đến khi trật tự ấy bắt đầu bóp nghẹt chính mình.",
     "faction": "thanhLoan",
     "archetype": "support",
     "attackStyle": "talisman",
@@ -467,6 +473,7 @@
   {
     "id": "m02",
     "name": "Lục Hàn Phong",
+    "bio": "Trẻ mồ côi chiến tranh, được nhà họ Tạ nuôi lớn để làm cận vệ cho Tạ Vân Chiêu. Kiếm của hắn không cần hiểu lý lẽ — chỉ cần biết bảo vệ ai. Chỉ có một người khiến hắn chậm mất một nhịp.",
     "faction": "huyenVu",
     "archetype": "vanguard",
     "attackStyle": "slash",
@@ -543,6 +550,7 @@
   {
     "id": "m03",
     "name": "Mặc Tử Du",
+    "bio": "Con trai thương nhân giàu nhất Hằng Châu, mua suất vào học viện và bị quý tộc khinh là \"trọc phú\". Y cười nhận — vì y biết thiên hạ vận hành bằng bạc, không phải bằng huyết thống.",
     "faction": "thanhLoan",
     "archetype": "specialist",
     "attackStyle": "fan",
@@ -624,6 +632,7 @@
   {
     "id": "m04",
     "name": "Bùi Thanh Minh",
+    "bio": "Thần y trẻ nhất học viện, tự nguyện mất thị lực để đổi lấy khả năng nhìn thấy bệnh tật trong kinh mạch. Y cứu người không phân địch ta — và giữ trong lòng một bí mật không phải của mình.",
     "faction": "bachLo",
     "archetype": "support",
     "attackStyle": "herb",
@@ -699,6 +708,7 @@
   {
     "id": "f01",
     "name": "Thẩm Nguyệt Hoa",
+    "bio": "Công chúa út, ứng viên Nguyệt Chủ theo lời tiên tri, vào học viện để \"được giáo dưỡng\" — thực chất để bị giám sát. Nàng không định ngoan ngoãn làm nạn nhân của thiên mệnh.",
     "faction": "thanhLoan",
     "archetype": "specialist",
     "attackStyle": "moon",
@@ -781,6 +791,7 @@
   {
     "id": "m07",
     "name": "Ninh An",
+    "bio": "Tân sinh viên đỗ hạng chót từ một ngôi làng bản đồ quên vẽ. Cậu ngây thơ tin rằng ai tử tế thì thế giới sẽ ổn — chưa biết mình mang dòng máu đã ngủ ba trăm năm.",
     "faction": "bachLo",
     "archetype": "specialist",
     "attackStyle": "blood",
@@ -855,6 +866,7 @@
   {
     "id": "m08",
     "name": "Khương Tịch",
+    "bio": "Giáo quan trẻ tuổi nhất lịch sử, người duy nhất tiên đoán đúng Nguyệt Thực lần trước — và bị phạt vì nói ra. Tuổi thật của ông, như bản chất của thiên mệnh, không ai đọc được hết.",
     "faction": "xichDien",
     "archetype": "controller",
     "attackStyle": "star",
@@ -930,6 +942,7 @@
   {
     "id": "m10",
     "name": "Chu Quyết",
+    "bio": "Con nông dân thi đỗ bằng thực lực — người thường dân đầu tiên lọt top 10 sau năm mươi năm. Cậu không muốn ngai vàng, chỉ muốn được đánh giá mà không ai nhắc đến quê mình trước.",
     "faction": "thanhLoan",
     "archetype": "striker",
     "attackStyle": "ink",
@@ -1005,6 +1018,7 @@
   {
     "id": "f08",
     "name": "Phượng Chiêu Dung",
+    "bio": "Đệ tử thiên tài nhất của Khương Tịch, phản sư để tu luyện cấm thuật Huyết Nguyệt. Thiên mệnh định chọn một nạn nhân — nàng sẽ chọn trước, và nuốt luôn cả thiên mệnh.",
     "faction": "xichDien",
     "archetype": "striker",
     "attackStyle": "fire",
@@ -1080,6 +1094,7 @@
   {
     "id": "f05",
     "name": "Hạ Chi",
+    "bio": "Con gái thợ săn biên giới, đỗ vào học viện nhờ bắn hạ thích khách giữa phòng thi. Nàng ghét lễ nghi rườm rà — trong rừng người này, ai yếu cứ đứng sau lưng nàng.",
     "faction": "huyenVu",
     "archetype": "striker",
     "attackStyle": "bow",
@@ -1155,6 +1170,7 @@
   {
     "id": "f06",
     "name": "Lam Khê",
+    "bio": "Vũ cơ nổi tiếng nhất kinh thành, được đặc cách vào học viện. Người ta đến xem nàng múa — nàng xem lại người ta, và ghi nhớ tất cả.",
     "faction": "bachLo",
     "archetype": "controller",
     "attackStyle": "ribbon",
@@ -1232,6 +1248,7 @@
   {
     "id": "f07",
     "name": "Cố Uyển",
+    "bio": "Hậu duệ nhà sử quan, đang bí mật chép lại \"phần lịch sử bị xóa\" về các Nguyệt Chủ trước. Lịch sử bị viết bởi kẻ thắng — nên nàng sẽ viết lại.",
     "faction": "thanhLoan",
     "archetype": "controller",
     "attackStyle": "ink",
@@ -1307,6 +1324,7 @@
   {
     "id": "f09",
     "name": "Tiểu Mãn",
+    "bio": "Được tìm thấy trong đêm trăng tròn bên một con thỏ ngọc — linh thú tưởng đã tuyệt chủng. Cô nói chuyện được với mọi sinh linh, chỉ chưa biết mình là câu hỏi lớn nhất của tất cả.",
     "faction": "bachLo",
     "archetype": "specialist",
     "attackStyle": "moon",
@@ -1382,6 +1400,7 @@
   {
     "id": "f10",
     "name": "Liễu Tịnh Nhan",
+    "bio": "Thánh nữ canh giữ Nguyệt Thần Điện, đã sống qua một kỳ Nguyệt Thực và mang theo cái giá của nó trăm năm. Ánh trăng không chọn ai để chiếu sáng — nhưng cái giá của nó thì có.",
     "faction": "neutral",
     "archetype": "support",
     "attackStyle": "moon",
@@ -1464,6 +1483,7 @@
   {
     "id": "m09",
     "name": "Đoàn Lạc",
+    "bio": "Hoàng tử nước bại trận Nam Chiếu, \"khách\" của học viện — thực chất là tù nhân danh dự. Nước mất rồi, nhưng khúc nhạc thì không ai chiếm được.",
     "faction": "bachLo",
     "archetype": "controller",
     "attackStyle": "music",

@@ -152,6 +152,7 @@ const branchSchema = z.object({
 export const heroDefSchema = z.object({
   id: idSchema,
   name: z.string().min(1),
+  bio: z.string().min(1),
   faction: factionSchema,
   archetype: archetypeSchema,
   attackStyle: attackStyleSchema.optional(),

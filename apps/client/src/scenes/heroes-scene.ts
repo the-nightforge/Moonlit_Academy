@@ -15,7 +15,7 @@ import { COLORS, CONSTELLATION_TEXT, CURRENCY_LABELS, FACTION_LABELS, RARITY_COL
 import { addButton, addText, isModalOpen } from "../ui/widgets";
 
 type Hero = GameData["heroes"][string];
-type DetailTab = "overview" | "constellation" | "cards";
+type DetailTab = "overview" | "story" | "constellation" | "cards";
 type Field = HTMLInputElement | HTMLSelectElement | HTMLButtonElement;
 const MAX_CONSTELLATION = CONSTELLATION_TEXT.length;
 const GRID = { x: 28, y: 182, width: 548, height: 446, cardWidth: 128, cardHeight: 142, stepX: 140, stepY: 152 };
@@ -286,11 +286,11 @@ export class HeroesScene extends Phaser.Scene {
     }
     this.fit(this.root, 1052, 276, inList ? `Dạng: ${form.name}` : "Ngoài bộ lọc", 184, 12, MUTED);
     this.root.add(this.add.rectangle(1070, 310, 332, 1, 0x475671));
-    ([["overview", "Tổng quan"], ["constellation", "Tinh Hồn"], ["cards", "Lá chủ lực"]] as const).forEach(([tab, label], index) => {
-      const x = 958 + index * 111;
-      const hit = this.add.rectangle(x, 311, 106, 34, 0x283c55, this.tab === tab ? 0.6 : 0).setRounded(8).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.root.add(hit);
+    ([["overview", "Tổng quan"], ["story", "Cốt truyện"], ["constellation", "Tinh Hồn"], ["cards", "Lá chủ lực"]] as const).forEach(([tab, label], index) => {
+      const x = 944 + index * 82;
+      const hit = this.add.rectangle(x, 311, 78, 34, 0x283c55, this.tab === tab ? 0.6 : 0).setRounded(8).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.root.add(hit);
       addText(this, this.root, x, 310, label, 14, this.tab === tab ? COLORS.text : MUTED).setOrigin(0.5);
-      if (this.tab === tab) this.root.add(this.add.rectangle(x, 328, 86, 2, 0xd0e7fc));
+      if (this.tab === tab) this.root.add(this.add.rectangle(x, 328, 64, 2, 0xd0e7fc));
       hit.on("pointerup", () => { if (isModalOpen() || this.tooltipPinned) return; this.tab = tab; this.detailScroll = 0; this.render(); });
     });
     this.detailArea = { ...DETAIL };
@@ -309,6 +309,10 @@ export class HeroesScene extends Phaser.Scene {
       if (level < MAX_CONSTELLATION) { paragraph(`MỐC TIẾP THEO · TINH HỒN ${level + 1}`, 12, MUTED); paragraph(CONSTELLATION_TEXT[level]!, 14); }
       else paragraph("Đã đạt đủ 6 mốc Tinh Hồn", 14, COLORS.gold);
       paragraph(`Nhánh lá: ${hero.branches.map(b => b.name).join(" · ")}`, 13, MUTED);
+    } else if (this.tab === "story") {
+      paragraph("TIỂU SỬ", 12, MUTED);
+      paragraph(hero.bio, 15);
+      paragraph(`${FACTION_LABELS[hero.faction]} · ${hero.branches.map(b => b.name).join(" · ")}`, 13, MUTED);
     } else if (this.tab === "constellation") {
       paragraph("CHỌN DẠNG THĂNG CẤP", 12, MUTED);
       const current = owned?.levelUpForm === "alt" && level >= 5 ? "alt" : "base";
