@@ -80,6 +80,9 @@ and Hứa Công Chúc. Three matching signature weapon images are also present:
 `weapons/w_thiet_but_an.webp`. All nine images are 1024×1536 WebP, encoded without
 resizing or cropping. The current hero inventory uses `.webp`; older `.jpg`/`.png`
 paths above describe the original inventory, not current extensions.
+All nine images were subsequently redrawn against direct existing-art references
+to match anime linework, face proportions, clean cel shading and painted backgrounds;
+see `styleRevision` and `prompts.styleMatching` in the generation record.
 Combat portrait inventory: 63 files (23 heroes ×2 +15 enemies +2 summons).
 Prompts, references, hashes and final paths: [generation record](assets/hero-wave3-generated-assets.json).
 Visual review and checks: [new hero artwork](reviews/2026-10-15-new-hero-art.md).

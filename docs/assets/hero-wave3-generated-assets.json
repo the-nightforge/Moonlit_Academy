@@ -15,118 +15,118 @@
       "id": "m11",
       "name": "Thất Diệp",
       "file": "apps/client/public/assets/heroes/m11.webp",
-      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-1c0e86d6-7091-4a22-823c-2d1583aea916.png",
-      "master": ".sdd-work/hero-wave3/masters/m11.png",
-      "promptKey": "m11-final",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-4e80c50b-7b06-4a2d-8ca4-4a36fb8ec1ed.png",
+      "master": ".sdd-work/hero-wave3/style-masters/m11.png",
+      "promptKey": "style-m11",
       "width": 1024,
       "height": 1536,
-      "bytes": 374440,
-      "sourceSha256": "63730c8baa650832abf9395b2d3d49a2069ee7680a6af3dfa9e58370beb10918",
-      "outputSha256": "49870abe2ab9a9938a9c549ad0f2b9e21168c074ed09a36514202491ef64a6a5"
+      "bytes": 355246,
+      "sourceSha256": "a4fd2c483e3571232439ec4f53b8b893e4a8cc6eb9ae147875162d3fb407966f",
+      "outputSha256": "eec38c0b168234c6de8ee4ecfaa14ca6d784192b969b75cd171728019d49a639"
     },
     {
       "id": "m11_up",
       "name": "Thất Diệp — Thức Tỉnh",
       "file": "apps/client/public/assets/heroes/m11_up.webp",
-      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-451f25ba-17ba-4af5-b474-efa91be53100.png",
-      "master": ".sdd-work/hero-wave3/masters/m11_up.png",
-      "promptKey": "m11-up",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-7d06280d-776f-4840-bc0b-aac3c80eebbf.png",
+      "master": ".sdd-work/hero-wave3/style-masters/m11_up.png",
+      "promptKey": "style-m11-up-seven",
       "width": 1024,
       "height": 1536,
-      "bytes": 416586,
-      "sourceSha256": "44bb525bad9c1480f37bf08f398dc58aa986af2864a41caea33e6f2264f3fb5a",
-      "outputSha256": "f4d6d6cb323cfe9751c7928631415148d75a439ceef632ba41195020fb47b04d"
+      "bytes": 363464,
+      "sourceSha256": "b8c47fe97e142aa3cf9716f18893f9e2e6bb89de90fea699bd51bbcd8c4390a0",
+      "outputSha256": "8651d76951f92743340ca86554ca72b0f5df94bf074662af8bae7227eec9e5ca"
     },
     {
       "id": "f11",
       "name": "Điệp Vũ",
       "file": "apps/client/public/assets/heroes/f11.webp",
-      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-71a8f0b4-5f0a-4267-8e9c-4659e3fc897a.png",
-      "master": ".sdd-work/hero-wave3/masters/f11.png",
-      "promptKey": "f11-final",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-59b1a68c-bc7a-498c-990f-5c0021582282.png",
+      "master": ".sdd-work/hero-wave3/style-masters/f11.png",
+      "promptKey": "style-f11-safe",
       "width": 1024,
       "height": 1536,
-      "bytes": 484028,
-      "sourceSha256": "024163a41eb5e5df38aaadd9e94f8d4f929f7bc0c77b6e8e347d2ec994f85745",
-      "outputSha256": "f5df33f7b0cf6cc3d2771a0ba040060876231aad9ad2e99891cf1ec22e5f07ab"
+      "bytes": 433968,
+      "sourceSha256": "6ebd2a01ef2b8b54f5dbcdc13f4cace97f3453ffb7c716954c92d4f229dea661",
+      "outputSha256": "be33c12c4f0496f6aa43fef034e136b87b8b3cac7e3dc7ed6473696d8c800cc3"
     },
     {
       "id": "f11_up",
       "name": "Điệp Vũ — Thức Tỉnh",
       "file": "apps/client/public/assets/heroes/f11_up.webp",
-      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-b64d2290-86c3-4e5d-a872-4dd483c42c2d.png",
-      "master": ".sdd-work/hero-wave3/masters/f11_up.png",
-      "promptKey": "f11-up-safe",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-3cbf696a-4956-43e2-97bf-44e5b194d93e.png",
+      "master": ".sdd-work/hero-wave3/style-masters/f11_up.png",
+      "promptKey": "style-f11-up",
       "width": 1024,
       "height": 1536,
-      "bytes": 497136,
-      "sourceSha256": "68175fd6e94d0a962f0ff285fc73ff9496ae64bae0642c30dfc3802304c9a6b5",
-      "outputSha256": "3d04d41b7e3c7a024a4d867a19edad6263e1753f2f6b365172858d337ac138b6"
+      "bytes": 508222,
+      "sourceSha256": "0625ff22f8dd939c060d5c436674bf7ddc6c499231f84d508fbef911f290c5be",
+      "outputSha256": "d9a74e65a1bc2e40df5dfcd3cadd502a3b5f5dbfd3940731aa0606e77efaba29"
     },
     {
       "id": "f12",
       "name": "Hứa Công Chúc",
       "file": "apps/client/public/assets/heroes/f12.webp",
-      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-5ba5d13c-e1ba-49df-b4e0-9e5d9abc4710.png",
-      "master": ".sdd-work/hero-wave3/masters/f12.png",
-      "promptKey": "f12-final",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-82d68593-a3e9-4169-b143-57dd86710e08.png",
+      "master": ".sdd-work/hero-wave3/style-masters/f12.png",
+      "promptKey": "style-f12",
       "width": 1024,
       "height": 1536,
-      "bytes": 448810,
-      "sourceSha256": "2ef25b4fd34fd0d2acab45fe26a37f6bba4d9651ff2e464341a0cb779f1210a0",
-      "outputSha256": "7fc5f3fb22c018c96eadacbf52e16ff1ea51f3289dbc1349939fcd4b66604a80"
+      "bytes": 361510,
+      "sourceSha256": "d400a95a336a348f07655cfd8e9b0b8f2db38c66c65f62e3e2d9981a42ba3995",
+      "outputSha256": "b5041910f53eff9073ad53b6aa874bf10ee303ac37d62099f349277ac58fcd40"
     },
     {
       "id": "f12_up",
       "name": "Hứa Công Chúc — Thức Tỉnh",
       "file": "apps/client/public/assets/heroes/f12_up.webp",
-      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-d8a8fba1-11f6-4fe1-9def-3365e30c5b8b.png",
-      "master": ".sdd-work/hero-wave3/masters/f12_up.png",
-      "promptKey": "f12-up",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-748a8b3d-2572-49ce-9b5b-74207de80952.png",
+      "master": ".sdd-work/hero-wave3/style-masters/f12_up.png",
+      "promptKey": "style-f12-up",
       "width": 1024,
       "height": 1536,
-      "bytes": 558712,
-      "sourceSha256": "d31cc9db78ad3a3a566eafb27d02ad73d2e355c72ec1ec76b2e9c78cfe0016b0",
-      "outputSha256": "db2486cdd555a129b7428ad056be630e77a9fcc1504828f274bda31d11592e66"
+      "bytes": 450424,
+      "sourceSha256": "c515e275a3c1d761f6c66c0e7dd5b33a0fa07091c0132b770de6b835d723b61d",
+      "outputSha256": "7f946d4cee31662d373de9aa17c45929559a8622c6e2695d109cd114bf89ad8f"
     },
     {
       "id": "w_that_diep",
       "name": "Thất Diệp Phi Đao",
       "file": "apps/client/public/assets/weapons/w_that_diep.webp",
-      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-40d51b9d-80b5-4a37-bcf8-afa682380e1a.png",
-      "master": ".sdd-work/hero-wave3/masters/w_that_diep.png",
-      "promptKey": "weapon-m11",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-f70ed93c-6531-4b87-9547-8158b11dcc63.png",
+      "master": ".sdd-work/hero-wave3/style-masters/w_that_diep.png",
+      "promptKey": "style-weapon-m11",
       "width": 1024,
       "height": 1536,
-      "bytes": 294330,
-      "sourceSha256": "1eaed611b7d2c00afba8d0385d01efeb9ca623f800b3a1f7fd7b3ce677ed8475",
-      "outputSha256": "1a6c1ba884e773ced04761c27266f5214abab306e0319ef59a20b25e5e57c3f1"
+      "bytes": 415882,
+      "sourceSha256": "2c0a9a9e7cb9094bcf892aeac2b1cae53993718d2cff5b25e51280371e14d3e9",
+      "outputSha256": "d7ab5f95eac3c8ced9ca4e07088bab8e56bc1d2b1b78817029efcd3d30290f61"
     },
     {
       "id": "w_nam_chieu_quat",
       "name": "Nam Chiếu Tâm Quạt",
       "file": "apps/client/public/assets/weapons/w_nam_chieu_quat.webp",
-      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-8c2e1463-86e2-44ec-a35f-0be5c5b175ac.png",
-      "master": ".sdd-work/hero-wave3/masters/w_nam_chieu_quat.png",
-      "promptKey": "weapon-f11-safe",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-f1d87738-7888-4eac-a232-056516ed076b.png",
+      "master": ".sdd-work/hero-wave3/style-masters/w_nam_chieu_quat.png",
+      "promptKey": "style-weapon-f11",
       "width": 1024,
       "height": 1536,
-      "bytes": 412212,
-      "sourceSha256": "b8a20f3d0a335f50eb5e336a4012f0e040060ec57b5b455d9787ff9be884fbb4",
-      "outputSha256": "40c95ca1c21ea4f5a817d8c041c4fc5657dc1b186c1378e1247e0b4c596779d8"
+      "bytes": 508108,
+      "sourceSha256": "abf10b7b302b6fdcbacf9c6db29aed13a41c0e80986ec10d17b4af3237337ff6",
+      "outputSha256": "12c0e843be81b0c4c1de6cbc807d1be711dcdab1f00c5df1664e6431c3aa7081"
     },
     {
       "id": "w_thiet_but_an",
       "name": "Thiết Bút Ấn",
       "file": "apps/client/public/assets/weapons/w_thiet_but_an.webp",
-      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-950a2b6f-23ce-41ba-a627-0a83f943b8d9.png",
-      "master": ".sdd-work/hero-wave3/masters/w_thiet_but_an.png",
-      "promptKey": "weapon-f12-safe",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-0301bede-3eb9-43b5-b028-5f0833331976.png",
+      "master": ".sdd-work/hero-wave3/style-masters/w_thiet_but_an.png",
+      "promptKey": "style-weapon-f12-safe",
       "width": 1024,
       "height": 1536,
-      "bytes": 315500,
-      "sourceSha256": "d304b5d064c7461da83ef3ba3b4fb85f6036235a95ace28197bc4b0ba8b6f8f0",
-      "outputSha256": "ff702f3f4dc4cb81daa0783fbd15ed56994d247f0133c24c55625db706dd8d62"
+      "bytes": 472454,
+      "sourceSha256": "1f4c75aac1912dd9d3eea0de837088b0125c851b88816f70120f0feba3ebaafe",
+      "outputSha256": "f5f9ccc546096c24e34c7068aa079e8e1dcdd0ce2687895cdae30bf128630985"
     }
   ],
   "prompts": {
@@ -220,6 +220,318 @@
         "key": "weapon-f12-safe",
         "path": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-c0e28077-52d4-44e2-a0b6-745abb2fb528.png",
         "prompt": "Use case: precise-object-edit. Edit target: supplied Thiết Bút Ấn item illustration. Fix only composition/framing: zoom out the main pen, jade seal and BOTH indigo tassels as a coherent group so ALL hanging cords and entire tassel ends are inside the canvas, with at least 8 percent clear background margin on right and bottom. The current right tassel is cut by the image edge: make both cords shorter and curl them onto the closed dossier if needed. Preserve same pen design, jade seal design, black dossier, exact materials and art style, moonlit archive, lighting and colors. Entire pen including nib and top ornament inside, no cut object silhouettes. Extend painted desk background as necessary. Same vertical 2:3 composition, no text or readable writing, no frame, no watermark."
+      }
+    ],
+    "styleMatching": [
+      {
+        "key": "style-m11",
+        "paths": [
+          "D:/Source/VongNguyet/apps/client/public/assets/heroes/m06.webp",
+          "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/heroes/m11.webp"
+        ],
+        "prompt": "Use case: style-transfer. IMAGE 1 is the authoritative OLD GAME ART STYLE REFERENCE. IMAGE 2 is the artwork to REDRAW, supplying subject design only. Make a complete new hand-drawn rendering of image 2 in EXACTLY image 1's illustration language. Match image 1's confident dark outlines, flat clean anime skin, large expressive drawn eyes, broad hard-edged cel shadows, large graphic silk highlights, saturated clean colors and soft simplified painted atmosphere. Reduce tiny embroidery and metallic microdetail substantially. This should look made by the same illustrator for the same set as image 1. Do not retain image 2's semi-realistic face, glossy 3D lighting, finely textured fabric, foggy grey color grading or dense realistic architectural detail. Do not copy image 1's character identity, hair color or costume colors. Subject: Thất Diệp, original impassive young male infiltrator with black tied hair and plain silver pin, black gloves, crimson and ink-black academy robe with a few larger silver leaf ornaments. Keep these identity features but redraw his face using image 1's clearly stylized anime facial proportions and prominent eyes. Upper-body portrait to hips, face about one third of the canvas width, head and both hands uncut. Exactly seven silver leaf throwing knives attached in a neat row near his raised black-gloved wrist at chest height, all blades visible and separated. Replace densely patterned robe with broad crimson-black graphic folds and sparse large silver leaf motifs. Airy pale peach dusk courtyard, softly painted roof silhouettes, a few red ribbons, visually quiet behind the head. Expression silent and serious, no smile. Single finished vertical 2:3 portrait, 1024x1536. Whole head, both hands, all weapon tips and all hanging ornaments fully inside with clear background margins. No text, readable writing, UI, border, signature or watermark."
+      },
+      {
+        "key": "style-f11",
+        "paths": [
+          "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06.webp",
+          "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/heroes/f11.webp"
+        ],
+        "prompt": "Use case: style-transfer. IMAGE 1 is the authoritative OLD GAME ART STYLE REFERENCE. IMAGE 2 is the artwork to REDRAW, supplying subject design only. Make a complete new hand-drawn rendering of image 2 in EXACTLY image 1's illustration language. Match image 1's confident dark outlines, flat clean anime skin, large expressive drawn eyes, broad hard-edged cel shadows, large graphic silk highlights, saturated clean colors and soft simplified painted atmosphere. Reduce tiny embroidery and metallic microdetail substantially. This should look made by the same illustrator for the same set as image 1. Do not retain image 2's semi-realistic face, glossy 3D lighting, finely textured fabric, foggy grey color grading or dense realistic architectural detail. Do not copy image 1's character identity, hair color or costume colors. Subject: Điệp Vũ, original determined young southern bodyguard dancer. Black high ponytail, moss-green and warm faded-gold layered hanfu, jade chest ornament, a few hollow silver bells, TWO green-gold folding fans with silver leaf blade tips. Keep own identity, green colors, face outline and hair ornament, but use image 1's large luminous anime eyes, simplified nose/mouth and smooth flat skin. Closer upper-body-to-hips composition, face about one third canvas width, both arms and both complete fans arranged inside the image: one near upper left shoulder, the other compact at lower right, with clear edge margins. Simplify embroidered textures to a few large floral motifs and bright graphic silk folds. Soft pastel jade/lavender moonlit watchtower background with large painted shapes and luminous air, no dense realistic city. Determined restrained sorrow, no seductive expression. Single finished vertical 2:3 portrait, 1024x1536. Whole head, both hands, all weapon tips and all hanging ornaments fully inside with clear background margins. No text, readable writing, UI, border, signature or watermark."
+      },
+      {
+        "key": "style-f12",
+        "paths": [
+          "D:/Source/VongNguyet/apps/client/public/assets/heroes/f07.webp",
+          "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/heroes/f12.webp"
+        ],
+        "prompt": "Use case: style-transfer. IMAGE 1 is the authoritative OLD GAME ART STYLE REFERENCE. IMAGE 2 is the artwork to REDRAW, supplying subject design only. Make a complete new hand-drawn rendering of image 2 in EXACTLY image 1's illustration language. Match image 1's confident dark outlines, flat clean anime skin, large expressive drawn eyes, broad hard-edged cel shadows, large graphic silk highlights, saturated clean colors and soft simplified painted atmosphere. Reduce tiny embroidery and metallic microdetail substantially. This should look made by the same illustrator for the same set as image 1. Do not retain image 2's semi-realistic face, glossy 3D lighting, finely textured fabric, foggy grey color grading or dense realistic architectural detail. Do not copy image 1's character identity, hair color or costume colors. Subject: Hứa Công Chúc, original stern young female imperial inspector, neat black official coiled bun with simple square jade hairpiece. High-collared covered indigo/silver court robe, dark iron brush pen in one hand, CLOSED black leather dossier cradled in the other, square jade waist seal with abstract geometry. Keep her own identity and formal costume, but draw face using image 1's larger luminous anime eyes, flat smooth skin, clean nose/mouth lines. Closer upper-body to hip composition, face about one third canvas width. Broad indigo graphic shadow shapes and silver edge highlights, only a few large restrained official motifs; remove dense tiny metallic embroidery. Bright airy silver-blue archive background with large simplified lattice silhouettes, a few blank paper sheets and soft warm lantern accent. No flowers added to her hair. Head, pen, dossier, both hands and jade seal entirely visible. Single finished vertical 2:3 portrait, 1024x1536. Whole head, both hands, all weapon tips and all hanging ornaments fully inside with clear background margins. No text, readable writing, UI, border, signature or watermark."
+      },
+      {
+        "key": "style-weapon-m11",
+        "paths": [
+          "D:/Source/VongNguyet/apps/client/public/assets/weapons/w_bach_ngan_cham.png",
+          "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/weapons/w_that_diep.webp"
+        ],
+        "prompt": "Use case: style-transfer. Image 1 is OLD WEAPON ART STYLE REFERENCE; image 2 supplies only the new weapon designs to redraw. Completely redraw the seven silver leaf daggers in image 2 using image 1's delicate outlined 2D anime fantasy item illustration, clean silver highlight shapes, soft pastel painted environment and bright airy color design. No photographic metal, no 3D rendering, no grungy textures or cinematic depth of field. Exactly SEVEN whole matching leaf-shaped throwing knives, separated in a graceful descending diagonal fan, crimson-wrapped short handles and restrained silver leaf fittings. Simplify filigree into large readable drawn shapes. Pale peach/lavender academy courtyard with softly illustrated roof silhouettes, a few red ribbons and blank paper leaves, not dark brown. Whole seven daggers and all ribbons fully inside at least 7 percent clear margin. Vertical 2:3 1024x1536 opaque illustration. No person, text, border, UI, watermark."
+      },
+      {
+        "key": "style-weapon-f11",
+        "paths": [
+          "D:/Source/VongNguyet/apps/client/public/assets/weapons/w_kinh_hong_phien.png",
+          "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/weapons/w_nam_chieu_quat.webp"
+        ],
+        "prompt": "Use case: style-transfer. Image 1 is OLD WEAPON ART STYLE REFERENCE; image 2 supplies only the new weapon designs. Completely redraw image 2's two war fans as if drawn by image 1's illustrator: clean elegant dark contours, broad flat colored silk shapes, crisp gold accent shapes, softly painted luminous jade/lavender moonlit landscape and gentle atmospheric ribbons. Match image 1's bright anime fantasy palette and surface simplicity, NOT image 2's photographic embossed metal, dark grey cinematic mood or dense texture. Keep TWO moss-green folding war fans, faded-gold branch/flower motifs, bronze-gold ribs, unmistakable silver leaf blade tips, dark jade pivots, hollow silver bells and green tassels. Main fan open front, second partly open above, scale group so EVERY blade tip, BOTH fans and ALL tassels/cords are completely inside with clear 7 percent margins. Short cords, no trailing cut tassel. Whole canvas vertical 2:3 1024x1536. No human, text, readable glyphs, UI, border, watermark."
+      },
+      {
+        "key": "style-weapon-f12",
+        "paths": [
+          "D:/Source/VongNguyet/apps/client/public/assets/weapons/w_ngoc_but.png",
+          "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/weapons/w_thiet_but_an.webp"
+        ],
+        "prompt": "Use case: style-transfer. Image 1 is the OLD WEAPON ART STYLE REFERENCE; image 2 supplies only the new pen, seal and dossier designs. Completely redraw image 2 in image 1's outlined 2D anime fantasy illustration: crisp dark ink contours, broad simplified silver and indigo highlight shapes, clean jade colors, luminous pastel moonlight, softly painted archive/lattice silhouettes and a few graphic ink ribbons. Remove image 2's photorealistic leather pores, granular wood, elaborate metal microdetail, dark grey cinematic grading and depth of field. Main item is a long dark IRON brush pen with silver geometric fittings and black brush tip, diagonally above a CLOSED black dossier, a compact square jade official seal beside it, short indigo cords and tassels. Preserve these items and their indigo/silver palette; do not copy image 1's white/gold pen or ornament. Whole pen, whole seal and all cords/tassels inside with at least 7 percent safe margin. Airy pale silver-blue background, elegant formal mood. Vertical 2:3 1024x1536 opaque illustration, no person, writing, text, UI, border or watermark."
+      },
+      {
+        "key": "style-m11-up",
+        "paths": [
+          "D:/Source/VongNguyet/apps/client/public/assets/heroes/m06.webp",
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-4e80c50b-7b06-4a2d-8ca4-4a36fb8ec1ed.png"
+        ],
+        "prompt": "Use case: identity-preserve and style-transfer. Image 1 is authoritative OLD GAME STYLE. Image 2 is the SAME new character in NORMAL FORM. Create its AWAKENED artwork, keeping image 2's own face identity, hairstyle, costume colors and weapons but exactly matching image 1's drawn anime outlines, large stylized eyes, smooth flat skin, broad hard-edged cel shadows and graphic bright silk highlights. No semi-realism, no 3D shading, no dense metallic microtexture. Thất Diệp: silent serious young male, black tied hair and simple silver pin, crimson and ink-black academy robes with sparse larger silver leaf motifs, black gloves. AWAKENED variation: one raised gloved hand near chest supporting exactly SEVEN separated silver leaf throwing blades in a compact floating crescent in the middle-right part of image, with ALL blades inside. Other hand gathers crimson sleeve below. Keep same face and crimson-black outfit; bright silver moonlit edge and a few graphic ink shadows drifting behind, red ribbons. Airy luminous pale peach/lavender academy roof silhouettes, stronger silver aura than normal but restrained and clean. No extra knives attached to waist if seven are floating. Vertical 2:3 1024x1536. Complete head, both hands and EVERY weapon tip and hanging tassel must be clearly inside the canvas, with generous margins. Frame upper body to hips, face large and easy to read. No text, letters, readable glyphs, UI, frame, watermark. The artwork must look made by the SAME illustrator as image 1."
+      },
+      {
+        "key": "style-f11-up",
+        "paths": [
+          "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06.webp",
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-b37a82c9-d0cf-4af0-a3e3-8d3d545a36bb.png"
+        ],
+        "prompt": "Use case: identity-preserve and style-transfer. Image 1 is authoritative OLD GAME STYLE. Image 2 is the SAME new character in NORMAL FORM. Create its AWAKENED artwork, keeping image 2's own face identity, hairstyle, costume colors and weapons but exactly matching image 1's drawn anime outlines, large stylized eyes, smooth flat skin, broad hard-edged cel shadows and graphic bright silk highlights. No semi-realism, no 3D shading, no dense metallic microtexture. Điệp Vũ: same young determined sorrowful face, black high ponytail, moss-green/gold layered dancer robes, jade chest jewel, hollow silver bells. AWAKENED variation: powerful elegant bodyguard pose with TWO open dark-green/gold silver-leaf-edged fans and clear jade butterfly energy arcs. IMPORTANT NEW COMPOSITION: both fans are SMALLER than image2, each no more than 30 percent canvas width, and held IN FRONT of torso, one at shoulder/chest height right of her face, the other near waist left. Both hands, both complete fans and all tassels must have at least 10 percent clear background from all canvas edges. Do not reproduce image2's cropped upper-left or lower-right fan positions. Complete head stays clear. Luminous lavender/jade moonlit watchtower background, large soft painted shapes, same old-game face and bright cel-shaded fabric. Keep own green color scheme, no blue costume. Vertical 2:3 1024x1536. Complete head, both hands and EVERY weapon tip and hanging tassel must be clearly inside the canvas, with generous margins. Frame upper body to hips, face large and easy to read. No text, letters, readable glyphs, UI, frame, watermark. The artwork must look made by the SAME illustrator as image 1."
+      },
+      {
+        "key": "style-f12-up",
+        "paths": [
+          "D:/Source/VongNguyet/apps/client/public/assets/heroes/f07.webp",
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-82d68593-a3e9-4169-b143-57dd86710e08.png"
+        ],
+        "prompt": "Use case: identity-preserve and style-transfer. Image 1 is authoritative OLD GAME STYLE. Image 2 is the SAME new character in NORMAL FORM. Create its AWAKENED artwork, keeping image 2's own face identity, hairstyle, costume colors and weapons but exactly matching image 1's drawn anime outlines, large stylized eyes, smooth flat skin, broad hard-edged cel shadows and graphic bright silk highlights. No semi-realism, no 3D shading, no dense metallic microtexture. Hứa Công Chúc: same stern young female imperial inspector, precise anime eyes, neat black official bun with square jade hairpiece, fully covering indigo/silver high-collared official robe. AWAKENED variation: calm raised dark iron brush pen surrounded by bright silver-blue abstract square ward patterns, closed black dossier against body, square jade waist seal, a few blank floating pages and bold graphic ink strokes. Keep original face, covered robe and own costume, simplified large cloth motifs. Airy bright silver-blue archive background and clean drawn glow instead of dense realistic details. Every brush end, whole book, both hands and head safely inside; no readable writing in magic. Vertical 2:3 1024x1536. Complete head, both hands and EVERY weapon tip and hanging tassel must be clearly inside the canvas, with generous margins. Frame upper body to hips, face large and easy to read. No text, letters, readable glyphs, UI, frame, watermark. The artwork must look made by the SAME illustrator as image 1."
+      },
+      {
+        "key": "style-f11-safe",
+        "paths": [
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-b37a82c9-d0cf-4af0-a3e3-8d3d545a36bb.png"
+        ],
+        "prompt": "Use case: precise-object-edit. Edit only WEAPON FRAMING in this exact anime portrait. Upper-left fan blade tips are currently cut by the top canvas edge and lower-right fan touches right edge. Keep the whole image, face identity, colors, anime drawing style and outfit unchanged. Make BOTH FANS 25 percent smaller and reposition arms/fans inward: upper-left entire fan lowered below a clear 100 pixel band of background at TOP and at least 70 pixels from LEFT; lower-right whole fan and tassel shifted left, at least 70 pixels background between all fan/tassel edges and RIGHT. Both entire hands remain attached naturally and fully visible. Do not zoom in or move fan toward another edge. Draw missing upper blade tips in full and keep them inside. Preserve the same 1024x1536 2:3 canvas. No text, border, UI or watermark."
+      },
+      {
+        "key": "style-weapon-f12-safe",
+        "paths": [
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-45542477-8e4e-40ab-ad9b-f59bdcdce15a.png"
+        ],
+        "prompt": "Use case: precise-object-edit. Preserve this exact anime item drawing style, pen/seal designs, colors, linework and illustrated archive background. Fix ONLY both hanging indigo tassels: both currently extend past RIGHT edge, and seal tassel approaches BOTTOM. Shorten the two cords and replace the hanging tassel shapes with COMPACT smaller tassels, curling LEFT onto the dossier, with their entire tips fully inside. Place brush tassel directly beside pen shaft near center-right, and seal tassel directly below seal near lower center. Keep at least 100 pixels clear background between each tassel and RIGHT/BOTTOM edges. Complete pen, seal and both tassels visible. Do not enlarge items, do not crop or change style, do not copy current cut-off tassel positions. Same vertical 2:3 1024x1536. No text, UI, frame or watermark."
+      },
+      {
+        "key": "style-m11-up-seven",
+        "paths": [
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-d4b512c2-5471-4717-8286-198ae61bef5b.png"
+        ],
+        "prompt": "Use case: precise-object-edit. Edit only the knife count in this exact finished anime portrait. The floating group currently contains SIX matching throwing daggers. Add ONE additional matching whole silver leaf throwing dagger with a red-wrapped short handle, next to and BELOW-LEFT of the lowest existing floating dagger, in the open space between the floating group and the man's chest. Total must now be exactly SEVEN whole visible separated daggers with SEVEN distinct red handles, with no extra copies attached to costume. Keep the six existing daggers unchanged. The new seventh dagger must be entirely inside canvas, not obscure face or either hand, and point along the same fan arc. Preserve exact face, pose, black/crimson clothing, cel-shaded anime style, colors and background, no zoom/crop or style change. Same vertical 2:3 1024x1536. No text, UI, border or watermark."
+      }
+    ]
+  },
+  "revisions": [
+    {
+      "revision": "d44b420",
+      "assets": [
+        {
+          "id": "m11",
+          "name": "Thất Diệp",
+          "file": "apps/client/public/assets/heroes/m11.webp",
+          "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-1c0e86d6-7091-4a22-823c-2d1583aea916.png",
+          "master": ".sdd-work/hero-wave3/masters/m11.png",
+          "promptKey": "m11-final",
+          "width": 1024,
+          "height": 1536,
+          "bytes": 374440,
+          "sourceSha256": "63730c8baa650832abf9395b2d3d49a2069ee7680a6af3dfa9e58370beb10918",
+          "outputSha256": "49870abe2ab9a9938a9c549ad0f2b9e21168c074ed09a36514202491ef64a6a5"
+        },
+        {
+          "id": "m11_up",
+          "name": "Thất Diệp — Thức Tỉnh",
+          "file": "apps/client/public/assets/heroes/m11_up.webp",
+          "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-451f25ba-17ba-4af5-b474-efa91be53100.png",
+          "master": ".sdd-work/hero-wave3/masters/m11_up.png",
+          "promptKey": "m11-up",
+          "width": 1024,
+          "height": 1536,
+          "bytes": 416586,
+          "sourceSha256": "44bb525bad9c1480f37bf08f398dc58aa986af2864a41caea33e6f2264f3fb5a",
+          "outputSha256": "f4d6d6cb323cfe9751c7928631415148d75a439ceef632ba41195020fb47b04d"
+        },
+        {
+          "id": "f11",
+          "name": "Điệp Vũ",
+          "file": "apps/client/public/assets/heroes/f11.webp",
+          "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-71a8f0b4-5f0a-4267-8e9c-4659e3fc897a.png",
+          "master": ".sdd-work/hero-wave3/masters/f11.png",
+          "promptKey": "f11-final",
+          "width": 1024,
+          "height": 1536,
+          "bytes": 484028,
+          "sourceSha256": "024163a41eb5e5df38aaadd9e94f8d4f929f7bc0c77b6e8e347d2ec994f85745",
+          "outputSha256": "f5df33f7b0cf6cc3d2771a0ba040060876231aad9ad2e99891cf1ec22e5f07ab"
+        },
+        {
+          "id": "f11_up",
+          "name": "Điệp Vũ — Thức Tỉnh",
+          "file": "apps/client/public/assets/heroes/f11_up.webp",
+          "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-b64d2290-86c3-4e5d-a872-4dd483c42c2d.png",
+          "master": ".sdd-work/hero-wave3/masters/f11_up.png",
+          "promptKey": "f11-up-safe",
+          "width": 1024,
+          "height": 1536,
+          "bytes": 497136,
+          "sourceSha256": "68175fd6e94d0a962f0ff285fc73ff9496ae64bae0642c30dfc3802304c9a6b5",
+          "outputSha256": "3d04d41b7e3c7a024a4d867a19edad6263e1753f2f6b365172858d337ac138b6"
+        },
+        {
+          "id": "f12",
+          "name": "Hứa Công Chúc",
+          "file": "apps/client/public/assets/heroes/f12.webp",
+          "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-5ba5d13c-e1ba-49df-b4e0-9e5d9abc4710.png",
+          "master": ".sdd-work/hero-wave3/masters/f12.png",
+          "promptKey": "f12-final",
+          "width": 1024,
+          "height": 1536,
+          "bytes": 448810,
+          "sourceSha256": "2ef25b4fd34fd0d2acab45fe26a37f6bba4d9651ff2e464341a0cb779f1210a0",
+          "outputSha256": "7fc5f3fb22c018c96eadacbf52e16ff1ea51f3289dbc1349939fcd4b66604a80"
+        },
+        {
+          "id": "f12_up",
+          "name": "Hứa Công Chúc — Thức Tỉnh",
+          "file": "apps/client/public/assets/heroes/f12_up.webp",
+          "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-d8a8fba1-11f6-4fe1-9def-3365e30c5b8b.png",
+          "master": ".sdd-work/hero-wave3/masters/f12_up.png",
+          "promptKey": "f12-up",
+          "width": 1024,
+          "height": 1536,
+          "bytes": 558712,
+          "sourceSha256": "d31cc9db78ad3a3a566eafb27d02ad73d2e355c72ec1ec76b2e9c78cfe0016b0",
+          "outputSha256": "db2486cdd555a129b7428ad056be630e77a9fcc1504828f274bda31d11592e66"
+        },
+        {
+          "id": "w_that_diep",
+          "name": "Thất Diệp Phi Đao",
+          "file": "apps/client/public/assets/weapons/w_that_diep.webp",
+          "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-40d51b9d-80b5-4a37-bcf8-afa682380e1a.png",
+          "master": ".sdd-work/hero-wave3/masters/w_that_diep.png",
+          "promptKey": "weapon-m11",
+          "width": 1024,
+          "height": 1536,
+          "bytes": 294330,
+          "sourceSha256": "1eaed611b7d2c00afba8d0385d01efeb9ca623f800b3a1f7fd7b3ce677ed8475",
+          "outputSha256": "1a6c1ba884e773ced04761c27266f5214abab306e0319ef59a20b25e5e57c3f1"
+        },
+        {
+          "id": "w_nam_chieu_quat",
+          "name": "Nam Chiếu Tâm Quạt",
+          "file": "apps/client/public/assets/weapons/w_nam_chieu_quat.webp",
+          "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-8c2e1463-86e2-44ec-a35f-0be5c5b175ac.png",
+          "master": ".sdd-work/hero-wave3/masters/w_nam_chieu_quat.png",
+          "promptKey": "weapon-f11-safe",
+          "width": 1024,
+          "height": 1536,
+          "bytes": 412212,
+          "sourceSha256": "b8a20f3d0a335f50eb5e336a4012f0e040060ec57b5b455d9787ff9be884fbb4",
+          "outputSha256": "40c95ca1c21ea4f5a817d8c041c4fc5657dc1b186c1378e1247e0b4c596779d8"
+        },
+        {
+          "id": "w_thiet_but_an",
+          "name": "Thiết Bút Ấn",
+          "file": "apps/client/public/assets/weapons/w_thiet_but_an.webp",
+          "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-950a2b6f-23ce-41ba-a627-0a83f943b8d9.png",
+          "master": ".sdd-work/hero-wave3/masters/w_thiet_but_an.png",
+          "promptKey": "weapon-f12-safe",
+          "width": 1024,
+          "height": 1536,
+          "bytes": 315500,
+          "sourceSha256": "d304b5d064c7461da83ef3ba3b4fb85f6036235a95ace28197bc4b0ba8b6f8f0",
+          "outputSha256": "ff702f3f4dc4cb81daa0783fbd15ed56994d247f0133c24c55625db706dd8d62"
+        }
+      ]
+    }
+  ],
+  "styleRevision": {
+    "date": "2026-10-15",
+    "baseRevision": "d44b420",
+    "tool": "built-in image_gen.imagegen",
+    "request": "Ảnh gen mới phải có phong cách giống các art cũ",
+    "references": [
+      {
+        "pathAtGeneration": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m06.webp",
+        "sha256": "990fb81dc07873bb9d40fc96abe09ee1ee82333cec8a2cdab1be2c7ce1624a21",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/990fb81dc07873bb9d40fc96abe09ee1ee82333cec8a2cdab1be2c7ce1624a21.webp"
+      },
+      {
+        "pathAtGeneration": "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/heroes/m11.webp",
+        "sha256": "49870abe2ab9a9938a9c549ad0f2b9e21168c074ed09a36514202491ef64a6a5",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/49870abe2ab9a9938a9c549ad0f2b9e21168c074ed09a36514202491ef64a6a5.webp"
+      },
+      {
+        "pathAtGeneration": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06.webp",
+        "sha256": "19c6e3c87586c6d46a11a45d57f7c6b64789b10d925edb2099b5dbbeec7fa008",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/19c6e3c87586c6d46a11a45d57f7c6b64789b10d925edb2099b5dbbeec7fa008.webp"
+      },
+      {
+        "pathAtGeneration": "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/heroes/f11.webp",
+        "sha256": "f5df33f7b0cf6cc3d2771a0ba040060876231aad9ad2e99891cf1ec22e5f07ab",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/f5df33f7b0cf6cc3d2771a0ba040060876231aad9ad2e99891cf1ec22e5f07ab.webp"
+      },
+      {
+        "pathAtGeneration": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f07.webp",
+        "sha256": "8356496b2b3ace453bf8902a0ef22d8ff48fc1eebf5c3e42ed2574947692733e",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/8356496b2b3ace453bf8902a0ef22d8ff48fc1eebf5c3e42ed2574947692733e.webp"
+      },
+      {
+        "pathAtGeneration": "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/heroes/f12.webp",
+        "sha256": "7fc5f3fb22c018c96eadacbf52e16ff1ea51f3289dbc1349939fcd4b66604a80",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/7fc5f3fb22c018c96eadacbf52e16ff1ea51f3289dbc1349939fcd4b66604a80.webp"
+      },
+      {
+        "pathAtGeneration": "D:/Source/VongNguyet/apps/client/public/assets/weapons/w_bach_ngan_cham.png",
+        "sha256": "7dee94d3f0bd7319808e1219a9d26cf5b1e7ae380aeaeef6d63ef4a92170fd1a",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/7dee94d3f0bd7319808e1219a9d26cf5b1e7ae380aeaeef6d63ef4a92170fd1a.png"
+      },
+      {
+        "pathAtGeneration": "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/weapons/w_that_diep.webp",
+        "sha256": "1a6c1ba884e773ced04761c27266f5214abab306e0319ef59a20b25e5e57c3f1",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/1a6c1ba884e773ced04761c27266f5214abab306e0319ef59a20b25e5e57c3f1.webp"
+      },
+      {
+        "pathAtGeneration": "D:/Source/VongNguyet/apps/client/public/assets/weapons/w_kinh_hong_phien.png",
+        "sha256": "8320f7a2914b59c8934d5e2bd71683d18d42edb577f7a297d2bc31d2bec22aab",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/8320f7a2914b59c8934d5e2bd71683d18d42edb577f7a297d2bc31d2bec22aab.png"
+      },
+      {
+        "pathAtGeneration": "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/weapons/w_nam_chieu_quat.webp",
+        "sha256": "40c95ca1c21ea4f5a817d8c041c4fc5657dc1b186c1378e1247e0b4c596779d8",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/40c95ca1c21ea4f5a817d8c041c4fc5657dc1b186c1378e1247e0b4c596779d8.webp"
+      },
+      {
+        "pathAtGeneration": "D:/Source/VongNguyet/apps/client/public/assets/weapons/w_ngoc_but.png",
+        "sha256": "8ddf383a0c67050a1a0aebdb89a02ce51e9f4f47bd1f367a471ffe9b85622eb6",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/8ddf383a0c67050a1a0aebdb89a02ce51e9f4f47bd1f367a471ffe9b85622eb6.png"
+      },
+      {
+        "pathAtGeneration": "C:/Users/Hienq/.codex/worktrees/game-animation-polish/VongNguyet/apps/client/public/assets/weapons/w_thiet_but_an.webp",
+        "sha256": "ff702f3f4dc4cb81daa0783fbd15ed56994d247f0133c24c55625db706dd8d62",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/ff702f3f4dc4cb81daa0783fbd15ed56994d247f0133c24c55625db706dd8d62.webp"
+      },
+      {
+        "pathAtGeneration": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-4e80c50b-7b06-4a2d-8ca4-4a36fb8ec1ed.png",
+        "sha256": "a4fd2c483e3571232439ec4f53b8b893e4a8cc6eb9ae147875162d3fb407966f",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/a4fd2c483e3571232439ec4f53b8b893e4a8cc6eb9ae147875162d3fb407966f.png"
+      },
+      {
+        "pathAtGeneration": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-b37a82c9-d0cf-4af0-a3e3-8d3d545a36bb.png",
+        "sha256": "4fa6cbafe7ecd4c58f4d4053fa9d4712b3f7baa76b7697a1d873b4942afedfe7",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/4fa6cbafe7ecd4c58f4d4053fa9d4712b3f7baa76b7697a1d873b4942afedfe7.png"
+      },
+      {
+        "pathAtGeneration": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-82d68593-a3e9-4169-b143-57dd86710e08.png",
+        "sha256": "d400a95a336a348f07655cfd8e9b0b8f2db38c66c65f62e3e2d9981a42ba3995",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/d400a95a336a348f07655cfd8e9b0b8f2db38c66c65f62e3e2d9981a42ba3995.png"
+      },
+      {
+        "pathAtGeneration": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-45542477-8e4e-40ab-ad9b-f59bdcdce15a.png",
+        "sha256": "bfbb23d663cff2261419be191004e9e72e3ee0710a75de8e2fc15a781d1bc985",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/bfbb23d663cff2261419be191004e9e72e3ee0710a75de8e2fc15a781d1bc985.png"
+      },
+      {
+        "pathAtGeneration": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-d4b512c2-5471-4717-8286-198ae61bef5b.png",
+        "sha256": "acca0fa1aedc452041e5eb935655a362da8af856017e489c29916f09ea97d3dc",
+        "snapshot": ".sdd-work/hero-wave3/style-inputs/acca0fa1aedc452041e5eb935655a362da8af856017e489c29916f09ea97d3dc.png"
       }
     ]
   }

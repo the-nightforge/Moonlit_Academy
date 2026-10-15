@@ -8,5 +8,6 @@ These rules apply to every UI change and every state, including selected, disabl
 4. Remove tooltips that merely repeat information already visible. Keep tooltips only when they add useful information, such as an explanation of a mechanic or the complete value/text otherwise unavailable.
 5. Do not abbreviate player-facing terms. Write “Tinh Luyện”, “Cộng Minh”, “máu”, “hình trang bị” in full; do not use “TL”, “CM”, “HP” or “art”. Numeric levels/counts and mathematical symbols are allowed.
 6. Verify the same rules for all item categories, owned/unowned/max-level/upgrade preview states, popups, keyboard/touch controls, and tested viewport sizes.
+7. Newly generated artwork must match the existing artwork for its category. Inspect existing hero or item images and use them as direct visual style references in generation/editing. Match linework, face proportions, shading, palette, materials and background treatment; a generic anime prompt is insufficient. Keep the new subject's identity and lore, then compare the result beside the existing set before accepting it.
 
 User instruction on 2026-10-12 takes precedence over earlier UI design proposals that recommended cropping, full-bleed text over art, abbreviated tile levels, or redundant hover labels.
