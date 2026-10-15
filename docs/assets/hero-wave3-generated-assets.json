@@ -1,0 +1,226 @@
+{
+  "date": "2026-10-15",
+  "tool": "built-in image_gen.imagegen",
+  "baseCommit": "7b5cebe",
+  "scope": "6 hero portraits replacing temporary copies, 3 missing signature weapons",
+  "encoding": {
+    "format": "webp",
+    "quality": 90,
+    "effort": 6,
+    "resize": false,
+    "crop": false
+  },
+  "assets": [
+    {
+      "id": "m11",
+      "name": "Thất Diệp",
+      "file": "apps/client/public/assets/heroes/m11.webp",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-1c0e86d6-7091-4a22-823c-2d1583aea916.png",
+      "master": ".sdd-work/hero-wave3/masters/m11.png",
+      "promptKey": "m11-final",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 374440,
+      "sourceSha256": "63730c8baa650832abf9395b2d3d49a2069ee7680a6af3dfa9e58370beb10918",
+      "outputSha256": "49870abe2ab9a9938a9c549ad0f2b9e21168c074ed09a36514202491ef64a6a5"
+    },
+    {
+      "id": "m11_up",
+      "name": "Thất Diệp — Thức Tỉnh",
+      "file": "apps/client/public/assets/heroes/m11_up.webp",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-451f25ba-17ba-4af5-b474-efa91be53100.png",
+      "master": ".sdd-work/hero-wave3/masters/m11_up.png",
+      "promptKey": "m11-up",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 416586,
+      "sourceSha256": "44bb525bad9c1480f37bf08f398dc58aa986af2864a41caea33e6f2264f3fb5a",
+      "outputSha256": "f4d6d6cb323cfe9751c7928631415148d75a439ceef632ba41195020fb47b04d"
+    },
+    {
+      "id": "f11",
+      "name": "Điệp Vũ",
+      "file": "apps/client/public/assets/heroes/f11.webp",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-71a8f0b4-5f0a-4267-8e9c-4659e3fc897a.png",
+      "master": ".sdd-work/hero-wave3/masters/f11.png",
+      "promptKey": "f11-final",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 484028,
+      "sourceSha256": "024163a41eb5e5df38aaadd9e94f8d4f929f7bc0c77b6e8e347d2ec994f85745",
+      "outputSha256": "f5df33f7b0cf6cc3d2771a0ba040060876231aad9ad2e99891cf1ec22e5f07ab"
+    },
+    {
+      "id": "f11_up",
+      "name": "Điệp Vũ — Thức Tỉnh",
+      "file": "apps/client/public/assets/heroes/f11_up.webp",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-b64d2290-86c3-4e5d-a872-4dd483c42c2d.png",
+      "master": ".sdd-work/hero-wave3/masters/f11_up.png",
+      "promptKey": "f11-up-safe",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 497136,
+      "sourceSha256": "68175fd6e94d0a962f0ff285fc73ff9496ae64bae0642c30dfc3802304c9a6b5",
+      "outputSha256": "3d04d41b7e3c7a024a4d867a19edad6263e1753f2f6b365172858d337ac138b6"
+    },
+    {
+      "id": "f12",
+      "name": "Hứa Công Chúc",
+      "file": "apps/client/public/assets/heroes/f12.webp",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-5ba5d13c-e1ba-49df-b4e0-9e5d9abc4710.png",
+      "master": ".sdd-work/hero-wave3/masters/f12.png",
+      "promptKey": "f12-final",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 448810,
+      "sourceSha256": "2ef25b4fd34fd0d2acab45fe26a37f6bba4d9651ff2e464341a0cb779f1210a0",
+      "outputSha256": "7fc5f3fb22c018c96eadacbf52e16ff1ea51f3289dbc1349939fcd4b66604a80"
+    },
+    {
+      "id": "f12_up",
+      "name": "Hứa Công Chúc — Thức Tỉnh",
+      "file": "apps/client/public/assets/heroes/f12_up.webp",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-d8a8fba1-11f6-4fe1-9def-3365e30c5b8b.png",
+      "master": ".sdd-work/hero-wave3/masters/f12_up.png",
+      "promptKey": "f12-up",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 558712,
+      "sourceSha256": "d31cc9db78ad3a3a566eafb27d02ad73d2e355c72ec1ec76b2e9c78cfe0016b0",
+      "outputSha256": "db2486cdd555a129b7428ad056be630e77a9fcc1504828f274bda31d11592e66"
+    },
+    {
+      "id": "w_that_diep",
+      "name": "Thất Diệp Phi Đao",
+      "file": "apps/client/public/assets/weapons/w_that_diep.webp",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-40d51b9d-80b5-4a37-bcf8-afa682380e1a.png",
+      "master": ".sdd-work/hero-wave3/masters/w_that_diep.png",
+      "promptKey": "weapon-m11",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 294330,
+      "sourceSha256": "1eaed611b7d2c00afba8d0385d01efeb9ca623f800b3a1f7fd7b3ce677ed8475",
+      "outputSha256": "1a6c1ba884e773ced04761c27266f5214abab306e0319ef59a20b25e5e57c3f1"
+    },
+    {
+      "id": "w_nam_chieu_quat",
+      "name": "Nam Chiếu Tâm Quạt",
+      "file": "apps/client/public/assets/weapons/w_nam_chieu_quat.webp",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-8c2e1463-86e2-44ec-a35f-0be5c5b175ac.png",
+      "master": ".sdd-work/hero-wave3/masters/w_nam_chieu_quat.png",
+      "promptKey": "weapon-f11-safe",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 412212,
+      "sourceSha256": "b8a20f3d0a335f50eb5e336a4012f0e040060ec57b5b455d9787ff9be884fbb4",
+      "outputSha256": "40c95ca1c21ea4f5a817d8c041c4fc5657dc1b186c1378e1247e0b4c596779d8"
+    },
+    {
+      "id": "w_thiet_but_an",
+      "name": "Thiết Bút Ấn",
+      "file": "apps/client/public/assets/weapons/w_thiet_but_an.webp",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-950a2b6f-23ce-41ba-a627-0a83f943b8d9.png",
+      "master": ".sdd-work/hero-wave3/masters/w_thiet_but_an.png",
+      "promptKey": "weapon-f12-safe",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 315500,
+      "sourceSha256": "d304b5d064c7461da83ef3ba3b4fb85f6036235a95ace28197bc4b0ba8b6f8f0",
+      "outputSha256": "ff702f3f4dc4cb81daa0783fbd15ed56994d247f0133c24c55625db706dd8d62"
+    }
+  ],
+  "prompts": {
+    "initialDrafts": [
+      {
+        "key": "m11-normal",
+        "prompt": "Create one finished vertical 2:3 portrait illustration, 1024x1536, for an original Vietnamese gufeng fantasy mobile card game. Character: Thất Diệp, a quiet expressionless young male infiltrator of the crimson academy. Neat ink-black hair tied with one simple silver pin, distinct sharp calm face, still watchful grey eyes, no smile. Slightly worn but meticulously arranged crimson and ink-black academy hanfu, fine silver embroidery, modest fully clothed layered robes, ink-stained black gloves. Seven thin silver metal leaf-shaped throwing blades are sewn in a neat fan inside one partly opened sleeve, all blade tips visible and separate. Upper body to mid-thigh three-quarter view, both gloved hands and the complete blade arrangement comfortably within the composition. He stands unnaturally still while a few narrow red silk ribbons and loose blank paper flutter past. Soft luminous dusk courtyard background, warm peach light against crimson, charcoal and silver, subtle long shadow. Style: polished Chinese mobile game splash illustration, refined clean anime linework, glossy detailed fabric rendering, luminous skin and jewel-like eyes, intricate restrained gold/silver details, soft depth of field and airy light. Match a cohesive high quality anime card roster rather than realistic photography or 3D. Strong readable face at thumbnail size. Preserve a generous safe margin around head, hands, blades and important accessories. Single character only, no text, no symbols resembling readable writing, no border, no UI, no watermark, no collage, no masked assassin, no extra limbs."
+      },
+      {
+        "key": "f11-normal",
+        "prompt": "Create one finished vertical 2:3 portrait illustration, 1024x1536, for an original Vietnamese gufeng fantasy mobile card game. Character: Điệp Vũ, a graceful yet resolute female blade-dancer, the last surviving royal bodyguard of a lost southern kingdom. Determined sorrowful eyes half lowered, long black hair in a high warrior ponytail, subtle silver bells in her hair. She wears modest moss-green and faded gold layered dance hanfu remade from old royal silk, flowing long sleeves and a covered fitted bodice, a small southern jade ornament on her chest, an intricate belt with hollow silver chimes and faded tassels. She holds two matching folding war fans, half open with elegant silver blade edges, one on each side in a poised turn; show both hands, both whole fans, her face, hair ornament and important accessories fully within the image. Upper body to mid-thigh framing, silk ribbon curves supporting the dance without covering her face. Soft misty moonlit watchtower looking south, luminous jade green, silver and aged gold palette with warm skin. Style: polished Chinese mobile game splash illustration, precise clean anime linework, richly rendered glossy silk and silver, detailed expressive anime eyes, airy cinematic lighting, softly blurred background, harmonious with a premium gufeng card roster. Single original character, distinct from a blue lotus dancer. Plenty of safe space around fan tips and head; do not clip the fans or hands. No text, no readable writing, no frame, no UI, no watermark, no collage, no extra fingers, no revealing outfit."
+      },
+      {
+        "key": "f12-normal",
+        "prompt": "Create one finished vertical 2:3 portrait illustration, 1024x1536, for an original Vietnamese gufeng fantasy mobile card game. Character: Hứa Công Chúc, a brilliant young female imperial inspector, stern, intelligent and composed. Her own distinct face with cold precise dark eyes, neat black hair in a practical official coiled bun with one square jade seal hairpiece. Modest fully covering indigo censor hanfu with high collar, rigid court sash, immaculate silver-edged long sleeves and restrained precise geometric embroidery; square jade official seal at her waist. She holds a slim dark iron brush pen in one hand and a closed black leather dossier in the other, both hands and every prop completely inside the frame. Upper body to mid-thigh composition, composed three-quarter pose with a strong balanced formal silhouette. A moonlit court study with softly blurred stacked blank dossiers, latticed window and pale blue moonlight, a few abstract ink wisps rather than readable characters. Palette indigo, silver, ink-black and jade, pale warm skin. Style: polished Chinese mobile game splash illustration, fine clean anime linework, exquisite glossy fabric rendering and beautiful expressive anime eyes, luminous restrained light, subtle gilt details, soft depth of field, cohesive premium gufeng card roster. Clear face at small thumbnail size, generous safety margin around head, pen, seal, dossier and hands. One original character only, not a white-robed historian. No text, no readable calligraphy, no UI, no frame, no watermark, no collage, no extra fingers, no revealing outfit."
+      }
+    ],
+    "normalStyleEdits": [
+      {
+        "key": "m11-final",
+        "paths": [
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-59d61171-4840-445d-bc7c-5f21231c10be.png",
+          "D:/Source/VongNguyet/apps/client/public/assets/heroes/m04.webp"
+        ],
+        "prompt": "Edit Image 1 (the crimson-clad black-haired male infiltrator portrait). Image 2 is STYLE REFERENCE ONLY, not the subject or clothing. Keep Image 1's distinct character identity, black tied hair, impassive face, crimson-black silver embroidered academy uniform, black gloves, exactly seven metal leaf throwing blades, dusk courtyard setting and vertical 2:3 composition. Change the rendering to match Image 2's clean sharply drawn ANIME card style: visible elegant ink contours, clear graphic cel-shadow shapes, luminous flat-smooth anime skin without photographic pores or volumetric 3D face shading, larger crisp anime eyes, more vivid controlled crimson accents, glossy flowing silk drawn with stylized highlights, simplified atmospheric background and decorative light. Do not copy Image 2's silver hair, smile, flower ornaments or outfit. This must look like another character in the SAME 2D hand-drawn mobile-game roster as Image 2, not a semi-realistic live-action render. Reframe slightly if needed to keep the entire head, both hands and every blade fully inside the picture with a comfortable margin. Keep one character, preserve full 2:3 canvas, no text, no readable calligraphy, no UI, no border, no watermark."
+      },
+      {
+        "key": "f11-final",
+        "paths": [
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-e217bb0e-00b9-40b4-b047-42867c1b5c8f.png",
+          "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06.webp"
+        ],
+        "prompt": "Edit Image 1 (the moss-green female war-fan dancer). Image 2 is STYLE REFERENCE ONLY; do not copy her identity, blue outfit or exposed costume. Preserve Image 1's own face, determined sorrowful personality, black high warrior ponytail, moss-green/faded-gold modest layered hanfu, jade ornament, silver chimes, TWO bladed folding fans and misty moonlit southern watchtower. Change rendering to the same clearly hand-drawn ANIME card style as Image 2: precise visible anime ink lines, crisp cel-shadow shapes, luminous smooth anime skin, clear expressive anime eyes, vibrant jade-green highlights, ornate stylized silk, restrained decorative sparkle and airy background, no photorealistic skin, no cinematic live-action look and no 3D doll rendering. Important composition correction: bring BOTH complete fan silhouettes and both hands well inside the canvas; the lower right fan currently clips the right edge, so pull the arm and fan inward and make that fan slightly smaller, leaving at least 6 percent clear margin around every blade tip. Keep face large/readable and preserve a vertical 2:3 single-character upper-body-to-thigh portrait. No cropped weapon, no text, no letters, no readable calligraphy, no UI, no frame, no watermark."
+      },
+      {
+        "key": "f12-final",
+        "paths": [
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-10f8ed60-57c4-411e-8bb7-926993bdbcab.png",
+          "D:/Source/VongNguyet/apps/client/public/assets/heroes/f07.webp"
+        ],
+        "prompt": "Edit Image 1 (the indigo imperial female inspector). Image 2 is STYLE REFERENCE ONLY, not an identity or clothing template. Preserve Image 1's own stern young face, black neat official coiled bun, square jade hairpiece, fully covering indigo/silver court robe, court sash, square jade waist seal, dark iron brush pen and closed black leather dossier, formal pose and moonlit archive setting. Render in Image 2's clean hand-drawn ANIME card visual style: elegant sharp ink outlines, crisp graphic cel-shaded shadows, luminous smooth anime skin with no photographic detail, clear beautiful anime eyes, rich indigo and silver decorative fabric rendering with stylized highlights, soft bright atmospheric moonlight and floating blank paper. Do not copy Image 2's blue flower hairpieces, white robe, open book or face. Keep the inspector visibly restrained and official, not a glamorous dancer. Replace any readable seal writing with abstract geometric carving. Every prop, both hands, head and pen tips must be fully visible inside a comfortable safe margin; portrait framing upper body to mid-thigh in vertical 2:3. One original character, no text, no readable characters, no UI, no frame, no watermark, no collage."
+      }
+    ],
+    "awakenedAndWeapons": [
+      {
+        "key": "m11-up",
+        "paths": [
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-1c0e86d6-7091-4a22-823c-2d1583aea916.png"
+        ],
+        "prompt": "Create an awakened variant by EDITING this supplied finished anime portrait of Thất Diệp. Preserve exactly the same original male face, impassive eyes, black tied hair, simple silver pin, crimson/ink-black academy robes, black gloves and metal leaf-blade design. Keep the same clean crisp 2D anime ink outlines and stylized glossy cel-shaded fabric; do not turn it into photography or 3D. His awakened theme is hidden leaves and vanishing shadows: he now raises one gloved hand quietly as SEVEN matching thin silver leaf-shaped throwing knives hover in a controlled crescent near his sleeve, each entire blade separated and visible. His other hand gathers the crimson sleeve. Add subtle silver-white moonlit edges to the same robe and a restrained dark ink shadow trailing on the courtyard stones, suggesting stealth, without another person. More powerful and composed than the normal portrait, with a brighter moonlit crimson/silver aura and a few flowing ribbons. Upper body to mid-thigh, face remains large/readable. Vertical 2:3, 1024x1536. Keep head, hands, seven knives, pin and major ornaments comfortably inside the canvas with safe margins; no clipping, no written talismans, no text, no UI, no border, no watermark. This is the SAME character's upgraded card artwork, not a redesign."
+      },
+      {
+        "key": "f11-up",
+        "paths": [
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-71a8f0b4-5f0a-4267-8e9c-4659e3fc897a.png"
+        ],
+        "prompt": "Create an awakened variant by EDITING this supplied finished anime portrait of Điệp Vũ. Preserve the exact same female face and determined sorrowful eyes, black high warrior ponytail, moss-green and faded-gold layered dance hanfu, jade chest ornament, hollow silver chimes and the distinctive dark-green gold-floral folding war-fans with silver leaf blade edges. Keep the same clean 2D hand-drawn anime outlines, crisp glossy cel shading, beautiful luminous anime eyes and fine embroidered silk. She now stands in a confident mid-dance bodyguard stance, BOTH fans fully open in a balanced curved composition, with one fan lifted near her left shoulder and the other lowered near her right side, both fully inside the image with at least 7 percent safety margin around all blade tips. A few luminous jade-green and silver butterfly-like energy ribbons follow the fan arcs, implying rhythmic counterattack and remembrance of the southern kingdom. A stronger cool moonlit ward subtly surrounds her, with misty watchtower and distant moon behind. Keep outfit modest and identity unchanged, do not switch her clothes to blue. Upper body to mid-thigh, 2:3 portrait 1024x1536, face large and clear. Both hands, both complete fans and hair ornament must be visible. No cropped weapon, no extra fan or extra person, no text, no readable script, no UI, no frame, no watermark."
+      },
+      {
+        "key": "f12-up",
+        "paths": [
+          "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-5ba5d13c-e1ba-49df-b4e0-9e5d9abc4710.png"
+        ],
+        "prompt": "Create an awakened variant by EDITING this supplied finished anime portrait of Hứa Công Chúc. Preserve exactly the same young female inspector's stern face, precise dark eyes, neat black official coiled bun, square jade hairpiece, modest fully covering indigo court hanfu with high collar, silver sleeve embroidery, square jade waist seal, black leather dossier and iron brush pen. Keep the exact same clean 2D hand-drawn anime style, crisp expressive ink outlines and glossy stylized fabric, not photorealism or 3D. Her awakened theme is the iron verdict and chronicler: she raises the dark iron brush with calm resolve and holds the dossier closed against her body while blank paper leaves arrange in a precise orbit, abstract silver/blue ink geometry and a square jade seal-shaped luminous ward appearing around her forearm. Ornamental patterns ONLY, no readable characters. Slightly more ornate silver-edged official robes, intensified cool moonlight through the archive lattice window and restrained warm lantern contrast. Identity and formal covered costume must remain unchanged. Upper body to mid-thigh in vertical 2:3, 1024x1536; complete head, brush, both hands, book and waist seal safely inside the image with comfortable margins. No text, no readable calligraphy, no extra person, no UI, no frame, no watermark."
+      },
+      {
+        "key": "weapon-m11",
+        "prompt": "Generate a finished vertical 2:3 weapon illustration, 1024x1536, for the original gufeng anime mobile card game Vọng Nguyệt. Asset: Thất Diệp Phi Đao, signature weapon of the silent crimson/black academy infiltrator Thất Diệp. Show exactly SEVEN slim elegant leaf-shaped silver throwing daggers, a coherent matching set, arranged as a floating fan in a broad diagonal arc. Distinct separated whole silhouettes, pointed silver engraved leaf blades, short dark handles wrapped in worn crimson silk with tiny silver knot fittings, restrained ink-black details. One blade slightly forward as the focal item, six behind in a carefully spaced fan; exactly seven daggers total, no extra blades hidden in background. All handles and tips comfortably inside the canvas, at least 10 percent safe margin. No person or hands. Refined hand-drawn 2D anime illustration with crisp ink contours, luminous stylized metal highlights and ornate but tasteful silver craftsmanship, coherent with glossy gufeng character cards. Soft dusk courtyard with warm peach light, a subtle crimson ribbon and a few blank fluttering paper leaves in blurred background; the seven blades dominate the image and are easy to read at small size. No text, no readable glyphs, no border, no UI, no watermark, no collage. Opaque thematic painted background, not a transparent product cutout."
+      },
+      {
+        "key": "weapon-f11",
+        "prompt": "Generate a finished vertical 2:3 weapon illustration, 1024x1536, for an original gufeng anime mobile card game. Asset: Nam Chiếu Tâm Quạt, signature war-fan set of Điệp Vũ, the last southern royal bodyguard. Show TWO matching folding war fans, main fan fully open in the foreground and a second fan partly open behind at a different angle. Dark moss-green silk leaves with delicate faded gold floral/branch patterns, polished bronze-gold ribs, unmistakable silver leaf-shaped blade tips along the top rim, ornate silver corner filigree, small dark-jade pivot stones, hanging hollow silver bells and moss-green tassels. Entire two fan silhouettes, every silver blade tip, both pivots and complete tassels must remain fully inside the canvas with generous 10 percent safe margins. No human figure or hands. Crisp hand-drawn 2D anime fantasy item art, luminous clean stylized metal, richly rendered glossy silk, coherent with ornate gufeng character portraits. Soft misty moonlit watchtower and southern lake background with jade-silver light, a few pale petals and silk ribbons supporting the composition without obscuring the fans. Strong readable item shape at thumbnail size. No text, no readable calligraphy, no frame, no UI, no watermark, no collage. Full opaque painted thematic background."
+      },
+      {
+        "key": "weapon-f12",
+        "prompt": "Generate a finished vertical 2:3 weapon illustration, 1024x1536, for an original gufeng anime mobile card game. Asset: Thiết Bút Ấn, signature of the stern imperial inspector Hứa Công Chúc. Main subject: an exquisite dark iron brush pen with a long straight ink-black shaft, crisp silver geometric filigree and a narrow silver nib ending in a controlled black ink brush tip. Beside it is a compact square jade official seal on a dark carved metal base with an abstract geometric square pattern, plus a restrained indigo silk cord. Place the complete pen diagonally across a closed black leather dossier, with the jade seal below to the right; every pen end, entire seal and cord inside the canvas with 10 percent safe margins. No person or hands. Crisp refined hand-drawn 2D anime fantasy item art with stylized luminous silver, dark iron, pale jade and detailed embossed leather. Formal moonlit archive desk, blurred neatly stacked blank files, pale silver moonlight through a lattice window and a distant warm lantern glow; indigo, silver, jade and ink-black palette. Simple dignified composition with item clearly dominant, coherent with glossy gufeng character cards. Absolutely no readable writing or Chinese characters on the seal or documents; use abstract geometry only. No text, no UI, no border, no watermark, no collage. Full opaque painted thematic background."
+      }
+    ],
+    "framingEdits": [
+      {
+        "key": "weapon-f11-safe",
+        "path": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-e6b8590a-dad5-46e6-988c-9854d78da5ca.png",
+        "prompt": "Use case: precise-object-edit. Edit target: this supplied Nam Chiếu Tâm Quạt illustration, two green/gold silver-bladed war fans. Correct only the foreground fan's hanging decorations: the small extra green tassel at bottom right, on the long trailing beaded cord, is cut off by the bottom edge. Shorten this trailing cord and curl it upward to the left so that the COMPLETE second smaller tassel, all beads and its tip lie clearly within the canvas, at least 8 percent canvas height above the bottom. Keep the larger foreground tassel fully visible too. Preserve exactly both fan designs, blade tips, pivots, silk texture, all colors, moonlit lakeside background and art style. Entire fans and hanging decorations must remain inside with visible background margin, do not zoom in. No frame, no text, no watermark, same vertical 2:3 composition."
+      },
+      {
+        "key": "f11-up-safe",
+        "path": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-acd555d3-0c60-4bc2-b36b-0fcea65ee314.png",
+        "prompt": "Use case: precise-object-edit. Edit target: supplied awakened portrait of Điệp Vũ. Fix only the framing of the LOWER LEFT fan: its silver blade tips currently touch or clip the left canvas edge. Move that complete fan and the wrist holding it inward to the right, making that fan about 15 percent smaller. Every blade tip must have at least 7 percent canvas width clear background margin from left edge. Keep both complete fans, their tassels, both hands and head fully inside the image. Preserve exactly the same woman's face, hair, body, green/gold silk outfit, anime linework and cel shading, upper fan, jade butterfly magic and moonlit background. Do not zoom in. Do not redesign anything. Same vertical 2:3 composition. No text, no frame, no watermark."
+      },
+      {
+        "key": "weapon-f12-safe",
+        "path": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-c0e28077-52d4-44e2-a0b6-745abb2fb528.png",
+        "prompt": "Use case: precise-object-edit. Edit target: supplied Thiết Bút Ấn item illustration. Fix only composition/framing: zoom out the main pen, jade seal and BOTH indigo tassels as a coherent group so ALL hanging cords and entire tassel ends are inside the canvas, with at least 8 percent clear background margin on right and bottom. The current right tassel is cut by the image edge: make both cords shorter and curl them onto the closed dossier if needed. Preserve same pen design, jade seal design, black dossier, exact materials and art style, moonlit archive, lighting and colors. Entire pen including nib and top ornament inside, no cut object silhouettes. Extend painted desk background as necessary. Same vertical 2:3 composition, no text or readable writing, no frame, no watermark."
+      }
+    ]
+  }
+}
