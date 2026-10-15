@@ -1,10 +1,25 @@
 import type Phaser from "phaser";
-import { loadCombatSettings } from "./combat-settings";
+import { COMBAT_SETTINGS_CHANGED, loadCombatSettings } from "./combat-settings";
 
 function reducedMotion(): boolean {
   const preferred = typeof window !== "undefined" && (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
   try { return loadCombatSettings(window.localStorage, preferred).reducedMotion; }
   catch { return preferred; }
+}
+
+/** Resolve DOM and canvas motion from the same saved preference, with the OS as fallback. */
+export function installUiMotion(): () => void {
+  const media = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+  const refresh = () => { document.documentElement.dataset.vnReducedMotion = String(reducedMotion()); };
+  refresh();
+  window.addEventListener(COMBAT_SETTINGS_CHANGED, refresh);
+  window.addEventListener("storage", refresh);
+  media?.addEventListener("change", refresh);
+  return () => {
+    window.removeEventListener(COMBAT_SETTINGS_CHANGED, refresh);
+    window.removeEventListener("storage", refresh);
+    media?.removeEventListener("change", refresh);
+  };
 }
 
 /** Opacity only: layout, hit areas, artwork aspect ratios and borders never change. */

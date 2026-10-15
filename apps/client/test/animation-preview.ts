@@ -7,6 +7,7 @@ import { playAttack } from "../src/ui/vfx";
 import type { AttackKind } from "../src/ui/attack-style";
 import { addButton, showModal } from "../src/ui/widgets";
 import { DialogueView } from "../src/ui/dialogue-view";
+import { installUiMotion } from "../src/ui/ui-motion";
 import "../src/ui/motion.css";
 
 const data = loadGameData();
@@ -83,5 +84,7 @@ class Preview extends Phaser.Scene {
     abort.onclick = () => controller?.abort();
   }
 }
-new Phaser.Game({ type: Phaser.AUTO, parent: "canvas", width: 1280, height: 720, backgroundColor: "#0d192a", scene: Preview,
+const removeUiMotion = installUiMotion();
+const game = new Phaser.Game({ type: Phaser.AUTO, parent: "canvas", width: 1280, height: 720, backgroundColor: "#0d192a", scene: Preview,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } });
+game.events.once(Phaser.Core.Events.DESTROY, removeUiMotion);

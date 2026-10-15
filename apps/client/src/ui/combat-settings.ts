@@ -20,6 +20,7 @@ export const DEFAULT_COMBAT_SETTINGS: CombatSettings = {
 };
 
 const STORAGE_KEY = "vongnguyet.combatSettings.v1";
+export const COMBAT_SETTINGS_CHANGED = "vn-combat-settings-changed";
 
 const clampVolume = (value: unknown): number =>
   typeof value === "number" && Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : DEFAULT_COMBAT_SETTINGS.volume;
@@ -50,6 +51,8 @@ export function loadCombatSettings(
 
 export function saveCombatSettings(storage: Pick<Storage, "setItem">, settings: CombatSettings): void {
   storage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  // The native storage event only reaches other windows, not this one.
+  if (typeof window !== "undefined") window.dispatchEvent?.(new Event(COMBAT_SETTINGS_CHANGED));
 }
 
 /**
