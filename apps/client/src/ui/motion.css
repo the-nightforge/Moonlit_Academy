@@ -1,0 +1,22 @@
+/* Animate containers and controls together: images retain their fitted borders. */
+@keyframes vn-screen-enter { from { opacity: .55; } to { opacity: 1; } }
+@keyframes vn-dialog-enter { from { opacity: .55; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
+@keyframes vn-dialog-backdrop { from { opacity: .4; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  :is(.vn-story, .vn-story-dialogue, .vn-run, .vn-shop, .vn-coop, .vn-missions, .vn-mastery) {
+    animation: vn-screen-enter 180ms ease-out;
+  }
+  :is(.vn-story, .vn-story-dialogue, .vn-run, .vn-shop, .vn-coop, .vn-missions, .vn-mastery) dialog[open] {
+    animation: vn-dialog-enter 160ms cubic-bezier(.2,.7,.3,1);
+  }
+  :is(.vn-story, .vn-story-dialogue, .vn-run, .vn-shop, .vn-coop, .vn-missions, .vn-mastery) dialog[open]::backdrop {
+    animation: vn-dialog-backdrop 160ms ease-out;
+  }
+  :is(.vn-story, .vn-story-dialogue, .vn-run, .vn-shop, .vn-coop, .vn-missions, .vn-mastery) button {
+    transition: background-color 140ms ease-out, border-color 140ms ease-out, box-shadow 140ms ease-out, translate 100ms ease-out;
+  }
+  :is(.vn-story, .vn-story-dialogue, .vn-run, .vn-shop, .vn-coop, .vn-missions, .vn-mastery) button:active:not(:disabled) {
+    translate: 0 1px;
+  }
+}

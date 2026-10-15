@@ -11,6 +11,38 @@ const to = { x: 320, y: 120 };
 const attacker = () => stubObject() as unknown as Phaser.GameObjects.Container;
 
 describe("playAttack onImpact", () => {
+  it("a blue unblocked spell remains a hit, and reduced motion does not start frame bursts", async () => {
+    for (const reducedMotion of [false, true]) {
+      const rt = new FakeRuntime({ reducedMotion });
+      await runToEnd(rt, playAttack({ kind: "spell", color: 0x9fd4ff }, from, to, { blocked: false, runtime: rt }));
+      await rt.drain();
+      expect(rt.spriteKeys).toEqual(reducedMotion ? [] : ["combat-impact-hit"]);
+      rt.dispose();
+    }
+  });
+
+  it.each(["slash", "spear"] as const)("%s winds up, strikes within 36 pixels and recovers", async kind => {
+    const rt = new FakeRuntime();
+    const view = attacker();
+    await runToEnd(rt, playAttack(look(kind), from, to, { blocked: false, runtime: rt, attackerView: view }));
+    await rt.drain();
+    const motion = rt.tweenConfigs.filter(config => config.targets === view);
+    expect(motion[0]!.x).toBeLessThan(from.x);
+    expect(motion).toHaveLength(3);
+    expect(Math.hypot(Number(motion[1]!.x) - from.x, Number(motion[1]!.y) - from.y)).toBeLessThanOrEqual(36.01);
+    expect(motion[2]).toMatchObject({ x: from.x, y: from.y });
+    rt.dispose();
+  });
+
+  it.each([false, true])("uses a distinct frame animation for a blocked=%s impact", async blocked => {
+    const rt = new FakeRuntime();
+    await runToEnd(rt, playAttack(look("slash"), from, to, { blocked, runtime: rt }));
+    await rt.drain();
+    expect(rt.spriteKeys).toContain(blocked ? "combat-impact-guard" : "combat-impact-hit");
+    rt.dispose();
+    expect(rt.created.every(object => object.destroyed)).toBe(true);
+  });
+
   for (const kind of ["slash", "spear"] as const) {
     it(`reduced motion ${kind} keeps the attacker stationary with one impact`, async () => {
       const rt = new FakeRuntime({ reducedMotion: true });

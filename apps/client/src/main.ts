@@ -20,6 +20,7 @@ import { StoryScene } from "./scenes/story-scene";
 import { DialogueScene } from "./scenes/dialogue-scene";
 import { DESIGN_HEIGHT, DESIGN_WIDTH, RENDER_SCALE } from "./ui/theme";
 import { isModalOpen } from "./ui/widgets";
+import "./ui/motion.css";
 
 initApi(session.data);
 

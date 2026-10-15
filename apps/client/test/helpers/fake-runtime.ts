@@ -40,6 +40,7 @@ export function fakeScene(shakeLog: number[], created?: Record<string | symbol, 
   };
   const add = {
     image: spawn(),
+    sprite: spawn(),
     rectangle: spawn(),
     circle: spawn(),
     text: (...args: unknown[]) => {
@@ -63,7 +64,8 @@ export function fakeScene(shakeLog: number[], created?: Record<string | symbol, 
       worldView: { x: 0, y: 0, width: 1280, height: 720, centerX: 640, centerY: 360 },
     },
   };
-  return { textures, add, cameras, time: {}, tweens: {} } as unknown as Phaser.Scene;
+  const anims = { exists: () => true, get: () => ({ repeat: 0, duration: 300 }) };
+  return { textures, add, cameras, anims, time: {}, tweens: {} } as unknown as Phaser.Scene;
 }
 
 type PendingOp = { due: number; resolve: () => void; reject: (error: Error) => void };
@@ -87,6 +89,7 @@ export class FakeRuntime implements AnimationRuntime {
   readonly rects: unknown[][] = [];
   /** Tween configs the runtime was asked to run. */
   readonly tweenConfigs: Phaser.Types.Tweens.TweenBuilderConfig[] = [];
+  readonly spriteKeys: string[] = [];
   private readonly settings: CombatSettings;
   private readonly budget: ShakeBudget;
   private readonly pending: PendingOp[] = [];
@@ -129,6 +132,11 @@ export class FakeRuntime implements AnimationRuntime {
     const base = (config.duration ?? 0) as number;
     const total = delay + base * ((config.repeat ?? 0) + 1) * (config.yoyo === true ? 2 : 1);
     return this.enqueue(this.duration(total));
+  }
+
+  play(_sprite: Phaser.GameObjects.Sprite, key: string): Promise<void> {
+    this.spriteKeys.push(key);
+    return this.enqueue(this.duration(300));
   }
 
   track<T extends Phaser.GameObjects.GameObject>(object: T): T {

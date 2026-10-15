@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { COLORS, CURRENCY_LABELS, DESIGN_HEIGHT, DESIGN_WIDTH, TEXT_BASE, visibleWorld } from "./theme";
 import { roundedPanel } from "./rounded-panel";
+import { buttonMotion, enterUi } from "./ui-motion";
 
 export function addText(
   scene: Phaser.Scene,
@@ -51,6 +52,7 @@ export function addButton(
   button.setStrokeStyle(1, enabled ? style.stroke : COLORS.panelBorder);
   if (enabled) {
     button.setInteractive({ useHandCursor: true });
+    buttonMotion(scene, button);
     button.on("pointerover", () => button.setFillStyle(style.hover));
     button.on("pointerout", () => button.setFillStyle(style.fill));
     button.on("pointerup", (pointer: Phaser.Input.Pointer) => {
@@ -340,6 +342,7 @@ export function showModal(scene: Phaser.Scene, options: ModalOptions): Promise<M
   return new Promise((resolve) => {
     const cx = DESIGN_WIDTH / 2;
     const layer = scene.add.container(0, 0).setDepth(2000);
+    enterUi(scene, layer);
     const view = visibleWorld(scene);
     layer.add(scene.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x000000, 0.6).setInteractive());
     const message = scene.add
