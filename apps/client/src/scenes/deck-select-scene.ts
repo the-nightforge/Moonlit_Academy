@@ -34,8 +34,10 @@ const PICK_STEP_Y = 108;
 const PICK_TOP = 110;
 /** Hero portraits of the selected deck on the right column. */
 const HERO_W = 200;
-const HERO_H = 288;
-const HERO_Y = 365;
+const HERO_ART_H = (HERO_W - 2) * 3 / 2;
+const HERO_NAME_H = 60;
+const HERO_H = HERO_ART_H + HERO_NAME_H + 2;
+const HERO_Y = 196 + HERO_H / 2;
 const HERO_XS = [606, 871, 1136] as const;
 
 export function describeDeckError(data: GameData, error: DeckError): string {
@@ -489,8 +491,8 @@ export class DeckSelectScene extends Phaser.Scene {
    * Rounded hero art with the name band baked in — cached per art/size so cards
    * repaint cheaply without per-frame masks. Returns the baked texture key.
    */
-  private heroCardTexture(artKey: string, w: number, h: number, radius: number) {
-    return roundedArtTexture(this, artKey, w, h, radius, Math.min(80, Math.round(h * 0.28)));
+  private heroCardTexture(artKey: string, w: number, h: number, radius: number, band = Math.min(80, Math.round(h * 0.28))) {
+    return roundedArtTexture(this, artKey, w, h, radius, band);
   }
 
   /** Selected-deck identity and explicit actions above the hero trio. */
@@ -512,14 +514,14 @@ export class DeckSelectScene extends Phaser.Scene {
       // Chrome border stays under the art — the frame is drawn on top instead.
       const card = roundedPanel(this, x, HERO_Y, HERO_W, HERO_H, 0x101c36, 0.9, 0x101c36, 14);
       const artKey = this.heroArtKey(heroId);
-      const baked = this.heroCardTexture(artKey, HERO_W, HERO_H, 14);
+      const baked = this.heroCardTexture(artKey, HERO_W, HERO_H, 14, HERO_NAME_H);
       if (this.textures.exists(baked)) {
         card.add(this.add.image(0, 0, baked).setScale(1 / RENDER_SCALE));
       } else {
         this.text(card, 0, -18, "❖", 40, COLORS.dimText).setOrigin(0.5);
       }
-      this.text(card, 0, HERO_H / 2 - 50, hero?.name ?? heroId, 17, COLORS.text).setOrigin(0.5).setStroke("#07101f", 2);
-      this.text(card, 0, HERO_H / 2 - 24, hero ? FACTION_LABELS[hero.faction] : "", 13, "#aab4ca").setOrigin(0.5).setStroke("#07101f", 2);
+      this.text(card, 0, HERO_H / 2 - 42, hero?.name ?? heroId, 17, COLORS.text).setOrigin(0.5).setStroke("#07101f", 2);
+      this.text(card, 0, HERO_H / 2 - 18, hero ? FACTION_LABELS[hero.faction] : "", 13, "#aab4ca").setOrigin(0.5).setStroke("#07101f", 2);
       // The frame sits on top of the baked art, fully inside the card edge.
       card.add(this.add.graphics().lineStyle(1.5, 0x7d90b8, 0.9).strokeRoundedRect(-HERO_W / 2 + 1, -HERO_H / 2 + 1, HERO_W - 2, HERO_H - 2, 13));
       const hit = this.add.rectangle(0, 0, HERO_W, HERO_H, 0, 0);
@@ -535,7 +537,7 @@ export class DeckSelectScene extends Phaser.Scene {
       this.root.add(card);
     });
 
-    if (errors.length > 0) this.root.add(this.add.text(840, 546, `⚠ ${describeDeckError(session.data, errors[0]!)}`, {
+    if (errors.length > 0) this.root.add(this.add.text(840, HERO_Y + HERO_H / 2 + 10, `⚠ ${describeDeckError(session.data, errors[0]!)}`, {
       ...TEXT_BASE, fontSize: "13px", color: "#ff8080", align: "center", wordWrap: { width: 680 }, maxLines: 3, stroke: "#07101f", strokeThickness: 2,
     }).setOrigin(0.5, 0));
   }
