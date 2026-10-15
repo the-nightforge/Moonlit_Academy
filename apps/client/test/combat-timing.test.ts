@@ -32,6 +32,7 @@ function recordingScene() {
   const delays: number[] = [];
   const tweenDurations: unknown[] = [];
   const tweenDelays: unknown[] = [];
+  const tweenScales: number[] = [];
   const shakes: number[][] = [];
   const scene = {
     time: {
@@ -44,12 +45,12 @@ function recordingScene() {
       add: (config: { duration?: unknown; delay?: unknown }) => {
         tweenDurations.push(config.duration);
         tweenDelays.push(config.delay);
-        return { remove() {} };
+        return { remove() {}, setTimeScale(scale: number) { tweenScales.push(scale); } };
       },
     },
     cameras: { main: { shake: (ms: number, intensity: number) => shakes.push([ms, intensity]) } },
   } as unknown as Phaser.Scene;
-  return { scene, delays, tweenDurations, tweenDelays, shakes };
+  return { scene, delays, tweenDurations, tweenDelays, tweenScales, shakes };
 }
 
 describe("runtime speed scaling", () => {
@@ -61,13 +62,14 @@ describe("runtime speed scaling", () => {
   });
 
   it("wait and tween scale exactly once — callers pass base milliseconds", () => {
-    const { scene, delays, tweenDurations, tweenDelays } = recordingScene();
+    const { scene, delays, tweenDurations, tweenDelays, tweenScales } = recordingScene();
     const rt = createAnimationRuntime(scene, new AbortController().signal, { ...ON, speed: 2 });
     void rt.wait(300);
     void rt.tween({ targets: {}, duration: 400, delay: 100 });
     expect(delays).toEqual([150]);
-    expect(tweenDurations).toEqual([200]);
-    expect(tweenDelays).toEqual([50]);
+    expect(tweenDurations).toEqual([400]);
+    expect(tweenDelays).toEqual([100]);
+    expect(tweenScales).toEqual([2]);
     rt.dispose();
   });
 

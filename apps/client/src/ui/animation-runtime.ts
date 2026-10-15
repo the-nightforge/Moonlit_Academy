@@ -30,6 +30,8 @@ export interface AnimationRuntime {
   wait(ms: number): Promise<void>;
   /** Resolves when the tween completes; abort removes the tween. */
   tween(config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void>;
+  /** Plays a finite global sprite animation; completion, stop and abort settle the scope. */
+  play(sprite: Phaser.GameObjects.Sprite, key: string): Promise<void>;
   /** Marks a temporary object for destruction on abort/dispose; returns it. */
   track<T extends Phaser.GameObjects.GameObject>(object: T): T;
   /** Throws `AnimationAbortedError` once the scope is no longer live. */
@@ -110,18 +112,47 @@ class SceneAnimationRuntime implements AnimationRuntime {
     const op = new Promise<void>((resolve, reject) => {
       tween = this.scene.tweens.add({
         ...config,
-        // Duration and delay scale exactly once here — callers pass base ms.
-        duration: typeof config.duration === "number" ? this.duration(config.duration) : config.duration,
-        delay: typeof config.delay === "number" ? this.duration(config.delay) : config.delay,
         onComplete: (t, targets, ...param) => {
           config.onComplete?.(t, targets, ...param);
           resolve();
         },
       });
+      // Native scaling includes holds, repeat/loop/complete delays and per-property timings.
+      tween.setTimeScale(this.settings.speed);
       cancel = () => {
         tween?.remove();
         reject(new AnimationAbortedError());
       };
+    });
+    return this.register(op, () => cancel());
+  }
+
+  play(sprite: Phaser.GameObjects.Sprite, key: string): Promise<void> {
+    this.assertActive();
+    const definition = this.scene.anims.get(key);
+    if (!definition || definition.repeat === -1) throw new Error(`Expected a finite sprite animation: ${key}`);
+    let cancel!: () => void;
+    const op = new Promise<void>((resolve, reject) => {
+      let finished = false;
+      const completeEvent = `animationcomplete-${key}`;
+      const cleanup = () => {
+        sprite.off(completeEvent, complete);
+        sprite.off("animationstop", interrupted);
+        sprite.off("destroy", interrupted);
+      };
+      const complete = () => { if (finished) return; finished = true; cleanup(); resolve(); };
+      const interrupted = () => { if (finished) return; finished = true; cleanup(); reject(new AnimationAbortedError()); };
+      cancel = () => {
+        if (finished) return;
+        interrupted();
+        sprite.anims.chain();
+        sprite.anims.stop();
+      };
+      sprite.once(completeEvent, complete);
+      sprite.once("animationstop", interrupted);
+      sprite.once("destroy", interrupted);
+      try { sprite.play({ key, timeScale: this.settings.speed }); }
+      catch (error) { finished = true; cleanup(); reject(error); }
     });
     return this.register(op, () => cancel());
   }

@@ -11,6 +11,7 @@ interface FakeTimer {
 }
 
 interface FakeTween {
+  setTimeScale(scale: number): void;
   readonly removed: boolean;
   remove(): void;
   complete(): void;
@@ -19,7 +20,7 @@ interface FakeTween {
 /** The two Phaser APIs the runtime owns: `time.delayedCall` and `tweens.add`. */
 function fakeScene(): { scene: Phaser.Scene; timers: FakeTimer[]; tweens: FakeTween[] } {
   const timers: { removed: boolean; fire(): void; remove(): void }[] = [];
-  const tweens: { removed: boolean; remove(): void; complete(): void }[] = [];
+  const tweens: FakeTween[] = [];
   const scene = {
     time: {
       delayedCall: (_ms: number, callback: () => void) => {
@@ -38,6 +39,7 @@ function fakeScene(): { scene: Phaser.Scene; timers: FakeTimer[]; tweens: FakeTw
       add: (config: Phaser.Types.Tweens.TweenBuilderConfig) => {
         const tween = {
           removed: false,
+          setTimeScale() {},
           remove() {
             this.removed = true;
           },

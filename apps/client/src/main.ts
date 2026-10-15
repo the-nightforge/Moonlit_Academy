@@ -20,8 +20,11 @@ import { StoryScene } from "./scenes/story-scene";
 import { DialogueScene } from "./scenes/dialogue-scene";
 import { DESIGN_HEIGHT, DESIGN_WIDTH, RENDER_SCALE } from "./ui/theme";
 import { isModalOpen } from "./ui/widgets";
+import { installUiMotion } from "./ui/ui-motion";
+import "./ui/motion.css";
 
 initApi(session.data);
+const removeUiMotion = installUiMotion();
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -41,6 +44,7 @@ const game = new Phaser.Game({
 });
 
 // A refused or expired session anywhere sends the player back to sign in.
+game.events.once(Phaser.Core.Events.DESTROY, removeUiMotion);
 auth.onUnauthorized = () => {
   resetAccount();
   setToken(null);

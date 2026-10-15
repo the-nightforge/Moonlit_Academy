@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import type { AttackLook } from "./attack-style";
 import type { AnimationRuntime } from "./animation-runtime";
+import { impactAnimation } from "./impact-animation";
 
 /**
  * Attack VFX by weapon style. Textures are drawn on canvases at runtime (no
@@ -433,17 +434,23 @@ function impact(rt: AnimationRuntime, at: Point, color: number, angle: number, p
   rt.shake(40 + 20 * power, 0.0025 * power);
 }
 
-/** The attacker's card steps toward the target and back. */
-function lunge(rt: AnimationRuntime, view: Phaser.GameObjects.Container | undefined, from: Point, to: Point, reach: number, ms: number) {
+/** A short anticipation, a decisive step and a soft recovery, without crossing card lanes. */
+function lunge(rt: AnimationRuntime, view: Phaser.GameObjects.Container | undefined, from: Point, to: Point, reach: number, strikeAt: number) {
   if (!view || rt.reducedMotion) return;
-  void rt.tween({
-    targets: view,
-    x: from.x + (to.x - from.x) * reach,
-    y: from.y + (to.y - from.y) * reach,
-    duration: ms,
-    yoyo: true,
-    ease: "Cubic.easeOut",
-  });
+  const distance = Math.hypot(to.x - from.x, to.y - from.y);
+  const dx = distance ? (to.x - from.x) / distance : 0;
+  const dy = distance ? (to.y - from.y) / distance : 0;
+  const step = Math.min(36, distance * reach);
+  const motion = async () => {
+    try {
+      await rt.tween({ targets: view, x: from.x - dx * 4, y: from.y - dy * 4, duration: 30, ease: "Sine.easeOut" });
+      await rt.tween({ targets: view, x: from.x + dx * step, y: from.y + dy * step, duration: strikeAt - 30, ease: "Cubic.easeIn" });
+      await rt.tween({ targets: view, x: from.x, y: from.y, duration: 140, ease: "Cubic.easeOut" });
+    } finally {
+      if (view.active !== false) { view.x = from.x; view.y = from.y; }
+    }
+  };
+  void motion().catch(() => {});
 }
 
 export interface AttackOptions {
@@ -473,7 +480,10 @@ export function playAttack(look: AttackLook, from: Point, to: Point, opts: Attac
   ensureTextures(rt.scene);
   const angle = Math.atan2(to.y - from.y, to.x - from.x);
   const hitColor = opts.blocked ? BLOCKED_COLOR : look.color;
-  const hit = once(opts.onImpact);
+  const hit = once(() => {
+    impactAnimation(rt, to, hitColor, opts.blocked, 1);
+    opts.onImpact?.();
+  });
   switch (look.kind) {
     case "slash":
       return slash(rt, from, to, look.color, hitColor, angle, hit, opts.attackerView);
@@ -513,7 +523,7 @@ export function playAttack(look: AttackLook, from: Point, to: Point, opts: Attac
 }
 
 async function slash(rt: AnimationRuntime, from: Point, to: Point, color: number, hitColor: number, angle: number, hit: () => void, view?: Phaser.GameObjects.Container) {
-  lunge(rt, view, from, to, 0.16, 110);
+  lunge(rt, view, from, to, 0.16, 90);
   if (view) await rt.wait(90);
   impact(rt, to, hitColor, angle);
   hit();
@@ -532,7 +542,7 @@ async function blade(rt: AnimationRuntime, at: Point, color: number, rot: number
 }
 
 async function thrust(rt: AnimationRuntime, from: Point, to: Point, color: number, hitColor: number, angle: number, hit: () => void, view?: Phaser.GameObjects.Container) {
-  lunge(rt, view, from, to, 0.24, 120);
+  lunge(rt, view, from, to, 0.24, 180);
   if (view) await rt.wait(70);
   const start = { x: from.x + Math.cos(angle) * 40, y: from.y + Math.sin(angle) * 40 };
   const length = Math.hypot(to.x - start.x, to.y - start.y) + 50;
