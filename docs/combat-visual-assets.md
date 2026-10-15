@@ -6,10 +6,10 @@ every subdir of `apps/client/public/assets` — one stem must map to exactly one
 
 ## Technical frame
 
-- Hero/enemy portrait source: 2:3 ratio, ≥ 768×1152 PNG/WebP/JPEG; head and face inside the upper 2/3 crop zone.
+- Hero/enemy portrait source: 2:3 ratio, ≥ 768×1152 PNG/WebP/JPEG; full head, hands and identifying props inside the canvas.
 - Summon source: square, ≥ 512×512; subject must not clip inside the 80×108 view.
 - No baked-in text, labels, borders, mockup chrome or signatures.
-- In-game slots: hero 136×196 / 100×148, summon 80×108 (rounded `coverImage` crop, cache key `key@WxH`).
+- Display the complete source with contain sizing; fit the visible border to the image, with at most one pixel of inner spacing. Do not crop or stretch. Current requirements in `docs/ui-rules.md` supersede historical crop-based QA below.
 - `{heroId}_up` is the shared awakened art for base/alt forms in this scope — frame and name distinguish the form.
 - Style target: gufeng/anime consistent with the existing m01–m08, f01–f04, f10 set; faction colours, gold
   ornaments; awakened form adds motif/lore while keeping the identity (prompts: `docs/08-character-prompts.md`).
@@ -73,11 +73,19 @@ source/crop details and provenance in `docs/combat-generated-assets.json`. The44
 were matched by SHA-256 to their native generation outputs. New hero/enemy sources are1024×1536;
 summons are1254×1254. Existing normal portraits retain their original resolutions.
 
-**Update — 3 heroes wave 3 (m11, f11, f12):** art chưa được generate. `heroes/m11*`,
-`f11*`, `f12*` hiện là **placeholder copies** (m11←m06, f11←f06, f12←f07, cả `_up`)
-để giữ inventory test xanh — phải thay bằng art thật từ prompts trong
-`docs/08-character-prompts.md` trước khi release. Tổng inventory giờ là 63 file
-(23 heroes ×2 + 15 enemies + 2 summons).
+**Update — 2026-10-15, three new heroes (m11, f11, f12):** six placeholder copies
+have been replaced with original normal/awakened artwork for Thất Diệp, Điệp Vũ
+and Hứa Công Chúc. Three matching signature weapon images are also present:
+`weapons/w_that_diep.webp`, `weapons/w_nam_chieu_quat.webp`,
+`weapons/w_thiet_but_an.webp`. All nine images are 1024×1536 WebP, encoded without
+resizing or cropping. The current hero inventory uses `.webp`; older `.jpg`/`.png`
+paths above describe the original inventory, not current extensions.
+All nine images were subsequently redrawn against direct existing-art references
+to match anime linework, face proportions, clean cel shading and painted backgrounds;
+see `styleRevision` and `prompts.styleMatching` in the generation record.
+Combat portrait inventory: 63 files (23 heroes ×2 +15 enemies +2 summons).
+Prompts, references, hashes and final paths: [generation record](assets/hero-wave3-generated-assets.json).
+Visual review and checks: [new hero artwork](reviews/2026-10-15-new-hero-art.md).
 
 ## QA checklist (Step 4)
 
