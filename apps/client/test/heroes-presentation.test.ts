@@ -32,7 +32,7 @@ describe("hero roster presentation", () => {
     const owned = { ...profile.heroes, m05: { ...profile.heroes.m05!, constellation: 6 }, f04: { ...profile.heroes.f04!, constellation: 2 } };
     const ids = filterHeroes(heroes, owned, { ...defaults, sort: "constellation" }).map(h => h.id);
     expect(ids.slice(0, 3)).toEqual(["m05", "f04", "m06"]);
-    expect(ids).toHaveLength(20);
+    expect(ids).toHaveLength(23);
   });
   it("clamps the last page when the collection shrinks and handles zero results", () => {
     expect(rosterPage(20, 1)).toEqual({ page: 1, pages: 2, start: 12, end: 20 });

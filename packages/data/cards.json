@@ -8732,5 +8732,1095 @@
       "linh_thu",
       "khieu_khich"
     ]
+  },
+  {
+    "id": "m11_am_anh_thu",
+    "name": "Ám Ảnh Thứ",
+    "ownerId": "m11",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Đánh Dấu 1 kẻ địch 1 vòng: nó nhận thêm 3 damage từ đòn tấn công của Thất Diệp."
+  },
+  {
+    "id": "m11_liet_dao",
+    "name": "Liệt Đao",
+    "ownerId": "m11",
+    "cost": 1,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 2,
+        "to": "chosen",
+        "hits": 2
+      }
+    ],
+    "text": "Gây 2 damage ×2."
+  },
+  {
+    "id": "m11_that_diem",
+    "name": "Thất Điểm",
+    "ownerId": "m11",
+    "cost": 4,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "mark"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 13,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 6,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 6 damage; mục tiêu đang bị Đánh Dấu: gây 13."
+  },
+  {
+    "id": "m11_that_diem_plus",
+    "name": "Thất Điểm+",
+    "ownerId": "m11",
+    "cost": 4,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "mark"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 16,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 8,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 8 damage; mục tiêu đang bị Đánh Dấu: gây 16.",
+    "plusOf": "m11_that_diem"
+  },
+  {
+    "id": "m11_tang_hinh",
+    "name": "Tàng Hình",
+    "ownerId": "m11",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "ward",
+      "assassin"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "stealth",
+        "amount": 2,
+        "to": "self"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "self"
+      }
+    ],
+    "text": "Ẩn Thân 2 vòng, nhận 4 giáp."
+  },
+  {
+    "id": "m11_vo_thanh",
+    "name": "Vô Thanh",
+    "ownerId": "m11",
+    "cost": 2,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 5,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "mark"
+        },
+        "then": [
+          {
+            "type": "applyStatus",
+            "status": "weak",
+            "amount": 1,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 5 damage; mục tiêu đang bị Đánh Dấu: thêm Suy Yếu 1 vòng."
+  },
+  {
+    "id": "m11_bay_an",
+    "name": "Bảy Ấn",
+    "ownerId": "m11",
+    "cost": 3,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 3,
+        "to": "chosen",
+        "hits": 3
+      },
+      {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 3 damage ×3, rồi Đánh Dấu 1 vòng."
+  },
+  {
+    "id": "m11_that_da",
+    "name": "Thất Dạ",
+    "ownerId": "m11",
+    "cost": 3,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "drawCards",
+        "amount": 1
+      }
+    ],
+    "text": "Đánh Dấu 2 vòng, rút 1 lá."
+  },
+  {
+    "id": "m11_truy_an",
+    "name": "Truy Ấn",
+    "ownerId": "m11",
+    "cost": 5,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "mark"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 15,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 7,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 7 damage; mục tiêu đang bị Đánh Dấu: gây 15."
+  },
+  {
+    "id": "m11_vo_danh_thi",
+    "name": "Vô Danh Thi",
+    "ownerId": "m11",
+    "cost": 4,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "ward",
+      "assassin"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "stealth",
+        "amount": 2,
+        "to": "self"
+      },
+      {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 2,
+        "to": "self"
+      }
+    ],
+    "text": "Ẩn Thân 2 vòng, nhận 2 Sức Mạnh."
+  },
+  {
+    "id": "m11_liet_anh_loan",
+    "name": "Liệt Ảnh Loạn",
+    "ownerId": "m11",
+    "cost": 6,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 5,
+        "to": "allEnemies",
+        "hits": 3
+      }
+    ],
+    "text": "Gây 5 damage ×3 lên mọi kẻ địch."
+  },
+  {
+    "id": "m11_tuyet_menh_thu",
+    "name": "Tuyệt Mệnh Thứ",
+    "ownerId": "m11",
+    "cost": 7,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "mark"
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 14,
+            "to": "chosen",
+            "hits": 2
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 10,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 10 damage; mục tiêu đang bị Đánh Dấu: gây 14 damage ×2."
+  },
+  {
+    "id": "m11_anh_tu",
+    "name": "Ảnh Tử",
+    "ownerId": "m11",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "assassin"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Đánh Dấu 1 vòng và Dễ Vỡ 1 vòng."
+  },
+  {
+    "id": "f11_mo_nhac",
+    "name": "Mở Nhạc",
+    "ownerId": "f11",
+    "cost": 0,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "ward"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+      },
+      {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 1,
+        "to": "self"
+      }
+    ],
+    "text": "Nhận 3 giáp và Cường Hóa 1."
+  },
+  {
+    "id": "f11_dao_mo_man",
+    "name": "Đao Mở Màn",
+    "ownerId": "f11",
+    "cost": 1,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 2
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 5,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 3,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 3 damage; nếu là lá thứ hai trở đi trong lượt: gây 5."
+  },
+  {
+    "id": "f11_quat_dao",
+    "name": "Quạt Đao",
+    "ownerId": "f11",
+    "cost": 4,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "scaledDamage",
+        "per": "cardsPlayedThisTurn",
+        "amount": 3,
+        "base": 3,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 3 damage, thêm 3 với mỗi lá khác đã đánh lượt này."
+  },
+  {
+    "id": "f11_quat_dao_plus",
+    "name": "Quạt Đao+",
+    "ownerId": "f11",
+    "cost": 4,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "scaledDamage",
+        "per": "cardsPlayedThisTurn",
+        "amount": 4,
+        "base": 4,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 4 damage, thêm 4 với mỗi lá khác đã đánh lượt này.",
+    "plusOf": "f11_quat_dao"
+  },
+  {
+    "id": "f11_vu_tau",
+    "name": "Vũ Tấu",
+    "ownerId": "f11",
+    "cost": 3,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "ward"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "reflect",
+        "amount": 2,
+        "to": "self"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 5,
+        "to": "self"
+      }
+    ],
+    "text": "Nhận 5 giáp và Phản Đòn 2."
+  },
+  {
+    "id": "f11_truc_nhip",
+    "name": "Trúc Nhịp",
+    "ownerId": "f11",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "drawCards",
+        "amount": 1
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 3
+        },
+        "then": [
+          {
+            "type": "gainMoonPower",
+            "amount": 1
+          }
+        ]
+      }
+    ],
+    "text": "Rút 1 lá; nếu là lá thứ ba trở đi trong lượt: nhận 1 Nguyệt Lực."
+  },
+  {
+    "id": "f11_hoi_vu",
+    "name": "Hồi Vũ",
+    "ownerId": "f11",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "ward",
+      "heal"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "reflect",
+        "amount": 1,
+        "to": "self"
+      },
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "self"
+      }
+    ],
+    "text": "Nhận Phản Đòn 1 và 2 Hồi Phục."
+  },
+  {
+    "id": "f11_bach_diep",
+    "name": "Bách Điệp",
+    "ownerId": "f11",
+    "cost": 5,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "chosen",
+        "hits": 3
+      }
+    ],
+    "text": "Gây 4 damage ×3."
+  },
+  {
+    "id": "f11_vong_xuyen",
+    "name": "Vọng Xuyên",
+    "ownerId": "f11",
+    "cost": 3,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "harmony",
+      "heal"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 5,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "1 Hero hồi 5 HP và nhận Cường Hóa 1."
+  },
+  {
+    "id": "f11_nam_cuong",
+    "name": "Nam Cường",
+    "ownerId": "f11",
+    "cost": 4,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "ward"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "reflect",
+        "amount": 3,
+        "to": "self"
+      },
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "self"
+      }
+    ],
+    "text": "Nhận Phản Đòn 3 và 2 Hồi Phục."
+  },
+  {
+    "id": "f11_diep_tan",
+    "name": "Điệp Tán",
+    "ownerId": "f11",
+    "cost": 6,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 8,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "cardsPlayedThisTurnAtLeast",
+          "count": 3
+        },
+        "then": [
+          {
+            "type": "applyStatus",
+            "status": "vulnerable",
+            "amount": 2,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 8 damage; nếu là lá thứ ba trở đi trong lượt: thêm Dễ Vỡ 2 vòng."
+  },
+  {
+    "id": "f11_thieng_vu",
+    "name": "Thiêng Vũ",
+    "ownerId": "f11",
+    "cost": 5,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "ward"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "reflect",
+        "amount": 2,
+        "to": "self"
+      },
+      {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 2,
+        "to": "self"
+      },
+      {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 1,
+        "to": "self"
+      }
+    ],
+    "text": "Nhận Phản Đòn 2, 2 Sức Mạnh và Cường Hóa 1."
+  },
+  {
+    "id": "f11_liet_quoc_tau",
+    "name": "Liệt Quốc Tấu",
+    "ownerId": "f11",
+    "cost": 7,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "control"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 6,
+        "to": "allEnemies"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Gây 6 damage và Suy Yếu 1 vòng lên mọi kẻ địch."
+  },
+  {
+    "id": "f12_lap_an",
+    "name": "Lập Án",
+    "ownerId": "f12",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Dễ Vỡ 1 vòng và Đánh Dấu 1 vòng."
+  },
+  {
+    "id": "f12_tuoc_van",
+    "name": "Tước Văn",
+    "ownerId": "f12",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "stealBuff",
+        "count": 1
+      }
+    ],
+    "text": "Cướp 1 buff của kẻ địch."
+  },
+  {
+    "id": "f12_tam_tuc_dien",
+    "name": "Tam Tức Điện",
+    "ownerId": "f12",
+    "cost": 4,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "stealBuff",
+        "count": 1
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      }
+    ],
+    "text": "Cướp 1 buff, áp Dễ Vỡ 1 vòng và Phong Ấn ý định kẻ địch: chiêu của nó chỉ còn damage."
+  },
+  {
+    "id": "f12_tam_tuc_dien_plus",
+    "name": "Tam Tức Điện+",
+    "ownerId": "f12",
+    "cost": 4,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "stealBuff",
+        "count": 2
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      }
+    ],
+    "text": "Cướp 2 buff, áp Dễ Vỡ 2 vòng và Phong Ấn ý định kẻ địch: chiêu của nó chỉ còn damage.",
+    "plusOf": "f12_tam_tuc_dien"
+  },
+  {
+    "id": "f12_tiep_an",
+    "name": "Tiếp Án",
+    "ownerId": "f12",
+    "cost": 0,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "ward"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "self"
+      },
+      {
+        "type": "chooseCard",
+        "look": 2
+      }
+    ],
+    "text": "Nhận 3 giáp; xem 2 lá đầu bộ bài và chọn 1 lá giữ lại."
+  },
+  {
+    "id": "f12_phan_lenh",
+    "name": "Phán Lệnh",
+    "ownerId": "f12",
+    "cost": 2,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "targetHasStatus",
+          "status": "vulnerable"
+        },
+        "then": [
+          {
+            "type": "applyStatus",
+            "status": "weak",
+            "amount": 1,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 4 damage; mục tiêu đang Dễ Vỡ: thêm Suy Yếu 1 vòng."
+  },
+  {
+    "id": "f12_dieu_tra",
+    "name": "Điều Tra",
+    "ownerId": "f12",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Suy Yếu 2 vòng lên 1 kẻ địch."
+  },
+  {
+    "id": "f12_nghiem_hinh",
+    "name": "Nghiêm Hình",
+    "ownerId": "f12",
+    "cost": 5,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "scaledDamage",
+        "per": "targetDebuffs",
+        "amount": 3,
+        "base": 3,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 3 damage, thêm 3 với mỗi debuff của mục tiêu."
+  },
+  {
+    "id": "f12_dinh_toi",
+    "name": "Định Tội",
+    "ownerId": "f12",
+    "cost": 3,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Đánh Dấu 2 vòng và Dễ Vỡ 1 vòng."
+  },
+  {
+    "id": "f12_phong_an",
+    "name": "Phong Ấn",
+    "ownerId": "f12",
+    "cost": 3,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Phong Ấn ý định kẻ địch: chiêu của nó chỉ còn damage; thêm Suy Yếu 1 vòng."
+  },
+  {
+    "id": "f12_benh_truyen",
+    "name": "Bỉnh Truyện",
+    "ownerId": "f12",
+    "cost": 6,
+    "copies": 2,
+    "type": "skill",
+    "tags": [
+      "control"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "allEnemies"
+      },
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 2,
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Suy Yếu 2 vòng và Dễ Vỡ 2 vòng lên mọi kẻ địch."
+  },
+  {
+    "id": "f12_xu_quyet",
+    "name": "Xử Quyết",
+    "ownerId": "f12",
+    "cost": 7,
+    "copies": 2,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "scaledDamage",
+        "per": "targetDebuffs",
+        "amount": 4,
+        "base": 5,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 5 damage, thêm 4 với mỗi debuff của mục tiêu."
+  },
+  {
+    "id": "f12_sat_luc",
+    "name": "Sát Lục",
+    "ownerId": "f12",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "scheme",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "extendDebuffs",
+        "amount": 2,
+        "to": "chosen"
+      }
+    ],
+    "text": "Mọi debuff có thời hạn của mục tiêu +2 vòng."
   }
 ]

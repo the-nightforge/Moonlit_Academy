@@ -81,9 +81,9 @@ describe("combat art inventory (`05` review U5)", () => {
 
   it("inventory covers every definition — no id may fall back silently", () => {
     // The four asserts above reject missing ids; this one keeps the list
-    // honest: the count is 20 heroes ×2 forms + 15 enemies + 2 summons = 57.
+    // honest: the count is 23 heroes ×2 forms + 15 enemies + 2 summons = 63.
     const expected = heroIds.length * 2 + enemyIds.length + summonIds.length;
-    expect(expected).toBe(57);
+    expect(expected).toBe(63);
   });
 });
 

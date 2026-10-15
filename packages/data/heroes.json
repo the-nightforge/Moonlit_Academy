@@ -932,7 +932,7 @@
     },
     "altLevelUp": {
       "name": "Tinh Mệnh",
-      "description": "Mỗi lá có Đổi Vận của Khương Tịch áp Suy Yếu 1 lên mọi kẻ địch.",
+      "description": "Mỗi lá có Đổi Vận của Khương Tịch áp Suy Yếu 1 vòng lên mọi kẻ địch.",
       "passive": {
         "type": "moonShiftWeakensEnemies",
         "amount": 1
@@ -1556,6 +1556,263 @@
         "minDebuffs": 2,
         "amount": 3
       }
+    }
+  },
+  {
+    "id": "m11",
+    "name": "Thất Diệp",
+    "bio": "Thanh lý viên của \"Vô Nguyệt\", được cài vào học viện để gác một con dao đang dao động — Tô Dạ. Người không có tên thì không có gì để mất; hắn đang kiểm chứng.",
+    "faction": "xichDien",
+    "archetype": "striker",
+    "attackStyle": "darts",
+    "rarity": "legendary",
+    "maxHp": 36,
+    "cardIds": [
+      "m11_am_anh_thu",
+      "m11_liet_dao",
+      "m11_that_diem",
+      "m11_tang_hinh",
+      "m11_vo_thanh",
+      "m11_bay_an"
+    ],
+    "lockedCardIds": [
+      "m11_that_da",
+      "m11_truy_an",
+      "m11_vo_danh_thi",
+      "m11_liet_anh_loan",
+      "m11_tuyet_menh_thu",
+      "m11_anh_tu"
+    ],
+    "branches": [
+      {
+        "name": "Liệt Ảnh",
+        "cardIds": [
+          "m11_liet_dao",
+          "m11_bay_an",
+          "m11_that_diem",
+          "m11_truy_an",
+          "m11_liet_anh_loan",
+          "m11_tuyet_menh_thu"
+        ]
+      },
+      {
+        "name": "Vô Danh",
+        "cardIds": [
+          "m11_am_anh_thu",
+          "m11_tang_hinh",
+          "m11_vo_thanh",
+          "m11_that_da",
+          "m11_vo_danh_thi",
+          "m11_anh_tu"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Ẩn Diệp",
+      "description": "Lá tấn công đầu tiên mỗi lượt của Thất Diệp Đánh Dấu mục tiêu 2 vòng.",
+      "counter": "schemeCardsPlayed",
+      "threshold": 5,
+      "constellationThreshold": 4,
+      "passive": {
+        "type": "firstHitMarks",
+        "rounds": 2
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m11_that_diem",
+      "plusCardId": "m11_that_diem_plus"
+    },
+    "altLevelUp": {
+      "name": "Vô Hình",
+      "description": "Khi thăng cấp: Ẩn Thân 2 vòng. Đòn tấn công của Thất Diệp gây thêm 2 damage lên mục tiêu đang mang debuff.",
+      "passive": {
+        "type": "bonusVsDebuffed",
+        "minDebuffs": 1,
+        "amount": 2
+      },
+      "onLevelUp": [
+        {
+          "type": "applyStatus",
+          "status": "stealth",
+          "amount": 2,
+          "to": "self"
+        }
+      ]
+    }
+  },
+  {
+    "id": "f11",
+    "name": "Điệp Vũ",
+    "bio": "Thân vệ cuối cùng của hoàng thất Nam Chiếu, vào học viện dưới thân phận vũ sinh để tìm hoàng tử của mình. Nàng không sống để trả thù — nàng sống vì chưa ai được phép quên.",
+    "faction": "bachLo",
+    "archetype": "striker",
+    "attackStyle": "fan",
+    "rarity": "epic",
+    "maxHp": 40,
+    "cardIds": [
+      "f11_mo_nhac",
+      "f11_dao_mo_man",
+      "f11_quat_dao",
+      "f11_vu_tau",
+      "f11_truc_nhip",
+      "f11_hoi_vu"
+    ],
+    "lockedCardIds": [
+      "f11_bach_diep",
+      "f11_vong_xuyen",
+      "f11_nam_cuong",
+      "f11_diep_tan",
+      "f11_thieng_vu",
+      "f11_liet_quoc_tau"
+    ],
+    "branches": [
+      {
+        "name": "Bách Điệp",
+        "cardIds": [
+          "f11_mo_nhac",
+          "f11_dao_mo_man",
+          "f11_quat_dao",
+          "f11_bach_diep",
+          "f11_diep_tan",
+          "f11_liet_quoc_tau"
+        ]
+      },
+      {
+        "name": "Vọng Xuyên",
+        "cardIds": [
+          "f11_vu_tau",
+          "f11_truc_nhip",
+          "f11_hoi_vu",
+          "f11_vong_xuyen",
+          "f11_nam_cuong",
+          "f11_thieng_vu"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Vũ Điệp",
+      "description": "Mỗi lượt, các lá tấn công sau lá đầu của Điệp Vũ gây thêm 1 damage.",
+      "counter": "turnsSurvived",
+      "threshold": 8,
+      "constellationThreshold": 6,
+      "passive": {
+        "type": "comboAttackBonus",
+        "amount": 1
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f11_quat_dao",
+      "plusCardId": "f11_quat_dao_plus"
+    },
+    "altLevelUp": {
+      "name": "Nam Vọng",
+      "description": "Khi thăng cấp: nhận Phản Đòn 2. Mỗi lượt Điệp Vũ nhận thêm 2 giáp.",
+      "passive": {
+        "type": "armorPerTurn",
+        "amount": 2
+      },
+      "onLevelUp": [
+        {
+          "type": "applyStatus",
+          "status": "reflect",
+          "amount": 2,
+          "to": "self"
+        }
+      ]
+    }
+  },
+  {
+    "id": "f12",
+    "name": "Hứa Công Chúc",
+    "bio": "Thanh tra nội các trẻ nhất lịch sử, được phái đến học viện để \"kiểm kê quỹ học bổng\" — thực chất là con mắt của triều đình. Nàng tin luật hơn tin người, và đang học lại khi nào xé trang là cứu người.",
+    "faction": "thanhLoan",
+    "archetype": "controller",
+    "attackStyle": "ink",
+    "rarity": "epic",
+    "maxHp": 38,
+    "cardIds": [
+      "f12_lap_an",
+      "f12_tuoc_van",
+      "f12_tam_tuc_dien",
+      "f12_tiep_an",
+      "f12_phan_lenh",
+      "f12_dieu_tra"
+    ],
+    "lockedCardIds": [
+      "f12_nghiem_hinh",
+      "f12_dinh_toi",
+      "f12_phong_an",
+      "f12_benh_truyen",
+      "f12_xu_quyet",
+      "f12_sat_luc"
+    ],
+    "branches": [
+      {
+        "name": "Nghiêm Hình",
+        "cardIds": [
+          "f12_lap_an",
+          "f12_tam_tuc_dien",
+          "f12_phan_lenh",
+          "f12_nghiem_hinh",
+          "f12_xu_quyet",
+          "f12_sat_luc"
+        ]
+      },
+      {
+        "name": "Bỉnh Truyện",
+        "cardIds": [
+          "f12_tuoc_van",
+          "f12_tiep_an",
+          "f12_dieu_tra",
+          "f12_dinh_toi",
+          "f12_phong_an",
+          "f12_benh_truyen"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Thiết Bút",
+      "description": "Đòn tấn công của Hứa Công Chúc gây thêm 2 damage lên mục tiêu đang mang debuff.",
+      "counter": "debuffsApplied",
+      "threshold": 6,
+      "constellationThreshold": 4,
+      "passive": {
+        "type": "bonusVsDebuffed",
+        "minDebuffs": 1,
+        "amount": 2
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f12_tam_tuc_dien",
+      "plusCardId": "f12_tam_tuc_dien_plus"
+    },
+    "altLevelUp": {
+      "name": "Bỉnh Truyện",
+      "description": "Debuff của Hứa Công Chúc kéo dài thêm 1 vòng. Khi thăng cấp: áp Suy Yếu 1 vòng lên mọi kẻ địch.",
+      "passive": {
+        "type": "debuffDurationBonus",
+        "amount": 1
+      },
+      "onLevelUp": [
+        {
+          "type": "applyStatus",
+          "status": "weak",
+          "amount": 1,
+          "to": "allEnemies"
+        }
+      ]
     }
   }
 ]

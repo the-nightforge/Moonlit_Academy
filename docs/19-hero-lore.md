@@ -200,6 +200,26 @@ Ngày tên cậu lên tới vị trí triều đình không thể lờ đi, cậ
 
 ---
 
+## M11 — Thất Diệp 七葉
+**Legendary · Xích Diên (trà trộn) · Sát thủ / Ấn ký**
+
+### Tiểu sử
+Vô Nguyệt không chỉ cài một con dao vào Vọng Nguyệt — họ cài một con dao để *gác* con dao kia. Thất Diệp là "thanh lý viên": người được cử đi xóa những sát thủ hỏng — hỏng nghĩa là chùn tay, là do dự, là bắt đầu có tên riêng. Tên thật của hắn bị bôi khỏi sổ từ thuở lên bảy; mỗi nhiệm vụ một lớp da mới, một cái chết giả để chôn lớp da cũ. Danh sách theo dõi của hắn ở học viện này có đúng một cái tên: **Tô Dạ** — đồng nghiệp mà mọi báo cáo đều cho thấy đang dao động. Hắn trà trộn thành sinh viên Xích Diên, ngồi lớp cấm thuật, ghi chép đẹp nhất khóa — vì kẻ săn giỏi nhất là kẻ nhìn ra con mồi trước khi con mồi biết mình bị nhìn. Điều hắn chưa tính vào phương trình: ở học viện, lần đầu tiên có người gọi hắn là "bạn" mà không cần lý do — một đứa nói chuyện với gà tây tên Ninh An, và không hề sợ ánh mắt không chớp của hắn.
+
+### Quan hệ
+- **Tô Dạ (M06):** con mồi và gương soi. Hai con dao cùng lò rèn chỉ khác một điều — một con đã bắt đầu mềm. Hắn quan sát Tô Dạ không phải để báo cáo, mà để xem kết quả của việc mềm là gì.
+- **Ninh An (M07):** đứa ngây thơ duy nhất hắn không giải được — không mưu đồ, không tầng lớp, không sợ hắn. Những bữa trưa bị kéo đi ăn chung bắt đầu xuất hiện trong nhật ký theo dõi của hắn như những lỗi hổng.
+- **Khương Tịch (M08):** giáo quan nhìn ra hắn không phải sinh viên từ tuần đầu — và chọn giữ im lặng, như giữ một quân cờ lạ trên bàn cờ của mình.
+- **Diệp Linh Lung (F02):** hai bóng mờ đã nhìn ra nhau trong đám đông — và cả hai cùng quyết định chưa đến lúc lật bài.
+
+### Điểm mở cốt truyện
+Lệnh cuối cùng của thanh lý viên bao giờ cũng giống nhau: khi mục tiêu đổ, nếu thanh lý viên đổ theo — không ai dọn cả hai. Hắn đang đứng trước câu hỏi mà Vô Nguyệt không lập trình được: nếu con dao cũng được đặt tên, nó có còn là con dao không.
+
+### Bio
+> Thanh lý viên của "Vô Nguyệt", được cài vào học viện để gác một con dao đang dao động — Tô Dạ. Người không có tên thì không có gì để mất; hắn đang kiểm chứng.
+
+---
+
 ## F01 — Thẩm Nguyệt Hoa 沈月華
 **Legendary · Thanh Loan Viện · Nhân vật trung tâm / Ultimate**
 
@@ -398,3 +418,43 @@ Nàng biết cái giá thật của Nguyệt Chủ vì đã xem nó được tr�
 
 ### Bio
 > Thánh nữ canh giữ Nguyệt Thần Điện, đã sống qua một kỳ Nguyệt Thực và mang theo cái giá của nó trăm năm. Ánh trăng không chọn ai để chiếu sáng — nhưng cái giá của nó thì có.
+
+---
+
+## F11 — Điệp Vũ 蝶舞
+**Epic · Bạch Lộ Viện · Vũ đao / Phản kích nhịp**
+
+### Tiểu sử
+Nàng là thân vệ cuối cùng của hoàng thất Nam Chiếu — đứa được chọn đưa đồ cúng ra khỏi thành trong đêm hạ thành, vì hoàng thượng cần một lưỡi đao chắc chắn nhất cho chuyến đi *dễ* nhất. Nàng quay đầu lại thì cổng đã đóng. Lệnh cuối cùng truyền qua kẽ cửa không phải "quay vào chết cùng" — mà là *sống sót để chứng kiến*: ai đó phải đứng ngoài biết chuyện đã xảy ra. Ba năm nàng lần theo dư quân tan tác, dệt lại mạng lưới cũ, và nghe được một tin đồn: học viện Vọng Nguyệt giữ một "khách quý" của Nam Chiếu. Nàng vào Bạch Lộ dưới thân phận vũ sinh — nghề thứ hai mà nàng được dạy để hộ giá hoàng thất trong yến tiệc. Điệp Vũ chiến đấu như múa: mỗi bước vũ điệu đặt một nhịp, và kẻ địch đánh vào nhịp ấy sẽ tự rơi vào lưỡi quạt đang chờ. Điều nàng không dám làm là đi hỏi thẳng cây cổ cầm kia — vì nếu người ngồi đó đúng là hoàng tử của nàng, thì ba năm trốn chạy của cả hai đều có nghĩa; còn nếu không phải, nàng sẽ không còn gì để đi tiếp.
+
+### Quan hệ
+- **Đoàn Lạc (M09):** câu hỏi nàng đi qua nửa thiên hạ để hỏi — và cũng là câu hỏi nàng chưa dám đứng trước mặt người mà hỏi. Nàng đã ba lần "vô tình" ngồi gần nghe đàn, và ba lần chưa nói một lời.
+- **Lam Khê (F06):** kình địch và tri âm lệch pha. Hai sân khấu khác nhau của cùng một nghệ thuật — một múa để sống, một múa để quên. Họ gặp nhau trong thính phòng trống vào những đêm mỗi người tưởng chỉ mình mình tập.
+- **Tần Sương (F03):** người nhìn ra nàng không phải vũ sinh từ tuần đầu — và chọn không hỏi, vì kẻ mang một quốc gia trên lưng nhận ra nhau không cần lời.
+- **Cố Uyển (F07):** nàng bắt đầu lén viết lại biên niên sử Nam Chiếu "theo bản kẻ sống sót kể" — F07 là người đầu tiên đọc bản thảo.
+
+### Điểm mở cốt truyện
+Lệnh "sống sót để chứng kiến" không nói chứng kiến cái gì — đêm hạ thành có người mở cổng từ trong. Khi nàng đủ gan hỏi Đoàn Lạc, câu trả lời đầu tiên sẽ không phải "có phải ta không" mà là "ta cũng muốn hỏi người đưa đồ cúng ra khỏi thành một điều".
+
+### Bio
+> Thân vệ cuối cùng của hoàng thất Nam Chiếu, vào học viện dưới thân phận vũ sinh để tìm hoàng tử của mình. Nàng không sống để trả thù — nàng sống vì chưa ai được phép quên.
+
+---
+
+## F12 — Hứa Công Chúc 許公祝
+**Epic · Thanh Loan Viện · Phán quyết / Tước đoạt**
+
+### Tiểu sử
+Hứa Công Chúc đỗ đầu kỳ thi thanh tra trẻ nhất lịch sử nội các — mười sáu tuổi, bài luận khiến giám khảo phải đọc hai lần trước khi dám chấm. Và nàng được phái đến Vọng Nguyệt với công văn khô khan nhất từng được viết: kiểm kê quỹ học bổng. Mọi người — kể cả nàng — đều hiểu đó là màn che: học viện đang giữ công chúa, giữ hoàng tử bại quốc, giữ những lời đồn về Nguyệt Thực mà triều đình cần một con mắt đủ lạnh để nhìn thẳng. Nàng chọn nhiệm vụ này vì một lý do riêng mà không hồ sơ nào ghi: năm mười bốn tuổi, nàng từng xé một trang hồ sơ để cứu gia đình mình — và người phải đổ mực cho trang được thay thế vẫn chưa bị ai hỏi tội. Luật nói việc nàng làm là sai; mẹ nàng nói đó là đúng; nàng vẫn chưa biết ai đúng hơn. Nàng đến học viện để học một điều mà sách luật không dạy: khi nào xé trang là tội, khi nào là cứu người.
+
+### Quan hệ
+- **Tạ Vân Chiêu (M01) & Chu Quyết (M10):** hai hồ sơ dày nhất trên bàn nàng — con trai tể tướng và thường dân đầu tiên lọt top 10, hai đầu của cùng một cái thang danh mà triều đình đang ngồi lên. Nàng vẫn chưa viết kết luận cho hồ sơ nào cả.
+- **Diệp Linh Lung (F02):** mật thám của Thái hậu đã đánh hơi ra "người của nội các" trong học viện — hai người chơi một ván cờ im lặng: một bên dò, một bên giả vờ không biết mình bị dò.
+- **Cố Uyển (F07):** nàng đọc ngấu nghiến phần sử mà F07 đang lén chép — hai con người y hệt nhau (một tin vào luật, một tin vào sử) mà chưa hề gặp nhau. Khi gặp, sẽ là bạn hay đối thủ tùy ai mở lời trước.
+- **Ninh An (M07):** trường hợp duy nhất khiến nàng xé quy tắc "không can thiệp" — nàng đã một lần lặng lẽ sửa điểm danh để cứu cậu khỏi một buổi phạt, rồi viết vào hồ sơ của chính mình một dòng nhỏ: "trang thứ hai."
+
+### Điểm mở cốt truyện
+Công văn kiểm kê của nàng sắp xong — và trong hồ sơ thật, đứng giữa "công chúa bị giam" và "hoàng tử bại quốc được chở che", nàng sẽ phải quyết định viết cái gì lên trang giấy mà triều đình sẽ đọc, và xé trang nào đi.
+
+### Bio
+> Thanh tra nội các trẻ nhất lịch sử, được phái đến học viện để "kiểm kê quỹ học bổng" — thực chất là con mắt của triều đình. Nàng tin luật hơn tin người, và đang học lại khi nào xé trang là cứu người.

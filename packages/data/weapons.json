@@ -4065,5 +4065,487 @@
     ]
    }
   ]
+ },
+ {
+  "id": "w_that_diep",
+  "name": "Thất Diệp Phi Đao",
+  "rarity": "legendary",
+  "attackStyle": "darts",
+  "signatureHeroId": "m11",
+  "text": "Mỗi lá sát thủ thứ 3 của người mang: +1 Sức Mạnh (Thất Diệp: +2 Sức Mạnh).",
+  "card": {
+   "name": "Liệt Tử",
+   "cost": 3,
+   "copies": 2,
+   "type": "attack",
+   "tags": [
+    "attack",
+    "assassin"
+   ],
+   "target": "enemy",
+   "effects": [
+    {
+     "type": "damage",
+     "amount": 3,
+     "to": "chosen",
+     "hits": 2
+    },
+    {
+     "type": "applyStatus",
+     "status": "mark",
+     "amount": 1,
+     "to": "chosen"
+    }
+   ],
+   "text": "Gây 3 damage ×2, Đánh Dấu 1 vòng."
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "assassin",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 3,
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "strength",
+      "amount": 1,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "assassin",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 3,
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "strength",
+      "amount": 2,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Liệt Tử gây 4 damage ×2.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 4,
+       "to": "chosen",
+       "hits": 2
+      },
+      {
+       "type": "applyStatus",
+       "status": "mark",
+       "amount": 1,
+       "to": "chosen"
+      }
+     ],
+     "text": "Gây 4 damage ×2, Đánh Dấu 1 vòng."
+    }
+   },
+   {
+    "text": "Liệt Tử còn 2 Nguyệt Lực.",
+    "card": {
+     "cost": 2
+    }
+   },
+   {
+    "text": "Liệt Tử Đánh Dấu 2 vòng.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 4,
+       "to": "chosen",
+       "hits": 2
+      },
+      {
+       "type": "applyStatus",
+       "status": "mark",
+       "amount": 2,
+       "to": "chosen"
+      }
+     ],
+     "text": "Gây 4 damage ×2, Đánh Dấu 2 vòng."
+    }
+   },
+   {
+    "text": "Nội tại: mỗi lá sát thủ thứ 2.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "assassin",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 2,
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 1,
+        "to": "self"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "assassin",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 2,
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_nam_chieu_quat",
+  "name": "Nam Chiếu Tâm Quạt",
+  "rarity": "epic",
+  "attackStyle": "fan",
+  "signatureHeroId": "f11",
+  "text": "Mỗi lá Hộ Thể thứ 4 của người mang: người mang Phản Đòn 1 (Điệp Vũ: Phản Đòn 2).",
+  "card": {
+   "name": "Vũ Quyệt",
+   "cost": 2,
+   "copies": 2,
+   "type": "attack",
+   "tags": [
+    "attack"
+   ],
+   "target": "enemy",
+   "effects": [
+    {
+     "type": "damage",
+     "amount": 4,
+     "to": "chosen"
+    },
+    {
+     "type": "gainArmor",
+     "amount": 2,
+     "to": "self"
+    }
+   ],
+   "text": "Gây 4 damage, nhận 2 giáp."
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "ward",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 4,
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "reflect",
+      "amount": 1,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "cardPlayed",
+     "tag": "ward",
+     "owner": "wearer"
+    },
+    "actor": "wearer",
+    "every": 4,
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "reflect",
+      "amount": 2,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Vũ Quyệt gây 6 damage.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 6,
+       "to": "chosen"
+      },
+      {
+       "type": "gainArmor",
+       "amount": 2,
+       "to": "self"
+      }
+     ],
+     "text": "Gây 6 damage, nhận 2 giáp."
+    }
+   },
+   {
+    "text": "Vũ Quyệt còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
+   {
+    "text": "Vũ Quyệt thêm Phản Đòn 1.",
+    "card": {
+     "effects": [
+      {
+       "type": "damage",
+       "amount": 6,
+       "to": "chosen"
+      },
+      {
+       "type": "gainArmor",
+       "amount": 2,
+       "to": "self"
+      },
+      {
+       "type": "applyStatus",
+       "status": "reflect",
+       "amount": 1,
+       "to": "self"
+      }
+     ],
+     "text": "Gây 6 damage, nhận 2 giáp và Phản Đòn 1."
+    }
+   },
+   {
+    "text": "Nội tại: mỗi lá Hộ Thể thứ 3.",
+    "hooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "ward",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 3,
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "reflect",
+        "amount": 1,
+        "to": "self"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "cardPlayed",
+       "tag": "ward",
+       "owner": "wearer"
+      },
+      "actor": "wearer",
+      "every": 3,
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "reflect",
+        "amount": 2,
+        "to": "self"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w_thiet_but_an",
+  "name": "Thiết Bút Ấn",
+  "rarity": "epic",
+  "attackStyle": "ink",
+  "signatureHeroId": "f12",
+  "text": "Đầu trận: mọi kẻ địch Dễ Vỡ 1 vòng (Hứa Công Chúc: thêm Đánh Dấu 1 vòng).",
+  "card": {
+   "name": "Định Án",
+   "cost": 2,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "scheme",
+    "control"
+   ],
+   "target": "enemy",
+   "effects": [
+    {
+     "type": "applyStatus",
+     "status": "weak",
+     "amount": 1,
+     "to": "chosen"
+    },
+    {
+     "type": "applyStatus",
+     "status": "vulnerable",
+     "amount": 1,
+     "to": "chosen"
+    }
+   ],
+   "text": "Suy Yếu 1 vòng và Dễ Vỡ 1 vòng lên 1 kẻ địch."
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "combatStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "vulnerable",
+      "amount": 1,
+      "to": "allEnemies"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "combatStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "applyStatus",
+      "status": "vulnerable",
+      "amount": 1,
+      "to": "allEnemies"
+     },
+     {
+      "type": "applyStatus",
+      "status": "mark",
+      "amount": 1,
+      "to": "allEnemies"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Định Án Suy Yếu 2 vòng.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "weak",
+       "amount": 2,
+       "to": "chosen"
+      },
+      {
+       "type": "applyStatus",
+       "status": "vulnerable",
+       "amount": 1,
+       "to": "chosen"
+      }
+     ],
+     "text": "Suy Yếu 2 vòng và Dễ Vỡ 1 vòng lên 1 kẻ địch."
+    }
+   },
+   {
+    "text": "Định Án còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
+   {
+    "text": "Định Án Dễ Vỡ 2 vòng.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "weak",
+       "amount": 2,
+       "to": "chosen"
+      },
+      {
+       "type": "applyStatus",
+       "status": "vulnerable",
+       "amount": 2,
+       "to": "chosen"
+      }
+     ],
+     "text": "Suy Yếu 2 vòng và Dễ Vỡ 2 vòng lên 1 kẻ địch."
+    }
+   },
+   {
+    "text": "Đầu trận: mọi kẻ địch Dễ Vỡ 2 vòng (Hứa Công Chúc: thêm Đánh Dấu 2 vòng).",
+    "hooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 2,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ],
+    "signatureHooks": [
+     {
+      "on": {
+       "type": "combatStart"
+      },
+      "actor": "wearer",
+      "effects": [
+       {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 2,
+        "to": "allEnemies"
+       },
+       {
+        "type": "applyStatus",
+        "status": "mark",
+        "amount": 2,
+        "to": "allEnemies"
+       }
+      ]
+     }
+    ]
+   }
+  ]
  }
 ]

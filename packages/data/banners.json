@@ -17,7 +17,9 @@
         "m02",
         "m04",
         "f06",
-        "m09"
+        "m09",
+        "f11",
+        "f12"
       ],
       "rare": [
         "f04",
@@ -94,6 +96,21 @@
               "f09"
             ]
           }
+        },
+        {
+          "heroId": "m11",
+          "name": "Ẩn Diệp Liệt Ảnh — Thất Diệp",
+          "pool": {
+            "epic": [
+              "f11",
+              "f12",
+              "m06"
+            ],
+            "rare": [],
+            "common": [
+              "f09"
+            ]
+          }
         }
       ]
     }
@@ -111,7 +128,8 @@
         "w_quan_tinh_truong",
         "w_thien_nguyet_truong",
         "w_huyet_phuong_dao",
-        "w_dan_hon_dang"
+        "w_dan_hon_dang",
+        "w_that_diep"
       ],
       "epic": [
         "w_anh_nguyet_chuy",
@@ -121,7 +139,9 @@
         "w_cam_ve_kich",
         "w_bach_ngan_cham",
         "w_vong_quoc_cam",
-        "w_kinh_hong_phien"
+        "w_kinh_hong_phien",
+        "w_nam_chieu_quat",
+        "w_thiet_but_an"
       ],
       "rare": [
         "w_bach_hoa_tram",

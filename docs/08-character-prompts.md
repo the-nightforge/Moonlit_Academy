@@ -225,6 +225,22 @@ determined young commoner scholar, sharp focused eyes, neatly tied black hair wi
 
 ---
 
+### M11 — Thất Diệp 七葉
+**Độ hiếm:** Legendary · **Viện:** Xích Diên (trà trộn) · **Vai trò card:** Ấn ký / Chấm điểm
+
+- **Tính cách:** Tĩnh lặng gần như vô thanh, lễ phép máy móc, không hờn không mừng. Cười đúng lúc như đọc sách chỉ dẫn.
+- **Thời trang:** Áo sinh viên Xích Diên hơi cũ, chỉnh tề đến vô hồn; bảy chiếc lá kim loại khâu trong vạt áo; gang tay nhuộm mực.
+- **Bối cảnh:** Vườn trường lúc chạng vạng, bóng kéo dài sai một nhịp.
+- **Tiểu sử:** "Thanh lý viên" của Vô Nguyệt — người xóa sát thủ hỏng, thay lớp da mỗi nhiệm vụ; được cài vào học viện để gác một con dao đang dao động: Tô Dạ.
+- **Quan hệ:** Thợ săn và gương soi của **Tô Dạ (M06)**; vô tình thân với **Ninh An (M07)** — đứa ngây thơ duy nhất hắn không giải được; bị **Khương Tịch (M08)** giữ như một quân cờ lạ.
+- **Tư tưởng:** "Người không có tên thì không có gì để mất — Vô Nguyệt dạy vậy. Ta đang kiểm chứng."
+
+```
+quiet expressionless young man, still calm eyes that never blink, neat dark hair with simple pin, slightly worn Xích Diên academy uniform in crimson-black with silver thread, seven thin metal leaf-blades stitched inside his sleeve catching light, ink-stained gloves, standing unnaturally still while ribbons and papers flutter past, long shadow stretching wrong direction, dusk courtyard soft orange background, crimson grey and ink-black palette
+```
+
+---
+
 ## 4. Nhân vật NỮ
 
 ### F01 — Thẩm Nguyệt Hoa 沈月華
@@ -387,6 +403,38 @@ serene divine priestess, compassionate sorrowful eyes, very long pale silver hai
 
 ---
 
+### F11 — Điệp Vũ 蝶舞
+**Độ hiếm:** Epic · **Viện:** Bạch Lộ · **Vai trò card:** Phản kích theo nhịp
+
+- **Tính cách:** Cương nhu ngầm — bề ngoài nhẹ nhàng như vũ giả, quyết đoán lạnh như đao. Kín lời về quá khứ, nóng lòng về một câu hỏi duy nhất.
+- **Thời trang:** Vũ phục Nam Chiếu cũ nhuộm lại màu xanh rêu, đôi quạt đao gấp gọn trong tay áo, dải chuông bạc quanh eo — im lìm vì đã tháo tim chuông.
+- **Bối cảnh:** Vọng lâu nhìn về phía nam, trăng nhòa sương.
+- **Tiểu sử:** Thân vệ cuối cùng của hoàng thất Nam Chiếu — người được lệnh sống sót để chứng kiến; vào học viện dưới thân phận vũ sinh để tìm hoàng tử của mình.
+- **Quan hệ:** Đi tìm **Đoàn Lạc (M09)** mà chưa dám đối diện — nàng sợ đáp án hơn sợ không có đáp án; kình địch vũ thuật và tri âm lệch pha với **Lam Khê (F06)**; được **Tần Sương (F03)** để mắt như người cùng mang một quốc gia trên lưng.
+- **Tư tưởng:** "Ta không sống để trả thù. Ta sống vì chưa ai được phép quên."
+
+```
+graceful female blade-dancer, determined sorrowful eyes half-lowered, long dark hair in high warrior tail with faded silver bells, moss-green and faded gold dance hanfu re-dyed from old royal fabric, twin folding war-fans half-open with hidden blade edges, mid-spin dancing stance, silk ribbons and floating bell-less chime tassels swirling, faint southern jade ornament on chest, misty moonlit watchtower background looking south, jade green silver and faded gold palette
+```
+
+---
+
+### F12 — Hứa Công Chúc 許公祝
+**Độ hiếm:** Epic · **Viện:** Thanh Loan · **Vai trò card:** Phán quyết / Tước đoạt
+
+- **Tính cách:** Chính trực đến cứng ngắc, tin luật hơn tin người, ghi chép mọi thứ. Bên dưới lớp băng là nỗi ám ảnh về một lần bẻ cong luật và hậu quả của nó.
+- **Thời trang:** Quan phục thanh tra nội các màu chàm chỉnh tề, triện ngọc vuông đeo eo, cây bút sắt và sổ da đen không rời tay.
+- **Bối cảnh:** Thư phòng triều đình, trăng rọi qua song cửa lên chồng hồ sơ.
+- **Tiểu sử:** Thanh tra trẻ nhất lịch sử nội các — được phái đến học viện để "kiểm kê quỹ học bổng", thực chất là con mắt của triều đình nhìn vào nơi đang giam công chúa và hoàng tử bại quốc.
+- **Quan hệ:** Ngòi nổ chính trị giữa **Tạ Vân Chiêu (M01)** và **Chu Quyết (M10)** — nàng đang viết hồ sơ về cả hai; bị **Diệp Linh Lung (F02)** dò xét vì "người của nội các"; đọc ngấu nghiến phần sử **Cố Uyển (F07)** đang lén chép — hai con người y hệt nhau mà chưa gặp nhau.
+- **Tư tưởng:** "Luật không công bằng. Nhưng thiếu luật, kẻ yếu chết trước."
+
+```
+stern elegant female imperial inspector, cold precise eyes behind calm, neat black hair in official coiled bun with square jade seal hairpiece, indigo censor hanfu with silver-edged sleeves and rigid court sash, iron brush pen and black leather dossier in hand, glowing ink verdict characters floating around like talismans, stacks of documents under moonlight window light, strict symmetrical composition, indigo silver and ink-black palette
+```
+
+---
+
 ## 5. Sơ đồ quan hệ tóm tắt
 
 | Nhân vật | Đồng minh | Đối thủ / Căng thẳng | Tình cảm / Bí mật |
@@ -401,6 +449,7 @@ serene divine priestess, compassionate sorrowful eyes, very long pale silver hai
 | M08 Khương Tịch | F10, M07 | F08 | Bị F07 điều tra |
 | M09 Đoàn Lạc | F06 | Triều đình | — |
 | M10 Chu Quyết | M03, M07 | M01 | Thư từ với F07 |
+| M11 Thất Diệp | M07 | M06 | Cái tên đã bị bôi |
 | F01 Thẩm Nguyệt Hoa | F02, F10 | F08 | Hôn ước M01 |
 | F02 Diệp Linh Lung | F01, F06 | M06 | Mật thám của Thái hậu |
 | F03 Tần Sương | F05, F04 | M05, F08 | Báo thù diệt môn |
@@ -411,12 +460,14 @@ serene divine priestess, compassionate sorrowful eyes, very long pale silver hai
 | F08 Phượng Chiêu Dung | — | M08, F03, F01 | Nhắm vào F09 |
 | F09 Tiểu Mãn | F10, M07, F04 | F08 | Thỏ ngọc linh thú |
 | F10 Liễu Tịnh Nhan | M08, F09, F01 | — | Biết cái giá của Nguyệt Chủ |
+| F11 Điệp Vũ | F03 | F06 | Tìm M09 mà không dám hỏi |
+| F12 Hứa Công Chúc | — | F02 | Hồ sơ về M01 và M10 |
 
 ---
 
 ## 6. Phân bổ độ hiếm (cho hệ thống gacha)
 
-- **Legendary (6):** M01, M05, M08, F01, F08, F10 → mỗi nhân vật có thể làm 1 banner giới hạn riêng
-- **Epic (7):** M02, M04, M06, M09, F02, F03, F06
+- **Legendary (7):** M01, M05, M08, M11, F01, F08, F10 → mỗi nhân vật có thể làm 1 banner giới hạn riêng
+- **Epic (9):** M02, M04, M06, M09, F02, F03, F06, F11, F12
 - **Rare (6):** M03, M07, M10, F04, F05, F07
 - **Common (1, có nâng cấp):** F09

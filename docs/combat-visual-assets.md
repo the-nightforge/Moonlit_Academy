@@ -73,6 +73,12 @@ source/crop details and provenance in `docs/combat-generated-assets.json`. The44
 were matched by SHA-256 to their native generation outputs. New hero/enemy sources are1024×1536;
 summons are1254×1254. Existing normal portraits retain their original resolutions.
 
+**Update — 3 heroes wave 3 (m11, f11, f12):** art chưa được generate. `heroes/m11*`,
+`f11*`, `f12*` hiện là **placeholder copies** (m11←m06, f11←f06, f12←f07, cả `_up`)
+để giữ inventory test xanh — phải thay bằng art thật từ prompts trong
+`docs/08-character-prompts.md` trước khi release. Tổng inventory giờ là 63 file
+(23 heroes ×2 + 15 enemies + 2 summons).
+
 ## QA checklist (Step 4)
 
 - [x] `combat-assets.test.ts`:6 positive assertions green, `.fails` removed (`green-final-assets.log`).

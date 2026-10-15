@@ -21,6 +21,7 @@ export const ALL_TEAMS: [string, string, string][] = [
   ["f08", "m07", "f07"],
   ["m03", "f09", "m08"],
   ["m10", "f02", "m06"],
+  ["m11", "f11", "f12"],
 ];
 
 function weaponFor(data: GameData, heroId: string, index: number): string {
