@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "id": "pool-v3",
+  "note": "Roster pool for playtest experiments — v3 adds the wave-4 heroes (m12/f13), each in a separate shell of mid-band veterans so the new hero's own winrate swing is readable. Every entry is a mode-legal team: heroes exist, deck resolves to owned cards ('starter' = starterDeck). Tags are labels for coverage/slicing, not engine input.",
+  "entries": [
+    {
+      "id": "pool_m05_m09_f04",
+      "label": "Mộc Cừu chủ trận",
+      "tags": [
+        "starter",
+        "defensive",
+        "veteran"
+      ],
+      "heroIds": [
+        "m05",
+        "m09",
+        "f04"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_f06_f03_f09",
+      "label": "Tam nữ đa dụng",
+      "tags": [
+        "starter",
+        "control",
+        "fragile"
+      ],
+      "heroIds": [
+        "f06",
+        "f03",
+        "f09"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_f10_f05_m04",
+      "label": "Song Hành tốc độ",
+      "tags": [
+        "starter",
+        "tempo",
+        "fragile"
+      ],
+      "heroIds": [
+        "f10",
+        "f05",
+        "m04"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_m01_f01_m02",
+      "label": "Tam kiếm cân bằng",
+      "tags": [
+        "starter",
+        "balanced"
+      ],
+      "heroIds": [
+        "m01",
+        "f01",
+        "m02"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_f08_m07_f07",
+      "label": "Hộ tống ẩn thân",
+      "tags": [
+        "starter",
+        "defensive"
+      ],
+      "heroIds": [
+        "f08",
+        "m07",
+        "f07"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_m03_f11_m08",
+      "label": "Thất Diệp săn mồi cùng song phong",
+      "tags": [
+        "starter",
+        "combo",
+        "wave3"
+      ],
+      "heroIds": [
+        "m03",
+        "f11",
+        "m08"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_m10_f02_m06",
+      "label": "Nguyệt sát áp lực",
+      "tags": [
+        "starter",
+        "aggressive"
+      ],
+      "heroIds": [
+        "m10",
+        "f02",
+        "m06"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_f05_m04_f10",
+      "label": "Phong nguyệt nghịch",
+      "tags": [
+        "starter",
+        "tempo"
+      ],
+      "heroIds": [
+        "f05",
+        "m04",
+        "f10"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_m11_f04_m06",
+      "label": "Thất Diệp sát ảnh",
+      "tags": [
+        "starter",
+        "aggressive",
+        "wave3"
+      ],
+      "heroIds": [
+        "m11",
+        "f04",
+        "m06"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_m10_m08_m06",
+      "label": "Song sát chủ lực",
+      "tags": [
+        "starter",
+        "tempo"
+      ],
+      "heroIds": [
+        "m10",
+        "m08",
+        "m06"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_m10_f12_m06",
+      "label": "Nguyệt án áp lực",
+      "tags": [
+        "starter",
+        "control",
+        "wave3"
+      ],
+      "heroIds": [
+        "m10",
+        "f12",
+        "m06"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_m12_f10_m07",
+      "label": "Trấn môn hộ tống",
+      "tags": [
+        "starter",
+        "defensive",
+        "wave4"
+      ],
+      "heroIds": [
+        "m12",
+        "f10",
+        "m07"
+      ],
+      "deck": "starter"
+    },
+    {
+      "id": "pool_f13_m05_f08",
+      "label": "Điềm giả hộ vệ",
+      "tags": [
+        "starter",
+        "control",
+        "wave4"
+      ],
+      "heroIds": [
+        "f13",
+        "m05",
+        "f08"
+      ],
+      "deck": "starter"
+    }
+  ]
+}
