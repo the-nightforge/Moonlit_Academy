@@ -1,0 +1,148 @@
+# Sharded PvP balance simulation.
+#
+# Dispatch from Actions → "pvp-sim". The pool pairing cycle is per-config, so
+# every slice covers the whole pool; slices only differ by seed band.
+#
+# Cost note: total CPU work is fixed (~slices × blockCount × ~1 min). More
+# slices cut wall-clock time but bill the same total minutes.
+name: pvp-sim
+
+on:
+  workflow_dispatch:
+    inputs:
+      slices:
+        description: "Parallel jobs (total blocks = slices × blockCount)"
+        default: "12"
+      blockCount:
+        description: "Blocks per slice (each block = 2 legs, AB/BA)"
+        default: "30"
+      seedBase:
+        description: "First seed of slice 0; bump between iterations"
+        default: "9000"
+      experimentId:
+        description: "Manifest id embedded in records"
+        default: "ci"
+      stage:
+        description: "Experiment stage"
+        type: choice
+        options: [screen, confirm]
+        default: screen
+      poolPath:
+        description: "Scenario pool, repo-relative"
+        default: "docs/playtest/scenarios.v2.json"
+      profilePath:
+        description: "Bot profile pool, repo-relative"
+        default: "docs/playtest/profiles.v1.json"
+      heroHpOverrides:
+        description: 'JSON merged into pvp-config heroStats, e.g. {"m12":{"maxHp":52}}'
+        required: false
+        default: ""
+
+concurrency:
+  group: pvp-sim-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - id: gen
+        run: |
+          node -e "
+            const n = Number.parseInt('${{ inputs.slices }}', 10);
+            if (!Number.isInteger(n) || n < 1 || n > 40) throw new Error('slices must be 1-40');
+            console.log('matrix=' + JSON.stringify(Array.from({ length: n }, (_, i) => i)));
+          " >> "$GITHUB_OUTPUT"
+
+  sim:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        slice: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm playtest:build
+      - name: Apply hero HP overrides
+        if: inputs.heroHpOverrides != ''
+        env:
+          OVERRIDES: ${{ inputs.heroHpOverrides }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const p = 'packages/data/pvp-config.json';
+            const cfg = JSON.parse(fs.readFileSync(p, 'utf8'));
+            Object.assign(cfg.heroStats, JSON.parse(process.env.OVERRIDES));
+            fs.writeFileSync(p, JSON.stringify(cfg, null, 2) + '\n');
+            console.log('heroStats overrides:', process.env.OVERRIDES);
+          "
+      - name: Simulate slice ${{ matrix.slice }}
+        run: |
+          node scripts/playtest/slice-config.mjs \
+            --id "${{ inputs.experimentId }}-s${{ matrix.slice }}" \
+            --slice "${{ matrix.slice }}" \
+            --seedBase "${{ inputs.seedBase }}" \
+            --blockCount "${{ inputs.blockCount }}" \
+            --stage "${{ inputs.stage }}" \
+            --poolPath "${{ inputs.poolPath }}" \
+            --profilePath "${{ inputs.profilePath }}" \
+            --output "output/cfg-${{ matrix.slice }}.json"
+          node output/playtest-tool/main.mjs --command simulate \
+            --config "output/cfg-${{ matrix.slice }}.json" \
+            --output "output/sim-${{ matrix.slice }}" --workers 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sim-${{ matrix.slice }}
+          path: output/sim-${{ matrix.slice }}/
+          retention-days: 7
+
+  report:
+    needs: sim
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm playtest:build
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sim-*
+          path: output/slices
+      - name: Merge + report
+        run: |
+          node scripts/playtest/merge-slices.mjs --input output/slices --output output/merged
+          node output/playtest-tool/main.mjs --command report --base output/merged --output output/report
+          node output/playtest-tool/main.mjs --command review --input output/report/report.json
+      - name: Quality gate
+        # Balance verdicts (inconclusive / human-check-required) are
+        # informational — this is a tuning tool, not a merge gate. But
+        # "invalid-quality" means the sim itself is broken (errorRate or
+        # truncatedRate over spec) and should fail loudly.
+        run: |
+          node -e "
+            const r = require('./output/report/report.json');
+            console.log('report status:', r.status, '| reasons:', r.statusReasons);
+            if (r.status === 'invalid-quality') process.exit(1);
+          "
+      - name: Summary
+        run: cat output/report/report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: balance-report
+          path: output/report/
+          retention-days: 30
