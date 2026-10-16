@@ -2,6 +2,7 @@ import type { WebSocket } from "ws";
 import type { CoopSide, PvpSide } from "rules";
 import type { AppContext } from "../context";
 import { BotPlayer, botCoopSide, botMatchedPvpSide, botPvpSide } from "./bot-player";
+import { rankedOpponentName } from "./arena-opponent";
 import { MatchRoom, send, startCoopMatch, startPvpMatch, type MatchMode } from "./match-room";
 import { clientMessageSchema, type ClientMessage, type ServerMessage } from "./protocol";
 import { CoopQueue, RankedQueue } from "./queue";
@@ -65,8 +66,8 @@ export class RealtimeHub {
       (a) => {
         const seed = this.ctx.random(4).readUInt32BE(0);
         void this.launchMatch("ranked_bot", seed, [
-          { accountId: a.accountId, username: a.username, side: a.side },
-          { accountId: null, username: "Vọng Nguyệt", side: botMatchedPvpSide(this.ctx, seed, a.side) },
+          { accountId: a.accountId, username: a.username, side: a.side, rating: a.rating },
+          { accountId: null, username: rankedOpponentName(seed), side: botMatchedPvpSide(this.ctx, seed, a.side), rating: a.rating },
         ]).catch((error: unknown) => this.failedLaunch([a.accountId], error));
       },
     );

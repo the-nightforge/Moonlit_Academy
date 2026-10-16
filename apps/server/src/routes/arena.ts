@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { buyHonorItem, dayKey, HONOR_PER_DAY, tierFor } from "rules";
 import { z } from "zod";
 import type { AppContext } from "../context";
+import { rankedOpponentName } from "../realtime/arena-opponent";
 
 const HISTORY_PAGE_SIZE = 20;
 const LEADERBOARD_SIZE = 50;
@@ -44,9 +45,10 @@ export function registerArenaRoutes(app: FastifyInstance, ctx: AppContext): void
   const history = db.prepare<[number, number, number], {
     match_id: string; mode: string; result: string | null; rating_before: number | null;
     rating_after: number | null; created_at: number; opponent: string | null;
+    seed: number; setup_json: string; opponent_slot: number | null;
   }>(
     `SELECT m.id AS match_id, m.mode, mine.result, mine.rating_before, mine.rating_after,
-            m.created_at, opp_acc.username AS opponent
+            m.created_at, m.seed, m.setup_json, opp.slot AS opponent_slot, opp_acc.username AS opponent
      FROM match_players mine
      JOIN matches m ON m.id = mine.match_id
      LEFT JOIN match_players opp ON opp.match_id = mine.match_id AND opp.slot <> mine.slot
@@ -101,8 +103,10 @@ export function registerArenaRoutes(app: FastifyInstance, ctx: AppContext): void
     return {
       entries: (await history.all(accountId, HISTORY_PAGE_SIZE, page * HISTORY_PAGE_SIZE)).map((row) => ({
         matchId: row.match_id,
-        mode: row.mode,
-        opponent: row.opponent, // null for a bot seat (practice)
+        mode: row.mode === "ranked_bot" ? "ranked" : row.mode,
+        opponent: row.opponent ?? (row.mode === "ranked_bot"
+          ? (JSON.parse(row.setup_json) as { botNames?: Record<string, string> }).botNames?.[String(row.opponent_slot)] ?? rankedOpponentName(row.seed)
+          : null),
         result: row.result,
         ratingDelta: row.rating_before === null || row.rating_after === null ? null : row.rating_after - row.rating_before,
         createdAt: row.created_at,

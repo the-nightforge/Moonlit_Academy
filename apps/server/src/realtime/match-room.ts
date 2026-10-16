@@ -115,7 +115,7 @@ export class MatchRoom {
   snapshotFor(seat: number): MatchSnapshot {
     return {
       matchId: this.matchId,
-      mode: this.mode,
+      mode: this.mode === "ranked_bot" ? "ranked" : this.mode,
       you: seat,
       others: this.seats
         .filter((s) => s.seat !== seat)
@@ -439,10 +439,9 @@ export class MatchRoom {
       }
       return winner === "draw" || winner === undefined ? "draw" : seat === winner ? "won" : "lost";
     };
-    // Human ranked matches settle Elo and Honor; arena bots pay Honor only.
+    // Both ranked queue paths settle Elo, ranked record and Honor.
     // Queue co-op pays §9.2 rewards; private/practice only record the result.
-    const ranked = this.mode === "ranked" && this.seats.every((seat) => seat.accountId !== null);
-    const rewardedBot = this.mode === "ranked_bot";
+    const ranked = this.mode === "ranked_bot" || (this.mode === "ranked" && this.seats.every((seat) => seat.accountId !== null));
     const rewardedCoop = this.mode === "coop";
     // Settlement runs exactly once (`16` §8.4): a failed transaction leaves the
     // room "failed" for recovery reads — it is never retried silently.
@@ -450,14 +449,13 @@ export class MatchRoom {
     try {
       // Elo deltas compare pre-match ratings — capture both profiles first.
       const profiles = new Map<number, Profile>();
-      if (ranked || rewardedBot || rewardedCoop) {
+      if (ranked || rewardedCoop) {
         for (const seat of this.seats) {
           if (seat.accountId !== null) profiles.set(seat.seat, (await this.ctx.readProfile(seat.accountId)).profile);
         }
       }
       const settled = new Map<number, { before: number; after: number; honor: number; rev: number }>();
       const coopPaid = new Map<number, { rewards: CoopRewards | null; rev: number }>();
-      const botPaid = new Map<number, { honor: number; rev: number }>();
       // The match record, seat results and both profile updates land in one
       // transaction (`16` §8.3): a crash mid-write leaves the row consistent.
       await this.ctx.db.transaction(async () => {
@@ -481,21 +479,13 @@ export class MatchRoom {
             coopPaid.set(seat.seat, { rewards: applied.rewards, rev });
             continue;
           }
-          if (rewardedBot) {
-            const applied = applyPvpResult(this.ctx.data, mine, {
-              result, reason: this.endReason, round: this.state.round,
-              now: this.ctx.clock(), ratingDelta: 0, honorOnly: true,
-            });
-            const rev = await this.ctx.saveProfile(seat.accountId!, applied.profile);
-            await seatResult.run(result, this.matchId, seat.seat);
-            botPaid.set(seat.seat, { honor: applied.honor, rev });
-            continue;
-          }
           const opponent = this.seats.find((s) => s.seat !== seat.seat)!;
-          const theirs = profiles.get(opponent.seat)!;
+          // A fallback opponent has no account. Its rating is fixed at queue
+          // entry, while only the human profile is read and updated.
+          const theirs = profiles.get(opponent.seat)?.arena ?? { ...mine.arena, rating: opponent.rating ?? seat.rating ?? mine.arena.rating };
           const score = result === "won" ? 1 : result === "lost" ? 0 : 0.5;
           const before = mine.arena.rating;
-          const delta = ratingChange(mine.arena, theirs.arena, score);
+          const delta = ratingChange(mine.arena, theirs, score);
           const applied = applyPvpResult(this.ctx.data, mine, {
             result,
             reason: this.endReason,
@@ -511,7 +501,6 @@ export class MatchRoom {
       for (const seat of this.seats) {
         const extras = settled.get(seat.seat);
         const coop = coopPaid.get(seat.seat);
-        const bot = botPaid.get(seat.seat);
         const end: MatchSettlement = {
           result: resultOf(seat.seat),
           reason: this.endReason,
@@ -519,7 +508,6 @@ export class MatchRoom {
             ? { rating: { before: extras.before, after: extras.after }, rewards: { honor: extras.honor }, profileRev: extras.rev }
             : {}),
           ...(coop ? { rewards: coop.rewards, profileRev: coop.rev } : {}),
-          ...(bot ? { rewards: { honor: bot.honor }, profileRev: bot.rev } : {}),
         };
         this.settlements.set(seat.seat, end);
         send(seat.socket, { type: "match.end", matchId: this.matchId, ...end });
@@ -562,7 +550,10 @@ export async function startPvpMatch(
     seat, accountId: p.accountId, username: p.username, rating: p.rating, nextSeq: 1,
     connected: p.accountId === null, consecutiveTimeouts: 0,
   }));
-  const setupJson = JSON.stringify({ players: [players[0].side, players[1].side] });
+  const setupJson = JSON.stringify({
+    players: [players[0].side, players[1].side],
+    ...(mode === "ranked_bot" ? { botNames: Object.fromEntries(players.flatMap((player, seat) => player.accountId === null ? [[seat, player.username]] : [])) } : {}),
+  });
   const room = new MatchRoom(ctx, matchId, mode, seed, seats, state, setupJson, events, drop);
   await room.persist();
   return room;

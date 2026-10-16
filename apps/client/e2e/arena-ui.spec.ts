@@ -34,7 +34,7 @@ test("hero and equipment previews explain PvP rules, history filters and validat
   const page = await signedInPage(browser, account.token);
   await page.route("**/api/arena/history", route => route.fulfill({ json: { entries: [
     { matchId: "ranked", mode: "ranked", opponent: "Ranked opponent", result: "won", ratingDelta: 20, createdAt: Date.now() },
-    { matchId: "ranked_bot", mode: "ranked_bot", opponent: "Generated opponent", result: "won", ratingDelta: null, createdAt: Date.now() },
+    { matchId: "legacy-ranked", mode: "ranked_bot", opponent: "NguyetLam", result: "won", ratingDelta: 20, createdAt: Date.now() },
     { matchId: "practice", mode: "practice", opponent: "Practice opponent", result: "lost", ratingDelta: null, createdAt: Date.now() },
   ] } }));
   await enterArena(page);
@@ -66,14 +66,16 @@ test("hero and equipment previews explain PvP rules, history filters and validat
   await page.keyboard.press("Escape");
   await clickArenaAction(page, "arena_history");
   await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").history?.length)).toBe(3);
-  await clickArenaAction(page, "arena_history_filter_ranked_bot");
-  const botHistory = await page.evaluate(() => {
+  await clickArenaAction(page, "arena_history_filter_ranked");
+  const rankedHistory = await page.evaluate(() => {
     const modal = (window as any).__vn.game.scene.getScene("arena").root.getByName("arena_modal");
     const texts = (nodes: any[]): string[] => nodes.flatMap(n => n.text ? [n.text] : n.list ? texts(n.list) : []);
     return texts(modal.list).join("\n");
   });
-  expect(botHistory).toContain("Generated opponent (máy)");
-  expect(botHistory).not.toContain("Ranked opponent");
+  expect(rankedHistory).toContain("NguyetLam");
+  expect(rankedHistory).toContain("Ranked opponent");
+  expect(rankedHistory).not.toContain("Practice opponent");
+  expect(rankedHistory).not.toContain("máy");
   await clickArenaAction(page, "arena_history_filter_practice");
   const visible = await page.evaluate(() => {
     const modal = (window as any).__vn.game.scene.getScene("arena").root.getByName("arena_modal");
@@ -91,7 +93,7 @@ test("hero and equipment previews explain PvP rules, history filters and validat
   await page.waitForFunction(() => (window as any).__vn.game.scene.isActive("deck-builder"));
 });
 
-test("queue ticks preserve the lobby, modal and tooltip across the automatic bot deadline", async ({ browser }) => {
+test("queue ticks preserve the lobby, modal and tooltip during a long search", async ({ browser }) => {
   const account = await registerAccount(`tick_${Date.now()}`);
   await saveDeck(account.token, account.rev);
   const page = await signedInPage(browser, account.token);
@@ -114,11 +116,11 @@ test("queue ticks preserve the lobby, modal and tooltip across the automatic bot
     return { sameBack: s.root.list[0] === back, sameModal: s.root.getByName("arena_modal") === modal,
       sameTooltip: s.tooltip === tooltip && !!tooltip.scene, wait: s.waitingSeconds,
       samePulse: !!pulse && s.tweens.getTweensOf(halo)[0] === pulse, pulses: s.tweens.getTweensOf(halo).length,
-      countdown: s.queueBody.getByName("arena_queue_fallback").getByName("arena_queue_countdown").text,
+      elapsed: s.queueTimer.text, noFallbackDisclosure: !s.queueBody.getByName("arena_queue_fallback"),
       noPracticeSwitch: !s.queueBody.getByName("arena_queue_practice") };
   });
   expect(result).toEqual({ sameBack: true, sameModal: true, sameTooltip: true, wait: 64, samePulse: true, pulses: 1,
-    countdown: "Đang ghép với đối thủ máy…", noPracticeSwitch: true });
+    elapsed: "01:04", noFallbackDisclosure: true, noPracticeSwitch: true });
   await clickArenaAction(page, "arena_modal_close");
   await clickArenaAction(page, "arena_queue_cancel");
   await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").queued)).toBe(false);
@@ -140,11 +142,10 @@ test("queue ticks preserve the lobby, modal and tooltip across the automatic bot
     const s = (window as any).__vn.game.scene.getScene("arena");
     s.pending = true;
     s.onMessage({ type: "error", error: "match unavailable" });
-    return { queued: s.queued, pending: s.pending, error: s.error, countdownRemoved: s.queueBody === null,
-      contentHasCountdown: !!s.root.getByName("arena_mode_content").getByName("arena_queue_fallback") };
+    return { queued: s.queued, pending: s.pending, error: s.error, queueRemoved: s.queueBody === null };
   });
   expect(failedLaunch).toEqual({ queued: false, pending: false, error: "Lỗi: Không thể mở trận — hãy tìm trận lại",
-    countdownRemoved: true, contentHasCountdown: false });
+    queueRemoved: true });
 });
 
 test("saved deck selector scrolls and selects by ID, queue locks edits and preserves errors", async ({ browser }) => {

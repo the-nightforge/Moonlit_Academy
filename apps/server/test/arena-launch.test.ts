@@ -32,7 +32,7 @@ it("reserves selected accounts while match persistence is pending", async () => 
   release();
   await ws.settle();
   expect(ws.inbox.filter(m => m.type === "match.start")).toHaveLength(1);
-  expect(ws.last("match.start")).toMatchObject({ mode: "ranked_bot" });
+  expect(ws.last("match.start")).toMatchObject({ mode: "ranked" });
   spy.mockRestore();
 }, 30_000);
 
@@ -65,6 +65,6 @@ it("reports a failed fallback launch and allows another queue attempt", async ()
     server.now.value += 60_000;
     schedulerOf(server).advance(1000);
     await ws.settle();
-    expect(ws.last("match.start")).toMatchObject({ mode: "ranked_bot" });
+    expect(ws.last("match.start")).toMatchObject({ mode: "ranked" });
   } finally { spy.mockRestore(); log.mockRestore(); }
 }, 30_000);

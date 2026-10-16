@@ -604,9 +604,11 @@ arena: {
 ```
 
 `currencies.honor` là tiền tệ Vinh Dự. `parseProfile` điền `arena` và `honor` mặc định
-cho hồ sơ cũ thiếu trường. Trận người với người `ranked` đổi điểm, thành tích và Vinh Dự.
-Trận tự ghép với máy `ranked_bot` chỉ đổi Vinh Dự và `honorDay`; giữ nguyên `rating`,
-`wins`, `losses`, `draws`, `rankedGames`, nên không tính vào điều kiện vào bảng xếp hạng.
+cho hồ sơ cũ thiếu trường. Mọi trận xếp hạng đổi điểm, thành tích và Vinh Dự, gồm trận
+tự ghép với máy sau 60 giây. Chỉ thị bổ sung ngày **2026-10-16** thay thế quy định trước
+đó trong ngày về việc trận máy chỉ nhận Vinh Dự. Server giữ `ranked_bot` nội bộ để kiểm
+tra; giao thức và lịch sử công khai dùng `ranked`, tên đối thủ thông thường và điểm
+đối thủ bằng điểm người chơi lúc vào hàng chờ. Tên này được giữ trong lịch sử.
 Phòng riêng và Đấu Tập không thưởng hoặc đổi điểm (trận vẫn vào lịch sử, `16` §8.6).
 
 ### 14.2 Điểm Đấu Trường — `rating.ts`
@@ -638,18 +640,17 @@ opts: {
   round: number;          // vòng kết thúc (để phạt bỏ sớm)
   now: number;
   ratingDelta: number;    // do ratingChange tính sẵn cho phía này
-  honorOnly?: boolean;   // true cho ranked_bot: chỉ thưởng Vinh Dự
 }
 ```
 
-- Khi `honorOnly` không bật: `wins`/`losses`/`draws` và `rankedGames` += 1;
-  `rating += ratingDelta` (kẹp ≥ 0). Khi `honorOnly: true`, toàn bộ các trường này
-  giữ nguyên, kể cả khi truyền `ratingDelta` khác 0.
+- `wins`/`losses`/`draws` theo kết quả và `rankedGames` += 1;
+  `rating += ratingDelta` (kẹp ≥ 0). Trận tự ghép với máy dùng Elo thông thường và
+  được tính vào số trận phân hạng, thành tích và điều kiện vào bảng xếp hạng.
 - Vinh Dự gốc theo kết quả: thắng **+20**, hòa **+12**, thua **+8**; riêng thua vì
   `resign`/`disconnect`/`timeout` **trước vòng 3** → **0** (người thắng vẫn +20).
 - Trần kỳ ngày **120**: `honorDay.dayKey ≠ dayKey(now)` → reset `gained` về 0; cộng
   `min(gốc, 120 − gained)` vào `honor` và `gained`. Trận máy dùng cùng mức thưởng,
-  trần ngày và phạt bỏ sớm. Vượt trần, trận người với người vẫn tính điểm xếp hạng.
+  trần ngày và phạt bỏ sớm. Vượt trần, mọi trận xếp hạng vẫn tính điểm và thành tích.
 - Có nhiệm vụ PvP thì ghi tiến độ nhiệm vụ (`§7`) — chưa có nhiệm vụ PvP ở GĐ5.
 
 ### 14.4 Cửa hàng Vinh Dự — `buyHonorItem`

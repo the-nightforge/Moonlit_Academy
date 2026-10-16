@@ -36,10 +36,6 @@ export function formatQueueTime(seconds: number): string {
   const value = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
   return `${Math.floor(value / 60).toString().padStart(2, "0")}:${(value % 60).toString().padStart(2, "0")}`;
 }
-export function formatQueueFallback(seconds: number): string {
-  const elapsed = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
-  return elapsed >= 60 ? "Đang ghép với đối thủ máy…" : `Tự ghép với máy sau ${60 - elapsed} giây`;
-}
 export function arenaActionReason(gate: ArenaGate): string {
   if (!gate.connected) return "Cần kết nối để vào trận";
   if (gate.queued) return "Hãy rời hàng chờ trước";

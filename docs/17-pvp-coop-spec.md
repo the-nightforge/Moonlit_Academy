@@ -6,8 +6,13 @@
 > đang sở hữu; Hero dùng thử ở Tinh Hồn 0, trang bị miễn phí chưa sở hữu ở cấp 1.
 > Ghép người theo sức mạnh đội hình trong khoảng 10%, mở tới 20% khi chờ lâu.
 > Sau 60 giây chưa ghép được người, tự ghép đối thủ máy ngẫu nhiên có sức mạnh tương đương.
-> Chế độ `ranked_bot` nhận Vinh Dự theo cùng trần ngày và quy tắc bỏ sớm, nhưng không đổi
-> điểm, thành tích hoặc số trận cần để vào bảng xếp hạng. Đấu Tập và Phòng riêng vẫn không thưởng.
+> **Chỉ thị bổ sung ngày 2026-10-16 thay thế quy định Vinh Dự đơn thuần trước đó trong ngày:**
+> Trận tự ghép với máy là trận xếp hạng thông thường: đổi Elo, thắng/thua/hòa, số trận phân
+> hạng và Vinh Dự theo cùng trần ngày và quy tắc bỏ sớm. Điểm đối thủ bằng điểm người chơi
+> lúc vào hàng chờ; tên đối thủ thông thường được giữ trong trận và lịch sử.
+> `ranked_bot` chỉ là chế độ lưu nội bộ; giao thức và lịch sử công khai dùng `ranked`.
+> Sảnh, hàng chờ, trận và lịch sử không tiết lộ đối thủ máy hoặc thời hạn tự ghép.
+> Đấu Tập, Phòng riêng và đồng đội máy Liên Thủ vẫn giữ nhãn và luật thưởng riêng.
 > Các phần thiết kế cũ bên dưới được giữ làm bối cảnh; luật hiện hành xem `14` §12 và §14.3.
 
 Đặc tả cho giai đoạn 5 và 6 của lộ trình GDD (`00` §12): **Đấu Trường Công Bằng** (PvP

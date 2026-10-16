@@ -19,7 +19,7 @@ import { roundedArtTexture, ellipsize } from "../ui/combat-card-view";
 import { addEquipmentArt, preloadEquipmentArt } from "../ui/equipment-art";
 import { matchesDeckText, summarizeDeck } from "../ui/deck-presentation";
 import { showTextTooltip } from "../ui/card-tooltip";
-import { arenaActionReason, arenaHeroLines, formatArenaDate, formatQueueFallback, formatQueueTime, rankProgress, RequestIdentity, type ArenaTier } from "../ui/arena-presentation";
+import { arenaActionReason, arenaHeroLines, formatArenaDate, formatQueueTime, rankProgress, RequestIdentity, type ArenaTier } from "../ui/arena-presentation";
 import { arenaInput } from "../ui/arena-input";
 import { describeDeckError } from "./deck-select-scene";
 
@@ -31,7 +31,7 @@ interface ArenaHistoryEntry { matchId: string; mode: string; opponent: string | 
 interface LeaderboardEntry { rank: number | null; username: string; rating: number; tier: ArenaTier | null; wins: number; losses: number; rankedGames: number }
 type Mode = "ranked" | "practice" | "private";
 type Panel = "history" | "leaderboard" | "decks" | "validation";
-const MODE_LABELS: Record<string, string> = { ranked: "Xếp hạng", ranked_bot: "Đấu máy", private: "Phòng riêng", practice: "Đấu tập" };
+const MODE_LABELS: Record<string, string> = { ranked: "Xếp hạng", private: "Phòng riêng", practice: "Đấu tập" };
 const RESULT_LABELS: Record<string, string> = { won: "Thắng", lost: "Thua", draw: "Hòa" };
 
 /** Owns API/realtime state. Every match send resolves a saved deck ID. */
@@ -185,7 +185,7 @@ export class ArenaScene extends Phaser.Scene {
         if (!this.queued) return; // reject status already in flight after cancellation
         this.pending = false; this.waitingSeconds = message.waitingSeconds;
         if (!this.queueTimer?.scene) this.render();
-        else { this.queueTimer.setText(formatQueueTime(this.waitingSeconds)); this.mountQueueFallback(); }
+        else this.queueTimer.setText(formatQueueTime(this.waitingSeconds));
         break;
       case "room.created": case "room.updated": {
         if (!this.roomCode && !(this.pending && this.mode === "private")) return;
@@ -319,7 +319,7 @@ export class ArenaScene extends Phaser.Scene {
     }
     else {
       const label = this.text(this.root, 172, 346, this.me?.tiers?.length ? progress.next ? `Tiến tới ${progress.next.name}` : "Hạng cao nhất" : "Đang tải ngưỡng hạng…", 14, COLORS.dimText).setOrigin(0.5);
-      this.info(label, "arena_rank_goal", ["Thanh tiến độ tính từ ngưỡng hạng hiện tại tới hạng kế tiếp.", "Điểm và thành tích xếp hạng chỉ thay đổi khi đấu với người chơi.", "Đối thủ máy không tính vào số trận xếp hạng."]);
+      this.info(label, "arena_rank_goal", ["Thanh tiến độ tính từ ngưỡng hạng hiện tại tới hạng kế tiếp.", "Mỗi trận xếp hạng cập nhật điểm và thành tích."]);
     }
     if (progress.next && this.me?.tiers?.length && !this.profileError) {
       this.progressBar(this.root, 62, 372, 220, progress.fraction, 0xc8ad73);
@@ -412,7 +412,7 @@ export class ArenaScene extends Phaser.Scene {
     });
     const content = this.add.container(0, 0).setName("arena_mode_content"); this.root.add(content);
     const reason = this.actionReason();
-    const description = this.mode === "ranked" ? "Ghép người có sức mạnh tương đương\nSau 60 giây tự đấu với máy\nĐấu người đổi điểm · Đấu máy giữ hạng" : this.mode === "practice" ? "Luyện với máy\nKhông đổi điểm · Không nhận Vinh Dự" : "Đấu với bạn bè bằng mã phòng\nKhông đổi điểm xếp hạng";
+    const description = this.mode === "ranked" ? "Ghép đối thủ có sức mạnh tương đương\nNhận điểm xếp hạng và Vinh Dự" : this.mode === "practice" ? "Luyện với máy\nKhông đổi điểm · Không nhận Vinh Dự" : "Đấu với bạn bè bằng mã phòng\nKhông đổi điểm xếp hạng";
     this.text(content, 904, 277, description, 14, COLORS.dimText, 308);
     if (this.roomCode) {
       this.text(content, 918, 326, "MÃ PHÒNG", 13, COLORS.dimText);
@@ -449,7 +449,6 @@ export class ArenaScene extends Phaser.Scene {
       this.text(content, 1060, 411, "Đang tìm đối thủ", 15, COLORS.dimText).setOrigin(0.5);
       this.queueTimer = this.text(content, 1060, 441, formatQueueTime(this.waitingSeconds), 23, COLORS.gold).setOrigin(0.5).setName("arena_queue_timer").setFontFamily("monospace");
       this.button(content, 1060, 481, 300, "Hủy tìm trận", "arena_queue_cancel", () => this.leaveQueue());
-      this.mountQueueFallback();
     } else if (this.mode === "private") {
       this.button(content, 1060, 357, 300, this.pending ? "Đang gửi yêu cầu…" : "Tạo phòng riêng", "arena_room_create", () => this.start("room.create"), !reason, { disabledReason: reason, variant: this.roomValue ? "secondary" : "primary", strong: !this.roomValue, height: 44, fontSize: 16 });
       this.text(content, 1060, 396, "hoặc", 13, COLORS.dimText).setOrigin(0.5);
@@ -461,7 +460,6 @@ export class ArenaScene extends Phaser.Scene {
     } else {
       this.art(content, `ui:mode_${this.mode === "ranked" ? "arena" : "practice"}`, 1060, 377, 96);
       this.button(content, 1060, 478, 300, this.pending ? "Đang vào trận…" : this.mode === "ranked" ? "Tìm trận xếp hạng" : "Bắt đầu đấu tập", this.mode === "ranked" ? "arena_ranked_start" : "arena_practice_start", () => this.start(this.mode === "ranked" ? "queue.join" : "practice.start"), !reason, { disabledReason: reason, variant: "primary", strong: true, height: 52, fontSize: 16 });
-      if (this.mode === "ranked") this.text(content, 1060, 518, "Đấu máy vẫn nhận Vinh Dự", 13, COLORS.dimText).setOrigin(0.5);
     }
     if (this.assetState === "error") {
       this.text(content, 904, 559, `Lỗi tải hình (${this.assetFailed} tệp)`, 12, "#ffb0b0");
@@ -472,15 +470,6 @@ export class ArenaScene extends Phaser.Scene {
       const text = this.fit(content, 904, 580, message, 308, 13, this.error ? "#ffb0b0" : "#94d9bb");
       text.setData("arenaError", !!this.error);
     }
-  }
-  private mountQueueFallback() {
-    const parent = this.queueBody;
-    if (!parent?.scene) return;
-    const existing = parent.getByName("arena_queue_fallback") as Phaser.GameObjects.Container | null;
-    if (existing) { (existing.getByName("arena_queue_countdown") as Phaser.GameObjects.Text).setText(formatQueueFallback(this.waitingSeconds)); return; }
-    const layer = this.add.container(0, 0).setName("arena_queue_fallback"); parent.add(layer);
-    this.text(layer, 1060, 524, formatQueueFallback(this.waitingSeconds), 14, COLORS.gold).setOrigin(0.5).setName("arena_queue_countdown");
-    this.text(layer, 1060, 553, "Máy ngẫu nhiên · Sức mạnh tương đương\nNhận Vinh Dự · Giữ điểm và thành tích", 12, COLORS.dimText).setOrigin(0.5);
   }
   private closePanel() {
     const opener = this.panelOpener;
@@ -589,10 +578,11 @@ export class ArenaScene extends Phaser.Scene {
     this.scrollControls(layer, decks.length, 6);
   }
   private renderHistory(layer: Phaser.GameObjects.Container) {
-    const entries = this.history!.filter(entry => this.historyFilter === "all" || entry.mode === this.historyFilter);
+    const entries = this.history!.map(entry => entry.mode === "ranked_bot" ? { ...entry, mode: "ranked" } : entry)
+      .filter(entry => this.historyFilter === "all" || entry.mode === this.historyFilter);
     this.text(layer, 148, 131, "Lọc trong các trận gần đây đã tải", 12, COLORS.dimText);
-    ["all", "ranked", "ranked_bot", "practice", "private"].forEach((mode, i) => {
-      this.button(layer, 239 + i * 198, 168, 182, mode === "all" ? "Tất cả" : MODE_LABELS[mode]!, `arena_history_filter_${mode}`, () => {
+    ["all", "ranked", "practice", "private"].forEach((mode, i) => {
+      this.button(layer, 271 + i * 246, 168, 230, mode === "all" ? "Tất cả" : MODE_LABELS[mode]!, `arena_history_filter_${mode}`, () => {
         this.historyFilter = mode; this.modalScroller.first = 0; this.render();
       }, true, { variant: this.historyFilter === mode ? "primary" : "secondary", height: 30, fontSize: 13 });
     });
@@ -603,8 +593,8 @@ export class ArenaScene extends Phaser.Scene {
       layer.add(roundedPanel(this, 640, y + 9, 970, 38, i % 2 ? 0x14253b : 0x102037, 1, 0x283b55, 7));
       layer.add(roundedPanel(this, 207, y + 9, 90, 26, entry.result === "won" ? 0x18382f : entry.result === "lost" ? 0x39252e : 0x28354c, 1, 0x34445d, 7));
       this.text(layer, 207, y + 9, RESULT_LABELS[entry.result ?? ""] ?? "—", 14, entry.result === "won" ? "#94d9bb" : entry.result === "lost" ? "#ffb0b0" : COLORS.text).setOrigin(0.5);
-      this.fit(layer, 295, y, entry.mode === "ranked_bot" ? `${entry.opponent ?? "Đối thủ"} (máy)` : entry.opponent ?? "Vọng Nguyệt (máy)", 290);
-      this.art(layer, `ui:mode_${entry.mode === "ranked" ? "arena" : entry.mode === "ranked_bot" ? "practice" : entry.mode}`, 625, y + 9, 22);
+      this.fit(layer, 295, y, entry.opponent ?? (entry.mode === "practice" ? "Vọng Nguyệt (máy)" : "Đối thủ"), 290);
+      this.art(layer, `ui:mode_${entry.mode === "ranked" ? "arena" : entry.mode}`, 625, y + 9, 22);
       this.fit(layer, 644, y, MODE_LABELS[entry.mode] ?? entry.mode, 125, 14);
       this.text(layer, 885, y, entry.ratingDelta === null ? "—" : `${entry.ratingDelta >= 0 ? "+" : ""}${entry.ratingDelta}`, 14, entry.ratingDelta === null ? COLORS.dimText : entry.ratingDelta >= 0 ? "#94d9bb" : "#ffb0b0").setOrigin(1, 0);
       const date = this.text(layer, 903, y, formatArenaDate(entry.createdAt), 13);
