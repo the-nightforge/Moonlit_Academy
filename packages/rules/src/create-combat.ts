@@ -20,7 +20,7 @@ export function bondCardsForTeam(data: GameData, heroIds: readonly string[]): Ca
   );
 }
 
-/** At constellation 4 a hero's signature card becomes its "+" version (`01` §8); never in PvP (`17` §3.2). */
+/** At constellation 4 a signature becomes its "+" version; only historical normalized replay loadouts suppress it. */
 export function applySignatureCards(data: GameData, deckCardIds: readonly string[], loadout?: Loadout): string[] {
   return deckCardIds.map((cardId) => {
     const ownerId = data.cards[cardId]?.ownerId;

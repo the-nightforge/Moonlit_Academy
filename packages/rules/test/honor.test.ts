@@ -28,6 +28,25 @@ function result(profile: Profile, opts: Parameters<typeof applyPvpResult>[2]) {
 }
 
 describe("arena rating and honor (`14` §14)", () => {
+  it("bot arena rewards honor without changing any ranked record field", () => {
+    const profile = withHonor(testData(), 7, { rating: 1623, wins: 13, losses: 7, draws: 2, rankedGames: 22 });
+    const before = structuredClone(profile);
+    const paid = result(profile, { result: "won", reason: "combat", round: 9, now: NOW, ratingDelta: 99, honorOnly: true });
+    expect(paid.honor).toBe(20);
+    expect(paid.profile.currencies.honor).toBe(27);
+    expect(paid.profile.arena).toEqual({ ...before.arena, honorDay: { dayKey: "2026-09-27", gained: 20 } });
+    expect(profile).toEqual(before);
+    const capped = result({ ...paid.profile, arena: { ...paid.profile.arena, honorDay: { dayKey: "2026-09-27", gained: 119 } } },
+      { result: "won", reason: "combat", round: 9, now: NOW, ratingDelta: 0, honorOnly: true });
+    expect(capped.honor).toBe(1);
+    for (const reason of ["resign", "disconnect", "timeout"]) {
+      const early = result(profile, { result: "lost", reason, round: 2, now: NOW, ratingDelta: -99, honorOnly: true });
+      expect(early.honor).toBe(0);
+      expect(early.profile.arena).toEqual({ ...before.arena, honorDay: { dayKey: "2026-09-27", gained: 0 } });
+    }
+    expect(result(profile, { result: "lost", reason: "combat", round: 1, now: NOW, ratingDelta: 0, honorOnly: true }).honor).toBe(8);
+    expect(result(profile, { result: "draw", reason: "combat", round: 30, now: NOW, ratingDelta: 0, honorOnly: true }).honor).toBe(12);
+  });
   it("T240: ratingChange uses K=40 during the first 10 games, K=24 after; stronger opponents pay more; rating never drops below 0", () => {
     const fresh = arena();
     const even = arena();

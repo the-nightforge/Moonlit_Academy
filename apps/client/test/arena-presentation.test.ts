@@ -1,16 +1,32 @@
 import { describe, expect, it } from "vitest";
 import { loadGameData } from "data";
-import { arenaActionReason, arenaHeroLines, formatArenaDate, formatQueueTime, rankProgress, RequestIdentity } from "../src/ui/arena-presentation";
+import { arenaActionReason, arenaHeroLines, formatArenaDate, formatQueueFallback, formatQueueTime, rankProgress, RequestIdentity } from "../src/ui/arena-presentation";
 
 describe("arena presentation behavior", () => {
-  it("previews PvP health and both awakening effects with the base threshold", () => {
+  it("previews owned constellation and awakening threshold without normalizing progression", () => {
     const data = loadGameData(), hero = data.heroes.m05!;
-    const lines = arenaHeroLines(data, hero.id);
-    expect(lines).toContain(`Máu PvP: ${data.pvpConfig.heroStats.m05!.maxHp}`);
+    const lines = arenaHeroLines(data, hero.id, { heroes: { [hero.id]: { constellation: 6, levelUpForm: "alt" } } });
+    expect(lines).toContain(`Máu Đấu Trường: ${data.pvpConfig.heroStats[hero.id]!.maxHp}`);
+    expect(lines).toContain("Tinh Hồn 6");
     expect(lines.join("\n")).toContain(hero.levelUp.description);
     expect(lines.join("\n")).toContain(hero.altLevelUp.description);
-    expect(lines.join("\n")).toContain(`Ngưỡng cơ bản: ${hero.levelUp.threshold}`);
+    expect(lines.join("\n")).toContain(`Ngưỡng Thức Tỉnh: ${hero.levelUp.constellationThreshold}`);
+    expect(lines).toContain(`Dạng đã chọn: ${hero.altLevelUp.name}`);
     expect(arenaHeroLines(data, "missing")).toEqual(["Không có thông tin Hero"]);
+  });
+  it("identifies a trial hero with its base constellation and awakening form", () => {
+    const data = loadGameData(), id = data.pvpConfig.trialHeroIds[0]!, hero = data.heroes[id]!;
+    const lines = arenaHeroLines(data, id, { heroes: {} });
+    expect(lines).toContain("Hero dùng thử · Tinh Hồn 0");
+    expect(lines).toContain(`Dạng đã chọn: ${hero.levelUp.name}`);
+    expect(lines).toContain(`Ngưỡng Thức Tỉnh: ${hero.levelUp.threshold}`);
+  });
+  it("counts down automatic bot pairing to sixty seconds and waits for the server at the deadline", () => {
+    expect(formatQueueFallback(0)).toBe("Tự ghép với máy sau 60 giây");
+    expect(formatQueueFallback(59)).toBe("Tự ghép với máy sau 1 giây");
+    expect(formatQueueFallback(60)).toBe("Đang ghép với đối thủ máy…");
+    expect(formatQueueFallback(94)).toBe("Đang ghép với đối thủ máy…");
+    expect(formatQueueFallback(-1)).toBe("Tự ghép với máy sau 60 giây");
   });
   it("formats local history dates and preserves years for old matches", () => {
     const now = new Date(2026, 9, 12, 12).getTime();

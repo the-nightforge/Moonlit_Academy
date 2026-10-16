@@ -1,5 +1,15 @@
 # 17 — Đặc tả Giai đoạn 5–6 (PvP, Co-op, triển khai Internet)
 
+> **Thay đổi đã duyệt ngày 2026-10-16:** [Đấu Trường theo sức mạnh đội hình](plans/2026-10-16-arena-power-matchmaking.md)
+> thay thế chính sách chuẩn hóa tại §3.2 và ghép chỉ theo điểm xếp hạng / chờ 90 giây tại §6.1.
+> Mọi trận Đấu Trường mới giữ nguyên Tinh Hồn, Tinh Luyện, Cộng Minh và lá chữ ký nâng cấp
+> đang sở hữu; Hero dùng thử ở Tinh Hồn 0, trang bị miễn phí chưa sở hữu ở cấp 1.
+> Ghép người theo sức mạnh đội hình trong khoảng 10%, mở tới 20% khi chờ lâu.
+> Sau 60 giây chưa ghép được người, tự ghép đối thủ máy ngẫu nhiên có sức mạnh tương đương.
+> Chế độ `ranked_bot` nhận Vinh Dự theo cùng trần ngày và quy tắc bỏ sớm, nhưng không đổi
+> điểm, thành tích hoặc số trận cần để vào bảng xếp hạng. Đấu Tập và Phòng riêng vẫn không thưởng.
+> Các phần thiết kế cũ bên dưới được giữ làm bối cảnh; luật hiện hành xem `14` §12 và §14.3.
+
 Đặc tả cho giai đoạn 5 và 6 của lộ trình GDD (`00` §12): **Đấu Trường Công Bằng** (PvP
 1v1 theo lượt) và **Liên Thủ** (co-op raid 2 người, lượt đồng thời, Hợp Kích, Boss
 Nguyệt Thực). Cả hai chạy **trên server** (server là trọng tài của trận, không chỉ của

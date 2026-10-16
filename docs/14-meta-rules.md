@@ -504,11 +504,13 @@ interface Loadout {
   trong lượt chơi dùng loadout của lượt chơi.
 - Phiếu lượt chơi (§4.1) chụp thêm `loadout` lúc cấp; nộp kết quả chạy lại với đúng
   loadout đó (đổi Tinh Hồn sau khi cấp phiếu không ảnh hưởng lượt đang chơi).
-- **[GĐ5]** `buildPvpLoadout(data, profile, deck)` cho Đấu Trường (`17` §3.2):
-  Tinh Hồn → cấp lẻ lớn nhất ≤ cấp thật (0→0, 1–2→1, 3–4→3, 5–6→5); ngưỡng chẵn / lá
-  "+" tắt bằng cờ `pvp: true` trên Loadout; `levelUpForm` theo hồ sơ. Vũ khí / Nguyệt
-  Bảo sở hữu hoặc trong `freeWeaponIds`/`freeRelicIds`, **mọi món về cấp 1**
-  (`refinement = 1`, `resonance = 1`). Hero thử (chưa sở hữu, có trong `trialHeroIds`):
+- **[Cập nhật 2026-10-16]** `buildPvpLoadout(data, profile, deck)` cho mọi trận Đấu Trường
+  ([kế hoạch hiện hành](plans/2026-10-16-arena-power-matchmaking.md)):
+  giữ nguyên Tinh Hồn 0–6, ngưỡng chẵn và lá chữ ký "+"; `levelUpForm` theo hồ sơ,
+  dạng thứ hai cần Tinh Hồn 5. Vũ khí và Nguyệt Bảo sở hữu giữ nguyên Tinh Luyện và
+  Cộng Minh; món chưa sở hữu trong `freeWeaponIds`/`freeRelicIds` dùng ở cấp 1.
+  Loadout mới không đặt `pvp: true`; cờ này chỉ giữ để chạy lại trận lịch sử theo luật cũ.
+  Máu Đấu Trường vẫn lấy từ `pvpConfig.heroStats`. Hero thử (chưa sở hữu, có trong `trialHeroIds`):
   Tinh Hồn 0 (trang bị như thường nhưng chỉ món sở hữu hoặc miễn phí);
   `hero not owned` nếu vừa chưa sở hữu vừa không trong `trialHeroIds`. Deck của Hero
   thử chỉ gồm 6 lá khởi đầu của Hero đó.
@@ -602,8 +604,10 @@ arena: {
 ```
 
 `currencies.honor` là tiền tệ Vinh Dự. `parseProfile` điền `arena` và `honor` mặc định
-cho hồ sơ cũ thiếu trường. Chỉ trận `ranked` đổi `arena`/`honor` — Phòng riêng và Đấu
-Tập không đụng vào (trận vẫn vào lịch sử, `16` §8.6).
+cho hồ sơ cũ thiếu trường. Trận người với người `ranked` đổi điểm, thành tích và Vinh Dự.
+Trận tự ghép với máy `ranked_bot` chỉ đổi Vinh Dự và `honorDay`; giữ nguyên `rating`,
+`wins`, `losses`, `draws`, `rankedGames`, nên không tính vào điều kiện vào bảng xếp hạng.
+Phòng riêng và Đấu Tập không thưởng hoặc đổi điểm (trận vẫn vào lịch sử, `16` §8.6).
 
 ### 14.2 Điểm Đấu Trường — `rating.ts`
 
@@ -625,7 +629,7 @@ Tiến Sĩ (1400), Trạng Nguyên (1600).
 ### 14.3 Vinh Dự — `honor.ts`
 
 `applyPvpResult(data, profile, opts)` — server gọi **một lần cho mỗi người** khi trận
-`ranked` kết thúc, trong transaction ghi trận:
+`ranked` hoặc `ranked_bot` kết thúc, trong transaction ghi trận:
 
 ```ts
 opts: {
@@ -634,14 +638,18 @@ opts: {
   round: number;          // vòng kết thúc (để phạt bỏ sớm)
   now: number;
   ratingDelta: number;    // do ratingChange tính sẵn cho phía này
+  honorOnly?: boolean;   // true cho ranked_bot: chỉ thưởng Vinh Dự
 }
 ```
 
-- `wins`/`losses`/`draws` và `rankedGames` += 1; `rating += ratingDelta` (kẹp ≥ 0).
+- Khi `honorOnly` không bật: `wins`/`losses`/`draws` và `rankedGames` += 1;
+  `rating += ratingDelta` (kẹp ≥ 0). Khi `honorOnly: true`, toàn bộ các trường này
+  giữ nguyên, kể cả khi truyền `ratingDelta` khác 0.
 - Vinh Dự gốc theo kết quả: thắng **+20**, hòa **+12**, thua **+8**; riêng thua vì
   `resign`/`disconnect`/`timeout` **trước vòng 3** → **0** (người thắng vẫn +20).
 - Trần kỳ ngày **120**: `honorDay.dayKey ≠ dayKey(now)` → reset `gained` về 0; cộng
-  `min(gốc, 120 − gained)` vào `honor` và `gained`. Vượt trần trận vẫn tính Elo.
+  `min(gốc, 120 − gained)` vào `honor` và `gained`. Trận máy dùng cùng mức thưởng,
+  trần ngày và phạt bỏ sớm. Vượt trần, trận người với người vẫn tính điểm xếp hạng.
 - Có nhiệm vụ PvP thì ghi tiến độ nhiệm vụ (`§7`) — chưa có nhiệm vụ PvP ở GĐ5.
 
 ### 14.4 Cửa hàng Vinh Dự — `buyHonorItem`

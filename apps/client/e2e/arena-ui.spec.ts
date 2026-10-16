@@ -34,14 +34,19 @@ test("hero and equipment previews explain PvP rules, history filters and validat
   const page = await signedInPage(browser, account.token);
   await page.route("**/api/arena/history", route => route.fulfill({ json: { entries: [
     { matchId: "ranked", mode: "ranked", opponent: "Ranked opponent", result: "won", ratingDelta: 20, createdAt: Date.now() },
+    { matchId: "ranked_bot", mode: "ranked_bot", opponent: "Generated opponent", result: "won", ratingDelta: null, createdAt: Date.now() },
     { matchId: "practice", mode: "practice", opponent: "Practice opponent", result: "lost", ratingDelta: null, createdAt: Date.now() },
   ] } }));
   await enterArena(page);
-  await page.evaluate(() => {
+  const heroPreview = await page.evaluate(() => {
     const { session, game } = (window as any).__vn;
     const deck = session.profile.decks[0];
     deck.weapons = { m05: "w_thiet_thuan" }; deck.relicIds = ["r_bach_lo_huong_nang"];
+    session.profile.heroes.m05.constellation = 6;
+    session.profile.weapons.w_thiet_thuan = { refinement: 3 };
+    session.profile.relics.r_bach_lo_huong_nang = { resonance: 4 };
     game.scene.getScene("arena").render();
+    return { health: session.data.pvpConfig.heroStats.m05.maxHp, threshold: session.data.heroes.m05.levelUp.constellationThreshold };
   });
   const tip = () => page.evaluate(() => {
     const s = (window as any).__vn.game.scene.getScene("arena");
@@ -49,17 +54,26 @@ test("hero and equipment previews explain PvP rules, history filters and validat
     return texts(s.tooltip?.list ?? []).join("\n");
   });
   await clickArenaAction(page, "arena_hero_m05");
-  await expect.poll(tip).toContain("Máu PvP: 52");
-  await expect.poll(tip).toContain("Ngưỡng cơ bản: 15");
+  await expect.poll(tip).toContain(`Máu Đấu Trường: ${heroPreview.health}`);
+  await expect.poll(tip).toContain(`Ngưỡng Thức Tỉnh: ${heroPreview.threshold}`);
+  await expect.poll(tip).toContain("Tinh Hồn 6");
   await page.keyboard.press("Escape");
   await clickArenaAction(page, "arena_weapon_m05");
-  await expect.poll(tip).toContain("Tinh Luyện 1");
+  await expect.poll(tip).toContain("Tinh Luyện 3");
   await page.keyboard.press("Escape");
   await clickArenaAction(page, "arena_relic_0");
-  await expect.poll(tip).toContain("Cộng Minh 1");
+  await expect.poll(tip).toContain("Cộng Minh 4");
   await page.keyboard.press("Escape");
   await clickArenaAction(page, "arena_history");
-  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").history?.length)).toBe(2);
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").history?.length)).toBe(3);
+  await clickArenaAction(page, "arena_history_filter_ranked_bot");
+  const botHistory = await page.evaluate(() => {
+    const modal = (window as any).__vn.game.scene.getScene("arena").root.getByName("arena_modal");
+    const texts = (nodes: any[]): string[] => nodes.flatMap(n => n.text ? [n.text] : n.list ? texts(n.list) : []);
+    return texts(modal.list).join("\n");
+  });
+  expect(botHistory).toContain("Generated opponent (máy)");
+  expect(botHistory).not.toContain("Ranked opponent");
   await clickArenaAction(page, "arena_history_filter_practice");
   const visible = await page.evaluate(() => {
     const modal = (window as any).__vn.game.scene.getScene("arena").root.getByName("arena_modal");
@@ -77,7 +91,7 @@ test("hero and equipment previews explain PvP rules, history filters and validat
   await page.waitForFunction(() => (window as any).__vn.game.scene.isActive("deck-builder"));
 });
 
-test("queue ticks preserve the lobby, open modal and tooltip across the practice threshold", async ({ browser }) => {
+test("queue ticks preserve the lobby, modal and tooltip across the automatic bot deadline", async ({ browser }) => {
   const account = await registerAccount(`tick_${Date.now()}`);
   await saveDeck(account.token, account.rev);
   const page = await signedInPage(browser, account.token);
@@ -86,7 +100,7 @@ test("queue ticks preserve the lobby, open modal and tooltip across the practice
   await page.evaluate(() => {
     const scene = (window as any).__vn.game.scene.getScene("arena");
     scene.reducedMotion = false;
-    scene.queued = true; scene.pending = false; scene.waitingSeconds = 84; scene.render();
+    scene.queued = true; scene.pending = false; scene.waitingSeconds = 54; scene.render();
   });
   await clickArenaAction(page, "arena_history");
   await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").history?.length)).toBe(0);
@@ -96,15 +110,18 @@ test("queue ticks preserve the lobby, open modal and tooltip across the practice
     const halo = s.queueBody.getByName("arena_queue_halo"), pulse = s.tweens.getTweensOf(halo)[0];
     s.tip(back, ["Thông tin đang đọc"]);
     const tooltip = s.tooltip;
-    for (const waitingSeconds of [89, 90, 94]) s.onMessage({ type: "queue.status", mode: "ranked", waitingSeconds });
+    for (const waitingSeconds of [59, 60, 64]) s.onMessage({ type: "queue.status", mode: "ranked", waitingSeconds });
     return { sameBack: s.root.list[0] === back, sameModal: s.root.getByName("arena_modal") === modal,
       sameTooltip: s.tooltip === tooltip && !!tooltip.scene, wait: s.waitingSeconds,
-      samePulse: !!pulse && s.tweens.getTweensOf(halo)[0] === pulse, pulses: s.tweens.getTweensOf(halo).length };
+      samePulse: !!pulse && s.tweens.getTweensOf(halo)[0] === pulse, pulses: s.tweens.getTweensOf(halo).length,
+      countdown: s.queueBody.getByName("arena_queue_fallback").getByName("arena_queue_countdown").text,
+      noPracticeSwitch: !s.queueBody.getByName("arena_queue_practice") };
   });
-  expect(result).toEqual({ sameBack: true, sameModal: true, sameTooltip: true, wait: 94, samePulse: true, pulses: 1 });
+  expect(result).toEqual({ sameBack: true, sameModal: true, sameTooltip: true, wait: 64, samePulse: true, pulses: 1,
+    countdown: "Đang ghép với đối thủ máy…", noPracticeSwitch: true });
   await clickArenaAction(page, "arena_modal_close");
-  await clickArenaAction(page, "arena_queue_practice");
-  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").mode)).toBe("practice");
+  await clickArenaAction(page, "arena_queue_cancel");
+  await expect.poll(() => page.evaluate(() => (window as any).__vn.game.scene.getScene("arena").queued)).toBe(false);
   const staticPulseCount = await page.evaluate(() => {
     const s = (window as any).__vn.game.scene.getScene("arena");
     s.reducedMotion = true; s.queued = true; s.render();
@@ -119,6 +136,15 @@ test("queue ticks preserve the lobby, open modal and tooltip across the practice
   });
   await clickArenaAction(page, "arena_honor_shop");
   await expect.poll(() => page.evaluate(() => (window as any).__arenaRoute)).toBe("shop");
+  const failedLaunch = await page.evaluate(() => {
+    const s = (window as any).__vn.game.scene.getScene("arena");
+    s.pending = true;
+    s.onMessage({ type: "error", error: "match unavailable" });
+    return { queued: s.queued, pending: s.pending, error: s.error, countdownRemoved: s.queueBody === null,
+      contentHasCountdown: !!s.root.getByName("arena_mode_content").getByName("arena_queue_fallback") };
+  });
+  expect(failedLaunch).toEqual({ queued: false, pending: false, error: "Lỗi: Không thể mở trận — hãy tìm trận lại",
+    countdownRemoved: true, contentHasCountdown: false });
 });
 
 test("saved deck selector scrolls and selects by ID, queue locks edits and preserves errors", async ({ browser }) => {

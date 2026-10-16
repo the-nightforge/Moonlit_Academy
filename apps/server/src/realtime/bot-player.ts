@@ -1,4 +1,4 @@
-import { coopBot, coopViewFor, nextRandom, pvpBot, starterDeck, viewFor } from "rules";
+import { coopBot, coopViewFor, measurePvpPower, nextRandom, pvpBot, starterDeck, viewFor } from "rules";
 import type { CoopSide, PvpSide } from "rules";
 import type { AppContext } from "../context";
 import type { MatchRoom } from "./match-room";
@@ -74,6 +74,80 @@ export function botPvpSide(ctx: AppContext, seed: number): PvpSide {
       pvp: true,
     },
   };
+}
+
+/**
+ * Seeded arena fallback. Search at most 32 random full-roster compositions and
+ * their finite upgrade ladders; keep the closest score. No simulated turns or
+ * timers are involved. Each candidate has a legal six-card pool per hero and
+ * distinct carried gear. Stop early within 0.5% of the authoritative target.
+ */
+export function botMatchedPvpSide(ctx: AppContext, seed: number, targetSide: PvpSide): PvpSide {
+  const data = ctx.data;
+  const target = measurePvpPower(data, targetSide);
+  let rngState = seed ^ 0x6d617463;
+  const next = () => {
+    const roll = nextRandom(rngState);
+    rngState = roll.rngState;
+    return roll.value;
+  };
+  const shuffled = <T>(items: readonly T[]): T[] => {
+    const result = [...items];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(next() * (i + 1));
+      [result[i], result[j]] = [result[j]!, result[i]!];
+    }
+    return result;
+  };
+  let best: PvpSide | undefined;
+  let distance = Number.POSITIVE_INFINITY;
+  for (let attempt = 0; attempt < 32; attempt++) {
+    const heroIds = shuffled(Object.keys(data.heroes)).slice(0, 3) as PvpSide["heroIds"];
+    const side: PvpSide = {
+      heroIds,
+      deckCardIds: heroIds.flatMap((id) => shuffled([...data.heroes[id]!.cardIds, ...data.heroes[id]!.lockedCardIds]).slice(0, data.metaConfig.deckSize / 3)),
+      loadout: { heroes: Object.fromEntries(heroIds.map((id) => [id, { constellation: 0, levelUpForm: "base" as const }])), relics: [] },
+    };
+    const consider = () => {
+      const gap = Math.abs(measurePvpPower(data, side) - target);
+      if (gap < distance) {
+        best = structuredClone(side);
+        distance = gap;
+      }
+    };
+    consider();
+    if (distance <= target * 0.005) return best!;
+    // These milestones enable all combat bonuses; C1/3 unlock card choices
+    // already represented by the selected deck, and C6 is presentation only.
+    for (const constellation of [2, 4, 6]) {
+      for (const id of shuffled(heroIds)) {
+        side.loadout.heroes[id]!.constellation = constellation;
+        if (constellation >= 5) side.loadout.heroes[id]!.levelUpForm = next() < 0.5 ? "alt" : "base";
+        consider();
+        if (distance <= target * 0.005) return best!;
+      }
+    }
+    const weapons = shuffled(Object.keys(data.weapons)).slice(0, 3);
+    for (let refinement = 1; refinement <= 5; refinement++) {
+      for (const [i, id] of heroIds.entries()) {
+        const hero = side.loadout.heroes[id]!;
+        hero.weaponId = weapons[i]!;
+        hero.refinement = refinement;
+        consider();
+        if (distance <= target * 0.005) return best!;
+      }
+    }
+    const relics = shuffled(Object.keys(data.relics)).slice(0, data.metaConfig.maxRelics);
+    for (let resonance = 1; resonance <= 5; resonance++) {
+      for (const [i, id] of relics.entries()) {
+        side.loadout.relics![i] = { id, resonance };
+        consider();
+        if (distance <= target * 0.005) return best!;
+      }
+    }
+    if (distance <= target * 0.005) break;
+  }
+  return best!;
 }
 
 /**

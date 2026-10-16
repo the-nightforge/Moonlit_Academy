@@ -30,7 +30,7 @@ export interface HeroState extends UnitState {
   leveledUp: boolean;
   /** Tinh Hồn from the loadout; 0 outside a run with one (`01` §8). */
   constellation: number;
-  /** Fair Arena: even constellation bonuses (2 = easier level-up, 4 = "+" card) stay off (`17` §3.2). */
+  /** Legacy normalized arena replay flag: even bonuses stay off. New arena heroes omit this. */
   pvp?: boolean;
   firstCardDiscountUsedThisTurn: boolean;
   firstCardDiscountActive: boolean;

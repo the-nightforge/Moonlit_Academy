@@ -1,7 +1,7 @@
 import type { WebSocket } from "ws";
 import type { CoopSide, PvpSide } from "rules";
 import type { AppContext } from "../context";
-import { BotPlayer, botCoopSide, botPvpSide } from "./bot-player";
+import { BotPlayer, botCoopSide, botMatchedPvpSide, botPvpSide } from "./bot-player";
 import { MatchRoom, send, startCoopMatch, startPvpMatch, type MatchMode } from "./match-room";
 import { clientMessageSchema, type ClientMessage, type ServerMessage } from "./protocol";
 import { CoopQueue, RankedQueue } from "./queue";
@@ -40,6 +40,7 @@ export class RealtimeHub {
   private readonly byAccount = new Map<number, Connection>();
   private readonly matches = new Map<string, MatchRoom>();
   private readonly matchByAccount = new Map<number, MatchRoom>();
+  private readonly launching = new Set<number>();
   private matchCounter = 0;
   readonly rooms: RoomManager;
   readonly queue: RankedQueue;
@@ -59,7 +60,14 @@ export class RealtimeHub {
         void this.launchMatch("ranked", seed, [
           { accountId: a.accountId, username: a.username, side: a.side, rating: a.rating },
           { accountId: b.accountId, username: b.username, side: b.side, rating: b.rating },
-        ]).catch((error: unknown) => console.error("launchMatch ranked failed:", error));
+        ]).catch((error: unknown) => this.failedLaunch([a.accountId, b.accountId], error));
+      },
+      (a) => {
+        const seed = this.ctx.random(4).readUInt32BE(0);
+        void this.launchMatch("ranked_bot", seed, [
+          { accountId: a.accountId, username: a.username, side: a.side },
+          { accountId: null, username: "Vọng Nguyệt", side: botMatchedPvpSide(this.ctx, seed, a.side) },
+        ]).catch((error: unknown) => this.failedLaunch([a.accountId], error));
       },
     );
     this.coopQueue = new CoopQueue(
@@ -207,6 +215,11 @@ export class RealtimeHub {
 
   private async dispatch(conn: Connection, message: ClientMessage): Promise<void> {
     const accountId = conn.accountId!;
+    if (this.byAccount.get(accountId) !== conn) return;
+    if (this.launching.has(accountId) && ["queue.join", "practice.start", "room.create", "room.join"].includes(message.type)) {
+      this.reply(conn, { type: "error", error: "already in match" });
+      return;
+    }
     switch (message.type) {
       case "pong":
         conn.missedPings = 0;
@@ -274,6 +287,7 @@ export class RealtimeHub {
         // Practice matches never touch Elo / Vinh Dự / rewards (`17` §5.4).
         if (message.mode === "coop") {
           const coop = await resolveCoopSide(this.ctx, accountId, message.deckId);
+          if (this.byAccount.get(accountId) !== conn) return;
           if (!coop.ok) {
             this.reply(conn, { type: "error", error: "invalid deck" });
             return;
@@ -285,6 +299,7 @@ export class RealtimeHub {
           return;
         }
         const side = await resolvePvpSide(this.ctx, accountId, message.deckId);
+        if (this.byAccount.get(accountId) !== conn) return;
         if (!side.ok) {
           this.reply(conn, { type: "error", error: "invalid deck" });
           return;
@@ -312,6 +327,7 @@ export class RealtimeHub {
           }
           this.queue.leave(accountId); // switching queues leaves the other one
           const side = await resolveCoopSide(this.ctx, accountId, message.deckId);
+          if (this.byAccount.get(accountId) !== conn) return;
           if (!side.ok) {
             this.reply(conn, { type: "error", error: "invalid deck", errors: side.errors } as ServerMessage);
             return;
@@ -336,6 +352,7 @@ export class RealtimeHub {
           return;
         }
         const { profile } = await this.ctx.readProfile(accountId);
+        if (this.byAccount.get(accountId) !== conn || this.launching.has(accountId) || this.matchByAccount.get(accountId)?.ended === false) return;
         this.queue.join({
           accountId,
           username: conn.username,
@@ -366,6 +383,14 @@ export class RealtimeHub {
     ]);
   }
 
+  private failedLaunch(accountIds: number[], error: unknown): void {
+    console.error("launchMatch failed:", error);
+    for (const id of accountIds) {
+      const conn = this.byAccount.get(id);
+      if (conn) this.reply(conn, { type: "error", error: "match unavailable" });
+    }
+  }
+
   /**
    * Creates and registers a match, arms a `BotPlayer` for `null` seats and
    * notifies every connected human (`17` §5.3/§5.4, §9.1).
@@ -378,45 +403,60 @@ export class RealtimeHub {
       { accountId: number | null; username: string; side: PvpSide | CoopSide; rating?: number },
     ],
   ): Promise<MatchRoom> {
-    const matchId = `m_${this.ctx.random(6).toString("hex")}_${this.matchCounter++}`;
-    const coop = mode === "coop" || mode === "coop_private" || mode === "coop_practice";
-    const match = await (coop
-      ? startCoopMatch(
-          this.ctx,
-          mode,
-          seed,
-          players as [
-            { accountId: number | null; username: string; side: CoopSide; rating?: number },
-            { accountId: number | null; username: string; side: CoopSide; rating?: number },
-          ],
-          matchId,
-          (finished) => this.dropMatch(finished),
-        )
-      : startPvpMatch(
-          this.ctx,
-          mode,
-          seed,
-          players as [
-            { accountId: number | null; username: string; side: PvpSide; rating?: number },
-            { accountId: number | null; username: string; side: PvpSide; rating?: number },
-          ],
-          matchId,
-          (finished) => this.dropMatch(finished),
-        ));
-    this.matches.set(matchId, match);
-    for (const seat of match.seats) {
-      if (seat.accountId === null) {
-        new BotPlayer(this.ctx, match, seat.seat, seed);
-        continue;
-      }
-      this.matchByAccount.set(seat.accountId, match);
-      const conn = this.byAccount.get(seat.accountId);
-      if (conn) {
-        match.attach(seat, conn.socket);
-        this.reply(conn, { type: "match.start", ...match.startFrameFor(seat.seat) });
-      }
+    const humans = players.flatMap(player => player.accountId === null ? [] : [player.accountId]);
+    for (const id of humans) {
+      if (this.launching.has(id) || this.matchByAccount.get(id)?.ended === false) throw new Error("already in match");
     }
-    return match;
+    for (const id of humans) {
+      this.launching.add(id);
+      this.queue.leave(id);
+      this.coopQueue.leave(id);
+    }
+    try {
+      const matchId = `m_${this.ctx.random(6).toString("hex")}_${this.matchCounter++}`;
+      const coop = mode === "coop" || mode === "coop_private" || mode === "coop_practice";
+      const match = await (coop
+        ? startCoopMatch(
+            this.ctx,
+            mode,
+            seed,
+            players as [
+              { accountId: number | null; username: string; side: CoopSide; rating?: number },
+              { accountId: number | null; username: string; side: CoopSide; rating?: number },
+            ],
+            matchId,
+            (finished) => this.dropMatch(finished),
+          )
+        : startPvpMatch(
+            this.ctx,
+            mode,
+            seed,
+            players as [
+              { accountId: number | null; username: string; side: PvpSide; rating?: number },
+              { accountId: number | null; username: string; side: PvpSide; rating?: number },
+            ],
+            matchId,
+            (finished) => this.dropMatch(finished),
+          ));
+      this.matches.set(matchId, match);
+      for (const seat of match.seats) {
+        if (seat.accountId === null) {
+          new BotPlayer(this.ctx, match, seat.seat, seed);
+          continue;
+        }
+        this.matchByAccount.set(seat.accountId, match);
+        const conn = this.byAccount.get(seat.accountId);
+        if (conn) {
+          match.attach(seat, conn.socket);
+          this.reply(conn, { type: "match.start", ...match.startFrameFor(seat.seat) });
+        } else {
+          match.detach(seat);
+        }
+      }
+      return match;
+    } finally {
+      for (const id of humans) this.launching.delete(id);
+    }
   }
 
   private dropMatch(room: MatchRoom): void {

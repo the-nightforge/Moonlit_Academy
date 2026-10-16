@@ -25,12 +25,15 @@ export interface PvpResultOpts {
   now: number;
   /** Elo delta already computed for this side via `ratingChange`. */
   ratingDelta: number;
+  /** Arena bot fallback pays honor while preserving the entire ranked record. */
+  honorOnly?: boolean;
 }
 
 /**
  * Applies a finished ranked match to one profile (`14` §14.3): arena record, Elo
  * (clamped ≥ 0), and honor capped at 120 per game day. The server calls this once
- * per side inside the match transaction; non-ranked modes never reach here.
+ * per human inside the match transaction. Arena bot fallback passes honorOnly
+ * to preserve Elo and the ranked record; practice/private modes never pay.
  */
 export function applyPvpResult(
   data: GameData,
@@ -40,11 +43,13 @@ export function applyPvpResult(
   const next = clone(profile);
   const today = dayKey(data, opts.now);
   if (next.arena.honorDay.dayKey !== today) next.arena.honorDay = { dayKey: today, gained: 0 };
-  next.arena.rating = Math.max(0, next.arena.rating + opts.ratingDelta);
-  next.arena.rankedGames += 1;
-  if (opts.result === "won") next.arena.wins += 1;
-  else if (opts.result === "lost") next.arena.losses += 1;
-  else next.arena.draws += 1;
+  if (!opts.honorOnly) {
+    next.arena.rating = Math.max(0, next.arena.rating + opts.ratingDelta);
+    next.arena.rankedGames += 1;
+    if (opts.result === "won") next.arena.wins += 1;
+    else if (opts.result === "lost") next.arena.losses += 1;
+    else next.arena.draws += 1;
+  }
   const base = opts.result === "won" ? HONOR_WON : opts.result === "draw" ? HONOR_DRAW : HONOR_LOST;
   const denied =
     opts.result === "lost" && EARLY_FORFEIT_REASONS.has(opts.reason) && opts.round < EARLY_FORFEIT_ROUND;

@@ -277,6 +277,7 @@ export const API_ERROR_TEXT: Record<string, string> = {
   "already in queue": "Đang trong hàng chờ — hãy hủy chờ trước",
   "already in room": "Đang ở một phòng khác",
   "already in match": "Đang trong một trận",
+  "match unavailable": "Không thể mở trận — hãy tìm trận lại",
   "no match": "Không có trận nào",
   "hero required": "Hãy chọn một Hero",
   "invalid hero": "Không chọn được Hero này",

@@ -5,7 +5,7 @@ import type { GameData, Profile, SavedDeck } from "rules";
 export function summarizeDeck(data: GameData, deck: SavedDeck, options?: { profile?: Pick<Profile, "weapons">; mode?: "pvp" }) {
   const weapons = deckWeapons(deck);
   const weaponDefs = weapons.map(([heroId, id]) => data.weapons[id] ? weaponCardDef(data, {
-    heroId, weaponId: id, refinement: options?.mode === "pvp" ? 1 : options?.profile?.weapons[id]?.refinement ?? 1,
+    heroId, weaponId: id, refinement: options?.profile?.weapons[id]?.refinement ?? 1,
   }) : undefined);
   const cards = [...deck.cardIds.map((id) => data.cards[id]), ...weaponDefs];
   const curve = Array<number>(9).fill(0);

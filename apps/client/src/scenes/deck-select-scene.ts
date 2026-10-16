@@ -693,7 +693,7 @@ export class DeckSelectScene extends Phaser.Scene {
         rowPanel.add(chip);
         this.text(chip, 0, 0, tag, 11, tag === "Đang dùng" ? "#a9d6c5" : "#c5cfdb").setOrigin(0.5);
       });
-      this.fitColumn(rowPanel, -96, 12, `${stats.slots}/${data.metaConfig.deckSize} ô · ${valid ? ordinary.length ? "Sẵn sàng PvP" : "Sẵn sàng" : "Cần chỉnh sửa"}`, 296, 12, valid ? "#a9d6c5" : "#e0aaa6");
+      this.fitColumn(rowPanel, -96, 12, `${stats.slots}/${data.metaConfig.deckSize} ô · ${valid ? ordinary.length ? "Sẵn sàng Đấu Trường" : "Sẵn sàng" : "Cần chỉnh sửa"}`, 296, 12, valid ? "#a9d6c5" : "#e0aaa6");
       const hit = this.add.rectangle(0, 0, 424, 60, 0, 0);
       rowPanel.add(hit);
       panel.add(rowPanel);
@@ -735,7 +735,7 @@ export class DeckSelectScene extends Phaser.Scene {
       this.closeDeckOverlay();
       this.render();
       this.queueHeroArt();
-    }, allowed && ready, { variant: "primary", disabledReason: "Bộ bài cần chỉnh sửa để dùng ở Thường hoặc PvP" });
+    }, allowed && ready, { variant: "primary", disabledReason: "Bộ bài cần chỉnh sửa để dùng ở Thường hoặc Đấu Trường" });
     this.queueDeckArt(panel, [...shown, deck]);
   }
 
@@ -784,7 +784,7 @@ export class DeckSelectScene extends Phaser.Scene {
       const weaponId = deck.weapons?.[id];
       const weapon = weaponId ? data.weapons[weaponId] : undefined;
       const rank = weaponId ? session.profile.weapons[weaponId]?.refinement : undefined;
-      this.deckGearTile(panel, 48 + slot * 188, 102, 176, weaponId ? `weapons:${weaponId}` : undefined, weapon?.name ?? "Vũ khí trống", weapon ? rank ? `Tinh Luyện ${rank}` : data.pvpConfig.freeWeaponIds.includes(weaponId!) ? "PvP · Tinh Luyện 1" : "Chưa sở hữu" : "Không trang bị");
+      this.deckGearTile(panel, 48 + slot * 188, 102, 176, weaponId ? `weapons:${weaponId}` : undefined, weapon?.name ?? "Vũ khí trống", weapon ? rank ? `Tinh Luyện ${rank}` : data.pvpConfig.freeWeaponIds.includes(weaponId!) ? "Dùng thử · Tinh Luyện 1" : "Chưa sở hữu" : "Không trang bị");
     });
     const relicSlots = data.metaConfig.maxRelics;
     const relicW = (552 - (relicSlots - 1) * 12) / relicSlots;
@@ -792,7 +792,7 @@ export class DeckSelectScene extends Phaser.Scene {
       const id = deck.relicIds?.[slot];
       const relic = id ? data.relics[id] : undefined;
       const resonance = id ? session.profile.relics[id]?.resonance : undefined;
-      this.deckGearTile(panel, -40 + relicW / 2 + slot * (relicW + 12), 190, relicW, id ? `relics:${id}` : undefined, relic?.name ?? "Nguyệt Bảo trống", relic ? resonance ? `Cộng Minh ${resonance}` : data.pvpConfig.freeRelicIds.includes(id!) ? "PvP · Cộng Minh 1" : "Chưa sở hữu" : "Không trang bị");
+      this.deckGearTile(panel, -40 + relicW / 2 + slot * (relicW + 12), 190, relicW, id ? `relics:${id}` : undefined, relic?.name ?? "Nguyệt Bảo trống", relic ? resonance ? `Cộng Minh ${resonance}` : data.pvpConfig.freeRelicIds.includes(id!) ? "Dùng thử · Cộng Minh 1" : "Chưa sở hữu" : "Không trang bị");
     }
   }
 

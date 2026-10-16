@@ -1195,7 +1195,9 @@ export class CombatScene extends Phaser.Scene {
     this.root.add(plate);
     const glyph = this.state.mode === "pvp" ? "⚔" : this.isCoop ? "♥" : "☾";
     this.badge(38, 36, 18, glyph, COLORS.goldFill, this.root, COLORS.button, 16, COLORS.gold);
-    const name = otherInfo ? `${otherInfo.username}${otherInfo.connected ? "" : " ⛔"}` : this.encounterName();
+    const botArena = match?.mode === "ranked_bot";
+    const opponentName = botArena ? `${otherInfo?.username ?? "Đối thủ"} (máy)` : otherInfo?.username;
+    const name = otherInfo ? `${opponentName}${otherInfo.connected ? "" : " ⛔"}` : this.encounterName();
     this.fitWidth(this.text(64, 36, name, 14).setOrigin(0, 0.5), this.isCoop ? 150 : 180);
     if (this.isCoop && other?.done === true && this.state.status === "playerTurn") {
       this.badge(232, 36, 11, "✓", COLORS.goldFill, this.root, 0x0a0e20, 12, COLORS.gold);
@@ -1205,7 +1207,8 @@ export class CombatScene extends Phaser.Scene {
     this.hoverTooltip(hit, () => ({ x: 16, y: 64 }), () => {
       if (other && otherInfo) {
         return [
-          `${this.isCoop ? "Đồng đội" : "Đối thủ"} ${otherInfo.username}${otherInfo.connected ? "" : " — mất kết nối"}`,
+          `${this.isCoop ? "Đồng đội" : "Đối thủ"} ${opponentName}${otherInfo.connected ? "" : " — mất kết nối"}`,
+          botArena ? "Đấu máy nhận Vinh Dự; không đổi điểm hoặc thành tích xếp hạng." : "",
           `Nguyệt Lực ${other.moonPower} · Dự Trữ ${Math.min(other.moonReserve, other.moonPower)}`,
           `Trên tay ${other.hand.length} lá`,
           this.isCoop && this.state.status === "playerTurn" ? (other.done ? "Đã xong lượt" : "Đang đánh") : "",
@@ -2694,7 +2697,10 @@ export class CombatScene extends Phaser.Scene {
         16, COLORS.dimText,
       ).setOrigin(0.5);
       // Ranked settlement arrives with match.end (`16` §8.8).
-      if (end?.rating) {
+      if (this.netMatch.mode === "ranked_bot") {
+        this.text(WIDTH / 2, HEIGHT / 2 - 84, "ĐẤU VỚI MÁY", 18, COLORS.dimText).setOrigin(0.5);
+        this.text(WIDTH / 2, HEIGHT / 2 + 50, "Giữ nguyên điểm và thành tích xếp hạng", 15, COLORS.dimText).setOrigin(0.5);
+      } else if (end?.rating) {
         const delta = end.rating.after - end.rating.before;
         this.text(
           WIDTH / 2, HEIGHT / 2 + 50,

@@ -19,7 +19,7 @@ import { roundedArtTexture, ellipsize } from "../ui/combat-card-view";
 import { addEquipmentArt, preloadEquipmentArt } from "../ui/equipment-art";
 import { matchesDeckText, summarizeDeck } from "../ui/deck-presentation";
 import { showTextTooltip } from "../ui/card-tooltip";
-import { arenaActionReason, arenaHeroLines, formatArenaDate, formatQueueTime, rankProgress, RequestIdentity, type ArenaTier } from "../ui/arena-presentation";
+import { arenaActionReason, arenaHeroLines, formatArenaDate, formatQueueFallback, formatQueueTime, rankProgress, RequestIdentity, type ArenaTier } from "../ui/arena-presentation";
 import { arenaInput } from "../ui/arena-input";
 import { describeDeckError } from "./deck-select-scene";
 
@@ -31,7 +31,7 @@ interface ArenaHistoryEntry { matchId: string; mode: string; opponent: string | 
 interface LeaderboardEntry { rank: number | null; username: string; rating: number; tier: ArenaTier | null; wins: number; losses: number; rankedGames: number }
 type Mode = "ranked" | "practice" | "private";
 type Panel = "history" | "leaderboard" | "decks" | "validation";
-const MODE_LABELS: Record<string, string> = { ranked: "Xếp hạng", private: "Phòng riêng", practice: "Đấu tập" };
+const MODE_LABELS: Record<string, string> = { ranked: "Xếp hạng", ranked_bot: "Đấu máy", private: "Phòng riêng", practice: "Đấu tập" };
 const RESULT_LABELS: Record<string, string> = { won: "Thắng", lost: "Thua", draw: "Hòa" };
 
 /** Owns API/realtime state. Every match send resolves a saved deck ID. */
@@ -319,7 +319,7 @@ export class ArenaScene extends Phaser.Scene {
     }
     else {
       const label = this.text(this.root, 172, 346, this.me?.tiers?.length ? progress.next ? `Tiến tới ${progress.next.name}` : "Hạng cao nhất" : "Đang tải ngưỡng hạng…", 14, COLORS.dimText).setOrigin(0.5);
-      this.info(label, "arena_rank_goal", ["Thanh tiến độ tính từ ngưỡng hạng hiện tại tới hạng kế tiếp.", "Điểm chỉ thay đổi sau trận xếp hạng."]);
+      this.info(label, "arena_rank_goal", ["Thanh tiến độ tính từ ngưỡng hạng hiện tại tới hạng kế tiếp.", "Điểm và thành tích xếp hạng chỉ thay đổi khi đấu với người chơi.", "Đối thủ máy không tính vào số trận xếp hạng."]);
     }
     if (progress.next && this.me?.tiers?.length && !this.profileError) {
       this.progressBar(this.root, 62, 372, 220, progress.fraction, 0xc8ad73);
@@ -372,16 +372,17 @@ export class ArenaScene extends Phaser.Scene {
       if (this.textures.exists(artKey)) panel.add(this.add.image(0, -22, artKey).setScale(1 / RENDER_SCALE));
       else this.text(panel, 0, -26, "Chưa có hình Hero", 12, COLORS.dimText).setOrigin(0.5);
       this.text(panel, -63, 90, ellipsize(this, hero?.name ?? id, 126, 14, 1), 14);
-      this.inspect(panel, `arena_hero_${id}`, arenaHeroLines(session.data, id));
+      this.inspect(panel, `arena_hero_${id}`, arenaHeroLines(session.data, id, session.profile));
       const weapon = deck.weapons?.[id];
       const gear = roundedPanel(this, x, 484, 146, 44, 0x102037, 1, 0x34445d, 9); this.root.add(gear);
       const def = weapon ? session.data.weapons[weapon] : undefined;
       if (weapon) addEquipmentArt(this, gear, "weapons", weapon, -52, 0, 32, 38);
       else this.art(gear, "ui:action_new", -52, 0, 20)?.setAlpha(0.45);
       this.text(gear, -30, 0, ellipsize(this, def?.name ?? "Chưa trang bị", 96, 13, 1), 13, COLORS.dimText).setOrigin(0, 0.5);
-      this.inspect(gear, `arena_weapon_${id}`, def ? [def.name, "Tinh Luyện 1 trong PvP", def.text, `Thêm ${def.card.copies} lá; không chiếm ô bộ bài`] : ["Chưa trang bị", `Vũ khí của ${hero?.name ?? id}`, "Chỉnh sửa bộ bài để chọn vũ khí"], 0x102037, 0x34445d);
+      const refinement = weapon ? session.profile.weapons[weapon]?.refinement : undefined;
+      this.inspect(gear, `arena_weapon_${id}`, def ? [def.name, refinement ? `Tinh Luyện ${refinement}` : session.data.pvpConfig.freeWeaponIds.includes(weapon!) ? "Vũ khí dùng thử · Tinh Luyện 1" : "Chưa sở hữu", def.text, ...def.refinement.slice(0, Math.max(0, (refinement ?? 1) - 1)).map((level, index) => `Tinh Luyện ${index + 2}: ${level.text}`), `Thêm ${def.card.copies} lá; không chiếm ô bộ bài`] : ["Chưa trang bị", `Vũ khí của ${hero?.name ?? id}`, "Chỉnh sửa bộ bài để chọn vũ khí"], 0x102037, 0x34445d);
     });
-    const summary = summarizeDeck(session.data, deck, { mode: "pvp" });
+    const summary = summarizeDeck(session.data, deck, { profile: session.profile, mode: "pvp" });
     const counts = this.text(this.root, 352, 519, `${summary.slots} ô bộ bài · ${summary.copies} bản`, 14, COLORS.dimText);
     this.info(counts, "arena_deck_summary", ["Ô bộ bài đếm các mục bài được chọn, không phải số bản.", `${summary.cardCopies} bản bài + ${summary.weaponCopies} bản vũ khí trong chồng bài.`, "Vũ khí không chiếm ô bộ bài."]);
     this.text(this.root, 647, 526, "Nguyệt Bảo", 13, COLORS.dimText);
@@ -390,13 +391,15 @@ export class ArenaScene extends Phaser.Scene {
       const slot = roundedPanel(this, 768 + i * 48, 530, 44, 44, 0x102037, 1, 0x34445d, 9); this.root.add(slot);
       if (id) addEquipmentArt(this, slot, "relics", id, 0, 0, 36, 38);
       else this.art(slot, "ui:action_new", 0, 0, 20)?.setAlpha(0.45);
-      this.inspect(slot, `arena_relic_${i}`, def ? [def.name, "Cộng Minh 1 trong PvP", def.resonance[0]?.text ?? ""] : [`Nguyệt Bảo ${i + 1} · Chưa trang bị`, "Chỉnh sửa bộ bài để chọn Nguyệt Bảo"], 0x102037, 0x34445d);
+      const resonance = id ? session.profile.relics[id]?.resonance : undefined;
+      this.inspect(slot, `arena_relic_${i}`, def ? [def.name, resonance ? `Cộng Minh ${resonance}` : session.data.pvpConfig.freeRelicIds.includes(id!) ? "Nguyệt Bảo dùng thử · Cộng Minh 1" : "Chưa sở hữu", def.resonance[(resonance ?? 1) - 1]?.text ?? ""] : [`Nguyệt Bảo ${i + 1} · Chưa trang bị`, "Chỉnh sửa bộ bài để chọn Nguyệt Bảo"], 0x102037, 0x34445d);
     }
     const errors = this.pvpErrors(deck.id);
     this.root.add(roundedPanel(this, 449, 571, 194, 30, errors.length ? 0x39252e : 0x18382f, 1, errors.length ? 0x805562 : 0x477664, 9));
     this.art(this.root, errors.length ? "ui:lock" : "ui:check", 370, 571, 20);
-    const validation = this.text(this.root, 387, 571, errors.length ? "Cần sửa bộ bài" : "Hợp lệ PvP", 14, errors.length ? "#ffb0b0" : "#94d9bb").setOrigin(0, 0.5);
-    this.info(validation, "arena_deck_validity", errors.length ? errors.map(error => describeDeckError(session.data, error)) : ["Hợp lệ theo luật PvP", "Vũ khí Tinh Luyện 1 · Nguyệt Bảo Cộng Minh 1"]);
+    const validation = this.text(this.root, 387, 571, errors.length ? "Cần sửa bộ bài" : "Hợp lệ", 14, errors.length ? "#ffb0b0" : "#94d9bb").setOrigin(0, 0.5);
+    this.info(validation, "arena_deck_validity", errors.length ? errors.map(error => describeDeckError(session.data, error)) : ["Hợp lệ theo luật Đấu Trường", "Giữ nguyên Tinh Hồn, Tinh Luyện và Cộng Minh đang sở hữu.", "Hero và trang bị dùng thử ở cấp cơ bản."]);
+    this.text(this.root, 352, 595, "Giữ nguyên Tinh Hồn và sức mạnh trang bị", 12, COLORS.dimText);
     if (errors.length) this.button(this.root, 730, 571, 200, "Xem lỗi", "arena_deck_validation", () => this.openPanel("validation"));
   }
   private renderModes() {
@@ -409,7 +412,7 @@ export class ArenaScene extends Phaser.Scene {
     });
     const content = this.add.container(0, 0).setName("arena_mode_content"); this.root.add(content);
     const reason = this.actionReason();
-    const description = this.mode === "ranked" ? "Đấu với người chơi\nCó thay đổi điểm xếp hạng" : this.mode === "practice" ? "Luyện với máy\nKhông đổi điểm · Không nhận Vinh Dự" : "Đấu với bạn bè bằng mã phòng\nKhông đổi điểm xếp hạng";
+    const description = this.mode === "ranked" ? "Ghép người có sức mạnh tương đương\nSau 60 giây tự đấu với máy\nĐấu người đổi điểm · Đấu máy giữ hạng" : this.mode === "practice" ? "Luyện với máy\nKhông đổi điểm · Không nhận Vinh Dự" : "Đấu với bạn bè bằng mã phòng\nKhông đổi điểm xếp hạng";
     this.text(content, 904, 277, description, 14, COLORS.dimText, 308);
     if (this.roomCode) {
       this.text(content, 918, 326, "MÃ PHÒNG", 13, COLORS.dimText);
@@ -458,6 +461,7 @@ export class ArenaScene extends Phaser.Scene {
     } else {
       this.art(content, `ui:mode_${this.mode === "ranked" ? "arena" : "practice"}`, 1060, 377, 96);
       this.button(content, 1060, 478, 300, this.pending ? "Đang vào trận…" : this.mode === "ranked" ? "Tìm trận xếp hạng" : "Bắt đầu đấu tập", this.mode === "ranked" ? "arena_ranked_start" : "arena_practice_start", () => this.start(this.mode === "ranked" ? "queue.join" : "practice.start"), !reason, { disabledReason: reason, variant: "primary", strong: true, height: 52, fontSize: 16 });
+      if (this.mode === "ranked") this.text(content, 1060, 518, "Đấu máy vẫn nhận Vinh Dự", 13, COLORS.dimText).setOrigin(0.5);
     }
     if (this.assetState === "error") {
       this.text(content, 904, 559, `Lỗi tải hình (${this.assetFailed} tệp)`, 12, "#ffb0b0");
@@ -471,10 +475,12 @@ export class ArenaScene extends Phaser.Scene {
   }
   private mountQueueFallback() {
     const parent = this.queueBody;
-    if (!parent?.scene || this.waitingSeconds < 90 || parent.getByName("arena_queue_fallback")) return;
+    if (!parent?.scene) return;
+    const existing = parent.getByName("arena_queue_fallback") as Phaser.GameObjects.Container | null;
+    if (existing) { (existing.getByName("arena_queue_countdown") as Phaser.GameObjects.Text).setText(formatQueueFallback(this.waitingSeconds)); return; }
     const layer = this.add.container(0, 0).setName("arena_queue_fallback"); parent.add(layer);
-    this.button(layer, 1060, 531, 270, "Chuyển sang Đấu tập", "arena_queue_practice", () => this.changeMode("practice"), true, { height: 34, fontSize: 13 });
-    this.text(layer, 1060, 557, "Sẽ hủy tìm trận xếp hạng", 13, COLORS.dimText).setOrigin(0.5);
+    this.text(layer, 1060, 524, formatQueueFallback(this.waitingSeconds), 14, COLORS.gold).setOrigin(0.5).setName("arena_queue_countdown");
+    this.text(layer, 1060, 553, "Máy ngẫu nhiên · Sức mạnh tương đương\nNhận Vinh Dự · Giữ điểm và thành tích", 12, COLORS.dimText).setOrigin(0.5);
   }
   private closePanel() {
     const opener = this.panelOpener;
@@ -512,7 +518,7 @@ export class ArenaScene extends Phaser.Scene {
     const view = visibleWorld(this);
     layer.add(this.add.rectangle(view.x + view.w / 2, view.y + view.h / 2, view.w, view.h, 0x03070f, 0.82).setInteractive());
     layer.add(roundedPanel(this, 640, 360, 1040, 592, 0x101d32, 1, 0x7d90b8, 16));
-    const title = this.panel === "decks" ? "Chọn bộ bài đã lưu" : this.panel === "history" ? "Lịch sử trận" : this.panel === "validation" ? "Lỗi bộ bài PvP" : "Bảng xếp hạng";
+    const title = this.panel === "decks" ? "Chọn bộ bài đã lưu" : this.panel === "history" ? "Lịch sử trận" : this.panel === "validation" ? "Lỗi bộ bài Đấu Trường" : "Bảng xếp hạng";
     this.text(layer, 148, 95, title, 23, COLORS.gold);
     this.iconButton(layer, 1118, 104, "close", "Đóng", "arena_modal_close", () => this.closePanel());
     if (this.panelError) {
@@ -577,7 +583,7 @@ export class ArenaScene extends Phaser.Scene {
       this.fit(c.panel, -346, -20, deck.name, 554, 16);
       this.fit(c.panel, -346, 5, deck.heroIds.map(id => session.data.heroes[id]?.name ?? id).join(" · "), 554, 13, COLORS.dimText);
       if (selected) { this.art(c.panel, "ui:check", 376, -12, 16); this.text(c.panel, 468, -12, "Đang dùng", 13, COLORS.gold).setOrigin(1, 0.5); }
-      this.text(c.panel, 468, selected ? 12 : 0, this.pvpErrors(deck.id).length ? "Cần sửa" : "Hợp lệ PvP", 13, this.pvpErrors(deck.id).length ? "#ffb0b0" : "#94d9bb").setOrigin(1, 0.5);
+      this.text(c.panel, 468, selected ? 12 : 0, this.pvpErrors(deck.id).length ? "Cần sửa" : "Hợp lệ", 13, this.pvpErrors(deck.id).length ? "#ffb0b0" : "#94d9bb").setOrigin(1, 0.5);
     });
     if (!decks.length) this.emptyPanel(layer, "ui:nav_heroes", "Không có bộ bài phù hợp", "Thử tìm tên khác hoặc xóa tìm kiếm");
     this.scrollControls(layer, decks.length, 6);
@@ -585,8 +591,8 @@ export class ArenaScene extends Phaser.Scene {
   private renderHistory(layer: Phaser.GameObjects.Container) {
     const entries = this.history!.filter(entry => this.historyFilter === "all" || entry.mode === this.historyFilter);
     this.text(layer, 148, 131, "Lọc trong các trận gần đây đã tải", 12, COLORS.dimText);
-    ["all", "ranked", "practice", "private"].forEach((mode, i) => {
-      this.button(layer, 245 + i * 236, 168, 210, mode === "all" ? "Tất cả" : MODE_LABELS[mode]!, `arena_history_filter_${mode}`, () => {
+    ["all", "ranked", "ranked_bot", "practice", "private"].forEach((mode, i) => {
+      this.button(layer, 239 + i * 198, 168, 182, mode === "all" ? "Tất cả" : MODE_LABELS[mode]!, `arena_history_filter_${mode}`, () => {
         this.historyFilter = mode; this.modalScroller.first = 0; this.render();
       }, true, { variant: this.historyFilter === mode ? "primary" : "secondary", height: 30, fontSize: 13 });
     });
@@ -597,8 +603,8 @@ export class ArenaScene extends Phaser.Scene {
       layer.add(roundedPanel(this, 640, y + 9, 970, 38, i % 2 ? 0x14253b : 0x102037, 1, 0x283b55, 7));
       layer.add(roundedPanel(this, 207, y + 9, 90, 26, entry.result === "won" ? 0x18382f : entry.result === "lost" ? 0x39252e : 0x28354c, 1, 0x34445d, 7));
       this.text(layer, 207, y + 9, RESULT_LABELS[entry.result ?? ""] ?? "—", 14, entry.result === "won" ? "#94d9bb" : entry.result === "lost" ? "#ffb0b0" : COLORS.text).setOrigin(0.5);
-      this.fit(layer, 295, y, entry.opponent ?? "Vọng Nguyệt (máy)", 290);
-      this.art(layer, `ui:mode_${entry.mode === "ranked" ? "arena" : entry.mode}`, 625, y + 9, 22);
+      this.fit(layer, 295, y, entry.mode === "ranked_bot" ? `${entry.opponent ?? "Đối thủ"} (máy)` : entry.opponent ?? "Vọng Nguyệt (máy)", 290);
+      this.art(layer, `ui:mode_${entry.mode === "ranked" ? "arena" : entry.mode === "ranked_bot" ? "practice" : entry.mode}`, 625, y + 9, 22);
       this.fit(layer, 644, y, MODE_LABELS[entry.mode] ?? entry.mode, 125, 14);
       this.text(layer, 885, y, entry.ratingDelta === null ? "—" : `${entry.ratingDelta >= 0 ? "+" : ""}${entry.ratingDelta}`, 14, entry.ratingDelta === null ? COLORS.dimText : entry.ratingDelta >= 0 ? "#94d9bb" : "#ffb0b0").setOrigin(1, 0);
       const date = this.text(layer, 903, y, formatArenaDate(entry.createdAt), 13);

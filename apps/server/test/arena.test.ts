@@ -76,7 +76,7 @@ describe("arena", () => {
     await wsA.waitForClose();
     await wsB.waitForClose();
 
-    // --- gap 250 > ±100 → no pair; after 30 s of waiting the window reaches 250 ---
+    // --- Elo gap does not block teams of comparable power ---
     const c = await register(server, "player_c");
     const d = await register(server, "player_d");
     await giveStarterDeck(server, await accountIdOf(server, c.token), ["m05", "f04", "m06"]);
@@ -90,11 +90,6 @@ describe("arena", () => {
     wsD.send({ type: "queue.join", mode: "ranked", deckId: "d1" });
     await wsC.settle();
     sched.advance(2_000);
-    await wsC.settle();
-    await wsD.settle();
-    expect(wsC.last("match.start")).toBeUndefined(); // 250 > 100
-    server.now.value += 30_000; // 30 s of waiting → ±100 + 50×3 = 250
-    sched.advance(1_000);
     await wsC.settle();
     await wsD.settle();
     expect(wsC.last<{ mode: string }>("match.start")!.mode).toBe("ranked");

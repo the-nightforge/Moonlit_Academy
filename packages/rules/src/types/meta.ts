@@ -10,7 +10,7 @@ export interface Loadout {
   }>;
   /** Moon relics (phase 4e); missing = none. */
   relics?: { id: string; resonance: number }[];
-  /** [GĐ5] Fair Arena loadout: even constellation thresholds and "+" cards stay off (`17` §3.2). */
+  /** Legacy replay compatibility: suppresses even bonuses in historical normalized arena setups. New arena loadouts omit this. */
   pvp?: boolean;
 }
 

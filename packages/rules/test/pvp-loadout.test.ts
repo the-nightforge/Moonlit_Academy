@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Profile } from "../src/index";
 import {
-  applyAction, buildPvpLoadout, createCombat, createProfile, starterDeck, validateDeck,
+  applyAction, buildPvpLoadout, createPvpCombat, createProfile, starterDeck, validateDeck,
 } from "../src/index";
 import { idleIntent, strike9Intent } from "./fixtures";
 import { makeTestCombat, ownAllHeroes, setIntent, testData } from "./helpers";
@@ -10,7 +10,7 @@ const TEAM: [string, string, string] = ["m05", "f04", "m06"];
 const PVP = { mode: "pvp" } as const;
 
 describe("PvP loadout and deck rules", () => {
-  it("T226: buildPvpLoadout normalizes to odd levels and level-1 gear; the pvp flag suppresses even bonuses", () => {
+  it("T226: arena keeps owned progression and activates signature+ and even bonuses", () => {
     const data = testData();
     const profile = ownAllHeroes(data, createProfile(data));
     profile.heroes["m05"]!.constellation = 6;
@@ -19,6 +19,8 @@ describe("PvP loadout and deck rules", () => {
     profile.heroes["m06"]!.levelUpForm = "alt";
     const weapon = data.pvpConfig.freeWeaponIds[0]!;
     const relic = data.pvpConfig.freeRelicIds[0]!;
+    profile.weapons[weapon] = { refinement: 5 };
+    profile.relics[relic] = { resonance: 4 };
 
     const built = buildPvpLoadout(data, profile, {
       heroIds: TEAM,
@@ -29,28 +31,38 @@ describe("PvP loadout and deck rules", () => {
       ok: true,
       loadout: {
         heroes: {
-          m05: { constellation: 5, levelUpForm: "base", weaponId: weapon, refinement: 1 },
-          f04: { constellation: 3, levelUpForm: "base", weaponId: null, refinement: 1 },
+          m05: { constellation: 6, levelUpForm: "base", weaponId: weapon, refinement: 5 },
+          f04: { constellation: 4, levelUpForm: "base", weaponId: null, refinement: 1 },
           m06: { constellation: 5, levelUpForm: "alt", weaponId: null, refinement: 1 },
         },
-        relics: [{ id: relic, resonance: 1 }],
-        pvp: true,
+        relics: [{ id: relic, resonance: 4 }],
       },
     });
 
-    // A plus card stays the base card in a pvp-flagged loadout.
+    // Use the real arena constructor so both seats receive the full loadout.
     const { cardId, plusCardId } = data.heroes["m05"]!.signature;
     const deck = starterDeck(data, TEAM);
     expect(deck).toContain(cardId);
     if (built.ok) {
-      const { state } = createCombat(data, { heroIds: TEAM, encounterId: "enc_01", seed: 3, deckCardIds: deck }, built.loadout);
+      const side = { heroIds: TEAM, deckCardIds: deck, loadout: built.loadout };
+      const { state } = createPvpCombat(data, { seed: 3, players: [side, side] });
       const ids = Object.values(state.cards).map((card) => card.cardId);
-      expect(ids).toContain(cardId);
-      expect(ids).not.toContain(plusCardId);
-      expect(state.heroes.every((hero) => hero.pvp === true)).toBe(true);
+      expect(ids).not.toContain(cardId);
+      expect(ids).toContain(plusCardId);
+      expect(state.heroes.every((hero) => hero.pvp !== true)).toBe(true);
+      expect(state.players.every((player) => player.weapons[0]?.refinement === 5 && player.relics[0]?.resonance === 4)).toBe(true);
+      const hero = state.heroes.find((hero) => hero.player === state.activePlayer && hero.defId === "m05")!;
+      hero.levelUpCounter = data.heroes.m05!.levelUp.constellationThreshold;
+      let current = state;
+      for (const player of [0, 1]) {
+        const result = applyAction(data, current, { type: "mulligan", player, instanceIds: [] });
+        if (!result.ok) throw new Error(result.error);
+        current = result.state;
+      }
+      expect(current.heroes.find((h) => h.id === hero.id)!.leveledUp).toBe(true);
     }
 
-    // Constellation 5 in pvp must not lower the level-up threshold (even bonus off).
+    // Explicit old replay flags still reproduce historical normalized bonuses.
     const { data: game, state } = makeTestCombat();
     const m05 = state.heroes.find((hero) => hero.defId === "m05")!;
     m05.constellation = 5;
@@ -96,6 +108,34 @@ describe("PvP loadout and deck rules", () => {
     expect(badWeapon).toEqual({ ok: false, error: "weapon not owned" });
     const badRelic = buildPvpLoadout(data, noGear, { heroIds: TEAM, relicIds: ["r_thien_sach"] });
     expect(badRelic).toEqual({ ok: false, error: "relic not owned" });
+  });
+
+  it("unowned trial heroes and free equipment remain at base progression", () => {
+    const data = testData();
+    const profile = createProfile(data);
+    profile.heroes = {};
+    profile.weapons = {};
+    profile.relics = {};
+    const team = data.pvpConfig.trialHeroIds.slice(0, 3);
+    const weapon = data.pvpConfig.freeWeaponIds[0]!;
+    const relic = data.pvpConfig.freeRelicIds[0]!;
+    const result = buildPvpLoadout(data, profile, { heroIds: team, weapons: { [team[0]!]: weapon }, relicIds: [relic] });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(Object.values(result.loadout.heroes).every((hero) => hero.constellation === 0 && hero.levelUpForm === "base" && hero.refinement === 1)).toBe(true);
+    expect(result.loadout.relics).toEqual([{ id: relic, resonance: 1 }]);
+    expect(result.loadout.pvp).toBeUndefined();
+  });
+
+  it("retains every owned constellation from zero through six", () => {
+    const data = testData();
+    const profile = ownAllHeroes(data, createProfile(data));
+    for (let constellation = 0; constellation <= 6; constellation++) {
+      profile.heroes.m05!.constellation = constellation;
+      const result = buildPvpLoadout(data, profile, { heroIds: TEAM });
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.loadout.heroes.m05!.constellation).toBe(constellation);
+    }
   });
 
   it("T227: validateDeck mode pvp accepts trial heroes and free gear", () => {

@@ -26,6 +26,7 @@ export {
 } from "./moon";
 export { applySignatureCards, bondCardsForTeam, createCombat } from "./create-combat";
 export { createPvpCombat } from "./pvp/create";
+export { measurePvpPower } from "./pvp/power";
 export { createCoopCombat } from "./coop/create";
 export { coopBot } from "./coop/bot";
 export { comboHintFor } from "./coop/combos";

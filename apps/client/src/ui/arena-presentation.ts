@@ -1,13 +1,17 @@
-import type { GameData } from "rules";
+import type { GameData, HeroProgress } from "rules";
 
-export function arenaHeroLines(data: GameData, heroId: string): string[] {
+export function arenaHeroLines(data: GameData, heroId: string, profile?: { heroes: Record<string, Pick<HeroProgress, "constellation" | "levelUpForm">> }): string[] {
   const hero = data.heroes[heroId];
   if (!hero) return ["Không có thông tin Hero"];
-  return [hero.name, `Máu PvP: ${data.pvpConfig.heroStats[heroId]?.maxHp ?? hero.maxHp}`,
-    `Ngưỡng cơ bản: ${hero.levelUp.threshold}`,
+  const progress = profile?.heroes[heroId];
+  const constellation = progress?.constellation ?? 0;
+  const form = constellation >= 5 && progress?.levelUpForm === "alt" ? hero.altLevelUp : hero.levelUp;
+  return [hero.name, `Máu Đấu Trường: ${data.pvpConfig.heroStats[heroId]?.maxHp ?? hero.maxHp}`, progress ? `Tinh Hồn ${constellation}` : data.pvpConfig.trialHeroIds.includes(heroId) ? "Hero dùng thử · Tinh Hồn 0" : "Chưa sở hữu",
+    `Ngưỡng Thức Tỉnh: ${constellation >= 2 ? hero.levelUp.constellationThreshold : hero.levelUp.threshold}`,
+    `Dạng đã chọn: ${form.name}`,
     `${hero.levelUp.name} — dạng cơ bản`, hero.levelUp.description,
     `${hero.altLevelUp.name} — dạng thứ hai`, hero.altLevelUp.description,
-    "Thông tin theo luật PvP; dạng Thức Tỉnh áp dụng theo lựa chọn được phép của bộ bài."];
+    "Giữ nguyên Tinh Hồn và hiệu ứng trang bị đang sở hữu."];
 }
 
 export function formatArenaDate(timestamp: number, now = Date.now()): string {
@@ -31,6 +35,10 @@ export function rankProgress(rating: number, tiers: ArenaTier[]) {
 export function formatQueueTime(seconds: number): string {
   const value = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
   return `${Math.floor(value / 60).toString().padStart(2, "0")}:${(value % 60).toString().padStart(2, "0")}`;
+}
+export function formatQueueFallback(seconds: number): string {
+  const elapsed = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
+  return elapsed >= 60 ? "Đang ghép với đối thủ máy…" : `Tự ghép với máy sau ${60 - elapsed} giây`;
 }
 export function arenaActionReason(gate: ArenaGate): string {
   if (!gate.connected) return "Cần kết nối để vào trận";

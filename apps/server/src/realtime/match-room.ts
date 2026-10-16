@@ -17,7 +17,7 @@ import {
 import type { AppContext } from "../context";
 import type { MatchSettlement, MatchSnapshot, PublicPlayedCard, SettlementState } from "./protocol";
 
-export type MatchMode = "ranked" | "private" | "practice" | "coop" | "coop_private" | "coop_practice";
+export type MatchMode = "ranked" | "ranked_bot" | "private" | "practice" | "coop" | "coop_private" | "coop_practice";
 
 /** One participant of a live match; `accountId` null marks a bot seat (§5.4, 5c.3). */
 export interface MatchSeat {
@@ -76,9 +76,7 @@ export class MatchRoom {
     private readonly setupJson: string,
     private readonly setupEvents: CombatEvent[],
     private readonly drop: (room: MatchRoom) => void,
-  ) {
-    this.armClock();
-  }
+  ) {}
 
   /** Writes the `matches`/`match_players` rows; factories await this once. */
   async persist(): Promise<void> {
@@ -92,6 +90,8 @@ export class MatchRoom {
       await insertMatch.run(this.matchId, this.mode, this.ctx.dataVersion, this.seed, this.setupJson, this.ctx.clock());
       for (const seat of this.seats) await insertPlayer.run(this.matchId, seat.accountId, seat.seat);
     });
+    // A failed launch must leave no turn clock able to settle an uncreated match.
+    this.armClock();
   }
 
   seatOf(accountId: number): MatchSeat | undefined {
@@ -439,9 +439,10 @@ export class MatchRoom {
       }
       return winner === "draw" || winner === undefined ? "draw" : seat === winner ? "won" : "lost";
     };
-    // Ranked matches settle Elo and Vinh Dự for both players; queue co-op pays
-    // the §9.2 rewards; private and practice matches only record the result.
+    // Human ranked matches settle Elo and Honor; arena bots pay Honor only.
+    // Queue co-op pays §9.2 rewards; private/practice only record the result.
     const ranked = this.mode === "ranked" && this.seats.every((seat) => seat.accountId !== null);
+    const rewardedBot = this.mode === "ranked_bot";
     const rewardedCoop = this.mode === "coop";
     // Settlement runs exactly once (`16` §8.4): a failed transaction leaves the
     // room "failed" for recovery reads — it is never retried silently.
@@ -449,13 +450,14 @@ export class MatchRoom {
     try {
       // Elo deltas compare pre-match ratings — capture both profiles first.
       const profiles = new Map<number, Profile>();
-      if (ranked || rewardedCoop) {
+      if (ranked || rewardedBot || rewardedCoop) {
         for (const seat of this.seats) {
           if (seat.accountId !== null) profiles.set(seat.seat, (await this.ctx.readProfile(seat.accountId)).profile);
         }
       }
       const settled = new Map<number, { before: number; after: number; honor: number; rev: number }>();
       const coopPaid = new Map<number, { rewards: CoopRewards | null; rev: number }>();
+      const botPaid = new Map<number, { honor: number; rev: number }>();
       // The match record, seat results and both profile updates land in one
       // transaction (`16` §8.3): a crash mid-write leaves the row consistent.
       await this.ctx.db.transaction(async () => {
@@ -479,6 +481,16 @@ export class MatchRoom {
             coopPaid.set(seat.seat, { rewards: applied.rewards, rev });
             continue;
           }
+          if (rewardedBot) {
+            const applied = applyPvpResult(this.ctx.data, mine, {
+              result, reason: this.endReason, round: this.state.round,
+              now: this.ctx.clock(), ratingDelta: 0, honorOnly: true,
+            });
+            const rev = await this.ctx.saveProfile(seat.accountId!, applied.profile);
+            await seatResult.run(result, this.matchId, seat.seat);
+            botPaid.set(seat.seat, { honor: applied.honor, rev });
+            continue;
+          }
           const opponent = this.seats.find((s) => s.seat !== seat.seat)!;
           const theirs = profiles.get(opponent.seat)!;
           const score = result === "won" ? 1 : result === "lost" ? 0 : 0.5;
@@ -499,6 +511,7 @@ export class MatchRoom {
       for (const seat of this.seats) {
         const extras = settled.get(seat.seat);
         const coop = coopPaid.get(seat.seat);
+        const bot = botPaid.get(seat.seat);
         const end: MatchSettlement = {
           result: resultOf(seat.seat),
           reason: this.endReason,
@@ -506,6 +519,7 @@ export class MatchRoom {
             ? { rating: { before: extras.before, after: extras.after }, rewards: { honor: extras.honor }, profileRev: extras.rev }
             : {}),
           ...(coop ? { rewards: coop.rewards, profileRev: coop.rev } : {}),
+          ...(bot ? { rewards: { honor: bot.honor }, profileRev: bot.rev } : {}),
         };
         this.settlements.set(seat.seat, end);
         send(seat.socket, { type: "match.end", matchId: this.matchId, ...end });

@@ -191,7 +191,7 @@ export class ShopView {
         '" aria-controls="shop-offers" tabindex="' + (state.tab === tab ? "0" : "-1") + '" aria-selected="' + (state.tab === tab) + '" ' + (state.busy ? "disabled" : "") + '>' +
         icon(tab === "moon" ? "cur_moonStar" : "cur_honor") + '<span>' + (tab === "moon" ? "Nguyệt Tinh" : "Vinh Dự") + '</span></button>').join("") + '</div>' +
       '<div class="sh-intro"><div class="sh-current">' + image("ui:cur_" + currency, currentLabel) + '<div><span>Đang có</span><strong>' + number(state.currencies[currency]) + ' ' + currentLabel + '</strong></div></div>' +
-      '<p>' + (state.tab === "moon" ? "Nhận Nguyệt Tinh khi quay trùng Hero đã đủ Tinh Hồn." : "Nhận Vinh Dự từ Đấu Trường xếp hạng.") + '</p></div>' +
+      '<p>' + (state.tab === "moon" ? "Nhận Nguyệt Tinh khi quay trùng Hero đã đủ Tinh Hồn." : "Nhận Vinh Dự khi tìm trận Đấu Trường, kể cả trận tự ghép với máy.") + '</p></div>' +
       (notice ? '<div class="sh-notice" role="status"><span>' + escape(notice) + '</span>' +
         (!state.busy && !state.refreshing ? '<button type="button" class="sh-icon-button" data-control="refresh" aria-label="Cập nhật lại cửa hàng">' + icon("action_reset") + '</button>' : "") + '</div>' : "") +
       '<main id="shop-offers" role="tabpanel" aria-labelledby="shop-tab-' + state.tab + '" class="sh-offers" tabindex="0" data-control="offers" aria-label="Vật phẩm ' + currentLabel + '">' +

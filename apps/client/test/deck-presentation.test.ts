@@ -15,7 +15,7 @@ const data = {
 const deck: SavedDeck = { id: "d1", name: "Test", heroIds: ["h1", "h2", "h3"], cardIds: ["a", "b", "c"], weapons: { h1: "w", h2: null }, relicIds: ["r1", "r2"] };
 
 describe("deck presentation", () => {
-  it("uses owned weapon refinement in normal view and R1 in PvP", () => {
+  it("uses owned weapon refinement in both normal and arena views", () => {
     const gameData = loadGameData();
     const profile = createProfile(gameData);
     profile.weapons.w_xich_diem_thuong = { refinement: 3 };
@@ -24,8 +24,8 @@ describe("deck presentation", () => {
     const pvp = summarizeDeck(gameData, draft, { profile, mode: "pvp" });
     expect(normal.averageCost).toBe(3);
     expect(normal.curve[3]).toBe(2);
-    expect(pvp.averageCost).toBe(4);
-    expect(pvp.curve[4]).toBe(2);
+    expect(pvp.averageCost).toBe(3);
+    expect(pvp.curve[3]).toBe(2);
   });
   it("weapons add battle copies without occupying slots, relics use none", () => {
     expect(summarizeDeck(data, deck)).toEqual({ slots: 3, copies: 8, cardCopies: 6, weaponCopies: 2, averageCost: 34 / 8, curve: [1, 0, 3, 0, 2, 0, 0, 0, 2], heroCounts: { h1: 2, h2: 1, h3: 0 } });
