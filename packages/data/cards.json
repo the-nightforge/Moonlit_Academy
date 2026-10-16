@@ -9822,5 +9822,709 @@
       }
     ],
     "text": "Mọi debuff có thời hạn của mục tiêu +2 vòng."
+  },
+  {
+    "id": "m12_giu_cong",
+    "name": "Giữ Cổng",
+    "ownerId": "m12",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "ward"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "taunt",
+        "amount": 1,
+        "to": "self"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "self"
+      }
+    ],
+    "text": "Khiêu Khích 1 vòng. Nhận 4 giáp."
+  },
+  {
+    "id": "m12_tran_mon_dao",
+    "name": "Trấn Môn Đao",
+    "ownerId": "m12",
+    "cost": 1,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 5,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 5 damage."
+  },
+  {
+    "id": "m12_dong_giap",
+    "name": "Đồng Giáp",
+    "ownerId": "m12",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "ward"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "self"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Nhận 4 giáp; đồng đội nhận 3 giáp."
+  },
+  {
+    "id": "m12_ho_ve_lenh",
+    "name": "Hộ Vệ Lệnh",
+    "ownerId": "m12",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "ward"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "guard",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 3,
+        "to": "chosen"
+      }
+    ],
+    "text": "1 đồng đội được Hộ Vệ 2 vòng và nhận 3 giáp."
+  },
+  {
+    "id": "m12_phan_cong",
+    "name": "Phản Công",
+    "ownerId": "m12",
+    "cost": 2,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 4,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "reflect",
+        "amount": 2,
+        "to": "self"
+      }
+    ],
+    "text": "Gây 4 damage. Nhận Phản Đòn 2."
+  },
+  {
+    "id": "m12_tam_canh",
+    "name": "Tam Canh",
+    "ownerId": "m12",
+    "cost": 4,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "taunt",
+        "amount": 1,
+        "to": "self"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 6,
+        "to": "self"
+      },
+      {
+        "type": "missingHpDamage",
+        "ratio": 0.5,
+        "to": "chosen"
+      }
+    ],
+    "text": "Khiêu Khích 1 vòng, nhận 6 giáp. Gây damage bằng 50% HP Cừ Trấn Nam đã mất."
+  },
+  {
+    "id": "m12_tam_canh_plus",
+    "name": "Tam Canh+",
+    "ownerId": "m12",
+    "cost": 4,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "taunt",
+        "amount": 1,
+        "to": "self"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 8,
+        "to": "self"
+      },
+      {
+        "type": "missingHpDamage",
+        "ratio": 0.6,
+        "to": "chosen"
+      }
+    ],
+    "text": "Khiêu Khích 1 vòng, nhận 8 giáp. Gây damage bằng 60% HP Cừ Trấn Nam đã mất.",
+    "plusOf": "m12_tam_canh"
+  },
+  {
+    "id": "m12_bat_dao",
+    "name": "Bất Dao",
+    "ownerId": "m12",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "ward"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "gainArmor",
+        "amount": 6,
+        "to": "self"
+      },
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 1,
+        "to": "self"
+      }
+    ],
+    "text": "Nhận 6 giáp và 1 Hồi Phục."
+  },
+  {
+    "id": "m12_nhat_kich",
+    "name": "Nhất Kích",
+    "ownerId": "m12",
+    "cost": 3,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "selfHpBelow",
+          "ratio": 0.5
+        },
+        "then": [
+          {
+            "type": "damage",
+            "amount": 12,
+            "to": "chosen"
+          }
+        ],
+        "else": [
+          {
+            "type": "damage",
+            "amount": 7,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Gây 7 damage; nếu HP dưới 50%: gây 12."
+  },
+  {
+    "id": "m12_mo_cong",
+    "name": "Mở Cổng",
+    "ownerId": "m12",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "ward"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "taunt",
+        "amount": 1,
+        "to": "self"
+      },
+      {
+        "type": "applyStatus",
+        "status": "strength",
+        "amount": 1,
+        "to": "self"
+      }
+    ],
+    "text": "Khiêu Khích 1 vòng. Nhận 1 Sức Mạnh."
+  },
+  {
+    "id": "m12_thiet_quan",
+    "name": "Thiết Quan",
+    "ownerId": "m12",
+    "cost": 3,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "scaledDamage",
+        "per": "selfArmor",
+        "base": 5,
+        "amount": 1,
+        "divisor": 4,
+        "max": 5,
+        "to": "chosen"
+      }
+    ],
+    "text": "Gây 5 damage, thêm 1 với mỗi 4 giáp đang có (tối đa +5)."
+  },
+  {
+    "id": "m12_dia_chuyen",
+    "name": "Địa Chuyển",
+    "ownerId": "m12",
+    "cost": 3,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "ward"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "guard",
+        "amount": 1,
+        "to": "allAllies"
+      },
+      {
+        "type": "gainArmor",
+        "amount": 4,
+        "to": "allAllies"
+      }
+    ],
+    "text": "Mọi đồng đội được Hộ Vệ 1 vòng và nhận 4 giáp."
+  },
+  {
+    "id": "m12_van_quan",
+    "name": "Vạn Quân",
+    "ownerId": "m12",
+    "cost": 6,
+    "copies": 3,
+    "type": "attack",
+    "tags": [
+      "attack"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 5,
+        "to": "allEnemies"
+      }
+    ],
+    "text": "Gây 5 damage lên mọi kẻ địch."
+  },
+  {
+    "id": "f13_quan_tuong",
+    "name": "Quan Tượng",
+    "ownerId": "f13",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "chooseCard",
+        "look": 2
+      }
+    ],
+    "text": "Chiêm Bài 2."
+  },
+  {
+    "id": "f13_diem_lanh",
+    "name": "Điềm Lành",
+    "ownerId": "f13",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "drawCards",
+        "amount": 1
+      }
+    ],
+    "text": "1 đồng đội nhận Cường Hóa 1. Rút 1 lá."
+  },
+  {
+    "id": "f13_diem_du",
+    "name": "Điềm Dữ",
+    "ownerId": "f13",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "moonPhaseIs",
+          "phase": "full"
+        },
+        "then": [
+          {
+            "type": "applyStatus",
+            "status": "freeze",
+            "amount": 1,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Dễ Vỡ 1 vòng; nếu đang Trăng Tròn: thêm Đóng Băng."
+  },
+  {
+    "id": "f13_nguyet_thi",
+    "name": "Nguyệt Thi",
+    "ownerId": "f13",
+    "cost": 0,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "shiftMoon",
+        "amount": 1
+      }
+    ],
+    "text": "Đẩy Nguyệt Luân 1 pha."
+  },
+  {
+    "id": "f13_song_nguyet",
+    "name": "Song Nguyệt",
+    "ownerId": "f13",
+    "cost": 4,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 1,
+        "to": "allAllies"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "allEnemies"
+      },
+      {
+        "type": "chooseCard",
+        "look": 3
+      }
+    ],
+    "text": "Đồng đội nhận Cường Hóa 1; mọi kẻ địch Suy Yếu 1 vòng. Chiêm Bài 3."
+  },
+  {
+    "id": "f13_song_nguyet_plus",
+    "name": "Song Nguyệt+",
+    "ownerId": "f13",
+    "cost": 4,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 1,
+        "to": "allAllies"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 2,
+        "to": "allEnemies"
+      },
+      {
+        "type": "chooseCard",
+        "look": 4
+      }
+    ],
+    "text": "Đồng đội nhận Cường Hóa 1; mọi kẻ địch Suy Yếu 2 vòng. Chiêm Bài 4.",
+    "plusOf": "f13_song_nguyet"
+  },
+  {
+    "id": "f13_bach_dong",
+    "name": "Bạch Đồng",
+    "ownerId": "f13",
+    "cost": 1,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "heal"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "cleanse",
+        "to": "chosen"
+      },
+      {
+        "type": "heal",
+        "amount": 3,
+        "to": "chosen"
+      }
+    ],
+    "text": "Giải trừ 1 Hero, hồi 3 HP."
+  },
+  {
+    "id": "f13_nghich_menh",
+    "name": "Nghịch Mệnh",
+    "ownerId": "f13",
+    "cost": 3,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "vulnerable",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "moonPhaseIs",
+          "phase": "full"
+        },
+        "then": [
+          {
+            "type": "applyStatus",
+            "status": "freeze",
+            "amount": 1,
+            "to": "chosen"
+          }
+        ]
+      }
+    ],
+    "text": "Dễ Vỡ 2 vòng; nếu đang Trăng Tròn: thêm Đóng Băng."
+  },
+  {
+    "id": "f13_so_tay",
+    "name": "Sổ Tay",
+    "ownerId": "f13",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "chooseCard",
+        "look": 4
+      }
+    ],
+    "text": "Chiêm Bài 4."
+  },
+  {
+    "id": "f13_te_le",
+    "name": "Tế Lễ",
+    "ownerId": "f13",
+    "cost": 3,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "gainMoonPower",
+        "amount": 2
+      },
+      {
+        "type": "shiftMoon",
+        "amount": 1
+      }
+    ],
+    "text": "Nhận 2 Nguyệt Lực. Đẩy Nguyệt Luân 1 pha."
+  },
+  {
+    "id": "f13_diem_phan",
+    "name": "Điềm Phản",
+    "ownerId": "f13",
+    "cost": 2,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "control"
+    ],
+    "target": "enemy",
+    "effects": [
+      {
+        "type": "sealIntent",
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
+        "amount": 1,
+        "to": "chosen"
+      }
+    ],
+    "text": "Phong Ấn 1 ý đồ của 1 kẻ địch và Suy Yếu 1 vòng."
+  },
+  {
+    "id": "f13_trang_ran",
+    "name": "Trăng Rạn",
+    "ownerId": "f13",
+    "cost": 3,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "heal"
+    ],
+    "target": "none",
+    "effects": [
+      {
+        "type": "shiftMoon",
+        "amount": 2
+      },
+      {
+        "type": "conditional",
+        "condition": {
+          "type": "moonPhaseIs",
+          "phase": "full"
+        },
+        "then": [
+          {
+            "type": "heal",
+            "amount": 4,
+            "to": "allAllies"
+          }
+        ]
+      }
+    ],
+    "text": "Đẩy Nguyệt Luân 2 pha; nếu tới Trăng Tròn: đồng đội hồi 4 HP."
+  },
+  {
+    "id": "f13_ung_diem",
+    "name": "Ứng Điềm",
+    "ownerId": "f13",
+    "cost": 3,
+    "copies": 3,
+    "type": "skill",
+    "tags": [
+      "moon",
+      "heal"
+    ],
+    "target": "ally",
+    "effects": [
+      {
+        "type": "applyStatus",
+        "status": "regen",
+        "amount": 2,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "empower",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "drawCards",
+        "amount": 1
+      }
+    ],
+    "text": "1 Hero nhận 2 Hồi Phục và Cường Hóa 1. Rút 1 lá."
   }
 ]

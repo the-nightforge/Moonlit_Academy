@@ -306,9 +306,9 @@ describe("core hero cards", () => {
 });
 
 describe("lunar hero cards and bonds", () => {
-  it("T276h: 23 heroes load; each bond pair adds its bond card to the deck", () => {
+  it("T276h: 25 heroes load; each bond pair adds its bond card to the deck", () => {
     const data = testData();
-    expect(Object.keys(data.heroes)).toHaveLength(23);
+    expect(Object.keys(data.heroes)).toHaveLength(25);
     for (const id of LUNAR_HERO_IDS) expect(data.pvpConfig.heroStats[id]).toBeDefined();
     for (const [a, b] of HERO_BOND_PAIRS) {
       const third = ["m06", "f04", "m05"].find((id) => id !== a && id !== b)!;
@@ -459,9 +459,9 @@ describe("spirit hero cards", () => {
     expect(data.summons.tho_ngoc!.awakenedId).toBe("tho_ngoc_thuc_tinh");
   });
 
-  it("T297: 23 heroes load; each wave-2 bond pair adds its bond card", () => {
+  it("T297: 25 heroes load; each wave-2 bond pair adds its bond card", () => {
     const data = testData();
-    expect(Object.keys(data.heroes)).toHaveLength(23);
+    expect(Object.keys(data.heroes)).toHaveLength(25);
     for (const [a, b] of [["m09", "f06"], ["f09", "f10"]] as const) {
       const { state } = makeTestCombat({ heroIds: [a, b, "m05"] });
       const pairs = Object.values(state.cards).filter((c) => c.ownerIds.length === 2).map((c) => [...c.ownerIds].sort().join("+"));

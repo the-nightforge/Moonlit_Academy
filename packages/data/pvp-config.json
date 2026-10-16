@@ -22,7 +22,9 @@
     "m09": { "maxHp": 40 },
     "m11": { "maxHp": 44 },
     "f11": { "maxHp": 48 },
-    "f12": { "maxHp": 42 }
+    "f12": { "maxHp": 42 },
+    "m12": { "maxHp": 48 },
+    "f13": { "maxHp": 36 }
   },
   "trialHeroIds": ["m05", "f04", "m06", "f03", "f02"],
   "freeWeaponIds": ["w_bach_hoa_tram", "w_thiet_thuan", "w_liet_cung", "w_thanh_tam_binh"],

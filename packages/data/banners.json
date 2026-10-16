@@ -19,7 +19,8 @@
         "f06",
         "m09",
         "f11",
-        "f12"
+        "f12",
+        "f13"
       ],
       "rare": [
         "f04",
@@ -111,6 +112,23 @@
               "f09"
             ]
           }
+        },
+        {
+          "heroId": "m12",
+          "name": "Trấn Môn Bất Dao — Cừ Trấn Nam",
+          "pool": {
+            "epic": [
+              "f13",
+              "f11",
+              "f12"
+            ],
+            "rare": [
+              "m10"
+            ],
+            "common": [
+              "f09"
+            ]
+          }
         }
       ]
     }
@@ -119,7 +137,9 @@
     "id": "banner_weapons",
     "name": "Binh Khí Các",
     "kind": "weapon",
-    "epitomized": { "maxPoints": 2 },
+    "epitomized": {
+      "maxPoints": 2
+    },
     "pool": {
       "legendary": [
         "w_xich_diem_thuong",
@@ -129,7 +149,8 @@
         "w_thien_nguyet_truong",
         "w_huyet_phuong_dao",
         "w_dan_hon_dang",
-        "w_that_diep"
+        "w_that_diep",
+        "w_tran_mon_dao"
       ],
       "epic": [
         "w_anh_nguyet_chuy",
@@ -141,7 +162,8 @@
         "w_vong_quoc_cam",
         "w_kinh_hong_phien",
         "w_nam_chieu_quat",
-        "w_thiet_but_an"
+        "w_thiet_but_an",
+        "w_bach_dong_kinh"
       ],
       "rare": [
         "w_bach_hoa_tram",

@@ -84,6 +84,13 @@ All nine images were subsequently redrawn against direct existing-art references
 to match anime linework, face proportions, clean cel shading and painted backgrounds;
 see `styleRevision` and `prompts.styleMatching` in the generation record.
 Combat portrait inventory: 63 files (23 heroes ×2 +15 enemies +2 summons).
+
+**Update — 2026-10-16, two new heroes (m12, f13):** four placeholder copies
+are in use pending original artwork (`m12*` ← m05, `f13*` ← f10). Signature
+weapon images are also placeholders (`w_tran_mon_dao` ← w_xich_diem_thuong,
+`w_bach_dong_kinh` ← w_huyen_linh_kinh). Prompts for the real art are in
+`docs/08-character-prompts.md` §3/§4.
+Combat portrait inventory: 67 files (25 heroes ×2 +15 enemies +2 summons).
 Prompts, references, hashes and final paths: [generation record](assets/hero-wave3-generated-assets.json).
 Visual review and checks: [new hero artwork](reviews/2026-10-15-new-hero-art.md).
 

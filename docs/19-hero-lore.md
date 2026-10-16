@@ -220,6 +220,27 @@ Lệnh cuối cùng của thanh lý viên bao giờ cũng giống nhau: khi mụ
 
 ---
 
+## M12 — Cừ Trấn Nam 巨鎮南
+**Legendary · Xích Diên Viện · Vanguard / Trấn môn**
+
+### Tiểu sử
+Đêm hạ thành Nam Chiếu, cổng Nam có một người đứng lại. Cừ Trấn Nam — trấn môn tướng quân — nhận được mật chỉ cuối cùng của triều đình bại quốc: mở cổng, đưa đồ cúng và thân vệ hoàng tử ra, rồi giữ cổng cho đến khi không còn ai để đưa nữa. Hắn làm đúng cả hai. Ba canh giờ một mình giữ cổng, lưỡi đại đao mẻ toác, giáp nặng thêm từng giờ vì máu người — rồi hắn ngã, và chết. Nhưng kẻ chết ấy tỉnh lại trên xe xác chết, giữa mùi vôi và mùi mưa, với một tin đồn đã chạy nhanh hơn xác hắn: "Cừ Trấn Nam mở cổng đầu hàng." Triều đình Hằng Châu cần một tên phản đồ cho dư luận, và một tướng còn sống tiện hơn một oanh liệt đã chết — oan khuất ấy là phần thưởng cho ba canh giờ của hắn. Ba năm hắn lang thạc theo dư quân, rồi theo một tin đồn khác vào Vọng Nguyệt: học viện giữ một "khách quý" của Nam Chiếu, người đàn cổ cầm khúc Vong Xuyên. Ba mươi bảy tuổi, già hơn cả giáo quan, hắn thi công danh vào Xích Diên — không phải để học, mà để nhìn thẳng vào mắt Đoàn Lạc và biết mình nên quỳ nhận tội, hay rút đao đi tìm kẻ thật sự đã bán cánh cổng đêm đó. Trên ngực áo hắn là một vết khâu chỉ vàng — nơi huy chương "Trấn Nam Thống Lĩnh" bị xé đi, hắn giữ lại một nửa, nửa kia cắm trên mộ không tên ngoài thành.
+
+### Quan hệ
+- **Đoàn Lạc (M09):** người hắn vừa tìm vừa né. Gặp hoàng tử là gặp lại cả quốc gia — và gặp câu hỏi hắn sợ nhất: "tại sao ngươi còn sống?" Hắn từng đứng ngoài tường nghe đàn ba đêm liền mà chưa bước vào.
+- **Điệp Vũ (F11):** hai người đứng hai đầu cánh cổng đêm hạ thành — nàng đưa đồ cúng ra, hắn giữ cổng đằng sau. Nếu họ nhìn nhau đủ lâu, sẽ cùng đến một câu hỏi: ai đã viết mật chỉ cuối cùng?
+- **Hoắc Liệt (M05):** hai "con tin của chiến tranh" — một người bị giam vì cha mình, một người tự giam vì trăm ngàn người khác. Họ uống với nhau không nói chuyện, và đó là buổi nói chuyện nhiều nhất của cả hai.
+- **Khương Tịch (M08):** giáo quan chủ động kéo hắn vào lớp lịch sử cấm. Ông muốn xem người sống sót kể lại trận đó thế nào — và hắn biết ông muốn xem, nên cố tình kể sai một chi tiết, để xem ông có nhận ra không. Ông nhận ra.
+- **Ninh An (M07):** đứa tân sinh không biết sợ giáo quan già. Một lần nó hỏi hắn "chúa thấy quê chú đẹp không" — và hắn, người không trả lời ai, đã đáp: "đẹp hơn kinh này."
+
+### Điểm mở cốt truyện
+Mật chỉ "mở cổng" đêm hạ thành — ai ký? Ấn tín trên đó là của Nam Chiếu thật, nhưng nét bút thì lạ. Khi hắn đủ thông tin để truy ra kẻ viết, hắn sẽ đứng trước lựa chọn cuối cùng của người lính giữ cổng: rửa oan cho mình, hay giữ im lặng vì sự thật đó còn nguy hiểm hơn dư quân biết.
+
+### Bio
+> Trấn môn tướng quân cuối cùng của Nam Chiếu, mang danh "kẻ mở cổng đầu hàng" vào học viện tìm hoàng tử của mình. Danh dự là thứ người khác tước đi — nghĩa mới là thứ hắn tự giữ.
+
+---
+
 ## F01 — Thẩm Nguyệt Hoa 沈月華
 **Legendary · Thanh Loan Viện · Nhân vật trung tâm / Ultimate**
 
@@ -458,3 +479,24 @@ Công văn kiểm kê của nàng sắp xong — và trong hồ sơ thật, đ�
 
 ### Bio
 > Thanh tra nội các trẻ nhất lịch sử, được phái đến học viện để "kiểm kê quỹ học bổng" — thực chất là con mắt của triều đình. Nàng tin luật hơn tin người, và đang học lại khi nào xé trang là cứu người.
+
+---
+
+## F13 — Tố Nguyệt Nhi 素月兒
+**Epic · Huyền Vu Viện · Chiêm bài / Điềm báo**
+
+### Tiểu sử
+Nguyệt Thần Điện không bao giờ chỉ chọn một Nguyệt Chủ. Mỗi kỳ có "Chính Nhi" và "Sách Nhi" — hai vật chứa được nuôi song song dưới điện, học cùng nghi lễ, mặc cùng y phục, và người thua không bị giết, chỉ bị *quên đi*: tên xóa khỏi sổ thần tự, sư huynh đệ quay mặt, cửa buồng tháo bản lề. Tố Nguyệt Nhi là Sách Nhi của kỳ này — nếu công chúa Thẩm Nguyệt Hoa chết trước Nguyệt Thực, nghi lễ sẽ lấy nàng thay. Nàng được gửi vào Vọng Nguyệt không phải để học mà để *sống cạnh* người mình sẽ thay thế, cho các vị thần làm quen mùi. Khác với Chính Nhi được giáo dưỡng để phản kháng thiên mệnh, Sách Nhi được nuôi để vâng — nhưng đôi mắt bạc bẩm sinh của nàng nhìn được những vệt "chưa xảy ra", và nàng bắt đầu viết lại các điềm ra sổ tay, điều cấm kỵ nhất của thần tự: điềm chỉ được đọc, không được chép — vì điềm bị chép thì người chép đã chọn tin nó là thật. Nàng đến học viện với một điềm duy nhất không dám chép: trong mọi vệt tương lai nàng nhìn được, người chết trước Nguyệt Thực không phải công chúa.
+
+### Quan hệ
+- **Thẩm Nguyệt Hoa (F01):** bản sao bị ẩn của nhau. Hai vật chứa nhìn nhau như nhìn gương lệch — công chúa được nuôi để chống lại số phận, nàng được nuôi để thừa hưởng nó. Lần đầu gặp, cả hai cùng chớp mắt đúng một nhịp, và cả hai giả vờ không để ý.
+- **Liễu Tịnh Nhan (F10):** thánh nữ trăm năm là người tự tay xây hệ thống Chính/Sách Nhi — và trăm năm chưa tha thứ cho mình. Bà dạy Tố Nguyệt Nhi đọc điềm, biết rõ nàng đang chép sổ tay, và chọn không lấy nó đi. Đó là lần đầu tiên bà cãi lệnh thần tự.
+- **Ninh An (M07):** người duy nhất nói chuyện với nàng như người bình thường — không khom người, không né tránh, không nhìn nàng như nhìn bình phong. Và là trang sổ tay trắng duy nhất: nàng không nhìn được điềm nào về cậu, như thể dòng máu ba trăm năm kia nuốt luôn cả các vệt tương lai.
+- **Diệp Linh Lung (F02):** con cáo của Thái hậu đánh hơi ra mùi thần tự trên người nàng ngày đầu tiên — và ngày thứ hai đã hiểu: hai vật chứa không nên đứng cạnh nhau, và triều đình chưa được biết chuyện này.
+- **Khương Tịch (M08):** giáo quan và Sách Nhi chỉ nói chuyện một lần, về trang sổ tay trắng. Ông nói: "Trang trắng là trang còn viết được." Nàng không biết ông đang nói về M07 hay về chính nàng.
+
+### Điểm mở cốt truyện
+Điềm nàng không dám chép nói rằng người chết trước Nguyệt Thực không phải công chúa — vậy thì là ai? Nếu là nàng, thần tự sẽ lấy công chúa thay *nàng*, và hệ thống Chính/Sách Nhi sẽ lộ ra ngoài sáng. Sổ tay ngày càng dày; mỗi trang là một tội với thần tự và một manh mối với Nguyệt Thực — cho đến ngày nàng tìm ra trang cần xé.
+
+### Bio
+> "Sách Nhi" của Nguyệt Thần Điện — vật chứa dự phòng cho Nguyệt Chủ, được gửi vào học viện để sống cạnh công chúa mình sẽ thay thế. Đôi mắt bạc của nàng nhìn thấy những vệt chưa xảy ra, và nàng đang lén viết lại điềm vào sổ tay.

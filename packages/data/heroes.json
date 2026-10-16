@@ -1814,5 +1814,186 @@
         }
       ]
     }
+  },
+  {
+    "id": "m12",
+    "name": "Cừ Trấn Nam",
+    "bio": "Trấn môn tướng quân cuối cùng của Nam Chiếu, mang danh \"kẻ mở cổng đầu hàng\" vào học viện tìm hoàng tử của mình. Danh dự là thứ người khác tước đi — nghĩa mới là thứ hắn tự giữ.",
+    "faction": "xichDien",
+    "archetype": "vanguard",
+    "attackStyle": "slash",
+    "rarity": "legendary",
+    "maxHp": 46,
+    "cardIds": [
+      "m12_giu_cong",
+      "m12_tran_mon_dao",
+      "m12_dong_giap",
+      "m12_ho_ve_lenh",
+      "m12_phan_cong",
+      "m12_tam_canh"
+    ],
+    "lockedCardIds": [
+      "m12_bat_dao",
+      "m12_nhat_kich",
+      "m12_mo_cong",
+      "m12_thiet_quan",
+      "m12_dia_chuyen",
+      "m12_van_quan"
+    ],
+    "branches": [
+      {
+        "name": "Bất Dao",
+        "cardIds": [
+          "m12_giu_cong",
+          "m12_dong_giap",
+          "m12_ho_ve_lenh",
+          "m12_tam_canh",
+          "m12_bat_dao",
+          "m12_dia_chuyen"
+        ]
+      },
+      {
+        "name": "Phục Quốc",
+        "cardIds": [
+          "m12_tran_mon_dao",
+          "m12_phan_cong",
+          "m12_nhat_kich",
+          "m12_mo_cong",
+          "m12_thiet_quan",
+          "m12_van_quan"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Cổng Đồng",
+      "description": "Mỗi lần Cừ Trấn Nam đỡ đòn cho đồng đội: nhận thêm 2 giáp.",
+      "counter": "hitsIntercepted",
+      "threshold": 4,
+      "constellationThreshold": 2,
+      "passive": {
+        "type": "interceptArmor",
+        "amount": 2
+      }
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "m12_tam_canh",
+      "plusCardId": "m12_tam_canh_plus"
+    },
+    "altLevelUp": {
+      "name": "Quốc Thù",
+      "description": "Khi thăng cấp: Khiêu Khích 2 vòng và nhận 1 Sức Mạnh. Đòn từ lá tấn công của Cừ Trấn Nam gây thêm 2 damage.",
+      "passive": {
+        "type": "attackDamageBonus",
+        "amount": 2
+      },
+      "onLevelUp": [
+        {
+          "type": "applyStatus",
+          "status": "taunt",
+          "amount": 2,
+          "to": "self"
+        },
+        {
+          "type": "applyStatus",
+          "status": "strength",
+          "amount": 1,
+          "to": "self"
+        }
+      ]
+    }
+  },
+  {
+    "id": "f13",
+    "name": "Tố Nguyệt Nhi",
+    "bio": "\"Sách Nhi\" của Nguyệt Thần Điện — vật chứa dự phòng cho Nguyệt Chủ, được gửi vào học viện để sống cạnh công chúa mình sẽ thay thế. Đôi mắt bạc của nàng nhìn thấy những vệt chưa xảy ra, và nàng đang lén viết lại điềm vào sổ tay.",
+    "faction": "huyenVu",
+    "archetype": "support",
+    "attackStyle": "moon",
+    "rarity": "epic",
+    "maxHp": 36,
+    "cardIds": [
+      "f13_quan_tuong",
+      "f13_diem_lanh",
+      "f13_diem_du",
+      "f13_nguyet_thi",
+      "f13_song_nguyet",
+      "f13_bach_dong"
+    ],
+    "lockedCardIds": [
+      "f13_nghich_menh",
+      "f13_so_tay",
+      "f13_te_le",
+      "f13_diem_phan",
+      "f13_trang_ran",
+      "f13_ung_diem"
+    ],
+    "branches": [
+      {
+        "name": "Thiên Sách",
+        "cardIds": [
+          "f13_quan_tuong",
+          "f13_diem_lanh",
+          "f13_song_nguyet",
+          "f13_so_tay",
+          "f13_te_le",
+          "f13_ung_diem"
+        ]
+      },
+      {
+        "name": "Nghịch Mệnh",
+        "cardIds": [
+          "f13_nguyet_thi",
+          "f13_diem_du",
+          "f13_bach_dong",
+          "f13_nghich_menh",
+          "f13_diem_phan",
+          "f13_trang_ran"
+        ]
+      }
+    ],
+    "levelUp": {
+      "name": "Bạch Đồng",
+      "description": "Khi thăng cấp: đồng đội nhận 3 giáp. Mỗi lần Tố Nguyệt Nhi Chiêm Bài: xem thêm 1 lá.",
+      "counter": "cardsChosen",
+      "threshold": 5,
+      "constellationThreshold": 3,
+      "passive": {
+        "type": "chooseCardExtraLook",
+        "amount": 1
+      },
+      "onLevelUp": [
+        {
+          "type": "gainArmor",
+          "amount": 3,
+          "to": "allAllies"
+        }
+      ]
+    },
+    "art": {
+      "portrait": "",
+      "levelUp": ""
+    },
+    "signature": {
+      "cardId": "f13_song_nguyet",
+      "plusCardId": "f13_song_nguyet_plus"
+    },
+    "altLevelUp": {
+      "name": "Sổ Vô Danh",
+      "description": "Khi thăng cấp: đẩy Nguyệt Luân 1 pha. Mỗi lần lá của Tố Nguyệt Nhi chuyển pha: mọi kẻ địch Suy Yếu 1 vòng.",
+      "passive": {
+        "type": "moonShiftWeakensEnemies",
+        "amount": 1
+      },
+      "onLevelUp": [
+        {
+          "type": "shiftMoon",
+          "amount": 1
+        }
+      ]
+    }
   }
 ]

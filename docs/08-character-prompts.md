@@ -239,6 +239,20 @@ determined young commoner scholar, sharp focused eyes, neatly tied black hair wi
 quiet expressionless young man, still calm eyes that never blink, neat dark hair with simple pin, slightly worn Xích Diên academy uniform in crimson-black with silver thread, seven thin metal leaf-blades stitched inside his sleeve catching light, ink-stained gloves, standing unnaturally still while ribbons and papers flutter past, long shadow stretching wrong direction, dusk courtyard soft orange background, crimson grey and ink-black palette
 ```
 
+### M12 — Cừ Trấn Nam 巨鎮南
+**Độ hiếm:** Legendary · **Viện:** Xích Diên · **Vai trò card:** Vanguard / Trấn môn
+
+- **Tính cách:** Trầm như núi, nói ít đến mức người ta tưởng câm; khi đã mở miệng thì từng chữ nặng như lời thề. Không bao giờ ngồi quay lưng vào cửa.
+- **Thời trang:** Giáp cũ Nam Chiếu sơn lại màu đồng đen, cánh vai mòn lộ đồng thau; thanh đại đao mẻ vác trần sau lưng; trên ngực áo một vết khâu chỉ vàng — huy chương cũ cắt làm đôi.
+- **Bối cảnh:** Bến đò hoang ngoài kinh thành, trăng lặn nghiêng lưỡi đao.
+- **Tiểu sử:** Trấn môn tướng quân cuối cùng của Nam Chiếu — người đứng ở cổng Nam đêm hạ thành. Triều đình ghi công hắn là "kẻ mở cổng đầu hàng"; sự thật là hắn mở cổng để đưa đồ cúng và thân vệ hoàng tử ra ngoài theo mật chỉ, rồi một mình giữ cổng ba canh giờ. Ba mươi bảy tuổi, hắn thi công danh vào Xích Diên để tìm Đoàn Lạc — để quỳ nhận tội, hoặc để rút đao tìm kẻ đã đổ oan.
+- **Quan hệ:** Người **Đoàn Lạc (M09)** vừa chờ vừa sợ; đáp lời hỏi của **Điệp Vũ (F11)** — hai người đứng hai đầu cánh cổng đêm ấy; được **Hoắc Liệt (M05)** tôn trọng lạ thường — hai "con tin của chiến tranh"; **Khương Tịch (M08)** cho hắn vào lớp lịch sử cấm.
+- **Tư tưởng:** "Danh dự là thứ người khác tặng và người khác tước. Nghĩa mới là thứ mình tự giữ."
+
+```
+towering middle-aged war veteran, weathered scarred face with one grey streak in tied hair, heavy black-copper Nam Chiếu armor repainted dark, chipped great saber carried bare on back, golden thread stitches on chest where an old medal was cut away, standing between viewer and moonlit gate in half-guard stance, lone ferry pier at dusk, embers and falling leaves in wind, bronze black and muted crimson palette, ancient Chinese wuxia style
+```
+
 ---
 
 ## 4. Nhân vật NỮ
@@ -433,6 +447,20 @@ graceful female blade-dancer, determined sorrowful eyes half-lowered, long dark 
 stern elegant female imperial inspector, cold precise eyes behind calm, neat black hair in official coiled bun with square jade seal hairpiece, indigo censor hanfu with silver-edged sleeves and rigid court sash, iron brush pen and black leather dossier in hand, glowing ink verdict characters floating around like talismans, stacks of documents under moonlight window light, strict symmetrical composition, indigo silver and ink-black palette
 ```
 
+### F13 — Tố Nguyệt Nhi 素月兒
+**Độ hiếm:** Epic · **Viện:** Huyền Vũ · **Vai trò card:** Chiêm bài / Điềm báo
+
+- **Tính cách:** Nhẹ nhàng chậm rãi như người vừa thức giấc, hay nhìn vào khoảng không; nói những câu bâng quơ mà ba ngày sau mới hiểu. Không giận ai — người đã thấy kết cục khó giận được diễn viên.
+- **Thời trang:** Y phục thần tự Nguyệt Thần Điện nhuộm thủy thanh, khăn trăng che nửa mắt — đôi mắt bạc bẩm sinh trông như mù; chuỗi ngọc tàn nguyệt quanh cổ tay, mỗi hạt một điềm đã ứng nghiệm.
+- **Bối cảnh:** Cầu đá trắng băng qua ao sen đêm, bóng trăng trong nước nứt đôi.
+- **Tiểu sử:** "Sách Nhi" của Nguyệt Thần Điện — vật chứa dự phòng cho Nguyệt Chủ: nếu công chúa chết trước Nguyệt Thực, nghi lễ sẽ lấy nàng thay. Nàng được gửi vào Vọng Nguyệt để *sống cạnh* người mình sẽ thay thế, và lén viết lại các điềm ra sổ tay — điều cấm kỵ nhất của thần tự.
+- **Quan hệ:** Bản sao bị ẩn của **Thẩm Nguyệt Hoa (F01)** — hai vật chứa nhìn nhau như nhìn gương lệch; học trò cũ của **Liễu Tịnh Nhan (F10)** — người tự tay xây hệ thống Chính/Sách Nhi; **Ninh An (M07)** là người duy nhất nói chuyện với nàng như người bình thường — và là trang sổ tay trắng duy nhất; bị **Diệp Linh Lung (F02)** dò xét.
+- **Tư tưởng:** "Điềm báo không nói tương lai cố định — nó nói cái giá đã được trả trước. Ta đang tìm xem ai trả."
+
+```
+gentle blind-seeming oracle girl, half-lidded silver eyes behind thin moon-veil, pale silver-white hair in loose temple braid, water-blue ceremonial hanfu of the Moon Temple with cracked-moon jade beads on wrist, holding a small hand-copied omen booklet, standing on white stone bridge over night lotus pond, moon reflection in water split in two halves, floating omen talismans and paper slips, serene ominous mood, pale aqua silver and moon-white palette
+```
+
 ---
 
 ## 5. Sơ đồ quan hệ tóm tắt
@@ -450,6 +478,7 @@ stern elegant female imperial inspector, cold precise eyes behind calm, neat bla
 | M09 Đoàn Lạc | F06 | Triều đình | — |
 | M10 Chu Quyết | M03, M07 | M01 | Thư từ với F07 |
 | M11 Thất Diệp | M07 | M06 | Cái tên đã bị bôi |
+| M12 Cừ Trấn Nam | M05 | Triều đình | Mang danh "kẻ mở cổng" — tìm M09 |
 | F01 Thẩm Nguyệt Hoa | F02, F10 | F08 | Hôn ước M01 |
 | F02 Diệp Linh Lung | F01, F06 | M06 | Mật thám của Thái hậu |
 | F03 Tần Sương | F05, F04 | M05, F08 | Báo thù diệt môn |
@@ -462,12 +491,13 @@ stern elegant female imperial inspector, cold precise eyes behind calm, neat bla
 | F10 Liễu Tịnh Nhan | M08, F09, F01 | — | Biết cái giá của Nguyệt Chủ |
 | F11 Điệp Vũ | F03 | F06 | Tìm M09 mà không dám hỏi |
 | F12 Hứa Công Chúc | — | F02 | Hồ sơ về M01 và M10 |
+| F13 Tố Nguyệt Nhi | M07, F10 | — | Sách Nhi — bản dự phòng của F01 |
 
 ---
 
 ## 6. Phân bổ độ hiếm (cho hệ thống gacha)
 
-- **Legendary (7):** M01, M05, M08, M11, F01, F08, F10 → mỗi nhân vật có thể làm 1 banner giới hạn riêng
-- **Epic (9):** M02, M04, M06, M09, F02, F03, F06, F11, F12
+- **Legendary (8):** M01, M05, M08, M11, M12, F01, F08, F10 → mỗi nhân vật có thể làm 1 banner giới hạn riêng
+- **Epic (10):** M02, M04, M06, M09, F02, F03, F06, F11, F12, F13
 - **Rare (6):** M03, M07, M10, F04, F05, F07
 - **Common (1, có nâng cấp):** F09

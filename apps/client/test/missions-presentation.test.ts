@@ -28,8 +28,8 @@ describe("mission presentation", () => {
   it("derives collection progress and wording from the actual hero definitions", () => {
     const p = createProfile(data); p.heroes.unknown = { ...p.heroes.m05! };
     const row = achievementRows(data, p).find(r => r.id === "a_all_heroes")!;
-    expect(row.progress).toEqual({ value: 3, goal: 23 });
-    expect(row.text).toBe("Sở hữu toàn bộ 23 Hero.");
+    expect(row.progress).toEqual({ value: 3, goal: 25 });
+    expect(row.text).toBe("Sở hữu toàn bộ 25 Hero.");
     const smaller = { ...data, heroes: { m05: data.heroes.m05!, f04: data.heroes.f04! } };
     expect(achievementRows(smaller, p).find(r => r.id === "a_all_heroes")?.progress).toEqual({ value: 2, goal: 2 });
   });

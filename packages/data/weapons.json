@@ -4547,5 +4547,265 @@
     ]
    }
   ]
+ },
+ {
+  "id": "w_tran_mon_dao",
+  "name": "Trấn Môn Đao",
+  "rarity": "legendary",
+  "attackStyle": "slash",
+  "signatureHeroId": "m12",
+  "text": "Đầu trận người mang nhận 6 giáp (Cừ Trấn Nam: 10 giáp và Khiêu Khích 1 vòng).",
+  "card": {
+   "name": "Môn Hạm",
+   "cost": 2,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "ward"
+   ],
+   "target": "none",
+   "effects": [
+    {
+     "type": "applyStatus",
+     "status": "taunt",
+     "amount": 1,
+     "to": "self"
+    },
+    {
+     "type": "gainArmor",
+     "amount": 5,
+     "to": "self"
+    }
+   ],
+   "text": "Khiêu Khích 1 vòng. Nhận 5 giáp."
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "combatStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "gainArmor",
+      "amount": 6,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "combatStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "gainArmor",
+      "amount": 10,
+      "to": "self"
+     },
+     {
+      "type": "applyStatus",
+      "status": "taunt",
+      "amount": 1,
+      "to": "self"
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Môn Hạm nhận 7 giáp.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "taunt",
+       "amount": 1,
+       "to": "self"
+      },
+      {
+       "type": "gainArmor",
+       "amount": 7,
+       "to": "self"
+      }
+     ],
+     "text": "Khiêu Khích 1 vòng. Nhận 7 giáp."
+    }
+   },
+   {
+    "text": "Môn Hạm còn 1 Nguyệt Lực.",
+    "card": {
+     "cost": 1
+    }
+   },
+   {
+    "text": "Môn Hạm Khiêu Khích 2 vòng.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "taunt",
+       "amount": 2,
+       "to": "self"
+      },
+      {
+       "type": "gainArmor",
+       "amount": 7,
+       "to": "self"
+      }
+     ],
+     "text": "Khiêu Khích 2 vòng. Nhận 7 giáp."
+    }
+   },
+   {
+    "text": "Môn Hạm thêm Phản Đòn 2.",
+    "card": {
+     "effects": [
+      {
+       "type": "applyStatus",
+       "status": "taunt",
+       "amount": 2,
+       "to": "self"
+      },
+      {
+       "type": "gainArmor",
+       "amount": 7,
+       "to": "self"
+      },
+      {
+       "type": "applyStatus",
+       "status": "reflect",
+       "amount": 2,
+       "to": "self"
+      }
+     ],
+     "text": "Khiêu Khích 2 vòng. Nhận 7 giáp và Phản Đòn 2."
+    }
+   }
+  ]
+ },
+ {
+  "id": "w_bach_dong_kinh",
+  "name": "Bạch Đồng Kính",
+  "rarity": "epic",
+  "attackStyle": "moon",
+  "signatureHeroId": "f13",
+  "text": "Đầu trận: đẩy Nguyệt Luân 1 pha (Tố Nguyệt Nhi: thêm 2 Nguyệt Lực).",
+  "card": {
+   "name": "Di Tích Nguyệt",
+   "cost": 1,
+   "copies": 2,
+   "type": "skill",
+   "tags": [
+    "moon"
+   ],
+   "target": "none",
+   "effects": [
+    {
+     "type": "shiftMoon",
+     "amount": 1
+    },
+    {
+     "type": "chooseCard",
+     "look": 2
+    }
+   ],
+   "text": "Đẩy Nguyệt Luân 1 pha. Chiêm Bài 2."
+  },
+  "hooks": [
+   {
+    "on": {
+     "type": "combatStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "shiftMoon",
+      "amount": 1
+     }
+    ]
+   }
+  ],
+  "signatureHooks": [
+   {
+    "on": {
+     "type": "combatStart"
+    },
+    "actor": "wearer",
+    "effects": [
+     {
+      "type": "shiftMoon",
+      "amount": 1
+     },
+     {
+      "type": "gainMoonPower",
+      "amount": 2
+     }
+    ]
+   }
+  ],
+  "refinement": [
+   {
+    "text": "Di Tích Nguyệt Chiêm Bài 3.",
+    "card": {
+     "effects": [
+      {
+       "type": "shiftMoon",
+       "amount": 1
+      },
+      {
+       "type": "chooseCard",
+       "look": 3
+      }
+     ],
+     "text": "Đẩy Nguyệt Luân 1 pha. Chiêm Bài 3."
+    }
+   },
+   {
+    "text": "Di Tích Nguyệt còn 0 Nguyệt Lực.",
+    "card": {
+     "cost": 0
+    }
+   },
+   {
+    "text": "Di Tích Nguyệt Chiêm Bài 4.",
+    "card": {
+     "effects": [
+      {
+       "type": "shiftMoon",
+       "amount": 1
+      },
+      {
+       "type": "chooseCard",
+       "look": 4
+      }
+     ],
+     "text": "Đẩy Nguyệt Luân 1 pha. Chiêm Bài 4."
+    }
+   },
+   {
+    "text": "Di Tích Nguyệt thêm 1 Nguyệt Lực.",
+    "card": {
+     "effects": [
+      {
+       "type": "shiftMoon",
+       "amount": 1
+      },
+      {
+       "type": "gainMoonPower",
+       "amount": 1
+      },
+      {
+       "type": "chooseCard",
+       "look": 4
+      }
+     ],
+     "text": "Đẩy Nguyệt Luân 1 pha. Chiêm Bài 4. Nhận 1 Nguyệt Lực."
+    }
+   }
+  ]
  }
 ]

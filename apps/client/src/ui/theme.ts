@@ -91,6 +91,8 @@ export const OWNER_COLORS: Record<string, number> = {
   m11: 0xa05060,
   f11: 0x58b090,
   f12: 0x3f4f9f,
+  m12: 0x8a6242,
+  f13: 0xa8c8d8,
 };
 
 export const STATUS_LABELS: Record<StatusId, string> = {

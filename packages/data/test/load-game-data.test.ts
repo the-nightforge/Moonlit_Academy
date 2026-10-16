@@ -54,8 +54,8 @@ describe("loadGameData", () => {
   it("loads the real data files into GameData keyed by id", () => {
     const data = loadGameData();
 
-    expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02", "m01", "m02", "m03", "m04", "f01", "m07", "m08", "m10", "f08", "f05", "f06", "f07", "f09", "f10", "m09", "m11", "f11", "f12"]);
-    expect(Object.keys(data.cards)).toHaveLength(309); // 276 hero + 9 bond + 23 constellation-4 plus cards + 1 token
+    expect(Object.keys(data.heroes)).toEqual(["m05", "f04", "m06", "f03", "f02", "m01", "m02", "m03", "m04", "f01", "m07", "m08", "m10", "f08", "f05", "f06", "f07", "f09", "f10", "m09", "m11", "f11", "f12", "m12", "f13"]);
+    expect(Object.keys(data.cards)).toHaveLength(335); // 302 hero + 9 bond + 25 constellation-4 plus cards + 1 token
     expect(Object.keys(data.enemies)).toEqual([
       "puppet_guard", "shadow_fox", "moon_ape", "book_wraith", "black_guard", "fox_king", "eclipse_lord",
       "thanh_loan_thi_quan", "huyen_vu_thi_quan", "bach_lo_thi_quan", "khao_hach_chi_linh",
@@ -395,9 +395,9 @@ describe("economyConfig", () => {
 
 
 describe("weapons, moon relics and second level-up forms", () => {
-  it("loads 28 weapons with 4 refinements and 16 relics with 5 resonance levels; every hero has a second form", () => {
+  it("loads 30 weapons with 4 refinements and 16 relics with 5 resonance levels; every hero has a second form", () => {
     const data = loadGameData();
-    expect(Object.keys(data.weapons)).toHaveLength(28);
+    expect(Object.keys(data.weapons)).toHaveLength(30);
     expect(Object.keys(data.relics)).toHaveLength(16);
     expect(Object.values(data.weapons).every((weapon) => weapon.refinement.length === 4)).toBe(true);
     expect(Object.values(data.relics).every((relic) => relic.resonance.length === 5)).toBe(true);
@@ -405,12 +405,12 @@ describe("weapons, moon relics and second level-up forms", () => {
     expect(data.metaConfig.maxRelics).toBe(2);
     expect(data.economyConfig.gearDupeMoonStar).toEqual({ legendary: 10, epic: 4, rare: 1, common: 1 });
     const count = (rarity: string) => Object.values(data.weapons).filter((weapon) => weapon.rarity === rarity).length;
-    expect([count("legendary"), count("epic"), count("rare")]).toEqual([8, 10, 10]);
+    expect([count("legendary"), count("epic"), count("rare")]).toEqual([9, 11, 10]);
   });
 
-  it("T313: 28 weapons with one signature weapon per hero at the hero's rarity; 16 relics; banners list every item", () => {
+  it("T313: 30 weapons with one signature weapon per hero at the hero's rarity; 16 relics; banners list every item", () => {
     const data = loadGameData();
-    expect(Object.keys(data.weapons)).toHaveLength(28);
+    expect(Object.keys(data.weapons)).toHaveLength(30);
     expect(Object.keys(data.relics)).toHaveLength(16);
     for (const hero of Object.values(data.heroes)) {
       const signature = Object.values(data.weapons).filter((weapon) => weapon.signatureHeroId === hero.id);
