@@ -79,7 +79,7 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
     "SELECT profile_json, rev FROM profiles WHERE account_id = ?",
   );
   const writeProfile = db.prepare(
-    "UPDATE profiles SET profile_json = ?, rev = ?, updated_at = ? WHERE account_id = ?",
+    "UPDATE profiles SET profile_json = ?, rev = ?, updated_at = ? WHERE account_id = ? AND rev = ?",
   );
 
   async function readProfile(accountId: number): Promise<{ profile: Profile; rev: number }> {
@@ -103,7 +103,8 @@ export function createContext(deps: AppDeps, dataVersion: string): AppContext {
       if (!result.ok) throw new HttpError(400, result.error);
       const { ok: _ok, profile, ...extra } = result;
       const rev = current.rev + 1;
-      await writeProfile.run(JSON.stringify(profile), rev, clock(), accountId);
+      const written = await writeProfile.run(JSON.stringify(profile), rev, clock(), accountId, expected);
+      if (written.changes !== 1) throw new HttpError(409, "stale profile", await readProfile(accountId));
       return { ...extra, profile, rev } as unknown as { profile: Profile; rev: number } & T;
     });
   }

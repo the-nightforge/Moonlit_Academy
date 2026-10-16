@@ -93,6 +93,12 @@ export function applyStoryResult(
   won: boolean,
 ): { ok: true; profile: Profile; rewards: StoryRewards } {
   const stage = data.storyStages[setup.stageId];
+  if (won && stage && profile.firstLesson && !profile.firstLesson.practiced
+    && setup.stageId !== Object.values(data.storyArcs)[0]?.stageIds[0]
+    && setup.deckCardIds.includes(profile.firstLesson.cardId)) {
+    profile = clone(profile);
+    profile.firstLesson!.practiced = true;
+  }
   if (!won || !stage || profile.story.cleared.includes(stage.id)) {
     return { ok: true, profile, rewards: { ...NO_REWARDS, gains: [] } };
   }

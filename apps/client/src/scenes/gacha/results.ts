@@ -4,7 +4,7 @@ import { session } from "../../session";
 import { roundedPanel } from "../../ui/rounded-panel";
 import { CURRENCY_LABELS, RARITY_COLORS, visibleWorld } from "../../ui/theme";
 import type { GachaScene } from "../gacha-scene";
-import { coverCrop, itemName, outcomeText, type ResultCard } from "./shared";
+import { itemName, outcomeText, type ResultCard } from "./shared";
 
 /**
  * The summon result flow: meteor cinematic → sequential card flip → footer.
@@ -167,16 +167,14 @@ export class GachaResults {
     const hasEquipmentArt = !hero && s.textures.exists(equipmentKey);
     const artKey = hero ? `heroes:${result.itemId}` : hasEquipmentArt ? equipmentKey : weapon ? "gacha:weapon_banner" : "gacha:relic_banner";
     const art = s.image(root, artKey, 0, 0, w - 8, h - 8);
-    if (art) {
-      if (!hero) coverCrop(art, w - 8, h - 8); // square equipment art -> cover-crop to 2:3
-    } else s.image(root, hero ? "ui:star" : "ui:gear", 0, -20, 60, 60);
+    if (!art) s.image(root, hero ? "ui:star" : "ui:gear", 0, -20, 60, 60);
     s.audio?.play(result.rarity === "legendary" ? "legendary" : result.rarity === "epic" ? "epic" : result.rarity === "rare" ? "rare" : "flip");
-    const frameKey = `gacha:frame_${result.rarity}`;
-    if (s.textures.exists(frameKey)) s.image(root, frameKey, 0, 0, w, h);
+
     // Rarity shows as a border around the art instead of a floating badge.
     const artBorder = s.add.graphics();
     artBorder.lineStyle(2, color, 0.9);
-    artBorder.strokeRoundedRect(-w / 2 + 5, -h / 2 + 5, w - 10, h - 10, 10);
+    const frameW = art ? art.displayWidth + 2 : w - 10, frameH = art ? art.displayHeight + 2 : h - 10;
+    artBorder.strokeRoundedRect(-frameW / 2, -frameH / 2, frameW, frameH, 0);
     root.add(artBorder);
     if (result.epitomizedHit) {
       const tagW = w * 0.52, tagH = 16, tagY = h / 2 - 76;

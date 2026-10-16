@@ -340,8 +340,8 @@ function collectCrossCheckErrors(parsed: z.infer<typeof rawGameDataSchema>): str
   }
 
   const byTier = (tier: string) => encounters.filter((encounter) => encounter.tier === tier);
-  if (byTier("boss").length !== 1) {
-    errors.push(`encounters: expected exactly 1 boss encounter, got ${byTier("boss").length}`);
+  if (byTier("boss").length < 1) {
+    errors.push("encounters: expected at least 1 boss encounter");
   }
   if (!byTier("normal").some((encounter) => (encounter.minFloor ?? 1) <= 1)) {
     errors.push(`encounters: need a normal encounter with minFloor 1`);

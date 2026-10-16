@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { framedImage } from "../ui/contained-art";
 import type { Rarity } from "rules";
 import { featuredEntry, featuredRotationEnd, weekKey } from "rules";
 import manifest from "virtual:assets-manifest";
@@ -14,7 +15,7 @@ import { addText, alertModal, isModalOpen, showToast } from "../ui/widgets";
 import { GachaDrawer } from "./gacha/drawer";
 import { GachaModals } from "./gacha/modals";
 import { GachaResults } from "./gacha/results";
-import { coverCrop, itemName, percent, splashKey, type PullReply } from "./gacha/shared";
+import { itemName, percent, splashKey, type PullReply } from "./gacha/shared";
 
 /**
  * Moon altar presentation. Profile changes remain authoritative server replies.
@@ -227,30 +228,15 @@ export class GachaScene extends Phaser.Scene {
     // Banner art window (~70% width) over the altar backdrop.
     const ART = { left: 24, top: 96, w: 880, h: 528 };
     const artCx = ART.left + ART.w / 2, artCy = ART.top + ART.h / 2;
-    // Splash + scrim share one container clipped by a single Mask filter:
-    // GeometryMask only works in the Canvas renderer, so WebGL clips via an
-    // external (screen-space) mask — the window stays fixed while the splash
-    // breathes behind it. The crop keeps the art inside the rect regardless.
+    // Keep the whole source visible, with its frame fitted to the displayed image.
     const artGroup = this.add.container(0, 0);
     this.root.add(artGroup);
-    const splash = this.image(artGroup, splashKey(this, banner, featured), artCx, artCy, ART.w, ART.h);
-    if (splash) {
-      coverCrop(splash, ART.w, ART.h);
-      if (!this.reducedMotion) {
-        this.artTween = this.tweens.add({ targets: splash, scaleX: splash.scaleX * 1.02, scaleY: splash.scaleY * 1.02, duration: 9000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-      }
-    }
+    framedImage(this, artGroup, splashKey(this, banner, featured), artCx, artCy, ART.w, ART.h, 1);
     const scrim = this.add.graphics();
     scrim.fillGradientStyle(0x050c18, 0x050c18, 0x050c18, 0x050c18, 0, 0, 0.88, 0.88);
     scrim.fillRect(ART.left, 400, ART.w, ART.top + ART.h - 400);
     artGroup.add(scrim);
-    const maskG = this.add.graphics();
-    maskG.fillStyle(0xffffff).fillRoundedRect(ART.left, ART.top, ART.w, ART.h, 16);
-    maskG.setVisible(false);
-    this.root.add(maskG);
-    artGroup.enableFilters();
-    artGroup.filters!.external.addMask(maskG, false, this.cameras.main);
-    this.root.add(roundedPanel(this, artCx, artCy, ART.w, ART.h, 0x000000, 0, 0x9a8965, 16));
+
 
     this.root.add(this.add.rectangle(640, 43, view.w, 86, 0x091425, 0.92));
     this.iconButton(this.root, 52, 42, "nav_back", "Quay lại", "btn:back", () => this.back(), enabled);

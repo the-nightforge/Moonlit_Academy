@@ -5,6 +5,7 @@ import "./story.css";
 
 export interface StoryViewState {
   data: GameData; progress: StoryProgress | null; online: boolean; loading: boolean; error: string; notice: string;
+  lesson?: HTMLElement;
 }
 const statusText = { cleared: "Đã qua", open: "Đang mở", locked: "Chưa mở" };
 const statusIcon = { cleared: "check", open: "mode_story", locked: "lock" };
@@ -16,7 +17,7 @@ export class StoryView {
   private arcId = "";
   private stageId = "";
   private state: StoryViewState | null = null;
-  constructor(private readonly actions: { back: () => void; retry: () => void; start: (id: string) => void }) {
+  constructor(private readonly actions: { back: () => void; retry: () => void; start: (id: string) => void; read?: (id: string, part: "before" | "after") => void; lesson?: () => void }) {
     this.shell.className = "vn-story";
     this.shell.setAttribute("aria-label", "Cốt Truyện");
     document.body.style.overflow = "hidden";
@@ -34,8 +35,10 @@ export class StoryView {
       }
       if (action === "start" && this.state.online && !this.state.loading && !this.state.error && this.state.progress) {
         const row = storyProgressModel(this.state.data, this.state.progress, this.arcId, this.stageId).stages.find(row => row.stage.id === this.stageId);
-        if (row?.status === "open") this.actions.start(this.stageId);
+        if (row?.status === "open" || row?.status === "cleared") this.actions.start(this.stageId);
       }
+      if (action === "read" && this.state.progress?.cleared.includes(this.stageId)) this.actions.read?.(this.stageId, button.dataset.read as "before" | "after");
+      if (action === "lesson") this.actions.lesson?.();
     });
   }
   render(state: StoryViewState, focusControl?: string) {
@@ -49,7 +52,8 @@ export class StoryView {
     else if (state.loading) body = '<section class="st-empty" role="status"><div class="st-loading"></div><p>Đang tải tiến độ…</p></section>';
     else if (state.error) body = `<section class="st-empty" role="alert"><h2>Chưa tải được tiến độ</h2><p>${esc(state.error)}</p><button data-action="retry" data-control="retry">${icon("action_reset")}Thử lại</button></section>`;
     else if (state.progress) body = this.journey(state);
-    this.shell.innerHTML = `<div class="st-shell">${header}${state.notice ? `<p class="st-notice" role="status">${esc(state.notice)}</p>` : ""}${body}</div>`;
+    this.shell.innerHTML = `<div class="st-shell">${header}${state.notice ? `<p class="st-notice" role="status">${esc(state.notice)}</p>` : ""}<div class="st-lesson-host"></div>${body}</div>`;
+    if (state.lesson) this.shell.querySelector(".st-lesson-host")!.append(state.lesson);
     if (focus) Array.from(this.shell.querySelectorAll<HTMLButtonElement>("[data-control]")).find(node => node.dataset.control === focus)?.focus({ preventScroll: true });
     this.shell.scrollTop = scroll;
   }
@@ -75,7 +79,7 @@ export class StoryView {
     const reward = stage.firstClear;
     const rewards = [["cur_moonJade", "Nguyệt Ngọc", reward.moonJade], ["cur_darkIron", "Huyền Thiết", reward.darkIron], ["nav_mastery", "Kinh nghiệm Tu Luyện", reward.masteryXp]] as const;
     const loot = rewards.filter(([, , value]) => value).map(([key, label, value]) => `<span class="st-loot">${icon(key, label)}<strong>${value}</strong></span>`).join("");
-    const button = row.status === "open" ? `<button class="st-start" data-action="start" data-control="start" aria-label="Tiếp tục vào màn ${esc(stage.name)}">${icon("mode_story")}Tiếp tục</button>`
+    const button = row.status !== "locked" ? `<button class="st-start" data-action="start" data-control="start" aria-label="${row.status === "cleared" ? "Thử thách lại" : "Tiếp tục vào"} màn ${esc(stage.name)}">${icon("mode_story")}${row.status === "cleared" ? "Thử thách lại" : "Tiếp tục"}</button>${row.status === "cleared" ? `<div class="st-read-actions"><span>Xem thoại</span><button data-action="read" data-read="before" data-control="read-before">Trước trận</button><button data-action="read" data-read="after" data-control="read-after">Sau trận</button></div>` : ""}`
       : `<button class="st-start" disabled>${icon(statusIcon[row.status])}${statusText[row.status]}</button>`;
     const arc = state.data.storyArcs[stage.arcId];
     const chapterDone = arc?.stageIds.every(id => state.progress?.cleared.includes(id));

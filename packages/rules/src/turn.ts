@@ -44,6 +44,7 @@ export function startPlayerTurn(
     (hero) => hero.alive && hasStatus(hero, "regen"),
   );
   for (const hero of heroesOf(state, player.index)) {
+    delete hero.ownAttackCardsThisTurn;
     if (!hero.alive) continue;
     if (anyAllyRegen) bumpCounter(data, hero, "turnsWithAllyRegen", 1);
     hero.firstCardDiscountUsedThisTurn = false;

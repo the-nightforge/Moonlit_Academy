@@ -1,3 +1,4 @@
+import { preferredAssetFiles } from "./asset-files.ts";
 import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -19,11 +20,7 @@ function assetsManifest(): Plugin {
       for (const dir of readdirSync(root, { withFileTypes: true })) {
         if (!dir.isDirectory()) continue;
         const files: Record<string, string> = {};
-        for (const file of readdirSync(join(root, dir.name))) {
-          if (file.startsWith(".") || !/\.(png|jpe?g|webp|svg)$/i.test(file)) continue;
-          const key = file.replace(/\.[^.]+$/, "");
-          // Prefer raster art (webp) while retaining any original SVG source.
-          if (file.endsWith(".svg") && files[key]?.endsWith(".webp")) continue;
+        for (const [key,file] of Object.entries(preferredAssetFiles(readdirSync(join(root, dir.name))))) {
           files[key] = `/assets/${dir.name}/${file}`;
         }
         manifest[dir.name] = files;

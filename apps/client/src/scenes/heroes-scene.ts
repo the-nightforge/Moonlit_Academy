@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { EquipmentControls } from "../ui/equipment-controls";
+import type { ButtonOptions } from "../ui/widgets";
 import { framedImage } from "../ui/contained-art";
 import { displayText } from "../ui/display-text";
 import type { GameData } from "rules";
@@ -12,7 +14,7 @@ import { cardArtCandidates, drawCardFace, roundedArtTexture } from "../ui/combat
 import { filterHeroes, heroLevelUpCondition, HERO_RARITY_LABELS, HERO_ROLE_LABELS, initialHeroId, rosterPage, type HeroFilters } from "../ui/heroes-presentation";
 import { roundedPanel } from "../ui/rounded-panel";
 import { COLORS, CONSTELLATION_TEXT, CURRENCY_LABELS, FACTION_LABELS, RARITY_COLORS, RENDER_SCALE, TEXT_BASE, useDesignCamera, visibleWorld } from "../ui/theme";
-import { addButton, addText, isModalOpen } from "../ui/widgets";
+import { addText, isModalOpen } from "../ui/widgets";
 
 type Hero = GameData["heroes"][string];
 type DetailTab = "overview" | "story" | "constellation" | "cards";
@@ -25,6 +27,7 @@ const defaults = (): HeroFilters => ({ query: "", ownership: "all", faction: "al
 
 /** Collection UI: art previews never change the server-authoritative form. */
 export class HeroesScene extends Phaser.Scene {
+  private controls!: EquipmentControls;
   private root!: Phaser.GameObjects.Container;
   private heroId = "";
   private focusedHeroId = "";
@@ -71,6 +74,7 @@ export class HeroesScene extends Phaser.Scene {
     this.formError = "";
     this.heroId = initialHeroId(Object.values(session.data.heroes), session.profile.heroes, this.heroId);
     this.root = this.add.container(0, 0);
+    this.controls = new EquipmentControls(this);
     this.game.canvas.tabIndex = 0;
     this.createFields();
     this.input.on("wheel", this.onWheel, this);
@@ -83,6 +87,7 @@ export class HeroesScene extends Phaser.Scene {
       this.input.keyboard?.off("keydown", this.onKey, this);
       this.scale.off(Phaser.Scale.Events.RESIZE, this.render, this);
       this.events.off(Phaser.Scenes.Events.UPDATE, this.syncFields, this);
+      this.controls.destroy();
       this.fields.forEach(field => field.element.remove());
       this.fields = [];
       this.fieldPlacement = "";
@@ -136,6 +141,7 @@ export class HeroesScene extends Phaser.Scene {
   }
   private syncFields() {
     const hidden = isModalOpen() || this.tooltipPinned;
+    this.controls?.sync(this.tooltipPinned, isModalOpen());
     for (const { element } of this.fields) {
       element.style.visibility = hidden ? "hidden" : "visible";
       if (element instanceof HTMLButtonElement) {
@@ -158,15 +164,21 @@ export class HeroesScene extends Phaser.Scene {
     }
   }
 
+  private accessibleButton(parent: Phaser.GameObjects.Container, x:number, y:number, width:number, label:string, action:()=>void, enabled=true, options:ButtonOptions={}) {
+    const names: Record<string,string> = { "‹":"Trang Hero trước", "›":"Trang Hero sau", "×":"Đóng chi tiết lá bài" };
+    return this.controls.button(parent,x,y,width,label,action,{ enabled, height:options.height, primary:options.variant==="primary", name:names[label]??label, id:`hero-action:${x}:${y}:${label.replace(/^✓ /, "")}`, pinned:this.tooltipPinned, clip:parent===this.detailContent?this.detailArea:undefined });
+  }
+
   private icon(parent: Phaser.GameObjects.Container, key: string, x: number, y: number, size: number) {
     if (this.textures.exists(`ui:${key}`)) framedImage(this,parent,`ui:${key}`,x,y,size,size,2);
   }
   private render() {
+    this.controls.clear();
     this.hideTooltip(); this.clearMask(); this.root.removeAll(true); this.scrollThumb = null; this.scrollArrows = [];
     const view = visibleWorld(this);
     if (this.textures.exists("backgrounds:home")) {const image=this.add.image(640,360,"backgrounds:home");image.setScale(Math.min(view.w/image.width,view.h/image.height));this.root.add(image);}
     this.root.add(this.add.rectangle(640, 360, view.w, view.h, COLORS.background, 0.8));
-    addButton(this, this.root, 90, 30, 140, "Quay lại", () => this.scene.start("deck-select"), true, { height: 40 });
+    this.accessibleButton(this.root, 90, 30, 140, "Quay lại", () => this.scene.start("deck-select"), true, { height: 40 });
     this.icon(this.root, "nav_back", 40, 30, 22);
     addText(this, this.root, 640, 30, "Kho Hero", 27, COLORS.text).setOrigin(0.5);
     ([["moonJade", session.profile.currencies.moonJade], ["moonStar", session.profile.currencies.moonStar], ["honor", session.profile.currencies.honor ?? 0]] as const).forEach(([id, value], index) => {
@@ -183,20 +195,20 @@ export class HeroesScene extends Phaser.Scene {
     if (!filtered.length) {
       addText(this, this.root, 302, 328, "Không tìm thấy Hero phù hợp", 17, COLORS.text).setOrigin(0.5);
       addText(this, this.root, 302, 356, "Thử tên khác hoặc bỏ điều kiện lọc", 13, MUTED).setOrigin(0.5);
-      addButton(this, this.root, 302, 402, 180, "Xóa bộ lọc", () => this.resetFilters(), true, { height: 40 });
+      this.accessibleButton(this.root, 302, 402, 180, "Xóa bộ lọc", () => this.resetFilters(), true, { height: 40 });
     }
     addText(this, this.root, 28, 648, `${filtered.length} Hero`, 14, MUTED);
-    addButton(this, this.root, 200, 666, 40, "‹", () => { this.page--; this.render(); }, range.page > 0, { height: 40 });
+    this.accessibleButton(this.root, 200, 666, 40, "‹", () => { this.page--; this.render(); }, range.page > 0, { height: 40 });
     for (let page = 0; page < range.pages; page++) {
       const x = 248 + page * 44, active = this.page === page;
       const button = this.add.rectangle(x, 666, 36, 40, active ? 0x344b68 : 0x17243b).setRounded(8).setStrokeStyle(1, active ? 0xc1ddf4 : 0x657590); this.root.add(button);
       addText(this, this.root, x, 666, String(page + 1), 14, active ? COLORS.text : MUTED).setOrigin(0.5);
       if (!active) { button.setInteractive({ useHandCursor: true }); button.on("pointerup", () => { this.page = page; this.render(); }); }
     }
-    addButton(this, this.root, 248 + range.pages * 44, 666, 40, "›", () => { this.page++; this.render(); }, range.page + 1 < range.pages, { height: 40 });
+    this.accessibleButton(this.root, 248 + range.pages * 44, 666, 40, "›", () => { this.page++; this.render(); }, range.page + 1 < range.pages, { height: 40 });
     const active = this.filters.query !== "" || this.filters.faction !== "all" || this.filters.ownership !== "all";
     if (active) {
-      addButton(this, this.root, 508, 666, 136, "Xóa lọc", () => this.resetFilters(), true, { height: 40 });
+      this.accessibleButton(this.root, 508, 666, 136, "Xóa lọc", () => this.resetFilters(), true, { height: 40 });
       const summary = [this.filters.query ? `Tên: ${this.filters.query}` : "", this.filters.ownership === "owned" ? "Đã sở hữu" : this.filters.ownership === "locked" ? "Chưa sở hữu" : "", this.filters.faction !== "all" ? FACTION_LABELS[this.filters.faction] : ""].filter(Boolean).join(" · ");
       this.fit(this.root, 28, 701, `Đang lọc: ${summary}`, 548, 12, MUTED);
     } else addText(this, this.root, 28, 701, "Badge có số: lượt mở lá · Phím mũi tên / Enter để chọn", 12, MUTED);
@@ -264,8 +276,8 @@ export class HeroesScene extends Phaser.Scene {
     this.art(this.root, `heroes:${hero.id}${this.previewUp ? "_up" : ""}`, 731, 406, 270, 444, 80);
     this.root.add(this.add.rectangle(731, 593, 270, 70, 0x101b30, 0.93));
     addText(this, this.root, 612, 565, "HÌNH NHÂN VẬT", 12, MUTED);
-    addButton(this, this.root, 659, 606, 110, this.previewUp ? "Thường" : "✓ Thường", () => { this.previewUp = false; this.render(); }, true, { height: 32 });
-    addButton(this, this.root, 795, 606, 126, this.previewUp ? "✓ Thăng cấp" : "Thăng cấp", () => { this.previewUp = true; this.render(); }, true, { height: 32 });
+    this.accessibleButton(this.root, 659, 606, 110, this.previewUp ? "Thường" : "✓ Thường", () => { this.previewUp = false; this.render(); }, true, { height: 32 });
+    this.accessibleButton(this.root, 795, 606, 126, this.previewUp ? "✓ Thăng cấp" : "Thăng cấp", () => { this.previewUp = true; this.render(); }, true, { height: 32 });
     const note = this.previewUp && owned?.levelUpForm === "alt" && owned.constellation >= 5 ? "Ảnh thăng cấp cơ bản · Dạng thứ hai chưa có ảnh riêng" : "Xem ảnh không thay đổi dạng đang dùng";
     this.root.add(this.add.text(608, 648, note, { ...TEXT_BASE, fontSize: "12px", color: MUTED, wordWrap: { width: 248 } }).setName("art-preview-note"));
   }
@@ -288,10 +300,7 @@ export class HeroesScene extends Phaser.Scene {
     this.root.add(this.add.rectangle(1070, 310, 332, 1, 0x475671));
     ([["overview", "Tổng quan"], ["story", "Cốt truyện"], ["constellation", "Tinh Hồn"], ["cards", "Lá chủ lực"]] as const).forEach(([tab, label], index) => {
       const x = 944 + index * 82;
-      const hit = this.add.rectangle(x, 311, 78, 34, 0x283c55, this.tab === tab ? 0.6 : 0).setRounded(8).setStrokeStyle(1,COLORS.panelBorder).setInteractive({ useHandCursor: true }); this.root.add(hit);
-      addText(this, this.root, x, 310, label, 14, this.tab === tab ? COLORS.text : MUTED).setOrigin(0.5);
-      if (this.tab === tab) this.root.add(this.add.rectangle(x, 328, 64, 2, 0xd0e7fc));
-      hit.on("pointerup", () => { if (isModalOpen() || this.tooltipPinned) return; this.tab = tab; this.detailScroll = 0; this.render(); });
+      this.controls.button(this.root,x,311,78,label,() => { this.tab=tab;this.detailScroll=0;this.render(); }, {height:34,role:"tab",selected:this.tab===tab,id:`hero-tab:${tab}`,name:`Chi tiết Hero: ${label}`});
     });
     this.detailArea = { ...DETAIL };
     this.detailContent = this.add.container(DETAIL.x, DETAIL.y); this.root.add(this.detailContent);
@@ -316,8 +325,8 @@ export class HeroesScene extends Phaser.Scene {
     } else if (this.tab === "constellation") {
       paragraph("CHỌN DẠNG THĂNG CẤP", 12, MUTED);
       const current = owned?.levelUpForm === "alt" && level >= 5 ? "alt" : "base";
-      addButton(this, this.detailContent, 77, y + 22, 154, `${current === "base" ? "✓ " : ""}${hero.levelUp.name}`, () => this.chooseForm("base"), !!owned && session.online && !this.busy, { height: 44, fontSize: 14 });
-      addButton(this, this.detailContent, 247, y + 22, 154, `${current === "alt" ? "✓ " : ""}${hero.altLevelUp.name}`, () => this.chooseForm("alt"), !!owned && level >= 5 && session.online && !this.busy, { height: 44, fontSize: 14 });
+      this.accessibleButton(this.detailContent, 77, y + 22, 154, `${current === "base" ? "✓ " : ""}${hero.levelUp.name}`, () => this.chooseForm("base"), !!owned && session.online && !this.busy, { height: 44, fontSize: 14 });
+      this.accessibleButton(this.detailContent, 247, y + 22, 154, `${current === "alt" ? "✓ " : ""}${hero.altLevelUp.name}`, () => this.chooseForm("alt"), !!owned && level >= 5 && session.online && !this.busy, { height: 44, fontSize: 14 });
       y += 56;
       const message = this.busy ? "Đang lưu dạng thăng cấp…" : this.formError || (!owned ? "Cần sở hữu Hero để chọn dạng" : level < 5 ? "Dạng thứ hai cần Tinh Hồn 5" : !session.online ? "Cần kết nối server để đổi dạng" : `Dạng đang dùng: ${form.name}`);
       paragraph(message, 13, this.formError ? "#ffb7b7" : MUTED);
@@ -342,6 +351,7 @@ export class HeroesScene extends Phaser.Scene {
         });
         hit.on("pointerout", () => { if (!this.tooltipPinned) this.hideTooltip(); });
         hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.button === 0 && this.inDetail(pointer)) this.showCard(id, true); });
+        this.controls.button(this.detailContent,x+77,y+97,154,"",()=>this.showCard(id,true),{height:194,transparent:true,id:`hero-card:${id}`,name:`Xem đầy đủ lá ${card.name}`,clip:this.detailArea});
       });
       y += 206; paragraph("Bản + thay lá chủ lực từ Tinh Hồn 4.", 13, MUTED);
     }
@@ -368,15 +378,15 @@ export class HeroesScene extends Phaser.Scene {
     }
     const actions = this.add.container(0, 0).setName("hero-actions"); this.root.add(actions);
     const pending = owned ? pendingUnlocks(session.data, session.profile, hero.id) : 0;
-    addButton(this, actions, 989, 666, 202, pending ? `Tu Luyện · ${pending} lượt` : "Tu Luyện", () => this.scene.start("mastery", { heroId: this.heroId }), !!owned, { variant: "primary", height: 44, fontSize: 15 });
-    addButton(this, actions, 1181, 666, 142, "Triệu Hồi", () => this.scene.start("gacha"), true, { variant: owned ? "secondary" : "primary", height: 44, fontSize: 15 });
+    this.accessibleButton(actions, 989, 666, 202, pending ? `Tu Luyện · ${pending} lượt` : "Tu Luyện", () => this.scene.start("mastery", { heroId: this.heroId }), !!owned, { variant: "primary", height: 44, fontSize: 15 });
+    this.accessibleButton(actions, 1181, 666, 142, "Triệu Hồi", () => this.scene.start("gacha"), true, { variant: owned ? "secondary" : "primary", height: 44, fontSize: 15 });
     if (!owned) addText(this, this.root, 888, 698, "Cần sở hữu Hero để Tu Luyện", 12, MUTED);
     else if (!inList) addText(this, this.root, 888, 698, "Hero đang xem nằm ngoài bộ lọc", 12, MUTED);
   }
 
   private async chooseForm(next: "base" | "alt") {
     const heroId = this.heroId, owned = session.profile.heroes[heroId];
-    if (this.busy || !owned || !session.online || !this.inDetail(this.input.activePointer) || (next === "alt" && owned.constellation < 5)) return;
+    if (this.busy || !owned || !session.online || (next === "alt" && owned.constellation < 5)) return;
     const current = owned.levelUpForm === "alt" && owned.constellation >= 5 ? "alt" : "base"; if (current === next) return;
     const generation = this.generation; this.busy = true; this.formError = ""; this.render();
     try { await mutate("PUT", `/profile/heroes/${heroId}/level-up-form`, { form: next }); if (this.generation !== generation) return; this.busy = false; this.render(); }
@@ -405,7 +415,7 @@ export class HeroesScene extends Phaser.Scene {
   private scrollDetail(delta: number) {
     if (isModalOpen() || this.tooltipPinned) return;
     this.hideTooltip(); this.detailScroll = Phaser.Math.Clamp(this.detailScroll + delta, 0, Math.max(0, this.detailHeight - this.detailArea.height));
-    this.detailContent.y = this.detailArea.y - this.detailScroll; this.updateScrollThumb();
+    this.detailContent.y = this.detailArea.y - this.detailScroll; this.updateScrollThumb(); this.controls.sync(this.tooltipPinned,isModalOpen());
   }
   private updateScrollThumb() {
     if (this.scrollThumb) this.scrollThumb.y = DETAIL.y + this.scrollThumb.height / 2 + (DETAIL.height - this.scrollThumb.height) * this.detailScroll / Math.max(1, this.detailHeight - DETAIL.height);
@@ -420,6 +430,15 @@ export class HeroesScene extends Phaser.Scene {
     if (isModalOpen()) return;
     if (this.tooltipPinned) { if (event.key === "Escape") { this.hideTooltip(); event.preventDefault(); } return; }
     if (event.key === "Escape") { this.scene.start("deck-select"); return; }
+    const control = (document.activeElement as HTMLElement | null)?.dataset.equipmentControl;
+    if (event.key === "PageDown" || event.key === "PageUp") { this.scrollDetail(event.key === "PageDown" ? 180 : -180); event.preventDefault(); return; }
+    if (control && event.key.startsWith("Arrow")) {
+      if (control.startsWith("hero-tab:")) {
+        const tabs:DetailTab[]=["overview","story","constellation","cards"], step=event.key==="ArrowLeft"||event.key==="ArrowUp"?-1:1;
+        this.tab=tabs[(tabs.indexOf(this.tab)+step+tabs.length)%tabs.length]!;this.detailScroll=0;this.render();this.controls.focus(`hero-tab:${this.tab}`);
+      } else this.scrollDetail(event.key==="ArrowUp"||event.key==="ArrowLeft"?-80:80);
+      event.preventDefault();return;
+    }
     const delta = ({ ArrowLeft: -1, ArrowRight: 1, ArrowUp: -4, ArrowDown: 4 } as Record<string, number>)[event.key];
     if (delta !== undefined) {
       const heroes = filterHeroes(Object.values(session.data.heroes), session.profile.heroes, this.filters); if (!heroes.length) return;
@@ -438,13 +457,13 @@ export class HeroesScene extends Phaser.Scene {
       const card = showCardTooltip(this, 582, 628, session.data, id); layer.add(card);
       const bounds = (card.list[0] as Phaser.GameObjects.Container).getBounds();
       const shield = this.add.rectangle(bounds.centerX, bounds.centerY, bounds.width, bounds.height, 0, 0).setInteractive(); layer.add(shield);
-      addButton(this, layer, bounds.right - 23, bounds.top + 22, 34, "×", () => this.hideTooltip(), true, { height: 34, fontSize: 20 });
+      this.accessibleButton(layer, bounds.right - 23, bounds.top + 22, 34, "×", () => this.hideTooltip(), true, { height: 34, fontSize: 20 });
     } else { this.tooltip = showCardTooltip(this, 582, 628, session.data, id); this.root.add(this.tooltip); }
     this.syncFields();
   }
   private hideTooltip() {
     this.tooltipTimer?.remove(false); this.tooltipTimer = null;
-    this.tooltip?.destroy(); this.tooltip = null; this.tooltipPinned = false;
+    this.tooltip?.destroy(); this.tooltip = null; this.tooltipPinned = false; this.controls?.removePinned();
   }
   private clearMask() { this.detailContent?.clearMask(); this.detailMask?.destroy(); this.detailMask = null; this.maskShape?.destroy(); this.maskShape = null; }
 }

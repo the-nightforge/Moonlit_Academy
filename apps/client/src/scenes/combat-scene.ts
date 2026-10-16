@@ -41,10 +41,12 @@ import {
   debugSetMoon,
   describeEvent,
 } from "../debug";
-import manifest from "virtual:assets-manifest";
+import { mountStoryCoach } from "../ui/story-coach";
+import { DialogControls } from "../ui/dialog-controls";
+import { framedImage, containedRect } from "../ui/contained-art";
 import { showCardTooltip, showTextTooltip } from "../ui/card-tooltip";
-import { confirmModal, isModalOpen, registerModal } from "../ui/widgets";
-import { combatTextureEntries } from "../ui/combat-assets";
+import { confirmModal, isModalOpen, registerModal, showModal } from "../ui/widgets";
+import { battleAssetSelection, prepareCombatAssets } from "../ui/combat-assets";
 import { CombatAudio } from "../ui/combat-audio";
 import { loadCombatSettings, saveCombatSettings, DEFAULT_COMBAT_SETTINGS } from "../ui/combat-settings";
 import type { CombatSettings } from "../ui/combat-settings";
@@ -217,6 +219,7 @@ export class CombatScene extends Phaser.Scene {
   /** Post-commit follow-ups keyed by their batch (run transition, story finish). */
   private commitWork = new Map<PlaybackBatch, () => void>();
   /** Local presentation preferences — each playback batch snapshots them. */
+  private storyCoach?: ReturnType<typeof mountStoryCoach>;
   private settings: CombatSettings = DEFAULT_COMBAT_SETTINGS;
   private audio: CombatAudio = new CombatAudio(this.settings);
 
@@ -237,17 +240,51 @@ export class CombatScene extends Phaser.Scene {
     return this.state.players[this.mySeat];
   }
 
-  preload() {
-    for (const { key, url } of combatTextureEntries(manifest)) {
-      if (this.textures.exists(key)) continue; // warmed by the lobby/Home gate (`home-ui-redesign` Task 3)
-      // SVG icons rasterize at the canvas scale so they stay sharp under the zoomed camera.
-      if (url.endsWith(".svg")) this.load.svg(key, url, { scale: RENDER_SCALE });
-      else this.load.image(key, url);
+  /** The incoming public roster is known now, including opponent gear and forms. */
+  async create() {
+    this.rootReady = false;
+    this.timerText = null;
+    this.turnClock = null;
+    useDesignCamera(this);
+    let current = true;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      current = false;
+      this.rootReady = false;
+      this.timerText = null;
+      this.turnClock = null;
+    });
+    const view = visibleWorld(this);
+    const label = this.add.text(view.x + view.w / 2, view.y + view.h / 2, "Đang tải hình trận…", { ...TEXT_BASE, fontSize: "20px", color: COLORS.text }).setOrigin(0.5);
+    const back = () => { current = false; this.scene.start(session.match ? session.match.mode.startsWith("coop") ? "coop-lobby" : "arena" : "deck-select"); };
+    const cancel = roundedPanel(this, view.x + view.w / 2, view.y + view.h / 2 + 62, 180, 40);
+    const cancelLabel = this.add.text(cancel.x, cancel.y, "Quay lại", { ...TEXT_BASE, fontSize: "15px", color: COLORS.text }).setOrigin(0.5);
+    const loadingControls = new DialogControls(this, back);
+    loadingControls.button(cancel, "Hủy tải hình trận và quay lại", back);
+    loadingControls.focus();
+    const sync = () => loadingControls.sync();
+    this.scale.on(Phaser.Scale.Events.RESIZE, sync);
+    const cleanup = () => { loadingControls.destroy(); this.scale.off(Phaser.Scale.Events.RESIZE, sync); cancel.destroy(); cancelLabel.destroy(); };
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup);
+    const state = session.match?.view ?? session.state;
+    while (current) {
+      const result = await prepareCombatAssets(this, { selection: battleAssetSelection(state), isCurrent: () => current,
+        onProgress: (done, total) => { if (current) label.setText(`Đang tải hình trận… ${done}/${total}`); } });
+      if (!current) return;
+      if (result.failed.length === 0) break;
+      loadingControls.suspend(true);
+      const answer = await showModal(this, { title: "Không tải được hình trận", message: `${result.failed.length} tệp chưa tải được. Kiểm tra kết nối rồi thử lại.`, actions: [{ label: "Quay lại" }, { label: "Thử lại", variant: "primary" }] });
+      if (!current) return;
+      loadingControls.suspend(false);
+      if (answer.action !== 1) { back(); return; }
     }
+    this.events.off(Phaser.Scenes.Events.SHUTDOWN, cleanup);
+    cleanup(); label.destroy();
+    this.createReady();
   }
 
-  create() {
+  private createReady() {
     this.rootReady = false;
+    this.errorText = undefined;
     this.endTurnObjects = [];
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.rootReady = false;
@@ -317,6 +354,7 @@ export class CombatScene extends Phaser.Scene {
     // A modal (settings, confirm) owns Esc — combat targeting yields to it.
     this.input.keyboard?.on("keydown-ESC", () => {
       if (isModalOpen()) return;
+      if (this.errorText) { this.errorText.destroy(); this.errorText = undefined; return; }
       if (this.collapseChoice()) return;
       this.cancelTargeting();
     });
@@ -336,6 +374,9 @@ export class CombatScene extends Phaser.Scene {
         this.requestRender();
       }
     });
+    this.storyCoach = mountStoryCoach();
+    const coach = this.storyCoach;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { coach.destroy(); if (this.storyCoach === coach) this.storyCoach = undefined; });
     this.renderAll();
     // A fresh match opens with the intro reveal; a rejoin renders settled
     // state. Local combats are always fresh — their snapshot synthesizes the
@@ -353,16 +394,18 @@ export class CombatScene extends Phaser.Scene {
     const net = session.net!;
     // Retain for the account lifetime: frames keep landing if this scene exits (`16` §8.4).
     session.registry?.retain(match);
-    net.onMessage = (message: ServerMessage) => {
+    const onMessage = net.onMessage = (message: ServerMessage) => {
       if ("matchId" in message && match.handle(message)) return;
       if (message.type === "error") this.showError(message.error);
     };
-    net.onStatus = (connected) => {
+    const onStatus = net.onStatus = (connected) => {
+      if (!this.rootReady) return;
       this.netDown = !connected;
       this.syncInputLock();
       if (this.scene.isActive()) this.requestRender();
     };
-    net.onRecovery = (snapshot) => {
+    const onRecovery = net.onRecovery = (snapshot) => {
+      if (!this.rootReady) return;
       if (snapshot !== null) {
         if (snapshot.matchId !== match.matchId) {
           // The server holds a different match — adopt it and rebind (`16` §8.4).
@@ -370,10 +413,9 @@ export class CombatScene extends Phaser.Scene {
           const next = new NetMatch(net, snapshot);
           session.match = next;
           session.registry?.retain(next);
-          this.netMatch = next;
-          this.mySeat = next.you;
-          this.bindNet(next);
-          this.applyNetRejoin(session.registry?.consumeLostPending(next.matchId) ?? false);
+          // The replacement roster can require images not used by the old match.
+          this.playback.reset();
+          this.scene.restart();
           return;
         }
         // registry.recover already rejoined — render the reconciled view.
@@ -391,6 +433,12 @@ export class CombatScene extends Phaser.Scene {
         refreshProfile: () => resumeSession(),
       });
     };
+    // Registry routing survives scenes; these UI callbacks belong to this entry.
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      if (net.onMessage === onMessage) net.onMessage = () => {};
+      if (net.onStatus === onStatus) net.onStatus = () => {};
+      if (net.onRecovery === onRecovery) net.onRecovery = () => {};
+    });
     // A `match.sync` answer resyncs the seat the same way a welcome rejoin does.
     match.onRejoin = (_snapshot, lostPending) => this.applyNetRejoin(lostPending);
     match.onPush = (events, view, metadata) => this.onNetPush(events, view, metadata);
@@ -486,6 +534,7 @@ export class CombatScene extends Phaser.Scene {
         );
         return false;
       }
+      this.errorText?.destroy(); this.errorText = undefined;
       this.hideCardTooltipOn(action);
       this.syncInputLock();
       return true;
@@ -498,6 +547,7 @@ export class CombatScene extends Phaser.Scene {
       this.showError(result.error);
       return false;
     }
+    this.errorText?.destroy(); this.errorText = undefined;
     // Story combats record every accepted action for the server's replay (`18` §4.4).
     if (!run && session.story) recordStoryAction(action);
     let newState: CombatState = this.state;
@@ -778,11 +828,11 @@ export class CombatScene extends Phaser.Scene {
 
   /** Redraws once the queue drains — immediately when it is already idle. */
   private requestRender(): void {
-    if (this.renderQueued) return;
+    if (!this.rootReady || this.renderQueued) return;
     this.renderQueued = true;
     this.playback.whenIdle(() => {
       this.renderQueued = false;
-      if (this.scene.isActive()) this.renderAll();
+      if (this.rootReady && this.scene.isActive()) this.renderAll();
     });
   }
 
@@ -890,6 +940,11 @@ export class CombatScene extends Phaser.Scene {
     this.tweens.add({ targets: view, x: view.x + 7, duration: 45, yoyo: true, repeat: 3 });
   }
 
+  private showFeedback(message: string) {
+    const text = this.add.text(WIDTH / 2, 572, message, { ...TEXT_BASE, fontSize: "15px", color: COLORS.text }).setOrigin(0.5).setDepth(1501);
+    this.tweens.add({ targets: text, alpha: 0, delay: 2800, duration: 500, onComplete: () => text.destroy() });
+  }
+
   private showError(error: string) {
     this.errorText?.destroy();
     const text = this.add
@@ -900,13 +955,26 @@ export class CombatScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     this.errorText = text;
-    this.tweens.add({
-      targets: text,
-      alpha: 0,
-      delay: 900,
-      duration: 800,
-      onComplete: () => text.destroy(),
-    });
+    text.setDepth(1501);
+    text.setText(`${errorLabel(error)}   · Nhấn Esc để đóng`).setPadding(12, 8);
+    const panel = this.add.rectangle(text.x, text.y, text.width, text.height, 0x181e35).setRounded(8).setStrokeStyle(1, 0xb16975).setDepth(1500).setInteractive({ useHandCursor: true });
+    const dismiss = () => { text.destroy(); if (this.errorText === text) this.errorText = undefined; };
+    const button = document.createElement("button");
+    button.type = "button"; button.setAttribute("aria-label", `Đóng thông báo lỗi: ${errorLabel(error)}`);
+    button.style.cssText = "position:fixed;z-index:12;color:transparent;background:transparent;border:1px solid transparent;border-radius:8px;padding:0;outline-offset:2px;cursor:pointer";
+    button.addEventListener("click", dismiss);
+    button.addEventListener("focus", () => button.style.outline = "2px solid #d3e8ff");
+    button.addEventListener("blur", () => button.style.outline = "none");
+    const place = () => {
+      const b = text.getBounds(), canvas = this.game.canvas.getBoundingClientRect(), cam = this.cameras.main;
+      const sx = canvas.width / this.game.scale.width, sy = canvas.height / this.game.scale.height;
+      Object.assign(button.style, { left: `${canvas.left + (cam.x + (b.left - cam.worldView.x) * cam.zoom) * sx}px`, top: `${canvas.top + (cam.y + (b.top - cam.worldView.y) * cam.zoom) * sy}px`, width: `${b.width * cam.zoom * sx}px`, height: `${b.height * cam.zoom * sy}px` });
+    };
+    document.body.append(button); place(); this.scale.on(Phaser.Scale.Events.RESIZE, place);
+    const cleanup = () => { button.remove(); this.scale.off(Phaser.Scale.Events.RESIZE, place); panel.destroy(); this.events.off(Phaser.Scenes.Events.SHUTDOWN, dismiss); };
+    text.once(Phaser.GameObjects.Events.DESTROY, cleanup);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, dismiss);
+    panel.on("pointerup", dismiss);
   }
 
   // ---- rendering ----
@@ -931,7 +999,6 @@ export class CombatScene extends Phaser.Scene {
     this.unitViews.clear();
     this.unitSpecs.clear();
     this.triggerAnchors.clear();
-    this.errorText = undefined;
     this.timerText = null;
     for (const player of this.state.players) {
       const layer = this.add.container(0, 0);
@@ -969,12 +1036,13 @@ export class CombatScene extends Phaser.Scene {
     }
     if (this.netDown) this.renderReconnectOverlay();
     this.renderDebugPanel();
+    this.storyCoach?.update();
   }
 
   /** Per-frame: countdown to the server deadline (online) or the local turn
    *  clock (offline — expiry auto-`endTurn`s, clock freezes while locked/modal). */
   update(_time: number, delta: number): void {
-    if (!this.timerText) return;
+    if (!this.rootReady || !this.timerText) return;
     if (this.netMatch) {
       const deadline = this.netMatch.deadline;
       if (deadline === null) {
@@ -1012,16 +1080,9 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private syncFromSession(): void {
-    // A rebuilt combat supersedes any in-flight beat: abort, then render.
+    // Re-enter through the asset gate when an encounter changes its public roster.
     this.playback.reset();
-    this.commitWork.clear();
-    this.state = session.state;
-    this.latestState = session.state;
-    this.targeting = null;
-    this.validTargetIds.clear();
-    this.mulliganPicks.clear();
-    this.syncInputLock();
-    this.renderAll();
+    this.scene.restart();
   }
 
   private text(
@@ -1377,13 +1438,17 @@ export class CombatScene extends Phaser.Scene {
 
   /** (Re)fills a unit card's contents from its spec — the container survives, so in-flight shakes keep their target. */
   private fillUnitCard(c: Phaser.GameObjects.Container, spec: UnitCardSpec): void {
-    const { id, x, y, w, h } = spec;
+    const { id, x, y } = spec;
+    const source = this.textures.exists(spec.artKey) ? this.textures.get(spec.artKey).getSourceImage() as { width: number; height: number } : null;
+    const fitted = source ? containedRect(source.width, source.height, spec.w - 2, spec.h - 2) : { width: spec.w - 2, height: spec.h - 2 };
+    const w = fitted.width + 2, h = fitted.height + 2;
+    c.setData("unitBounds", { w, h });
     const isValidTarget = this.targeting !== null && this.validTargetIds.has(id);
     c.add(this.roundBox(w, h, spec.hostile ? COLORS.panelEnemy : COLORS.panelHero, 1, isValidTarget ? 3 : 2, isValidTarget ? COLORS.goldFill : spec.frame));
     const panel = this.add.rectangle(0, 0, w, h, 0x000000, 0.001);
     c.add(panel);
     // Missing art leaves a readable silhouette — never an empty frame.
-    if (this.coverImage(spec.artKey, 0, 0, w - 6, h - 6, c) === null) {
+    if (this.coverImage(spec.artKey, 0, 0, w, h, c) === null) {
       this.unitSilhouette(c, w, h, spec.hostile);
     }
     c.add(this.add.rectangle(0, h / 2 - 15, w - 6, 24, 0x0a0e20, 0.8));
@@ -1403,7 +1468,7 @@ export class CombatScene extends Phaser.Scene {
     }
     this.unitPanelHit(panel, w, h, id);
     this.hoverTooltip(panel, () => ({ x: x + w / 2 + 8, y: y - h / 2 }), spec.tooltip);
-    this.statusIcons(spec, c);
+    this.statusIcons({ ...spec, w, h }, c);
     // Trang Bị stacks under the corner armor badge; it is also the trigger anchor.
     if (spec.weapon !== undefined && spec.alive) {
       const weapon = spec.weapon;
@@ -1834,36 +1899,8 @@ export class CombatScene extends Phaser.Scene {
     this.guardTether = undefined;
   }
 
-  // Draws a texture cover-fitted into a w×h box centered at (x, y).
-  // Returns null when the texture is missing so callers can fall back.
-  private coverImage(
-    key: string,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    parent: Phaser.GameObjects.Container,
-  ): Phaser.GameObjects.Image | null {
-    if (!this.textures.exists(key)) return null;
-    const rounded = `${key}@${w}x${h}`;
-    if (!this.textures.exists(rounded)) {
-      const source = this.textures.get(key).getSourceImage() as CanvasImageSource & { width: number; height: number };
-      const scale = Math.max(w / source.width, h / source.height);
-      const cropW = Math.min(source.width, w / scale);
-      const cropH = Math.min(source.height, h / scale);
-      const canvas = this.textures.createCanvas(rounded, Math.ceil(w * RENDER_SCALE), Math.ceil(h * RENDER_SCALE));
-      if (!canvas) return null;
-      const ctx = canvas.getContext();
-      ctx.scale(RENDER_SCALE, RENDER_SCALE);
-      ctx.beginPath();
-      ctx.roundRect(0, 0, w, h, CARD_RADIUS - 2);
-      ctx.clip();
-      ctx.drawImage(source, (source.width - cropW) / 2, (source.height - cropH) / 2, cropW, cropH, 0, 0, w, h);
-      canvas.refresh();
-    }
-    const img = this.add.image(x, y, rounded).setScale(1 / RENDER_SCALE);
-    parent.add(img);
-    return img;
+  private coverImage(key: string, x: number, y: number, w: number, h: number, parent: Phaser.GameObjects.Container): Phaser.GameObjects.Image | null {
+    return framedImage(this, parent, key, x, y, w, h, 1);
   }
 
   private unitPanelHit(
@@ -2094,7 +2131,7 @@ export class CombatScene extends Phaser.Scene {
         if (pointer.button !== 0) return;
         const now = Date.now();
         if (now - this.lastEmoteAt < 3000) {
-          this.showError("Chờ một chút giữa hai biểu cảm");
+          this.showFeedback("Chờ một chút giữa hai biểu cảm");
           return;
         }
         this.lastEmoteAt = now;
@@ -2162,8 +2199,9 @@ export class CombatScene extends Phaser.Scene {
     const def = this.gameData.heroes[hero.defId]!;
     // Same threshold the rules roll for (`17` §3.2): Tinh Hồn perks stay off in Fair Arena.
     const threshold = hero.constellation >= 2 && !hero.pvp ? def.levelUp.constellationThreshold : def.levelUp.threshold;
-    if (hero.leveledUp) this.neonFrame(c, w, h);
-    else this.frameTrace(c, w, h, Math.min(1, hero.levelUpCounter / threshold));
+    const bounds = c.getData("unitBounds") as { w:number; h:number };
+    if (hero.leveledUp) this.neonFrame(c, bounds.w, bounds.h);
+    else this.frameTrace(c, bounds.w, bounds.h, Math.min(1, hero.levelUpCounter / threshold));
   }
 
   private renderHeroes() {
@@ -2815,7 +2853,7 @@ export class CombatScene extends Phaser.Scene {
     label: string,
     onClick: () => void,
   ): void {
-    const btn = this.add.rectangle(x, y, 160, 42, COLORS.button);
+    const btn = this.add.rectangle(x, y, 160, 42, COLORS.button).setRounded(8);
     btn.setStrokeStyle(1, COLORS.goldFill);
     btn.setInteractive({ useHandCursor: true });
     btn.on("pointerover", () => btn.setFillStyle(0x3a5090));

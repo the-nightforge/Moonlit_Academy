@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { DialogControls } from "./dialog-controls";
 import type { CombatSettings } from "./combat-settings";
 import { registerModal } from "./widgets";
 import { roundedPanel } from "./rounded-panel";
@@ -15,14 +16,20 @@ export function showCombatSettings(
   const content = scene.add.container(cx,cy);layer.add(content);
   let settings = {...initial}, lastVolume = initial.volume > 0 ? initial.volume : 0.5;
   let closed = false;
+  let controls: DialogControls | null = null;
+  let focusedName = "settings_close";
   const close = () => {
     if(closed) return;closed=true;unregister();
+    controls?.destroy();
     scene.input.keyboard?.off("keydown-ESC",close);
-    scene.input.keyboard?.off("keydown-ENTER",close);
+    scene.scale.off(Phaser.Scale.Events.RESIZE,sync);
     scene.events.off(Phaser.Scenes.Events.SHUTDOWN,close);layer.destroy();
   };
   const unregister = registerModal(close);
+  const sync = () => controls?.sync();
   const draw = () => {
+    controls?.destroy();
+    controls = new DialogControls(scene, close);
     content.removeAll(true);
     const text=(x:number,y:number,value:string,size=14,color: string=COLORS.text)=>{
       const t=scene.add.text(x,y,value,{...TEXT_BASE,fontSize:`${size}px`,color}).setOrigin(0,0.5);content.add(t);return t;
@@ -31,8 +38,12 @@ export function showCombatSettings(
       const panel=roundedPanel(scene,x,y,w,34,active?0x34486d:0x1d2945,1,active?0xaac7f0:0x66759d,8);
       panel.setName(name).setInteractive({useHandCursor:true});
       panel.on("pointerover",()=>panel.setAlpha(0.8));panel.on("pointerout",()=>panel.setAlpha(1));
-      panel.on("pointerup",(p:Phaser.Input.Pointer)=>{if(p.button===0){action();if(!closed){apply({...settings});draw();}}});
+      const run = () => { focusedName = name; action(); if(!closed){apply({...settings});draw();} };
+      panel.on("pointerup",(p:Phaser.Input.Pointer)=>{if(p.button===0)run();});
       content.add(panel);text(x,y,label,13).setOrigin(0.5);
+      const names: Record<string,string> = {settings_speed_1:"Tốc độ một lần",settings_speed_2:"Tốc độ hai lần",settings_motion:`Giảm chuyển động: ${label}`,settings_volume_down:"Giảm âm lượng",settings_volume_up:"Tăng âm lượng",settings_mute:label,settings_close:"Đóng thiết lập"};
+      const element=controls!.button(panel,names[name]??label,run);
+      if(name===focusedName) element.focus({preventScroll:true});
     };
     text(0,-144,"Thiết Lập",22,COLORS.gold).setOrigin(0.5);
     text(0,-112,"Nhịp độ và âm thanh — lưu trên máy này",13,COLORS.dimText).setOrigin(0.5);
@@ -50,6 +61,6 @@ export function showCombatSettings(
     control(0,138,160,"Đóng","settings_close",close,true);
   };
   draw();
-  scene.input.keyboard?.on("keydown-ESC",close);scene.input.keyboard?.on("keydown-ENTER",close);
+  scene.input.keyboard?.on("keydown-ESC",close);scene.scale.on(Phaser.Scale.Events.RESIZE,sync);
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN,close);
 }

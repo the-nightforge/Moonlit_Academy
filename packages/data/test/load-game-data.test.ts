@@ -62,7 +62,7 @@ describe("loadGameData", () => {
       "hac_y_mat_tham", "vo_nguyet_am_sat", "vo_nguyet_nghi_si", "vo_nguyet_anh_chu",
     ]);
     expect(Object.keys(data.encounters)).toEqual([
-      "enc_01", "enc_02", "enc_03", "enc_04", "enc_05", "enc_06", "enc_elite_01", "enc_elite_02",
+      "enc_01", "enc_02", "enc_03", "enc_04", "enc_boss_02", "enc_boss_03", "enc_05", "enc_06", "enc_elite_01", "enc_elite_02",
       "enc_coop_01",
       "story_arc1_s01", "story_arc1_s02", "story_arc1_s03", "story_arc1_s04",
       "story_arc1_s05", "story_arc1_s06", "story_arc1_s07", "story_arc1_s08",
@@ -208,9 +208,10 @@ describe("parseGameData validation", () => {
     expect(() => parseGameData(raw)).toThrowError(/locked card/);
   });
 
-  it("rejects encounters without exactly one boss", () => {
+  it("rejects encounters without a boss and accepts a rotating boss pool", () => {
     const raw = rawData();
-    raw.encounters.find((e: any) => e.id === "enc_04").tier = "normal";
+    expect(() => parseGameData(raw)).not.toThrow();
+    for (const encounter of raw.encounters) if (encounter.tier === "boss") encounter.tier = "normal";
     expect(() => parseGameData(raw)).toThrowError(/boss/);
   });
 
@@ -501,7 +502,7 @@ describe("weapons, moon relics and second level-up forms", () => {
 });
 
 describe("co-op data", () => {
-  it("loads the eclipse boss, its co-op encounter and the three combos", () => {
+  it("loads the eclipse boss, its co-op encounter and all six combos", () => {
     const data = loadGameData();
     expect(data.coopConfig).toMatchObject({
       turnSeconds: 45,
@@ -511,6 +512,7 @@ describe("co-op data", () => {
     });
     expect(Object.keys(data.coopCombos)).toEqual([
       "combo_bang_nguyet_ke", "combo_am_anh_tuyet_sat", "combo_nguyet_quang_pho_chieu",
+      "combo_dong_tam_ho_tran", "combo_pha_tran_hop_luc", "combo_tu_nguyet_dong_hanh",
     ]);
     const boss = data.enemies["eclipse_lord"]!;
     expect(boss.maxHp).toBe(210);

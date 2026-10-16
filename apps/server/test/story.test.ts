@@ -14,6 +14,22 @@ async function signedIn() {
 }
 
 describe("story tickets", () => {
+  it("replays a cleared stage through a verified ticket without repeating first-clear rewards", async () => {
+    const { server, token } = await signedIn();
+    const ticket = await call(server, "POST", "/api/story/t_a1s1/tickets", { token, body: start });
+    const played = playStory(server.data, ticket.body.setup, ticket.body.loadout);
+    expect(played.state.status).toBe("won");
+    const first = await call(server, "POST", `/api/story/tickets/${ticket.body.ticketId}/finish`, { token, rev: 1, body: { actions: played.actions } });
+    expect(first.body.rewards.firstClear).toBe(true);
+    const again = await call(server, "POST", "/api/story/t_a1s1/tickets", { token, body: start });
+    expect(again.status).toBe(201);
+    const replay = playStory(server.data, again.body.setup, again.body.loadout);
+    const finished = await call(server, "POST", `/api/story/tickets/${again.body.ticketId}/finish`, { token, rev: first.body.rev, body: { actions: replay.actions } });
+    expect(finished.status).toBe(200);
+    expect(finished.body.rewards).toEqual({ firstClear: false, moonJade: 0, darkIron: 0, gains: [], hero: null });
+    expect(finished.body.profile.currencies).toEqual(first.body.profile.currencies);
+    expect(finished.body.profile.heroes).toEqual(first.body.profile.heroes);
+  });
   it("T305: locked stage 403; verified win pays once; tampered replay 422 rejected; unfinished 422", async () => {
     const { server, token } = await signedIn();
     expect((await call(server, "POST", "/api/story/t_a1s2/tickets", { token, body: start })).status).toBe(403);

@@ -1,8 +1,8 @@
 import { reachableNodeIds, type MapNode, type NodeType, type RunState } from "rules";
-export const RUN_NODE_LABELS: Record<NodeType, string> = { combat: "Trận thường", elite: "Tinh Anh", rest: "Nghỉ Chân", treasure: "Kho Báu", boss: "Thủ lĩnh" };
+export const RUN_NODE_LABELS: Record<NodeType, string> = { combat: "Trận thường", elite: "Tinh Anh", rest: "Nghỉ Chân", treasure: "Kho Báu", event: "Kỳ Ngộ", boss: "Thủ lĩnh" };
 export const RUN_NODE_HELP: Record<NodeType, string> = {
   combat: "Thắng trận để chọn một Lõi.", elite: "Thắng trận để nhận Kỳ Vật và chọn một Lõi.",
-  rest: "Hồi máu cho đội hình hoặc bỏ một lá khỏi bộ bài.", treasure: "Nhận một Kỳ Vật chưa có trong hành trình.", boss: "Đánh bại thủ lĩnh để hoàn thành Tầm Nguyệt.",
+  rest: "Hồi máu cho đội hình, bỏ một lá hoặc đổi một lá đã mở của cùng anh hùng. Chỉ chọn một lần.", treasure: "Nhận một Kỳ Vật chưa có trong hành trình.", event: "Chọn trao đổi máu, lá bài hoặc Kỳ Vật để nhận sức mạnh, hoặc hồi máu an toàn.", boss: "Đánh bại thủ lĩnh để hoàn thành Tầm Nguyệt.",
 };
 export type RunNodeStatus = "current" | "visited" | "open" | "upcoming" | "blocked";
 export interface RunNodeRow extends MapNode { status: RunNodeStatus; x: number; y: number }

@@ -47,6 +47,7 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
     const mine = heroesOf(state, seat.index);
     const anyAllyRegen = mine.some((hero) => hero.alive && hasStatus(hero, "regen"));
     for (const hero of mine) {
+      delete hero.ownAttackCardsThisTurn;
       if (!hero.alive) continue;
       if (anyAllyRegen) bumpCounter(data, hero, "turnsWithAllyRegen", 1);
       hero.firstCardDiscountUsedThisTurn = false;
@@ -65,6 +66,17 @@ export function startCoopTurn(data: GameData, state: CombatState, events: Combat
     if (checkCombatEnd(state, events)) return;
     fireEventHooks(data, state, events, start, state.bloodMoonRounds, unit.player);
     if (checkCombatEnd(state, events)) return;
+  }
+  // Kiệt Sức uses the same start-turn schedule as solo/PvP, across both seats.
+  const fatigue = data.combatConfig.fatigue;
+  if (fatigue !== undefined && state.round >= fatigue.startRound) {
+    const amount = state.round - fatigue.startRound + 1;
+    for (const unit of [...state.heroes, ...summonsOf(state)]) {
+      if (!unit.alive) continue;
+      loseHp(data, unit, amount, "fatigue", events);
+      processDeaths(data, state, events, undefined);
+      if (checkCombatEnd(state, events)) return;
+    }
   }
   if (state.bloodMoonRounds > 0) {
     for (const hero of state.heroes) {

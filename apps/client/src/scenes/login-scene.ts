@@ -61,7 +61,7 @@ export class LoginScene extends Phaser.Scene {
       await login(username, password, register);
       if (!this.current(generation)) return;
       this.view!.showConnecting("Đang mở thư viện…");
-      await this.afterSignIn(generation);
+      await this.afterSignIn(generation, register);
     } catch (error) {
       if (!this.current(generation)) return;
       if (error instanceof ApiError && error.status === 0) { this.showOffline(generation); return; }
@@ -75,7 +75,7 @@ export class LoginScene extends Phaser.Scene {
   }
 
   /** Offer the existing one-time import and unfinished-run flows after sign-in. */
-  private async afterSignIn(generation: number) {
+  private async afterSignIn(generation: number, registered = false) {
     const legacy = readLegacyProfile();
     if (legacy !== null && !session.profile.flags.localImportDone) {
       const choice = await this.ask("Tiếp nối hành trình", "Có tiến độ cũ trên máy này (Tu Luyện, bộ bài). Nhập vào tài khoản?", ["Nhập", "Bỏ qua"], generation);
@@ -103,7 +103,7 @@ export class LoginScene extends Phaser.Scene {
       this.view!.showConnecting("Đang mở thư viện…");
       await abandonSavedRun(unfinished);
     }
-    if (this.current(generation)) this.scene.start("deck-select");
+    if (this.current(generation)) this.scene.start(registered ? "story" : "deck-select");
   }
 
   private showOffline(generation: number) {

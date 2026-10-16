@@ -1,12 +1,13 @@
 import type { FastifyInstance } from "fastify";
 import {
-  checkAchievements, claimMission, deleteDeck, mergeImportedProfile, parseProfile, recordProgress, saveDeck, setLevelUpForm,
+  checkAchievements, claimFirstCard, claimMission, deleteDeck, mergeImportedProfile, parseProfile, recordProgress, saveDeck, setLevelUpForm,
   unlockCard, upgradeItem,
 } from "rules";
 import { z } from "zod";
 import { HttpError, type AppContext } from "../context";
 
 const unlockBody = z.object({ heroId: z.string(), cardId: z.string() });
+const firstCardBody = z.object({ deckId: z.string().max(64), cardId: z.string().max(128), replaceCardId: z.string().max(128) });
 const deckBody = z.object({
   draft: z.object({
     id: z.string().max(16),
@@ -25,6 +26,16 @@ export function registerProfileRoutes(app: FastifyInstance, ctx: AppContext): vo
   const { data } = ctx;
 
   app.get("/api/profile", async (request) => ctx.readProfile(await ctx.requireAccount(request)));
+
+  app.post("/api/profile/first-card", async (request) => {
+    const accountId = await ctx.requireAccount(request);
+    const input = ctx.parseBody(firstCardBody, request.body);
+    return ctx.mutateProfile(accountId, request, (profile) => {
+      const claimed = claimFirstCard(data, profile, input);
+      if (!claimed.ok) return claimed;
+      return checkAchievements(data, recordProgress(data, claimed.profile, ctx.clock(), { cardsUnlocked: 1 }).profile);
+    });
+  });
 
   app.post("/api/profile/unlock", async (request) => {
     const accountId = await ctx.requireAccount(request);

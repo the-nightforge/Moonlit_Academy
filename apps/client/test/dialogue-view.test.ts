@@ -75,3 +75,9 @@ it('labels the last action with its real destination and cleans up keyboard list
   click('next');click('skip');expect(next).toBe(1);expect(skipped).toBe(1);
   view.destroy();key(document.body);expect(next).toBe(1);
 });
+it('reader mode clearly returns to story even for the before-fight dialogue',()=>{
+  setup();view.render(data,'Nhập Học',{speaker:'m05',text:'Đọc lại'},0,1,{stageId:'arc1_s01',part:'before',replayOnly:true});
+  expect(document.querySelector('.sd-part')?.textContent).toContain('Xem lại hội thoại');
+  expect(document.querySelector('[data-action="next"]')?.textContent).toContain('Về Cốt Truyện');
+  expect(document.querySelector('[data-action="skip"]')?.getAttribute('aria-label')).toContain('về Cốt Truyện');
+});

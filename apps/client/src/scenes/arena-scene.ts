@@ -8,7 +8,7 @@ import { NetMatch } from "../net/match";
 import { NetSocket } from "../net/socket";
 import type { ServerMessage } from "../net/protocol";
 import { session } from "../session";
-import { prepareCombatAssets } from "../ui/combat-assets";
+import { deckAssetSelection, prepareCombatAssets } from "../ui/combat-assets";
 import { loadCombatSettings } from "../ui/combat-settings";
 import { API_ERROR_TEXT, COLORS, CURRENCY_LABELS, RENDER_SCALE, useDesignCamera, visibleWorld } from "../ui/theme";
 import { addText, isModalOpen, RowScroller, showToast, type ButtonOptions } from "../ui/widgets";
@@ -152,7 +152,7 @@ export class ArenaScene extends Phaser.Scene {
     if (this.assetState === "loading" || this.assetState === "ready") return;
     this.assetState = "loading"; this.render();
     const generation = this.generation;
-    prepareCombatAssets(this).then(({ failed }) => {
+    prepareCombatAssets(this, { selection: deckAssetSelection(this.selectedDeck() ?? { heroIds: session.heroIds }), isCurrent: () => this.isCurrent(generation) }).then(({ failed }) => {
       if (!this.isCurrent(generation)) return;
       this.assetFailed = failed.length; this.assetState = failed.length ? "error" : "ready"; this.render();
     });

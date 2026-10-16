@@ -261,19 +261,20 @@ function main(): void {
   }
 
   // Logical workers partition in-process; merge order is index-sorted already.
-  const records = [];
-  for (let worker = 0; worker < workers; worker++) {
-    records.push(...runExperiment(data, manifest, { workerIndex: worker, workerCount: workers, skip }));
-  }
-  records.sort((a, b) => a.blockId.localeCompare(b.blockId) || a.leg.localeCompare(b.leg) || a.scenarioId.localeCompare(b.scenarioId));
-
+  // Records append to disk as each scenario finishes — an interrupted run keeps
+  // completed legs, and --resume skips them on the next invocation.
   writeFileSync(resolve(outputDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   const tracesPath = resolve(outputDir, "traces.jsonl");
-  for (const record of records) {
+  const onRecord = (record: MatchRecord) => {
     const { traceKeys, ...row } = record;
     appendFileSync(recordsPath, `${JSON.stringify(row)}\n`);
     appendFileSync(tracesPath, `${JSON.stringify({ key: recordKey(record), traceKeys })}\n`);
+  };
+  const records = [];
+  for (let worker = 0; worker < workers; worker++) {
+    records.push(...runExperiment(data, manifest, { workerIndex: worker, workerCount: workers, skip, onRecord }));
   }
+  records.sort((a, b) => a.blockId.localeCompare(b.blockId) || a.leg.localeCompare(b.leg) || a.scenarioId.localeCompare(b.scenarioId));
 
   const counts: Record<string, number> = {};
   for (const record of records) counts[record.outcome] = (counts[record.outcome] ?? 0) + 1;

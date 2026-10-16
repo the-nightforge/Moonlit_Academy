@@ -59,6 +59,8 @@ export function chooseRunAction(
     }
     case "treasure":
       return { type: "continue" };
+    case "event":
+      return { type: "event", choice: "rest" };
     case "won":
     case "lost":
       throw new Error("run is over");

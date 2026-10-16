@@ -4,7 +4,7 @@ import { displayText } from "./display-text";
 import "./story.css";
 import "./dialogue.css";
 
-export interface DialogueContext { stageId?: string; part?: "before" | "after" }
+export interface DialogueContext { stageId?: string; part?: "before" | "after"; replayOnly?: boolean }
 interface ReadLine { index: number; name: string; text: string }
 
 /** Scenery, portraits and speech keep separate frames; history never changes story progress. */
@@ -68,7 +68,7 @@ export class DialogueView {
     this.history = this.history.filter(entry => entry.index < index);
     this.history.push({index,name,text});
     this.shell.querySelector("h1")!.textContent = stageName;
-    this.shell.querySelector(".sd-part")!.textContent = context.part === "after" ? "Sau trận" : context.part === "before" ? "Trước trận" : "";
+    this.shell.querySelector(".sd-part")!.textContent = `${context.replayOnly ? "Xem lại hội thoại · " : ""}${context.part === "after" ? "Sau trận" : context.part === "before" ? "Trước trận" : ""}`;
     const count = this.shell.querySelector(".sd-count")!;
     count.textContent = `${index + 1} / ${total}`; count.setAttribute("aria-label", `Lời thoại ${index + 1} trên ${total}`);
     const progress = this.shell.querySelector<HTMLElement>(".sd-progress")!;
@@ -82,7 +82,8 @@ export class DialogueView {
     }
     this.shell.querySelector(".sd-speech")!.innerHTML = `<h2>${esc(name)}</h2><p>${esc(text)}</p>`;
     const last = index >= total-1;
-    this.shell.querySelector(".sd-next-label")!.textContent = !last ? "Tiếp tục" : context.part === "before" ? "Chọn bộ bài" : context.part === "after" ? "Về Cốt Truyện" : "Hoàn tất";
+    this.shell.querySelector(".sd-next-label")!.textContent = !last ? "Tiếp tục" : context.replayOnly ? "Về Cốt Truyện" : context.part === "before" ? "Chọn bộ bài" : context.part === "after" ? "Về Cốt Truyện" : "Hoàn tất";
+    this.shell.querySelector('[data-action="skip"]')!.setAttribute("aria-label", context.replayOnly ? "Đóng hội thoại và về Cốt Truyện" : "Bỏ qua đoạn hội thoại");
     this.ready = true;
     this.shell.querySelectorAll<HTMLButtonElement>("[data-action]").forEach(button => button.disabled = false);
     this.shell.scrollTop = 0;

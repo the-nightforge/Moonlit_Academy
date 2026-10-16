@@ -58,6 +58,7 @@ export type LevelUpPassive =
   | { type: "moonShiftWeakensEnemies"; amount: number }     // M08 Tinh Mệnh
   | { type: "firstSchemeRepeats" }                          // M10 Bác Học
   | { type: "comboAttackBonus"; amount: number }            // M10 Trạng Nguyên
+  | { type: "subsequentOwnAttackBonus"; amount: number }    // F11 Vũ Điệp
   | { type: "tagDiscountOwnCards"; tag: CardTag; amount: number } // F01 Tự Do
   | { type: "forbiddenNoSelfHpLoss" }                       // F08 Huyết Phượng
   | { type: "bloodMoonAttackBonus"; amount: number }        // F08 Phản Sư
@@ -340,7 +341,7 @@ export interface MoonPhaseDef {
   decrees: MoonDecreeDef[];
 }
 
-export type NodeType = "combat" | "elite" | "rest" | "treasure" | "boss";
+export type NodeType = "combat" | "elite" | "rest" | "treasure" | "event" | "boss";
 
 export type FloorRule =
   | { floors: number[]; type: NodeType }

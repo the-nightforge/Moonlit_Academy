@@ -6,7 +6,7 @@ import { loadGameData } from "data";
 
 vi.mock("../src/ui/theme", () => ({ RENDER_SCALE: 2 }));
 
-import { combatTextureEntries, prepareCombatAssets } from "../src/ui/combat-assets";
+import { battleAssetSelection, deckAssetSelection, combatTextureEntries, prepareCombatAssets } from "../src/ui/combat-assets";
 
 /**
  * Art inventory regression (`05` review U5): every hero normal, every Thức
@@ -106,7 +106,7 @@ describe("combatTextureEntries (`home-ui-redesign` Task 3)", () => {
   };
 
   it("lists the combat categories and nothing else", () => {
-    const keys = combatTextureEntries(manifest).map((entry) => entry.key);
+    const keys = combatTextureEntries(manifest, {heroIds:["m05"],enemyIds:["e1"],weaponIds:["w1"],relicIds:["r1"]}).map((entry) => entry.key);
     for (const expected of [
       "cards:c1", "heroes:m05", "enemies:e1", "summons:s1", "weapons:w1", "relics:r1", "ui:seal", "vfx:hit", "backgrounds:background",
     ]) {
@@ -184,11 +184,61 @@ describe("prepareCombatAssets (`home-ui-redesign` Task 3)", () => {
     expect(progress.at(-1)).toBe("3/3");
   });
 
+  it("waits for synchronous Phaser create to return before checking scene activity", async () => {
+    const target = scene(); target.active = false;
+    const result = prepareCombatAssets(target, { files: [files[0]!] });
+    target.active = true; // SceneManager marks RUNNING after calling create().
+    expect(await result).toEqual({ loaded: 1, failed: [] });
+  });
+
+  it("bounds scheduling and stops new jobs when a gate becomes stale", async () => {
+    const target=scene(); const queued:string[]=[];
+    target.load.start=()=>{target.load.loading=true;};
+    target.load.image=(key:string)=>queued.push(key);
+    let current=true;
+    const result=prepareCombatAssets(target,{files:Array.from({length:12},(_,i)=>({key:`cards:${i}`,url:"/test.webp"})),concurrency:2,isCurrent:()=>current});
+    await Promise.resolve();
+    expect(queued).toHaveLength(2); current=false;
+    for(const key of queued) target.load.emit("filecomplete",key);
+    expect((await result).failed).toHaveLength(10);
+    expect(queued).toHaveLength(2);
+  });
+
+  it("two gates share a pending texture and the surviving scene retries after owner shutdown", async () => {
+    const owner=scene(), waiter=scene();
+    waiter.textures=owner.textures;
+    owner.load.start=()=>{owner.load.loading=true;};
+    const one=[{key:"heroes:m05",url:"/m05.webp"}];
+    const first=prepareCombatAssets(owner,{files:one});
+    const second=prepareCombatAssets(waiter,{files:one});
+    await Promise.resolve();
+    expect(owner.load.files).toHaveLength(1);expect(waiter.load.files).toHaveLength(0);
+    owner.active=false;owner.events.emit("shutdown");
+    expect(await first).toEqual({loaded:0,failed:["heroes:m05"]});
+    expect(await second).toEqual({loaded:1,failed:[]});
+  });
+
   it("counts cached textures as loaded without touching the loader", async () => {
     const target = scene();
     target.textures.exists = () => true;
     const result = await prepareCombatAssets(target, { files });
     expect(result).toEqual({ loaded: 3, failed: [] });
     expect(target.loader!.files).toHaveLength(0);
+  });
+});
+
+
+describe("combat selection uses visible roster and equipment", () => {
+  it("does not queue unrelated gear or roster at a lobby gate", () => {
+    const files = { heroes:{m05:"/m05.webp",m05_up:"/m05_up.webp",m01:"/m01.webp"}, weapons:{w1:"/w1.webp",w2:"/w2.webp"}, relics:{r1:"/r1.webp",r2:"/r2.webp"}, cards:{art_attack:"/attack.webp"}, summons:{s1:"/summon.webp"} };
+    const selection=deckAssetSelection({heroIds:["m05","f04","m06"],weapons:{m05:"w1",m06:null},relicIds:["r1"]});
+    expect(combatTextureEntries(files,selection).map(entry=>entry.key)).toEqual(["cards:art_attack","heroes:m05","heroes:m05_up","summons:s1","weapons:w1","relics:r1"]);
+    expect(combatTextureEntries(files).map(entry=>entry.key)).toEqual(["cards:art_attack","summons:s1"]);
+  });
+  it("prepares both public sides and alternate forms without reading private cards", () => {
+    const state = {heroes:[{defId:"m05"},{defId:"f09"}],enemies:[{defId:"boss"}],players:[{weapons:[{weaponId:"w1"}],relics:[]},{weapons:[{weaponId:"w2"}],relics:[{id:"r2"}]}],get cards(){throw new Error("private data accessed");}};
+    const selection=battleAssetSelection(state as any);
+    const files={heroes:{m05:"a",m05_up:"b",f09:"c",f09_up:"d",m01:"e"},weapons:{w1:"f",w2:"g",w3:"h"}};
+    expect(combatTextureEntries(files,selection).map(entry=>entry.key)).toEqual(["heroes:m05","heroes:m05_up","heroes:f09","heroes:f09_up","weapons:w1","weapons:w2"]);
   });
 });

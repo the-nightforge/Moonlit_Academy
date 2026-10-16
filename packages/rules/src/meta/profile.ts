@@ -253,6 +253,15 @@ export function parseProfile(data: GameData, raw: unknown): { profile: Profile; 
     };
   }
   profile.story = { cleared: isRecord(raw.story) ? strings(raw.story.cleared).filter((id) => data.storyStages[id] !== undefined) : [] };
+  const lesson = raw.firstLesson;
+  if (isRecord(lesson) && typeof lesson.deckId === "string" && typeof lesson.cardId === "string" && typeof lesson.replacedCardId === "string") {
+    const owner = data.cards[lesson.cardId]?.ownerId;
+    const first = Object.values(data.storyArcs)[0]?.stageIds[0];
+    if (first && profile.story.cleared.includes(first) && owner && profile.heroes[owner]?.unlockedCardIds.includes(lesson.cardId)
+      && data.heroes[owner]?.lockedCardIds.includes(lesson.cardId) && data.cards[lesson.replacedCardId]?.ownerId === owner) {
+      profile.firstLesson = { deckId: lesson.deckId, cardId: lesson.cardId, replacedCardId: lesson.replacedCardId, practiced: lesson.practiced === true };
+    }
+  }
   profile.achievements = strings(raw.achievements);
   profile.stats = counters(raw.stats);
   const flags = isRecord(raw.flags) ? raw.flags : {};

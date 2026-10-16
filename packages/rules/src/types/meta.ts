@@ -102,6 +102,8 @@ export interface Profile {
   coop: { dayKey: string; clears: number; rewarded: number };
   /** Story progress (`18` §4.2); server-only. */
   story: { cleared: string[] };
+  /** One-time story lesson reward; server-only, never merged from local imports. */
+  firstLesson?: { deckId: string; cardId: string; replacedCardId: string; practiced: boolean };
   achievements: string[];
   stats: Record<string, number>;
   flags: { starterGiftClaimed: boolean; localImportDone: boolean };

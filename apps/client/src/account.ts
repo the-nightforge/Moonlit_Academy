@@ -130,7 +130,7 @@ export async function login(username: string, password: string, register: boolea
   // New accounts receive the starter gift with registration (`14` §5).
   if (register) {
     const gift = session.data.economyConfig.starterGift.moonJade;
-    session.notices.push(`Quà tân thủ: +${gift} ${CURRENCY_LABELS.moonJade} — thử vận may ở Triệu Hồi!`);
+    session.notices.push(`Quà tân thủ: +${gift} ${CURRENCY_LABELS.moonJade}. Bắt đầu Cốt Truyện để học chiến đấu, rồi chọn một lá bài mới miễn phí và đưa vào bộ bài.`);
   }
 }
 
@@ -180,6 +180,8 @@ export async function logout(): Promise<void> {
 
 /** Vietnamese text for an error from the API (or anything else). */
 export function errorText(error: unknown): string {
+  if (error instanceof ApiError && error.code === "first card unavailable") return "Lựa chọn lá đầu tiên không còn khả dụng. Hãy tải lại tiến độ hoặc chọn bộ bài hợp lệ.";
+  if (error instanceof ApiError && error.code === "invalid replacement") return "Hãy chọn một lá đang trong bộ bài của cùng Hero để thay ra.";
   if (error instanceof ApiError) return API_ERROR_TEXT[error.code] ?? `Lỗi server (${error.code})`;
   return "Có lỗi không xác định";
 }

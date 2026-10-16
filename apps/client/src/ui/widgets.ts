@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { DialogControls } from "./dialog-controls";
 import { COLORS, CURRENCY_LABELS, DESIGN_HEIGHT, DESIGN_WIDTH, TEXT_BASE, visibleWorld } from "./theme";
 import { roundedPanel } from "./rounded-panel";
 import { buttonMotion, enterUi } from "./ui-motion";
@@ -298,7 +299,7 @@ export interface ModalAction {
 export interface ModalOptions {
   title?: string;
   message: string;
-  /** Left to right; the last one is the default (Enter). */
+  /** Left to right; focus starts on the first, safe action. */
   actions: ModalAction[];
   /** A text field (HTML, laid over the canvas like the sign-in form). */
   input?: { value?: string; maxLength: number; placeholder?: string };
@@ -334,7 +335,7 @@ export function registerModal(cancel: () => void): () => void {
 
 /**
  * In-game dialog replacing `window.alert/confirm/prompt`: drawn in the game's
- * own style, blocks the screen under it, Enter picks the last action, Esc
+ * own style, blocks the screen under it, Enter activates the focused action, Esc
  * dismisses. Lives outside scene roots, so a re-render underneath keeps it.
  */
 export function showModal(scene: Phaser.Scene, options: ModalOptions): Promise<ModalResult> {
@@ -361,20 +362,20 @@ export function showModal(scene: Phaser.Scene, options: ModalOptions): Promise<M
     let input: HTMLInputElement | null = null;
     let done = false;
     const last = options.actions.length - 1;
+    const controls = new DialogControls(scene, () => finish(-1));
     const finish = (action: number) => {
       if (done) return;
       done = true;
       const value = input?.value ?? "";
+      controls.destroy();
       input?.remove();
       scene.scale.off(Phaser.Scale.Events.RESIZE, place);
-      scene.input.keyboard?.off("keydown-ENTER", onEnter);
       scene.input.keyboard?.off("keydown-ESC", onEsc);
       scene.events.off(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
       layer.destroy();
       if (activeModal === handle) activeModal = null;
       resolve({ action, value });
     };
-    const onEnter = () => finish(last);
     const onEsc = () => finish(-1);
     const onShutdown = () => finish(-1);
     const handle = { cancel: () => finish(-1) };
@@ -403,9 +404,10 @@ export function showModal(scene: Phaser.Scene, options: ModalOptions): Promise<M
       // Keys typed here are text, not game hotkeys (E, `, Esc to go back).
       input.addEventListener("keydown", (event) => {
         event.stopPropagation();
-        if (event.key === "Enter") finish(last);
+        if (event.key === "Enter") { event.preventDefault(); controls.focus(1); }
         if (event.key === "Escape") finish(-1);
       });
+      controls.field(input);
       document.body.appendChild(input);
       place();
       scene.scale.on(Phaser.Scale.Events.RESIZE, place);
@@ -418,8 +420,12 @@ export function showModal(scene: Phaser.Scene, options: ModalOptions): Promise<M
     const startX = cx - (last * step) / 2;
     options.actions.forEach((action, index) => {
       addButton(scene, layer, startX + index * step, buttonY, 180, action.label, () => finish(index), true, { variant: action.variant });
+      const button = layer.list[layer.list.length - 2] as Phaser.GameObjects.Rectangle;
+      controls.button(button, action.label, () => finish(index));
     });
-    scene.input.keyboard?.on("keydown-ENTER", onEnter);
+    if (!input) controls.focus();
+    scene.scale.on(Phaser.Scale.Events.RESIZE, controls.sync);
+    layer.once(Phaser.GameObjects.Events.DESTROY, () => scene.scale.off(Phaser.Scale.Events.RESIZE, controls.sync));
     scene.input.keyboard?.on("keydown-ESC", onEsc);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
   });

@@ -7,12 +7,12 @@ import { auth } from "../api";
 import { homeDecks, resolveHomeDeck } from "../home-selection";
 import { StaleRequestError, type RequestGuard } from "../request-context";
 import { startServerRun } from "../run-session";
-import { prepareCombatAssets } from "../ui/combat-assets";
+import { deckAssetSelection, prepareCombatAssets } from "../ui/combat-assets";
 import { queueTexture } from "../ui/texture-queue";
 import { startStoryTicket } from "../story-session";
 import { session } from "../session";
 import type { RankInfo, Team } from "../session";
-import { coverCrop } from "./gacha/shared";
+import { framedImage } from "../ui/contained-art";
 import { showTextTooltip } from "../ui/card-tooltip";
 import { roundedPanel } from "../ui/rounded-panel";
 import { HomeControls } from "../ui/home-controls";
@@ -223,7 +223,7 @@ export class DeckSelectScene extends Phaser.Scene {
   private async withCombatAssets(generation: number, next: () => void): Promise<void> {
     this.busyStage = "Đang tải tài nguyên…";
     this.render();
-    const { failed } = await prepareCombatAssets(this).catch(() => ({ loaded: 0, failed: ["loader"] }));
+    const { failed } = await prepareCombatAssets(this, { selection: deckAssetSelection(this.selectedDeck()), isCurrent: () => this.isCurrent(generation), onProgress: (done, total) => { if (this.isCurrent(generation)) { this.busyStage = `Đang tải hình trận… ${done}/${total}`; this.render(); } } }).catch(() => ({ loaded: 0, failed: ["loader"] }));
     if (!this.isCurrent(generation)) return;
     if (failed.length > 0) {
       this.busy = false;
@@ -797,19 +797,12 @@ export class DeckSelectScene extends Phaser.Scene {
   }
 
   private deckPortrait(parent: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number, heroId: string) {
-    const portrait = roundedPanel(this, x, y, width, height, 0x20334b, 1, 0x4b617b, 6);
-    parent.add(portrait);
     const key = this.heroArtKey(heroId);
-    if (this.textures.exists(key)) {
-      const image = this.add.image(0, 0, key);
-      coverCrop(image, width, height);
-      // Wide preview portraits frame the head and upper body of vertical Hero art.
-      if (width > height) {
-        image.setOrigin(0.5, 0).setY(-height / 2);
-        image.setCrop((image.width - width / image.scaleX) / 2, 0, width / image.scaleX, height / image.scaleY);
-      }
-      portrait.add(image);
-    } else this.text(portrait, 0, 0, "❖", Math.min(24, width * 0.6), COLORS.dimText).setOrigin(0.5);
+    if (!framedImage(this, parent, key, x, y, width, height, 1)) {
+      const portrait = roundedPanel(this, x, y, Math.min(width, height * 2 / 3), height, 0x20334b, 1, 0x4b617b, 6);
+      parent.add(portrait);
+      this.text(portrait, 0, 0, "❖", Math.min(24, width * 0.6), COLORS.dimText).setOrigin(0.5);
+    }
   }
 
   private deckGearTile(parent: Phaser.GameObjects.Container, x: number, y: number, width: number, key: string | undefined, name: string, detail: string) {
@@ -1037,9 +1030,7 @@ export class DeckSelectScene extends Phaser.Scene {
       const panel = roundedPanel(this, x, y, PICK_W, PICK_H, COLORS.panelHero, owned ? 1 : 0.92, slot >= 0 ? COLORS.goldFill : COLORS.panelBorder, 10);
       const artKey = this.heroArtKey(hero.id);
       if (this.textures.exists(artKey)) {
-        const art = this.add.image(-69, 0, artKey);
-        coverCrop(art, 62, 76);
-        panel.add(art);
+        framedImage(this, panel, artKey, -69, 0, 62, 76, 1);
       } else if (this.textures.exists("ui:nav_heroes")) panel.add(this.add.image(-69, 0, "ui:nav_heroes").setDisplaySize(48, 48).setAlpha(owned ? 1 : 0.45));
       const hit = this.add.rectangle(0, 0, PICK_W, PICK_H, 0, 0);
       panel.add(hit);

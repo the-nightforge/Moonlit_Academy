@@ -180,6 +180,9 @@ function playCard(
   player.discardPile.push(instance.instanceId);
   player.cardsPlayedThisTurn += 1;
   if (card.type === "attack") player.attackCardsThisTurn = (player.attackCardsThisTurn ?? 0) + 1;
+  if (card.type === "attack" && !card.bond) {
+    owner.ownAttackCardsThisTurn = (owner.ownAttackCardsThisTurn ?? 0) + 1;
+  }
 }
 
 /** Owner(s) losing empower/stealth after an attack card: a bond card's damage actors. */

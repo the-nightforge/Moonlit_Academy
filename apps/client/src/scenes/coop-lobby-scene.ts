@@ -6,7 +6,7 @@ import { NetMatch } from "../net/match";
 import { NetSocket } from "../net/socket";
 import type { ServerMessage } from "../net/protocol";
 import { session } from "../session";
-import { prepareCombatAssets } from "../ui/combat-assets";
+import { deckAssetSelection, prepareCombatAssets } from "../ui/combat-assets";
 import { coopLobbyError, coopLobbyModel, CoopLobbyFlow, normalizeCoopRoomCode, type CoopAction, type CoopRewards } from "../ui/coop-lobby-presentation";
 import { CoopLobbyView } from "../ui/coop-lobby-view";
 import { useDesignCamera } from "../ui/theme";
@@ -155,7 +155,7 @@ export class CoopLobbyScene extends Phaser.Scene {
     this.assetState = "loading";
     this.render();
     const generation = this.generation, account = auth.generation;
-    prepareCombatAssets(this).then(({ failed }) => {
+    prepareCombatAssets(this, { selection: deckAssetSelection(session.profile.decks.find(deck => deck.id === session.selectedDeckId) ?? { heroIds: session.heroIds }), isCurrent: () => this.current(generation, account) }).then(({ failed }) => {
       if (!this.current(generation, account)) return;
       this.assetFailed = failed.length;
       this.assetState = failed.length ? "error" : "ready";

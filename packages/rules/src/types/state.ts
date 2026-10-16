@@ -40,6 +40,8 @@ export interface HeroState extends UnitState {
   comboBonusUsedThisTurn: boolean;
   /** Hàn Kiếm: the first hit this turn already happened. */
   firstHitUsedThisTurn: boolean;
+  /** Completed non-bond attack cards owned by this hero this turn (Vũ Điệp). */
+  ownAttackCardsThisTurn?: number;
   /** Bác Học: the first scheme card this turn already repeated. */
   firstSchemeUsedThisTurn?: boolean;
   /** Sử Bút: the first Phong Ấn this turn already cancelled an extra intent (`01` §5.6). */

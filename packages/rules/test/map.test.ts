@@ -76,7 +76,7 @@ describe("map generation", () => {
   it("T100: encounters match tier and minFloor and avoid parents' encounters", () => {
     for (const map of maps) {
       for (const node of nodesOf(map)) {
-        if (node.type === "rest" || node.type === "treasure") {
+        if (node.type === "rest" || node.type === "treasure" || node.type === "event") {
           expect(node.encounterId).toBeUndefined();
           continue;
         }

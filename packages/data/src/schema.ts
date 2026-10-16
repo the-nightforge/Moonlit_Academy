@@ -128,6 +128,7 @@ const levelUpPassiveSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("moonShiftWeakensEnemies"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("firstSchemeRepeats") }),
   z.object({ type: z.literal("comboAttackBonus"), amount: z.number().int().positive() }),
+  z.object({ type: z.literal("subsequentOwnAttackBonus"), amount: z.number().int().positive() }),
   z.object({ type: z.literal("tagDiscountOwnCards"), tag: cardTagSchema, amount: z.number().int().positive() }),
   z.object({ type: z.literal("forbiddenNoSelfHpLoss") }),
   z.object({ type: z.literal("bloodMoonAttackBonus"), amount: z.number().int().positive() }),
@@ -288,7 +289,7 @@ export const moonPhaseDefSchema = z.object({
   })).length(3),
 });
 
-const nodeTypeSchema = z.enum(["combat", "elite", "rest", "treasure", "boss"]);
+const nodeTypeSchema = z.enum(["combat", "elite", "rest", "treasure", "event", "boss"]);
 
 const hookTriggerSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("combatStart") }),
@@ -383,6 +384,7 @@ export const runConfigSchema = z.object({
           elite: weightSchema,
           rest: weightSchema,
           treasure: weightSchema,
+            event: weightSchema,
           boss: weightSchema,
         }),
       }),
@@ -570,7 +572,7 @@ const effectTypeSchema = z.enum([
   "damage", "heal", "loseHp", "gainArmor", "removeArmor", "applyStatus", "cleanse",
   "chooseCard", "gainMoonPower", "shiftMoon", "stealBuff", "bloodMoon",
   "drainMoonPower", "gainMoonPowerPerTurn", "missingHpDamage", "scaledDamage", "burstRegen",
-  "conditional", "execute", "createCard", "summon", "sealIntent", "extendDebuffs",
+  "conditional", "execute", "createCard", "drawCards", "summon", "sealIntent", "extendDebuffs",
   "revive",
 ]);
 

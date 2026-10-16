@@ -4,7 +4,7 @@ import { session } from "../session";
 import { CURRENCY_LABELS, useDesignCamera } from "../ui/theme";
 import { DialogueView } from "../ui/dialogue-view";
 
-interface DialogueData { stageId?: string; part?: "before" | "after" }
+interface DialogueData { stageId?: string; part?: "before" | "after"; replayOnly?: boolean }
 
 /** Rewards are the server-confirmed profile diff, never a client-side grant. */
 function rewardLines(rewards: StoryRewards): string[] {
@@ -34,11 +34,13 @@ export class DialogueScene extends Phaser.Scene {
   private lines: DialogueLine[] = [];
   private index = 0;
   private finished = false;
+  private replayOnly = false;
   constructor() { super("dialogue"); }
   create(data: DialogueData = {}) {
     useDesignCamera(this);
     this.stageId = data.stageId ?? session.pendingStageId ?? "";
     this.part = data.part ?? "before";
+    this.replayOnly = data.replayOnly === true;
     this.index = 0; this.finished = false;
     this.lines = session.data.storyStages[this.stageId]?.[this.part] ?? [];
     if (this.lines.length === 0) { this.finish(); return; }
@@ -54,11 +56,12 @@ export class DialogueScene extends Phaser.Scene {
   private finish() {
     if (this.finished) return;
     this.finished = true;
+    if (this.replayOnly) { session.pendingStageId = null; this.scene.start("story"); return; }
     if (this.part === "before") { this.scene.start("deck-select"); return; }
     const last = session.lastStory;
     session.lastStory = null;
     if (last?.won === true && last.rewards.firstClear) session.notices.push("Thưởng lần đầu:", ...rewardLines(last.rewards));
     this.scene.start("story");
   }
-  private render() { this.view?.render(session.data, session.data.storyStages[this.stageId]!.name, this.lines[this.index]!, this.index, this.lines.length, {stageId:this.stageId,part:this.part}); }
+  private render() { this.view?.render(session.data, session.data.storyStages[this.stageId]!.name, this.lines[this.index]!, this.index, this.lines.length, {stageId:this.stageId,part:this.part,replayOnly:this.replayOnly}); }
 }

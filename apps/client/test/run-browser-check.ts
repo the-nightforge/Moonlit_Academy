@@ -41,6 +41,15 @@ export async function runBrowserChecks():Promise<string[]> {
     if(innerWidth>=1050&&innerHeight>=720){document.querySelector<HTMLElement>('.vn-run')!.scrollTop=0;check('Desktop reward keeps every choice fully visible',Array.from(document.querySelectorAll('.rn-augment')).every(b=>b.getBoundingClientRect().bottom<=innerHeight));}
     document.querySelector<HTMLButtonElement>('[data-action="augment"]')!.focus();click('[data-action="augment"]');check('Reward choice applies the offered Lõi',actions.at(-1)?.type==='pickAugment'&&(actions.at(-1) as {augmentId:string}).augmentId===choices[0]);styled&&=buttons();
     state={...state,run:{...run,status:'map'}};render();check('Finishing a choice moves keyboard focus to Continue',(document.activeElement as HTMLElement)?.dataset.control==='enter');
+    state={...state,run:{...run,status:'rest',availableCardIds:heroIds.flatMap(id=>[...data.heroes[id]!.cardIds,...data.heroes[id]!.lockedCardIds])}};render();
+    check('Swap previews show both entire cards with tight image borders',document.querySelectorAll('.rn-swap-preview img').length===2&&await framed());styled&&=buttons();
+    const swapBefore=actions.length;click('[data-action="swap"]');check('A swap dispatches one recorded action for one card',actions.length===swapBefore+1&&actions.at(-1)?.type==='rest'&&(actions.at(-1) as {choice:string}).choice==='swapCard');
+    for(const eventId of ['moonShrine','wanderingSmith','forgottenArchive'] as const){
+      state={...state,run:{...run,status:'event',pendingEvent:{id:eventId,...(eventId==='moonShrine'?{runRelicId:Object.keys(data.runRelics)[0]!}:{augmentId:Object.keys(data.augments)[0]!})}}};render();
+      check(`Event ${eventId} shows two legal choices with complete image framing`,document.querySelectorAll('.rn-event-choices>article').length===2&&await framed());styled&&=buttons();
+    }
+    state={...state,run:{...run,status:'event',pendingEvent:{id:'forgottenArchive'},deck:run.deck.slice(0,data.runConfig.minDeckSize)}};render();
+    check('An event without eligible cards keeps both exits available',!document.querySelector('[data-control="event-card"]')&&Array.from(document.querySelectorAll<HTMLButtonElement>('.rn-event button')).every(b=>!b.disabled));
     state={...state,run:{...run,status:'treasure',runRelicIds:[Object.keys(data.runRelics)[0]!]},lastRelicId:null};render();check('An empty treasure never claims an old relic as newly earned',!document.querySelector('.rn-found')&&document.querySelector('.rn-treasure')?.textContent?.includes('Không còn Kỳ Vật mới')===true);
     state={...state,run:{...run,status:'lost'},submitting:true};render();check('Pending submission blocks leaving and hides unverified rewards',document.querySelector<HTMLButtonElement>('[data-action="back"]')!.disabled&&!document.querySelector('.rn-receipt'));styled&&=buttons();
     state={...state,submitting:false,error:'Không thể kết nối'};render();document.querySelector<HTMLButtonElement>('[data-action="retry"]')!.focus();click('[data-action="retry"]');check('Submission failure provides a working retry',retries===1);styled&&=buttons();

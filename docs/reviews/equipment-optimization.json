@@ -1,0 +1,306 @@
+{
+  "encoding": "WebP quality 90 method 6, original dimensions and PNG files retained",
+  "originalBytes": 115857448,
+  "optimizedBytes": 16595642,
+  "files": [
+    {
+      "key": "weapons:w_anh_nguyet_chuy",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2620991,
+      "optimizedBytes": 310622
+    },
+    {
+      "key": "weapons:w_bach_hoa_tram",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2692144,
+      "optimizedBytes": 364268
+    },
+    {
+      "key": "weapons:w_bach_ngan_cham",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2797510,
+      "optimizedBytes": 367510
+    },
+    {
+      "key": "weapons:w_cam_ve_kich",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2641180,
+      "optimizedBytes": 364278
+    },
+    {
+      "key": "weapons:w_dan_hon_dang",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2789515,
+      "optimizedBytes": 379716
+    },
+    {
+      "key": "weapons:w_han_mon_kiem",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2642613,
+      "optimizedBytes": 348232
+    },
+    {
+      "key": "weapons:w_han_tuyet_song_kiem",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2894513,
+      "optimizedBytes": 405438
+    },
+    {
+      "key": "weapons:w_huyen_linh_kinh",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2671773,
+      "optimizedBytes": 372040
+    },
+    {
+      "key": "weapons:w_huyet_phuong_dao",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2795643,
+      "optimizedBytes": 413786
+    },
+    {
+      "key": "weapons:w_huyet_tran_co",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2847110,
+      "optimizedBytes": 418980
+    },
+    {
+      "key": "weapons:w_kinh_hong_phien",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2939869,
+      "optimizedBytes": 436398
+    },
+    {
+      "key": "weapons:w_liet_cung",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2831496,
+      "optimizedBytes": 422332
+    },
+    {
+      "key": "weapons:w_ngoc_but",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2936240,
+      "optimizedBytes": 439106
+    },
+    {
+      "key": "weapons:w_ngoc_tho_boi",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2771799,
+      "optimizedBytes": 388300
+    },
+    {
+      "key": "weapons:w_phan_quan_but",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2872523,
+      "optimizedBytes": 434334
+    },
+    {
+      "key": "weapons:w_quan_tinh_truong",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2763931,
+      "optimizedBytes": 374678
+    },
+    {
+      "key": "weapons:w_thanh_tam_binh",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2820304,
+      "optimizedBytes": 410960
+    },
+    {
+      "key": "weapons:w_thien_dien_phien",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 3167353,
+      "optimizedBytes": 503298
+    },
+    {
+      "key": "weapons:w_thien_nguyet_truong",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2948164,
+      "optimizedBytes": 420060
+    },
+    {
+      "key": "weapons:w_thiet_thuan",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2911964,
+      "optimizedBytes": 416114
+    },
+    {
+      "key": "weapons:w_tinh_ban",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2934186,
+      "optimizedBytes": 439540
+    },
+    {
+      "key": "weapons:w_van_kim_dau",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2646184,
+      "optimizedBytes": 355750
+    },
+    {
+      "key": "weapons:w_vong_quoc_cam",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2767146,
+      "optimizedBytes": 383540
+    },
+    {
+      "key": "weapons:w_xich_diem_thuong",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2936001,
+      "optimizedBytes": 473214
+    },
+    {
+      "key": "weapons:w_xuyen_van_cung",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2754052,
+      "optimizedBytes": 415868
+    },
+    {
+      "key": "relics:r_bach_lo_huong_nang",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2918872,
+      "optimizedBytes": 404722
+    },
+    {
+      "key": "relics:r_bat_dong_an",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2691426,
+      "optimizedBytes": 381054
+    },
+    {
+      "key": "relics:r_can_khon_ban",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2923544,
+      "optimizedBytes": 441640
+    },
+    {
+      "key": "relics:r_han_lam_an",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2791171,
+      "optimizedBytes": 413124
+    },
+    {
+      "key": "relics:r_ho_tam_chau",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2748917,
+      "optimizedBytes": 371936
+    },
+    {
+      "key": "relics:r_huyen_vu_giap_phu",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2964180,
+      "optimizedBytes": 441734
+    },
+    {
+      "key": "relics:r_huyet_luyen_dinh",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 3061800,
+      "optimizedBytes": 479662
+    },
+    {
+      "key": "relics:r_huyet_ngoc_boi",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2768806,
+      "optimizedBytes": 390372
+    },
+    {
+      "key": "relics:r_kim_cang_phu",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2950016,
+      "optimizedBytes": 455044
+    },
+    {
+      "key": "relics:r_loan_linh_an",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2895466,
+      "optimizedBytes": 445156
+    },
+    {
+      "key": "relics:r_ngu_linh_chuong",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2644795,
+      "optimizedBytes": 346488
+    },
+    {
+      "key": "relics:r_phong_toa_an",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2885899,
+      "optimizedBytes": 383666
+    },
+    {
+      "key": "relics:r_thien_sach",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2751970,
+      "optimizedBytes": 366896
+    },
+    {
+      "key": "relics:r_tran_hon_linh",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2806523,
+      "optimizedBytes": 392964
+    },
+    {
+      "key": "relics:r_vong_nguyet_kinh",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2907658,
+      "optimizedBytes": 424520
+    },
+    {
+      "key": "relics:r_xich_diem_chau",
+      "width": 1024,
+      "height": 1536,
+      "originalBytes": 2752201,
+      "optimizedBytes": 398302
+    }
+  ],
+  "selectedCombatExample": {
+    "description": "Example selected three-hero equipment loadout; other gear is excluded by deck/battle selection",
+    "keys": [
+      "weapons:w_cam_ve_kich",
+      "weapons:w_han_mon_kiem",
+      "weapons:w_vong_quoc_cam",
+      "relics:r_vong_nguyet_kinh",
+      "relics:r_ho_tam_chau"
+    ],
+    "originalBytes": 13707514,
+    "optimizedBytes": 1892506
+  }
+}

@@ -15,7 +15,7 @@
   {
     "id": "combo_am_anh_tuyet_sat",
     "name": "Ám Ảnh Tuyệt Sát",
-    "text": "Thực tử mọi kẻ địch còn ≤ 25% HP; không ai ngã → 8 sát thương lên toàn bộ kẻ địch.",
+    "text": "Thực tử mọi kẻ địch còn ≤ 25% máu; không ai ngã → 8 sát thương lên toàn bộ kẻ địch.",
     "parts": [
       { "ownerId": "m06", "appliesStatus": "stealth" },
       { "ownerId": "f02", "effect": "loseHp" }
@@ -33,7 +33,7 @@
   {
     "id": "combo_nguyet_quang_pho_chieu",
     "name": "Nguyệt Quang Phổ Chiếu",
-    "text": "Hồi 6 HP cho cả sáu Hero (dưới Trăng Tròn: ×2).",
+    "text": "Hồi 6 máu cho cả sáu Hero (dưới Trăng Tròn: ×2).",
     "parts": [
       { "effect": "shiftMoon", "moonPhaseAfter": "full" },
       { "effect": "heal" }
@@ -42,5 +42,29 @@
     "effects": [
       { "type": "heal", "amount": 6, "to": "allAllies" }
     ]
+  },
+  {
+    "id": "combo_dong_tam_ho_tran",
+    "name": "Đồng Tâm Hộ Trận",
+    "text": "Hai người dùng bài tạo giáp và hồi máu trong cùng lượt: cả đội nhận 4 Giáp. Mỗi trận một lần.",
+    "parts": [{ "effect": "gainArmor" }, { "effect": "heal" }],
+    "limit": { "perRound": 1, "perCombat": 1 },
+    "effects": [{ "type": "gainArmor", "amount": 4, "to": "allAllies" }]
+  },
+  {
+    "id": "combo_pha_tran_hop_luc",
+    "name": "Phá Trận Hợp Lực",
+    "text": "Hai người dùng bài tấn công và bài áp Dễ Vỡ trong cùng lượt: gây 8 sát thương lên mọi kẻ địch. Mỗi trận một lần.",
+    "parts": [{ "tag": "attack" }, { "appliesStatus": "vulnerable" }],
+    "limit": { "perRound": 1, "perCombat": 1 },
+    "effects": [{ "type": "damage", "amount": 8, "to": "allEnemies" }]
+  },
+  {
+    "id": "combo_tu_nguyet_dong_hanh",
+    "name": "Tụ Nguyệt Đồng Hành",
+    "text": "Hai người dùng bài rút thêm và bài chuyển pha trăng trong cùng lượt: hồi 3 máu cho cả đội. Mỗi trận một lần.",
+    "parts": [{ "effect": "drawCards" }, { "effect": "shiftMoon" }],
+    "limit": { "perRound": 1, "perCombat": 1 },
+    "effects": [{ "type": "heal", "amount": 3, "to": "allAllies" }]
   }
 ]

@@ -24,12 +24,13 @@ export interface TestServer {
 /**
  * pg-mem `createPg` client as a `SqlRunner`. Cross-call transactions aren't
  * supported by the adapter, so `begin` snapshots the whole database with
- * `mem.backup()` and restores on failure — sequential tests never interleave
- * transactions, and no transaction mutates the schema after migrations run.
+ * `mem.backup()` and restores on failure. Serialize transactions so rollback
+ * cannot undo a concurrent commit; no transaction changes schema after migration.
  */
 function memRunner(): SqlRunner {
   const mem = newDb();
   const client = new (mem.adapters.createPg().Client)();
+  let transactionTail = Promise.resolve();
   return {
     async unsafe(query, params = []) {
       const result = await client.query(query, params as unknown[]);
@@ -38,12 +39,18 @@ function memRunner(): SqlRunner {
       return rows;
     },
     async begin(fn) {
+      const previous = transactionTail;
+      let release!: () => void;
+      transactionTail = new Promise<void>(resolve => { release = resolve; });
+      await previous;
       const backup = mem.backup();
       try {
         return await fn(this);
       } catch (error) {
         backup.restore();
         throw error;
+      } finally {
+        release();
       }
     },
     end: () => client.end(),
@@ -200,6 +207,8 @@ function botAction(data: GameData, run: RunState): RunAction {
       return { type: "rest", choice: "heal" };
     case "treasure":
       return { type: "continue" };
+    case "event":
+      return { type: "event", choice: "rest" };
     case "won":
     case "lost":
       throw new Error("run is over");

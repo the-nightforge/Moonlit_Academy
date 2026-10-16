@@ -176,6 +176,7 @@ export const INTENT_ICONS: Record<IntentKind, string> = {
 };
 
 export const NODE_ICONS: Record<NodeType, string> = {
+  event: "✦",
   combat: "⚔",
   elite: "☠",
   rest: "🏮",
@@ -184,6 +185,7 @@ export const NODE_ICONS: Record<NodeType, string> = {
 };
 
 export const NODE_LABELS: Record<NodeType, string> = {
+  event: "Kỳ Ngộ",
   combat: "Trận thường",
   elite: "Tinh Anh — thắng nhận Kỳ Vật",
   rest: "Nghỉ Chân — hồi máu / bỏ lá",

@@ -22,13 +22,6 @@ export function splashKey(scene: Phaser.Scene, banner: GameData["banners"][strin
   return candidates.find(key => key !== "" && scene.textures.exists(key)) ?? "";
 }
 
-/** Scale to cover w×h then crop the overflow so the image stays centered. */
-export function coverCrop(image: Phaser.GameObjects.Image, width: number, height: number) {
-  const scale = Math.max(width / image.width, height / image.height);
-  image.setScale(scale);
-  image.setCrop((image.width - width / scale) / 2, (image.height - height / scale) / 2, width / scale, height / scale);
-}
-
 /** One-line outcome label under the item name on a revealed card / history row. */
 export function outcomeText(result: PullResult): string {
   switch (result.outcome) {

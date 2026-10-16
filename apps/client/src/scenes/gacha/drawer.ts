@@ -1,10 +1,11 @@
 import Phaser from "phaser";
+import { framedImage } from "../../ui/contained-art";
 import { featuredEntry, featuredRotationEnd } from "rules";
 import { session } from "../../session";
 import { roundedPanel } from "../../ui/rounded-panel";
 import { COLORS, visibleWorld } from "../../ui/theme";
 import type { GachaScene } from "../gacha-scene";
-import { coverCrop, itemName, splashKey } from "./shared";
+import { itemName, splashKey } from "./shared";
 
 /** Left slide-in banner switcher. Owns its layer so the scene can ask via getters. */
 export class GachaDrawer {
@@ -33,8 +34,7 @@ export class GachaDrawer {
     Object.values(data.banners).forEach((entry, index) => {
       const y = 134 + index * 134, selected = entry.id === s.bannerId;
       const card = roundedPanel(s, 202, y, 356, 116, selected ? 0x2c3a55 : 0x14243a, 0.95, selected ? 0xe8c784 : 0x53627d, 12);
-      const thumb = s.image(card, splashKey(s, entry, featuredEntry(entry, Date.now())), -102, 0, 128, 88);
-      if (thumb) coverCrop(thumb, 128, 88);
+      framedImage(s, card, splashKey(s, entry, featuredEntry(entry, Date.now())), -102, 0, 128, 88, 1);
       s.text(card, -30, -28, entry.name, 17, selected ? "#f4dfb2" : COLORS.text);
       const entryFeatured = featuredEntry(entry, Date.now());
       const caption = entryFeatured ? `Tuần này: ${itemName(data, entryFeatured.heroId)}` : entry.kind === "hero" ? "Anh hùng thường trực" : entry.kind === "weapon" ? "Trang bị · binh khí" : "Trang bị · nguyệt bảo";

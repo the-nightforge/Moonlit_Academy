@@ -55,6 +55,7 @@ export { previewEnemyIntent } from "./preview";
 export { planEnemyIntents } from "./intent";
 export { drawCards, refillHand } from "./draw";
 export { generateMap } from "./run/map";
+export { runEventModel, runSwapChoices } from "./run/events";
 export {
   applyRunAction,
   createRun,
@@ -75,6 +76,7 @@ export {
   unlockCard,
 } from "./meta/profile";
 export { deckWeapons, deleteDeck, saveDeck, starterDeck, validateDeck } from "./meta/deck";
+export { claimFirstCard, firstCardChoices, firstStoryStageId } from "./meta/onboarding";
 export { replayRun } from "./meta/replay";
 export {
   applyStoryResult,

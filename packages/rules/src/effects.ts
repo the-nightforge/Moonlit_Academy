@@ -159,6 +159,9 @@ export function computeDamageAmount(
         const played = playerOf(state, ctx.source.id)?.cardsPlayedThisTurn ?? 0;
         flat += passive.amount * (played + (ctx.comboBonus ?? 0));
       }
+      if (passive?.type === "subsequentOwnAttackBonus" && ((ctx.source as HeroState).ownAttackCardsThisTurn ?? 0) > 0) {
+        flat += passive.amount;
+      }
       if (passive?.type === "bloodMoonAttackBonus" && state.bloodMoonRounds > 0) flat += passive.amount;
       // Nam Chiếu Hồn: the hero's card hits harder on a stacked target (`18` §3.3).
       if (passive?.type === "bonusVsDebuffed" && target.statuses.filter((st) => DEBUFF_STATUSES.has(st.id)).length >= passive.minDebuffs) flat += passive.amount;
@@ -262,11 +265,12 @@ function dealDamage(
 
   // Hàn Kiếm: the first hit each turn from the hero's cards leaves the enemy vulnerable.
   const passive = cardPassive(data, ctx);
-  if (passive?.type === "firstHitVulnerable" && target.side === "enemy") {
+  if (passive?.type === "firstHitVulnerable" && opponentsOf(state, ctx.source).includes(target)) {
     const hero = ctx.source as HeroState;
     if (!hero.firstHitUsedThisTurn) {
       hero.firstHitUsedThisTurn = true;
-      if (target.alive && target.hp > 0) applyStatusDecreed(data, state, target, "vulnerable", passive.rounds, hero.id, events);
+      const factor = state.mode === "pvp" ? 2 : 1;
+      if (target.alive && target.hp > 0) applyStatusDecreed(data, state, target, "vulnerable", passive.rounds * factor, hero.id, events);
     }
   }
   // Biên Tái: the first hit each turn from the hero's attack cards marks the opposing target.

@@ -21,6 +21,8 @@ function botAction(data: GameData, run: RunState): RunAction {
       return { type: "rest", choice: "heal" };
     case "treasure":
       return { type: "continue" };
+    case "event":
+      return { type: "event", choice: "rest" };
     case "won":
     case "lost":
       throw new Error("run is over");

@@ -15,6 +15,33 @@ async function setXp(server: TestServer, heroId: string, xp: number) {
 }
 
 describe("profile routes", () => {
+  it("claims the first story card and replacement together, with revisions and no duplicate reward", async () => {
+    const { server, token } = await signedIn();
+    const heroId = TEAM[0], cardId = server.data.heroes[heroId]!.lockedCardIds[0]!;
+    const replaceCardId = server.data.heroes[heroId]!.cardIds[0]!;
+    const draft: SavedDeck = { id: "", name: "Bài học", heroIds: TEAM, cardIds: starterDeck(server.data, TEAM) };
+    await call(server, "PUT", "/api/profile/decks", { token, rev: 1, body: { draft } });
+    const body = { deckId: "d1", cardId, replaceCardId };
+    expect((await call(server, "POST", "/api/profile/first-card", { token, rev: 2, body })).status).toBe(400);
+    const row = (await server.db.prepare("SELECT profile_json FROM profiles").get()) as { profile_json: string };
+    const profile = JSON.parse(row.profile_json) as Profile;
+    profile.story.cleared.push(Object.values(server.data.storyArcs)[0]!.stageIds[0]!);
+    await server.db.prepare("UPDATE profiles SET profile_json = ?").run(JSON.stringify(profile));
+    expect((await call(server, "POST", "/api/profile/first-card", { token, body })).status).toBe(428);
+    const attempts = await Promise.all([
+      call(server, "POST", "/api/profile/first-card", { token, rev: 2, body }),
+      call(server, "POST", "/api/profile/first-card", { token, rev: 2, body }),
+    ]);
+    expect(attempts.map(result => result.status).sort()).toEqual([200, 409]);
+    const done = attempts.find(result => result.status === 200)!;
+    expect(done.status).toBe(200);
+    expect(done.body.profile.firstLesson).toEqual({ deckId: "d1", cardId, replacedCardId: replaceCardId, practiced: false });
+    expect(done.body.profile.decks[0].cardIds).toContain(cardId);
+    expect(done.body.profile.missions.daily.cardsUnlocked).toBe(1);
+    expect((await call(server, "POST", "/api/profile/first-card", { token, rev: 2, body })).status).toBe(409);
+    expect((await call(server, "POST", "/api/profile/first-card", { token, rev: done.body.rev, body })).status).toBe(400);
+    expect((await call(server, "GET", "/api/profile", { token })).body.rev).toBe(done.body.rev);
+  });
   it("reads the profile; saves, renames and deletes decks; unlocks cards through the rules", async () => {
     const { server, token } = await signedIn();
     const read = await call(server, "GET", "/api/profile", { token });

@@ -1700,7 +1700,7 @@
       "threshold": 8,
       "constellationThreshold": 6,
       "passive": {
-        "type": "comboAttackBonus",
+        "type": "subsequentOwnAttackBonus",
         "amount": 1
       }
     },

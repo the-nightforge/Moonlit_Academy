@@ -89,7 +89,8 @@ export function generateMap(data: GameData, rngState: number): { map: RunMap; rn
   for (const floorNodes of nodes) {
     for (const node of floorNodes) {
       if (node.type === "boss") {
-        node.encounterId = encounters.find((e) => e.tier === "boss")!.id;
+        const pool = encounters.filter((e) => e.tier === "boss" && (e.minFloor ?? 1) <= node.floor);
+        node.encounterId = pickOne(rng, pool).id;
       } else if (node.type === "combat" || node.type === "elite") {
         const tier = node.type === "combat" ? "normal" : "elite";
         const pool = encounters

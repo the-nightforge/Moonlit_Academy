@@ -14,6 +14,7 @@ import type {
 } from "../types/index";
 import { generateMap } from "./map";
 import { pickOne, type Rng } from "./random";
+import { drawRunEvent, EVENT_FALLBACK_HEAL_RATIO, EVENT_HEAL_RATIO, eventHealthCosts, runEventModel, runSwapChoices } from "./events";
 
 function cloneRun(run: RunState): RunState {
   return JSON.parse(JSON.stringify(run)) as RunState;
@@ -54,6 +55,10 @@ export function createRun(data: GameData, setup: RunSetup, loadout?: Loadout): {
     rngState,
     heroes: heroDefs.map((hero) => ({ defId: hero.id, hp: hero.maxHp, maxHp: hero.maxHp })),
     deck: applySignatureCards(data, setup.deckCardIds, loadout),
+    availableCardIds: [...new Set(setup.availableCardIds ?? [...heroDefs.flatMap(h => h.cardIds), ...setup.deckCardIds])].filter(id => {
+      const owner = data.cards[id]?.ownerId;
+      return owner !== undefined && setup.heroIds.includes(owner) && [...data.heroes[owner]!.cardIds, ...data.heroes[owner]!.lockedCardIds].includes(id);
+    }),
     runRelicIds: [],
     augmentIds: [],
     map,
@@ -84,11 +89,23 @@ export function getRunActionError(data: GameData, run: RunState, action: RunActi
         : "augment is not a reward choice";
     case "rest":
       if (run.status !== "rest") return "not resting";
+      if (action.choice === "swapCard") {
+        return runSwapChoices(data, run, action.cardId).includes(action.replacementId) ? null : "card swap is not available";
+      }
       if (action.choice === "removeCard") {
         if (!run.deck.includes(action.cardId)) return "card is not in deck";
         if (run.deck.length <= data.runConfig.minDeckSize) return "deck is at minimum size";
       }
       return null;
+    case "event": {
+      if (run.status !== "event" || !run.pendingEvent) return "not at an event";
+      if (action.choice !== "trade" && action.choice !== "rest") return "unknown event choice";
+      const model = runEventModel(data, run)!;
+      if (action.choice === "trade" && model.cardIds.length > 0) {
+        return action.cardId && model.cardIds.includes(action.cardId) ? null : "choose a card from the deck";
+      }
+      return action.cardId === undefined ? null : "this event choice does not take a card";
+    }
     case "continue":
       return run.status === "treasure" ? null : "nothing to continue";
     default: {
@@ -157,6 +174,10 @@ function enterNode(
       gainRunRelic(data, run, runEvents);
       run.status = "treasure";
       return;
+    case "event":
+      run.pendingEvent = drawRunEvent(data, run);
+      run.status = "event";
+      return;
     default: {
       const exhaustive: never = node.type;
       throw new Error(`unknown node type ${String(exhaustive)}`);
@@ -174,11 +195,13 @@ function finishCombat(data: GameData, run: RunState, runEvents: RunEvent[]): voi
   }
   combat.heroes.forEach((unit, index) => {
     const hero = run.heroes[index]!;
+    const floor = Math.min(hero.maxHp, Math.max(1, Math.ceil(hero.maxHp * data.runConfig.reviveHpRatio)));
     if (unit.alive) {
-      hero.hp = unit.hp;
+      hero.hp = Math.min(hero.maxHp, Math.max(unit.hp, floor));
+      if (hero.hp > unit.hp) runEvents.push({ type: "heroRecovered", heroId: hero.defId, amount: hero.hp - unit.hp });
       return;
     }
-    hero.hp = Math.max(1, Math.ceil(hero.maxHp * data.runConfig.reviveHpRatio));
+    hero.hp = floor;
     runEvents.push({ type: "heroRevived", heroId: hero.defId, hp: hero.hp });
   });
   const node = findNode(run, run.position!)!;
@@ -237,12 +260,52 @@ export function applyRunAction(data: GameData, run: RunState, action: RunAction)
           hero.hp += amount;
           if (amount > 0) runEvents.push({ type: "restHealed", heroId: hero.defId, amount });
         });
-      } else {
+      } else if (action.choice === "removeCard") {
         next.deck.splice(next.deck.indexOf(action.cardId), 1);
         runEvents.push({ type: "cardRemoved", cardId: action.cardId });
+      } else {
+        next.deck[next.deck.indexOf(action.cardId)] = action.replacementId;
+        runEvents.push({ type: "cardSwapped", cardId: action.cardId, replacementId: action.replacementId });
       }
       next.status = "map";
       break;
+    case "event": {
+      const event = next.pendingEvent!;
+      const model = runEventModel(data, next)!;
+      if (action.choice === "rest" || !model.hasReward) {
+        const ratio = action.choice === "rest" ? EVENT_HEAL_RATIO : EVENT_FALLBACK_HEAL_RATIO;
+        next.heroes.forEach(hero => {
+          const amount = Math.min(hero.maxHp - hero.hp, Math.floor(hero.maxHp * ratio));
+          hero.hp += amount;
+          if (amount > 0) runEvents.push({ type: "restHealed", heroId: hero.defId, amount });
+        });
+      } else {
+        if (event.id === "forgottenArchive") {
+          next.deck.splice(next.deck.indexOf(action.cardId!), 1);
+          runEvents.push({ type: "cardRemoved", cardId: action.cardId! });
+        } else if (event.id === "wanderingSmith" && next.runRelicIds.length > 0) {
+          runEvents.push({ type: "runRelicLost", runRelicId: next.runRelicIds.pop()! });
+        } else {
+          eventHealthCosts(next).forEach((amount, i) => {
+            const hero = next.heroes[i]!;
+            hero.hp -= amount;
+            if (amount > 0) runEvents.push({ type: "heroPaidHealth", heroId: hero.defId, amount });
+          });
+        }
+        if (event.runRelicId) {
+          next.runRelicIds.push(event.runRelicId);
+          runEvents.push({ type: "runRelicGained", runRelicId: event.runRelicId });
+        }
+        if (event.augmentId) {
+          next.augmentIds.push(event.augmentId);
+          runEvents.push({ type: "augmentGained", augmentId: event.augmentId });
+        }
+      }
+      runEvents.push({ type: "eventResolved", eventId: event.id, choice: action.choice });
+      next.pendingEvent = null;
+      next.status = "map";
+      break;
+    }
     case "continue":
       next.status = "map";
       break;

@@ -345,6 +345,8 @@ export interface RunExperimentOptions {
   workerCount?: number;
   /** Record keys already completed — resume skips them exactly once. */
   skip?: ReadonlySet<string>;
+  /** Called as each record completes — enables incremental persistence. */
+  onRecord?: (record: MatchRecord) => void;
 }
 
 /**
@@ -365,7 +367,9 @@ export function runExperiment(
     if (index % workerCount !== workerIndex) return;
     const key = `${manifest.id}|${scenario.id}|${scenario.blockId}|${scenario.leg}`;
     if (options.skip?.has(key)) return;
-    records.push(runScenario(data, scenario, caps, manifest.id));
+    const record = runScenario(data, scenario, caps, manifest.id);
+    options.onRecord?.(record);
+    records.push(record);
   });
   return sortRecords(records);
 }

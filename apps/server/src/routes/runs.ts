@@ -29,6 +29,8 @@ export const runActionSchema: z.ZodType<RunAction> = z.union([
   z.object({ type: z.literal("pickAugment"), augmentId: id.nullable() }),
   z.object({ type: z.literal("rest"), choice: z.literal("heal") }),
   z.object({ type: z.literal("rest"), choice: z.literal("removeCard"), cardId: id }),
+  z.object({ type: z.literal("rest"), choice: z.literal("swapCard"), cardId: id, replacementId: id }),
+  z.object({ type: z.literal("event"), choice: z.enum(["trade", "rest"]), cardId: id.optional() }),
   z.object({ type: z.literal("continue") }),
 ]);
 
@@ -93,7 +95,12 @@ export function registerRunRoutes(app: FastifyInstance, ctx: AppContext): void {
     if (!built.ok) throw new HttpError(400, built.error);
     const { loadout } = built;
 
-    const setup: RunSetup = { heroIds: deck.heroIds, seed: random(4).readUInt32BE(0), deckCardIds: [...deck.cardIds] };
+    const setup: RunSetup = {
+      heroIds: deck.heroIds, seed: random(4).readUInt32BE(0), deckCardIds: [...deck.cardIds],
+      availableCardIds: [...new Set(deck.heroIds.flatMap(heroId => [
+        ...data.heroes[heroId]!.cardIds, ...(profile.heroes[heroId]?.unlockedCardIds ?? []),
+      ]))],
+    };
     const runId = random(16).toString("base64url");
     await db.transaction(async () => {
       const now = clock();
