@@ -85,11 +85,13 @@ to match anime linework, face proportions, clean cel shading and painted backgro
 see `styleRevision` and `prompts.styleMatching` in the generation record.
 Combat portrait inventory: 63 files (23 heroes ×2 +15 enemies +2 summons).
 
-**Update — 2026-10-16, two new heroes (m12, f13):** four placeholder copies
-are in use pending original artwork (`m12*` ← m05, `f13*` ← f10). Signature
-weapon images are also placeholders (`w_tran_mon_dao` ← w_xich_diem_thuong,
-`w_bach_dong_kinh` ← w_huyen_linh_kinh). Prompts for the real art are in
-`docs/08-character-prompts.md` §3/§4.
+**Update — 2026-10-16, two new heroes (m12, f13):** original artwork now replaces
+all four temporary portraits and both signature weapon copies. Cừ Trấn Nam has
+blackened copper armor, a grey forelock and chipped Trấn Môn Đao; Cổng Đồng adds
+bronze gate wards. Tố Nguyệt Nhi has a silver braid, moon veil, aqua temple robes,
+omen notebook and silver Bạch Đồng Kính; Bạch Đồng adds luminous omen pages.
+All six images retain the full 1024×1536 composition and existing texture keys.
+Prompts, direct style references and hashes: [wave four generation record](assets/hero-wave4-generated-assets.json).
 Combat portrait inventory: 67 files (25 heroes ×2 +15 enemies +2 summons).
 Prompts, references, hashes and final paths: [generation record](assets/hero-wave3-generated-assets.json).
 Visual review and checks: [new hero artwork](reviews/2026-10-15-new-hero-art.md).

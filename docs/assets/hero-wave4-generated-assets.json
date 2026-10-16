@@ -1,0 +1,146 @@
+{
+  "date": "2026-10-16",
+  "tool": "built-in image_gen.imagegen",
+  "scope": "m12/f13 normal and awakened portraits plus their signature weapons; replace temporary copies",
+  "encoding": {
+    "format": "webp",
+    "quality": 90,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  },
+  "assets": [
+    {
+      "id": "m12",
+      "name": "Cừ Trấn Nam",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-9ef780a0-5085-40ca-b74e-0a3078c6603f.png",
+      "master": ".sdd-work/hero-wave4/originals/m12.png",
+      "file": "apps/client/public/assets/heroes/m12.webp",
+      "references": [
+        "apps/client/public/assets/heroes/m05.webp",
+        "apps/client/public/assets/heroes/f10.webp"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: original 2:3 portrait illustration for the same wuxia card game as the supplied STYLE REFERENCES. Create ONE new male character, NOT the reference character. Match the references' precise crisp ink contours, sharp cel-shaped shadows blended with glossy smooth highlights, luminous anime eyes, lavish metal rendering, flowing silk, dense yet readable mobile-game splash illustration. Avoid photorealism, oil painting, soft painterly western concept art or 3D.\nSubject: Cu Tran Nam (Cừ Trấn Nam), 37-year-old towering gate-guard general, broad shoulders, weathered angular handsome adult face, small healed scar on cheek, stern protective eyes, tied black hair with ONE visible grey streak, short restrained stubble. He must clearly look older and more solid than the young male style reference. Worn heavy Nam Chieu blackened copper lamellar armor with exposed brass at worn shoulder edges, muted dark crimson scarf and cape, fine gold-thread chest seam where an old medal was cut in half. His distinctive weapon is a massive broad SINGLE-EDGED CHIPPED GREAT SABER with a simple bronze gate-shaped guard and dark red grip, not a spear or a thin straight sword. Hold the blade diagonally with tip and grip both within composition, one forearm raised in a steady guarding stance.\nScene: abandoned ferry landing beside an ancient gate outside the capital, dusk-to-moonlight, distant pale moon over water, a few drifting autumn leaves and tiny embers. Bronze, black and muted crimson on the figure with cool blue background and warm rim light. Base form: grounded protective dignity, modest controlled energy, no giant fire bird, no extravagant golden transformation.\nComposition: single borderless 1024x1536 portrait, upper-body to upper-thigh three-quarter shot, figure fills frame, readable unobstructed face in upper third, topknot fully inside image, hands anatomically coherent. Rich environment but character strongest. No text, no letters, no logo, no watermark, no card border, no UI. Reference images define rendering language ONLY; make original identity, armor, weapon, pose and scene.",
+      "previousSha256": "69606e046f795c5517523560e6907da3626fdc6565cf2c6e188f69c2308dacd7",
+      "width": 1024,
+      "height": 1536,
+      "sourceSha256": "e6447234c9b3ffa224e9d115417ca639b15d019dc9b4d694e19f505d7d2c1ccc",
+      "outputSha256": "d474e24b4b91b3c2f61a541f7c5d6135734c18fc054390c3bbc571ac1a985a4d",
+      "bytes": 451102,
+      "referenceHashes": {
+        "apps/client/public/assets/heroes/m05.webp": "69606e046f795c5517523560e6907da3626fdc6565cf2c6e188f69c2308dacd7",
+        "apps/client/public/assets/heroes/f10.webp": "ce257a7dfb0ff1486a337ccbacec0240b08c3131a23c0bc9bae41aa6c151b256"
+      }
+    },
+    {
+      "id": "m12_up",
+      "name": "Cừ Trấn Nam — Cổng Đồng",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-260f41bc-a35d-494c-b0bb-b78f3bacdc91.png",
+      "master": ".sdd-work/hero-wave4/originals/m12_up.png",
+      "file": "apps/client/public/assets/heroes/m12_up.webp",
+      "references": [
+        "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-9ef780a0-5085-40ca-b74e-0a3078c6603f.png",
+        "apps/client/public/assets/heroes/m05_up.webp"
+      ],
+      "prompt": "Use case: identity-preserve. Create the AWAKENED companion portrait of Cừ Trấn Nam from reference image1. Image1 is the exact identity/equipment/pose to preserve; image2 is only the established game's awakened rendering density and luminous effect style, NOT the identity or phoenix theme. Produce a single 2:3 1024x1536 borderless wuxia anime splash illustration, matching crisp dark contours, cel-shape shadow structure, glossy smooth materials and bright detailed gold from both references.\nPreserve EXACTLY the mature 37-year-old scarred face, grey forelock, tied dark hair, mustache/short stubble, strong body, blackened copper lamellar armor with worn brass edges, crimson scarf/cape, and chipped broad single-edge saber with bronze geometric gate guard. Keep recognizable guarding stance and unobstructed face.\nAwakening named Cổng Đồng (Bronze Gate): illuminate seams of the same armor in protective bronze-gold, chest gold-thread seam glows, formidable translucent paired bronze gate wings rise BEHIND his shoulders as a defensive ward. Gate ward is architecture and geometric light, NOT angel wings or feathers. Add concentric low protective arcs around the saber, richer copper filigree and gold dust but keep chipped blade and battlewear. Dusk ferry landing and ruined gate with a larger moon and luminous reflection; cape flows more dynamically. Noble unyielding protector, not enraged demon. Bronze-black/crimson remain core palette; golden energy never hides face, hands or armor. Saber has one coherent blade and hilt. No additional people, no spear, no phoenix, no modern props, no letters, no text, no watermark, no UI or border. Keep head entirely inside frame and same upper-body-to-thigh framing.",
+      "previousSha256": "3cdf4a33ab8c0f4a9d3ac5e6e4329665f5f3904a550247c164e55cd91a0d639a",
+      "width": 1024,
+      "height": 1536,
+      "sourceSha256": "375098277129517959ffa37a2530fc66c73347715e802aa273a31a000ad7f5af",
+      "outputSha256": "96211e668ee3793cc8690c0f28f67e9accdf7f7a474c174593adb27c65c934c5",
+      "bytes": 580806,
+      "referenceHashes": {
+        "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-9ef780a0-5085-40ca-b74e-0a3078c6603f.png": "e6447234c9b3ffa224e9d115417ca639b15d019dc9b4d694e19f505d7d2c1ccc",
+        "apps/client/public/assets/heroes/m05_up.webp": "3cdf4a33ab8c0f4a9d3ac5e6e4329665f5f3904a550247c164e55cd91a0d639a"
+      }
+    },
+    {
+      "id": "f13",
+      "name": "Tố Nguyệt Nhi",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-d2b6bc37-8b2a-48dc-8306-43cc9c32d8ff.png",
+      "master": ".sdd-work/hero-wave4/originals/f13.png",
+      "file": "apps/client/public/assets/heroes/f13.webp",
+      "references": [
+        "apps/client/public/assets/heroes/f10.webp",
+        "apps/client/public/assets/heroes/m05.webp"
+      ],
+      "prompt": "Use case: stylized-concept. Create ONE new original female wuxia oracle portrait for the SAME card game as the two supplied STYLE REFERENCES. They define crisp elegant dark linework, precise cel-shaped shadows with glossy highlights, luminous eyes and skin, ornate metallic details, layered flowing fabric and atmospheric detailed anime splash art. Do NOT copy either character. No photorealism, western oil-painted concept art or 3D.\nSubject: Tố Nguyệt Nhi, a gentle young ADULT woman of the Moon Temple, quiet dreamy unreadable expression, half-lidded PALE SILVER irises visible through a fine translucent pale moon veil crossing the upper eyes, distinct from the mature purple-haired woman reference. Long SILVER-WHITE hair in a loose temple braid with floating strands, simple crescent silver ornament and small pearl chains. Modest layered WATER-AQUA and moon-white ceremonial hanfu, silver edging, subtle tarnished pale gold details, long sheer sleeves, cracked crescent jade beads circling one wrist. She holds a SMALL THREADBOUND OMEN NOTEBOOK open close to her chest with coherent natural hands, one finger poised on the page; pages have faint abstract nonlinguistic marks, no readable writing. A few thin paper slips float around her.\nScene: a white stone bridge across a NIGHT LOTUS POND, two separate halves of one moon reflected in water, distant temple eaves. Pale aqua, silver, moon-white and soft deep blue; restrained mysterious lunar glow. Base form has calm understated magic, not a huge golden halo. \nComposition: ONE 1024x1536 portrait, head to upper thighs, three-quarter near-front view with BOTH eyes/veil and notebook clearly readable, face upper third, braid and head ornament fully in frame, figure fills portrait, refined materials and elegant flow like references. No extra people, no feather staff, no crown copied from reference, no logo, no text, no card border or UI. Original personality and costume; preserve the reference drawing/rendering language.",
+      "previousSha256": "ce257a7dfb0ff1486a337ccbacec0240b08c3131a23c0bc9bae41aa6c151b256",
+      "width": 1024,
+      "height": 1536,
+      "sourceSha256": "8de8bcf52ea05ce52ed488584813ff9e07c9a23127d52f5e1645fd0a9b2da0a6",
+      "outputSha256": "369377a39971735e93aa3c2274ce1ce336837ac5ee226ffb3614bec14bbff0c4",
+      "bytes": 441284,
+      "referenceHashes": {
+        "apps/client/public/assets/heroes/f10.webp": "ce257a7dfb0ff1486a337ccbacec0240b08c3131a23c0bc9bae41aa6c151b256",
+        "apps/client/public/assets/heroes/m05.webp": "69606e046f795c5517523560e6907da3626fdc6565cf2c6e188f69c2308dacd7"
+      }
+    },
+    {
+      "id": "f13_up",
+      "name": "Tố Nguyệt Nhi — Bạch Đồng",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-1d984a44-44d1-491a-afb4-55b94c6ad1f6.png",
+      "master": ".sdd-work/hero-wave4/originals/f13_up.png",
+      "file": "apps/client/public/assets/heroes/f13_up.webp",
+      "references": [
+        "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-d2b6bc37-8b2a-48dc-8306-43cc9c32d8ff.png",
+        "apps/client/public/assets/heroes/f10_up.webp"
+      ],
+      "prompt": "Use case: identity-preserve. Create one AWAKENED portrait for Tố Nguyệt Nhi. Reference1 is her EXACT identity, face, silver-white braid, crescent-flower pearl hair ornaments, fine translucent moon veil, aqua-white layered hanfu, cracked jade bead bracelet, small dark handbound omen notebook and calm personality. Retain all of those recognizable motifs and the same face, face angle, hand pose and upper-body-to-thigh composition. Reference2 defines the existing game's awakened splash-art polish and density ONLY, do not copy its woman, feather staff or bird.\nAwakening Bạch Đồng: her irises glow softly pale luminous silver, the thin veil lifts slightly from the eyes but still trails across the cheek. The SAME opened omen notebook emits floating translucent silver-aqua pages and thin branching moonlight traces of possible futures. Nonlinguistic diagrams only, NO written words. A glowing moon in the background has a hairline fissure, a gentle pair of silver lunar arcs frame her body and lotus petals rise from the same white stone bridge and night lotus pond. Evolve the same robes with richer silver thread, small pearls and a little pale gold filigree; keep watery aqua-silver-white identity and elegant modest neckline. Crisp refined dark contours, bright anime cel shadows blended with glossy highlights, detailed fabric, clean metallic sparkles consistent with the references. Do not turn into a different golden princess, do not obscure eyes/hands/notebook with effects. One coherent notebook, natural hands. Single portrait 1024x1536 2:3, NO UI, border, watermark, text or additional people.",
+      "previousSha256": "76aaf1fbc4b06b8b5cdc15508cd0ed4cefff22d7dd7a153b6c974d9c7fe1a6d7",
+      "width": 1024,
+      "height": 1536,
+      "sourceSha256": "82826d5e269531214f787df6c98c97e6ba014527f3e984693616ecd4057c0d0c",
+      "outputSha256": "b3a5925327aafed69d346e520555d9174c67ac66beb4be2d94821ce798d5fb6e",
+      "bytes": 531378,
+      "referenceHashes": {
+        "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-d2b6bc37-8b2a-48dc-8306-43cc9c32d8ff.png": "8de8bcf52ea05ce52ed488584813ff9e07c9a23127d52f5e1645fd0a9b2da0a6",
+        "apps/client/public/assets/heroes/f10_up.webp": "76aaf1fbc4b06b8b5cdc15508cd0ed4cefff22d7dd7a153b6c974d9c7fe1a6d7"
+      }
+    },
+    {
+      "id": "w_tran_mon_dao",
+      "name": "Trấn Môn Đao",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-69c77a31-9068-4fa4-9b1f-f5ea50caf796.png",
+      "master": ".sdd-work/hero-wave4/originals/w_tran_mon_dao.png",
+      "file": "apps/client/public/assets/weapons/w_tran_mon_dao.webp",
+      "references": [
+        "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-9ef780a0-5085-40ca-b74e-0a3078c6603f.png",
+        "apps/client/public/assets/weapons/w_xich_diem_thuong.png"
+      ],
+      "prompt": "Use case: stylized-concept. Create ONE isolated signature weapon equipment splash illustration for the same game. Reference1 contains the weapon design to reproduce faithfully: Cừ Trấn Nam's HUGE BROAD SINGLE-EDGED GREAT SABER, blackened worn steel, several distinct chips/notches in the cutting edge, restrained bright edge, blunt angular battleworn spine, broad geometric bronze gate-shaped guard, dark crimson leather-wrapped grip, plain brass pommel and one short worn red tassel. It is a hand-held saber with SHORT grip, NOT a spear/polearm. Reference2 is equipment illustration STYLE/composition/environment only: sharp polished anime ink contours, dimensional glossy metal and fine highlights, rich atmospheric wuxia background, vertical diagonal full-weapon layout, controlled magical swirls.\nShow the ENTIRE saber from pommel bottom-left to tip upper-right, generously fitted with 6% safe margin all around, weapon dominates about80% height and is unmistakable at thumbnail size. No holder, hands, character or second weapon. Scene abandoned ferry pier and old gate at dusk with cool river and distant moon; muted bronze black crimson palette with a thin golden protective arc, a few embers and autumn leaves. Avoid phoenix or excessive flames. Single 1024x1536 2:3 borderless illustration. All parts inside frame, coherent one blade and hilt. No text, logo, runic letters, watermark, UI, card frame or transparency.",
+      "previousSha256": "d09287ab5bb78bd4dd1627754a9524864abd6429803af992854c8b62cd4df5be",
+      "width": 1024,
+      "height": 1536,
+      "sourceSha256": "689015bbc18d155c97b8e5bf998f7963ccee9b5616f265296cabedd9fb1ca972",
+      "outputSha256": "b96f6063601260ef615666ff92bed4bdee1df5505aa0adb41fc04dd72395ab9c",
+      "bytes": 503246,
+      "referenceHashes": {
+        "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-9ef780a0-5085-40ca-b74e-0a3078c6603f.png": "e6447234c9b3ffa224e9d115417ca639b15d019dc9b4d694e19f505d7d2c1ccc",
+        "apps/client/public/assets/weapons/w_xich_diem_thuong.png": "0b9d724e4aeed2f7a474d8e470feefbd0ae7bf10f26700bcc56c27eed35263a9"
+      }
+    },
+    {
+      "id": "w_bach_dong_kinh",
+      "name": "Bạch Đồng Kính",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-b1ff517a-e6ee-42aa-a257-2031eafa301e.png",
+      "master": ".sdd-work/hero-wave4/originals/w_bach_dong_kinh.png",
+      "file": "apps/client/public/assets/weapons/w_bach_dong_kinh.webp",
+      "references": [
+        "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-d2b6bc37-8b2a-48dc-8306-43cc9c32d8ff.png",
+        "apps/client/public/assets/weapons/w_huyen_linh_kinh.png"
+      ],
+      "prompt": "Use case: stylized-concept. Create ONE original signature weapon equipment portrait for Tố Nguyệt Nhi, Bạch Đồng Kính: a ritual hand mirror of the Moon Temple, NOT the gold/purple mirror in reference2. Reference1 supplies the oracle's silver-white/aqua, pearl/crescent, cracked pale jade motifs. Reference2 supplies ONLY the established equipment illustration style: crisp anime linework, glossy dimensional metal, polished detailed surface, luminous atmosphere, one complete large diagonal object in a richly painted wuxia night scene.\nDesign: oval-to-circular luminous PALE SILVER mirror face with softly cloudy moon-white reflection, a fine single branching hairline fissure across the reflected moon but INTACT glass. Delicate SILVER crescent-petal frame, very small pale gold accents, aqua cracked-jade inlays and two pearl drops. Slender short silver handle with aqua inlay, one silvery-white/aqua silk tassel hanging from a crescent charm. Distinct eye-like lunar reflection suggests prophetic sight without a literal eyeball. No purple energy or broad ornate gold swirl frame. Entire mirror including tassel fits with6% margin; face fills upper two-thirds, handle points diagonally down-right, coherent symmetrical manufactured object. No hands, no character, no other equipment.\nBackground white stone bridge over night lotus pond, split moon reflection on dark blue water, a few white lotus petals and floating abstract blank paper slips; soft silver-aqua omen ribbons around the object without obscuring it. Match linework, cel-shape shading and glossy material density of refs. ONE1024x1536 2:3 portrait, no cropping, words, letters, logo, border, watermark or UI, opaque environment background.",
+      "previousSha256": "9f330a53f9fa4429ce84eeea8d74c8f74e9261a93b90955efb399313f5e970c2",
+      "width": 1024,
+      "height": 1536,
+      "sourceSha256": "6cbf4e7d1312664e0318380ba497d1242b3c0c2c9c45faca479e77d8e658899c",
+      "outputSha256": "7cd76bddcb2067338960092b118550d7a7bae926a7f40627c18d4819cd17e3d6",
+      "bytes": 391978,
+      "referenceHashes": {
+        "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-d2b6bc37-8b2a-48dc-8306-43cc9c32d8ff.png": "8de8bcf52ea05ce52ed488584813ff9e07c9a23127d52f5e1645fd0a9b2da0a6",
+        "apps/client/public/assets/weapons/w_huyen_linh_kinh.png": "ba17e2560a36f18c8166049cb3eadb9306bdb3126f4d849f6ce1360b4d696239"
+      }
+    }
+  ]
+}
