@@ -119,6 +119,8 @@ export interface BalanceReport {
     perProfile: Record<string, number>;
     heroAppearances: Record<string, number>;
   };
+  /** Per-hero decisive win share for pvp records — descriptive, pool-relative. */
+  perHero: Record<string, { records: number; wins: number; winRate: number | null }>;
   quality: {
     errorRate: number;
     truncatedRate: number;
@@ -271,6 +273,7 @@ export function buildBalanceReport(
   const byMode = new Map<string, MatchRecord[]>();
   const perProfileRecords = new Map<string, MatchRecord[]>();
   const cardStats = new Map<string, { playedIn: number; playedWins: number }>();
+  const perHeroStats = new Map<string, { records: number; wins: number }>();
   for (const record of baseline) {
     const mode = scenarios.get(record.scenarioId)?.mode ?? "unknown";
     const list = byMode.get(mode) ?? [];
@@ -287,6 +290,20 @@ export function buildBalanceReport(
       entry.playedIn += 1;
       if (record.outcome === "won") entry.playedWins += 1;
       cardStats.set(key.slice(5), entry);
+    }
+    // Per-hero win attribution (pvp): winnerSeat marks the winning side —
+    // decisive records only, so draws/errors shift nobody's rate.
+    const pvpScenario = scenarios.get(record.scenarioId);
+    if (pvpScenario?.mode === "pvp" && record.winnerSeat !== null) {
+      const players = (pvpScenario.setup as PvpSetup).players;
+      for (let seat = 0; seat < 2; seat++) {
+        for (const heroId of players[seat]!.heroIds) {
+          const entry = perHeroStats.get(heroId) ?? { records: 0, wins: 0 };
+          entry.records += 1;
+          entry.wins += seat === record.winnerSeat ? 1 : 0;
+          perHeroStats.set(heroId, entry);
+        }
+      }
     }
   }
 
@@ -429,6 +446,9 @@ export function buildBalanceReport(
       decisiveRecords: baseline.filter((r) => r.outcome === "won" || r.outcome === "lost" || r.outcome === "draw").length,
     },
     modes,
+    perHero: Object.fromEntries(
+      [...perHeroStats].map(([id, e]) => [id, { ...e, winRate: e.records === 0 ? null : e.wins / e.records }]),
+    ),
     perProfile,
     cardCorrelations,
     comparison,
@@ -469,6 +489,21 @@ export function reportMarkdown(report: BalanceReport): string {
         `| ${mode} | ${m.records} | ${fmt(m.decisiveWinRate)} | ${fmt(m.score)} | ${m.roundsP50}/${m.roundsP90} |`,
     ),
   ];
+  const heroRows = Object.entries(report.perHero)
+    .filter(([, e]) => e.winRate !== null)
+    .sort((a, b) => b[1].winRate! - a[1].winRate!);
+  if (heroRows.length > 0) {
+    lines.push(
+      "",
+      "## Per-hero win rates (pvp, decisive)",
+      "",
+      "| Hero | n | win% |",
+      "|---|---:|---:|",
+      ...heroRows.map(([id, e]) => `| ${id} | ${e.records} | ${pct(e.winRate!)} |`),
+      "",
+      "_Win shares are pool-relative: a hero's rate is measured inside the teams this pool gave them._",
+    );
+  }
   if (report.comparison) {
     const c = report.comparison;
     lines.push(
