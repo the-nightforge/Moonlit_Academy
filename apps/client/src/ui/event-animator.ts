@@ -512,6 +512,17 @@ export async function playEventQueue(
         continue;
       }
     }
+    if (event.type === "heroLeveledUp") {
+      const hero = ctx.presentation.heroes.find(unit => unit.id === event.heroId);
+      const def = hero && ctx.gameData.heroes[hero.defId];
+      ctx.audio?.play("levelUp");
+      await playAwakening(rt, {
+        heroId: hero?.defId ?? "", style: def?.attackStyle ?? "moon",
+        view: ctx.unitViews.get(event.heroId), transform: () => applyBeat(ctx, event),
+      });
+      previous = event;
+      continue;
+    }
     applyBeat(ctx, event);
     await animateEvent(rt, event, ctx, card);
     previous = event;
@@ -858,12 +869,6 @@ function animateEvent(
       const anchor = anchorOf(event.enemyId);
       if (!anchor) return instant();
       return floatHeld(rt, anchor.x, anchor.y - 80, "Hụt", "#8b93b8", 13, 250, 120);
-    }
-    case "heroLeveledUp": {
-      ctx.audio?.play("levelUp");
-      const hero = ctx.presentation.heroes.find(unit => unit.id === event.heroId);
-      const def = hero && ctx.gameData.heroes[hero.defId];
-      return playAwakening(rt, { heroId: hero?.defId ?? "", heroName: def?.name ?? "Anh hùng", formName: event.name, style: def?.attackStyle ?? "moon" });
     }
     case "unitDied": {
       const anchor = anchorOf(event.unitId);

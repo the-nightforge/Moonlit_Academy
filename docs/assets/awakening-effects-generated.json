@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-17",
+  "tool": "built-in image_gen.imagegen",
+  "scope": "Production in-place awakening effects for combat and the shared animation preview; generated illustrations replace code-drawn ornaments",
+  "encoding": {
+    "format": "webp",
+    "lossless": true,
+    "resize": false,
+    "crop": false,
+    "alphaPreserved": true
+  },
+  "assets": [
+    {
+      "id": "awakening_bronze_gate",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-68a89fd2-1c98-4fb1-879a-606870453fb2.png",
+      "file": "apps/client/public/assets/vfx/awakening_bronze_gate.webp",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m12_up.webp",
+      "prompt": "Use case: stylized-concept. Asset type: production 2D game VFX sprite with REAL TRANSPARENT ALPHA background. Create one isolated effect, no hero, no scene, no UI card or outer rectangle, no text or letters, no watermark. Match the supplied wuxia character illustration's crisp anime contours, finely shaded dimensional metal, painterly soft luminous edges, richly detailed but readable fantasy mobile game rendering. NOT flat vector icons, wireframes, diagram lines, simple geometric outlines, clipart or 3D photo. Keep every glow and wisp within the canvas with generous transparent edge padding. The center must remain mostly EMPTY TRANSPARENT so this can surround a 2:3 portrait without hiding its face or torso. Portrait 1024x1536 composition. Subject: Cổng Đồng, a radiant protective ancient BRONZE GATE APPARITION. Two narrow solid carved gate pillars stand at outer left and outer right, each with black-copper weathered inset panels, layered dragon/cloud relief, tiny worn gold studs and a golden luminous edge. A delicate broken lintel of flame-like bronze filigree spans the TOP, leaving the middle and bottom open. These are substantial illustrated architectural fragments, not rectangular wire outlines. Tall open doorway shape: side ornaments confined to outer 18% each, CENTER62% completely clear transparent. Few sculpted gold embers and flowing golden silk-like energy wisps curl along the OUTSIDE edges only. Warm antique brass, orange-gold light, dark bronze relief contrast. Keep center untouched, no filled doors crossing the portrait. Guardian's restrained heavy majesty as in reference armor. Full object fits, no cropping, no background plate.",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2206150,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "80990b7c564203617b9d86b7919437d8e69f698ef023013703dbdae5a516f04c",
+      "outputSha256": "ae484cd8000b8a1c5405bd22fce3f8d65af2d8d7bd51567ed59d04cf88d369be",
+      "referenceSha256": "96211e668ee3793cc8690c0f28f67e9accdf7f7a474c174593adb27c65c934c5"
+    },
+    {
+      "id": "awakening_omen_pages",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-9b2d3c53-3961-44f5-a122-faa81d89b501.png",
+      "file": "apps/client/public/assets/vfx/awakening_omen_pages.webp",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f13_up.webp",
+      "prompt": "Use case: stylized-concept. Asset type: production 2D game VFX sprite with REAL TRANSPARENT ALPHA background. Create one isolated effect, no hero, no scene, no UI card or outer rectangle, no text or letters, no watermark. Match the supplied wuxia character illustration's crisp anime contours, finely shaded dimensional metal, painterly soft luminous edges, richly detailed but readable fantasy mobile game rendering. NOT flat vector icons, wireframes, diagram lines, simple geometric outlines, clipart or 3D photo. Keep every glow and wisp within the canvas with generous transparent edge padding. The center must remain mostly EMPTY TRANSPARENT so this can surround a 2:3 portrait without hiding its face or torso. Portrait 1024x1536 composition. Subject: four beautifully illustrated floating OMEN MANUSCRIPT PAGES, two at left and two at right, in a loose tall oval orbit around an EMPTY transparent portrait-shaped CENTER. Each page is a curved translucent moon-white silk-paper sheet with fine silver filigree border, tiny delicate nonlinguistic lunar constellations, subtle aqua shading and luminous slightly folded edges; richly drawn paper volume and elegant fluid motion, NOT line rectangles or icons. A thin twisting translucent silver-aqua silk ribbon connects the OUTER orbit with a few pearl light droplets and small lotus petals. Large central60% transparent/open, all pages restricted to outer edges. Soft yet crisp detailed fantasy anime rendering same as reference's floating pages and translucent fabric. Four coherent sheets, no book, no hand, no person, no readable text or symbols resembling letters. Pale aqua, silver, moon-white, tiny champagne highlights. Keep entire effect inside frame.",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1758416,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "cf01d662f3c03d80f43fd1df59ee29ada9bca8f7c6c564c214f9f67f3c08e996",
+      "outputSha256": "2246e0f7f999dc06f30ba4383001f349909d7a74e2c961253e7816ba2a0390e1",
+      "referenceSha256": "b3a5925327aafed69d346e520555d9174c67ac66beb4be2d94821ce798d5fb6e"
+    },
+    {
+      "id": "awakening_lunar_aura",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-6f8edb5b-2142-4a86-b909-8ddf8ada8c04.png",
+      "file": "apps/client/public/assets/vfx/awakening_lunar_aura.webp",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f13_up.webp",
+      "prompt": "Use case: stylized-concept. Asset type: production 2D game VFX sprite with REAL TRANSPARENT ALPHA background. Create one isolated effect, no hero, no scene, no UI card or outer rectangle, no text or letters, no watermark. Match the supplied wuxia character illustration's crisp anime contours, finely shaded dimensional metal, painterly soft luminous edges, richly detailed but readable fantasy mobile game rendering. NOT flat vector icons, wireframes, diagram lines, simple geometric outlines, clipart or 3D photo. Keep every glow and wisp within the canvas with generous transparent edge padding. The center must remain mostly EMPTY TRANSPARENT so this can surround a 2:3 portrait without hiding its face or torso. Portrait 1024x1536 composition. Subject: an elegant broad portrait-oval BURST OF MOONLIGHT made of tapered painterly white-silver luminous silk streams, tiny glints and layered wisps, like the moment a lunar blessing expands outward. The central65% is fully clear transparent, with light concentrated in an irregular outer oval rim. Broken organic flowing arcs vary in thickness and fade naturally into alpha; a few small tapered star glints add polish. No hard-edged perfect circle, no neon tube, no thin vector outline, no solid fog filling center. Mostly neutral white-silver so the sprite can be tinted warm gold or aqua by the game. Fine anime gacha spell effect finish following reference moonlit ribbons, purposeful restrained particles, full effect safely inside 1024x1536. No moon disk, no environment, no text.",
+      "editPrompt": "Use case: precise-object-edit. Edit the supplied transparent VFX sprite into a PURE ENERGY RELEASE, keeping the same 2:3 portrait canvas and true transparent alpha, central empty opening and softly shaded flowing white-silver light ribbons. REMOVE EVERY solid ornament: all flowers, pearls, beads, jewelry, metalwork, chains, tassels, moon charms and pendants. Remove the heavy static picture-frame feeling. Replace them with a few tapered hand-painted wisps and irregular luminous streaks dissolving into sparse tiny white particles. This is a brief awakening SHOCKWAVE of magical light, not a decorative border. Keep broad varying-width broken arcs on the outer oval, energetic outward flow, soft luminous edges, cool neutral white-silver, no solid fog in the center. Central65% completely transparent; do not fill with white or grey. No perfect thin vector ellipse, no diagram geometry, no words, no text, no background plate, no characters. Keep the full effect safely inside the canvas. Output real RGBA transparency.",
+      "editReference": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-9849bddb-1723-4a57-8a4c-73fe7b249107.png",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1586042,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "centerAlpha": 1,
+      "sourceSha256": "addcf9f48f7e33477828984dcd3aa7dad83843a2c198452aa0e7e99250906e05",
+      "outputSha256": "fb5e162eca97a3a3e184ea2b271028d0e8fafab8aeffd5b4fda4149162f30f79",
+      "referenceSha256": "b3a5925327aafed69d346e520555d9174c67ac66beb4be2d94821ce798d5fb6e"
+    }
+  ]
+}

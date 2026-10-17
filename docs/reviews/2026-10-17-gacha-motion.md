@@ -20,35 +20,45 @@ video tham khảo. Không tải hay đưa tài nguyên của các game tham kh�
 
 | Phần | Trước | Sau |
 |---|---|---|
-| Thức Tỉnh | Tên nổi và lóe sáng | Ảnh Thức Tỉnh đầy đủ trong viền ôm sát; tên nhân vật, tên dạng và họa tiết theo nhóm kỹ năng. Cừ Trấn Nam dùng Cổng Đồng; Tố Nguyệt Nhi dùng trang điềm báo. Nền tối nhẹ giúp đọc rõ. |
-| Nhịp Thức Tỉnh | Nhịp giữ 500 mili giây, chữ còn nổi phía sau | Vào 180, giữ 320, ra 160 mili giây: tổng 660; tốc độ gấp đôi còn 330. Giảm chuyển động dùng fade 100+240+100, không trượt/phóng/xoay. |
+| Thức Tỉnh | Khung giới thiệu lớn, tên nhân vật/dạng, nền tối và họa tiết dựng bằng mã | Đổi ảnh ngay trên ô hero, không mở khung giới thiệu, thêm chữ, làm tối toàn màn hay rung camera. Tên, máu và trạng thái của ô vẫn hiện ổn định phía trên ảnh. Cừ Trấn Nam dùng Cổng Đồng; Tố Nguyệt Nhi dùng trang điềm báo; các hero còn lại dùng hào quang đổi sắc theo kỹ năng. |
+| Nhịp Thức Tỉnh | Giới thiệu 660 mili giây | Tụ lực 120, chuyển ảnh 160, tan sáng 240: tổng 520 mili giây; tốc độ gấp đôi còn 260. Giảm chuyển động chỉ mờ chuyển 60+100+20, tổng 180 mili giây, không dịch/phóng/xoay. |
 | Trúng đòn | Rung ngang cố định nhiều lần | Giật lùi theo hướng từ nguồn đánh, tăng theo sát thương thực tế và giới hạn tối đa 10 pixel. Đỡ hết không bị đẩy lùi; giảm chuyển động chỉ đổi độ sáng nhẹ. |
 | Đòn liên tiếp | Tween trực tiếp lên lá nhân vật | Proxy có quyền sở hữu riêng, hồi đúng vị trí/độ sáng; hiệu ứng cũ không ghi đè đòn mới. Bàn giao trước gục ngã, hồi sinh, hành động tiếp theo và biến mất của Linh Thú. |
 | Vào Cốt Truyện, Tầm Nguyệt, Cửa hàng | Toàn màn cùng mờ vào | Các vùng nội dung xuất hiện lệch nhau 35 mili giây, tối đa sáu vùng, mỗi vùng 220 mili giây và dịch 6 pixel. Chỉ chạy một lần lúc vào màn, không lặp khi lọc/mua/cập nhật tiến trình. |
 
-Tận dụng các ảnh `heroes:*_up` và helper chứa toàn bộ ảnh hiện tại; thiếu ảnh thì
-còn tên/dạng để đọc. Họa tiết dùng hình học dựng trong game. Không thêm tải ảnh,
-video hoặc bộ xương nhân vật mới. Luật, sự kiện, dữ liệu trận, RNG và mạng giữ
-nguyên; số sát thương vẫn cập nhật đúng điểm chạm. Tốc độ và hủy cảnh dùng runtime
-chung; đổi sang giảm chuyển động hủy ngay các chuyển động panel đang chạy.
+Tận dụng các ảnh `heroes:*_up`, giữ nguyên tỉ lệ và toàn bộ hình trong viền ôm sát.
+Ba ảnh hiệu ứng mới có alpha trong suốt được tạo từ ảnh tham chiếu m12/f13 cùng
+phong cách; thông tin nguồn và hash ở `docs/assets/awakening-effects-generated.json`.
+Không dùng hình học dựng bằng mã làm vật trang trí. Chỉ tải hào quang chung và
+hiệu ứng riêng tương ứng đội hình công khai của cả hai phía; ba ảnh tổng khoảng
+5,55 megabyte, giữ WebP lossless và alpha gốc.
+
+Sự kiện Thức Tỉnh cập nhật trạng thái trình bày đúng một lần sau tụ lực; ảnh cũ
+được chụp lại bằng thông tin texture/kích thước, tránh giữ ảnh đã bị renderer hủy.
+Ảnh chuyển nằm dưới tên/máu/trạng thái. Thiếu ảnh hoặc ô nhân vật vẫn áp dụng
+sự kiện, không mở khung trống hay thay bằng chữ. Hiệu ứng tạm được dọn khi hoàn
+tất, hủy cảnh hoặc kết nối lại. Luật, dữ liệu trận, RNG và mạng giữ nguyên;
+số sát thương vẫn cập nhật đúng điểm chạm.
 
 ## Kiểm tra
 
-- 59 tệp kiểm thử client, 430 ca đều qua trên lượt cuối.
+- 60 tệp kiểm thử client, 438 ca đều qua trên lượt cuối.
 - Kiểm tra riêng nhịp đòn, trình tự sự kiện, hủy trước/sau điểm chạm, gục ngã/hồi
   sinh, hai tốc độ, giảm chuyển động, đòn liên tiếp và bàn giao quyền chuyển động.
 - Typecheck client và bản dựng production thành công. Cảnh báo gói JavaScript
   lớn sẵn có vẫn còn; chưa có phép đo tốc độ khung hình hoặc kiểm tra thiết bị yếu.
-- Rà soát độc lập đã phát hiện xung đột recoil/gục ngã; sửa và kiểm tra lại, không
-  còn lỗi Critical hoặc Important trong phạm vi rà soát.
+- Rà soát độc lập bản Thức Tỉnh tại chỗ không phát hiện lỗi Critical, Important
+  hoặc Minor trong phạm vi thay đổi; hash ba asset khớp hồ sơ.
 - Đã mở renderer thật tại `/test/animation-preview.html` trong trình duyệt, xem
   Cừ Trấn Nam và Tố Nguyệt Nhi, kiểm tra ảnh đủ trong khung và nút mở lại sau khi
-  kết thúc. Thời gian thực quan sát khoảng 706–716 mili giây ở tốc độ thường,
-  bao gồm nhịp vẽ; đây không phải benchmark. Ảnh chụp Tố Nguyệt Nhi dùng chế độ
+  kết thúc. Trang này gọi cùng helper production, có đủ 25 lựa chọn hero.
+  Đã kiểm tra trực quan m12, f13 và Hoắc Liệt, tốc độ gấp đôi (khoảng 324 mili
+  giây thực), giảm chuyển động (khoảng 239 mili giây thực) và hủy giữa chừng.
+  Các thời gian thực có nhịp vẽ, không phải benchmark. Ảnh chụp dùng chế độ
   xem chậm chỉ có trong trang thử để ghi được khung hình.
 - Chưa chơi trọn trận trên máy chủ hay xác nhận trực quan mọi màn/kích thước.
 
 Trang xem thử có lựa chọn hiệu ứng, hero, đỡ đòn, tốc độ gấp đôi, giảm chuyển động,
 hủy hiệu ứng và xem chậm. Trang không thay đổi tài khoản hoặc kết quả trận.
 
-![Khung Thức Tỉnh trong renderer thật, chế độ xem chậm](assets/2026-10-17-f13-awakening.png)
+![Thức Tỉnh tại ô nhân vật, hiệu ứng trang điềm báo](assets/2026-10-17-f13-in-place-awakening.png)

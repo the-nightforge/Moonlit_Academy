@@ -229,6 +229,15 @@ describe("prepareCombatAssets (`home-ui-redesign` Task 3)", () => {
 
 
 describe("combat selection uses visible roster and equipment", () => {
+  it("loads only common and roster-specific awakening artwork, including the remote seat", () => {
+    const vfx = Object.fromEntries(["hit", "awakening_bronze_gate", "awakening_omen_pages", "awakening_lunar_aura"].map(stem => [stem, `/${stem}.webp`]));
+    const keys = (heroIds: string[]) => combatTextureEntries({vfx}, {heroIds}).map(entry => entry.key);
+    expect(keys(["m05"])).toEqual(["vfx:hit", "vfx:awakening_lunar_aura"]);
+    expect(keys(["m12"])).toContain("vfx:awakening_bronze_gate");
+    expect(keys(["m12"])).not.toContain("vfx:awakening_omen_pages");
+    expect(keys(["m05", "f13"])).toContain("vfx:awakening_omen_pages");
+    expect(keys([])).toEqual(["vfx:hit"]);
+  });
   it("does not queue unrelated gear or roster at a lobby gate", () => {
     const files = { heroes:{m05:"/m05.webp",m05_up:"/m05_up.webp",m01:"/m01.webp"}, weapons:{w1:"/w1.webp",w2:"/w2.webp"}, relics:{r1:"/r1.webp",r2:"/r2.webp"}, cards:{art_attack:"/attack.webp"}, summons:{s1:"/summon.webp"} };
     const selection=deckAssetSelection({heroIds:["m05","f04","m06"],weapons:{m05:"w1",m06:null},relicIds:["r1"]});

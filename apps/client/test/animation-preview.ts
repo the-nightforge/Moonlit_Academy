@@ -8,22 +8,23 @@ import type { AttackKind } from "../src/ui/attack-style";
 import { addButton, showModal } from "../src/ui/widgets";
 import { DialogueView } from "../src/ui/dialogue-view";
 import { installUiMotion } from "../src/ui/ui-motion";
-import { playAwakening } from "../src/ui/awakening-showcase";
+import { playAwakening, AWAKENING_EFFECTS } from "../src/ui/awakening-showcase";
 import { reactToImpact } from "../src/ui/impact-reaction";
 import "../src/ui/motion.css";
 
 const data = loadGameData();
+const heroIds = ["m12", "f13", ...Object.keys(data.heroes).filter(id => id !== "m12" && id !== "f13")];
 const kinds: [AttackKind, string][] = [
   ["slash", "Kiếm"], ["spear", "Thương"], ["darts", "Ám khí"], ["bow", "Cung"], ["herb", "Thảo dược"],
   ["fan", "Quạt"], ["ink", "Bút mực"], ["music", "Âm luật"], ["ribbon", "Dải lụa"], ["fire", "Lửa"],
   ["star", "Tinh tú"], ["moon", "Nguyệt"], ["talisman", "Phù chú"], ["blood", "Huyết"], ["spell", "Pháp thuật"],
 ];
-document.body.innerHTML = `<header><h1>Xem thử chuyển động</h1><p>Renderer thật của bản game trong worktree. Không thay đổi tài khoản hoặc kết quả trận đấu.</p></header>
+document.body.innerHTML = `<header><h1>Xem thử chuyển động</h1><p>Hiệu ứng Thức Tỉnh dùng trong trận đấu: đổi hình ngay trên ô nhân vật, không mở khung giới thiệu.</p></header>
   <section id="controls"><label>Hiệu ứng <select id="style">${kinds.map(([key, label]) => `<option value="${key}">${label}</option>`).join("")}</select></label>
   <label>Tốc độ <select id="speed"><option value="1">Thường</option><option value="2">Gấp đôi</option></select></label>
   <label><input id="guard" type="checkbox">Đỡ đòn</label><label><input id="reduced" type="checkbox">Giảm chuyển động</label>
   <button id="play" disabled>Phát hiệu ứng</button>
-  <label>Thức Tỉnh <select id="hero">${["m05","m12","f13"].map(id=>`<option value="${id}">${data.heroes[id]!.name}</option>`).join("")}</select></label>
+  <label>Thức Tỉnh <select id="hero">${heroIds.map(id=>`<option value="${id}">${data.heroes[id]!.name}</option>`).join("")}</select></label>
   <button id="awaken" disabled>Xem Thức Tỉnh</button><button id="abort" disabled>Hủy hiệu ứng</button>
   <label><input id="slow" type="checkbox">Xem chậm để kiểm tra</label></section>
   <p id="result" role="status">Đang tải hình nhân vật…</p><div id="canvas"></div>`;
@@ -39,7 +40,11 @@ class Preview extends Phaser.Scene {
   preload() {
     this.load.image("preview-hero", manifest.heroes!.m05!);
     this.load.image("preview-enemy", manifest.enemies!.puppet_guard!);
-    for (const id of ["m05","m12","f13"]) {
+    for (const stem of AWAKENING_EFFECTS) {
+      const url = manifest.vfx?.[stem];
+      if (url) this.load.image(`vfx:${stem}`, url);
+    }
+    for (const id of heroIds) {
       this.load.image(`heroes:${id}`, manifest.heroes![id]!);
       this.load.image(`heroes:${id}_up`, manifest.heroes![`${id}_up`]!);
     }
@@ -54,10 +59,20 @@ class Preview extends Phaser.Scene {
       image.setScale(scale);
       const border = this.add.rectangle(0, 0, source.width * scale + 1, source.height * scale + 1, 0, 0).setStrokeStyle(1, 0xd4bd86);
       const view = this.add.container(x, from.y, [image, border]);
-      this.add.text(x, from.y + 145, name, { fontSize: "23px", color: "#eed5a0" }).setOrigin(0.5);
+      const label = this.add.text(x, from.y + 145, name, { fontSize: "23px", color: "#eed5a0" }).setOrigin(0.5);
+      view.setData("unitPortrait",image);view.setData("label",label);view.setData("border",border);
       return view;
     };
-    const attacker = portrait("preview-hero", from.x, data.heroes.m05!.name);
+    const attacker = portrait("heroes:m12", from.x, data.heroes.m12!.name);
+    const heroSelect=document.querySelector<HTMLSelectElement>("#hero")!;
+    const resetHero=(up=false)=>{
+      const image=attacker.getData("unitPortrait") as Phaser.GameObjects.Image;
+      image.setTexture(`heroes:${heroSelect.value}${up?"_up":""}`).setAlpha(1);
+      image.setScale(Math.min(160/image.width,240/image.height));
+      (attacker.getData("border") as Phaser.GameObjects.Rectangle).setSize(image.displayWidth+1,image.displayHeight+1);
+      (attacker.getData("label") as Phaser.GameObjects.Text).setText(data.heroes[heroSelect.value]!.name);
+    };
+    heroSelect.onchange=()=>{if(!controller)resetHero();};
     const defender = portrait("preview-enemy", to.x, data.enemies.puppet_guard!.name);
     const root = this.add.container(0, 0);
     addButton(this, root, 360, 610, 230, "Xem popup", () => {
@@ -85,12 +100,16 @@ class Preview extends Phaser.Scene {
         speed: Number(document.querySelector<HTMLSelectElement>("#speed")!.value) as 1 | 2,
         reducedMotion: reduced.checked, volume: 0,
       });
-      play.disabled = true; awaken.disabled = true; abort.disabled = false;
+      play.disabled = true; awaken.disabled = true; heroSelect.disabled = true; abort.disabled = false;
+      result.textContent = "Đang phát hiệu ứng…";
       const started = performance.now(); let impacts = 0;
       try {
         const blocked = document.querySelector<HTMLInputElement>("#guard")!.checked;
         const heroId = document.querySelector<HTMLSelectElement>("#hero")!.value, hero = data.heroes[heroId]!;
-        if (kind === "awakening") await playAwakening(runtime, { heroId, heroName: hero.name, formName: hero.levelUp.name, style: hero.attackStyle ?? "moon" });
+        if (kind === "awakening") {
+          resetHero();
+          await playAwakening(runtime,{heroId,style:hero.attackStyle??"moon",view:attacker,transform:()=>resetHero(true)});
+        }
         else await playAttack({ kind: document.querySelector<HTMLSelectElement>("#style")!.value as AttackKind, color: 0xf4d35e }, from, to, {
           runtime, attackerView: attacker, blocked: document.querySelector<HTMLInputElement>("#guard")!.checked,
           onImpact: () => { impacts++; result.textContent = `Điểm chạm: ${impacts}`; void reactToImpact(runtime, defender, from, to, blocked ? 0 : 12).catch(()=>{}); },
@@ -98,7 +117,7 @@ class Preview extends Phaser.Scene {
         await runtime.drain();
         result.textContent = `Hoàn tất sau ${Math.round(performance.now() - started)} mili giây.${kind === "attack" ? ` Điểm chạm: ${impacts}.` : ` ${hero.name} — ${hero.levelUp.name}.`}`;
       } catch { result.textContent = "Đã hủy hiệu ứng và trả nhân vật về vị trí ban đầu."; }
-      finally { runtime.dispose(); controller = undefined; play.disabled = false; awaken.disabled = false; abort.disabled = true; }
+      finally { runtime.dispose(); controller = undefined; play.disabled = false; awaken.disabled = false; heroSelect.disabled = false; abort.disabled = true; }
     };
     play.onclick = () => { void run("attack"); };
     awaken.onclick = () => { void run("awakening"); };

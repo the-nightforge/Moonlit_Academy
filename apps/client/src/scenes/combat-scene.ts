@@ -1448,7 +1448,9 @@ export class CombatScene extends Phaser.Scene {
     const panel = this.add.rectangle(0, 0, w, h, 0x000000, 0.001);
     c.add(panel);
     // Missing art leaves a readable silhouette — never an empty frame.
-    if (this.coverImage(spec.artKey, 0, 0, w, h, c) === null) {
+    const portrait = this.coverImage(spec.artKey, 0, 0, w, h, c);
+    c.setData("unitPortrait", portrait);
+    if (portrait === null) {
       this.unitSilhouette(c, w, h, spec.hostile);
     }
     c.add(this.add.rectangle(0, h / 2 - 15, w - 6, 24, 0x0a0e20, 0.8));
