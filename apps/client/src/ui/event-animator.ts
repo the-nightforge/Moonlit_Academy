@@ -14,6 +14,8 @@ import type { CombatLayout } from "./combat-layout";
 import { triggerAnchorKey } from "./combat-inspector";
 import type { AnimationRuntime } from "./animation-runtime";
 import type { CombatAudio } from "./combat-audio";
+import { playAwakening } from "./awakening-showcase";
+import { reactToImpact, finishImpactReaction } from "./impact-reaction";
 
 const WIDTH = 1280;
 const { midY, unitFlash } = COMBAT_LAYOUT;
@@ -434,6 +436,10 @@ export async function playEventQueue(
     rt.assertActive();
     const group = groups[g]!;
     const event = group[0]!;
+    // Non-hit pose owners must not compete with the cosmetic tail of a prior hit.
+    if (event.type === "unitDied" || event.type === "summonDismissed") finishImpactReaction(ctx.unitViews.get(event.unitId));
+    if (event.type === "heroRevived" || event.type === "heroLeveledUp") finishImpactReaction(ctx.unitViews.get(event.heroId));
+    if (event.type === "intentExecuted") finishImpactReaction(ctx.unitViews.get(event.enemyId));
     const next = groups[g + 1]?.[0];
     if (event.type === "cardPlayed") {
       card = resolvePlayedCard(ctx.gameData, ctx.presentation, ctx.after, event.instanceId, ctx.revealedCards)?.definition;
@@ -635,6 +641,7 @@ function animateEvent(
         return instant();
       }
       const from = anchorOf(event.sourceId) ?? { x: anchor.x, y: anchor.y + 200 };
+      finishImpactReaction(ctx.unitViews.get(event.sourceId));
       const fromHero = ctx.presentation.heroes.some((hero) => hero.id === event.sourceId);
       const look = attackLookOf(ctx.gameData, ctx.presentation, event.sourceId, card);
       let seen!: () => void;
@@ -652,11 +659,7 @@ function animateEvent(
           applyBeat(ctx, event);
           ctx.audio?.play(event.hpLost > 0 ? "hit" : "block");
           const view = ctx.unitViews.get(event.targetId);
-          if (view && rt.reducedMotion) {
-            void rt.tween({ targets: view, alpha: 0.55, duration: 80, yoyo: true });
-          } else if (view) {
-            void rt.tween({ targets: view, x: view.x + 6, duration: 45, yoyo: true, repeat: 3 });
-          }
+          if (view) void reactToImpact(rt, view, from, anchor, event.hpLost).catch(() => {});
           const offset = hitIndex * 14;
           const jobs = [
             floatText(rt, anchor.x + offset, anchor.y - 50 - offset, event.hpLost > 0 ? `-${event.hpLost}` : "Chặn",
@@ -858,12 +861,9 @@ function animateEvent(
     }
     case "heroLeveledUp": {
       ctx.audio?.play("levelUp");
-      const anchor = anchorOf(event.heroId);
-      const jobs: Promise<void>[] = [
-        floatText(rt, WIDTH / 2, midY, `★ ${event.name} ★`, "#f4d35e", 26, 900),
-      ];
-      if (anchor) jobs.push(unitFlashAt(rt, ctx, event.heroId, 0xf4d35e, 500));
-      return held(rt, 500, ...jobs);
+      const hero = ctx.presentation.heroes.find(unit => unit.id === event.heroId);
+      const def = hero && ctx.gameData.heroes[hero.defId];
+      return playAwakening(rt, { heroId: hero?.defId ?? "", heroName: def?.name ?? "Anh hùng", formName: event.name, style: def?.attackStyle ?? "moon" });
     }
     case "unitDied": {
       const anchor = anchorOf(event.unitId);

@@ -16,6 +16,20 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup?.(); cleanup = undefined; localStorage.clear(); vi.restoreAllMocks(); });
 
+it("stages whole panels once at screen entry and cancels them when motion is reduced", () => {
+  document.body.innerHTML='<section class="vn-story"><header class="st-header"></header><main class="st-layout"><nav class="st-arcs"></nav><section class="st-journey"></section></main></section>';
+  const cancel=vi.fn(),animate=vi.fn((_frames:Keyframe[]|PropertyIndexedKeyframes|null,_options?:number|KeyframeAnimationOptions)=>({cancel,finished:new Promise(()=>{})}) as unknown as Animation);
+  vi.spyOn(HTMLElement.prototype,"animate").mockImplementation(animate);
+  cleanup=installUiMotion();
+  const root=document.querySelector('.vn-story')!;
+  const start=()=>root.dispatchEvent(Object.assign(new Event('animationstart',{bubbles:true}),{animationName:'vn-screen-enter'}));
+  start();expect(animate).toHaveBeenCalledTimes(3);
+  expect(animate.mock.calls[0]?.[0]).toEqual([{opacity:.55,translate:'0 6px'},{opacity:1,translate:'0 0'}]);
+  start();expect(animate).toHaveBeenCalledTimes(3);
+  saveCombatSettings(localStorage,settings(true));expect(cancel).toHaveBeenCalledTimes(3);
+  document.body.replaceChildren();
+});
+
 describe("shared UI motion preference", () => {
   it("turns off DOM movement when the saved preference is true and the OS allows motion", () => {
     saveCombatSettings(localStorage, settings(true));
