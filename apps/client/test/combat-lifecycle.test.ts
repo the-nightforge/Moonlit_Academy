@@ -174,17 +174,77 @@ describe("death and revive", () => {
   });
 });
 
-describe("unit flash bounds", () => {
-  it("flashes cover the unit view's real bounds, not a fixed 140×200", async () => {
+describe("unit artwork feedback", () => {
+  it("pulses existing portrait tint and restores its corner colors without a rectangle", async () => {
     const rt = new FakeRuntime();
     const hero = base.heroes[0]!;
-    const actualUnitBounds = { x: 300, y: 260, centerX: 360, centerY: 345, width: 120, height: 170 };
-    const view = stubObject({ getBounds: () => actualUnitBounds }) as unknown as Phaser.GameObjects.Container;
+    const original={tintTopLeft:0xaabbcc,tintTopRight:0xbbccdd,tintBottomLeft:0xccddee,tintBottomRight:0xddeeff,tintMode:3,tint2TopLeft:0x112233};
+    const portrait=stubObject({active:true,...original});
+    const view = stubObject({ getData:()=>portrait }) as unknown as Phaser.GameObjects.Container;
     const unitViews = new Map([[hero.id, view]]);
     const context = ctx(rt, { unitViews, unitAnchors: new Map([[hero.id, { x: 360, y: 345 }]]) });
-    await runToEnd(rt, playEventQueue(rt, [{ type: "hpLost", targetId: hero.id, amount: 4, cause: "burn" }], context));
-    const flashBounds = rt.rects[0]!;
-    expect(flashBounds.slice(0, 4)).toEqual([actualUnitBounds.centerX, actualUnitBounds.centerY, actualUnitBounds.width, actualUnitBounds.height]);
+    const queue=playEventQueue(rt, [{ type: "hpLost", targetId: hero.id, amount: 4, cause: "burn" }], context);
+    const tint=rt.tweenConfigs.find(config=>(config.targets as {progress?:number}).progress===0)!;
+    expect(tint).toBeDefined();(tint.targets as {progress:number}).progress=1;(tint.onUpdate as ()=>void)();
+    expect(portrait.tintTopLeft).not.toBe(original.tintTopLeft);expect(rt.rects).toEqual([]);
+    await runToEnd(rt,queue);await queue;await rt.drain();expect(portrait).toMatchObject(original);
+  });
+  it("restores original tint on cancellation without touching a destroyed portrait",async()=>{
+    for(const active of [true,false]){
+      const rt=new FakeRuntime(),hero=base.heroes[0]!,portrait=stubObject({active:true,tintTopLeft:0xffffff,tintTopRight:0xffffff,tintBottomLeft:0xffffff,tintBottomRight:0xffffff});
+      const context=ctx(rt,{unitViews:new Map([[hero.id,stubObject({getData:()=>portrait}) as unknown as Phaser.GameObjects.Container]]),unitAnchors:new Map([[hero.id,{x:400,y:400}]])});
+      const queue=playEventQueue(rt,[{type:"hpLost",targetId:hero.id,amount:4,cause:"burn"}],context);
+      const tint=rt.tweenConfigs.find(config=>(config.targets as {progress?:number}).progress===0)!;
+      (tint.targets as {progress:number}).progress=1;(tint.onUpdate as ()=>void)();const tinted=portrait.tintTopLeft;
+      portrait.active=active;rt.dispose();await expect(queue).rejects.toThrow();await Promise.resolve();
+      expect(portrait.tintTopLeft).toBe(active?0xffffff:tinted);
+    }
+  });
+  it("uses finite authored feedback when a portrait is unavailable",async()=>{
+    const rt=new FakeRuntime(),hero=base.heroes[0]!;
+    await runToEnd(rt,playEventQueue(rt,[{type:"hpLost",targetId:hero.id,amount:4,cause:"burn"}],ctx(rt,{unitAnchors:new Map([[hero.id,{x:400,y:400}]])})));
+    expect(rt.rects).toEqual([]);expect(rt.created.some(node=>node.textureKey==="vfx:combat_effect_hit")).toBe(true);
+  });
+  it("an older tint pulse cannot overwrite a newer pulse",async()=>{
+    const rt=new FakeRuntime(),hero=base.heroes[0]!,portrait=stubObject({active:true,tintTopLeft:0xffffff,tintTopRight:0xffffff,tintBottomLeft:0xffffff,tintBottomRight:0xffffff});
+    const context=ctx(rt,{unitViews:new Map([[hero.id,stubObject({getData:()=>portrait}) as unknown as Phaser.GameObjects.Container]]),unitAnchors:new Map([[hero.id,{x:400,y:400}]])});
+    const first=playEventQueue(rt,[{type:"hpLost",targetId:hero.id,amount:4,cause:"burn"}],context),old=rt.tweenConfigs[0]!;
+    (old.targets as {progress:number}).progress=1;(old.onUpdate as ()=>void)();
+    const second=playEventQueue(rt,[{type:"hpLost",targetId:hero.id,amount:4,cause:"fatigue"}],context),latest=[...rt.tweenConfigs].reverse().find(config=>(config.targets as {progress?:number}).progress===0)!;
+    (latest.targets as {progress:number}).progress=1;(latest.onUpdate as ()=>void)();const current=portrait.tintTopLeft;
+    (old.targets as {progress:number}).progress=.5;(old.onUpdate as ()=>void)();expect(portrait.tintTopLeft).toBe(current);
+    await runToEnd(rt,Promise.all([first,second]));await rt.drain();expect(portrait.tintTopLeft).toBe(0xffffff);
+  });
+  it("Canvas fades the existing portrait pixels and restores their opacity",async()=>{
+    const rt=new FakeRuntime(),hero=base.heroes[0]!,portrait=stubObject({active:true,alpha:.8,tintTopLeft:0xffffff,tintTopRight:0xffffff,tintBottomLeft:0xffffff,tintBottomRight:0xffffff});
+    (rt.scene as any).game={renderer:{type:1}};
+    const context=ctx(rt,{unitViews:new Map([[hero.id,stubObject({getData:()=>portrait}) as unknown as Phaser.GameObjects.Container]]),unitAnchors:new Map([[hero.id,{x:400,y:400}]])});
+    const queue=playEventQueue(rt,[{type:"hpLost",targetId:hero.id,amount:4,cause:"burn"}],context),tint=rt.tweenConfigs[0]!;
+    (tint.targets as {progress:number}).progress=1;(tint.onUpdate as ()=>void)();expect(portrait.alpha).toBeCloseTo(.6);expect(rt.rects).toEqual([]);
+    await runToEnd(rt,queue);await rt.drain();expect(portrait.alpha).toBe(.8);expect(portrait.tintTopLeft).toBe(0xffffff);
+  });
+});
+
+describe("authored intent anticipation",()=>{
+  it.each([false,true])("replaces a targeted debuff beam without changing event order or80ms hold (reduced=%s)",async reducedMotion=>{
+    const rt=new FakeRuntime({reducedMotion}),enemy=base.enemies[0]!,hero=base.heroes[0]!,state=cloneState(base);
+    state.enemies[0]!.defId="shadow_fox";const trace:string[]=[],graphics=vi.spyOn(rt.scene.add,"graphics");
+    const context=ctx(rt,{presentation:state,after:state,bindings:silentBindings(trace),unitViews:new Map([[enemy.id,stubObject({x:800,y:220,alpha:1}) as unknown as Phaser.GameObjects.Container]]),unitAnchors:new Map([[enemy.id,{x:800,y:220}],[hero.id,{x:400,y:500}]])});
+    const queue=playEventQueue(rt,[{type:"intentExecuted",enemyId:enemy.id,intentId:"illusion",targetId:hero.id},{type:"statusApplied",targetId:hero.id,status:"weak",value:2}],context);
+    const target:any=rt.created.find(node=>node.frameBlendTarget===true),positions:number[][]=[];
+    if(target)target.setPosition=(x:number,y:number)=>{positions.push([x,y]);return target;};
+    await runToEnd(rt,queue);await queue;await rt.drain();
+    expect(graphics).not.toHaveBeenCalled();expect(trace).toEqual([`unit:${enemy.id}`,`unit:${hero.id}`]);
+    expect(rt.created.filter(node=>node.textureKey==="vfx:combat_effect_status_apply")).toHaveLength(4);
+    expect(rt.tweenConfigs[0]).toMatchObject({duration:40,yoyo:true});expect(rt.created.filter(node=>node.frameBlendTarget===true||typeof node.textureKey==="string").every(node=>node.destroyed)).toBe(true);
+    if(reducedMotion)expect(positions.every(([x,y])=>x===400&&y===500)).toBe(true);
+  });
+  it("abort before the intent hold ends does not apply the next status and destroys the cue",async()=>{
+    const rt=new FakeRuntime(),enemy=base.enemies[0]!,hero=base.heroes[0]!,state=cloneState(base),trace:string[]=[];
+    state.enemies[0]!.defId="shadow_fox";
+    const context=ctx(rt,{presentation:state,after:state,bindings:silentBindings(trace),unitViews:new Map([[enemy.id,stubObject({x:800,y:220,alpha:1}) as unknown as Phaser.GameObjects.Container]]),unitAnchors:new Map([[enemy.id,{x:800,y:220}],[hero.id,{x:400,y:500}]])});
+    const queue=playEventQueue(rt,[{type:"intentExecuted",enemyId:enemy.id,intentId:"illusion",targetId:hero.id},{type:"statusApplied",targetId:hero.id,status:"weak",value:2}],context);
+    rt.dispose();await expect(queue).rejects.toThrow("animation aborted");expect(trace).toEqual([`unit:${enemy.id}`]);expect(rt.created.every(node=>node.destroyed)).toBe(true);
   });
 });
 
@@ -204,11 +264,7 @@ describe("reflect beat", () => {
       { type: "hpLost", targetId: hero.id, amount: 2, cause: "reflect" },
     ];
     await runToEnd(rt, playEventQueue(rt, events, context));
-    // The rebound shard (and its halo) land exactly on the attacker's anchor.
-    const flights = rt.tweenConfigs.filter(
-      (config) => (config as { x?: number; y?: number }).x === 400 && (config as { x?: number; y?: number }).y === 500,
-    );
-    expect(flights.length).toBeGreaterThan(0);
+    expect(rt.created.filter(node => node.textureKey === "vfx:combat_effect_reflect")).toHaveLength(2);
     expect(rt.texts.some((text) => text.includes("Phản"))).toBe(true);
   });
 });
@@ -280,10 +336,11 @@ describe("blood moon ignition", () => {
     // The old flat red rectangle is gone; the edge pulse is an image vignette.
     expect(rt.rects.some((r) => (r[4] as number) === 0xc01030)).toBe(false);
     expect(rt.texts.some((t) => t.includes("HUYẾT NGUYỆT"))).toBe(true);
-    // Corona + ring + ember emitter + vignette veil + banner — all runtime-tracked.
-    expect(rt.created.length).toBeGreaterThanOrEqual(5);
-    // The veil pulse is a brief yoyo alpha tween, not a lingering overlay.
-    expect(rt.tweenConfigs.some((c) => c.yoyo === true && c.alpha !== undefined)).toBe(true);
+    // The authored two-image crossfade is finite and owned by the runtime.
+    const sheets = rt.created.filter(node => node.textureKey === "vfx:combat_effect_blood_moon");
+    expect(sheets).toHaveLength(2);
+    await rt.drain();
+    expect(sheets.every(node => node.destroyed)).toBe(true);
     expect(rt.shakes.length).toBeGreaterThan(0);
   });
 

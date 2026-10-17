@@ -1,0 +1,3331 @@
+{
+  "date": "2026-10-17",
+  "tool": "built-in image_gen.imagegen",
+  "layout": {
+    "columns": 4,
+    "rows": 2,
+    "width": 1536,
+    "height": 1024,
+    "frames": 8
+  },
+  "assets": [
+    {
+      "id": "attack_slash",
+      "stem": "combat_attack_slash",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-10e3dc10-6a19-4e26-9225-85a63703ee85.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A silver-blue sword crescent cuts from lower left to upper right, blade-edge folds unfurl into fine frost splinters; flowing angular sharp sword arc, no physical hero or full sword.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f03_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f03_frost_swords.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "8b7e7d9c406195bcd54121eb2acf7a553ce2e728feb8bf2dbc5cb3f7100d97cb",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            24,
+            69,
+            374,
+            465
+          ]
+        },
+        {
+          "sha256": "3b35abc70ae7552a1cd9806dda8040141e131dadcd9cf77aa78b24b9532292fe",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            14,
+            65,
+            368,
+            480
+          ]
+        },
+        {
+          "sha256": "75fb2abfe1ba0872e3ae7089ecb7c28b9281f237785011ff2db9f1efd7ca3888",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            11,
+            59,
+            376,
+            487
+          ]
+        },
+        {
+          "sha256": "f274be0fa469b7a739e5586d6f326dff5317b970e7f0829bcbca5d8bc01da647",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            4,
+            16,
+            369,
+            486
+          ]
+        },
+        {
+          "sha256": "357ba3ae4bac2971dbcc5a079ae86c0398a29c8c5cf8fa07a78ba874afd61163",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            18,
+            17,
+            384,
+            482
+          ]
+        },
+        {
+          "sha256": "1818e820ede930b23266b16151641259178f13235d05fcee35e2b47ebbaa205c",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            13,
+            19,
+            367,
+            483
+          ]
+        },
+        {
+          "sha256": "40d052e0590108f91097badcdfec9480bd2455fd1c91b094087494406cbeed3d",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            38,
+            50,
+            364,
+            464
+          ]
+        },
+        {
+          "sha256": "62631f7f63b9004331d080ce65042168ee40d1cbe36d2b8cbc34c39731eb0eb0",
+          "alphaRange": [
+            0,
+            248
+          ],
+          "bounds": [
+            50,
+            91,
+            323,
+            437
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_slash.webp",
+      "sha256": "3bb6faca3ccbc33cc0af102a984fa14ceef45365385dfeb84805eca646f8d577",
+      "bytes": 1615272,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_spear",
+      "stem": "combat_attack_spear",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-3fdfb009-184f-4b2d-8fc0-6f9d1281e3dc.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A long golden crimson spear thrust streak pointed to the RIGHT, finely engraved short spear tip with flame tongues streaming to the LEFT, coiling red-gold flame dragon wisps.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m05_fire_spear.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "63b2fa13f8af50c6b845389edb4b350c9365fdd407f1f534c259247ac44b7b60",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            17,
+            171,
+            364,
+            383
+          ]
+        },
+        {
+          "sha256": "b857b9df4b00d1b696a7609da9e7e1e66cac2036164628cfb59bdaa4f7f20d34",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            17,
+            128,
+            369,
+            422
+          ]
+        },
+        {
+          "sha256": "07c34fc83acc6bbbed525239cdcff593359e8c9f4776ae94db00522890dc7c95",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            1,
+            87,
+            384,
+            437
+          ]
+        },
+        {
+          "sha256": "209770faaeb5600c3f2df5fc0750d660a7c57da66941602f9f0cfaf67c3a9eb1",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            89,
+            370,
+            447
+          ]
+        },
+        {
+          "sha256": "2ea6888c772ec08b34cb87be2cfeba3de71392d514182f15a359d862bd1a214f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            8,
+            78,
+            384,
+            414
+          ]
+        },
+        {
+          "sha256": "bbb60a95d09a00b3afc38ed522f1b868c957cf778bb53d86deeec5d462ea3702",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            0,
+            109,
+            367,
+            414
+          ]
+        },
+        {
+          "sha256": "6551850411cb09b80034edaa8895db7b24a2a8d1ad4498563c1fc413b29ee2d3",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            12,
+            144,
+            352,
+            391
+          ]
+        },
+        {
+          "sha256": "8e816f2649dd58ae608762051a453e6ad419d10f223bf29e2f06300ccd3875f7",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            10,
+            192,
+            364,
+            334
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_spear.webp",
+      "sha256": "15bf02b20c511b43c1b193f4b3e28e0753d5e7d43944d29081217ee728d29303",
+      "bytes": 1730294,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_darts",
+      "stem": "combat_attack_darts",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-2de2aa68-f90e-470f-8931-73c74cb1349d.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: Three distinct silver violet kunai darts all pointed RIGHT, silk tassels flexing and fine lavender shadow trails fluttering LEFT. Darts physical angles remain coherent.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m06_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m06_shadow_daggers.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "b8339950431077a11b962fc08f066dbdb9ae83992fa73011264425be8b1fa8e5",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            23,
+            114,
+            370,
+            469
+          ]
+        },
+        {
+          "sha256": "c93af5df35ac2e93c59986d6c5f1f6a38a315ba35369840c0cbe8779a3f17c60",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            28,
+            89,
+            366,
+            475
+          ]
+        },
+        {
+          "sha256": "067ab5ddd13db708d41e02e20e108e827a689d4770c45588c3072780af49332e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            17,
+            90,
+            376,
+            477
+          ]
+        },
+        {
+          "sha256": "9f64f0866f722e8b6c3471540a835821c35d0fa431d549a510d2e44cf6559568",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            3,
+            60,
+            378,
+            475
+          ]
+        },
+        {
+          "sha256": "ea960bd07c3029c2114ac72256fa554eef461835c2e550d7c8748c8bf2c24fca",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            9,
+            55,
+            384,
+            453
+          ]
+        },
+        {
+          "sha256": "a35253b3df5dd799cc4fa9e645103beaeea57bd3c6d9d3d773fbf024b3c6f5a7",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            78,
+            384,
+            437
+          ]
+        },
+        {
+          "sha256": "b99c1ca218d6f9b5f867f5cc421bd615cbee1d2e6560b9226c7a798d5abaf572",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            107,
+            384,
+            433
+          ]
+        },
+        {
+          "sha256": "58929ef566096c81c2aea826bcb054b4408f70e06913187f45c6353c64a3deb9",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            86,
+            123,
+            380,
+            424
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_darts.webp",
+      "sha256": "54646364790e87e7c89a64fdd5e21cebdfff1deed8baf0f018ecd381f34582b8",
+      "bytes": 1908106,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_bow",
+      "stem": "combat_attack_bow",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-b8cdf912-312a-48df-9fd6-dba59558dda8.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: One ornate gold arrow pointed RIGHT, white-orange feather fletching, a fine flowing jade ribbon and clouds trailing LEFT. Arrow stays straight, flight trail changes shape.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f05_cloud_arrow.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "3536fb267ef7c2591bc5c36529c89c69b14a40aa429a060241208c93c67e767d",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            31,
+            162,
+            367,
+            343
+          ]
+        },
+        {
+          "sha256": "722c110d1f99d4df6a8df4537b7ba9726783d25e2ef56a541d3306c4b7118942",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            8,
+            151,
+            367,
+            374
+          ]
+        },
+        {
+          "sha256": "b39036e32ca7eec8664e89a28becb5c6d706c8edf286b7ff4dfde45fdf18ad48",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            9,
+            98,
+            384,
+            465
+          ]
+        },
+        {
+          "sha256": "1843c8fc473283cd1b0ce735cf9225d50b77f2c75c8139964d3b0f10fdfe6c55",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            62,
+            369,
+            456
+          ]
+        },
+        {
+          "sha256": "e1cb6cc0d7ddf1276f81721406f494cf8379b12a7b0e873e80f5641997c59746",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            6,
+            102,
+            384,
+            378
+          ]
+        },
+        {
+          "sha256": "d9dfaf97a1a8fa7513c84141ea1f84d4f99462789ef2e08d3d631b686698e952",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            0,
+            150,
+            384,
+            344
+          ]
+        },
+        {
+          "sha256": "d9f7af08a5c5c3f15c9e8af59b25efd3080fa91095e434fe8c78b1fd43f2d2d6",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            0,
+            163,
+            378,
+            333
+          ]
+        },
+        {
+          "sha256": "fc08069c81867bd21842d4f4ef352a17e3ace77bcba187ed43edbf29541780fe",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            22,
+            184,
+            378,
+            304
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_bow.webp",
+      "sha256": "8e2c199941790ebb198a085fb8d0ae45d2679865e5e1cf1d16545132de955717",
+      "bytes": 1549750,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_herb",
+      "stem": "combat_attack_herb",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-f9570e98-7bc0-4f21-9644-3555b8a82a29.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A small jade medicinal blossom orb, tender leaves physically unfurl and spiral, dew trails stream LEFT, luminous white pollen separates and drifts.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f04_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f04_herbal_bloom.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "d17736d10808551dcc2192af3df591dd435f744a5130c53f82e9cff281f37fe0",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            57,
+            196,
+            283,
+            408
+          ]
+        },
+        {
+          "sha256": "7ac46529d8fae48b953f86de12f5d74f47afe2a2bfe0cdb56bce9ce03f59b85f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            4,
+            180,
+            384,
+            456
+          ]
+        },
+        {
+          "sha256": "46b837b9b5fcd215b499cd7df4fa29705fa3b34fdfd5906ded7895c331964075",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            134,
+            384,
+            470
+          ]
+        },
+        {
+          "sha256": "975e1075542fedf1dc7975cb351267d84dfdabbf8b8925563d0a384e5b4eb9b9",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "bounds": [
+            0,
+            37,
+            381,
+            506
+          ]
+        },
+        {
+          "sha256": "8b85c9b07a9ea42400ea1d80dbc80bd8266f8efb316a2fbf5618b595f8752d69",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            17,
+            66,
+            384,
+            458
+          ]
+        },
+        {
+          "sha256": "daf3e8dccdaa9a953bfe79a35501f33d2f9d3fb3dbf7c322791c2ffb7081a7ee",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            0,
+            109,
+            384,
+            415
+          ]
+        },
+        {
+          "sha256": "bb86b4e195b4800f928893ba3782138434dcd0aa4410fb36ddbf1a971dd869ec",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            27,
+            143,
+            383,
+            420
+          ]
+        },
+        {
+          "sha256": "0cf7bb63aee2c7551d46fc66e4a2fc7d667cbcac225fb93e0bc30dde61c3d347",
+          "alphaRange": [
+            0,
+            248
+          ],
+          "bounds": [
+            63,
+            200,
+            332,
+            355
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_herb.webp",
+      "sha256": "a496799211c9204b93fa2779a83d96f6de28c2dc62c8e2115100e61e024fdf49",
+      "bytes": 1727532,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_fan",
+      "stem": "combat_attack_fan",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-db95979c-022c-440a-8bb5-8e06fe98c6a5.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: Three light jade-gold wind blades peel from an ornate folding fan edge, sweep towards RIGHT with distinct flowing wind curls and delicate gold dust.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m03_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m03_golden_fan.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "f8dd1d87d1c522d4429877da7a74e3fcf49eb6dc4a747b2b92b9a61c4d8ba56e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            11,
+            141,
+            366,
+            427
+          ]
+        },
+        {
+          "sha256": "b55d55c30102086967a6b6de0514684e78a6109461e70b5d16ae9b317dfd434c",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            10,
+            108,
+            367,
+            438
+          ]
+        },
+        {
+          "sha256": "69ba4a5c29a7bb67f5bf0c48641889cffbc43aebecf9f36a97efd4898f99aaea",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            8,
+            109,
+            375,
+            455
+          ]
+        },
+        {
+          "sha256": "e7b4ae75ed12009893c2be955b24259da074ab7e52abfafbd8c41aff5ccc2545",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            7,
+            59,
+            378,
+            477
+          ]
+        },
+        {
+          "sha256": "e3017eea458466917db952ac6245155c58a5b81bdce3ab3cf71fc0b2e61c5963",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            8,
+            44,
+            380,
+            435
+          ]
+        },
+        {
+          "sha256": "61649f9d8ca041f9bfb0eadd07239e9a4a04d3871879388c6c075a1dac8ea32c",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            9,
+            74,
+            375,
+            430
+          ]
+        },
+        {
+          "sha256": "3b8eb5c67beb2cfaae724d6a4bffcd031f75f84bde45500ac4214eea654e1575",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            11,
+            102,
+            366,
+            390
+          ]
+        },
+        {
+          "sha256": "22585abdbd60db111b462a295d1e27a99e056d2f4dc2d1d9bcb986a13f50ab1f",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            14,
+            139,
+            367,
+            316
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_fan.webp",
+      "sha256": "692f4b03503bc279a9e2954968f365801c1a5d535e3c25fa7ed7763a30c09a3f",
+      "bytes": 1790890,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_ink",
+      "stem": "combat_attack_ink",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-f497e184-e558-47f5-8ba3-46dc20a4deae.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A dark indigo ink stroke flows RIGHT with a sharp brush tip, wet ink droplets and silk-like blue-white strokes trailing LEFT, fluid physical shape evolution.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f07_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f07_history_brush.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "8e2680bdaeff3c12eac7bd512025101adfa69c53629d90f8c3bb8695c6c9965e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            18,
+            155,
+            348,
+            371
+          ]
+        },
+        {
+          "sha256": "7a072c8b11b8cf7fad47531fcbd48b6ebae2a23c1ae624610ebd8f512ea3b267",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            7,
+            134,
+            384,
+            442
+          ]
+        },
+        {
+          "sha256": "bdb0dcc02ff4e359b9536170074915150aa100a9f799773848b6553594622ec6",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            131,
+            384,
+            454
+          ]
+        },
+        {
+          "sha256": "26c4fb14c9b62cb771e342a62afb0d8fdd5b3fe975d0f6a9493ba7bdc2e1ef02",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            98,
+            366,
+            473
+          ]
+        },
+        {
+          "sha256": "b2aad3c2b7fb0a1ea7b2b2d553071e94cab57b46be97affc1de91f580fb3dd4b",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            16,
+            96,
+            384,
+            429
+          ]
+        },
+        {
+          "sha256": "fdb6bb46fe982cd7810f1c271d5a75fbf26d97cc700cb6622c5c729345a76cd7",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            0,
+            119,
+            384,
+            427
+          ]
+        },
+        {
+          "sha256": "9637679cc626bcca4d83ee434dd6b220a6daee313e194cefd889cf796040ab31",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            0,
+            155,
+            384,
+            420
+          ]
+        },
+        {
+          "sha256": "c8b4503749ad318807e0e5e930d4364c6511031dfcb0b3a08e5dbe8339dcb0ea",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            0,
+            152,
+            362,
+            330
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_ink.webp",
+      "sha256": "ec4b9cb9b9a6b54b792961d72ee18416453c8492b678503b92799cbe228da696",
+      "bytes": 1680526,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_music",
+      "stem": "combat_attack_music",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-ef3af0e1-53e0-4c2a-ade4-48a2382a4c6e.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: Translucent jade-silver guqin sound waves travel RIGHT, delicate plucked string filaments vibrate with moving crests and pearl notes, organic musical ripples not geometric UI rings.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m09_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m09_sorrow_strings.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "5d530b9379791c4df4bf780f6f71c22bdcc37e0327aeaa1e10a980669087c79e",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            41,
+            164,
+            337,
+            386
+          ]
+        },
+        {
+          "sha256": "b0c8b2ed84ee7151d3fb41f1c5f33a67da634a93fedbad2e3ec73f3b703195c9",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            15,
+            162,
+            370,
+            443
+          ]
+        },
+        {
+          "sha256": "e162162c91bd83be294b91ba238789dc850fc63ca7fb5494563b9ffc0dfb8afe",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            9,
+            108,
+            381,
+            466
+          ]
+        },
+        {
+          "sha256": "58b2192718ebf69b06776933f857579085d47f31618e6edb3878db3760f0895d",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            9,
+            79,
+            374,
+            464
+          ]
+        },
+        {
+          "sha256": "381ff2565f9e98f6d96bab21fb58013efa24827a23a1da6cae64e94dbbb39077",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            11,
+            85,
+            376,
+            439
+          ]
+        },
+        {
+          "sha256": "9d1f3b9abd7e98fab93f97b5a055709114ccc9d1accf6511d30094dfc37d7648",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            12,
+            110,
+            371,
+            424
+          ]
+        },
+        {
+          "sha256": "ed335aa06ce0ac3d8239a580b6ffeb37b6df2f3d97fbfab2f6af7bbbef0dccc7",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            27,
+            153,
+            376,
+            401
+          ]
+        },
+        {
+          "sha256": "d918521178eb2ffc1bc9a272469f6c735a8d413997764bfd5468368aef826dc0",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            51,
+            216,
+            360,
+            353
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_music.webp",
+      "sha256": "6af41d1c0443caf2cff986dea6ba5676904ebd6db1a42b6bc7fe681a2814b4c1",
+      "bytes": 1693578,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_ribbon",
+      "stem": "combat_attack_ribbon",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-4c687631-8dab-4234-8b88-d1551deb86ff.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: An exquisite azure silk ribbon whips RIGHT, its embroidered satin folds undulate with overlapping S curves, trailing tassels and small bells sway after it.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f06_azure_ribbons.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "9dbed119a2a59834e97d999c792ab4b06fcc0f15be1d3bdef94faf218596aee8",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            36,
+            95,
+            361,
+            495
+          ]
+        },
+        {
+          "sha256": "45687ce64f2e7e1b80e5ebdc54e3468af07e4692792a1d19a5f3cbaffb153182",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            8,
+            65,
+            384,
+            493
+          ]
+        },
+        {
+          "sha256": "58dd2aaecf585ce5e8d0b4926f881cf712b7ceaeed6cd98eb2f25902eb1938c1",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            41,
+            384,
+            506
+          ]
+        },
+        {
+          "sha256": "40f4c50f7ebdff5797adf868e319f8ec67bcef03dc7c38f84dd7a014c481c8fb",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            88,
+            376,
+            504
+          ]
+        },
+        {
+          "sha256": "079207b99ca13dcd30115b05877979869960f73577a079dd6179e1b384999b2b",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            16,
+            76,
+            384,
+            439
+          ]
+        },
+        {
+          "sha256": "650be092ad15c2dd449a8d9dded883305cab6116a8cc80e7ab75a05842cdb299",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            0,
+            87,
+            384,
+            406
+          ]
+        },
+        {
+          "sha256": "80ca78f66e94ebe229588025e4a38f52d4fc076b343eac42a6b6eab884d698f5",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            0,
+            117,
+            370,
+            398
+          ]
+        },
+        {
+          "sha256": "5f76e1425872c09e3f78fd570fae711c816da739396ad663aed4da2e56cc503c",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            49,
+            175,
+            311,
+            363
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_ribbon.webp",
+      "sha256": "c8a518b28361c02c5c2e95240d1bcb9c4a8e7c7a38f83dbd2629cfe01c21a8c8",
+      "bytes": 1837090,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_fire",
+      "stem": "combat_attack_fire",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-d34ce188-b2c7-4afe-9dbb-f48fee5ef2ce.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A small crimson-gold phoenix flame projectile pointed RIGHT, layered feather tongues flex and break into red embers trailing LEFT, luminous filigree subtle not dense.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f08_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f08_blood_phoenix.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "b7b60c82ccd992cf8ee83f7ab1338c9ff0e47185742d4d3e37b98b91dc236eb8",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            30,
+            202,
+            342,
+            326
+          ]
+        },
+        {
+          "sha256": "600e8af35f676e08f43a7860bd112eadc9d295c9523f966ed0ff769554d92de9",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            20,
+            161,
+            345,
+            357
+          ]
+        },
+        {
+          "sha256": "15f03797b1b5280698e4af242ac2cefcc948f2297e7c912c30ffcbfc7c7e37c3",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            127,
+            384,
+            401
+          ]
+        },
+        {
+          "sha256": "f743ea82e9ae18172030fa06a52d89439c2eb1e74a0c1089565a1aaf59ae8793",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            121,
+            369,
+            436
+          ]
+        },
+        {
+          "sha256": "38b58f474206c688f7b0acd145aaefe497c55d5e971beb870265d4824f9e1cf9",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            28,
+            70,
+            383,
+            394
+          ]
+        },
+        {
+          "sha256": "d82de7d44633540b8ca1b006daffc461a29601af9fdcfe00cdfbe40446371baa",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            18,
+            81,
+            375,
+            395
+          ]
+        },
+        {
+          "sha256": "6491ba106130c2b2ef0a3e7fcd6350854724b3e6f0d144cc4c9706b3fdf61a5c",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            14,
+            106,
+            366,
+            366
+          ]
+        },
+        {
+          "sha256": "f1a80465d84bef1f80e6d6e53660741a9f743ebac587cf203e33e1ca4951b099",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "bounds": [
+            31,
+            138,
+            342,
+            312
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_fire.webp",
+      "sha256": "b80cab4867674789ab8e27d093e907015f8af6bdd512256f035ae0f3b45d83b4",
+      "bytes": 1471884,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_star",
+      "stem": "combat_attack_star",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-fd446131-f473-45c1-83d1-cb7b4415586c.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A sapphire gold shooting star pointed RIGHT, fine dimensional crystalline points, its long silver blue stardust wake ripples LEFT and dissolves into tiny motes.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m08_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m08_star_astrolabe.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "5fd319be861b47d3cc9d80369e342ab77b09f0eb45e4f331b7ddc5eaa85be83e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            49,
+            197,
+            365,
+            336
+          ]
+        },
+        {
+          "sha256": "12b6caaf4000c5993d696ec9f8380eaa8059fa3f1511e8d4ba1aa7dece8cd272",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            9,
+            159,
+            361,
+            384
+          ]
+        },
+        {
+          "sha256": "f20644cabd50561d4155e4d35b74037eef0807f137db4ed874658d96dfec5828",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            3,
+            80,
+            384,
+            399
+          ]
+        },
+        {
+          "sha256": "7463473ca4dd1875c54abeb6d7eab26f58e509a90842ad6aff20a0122d72a740",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "bounds": [
+            0,
+            81,
+            383,
+            431
+          ]
+        },
+        {
+          "sha256": "45c8af26600b2a456a57d4643e867b89461f19f4b988f9595d88cc660a463c12",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            99,
+            382,
+            380
+          ]
+        },
+        {
+          "sha256": "58a12be09882f96515fd23814653571d1137f27852b6796b0100e33a37eba09f",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            20,
+            83,
+            363,
+            318
+          ]
+        },
+        {
+          "sha256": "efc0d9a24aec2bc2226cf5b2eccaafb113ce89bb16791eedc2f17c0c23fd0d76",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            30,
+            117,
+            349,
+            314
+          ]
+        },
+        {
+          "sha256": "cdb60c55ffb11b6e8c18e905ce5dfa7fb62eb55abc6f2e5161d4964cf3ff6b6d",
+          "alphaRange": [
+            0,
+            246
+          ],
+          "bounds": [
+            27,
+            144,
+            327,
+            289
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_star.webp",
+      "sha256": "d3deded6793a8c0df3e299098b1e24e4c07662026ad168def39dc4549e187f4d",
+      "bytes": 1532432,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_moon",
+      "stem": "combat_attack_moon",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-23a4938f-b27e-4e36-807c-c18f464cfc94.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A pearly silver crescent sweeps RIGHT, thin luminous edge and translucent lavender cloud trails, tiny white plum petals tumble independently along its wake.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f01_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f01_moon_blossoms.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "1e0c6504102562ae7f44a0b3e1c4a8a70b403f645dbc5b41bd347d302f619649",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            114,
+            119,
+            340,
+            463
+          ]
+        },
+        {
+          "sha256": "a478affabb18b4586c2bf62ecd96a5a56b193a2c0a5597e8791e8e0c230f7ce7",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            25,
+            103,
+            333,
+            478
+          ]
+        },
+        {
+          "sha256": "40aa71e1e76f66f61b22af893b176b9ed5b5d1abe4079925b2d7128d7dc73fff",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            5,
+            62,
+            384,
+            496
+          ]
+        },
+        {
+          "sha256": "705b7d8648c461a22a6c70dbc020753278ee8ca1584a404881ba621815d416ec",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            52,
+            366,
+            512
+          ]
+        },
+        {
+          "sha256": "abcc8b0a64d63ddc591df3266b9d757687973ccca3ecdc2a414c102d244648bf",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            22,
+            33,
+            384,
+            465
+          ]
+        },
+        {
+          "sha256": "4b74807c21307b4f2088f676b5cbb82ad56a907a783803d25beaf22c0e4e49e7",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            60,
+            384,
+            468
+          ]
+        },
+        {
+          "sha256": "2b673dc01b6592ce96e7db74c439480241299a5d2823843b1254ced25b980e55",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "bounds": [
+            0,
+            136,
+            383,
+            433
+          ]
+        },
+        {
+          "sha256": "26ebc3c9cb2089e10e9b9ebbde3f31a9938cfd849d456a6f06cc47362bb9360f",
+          "alphaRange": [
+            0,
+            245
+          ],
+          "bounds": [
+            2,
+            0,
+            289,
+            379
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_moon.webp",
+      "sha256": "c77c6196c587a15aa223a0e26bdae744b78c90c9c15b8f4f8d9a642f4696bf67",
+      "bytes": 1664088,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_talisman",
+      "stem": "combat_attack_talisman",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-c1141788-8e32-46c3-a321-24f071a8aec3.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: Two blue silver talisman paper slips flutter RIGHT, edges curl and tassels trail LEFT, fine warm luminous ink patterns, no readable text.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m01_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m01_heaven_talismans.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "a04b8bcc93411e78426d44a234531ae9c80edf59c57670b2dfb2cf69ea98d21f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            67,
+            71,
+            359,
+            472
+          ]
+        },
+        {
+          "sha256": "51feaff35814d8902adcf640202663c57545c77f84d79f83ba1dedceca3ec4b0",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            55,
+            58,
+            356,
+            465
+          ]
+        },
+        {
+          "sha256": "ffcee08f0fec98c6e5e7b8f284e7695d88410918b53e7873e13057bd6121148f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            20,
+            43,
+            361,
+            484
+          ]
+        },
+        {
+          "sha256": "48e1eda3801a6a1b3eb7ef2e284768c84dd61b28a400ca7d4d11cd04bec5d04a",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            18,
+            45,
+            374,
+            489
+          ]
+        },
+        {
+          "sha256": "2438c1622a44a33cfdac8aa36c9d42ef6ce54a8f4cc5c2cddc687ee40b6609bf",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            28,
+            37,
+            377,
+            462
+          ]
+        },
+        {
+          "sha256": "8655a99cc2625612f21cf116085f721208802f36069e1f6d252cfa52709bbd48",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            34,
+            35,
+            363,
+            443
+          ]
+        },
+        {
+          "sha256": "41ceb9417878efa8a5b4938d07cd1be465d9d852d3fc8fe9b3edb7ab4423205f",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "bounds": [
+            30,
+            70,
+            347,
+            447
+          ]
+        },
+        {
+          "sha256": "816a5ec70f06a4dccfbad74577acb033b150f8cf89283346202df5ba4caf0d26",
+          "alphaRange": [
+            0,
+            248
+          ],
+          "bounds": [
+            68,
+            121,
+            304,
+            422
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_talisman.webp",
+      "sha256": "b774cce81d5627b54d2718d1b5c3d0e9f318e8c3f5034fec3b0f2eb784f72a10",
+      "bytes": 1804764,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_blood",
+      "stem": "combat_attack_blood",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-66d4d922-076a-4a5a-b273-d2745d1528f2.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A ruby crimson life-energy stream flows RIGHT, red jewel droplets and fine gold strands spiral with jade silk accents, elegant supernatural energy, no gore.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m07_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m07_blood_meridians.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "7cc477506479c8409e9895759bd88c17005ff11a3731e54685d2d5f870f8c690",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            60,
+            95,
+            384,
+            471
+          ]
+        },
+        {
+          "sha256": "4e9f92d554cb4a10edfc2e19709718f8aa2bc1f62cf91a2d9a0792b99f1471e2",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            89,
+            384,
+            506
+          ]
+        },
+        {
+          "sha256": "93eec6418c78ae3bc8e8420a4856d72e35e6adf379cab96b1d3832177a05618c",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            45,
+            384,
+            496
+          ]
+        },
+        {
+          "sha256": "164e50157be81ddcf17fc077dd6d01d8140c733e14b6c2e5f0eaccaad7fe6bd2",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            66,
+            361,
+            476
+          ]
+        },
+        {
+          "sha256": "e7bc2607362ba9e52aef81e90541667e5ff0aa8b61a227e15b4c93cc1a2487da",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            24,
+            50,
+            384,
+            414
+          ]
+        },
+        {
+          "sha256": "09067a4a6ae9cb2796ab92e2dc89787690dcb1f3399cff3edaf3c94bbda98b12",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            0,
+            62,
+            384,
+            442
+          ]
+        },
+        {
+          "sha256": "71dac1f703e9f1298a553890154337dfc4819114f5230221cce7de75304af7d6",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            0,
+            105,
+            384,
+            450
+          ]
+        },
+        {
+          "sha256": "dfed153fb669cd1db5f46efe41eccc2eb5ade8d92e26db0b43d374ec56e3e858",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            0,
+            144,
+            338,
+            380
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_blood.webp",
+      "sha256": "c5e0fc30b10c3e53f0671ee744f1f0a7f8cfd90ab49550d255272b1b0ed4385d",
+      "bytes": 2049106,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "attack_spell",
+      "stem": "combat_attack_spell",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-0a711d14-df80-40ad-ac16-85a9a05f329d.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: An iridescent pearl blue divination bolt flows RIGHT, layered luminous folded page-like wisps and small white petals trailing LEFT, fine dimensional crystalline edges.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f13_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_omen_pages.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "9ec0efab264b2d32f1c44a296897821b57c6deb6a3d5807d4dddcadbcf7c2091",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            42,
+            126,
+            337,
+            388
+          ]
+        },
+        {
+          "sha256": "ad9f4c416d7e2860e7246713f6a524599586b49f2e2244ac0abc7c420814c0a9",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            20,
+            102,
+            326,
+            460
+          ]
+        },
+        {
+          "sha256": "ae6aa20060ca1d9048b4553ed8658d010186466a180e108c0f9b7226be9c8da1",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            4,
+            99,
+            368,
+            448
+          ]
+        },
+        {
+          "sha256": "6e84f8f8833c6d1ca115bfb3196ce14ae54e5c2dc8d27d227d3e4ee6d8d27ff6",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            104,
+            373,
+            463
+          ]
+        },
+        {
+          "sha256": "b9e362cf92f29491c462905bd907a2abc5bd185f7b3ba9c6af6513f5bf92dbaf",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            22,
+            47,
+            384,
+            440
+          ]
+        },
+        {
+          "sha256": "f6978f73c22de291ae98954c6784ceb81873a617ef5e8dc15b793300e7189b4b",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            18,
+            84,
+            372,
+            410
+          ]
+        },
+        {
+          "sha256": "d389428f0e3c0cb60e355178af8203c1732f996257c585a735cbebefbdae52b6",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            10,
+            106,
+            358,
+            389
+          ]
+        },
+        {
+          "sha256": "cc60be44d76c510d549aac5f93a142a081cc83e36bf71f8f3606b5ff410bf9a9",
+          "alphaRange": [
+            0,
+            247
+          ],
+          "bounds": [
+            14,
+            150,
+            362,
+            319
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_attack_spell.webp",
+      "sha256": "d8a8617b42938485becfd69004e8521ab1fb49663d187af4cdd6d1c21f5a0498",
+      "bytes": 1660312,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_hit",
+      "stem": "combat_effect_hit",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-6d2b8eab-9340-4bbb-bdf1-d11120a24af8.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A small elegant gold white contact spark bursts outward into asymmetric feather-like light shards, not a circular UI ring. Fast sharp core then graceful thin trails.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m05_fire_spear.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "3121761311e8ca144077b2ac81e22194590da4cc59bb368cf7b549353f3e5d30",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            62,
+            151,
+            337,
+            356
+          ]
+        },
+        {
+          "sha256": "4f82dacd8948dccdd3e7c842cf698fad77b2a2e0e9273d4a90fab38e5a486e30",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            42,
+            51,
+            350,
+            466
+          ]
+        },
+        {
+          "sha256": "88d89d0eae03cedef06552386efa7b8d36e35f0cbd345eed0d04c3672f91a68a",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            7,
+            51,
+            373,
+            461
+          ]
+        },
+        {
+          "sha256": "64b7152f2c3d59925488f4075492519be6f53fc216c2212efd76b2f8575ce321",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            9,
+            32,
+            368,
+            500
+          ]
+        },
+        {
+          "sha256": "b31760790371dc3561d9029e0c93c1516954b5db31edd25211726e678c431e0e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            18,
+            19,
+            370,
+            486
+          ]
+        },
+        {
+          "sha256": "4b0fa6c626bee40867a7931ef17d74ef230e9b7f74e4835e2cedb976b9899afb",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            26,
+            46,
+            364,
+            475
+          ]
+        },
+        {
+          "sha256": "3c13a1b774010d4097000324f3ec8991fdf00aa97d188a03cab94866fcdfcf2f",
+          "alphaRange": [
+            0,
+            245
+          ],
+          "bounds": [
+            43,
+            71,
+            344,
+            453
+          ]
+        },
+        {
+          "sha256": "68961534a7e841c1b3a8546c949313163c023318d0fc351b59718306ecf4dde1",
+          "alphaRange": [
+            0,
+            245
+          ],
+          "bounds": [
+            79,
+            157,
+            334,
+            391
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_hit.webp",
+      "sha256": "03ca924dced58306d1c4cd1d0ef908ccb4cf1d2c63059a5edeb950a5e5cebcc7",
+      "bytes": 1637846,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_guard",
+      "stem": "combat_effect_guard",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-d6a93a75-6785-45c8-b778-ccdc2fe811d1.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A dimensional engraved silver jade protective shield braces, a gold streak deflects to the side, soft blue ward ribbons spread around its outside then dissolve. Leave central rectangle x=110..274,y=100..400 of EACH cell fully transparent to preserve hero face/torso.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m02_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m02_iron_bulwark.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "5af59fb506dbdb88d640bab50b08fab8678d0999e2501fe7b6b2198a1eb1a456",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            31,
+            38,
+            350,
+            473
+          ]
+        },
+        {
+          "sha256": "e2ba8cea31ce1db913db6893560930e9dd968f67f92038fec5d7e99e74507907",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            15,
+            44,
+            366,
+            491
+          ]
+        },
+        {
+          "sha256": "14fbf96a39376c471168c439c1c68d73d009bd8a5e1bbcda8ba78da90682d9d7",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            6,
+            35,
+            379,
+            491
+          ]
+        },
+        {
+          "sha256": "241a695345bd1685388fc600b009bffe00b68036ffcad7f63115703d29b216fd",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            8,
+            32,
+            384,
+            486
+          ]
+        },
+        {
+          "sha256": "e9db9a8ea1ede8adcaf2c808761dc914b26093fbed16ce852705e30029596786",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            9,
+            22,
+            378,
+            478
+          ]
+        },
+        {
+          "sha256": "12e358d1691e18717ddb47d8d53ce346e84c2b518cd1b68f317ad714af40bc8d",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            11,
+            29,
+            369,
+            477
+          ]
+        },
+        {
+          "sha256": "90d43b672ba4fde781883aa2e4079566d9fecbd3220bc3bdf6c35435af38e525",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "bounds": [
+            11,
+            41,
+            367,
+            474
+          ]
+        },
+        {
+          "sha256": "bfa40f178ba4be3869c9d3c4a9df16505c1806a22415615be64bda3567b67677",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "bounds": [
+            33,
+            58,
+            350,
+            452
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_guard.webp",
+      "sha256": "01ce1a2e25c8868454a30773faa53751a752703c051adc3052b9ce095e818352",
+      "bytes": 2039466,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_heal",
+      "stem": "combat_effect_heal",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-6bdaacc7-824e-483d-b377-eae32a8131e2.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: Jade leaves unfurl upward at lower outer corners, white medicinal blossoms open and translucent dew beads rise, soft green-gold pollen; center stays empty. Leave central rectangle x=110..274,y=100..400 of EACH cell fully transparent to preserve hero face/torso.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f04_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f04_herbal_bloom.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "8dad2df2d57ccd42ae9176fe1f3b7942e9f4b12a0a42e7a82f53233620f43f74",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            10,
+            175,
+            375,
+            491
+          ]
+        },
+        {
+          "sha256": "e131d9f78069abe42f150289e88edf034e298b0c6a260acd0ec9f3ebfd09060f",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            12,
+            104,
+            379,
+            495
+          ]
+        },
+        {
+          "sha256": "f46c98c86bbb0c6705aa6cf6017b891c0f1d3d90d1e5cbb43ed460c40ed2a578",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            6,
+            52,
+            377,
+            508
+          ]
+        },
+        {
+          "sha256": "aee276b825e7367e519522a8b017421b75b1031df4627b1db7f0ed01f119065c",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            9,
+            24,
+            381,
+            508
+          ]
+        },
+        {
+          "sha256": "f1ee9a7bf52d86c8e119a9b538130bb3cf2aa92e41e70a6e420aee2558960553",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            6,
+            26,
+            377,
+            494
+          ]
+        },
+        {
+          "sha256": "ac58b185fcd0bbf8a0a48bfc0928146727ac9c1286c27883feb838a05c937423",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            14,
+            26,
+            371,
+            491
+          ]
+        },
+        {
+          "sha256": "8297aa4d4c4ddae0acfd77e413c4d9cd44cd1562504b0e9540d1ee236b67d79e",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "bounds": [
+            12,
+            60,
+            379,
+            488
+          ]
+        },
+        {
+          "sha256": "fe5f8c406f100b8614a3a8aac935940636379501c8ff80df8f1f9d6baa2bb49f",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "bounds": [
+            17,
+            111,
+            378,
+            483
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_heal.webp",
+      "sha256": "02f7b159370749c74011964d15c29573c66643dfebc1e3f5f228b0c2d230f8dc",
+      "bytes": 1957668,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_armor",
+      "stem": "combat_effect_armor",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-0c5e2954-f60e-4ae8-bd00-47ba115c3963.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: Fine engraved gold-silver shield segments settle securely at lower outer sides, jade protective silk curls and thin warm motes; center stays empty. Leave central rectangle x=110..274,y=100..400 of EACH cell fully transparent to preserve hero face/torso.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m02_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m02_iron_bulwark.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "c2fe5249282e956ced8e65a1cfc52fc8531f0d96d259f57862bcded53f96d374",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            12,
+            70,
+            364,
+            459
+          ]
+        },
+        {
+          "sha256": "e5577ef34a8458db972831a00f2de20f7c1744fda297e2f5bdab0ff366f4fe75",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            1,
+            50,
+            381,
+            476
+          ]
+        },
+        {
+          "sha256": "333811be1391ce5af51c0e4e7517f1e21c91db30cea682c1a9dd54bf4c79b893",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            2,
+            35,
+            378,
+            491
+          ]
+        },
+        {
+          "sha256": "0d811f48003457799841a8ea72c4b2453bf48b5911f4e3c54cdc4afaf27329bc",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            1,
+            13,
+            383,
+            508
+          ]
+        },
+        {
+          "sha256": "b92ac602bbc17e41e1c3ba19a152534322b42843d55707479418d355ce06d6b8",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            4,
+            13,
+            383,
+            494
+          ]
+        },
+        {
+          "sha256": "4b759acd2ae25062ab69e8f7068b09fb755e06ec863a672b881cae0aef1f9878",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            8,
+            22,
+            379,
+            488
+          ]
+        },
+        {
+          "sha256": "e9832d8221e5de989a9591220e6b65d7ec9f2b510dac43644e5abd248fa61f04",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            11,
+            42,
+            373,
+            477
+          ]
+        },
+        {
+          "sha256": "f71f3c8586f65c50ff88c5a692b18d52e86e83933235e8cda24d0442954f62a7",
+          "alphaRange": [
+            0,
+            248
+          ],
+          "bounds": [
+            14,
+            53,
+            366,
+            472
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_armor.webp",
+      "sha256": "d343aae32255044e715ac38a4b4f9296d11b5147f539946b14d83f5d655b48cf",
+      "bytes": 2207320,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_armor_break",
+      "stem": "combat_effect_armor_break",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-7c19a85a-875c-4eab-8dd8-30894f8fec5d.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: Engraved silver-gold shield fragments separate outward, tiny blue crystal chips and delicate light threads dissolve; center stays empty. Leave central rectangle x=110..274,y=100..400 of EACH cell fully transparent to preserve hero face/torso.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m02_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m02_iron_bulwark.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "48fad6c2a93b9cfd7e0704b4739ffc8c205f05faf4af776abb5c2b1e2d78ffda",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            20,
+            83,
+            365,
+            434
+          ]
+        },
+        {
+          "sha256": "62aaaae77f38cbce5537a6082eccfa066bf7d0a2244dcad292eb5031c5167c94",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            9,
+            51,
+            384,
+            465
+          ]
+        },
+        {
+          "sha256": "9f66be4f205114888c8f0ce075458f91153488d597788beb0ccf11fe47cf2f93",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            20,
+            384,
+            497
+          ]
+        },
+        {
+          "sha256": "730f4e88839a2cda324bfbbe2b8b651c6a48b708d765fd4bc8893b022fd74d64",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            5,
+            383,
+            499
+          ]
+        },
+        {
+          "sha256": "333649adfe084bf2dc285801e2780b6ed1c9b9ba94adbdaa3a141f3b3e6ae5b1",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            1,
+            11,
+            380,
+            493
+          ]
+        },
+        {
+          "sha256": "244b512f423da764df9150bf2874d131bc0f074b1d97b0e7b8c8e8c4c8742b79",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            10,
+            16,
+            376,
+            482
+          ]
+        },
+        {
+          "sha256": "27d0022ae63cbf978a38ac36cf6799d7e690dfd4ed52ab7bf3f9909eedfe7bf5",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "bounds": [
+            6,
+            36,
+            375,
+            462
+          ]
+        },
+        {
+          "sha256": "2c67125e5a4d2ff8c017fbbee433c7355d1541a14674e8462e2660017603364f",
+          "alphaRange": [
+            0,
+            247
+          ],
+          "bounds": [
+            40,
+            90,
+            349,
+            425
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_armor_break.webp",
+      "sha256": "8d45b108975c6684d1edfeb983eb2a377a523b9c5a8d336e3e5be0998284b9ef",
+      "bytes": 2378128,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_status_apply",
+      "stem": "combat_effect_status_apply",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-dbf38574-35da-426d-9826-4b9ff8428c61.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: Blue silver talisman threads softly gather around outer corners, small paper slips curl and settle with fine pearl dust; center empty, no readable glyph or text. Leave central rectangle x=110..274,y=100..400 of EACH cell fully transparent to preserve hero face/torso.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m01_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m01_heaven_talismans.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "c5d29f96f4738406bb5a967b8cd032c7b3f10665279c56c43a38d93588037c0e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            17,
+            29,
+            366,
+            470
+          ]
+        },
+        {
+          "sha256": "c5c186b89ed6edd06f86ecbdb43af219b47949b8c86dc80342008cc44c5c0456",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            12,
+            24,
+            373,
+            487
+          ]
+        },
+        {
+          "sha256": "5b5b2b3a54dbc0ebca2a9678e1517d627e5e784f0f1c825dbe14903d028da574",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            12,
+            16,
+            377,
+            499
+          ]
+        },
+        {
+          "sha256": "2a9a36a4d2d6cc55e4646266e1006fafdfade03a095bfac1da607dd1e06711f7",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            12,
+            11,
+            378,
+            502
+          ]
+        },
+        {
+          "sha256": "c6d504e025ae2507e76b8bfc8eb09345a7172069cf5f90b877ecf7487e8b42e2",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            14,
+            8,
+            384,
+            488
+          ]
+        },
+        {
+          "sha256": "bda0fb1c7d60c13bcbe97b9edb3fa432631c3877380d1a10cb8777b5936b720b",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            18,
+            16,
+            377,
+            469
+          ]
+        },
+        {
+          "sha256": "ca9842be117111116fa7d7d23d581fd35e4edc4123e9aa6ea7bf33676eec692f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            19,
+            34,
+            359,
+            454
+          ]
+        },
+        {
+          "sha256": "13b14336aefdf658a8899e2955d2d6cf840c60715aae44f711586708d7e4d4d1",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            31,
+            65,
+            355,
+            424
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_status_apply.webp",
+      "sha256": "86f6db5a4d54a067961f9e3ecfd09fe9528fe0c607fe434eb4b731584c524194",
+      "bytes": 1930092,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_status_remove",
+      "stem": "combat_effect_status_remove",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-7d2a9ae2-50a5-4f99-84bc-b91ccfbb1854.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: Pearly folded talisman wisps unravel and drift away from outer corners, delicate silver page edges dissolve into tiny white motes; center empty. Leave central rectangle x=110..274,y=100..400 of EACH cell fully transparent to preserve hero face/torso.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f13_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_omen_pages.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "6c1ccd4af8e5434480deb34b38eb6b572a52a0b6c0e24ab0e24091a514af5c96",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            15,
+            30,
+            363,
+            487
+          ]
+        },
+        {
+          "sha256": "b85040c444505b860bf8ba4b1c5453d5803e8afb170d6e0052e796a86bcb73ad",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            8,
+            15,
+            379,
+            482
+          ]
+        },
+        {
+          "sha256": "7fb1673b6e49b57f33881af0f48c4321e8617ffb8d2efa42b90c54c6ced7825a",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            12,
+            16,
+            376,
+            492
+          ]
+        },
+        {
+          "sha256": "2928c0df9c8e939d5db888641c9c29994f9abe6e2546a0bde6e51787a8c6e75c",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            12,
+            15,
+            371,
+            497
+          ]
+        },
+        {
+          "sha256": "fce5d6b51edab20968ab6de0cc76606bec618ffff61499335e6044be6145fab7",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            16,
+            18,
+            379,
+            490
+          ]
+        },
+        {
+          "sha256": "5e97455b56a9c96f1131beee985f5c4831d5d8b6ba1fb16a46e748f798a45671",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            17,
+            28,
+            370,
+            482
+          ]
+        },
+        {
+          "sha256": "cefb083fd5d58a7a5b223b2c90f030d04f1b65440e8220e946890570fe0d4243",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            24,
+            31,
+            371,
+            455
+          ]
+        },
+        {
+          "sha256": "feebd9f9734569cf84aff2612d87a890e6089a5d55ecdbf6285402e58f53d486",
+          "alphaRange": [
+            0,
+            246
+          ],
+          "bounds": [
+            49,
+            42,
+            360,
+            462
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_status_remove.webp",
+      "sha256": "aadbb4fd0dc47c45fd6e1e187839a8a8f10ce048a7ae992f3c12a926ab6529d6",
+      "bytes": 1834998,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_death",
+      "stem": "combat_effect_death",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-6566e87e-5a2a-4be7-8bf8-462ceda7bbf2.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: Fine dark indigo ash, muted crimson maple petals and tiny warm embers separate upward along outer edges, beautiful soft dissipation, no opaque smoke or center fill. Leave central rectangle x=110..274,y=100..400 of EACH cell fully transparent to preserve hero face/torso.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m11_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m11_hidden_leaves.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "e80c2733849dc2c2289b1673d565959cc74b4e8cdd92476607e3614a45c317dd",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            16,
+            43,
+            350,
+            487
+          ]
+        },
+        {
+          "sha256": "2185805131fc41094135b4bb3aacb4833104b14c1475f41d1dd3da13e50cc6b1",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            3,
+            29,
+            366,
+            499
+          ]
+        },
+        {
+          "sha256": "7dccbe1584c0a7bfd4aa8f1b6891bcedb6f36b9a12ff2bd72b5e5bfd511bc29e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            13,
+            6,
+            372,
+            508
+          ]
+        },
+        {
+          "sha256": "5d3551bfa32a1a8dbf38c0ce1a9b66455a3fdde298274eeb70bd1ad9713d51d3",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            7,
+            0,
+            379,
+            507
+          ]
+        },
+        {
+          "sha256": "a53d2039f4cf02f99aa3c9ac788ec9954e389ddd0ead8051c632323d25c2bace",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            7,
+            1,
+            376,
+            512
+          ]
+        },
+        {
+          "sha256": "60b164c9f94d19be53186c0f83308ea8545a2aa3fdf4e61c3be8fec8504624b3",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            11,
+            1,
+            369,
+            496
+          ]
+        },
+        {
+          "sha256": "89c749313299fc469fa7e2b69a1d7c101d75b439fe0c5e8c73e6300d1c3873ff",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            32,
+            7,
+            374,
+            496
+          ]
+        },
+        {
+          "sha256": "0709e1fb1ac8ec13f878977f52013ad4450964ae668ff4b3b31afdfaef9b59a1",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            29,
+            33,
+            361,
+            481
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_death.webp",
+      "sha256": "93d5a37dc3a2df7a2da87ad75bf9432e05311b163bb35cfceca914f604f08cf9",
+      "bytes": 2011812,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_blood_moon",
+      "stem": "combat_effect_blood_moon",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-7fc7f910-5cad-4f95-b11d-1a59b32cce17.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A ruby lunar crescent ignites with fine gold-corona wisps and crimson stardust, forms around outer sides and dissipates; keep center transparent, no flat overlay. Leave central rectangle x=110..274,y=100..400 of EACH cell fully transparent to preserve hero face/torso.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m07_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m07_blood_meridians.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "cfb431a4542bfe080b3784918ed325d78b88e77b03b6bacf3d656bd896565c5b",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            16,
+            49,
+            384,
+            462
+          ]
+        },
+        {
+          "sha256": "529ac19ccb9bc498e96d9c1657e2d8895f11ed79f866edf13c3f46720b05ceec",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            38,
+            384,
+            483
+          ]
+        },
+        {
+          "sha256": "505bd94009b6bc2c67df0e68aadc1f3fc6361f8c34aa45429e35fa1aa01c5259",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            29,
+            384,
+            491
+          ]
+        },
+        {
+          "sha256": "eb48746659e55027c8d27e46d1fc6db0abf8c25952574e2e652c7892bb97ba11",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            12,
+            369,
+            500
+          ]
+        },
+        {
+          "sha256": "cfd30a96e9875e0cdd065eb80e1b50d9d0410584cf8cc63e61450e9a6761b0e2",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            8,
+            11,
+            373,
+            495
+          ]
+        },
+        {
+          "sha256": "3a39c2c405d7f9f19b2a56940aa2c4fde61dc8a3723a95fdb4d85c8a7d0fb5fa",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            14,
+            37,
+            362,
+            483
+          ]
+        },
+        {
+          "sha256": "efeceea138cac6483c44a0c4224868db5c9c2edca6649301a8a01b72b07d765c",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            19,
+            55,
+            336,
+            462
+          ]
+        },
+        {
+          "sha256": "37ba8c94e8907e58bc1a3263a7904b1a327940dc0b270a8bfa60ac688f3fe1cb",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            25,
+            84,
+            342,
+            449
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_blood_moon.webp",
+      "sha256": "7679db08778f107ef197abd862a31fc79a45b5b4fd0ea1686a0b282086ce178b",
+      "bytes": 1905890,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_cast",
+      "stem": "combat_effect_cast",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-2aea6d6a-47eb-444d-81a8-633f0f938fcb.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: Pearly gold-white light unfurls like exquisitely illustrated turning paper and silk at outer corners, soft blue threads flow onward, center empty. Leave central rectangle x=110..274,y=100..400 of EACH cell fully transparent to preserve hero face/torso.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m10_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m10_scholar_scrolls.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "6457f5f4074313c1df207c749bb8eebb088017286977e0ce10e24a844452c37a",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            15,
+            53,
+            378,
+            464
+          ]
+        },
+        {
+          "sha256": "2b4376cc17c690403faa04ded134740d86801120c21d2fab2c6b5739afb54429",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            13,
+            30,
+            371,
+            476
+          ]
+        },
+        {
+          "sha256": "5d4e9b0b74c76ba100c04dcbee957830f70158216101387ba9edaefb8f10e35f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            10,
+            14,
+            371,
+            510
+          ]
+        },
+        {
+          "sha256": "36e0e4dedd563468ffe9785244a76547eab99fe0271710dd26b0977123d02a6c",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            5,
+            8,
+            374,
+            509
+          ]
+        },
+        {
+          "sha256": "34392460c5e7345d08e497502c81a61bec395237fec04cd0542dc2cf2f26110b",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            11,
+            8,
+            384,
+            497
+          ]
+        },
+        {
+          "sha256": "6b1aa55ab65546755bd1f8391b80d0e1162745b84cabf2f93adf5810ad159edf",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            0,
+            20,
+            371,
+            487
+          ]
+        },
+        {
+          "sha256": "f9f0b2248b366f896963721e0d0a09e75b7c72c224a4161296455403ef915342",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            37,
+            48,
+            356,
+            456
+          ]
+        },
+        {
+          "sha256": "a59b3aa1cccfd2fe4b7591c05f1cbdae6efcbc6ec02f50751607cb14b90ed04e",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            43,
+            46,
+            334,
+            427
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_cast.webp",
+      "sha256": "ffc4ac414a66045afaf24eb38453d7daf6eb8606a45c37d7602a8dcb79ea4c9a",
+      "bytes": 1843920,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_moon_shift",
+      "stem": "combat_effect_moon_shift",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-f5c06ecc-56c2-4417-9b11-ac115879cab1.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: A dimensional pearl crescent and white plum petals trace a gentle orbit with lavender silver cloud filaments at outer edges, no rigid circular UI ornament, center empty. Leave central rectangle x=110..274,y=100..400 of EACH cell fully transparent to preserve hero face/torso.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f01_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f01_moon_blossoms.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "e53981410342b06e3e473bdc23a1480404fecd385f7304eb9bbcc38daa2becf1",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            33,
+            58,
+            373,
+            463
+          ]
+        },
+        {
+          "sha256": "985afda3562523cc98bd4424f4ea141784607c4df090b98c40dd9d19090ad94f",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            23,
+            32,
+            375,
+            481
+          ]
+        },
+        {
+          "sha256": "c5fc3b139f4931cc019adb77b8910577e5a76b6b497165c69755e34fe6f694a2",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            19,
+            32,
+            368,
+            487
+          ]
+        },
+        {
+          "sha256": "e6755f00f9ea4a7f7e4835c3d46bbe5a228675bcf4ca8c69fe134e84d3365fac",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            7,
+            22,
+            370,
+            502
+          ]
+        },
+        {
+          "sha256": "ca22f594a532835077cdff590fcb7bc0f1d710b3958cf88a77cbf440a55c133d",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            13,
+            23,
+            374,
+            478
+          ]
+        },
+        {
+          "sha256": "f772470786f64657a7db2c6bdfbebc9b98e546d6bd1206765cf980c984ce547d",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            26,
+            40,
+            365,
+            462
+          ]
+        },
+        {
+          "sha256": "35031cd726c425ad830c50d6af1044c0792bbea9b40e1570b2745e39f7ef9a07",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            24,
+            69,
+            366,
+            463
+          ]
+        },
+        {
+          "sha256": "ee0f924242d0f3a84d0c348f733b2db0f0f16f5a915659b85260ce55b2fafcb2",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "bounds": [
+            48,
+            102,
+            349,
+            451
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_moon_shift.webp",
+      "sha256": "75ab218f7f8cbbbcd31057e37323a77c7ee818a903fb6eb29b5af40ce9e09463",
+      "bytes": 1700906,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "effect_reflect",
+      "stem": "combat_effect_reflect",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-27c5c70b-2ae6-47ee-9727-eeaa585d9124.png",
+      "prompt": "Create a production wuxia anime game VFX ANIMATION SPRITESHEET exactly1536x1024 LANDSCAPE, STRICT4columns by2rows, EIGHT equal384x512 cells in row-major chronological order. TRUE TRANSPARENT ALPHA in each cell. No background, no person, no scenery, no text/labels/gridlines/cell borders. Fixed orthographic camera, same center, same scale, same object identity across frames. Every illustrated motif MUST have at least24pixels transparent safety padding from ALL edges of its OWN384x512 cell; no inter-cell art, no clipped tips. Use supplied hero and dedicated effect as DIRECT STYLE references, matching crisp polished linework, finely shaded materials and rich wuxia palettes. Animate real physical shape changes and secondary motion, NOT copies merely scaled/translated/rotated. A coherent continuous arc:1 faint gathering,2 forming,3 unfolding,4 strong readable action,5 follow-through,6 disintegration,7 sparse trails,8 almost empty last motes. Neighboring frames share coherent consecutive forms, avoid jumps. Keep delicate translucent luminous edges, restrained brightness, no large opaque core. Subject: An elegant silver blue mirrored shard deflects then flies RIGHT with a trailing curl of frost and sapphire ribbon, fine fragments dissolve.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f03_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f03_frost_swords.webp"
+      ],
+      "frames": [
+        {
+          "sha256": "bce347bd7f0936a3c987cd84a15209e66971db96fc0fb94f5acfb9b60b41326d",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "bounds": [
+            20,
+            126,
+            384,
+            428
+          ]
+        },
+        {
+          "sha256": "9c836ab590b497f023497caaffaab7be3e7c572591c35a51d3c3f53ce75c192e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            117,
+            384,
+            419
+          ]
+        },
+        {
+          "sha256": "29d1eca9b7ddde598f8f694aa9a86baefdcc3e7db58b493aad41a15b927d0e0f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            103,
+            384,
+            470
+          ]
+        },
+        {
+          "sha256": "b6b1a2e55b9433ae3732a7b4e5fe2dddb72bbfc172468e5514ac73f3107e8b2f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            179,
+            367,
+            419
+          ]
+        },
+        {
+          "sha256": "58bf6f064f0cd7d9f07802fff127d02e2802a01516b942350a8835ad7197aa54",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            33,
+            83,
+            384,
+            394
+          ]
+        },
+        {
+          "sha256": "d03b746529be76f46937cb093434f4596ab94a0cd1b8a5e1b47160e84f804beb",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "bounds": [
+            0,
+            84,
+            384,
+            398
+          ]
+        },
+        {
+          "sha256": "6d7a12c3d1f4ca0fd92d3ead2e93184ad92b53e6708684fdacf38f481cc45e92",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            0,
+            96,
+            384,
+            377
+          ]
+        },
+        {
+          "sha256": "1b0054aee0da74786a4c6d48d021246433b7cf7b7b28d21ade274d6a83d1e0b4",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "bounds": [
+            0,
+            184,
+            353,
+            323
+          ]
+        }
+      ],
+      "path": "apps/client/public/assets/vfx/combat_effect_reflect.webp",
+      "sha256": "ae1f1c60ac21b1b82b09e4893492497bd33ee623dd2fc7d5f94334a9dafe4053",
+      "bytes": 1600484,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "glow",
+      "stem": "combat_glow",
+      "kind": "utility",
+      "maxSize": 128,
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-2d7d979f-1d99-42cd-940b-4aa25405fe4c.png",
+      "prompt": "Create a SINGLE tiny luminous particle sprite for a polished wuxia anime game. Square1024x1024, TRUE TRANSPARENT background. Use the supplied artwork as direct rendering/style reference. One delicate soft pearly white light mote centered, a small finely illustrated warm ivory core and extremely soft translucent thin feathered glow gently fading to alpha0 well before all image edges. No ornament, no solid disc, no hard ring, no frame, no text, no colored background. Neutral luminous white with subtle warm-silver shading, tint-friendly. This is ONE particle sprite, not a spritesheet. All four corners entirely transparent, center brightest, soft elegant game VFX material.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f01_up.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/combat_glow.webp",
+      "sha256": "68334e6a47baf24a72ab8a1e88e3620eea1bc0c77471d783634008553079ce39",
+      "bytes": 6726,
+      "width": 128,
+      "height": 128
+    },
+    {
+      "id": "star",
+      "stem": "combat_star",
+      "kind": "utility",
+      "maxSize": 48,
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-6f738acb-a747-41c5-8336-071b4116181c.png",
+      "prompt": "Create a SINGLE tiny polished magical starlight particle sprite, square1024x1024 with TRUE TRANSPARENT background. Use supplied wuxia anime artwork as direct illustration/style reference. One delicate pearly ivory four-point starlight glint, beautifully tapered curved rays with thin golden-silver edges and a soft translucent luminous white center, extra tiny restrained dust near core only. Entirely within middle60% of image; generous fully transparent padding all sides. No ring, ornament, face, scene, text or opaque background. Neutral warm-white material suitable for tinting. ONE sprite, not grid.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f01_up.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/combat_star.webp",
+      "sha256": "bd52da8754f721518399e565e29e5a3ccaf8f797250be19d6e8a15022bdc2bd9",
+      "bytes": 766,
+      "width": 48,
+      "height": 48
+    },
+    {
+      "id": "vignette",
+      "stem": "combat_vignette",
+      "kind": "utility",
+      "maxSize": 160,
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-fb1477fb-c024-4602-bcde-b7e91bb978db.png",
+      "prompt": "Create a SINGLE landscape1536x1024 transparent magical atmosphere border for a polished wuxia anime game, using the supplied art as direct style/material reference. TRUE transparent alpha background. The middle80% of canvas COMPLETELY EMPTY transparent. Only along extreme outer rim: very soft feathery silver-white moonlit mist, thin wisps of pearl silk-like vapor, a few subtle tiny warm motes. Restrained ethereal barely visible atmospheric edge dressing, no solid frame, no geometric ring, no characters, no text, no background plate. Mist smoothly fades to alpha0 toward center. Neutral white/ivory suitable for tinting, luminous illustrated material, soft feathered edges. No hard boundary inside image.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f01_up.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/combat_vignette.webp",
+      "sha256": "4494c4cdb49ef668ad79dd2ff1f186a4c77a67e20587ff61983ed0818dc0c0f8",
+      "bytes": 18666,
+      "width": 160,
+      "height": 107
+    }
+  ]
+}

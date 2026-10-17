@@ -253,6 +253,7 @@ describe("abort and error discipline", () => {
       ],
       context,
     );
+    await runToEnd(rt, queue);
     await expect(queue).rejects.toThrow("binding exploded");
     rt.dispose();
   });

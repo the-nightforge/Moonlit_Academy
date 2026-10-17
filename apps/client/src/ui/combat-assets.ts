@@ -1,5 +1,6 @@
 import type Phaser from "phaser";
 import type { CombatState, SavedDeck } from "rules";
+import { rawGameInput } from "data";
 import manifest from "virtual:assets-manifest";
 import { queueTexture } from "./texture-queue";
 import { awakeningEffectsFor } from "./awakening-profiles";
@@ -10,6 +11,10 @@ import { awakeningEffectsFor } from "./awakening-profiles";
  */
 const COMBAT_CATEGORIES = ["cards", "heroes", "enemies", "summons", "weapons", "relics", "ui", "vfx"] as const;
 const COMBAT_BACKGROUND_STEM = "background";
+const styleData = rawGameInput();
+const heroStyles = new Map(styleData.heroes.map(hero => [hero.id, hero.attackStyle ?? (hero.archetype === "support" ? "herb" : "slash")]));
+const enemyStyles = new Map(styleData.enemies.map(enemy => [enemy.id, enemy.attackStyle ?? "slash"]));
+const weaponStyles = new Map(styleData.weapons.map(weapon => [weapon.id, weapon.attackStyle]));
 
 export interface CombatTextureEntry {
   key: string;
@@ -40,6 +45,14 @@ export function battleAssetSelection(state: CombatState): CombatAssetSelection {
 export function combatTextureEntries(files: Record<string, Record<string, string>>, selection: CombatAssetSelection = {}): CombatTextureEntry[] {
   const entries: CombatTextureEntry[] = [];
   const awakening = new Set((selection.heroIds ?? []).flatMap(awakeningEffectsFor));
+  // Public ids cover every seat, reserve hero and equipped weapon even when hands
+  // are hidden. Skills can cast spell; both rabbit summons use moon; unknown units slash.
+  const attacks = selection.heroIds || selection.enemyIds || selection.weaponIds ? new Set([
+    "slash", "spell", "moon",
+    ...(selection.heroIds ?? []).map(id => heroStyles.get(id) ?? "slash"),
+    ...(selection.enemyIds ?? []).map(id => enemyStyles.get(id) ?? "slash"),
+    ...(selection.weaponIds ?? []).flatMap(id => weaponStyles.get(id) ? [weaponStyles.get(id)!] : []),
+  ]) : null;
   const selected: Record<string, Set<string>> = {
     heroes: new Set((selection.heroIds ?? []).flatMap(id => [id, `${id}_up`])),
     enemies: new Set(selection.enemyIds ?? []), weapons: new Set(selection.weaponIds ?? []), relics: new Set(selection.relicIds ?? []),
@@ -48,6 +61,7 @@ export function combatTextureEntries(files: Record<string, Record<string, string
     for (const [stem, url] of Object.entries(files[category] ?? {})) {
       if (selected[category] && !selected[category].has(stem)) continue;
       if (category === "vfx" && stem.startsWith("awakening_") && !awakening.has(stem)) continue;
+      if (category === "vfx" && attacks && stem.startsWith("combat_attack_") && !attacks.has(stem.slice("combat_attack_".length))) continue;
       entries.push({ key: `${category}:${stem}`, url });
     }
   }

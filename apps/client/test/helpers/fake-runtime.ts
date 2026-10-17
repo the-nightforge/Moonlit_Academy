@@ -28,18 +28,34 @@ export function stubObject(fields: Record<string, unknown> = {}): Record<string 
     state.destroyed = true;
     return proxy;
   };
+  state.setBlendMode = (mode: string | number) => { state.blendMode = mode; return proxy; };
   return proxy;
 }
 
 export function fakeScene(shakeLog: number[], created?: Record<string | symbol, unknown>[], texts?: string[]): Phaser.Scene {
-  const textures = { exists: () => true, addCanvas: () => undefined, createCanvas: () => undefined, get: () => ({ getSourceImage: () => ({ width: 128, height: 128 }) }) };
+  const textures = { exists: () => true, addCanvas: () => undefined, createCanvas: () => undefined,
+    get: (key: string) => /^vfx:combat_(attack|effect)_/.test(key)
+      ? { getSourceImage: () => ({ width: 1536, height: 1024 }), has: () => false, add: () => undefined }
+      : { getSourceImage: () => ({ width: 128, height: 128 }) } };
   const spawn = () => () => {
     const object = stubObject();
     created?.push(object);
     return object;
   };
   const add = {
-    image: spawn(),
+    image: (_x: number, _y: number, key: string) => { const object = spawn()(); object.textureKey = key; return object; },
+    renderTexture: () => {
+      const object = spawn()(); object.frameBlendTarget = true; object.compositedAlpha = 0;
+      object.clear = () => { object.compositedAlpha = 0; return object; };
+      object.draw = (cells: Record<string | symbol, unknown>[]) => {
+        for (const cell of cells) {
+          const alpha = Number(cell.alpha), previous = Number(object.compositedAlpha);
+          object.compositedAlpha = alpha + previous * (cell.blendMode === "ADD" || cell.blendMode === 1 ? 1 : 1 - alpha);
+        }
+        return object;
+      };
+      return object;
+    },
     sprite: spawn(),
     rectangle: spawn(),
     circle: spawn(),
@@ -131,6 +147,20 @@ export class FakeRuntime implements AnimationRuntime {
     const delay = typeof config.delay === "number" ? config.delay : 0;
     const base = (config.duration ?? 0) as number;
     const total = delay + base * ((config.repeat ?? 0) + 1) * (config.yoyo === true ? 2 : 1);
+    // Illustration clocks drive gameplay during onUpdate, before their tails finish.
+    // Sample at scene-frame intervals rather than treating the whole tween as a wait.
+    const target = config.targets as { elapsed?: number } | undefined;
+    if (target && typeof target.elapsed === "number" && typeof config.elapsed === "number" && config.onUpdate) {
+      const start = target.elapsed, end = config.elapsed;
+      let failed = false;
+      const samples = Array.from({ length: Math.max(1, Math.ceil(base / 16)) }, (_, i) => Math.min(base, (i + 1) * 16));
+      const updates = samples.map(elapsed => this.enqueue(this.duration(delay + elapsed), () => {
+        if (failed) return;
+        target.elapsed = Math.max(target.elapsed ?? start, start + (end - start) * elapsed / Math.max(1, base));
+        try { (config.onUpdate as () => void)(); } catch (error) { failed = true; throw error; }
+      }));
+      return Promise.all(updates).then(() => undefined);
+    }
     return this.enqueue(this.duration(total));
   }
 
@@ -164,7 +194,9 @@ export class FakeRuntime implements AnimationRuntime {
   }
 
   async drain(): Promise<void> {
-    while (this.pending.length > 0) {
+    let idle = 0;
+    while (idle < 8) {
+      if (this.pending.length > 0) idle = 0; else idle++;
       this.step();
       await Promise.resolve();
     }
@@ -179,7 +211,7 @@ export class FakeRuntime implements AnimationRuntime {
     this.tracked.clear();
   }
 
-  private enqueue(ms: number): Promise<void> {
+  private enqueue(ms: number, action?: () => void): Promise<void> {
     this.assertActive();
     let resolve!: () => void;
     let reject!: (error: Error) => void;
@@ -189,7 +221,7 @@ export class FakeRuntime implements AnimationRuntime {
     });
     // The runtime owns the rejection, like SceneAnimationRuntime.register.
     void promise.catch(() => {});
-    this.pending.push({ due: this.clock + Math.max(0, ms), resolve, reject });
+    this.pending.push({ due: this.clock + Math.max(0, ms), resolve: () => { try { action?.(); resolve(); } catch (error) { reject(error as Error); } }, reject });
     return promise;
   }
 }

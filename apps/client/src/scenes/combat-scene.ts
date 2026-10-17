@@ -1175,13 +1175,9 @@ export class CombatScene extends Phaser.Scene {
     const cx = view.x + view.w / 2;
     const cy = view.y + view.h / 2;
     if (wash > 0) this.root.add(this.add.rectangle(cx, cy, view.w, view.h, BLOOD_MOON_BG, wash));
-    this.root.add(
-      this.add
-        .image(cx, cy, VIGNETTE)
-        .setDisplaySize(view.w + 8, view.h + 8)
-        .setTint(0x90142c)
-        .setAlpha(0.45),
-    );
+    const vignette = this.add.image(cx, cy, VIGNETTE).setTint(0x90142c).setAlpha(0.45);
+    vignette.setScale(Math.min((view.w + 8) / vignette.width, (view.h + 8) / vignette.height));
+    this.root.add(vignette);
     const embers = this.add.particles(view.x + view.w / 2, view.y + view.h, VFX_GLOW, {
       x: { min: -view.w / 2, max: view.w / 2 },
       y: { min: -view.h * 0.65, max: 0 },

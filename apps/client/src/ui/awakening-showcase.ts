@@ -3,6 +3,8 @@ import type { AnimationRuntime } from "./animation-runtime";
 import { HERO_AWAKENINGS } from "./awakening-profiles";
 import { sampleAwakening } from "./awakening-motion";
 import { awakeningSheet, registerAwakeningFrames, sampleAwakeningFrame } from "./awakening-flipbook";
+import { createFrameBlend } from "./frame-blend";
+import type { FrameBlend } from "./frame-blend";
 export { AWAKENING_EFFECTS, awakeningEffectsFor } from "./awakening-profiles";
 
 export interface AwakeningDetails {
@@ -31,6 +33,7 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
   const effects = rt.track(scene.add.container(0, 0));
   view.addAt(effects, view.getIndex(portrait!) + 1);
   let blend: Phaser.GameObjects.Container | undefined;
+  let frameBlend: FrameBlend | undefined;
   try {
     const sprite = (stem: string, targetHeight: number) => {
       const texture = `vfx:${stem}`;
@@ -42,15 +45,11 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
     // Each illustrated cell changes the actual flame/cloth/petal shapes, not just the whole quad.
     const sheetKey=`vfx:${awakeningSheet(details.heroId)}`;
     const sheet=!rt.reducedMotion?registerAwakeningFrames(scene,sheetKey):null;
-    const motif=sheet?scene.add.container(old.x,old.y):sprite(profile.texture,height+36);
-    const cells:Phaser.GameObjects.Image[]=[];
+    frameBlend=sheet?createFrameBlend(rt,sheetKey,sheet.width,sheet.height,"awakening"):undefined;
+    const motif=frameBlend?frameBlend.view.setPosition(old.x,old.y):sprite(profile.texture,height+36);
     if(sheet && motif) {
       motif.setScale(Math.min((width+80)/sheet.width,(height+36)/sheet.height));
       effects.add(motif);
-      for(let i=0;i<2;i++) {
-        const image=scene.add.image(0,0,sheetKey,`awakening-${i}`).setAlpha(i===0?1:0);
-        (motif as Phaser.GameObjects.Container).add(image);cells.push(image);
-      }
     }
     const motifScale = motif?.scaleX ?? 1;
     const clock={elapsed:0};
@@ -78,10 +77,9 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
       // use this same clock, rather than scene timers that start a frame earlier.
       if(!transformed && clock.elapsed>=charge)swap();
       const pose=sampleAwakening(profile,clock.elapsed,rt.reducedMotion);
-      if(cells.length) {
+      if(frameBlend) {
         const frame=sampleAwakeningFrame(clock.elapsed/(motion.charge+motion.blend+motion.release));
-        cells[0]!.setFrame(`awakening-${frame.from}`).setAlpha(1-frame.mix);
-        cells[1]!.setFrame(`awakening-${frame.to}`).setAlpha(frame.mix);
+        frameBlend.setFrames(frame.from,frame.to,frame.mix);
       }
       motif?.setAlpha(pose.alpha);
       if(!rt.reducedMotion) motif?.setPosition(old.x+pose.x*width/160,old.y-8+pose.y*height/240)
@@ -97,6 +95,6 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
     rt.assertActive();
     clock.elapsed=total;draw();
   } finally {
-    blend?.destroy(true); effects.destroy(true);
+    frameBlend?.destroy(); blend?.destroy(true); effects.destroy(true);
   }
 }

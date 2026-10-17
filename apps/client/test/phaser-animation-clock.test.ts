@@ -3,7 +3,8 @@ import { dirname, join } from "node:path";
 import type Phaser from "phaser";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAnimationRuntime } from "../src/ui/animation-runtime";
-import { ensureImpactAnimations, IMPACT_ANIMATIONS } from "../src/ui/impact-animation";
+import { playCombatIllustration, registerCombatFrames } from "../src/ui/combat-illustration";
+import { FakeRuntime } from "./helpers/fake-runtime";
 import { buttonMotion, enterUi } from "../src/ui/ui-motion";
 
 // Actual Phaser 4 components, stepped deterministically; only the canvas renderer is omitted.
@@ -19,16 +20,16 @@ function fixture() {
   const textures = new Map<string, object>();
   const context = new Proxy({}, { get: (_target, key) => key === "createRadialGradient" ? () => ({ addColorStop() {} }) : () => {}, set: () => true });
   const texture = {
-    getContext: () => context, refresh() {}, frameTotal: 25,
-    add(name: number, _source: number, _x: number, _y: number, width: number, height: number) {
-      expect(width).toBe(192); expect(height).toBe(192);
+    getContext: () => context, refresh() {}, frameTotal: 9, getSourceImage: () => ({ width:1536, height:1024 }),
+    add(name: string, _source: number, _x: number, _y: number, width: number, height: number) {
+      expect(width).toBe(384); expect(height).toBe(512);
       frames.set(String(name), { name: String(name), texture });
     },
-    has: (name: number) => frames.has(String(name)),
+    has: (name: string) => frames.has(String(name)),
   };
   const textureManager = {
-    exists: (key: string) => textures.has(key), get: () => texture,
-    getFrame: (_key: string, frame: number) => frames.get(String(frame)),
+    exists: (key: string) => key.startsWith("vfx:combat_") || textures.has(key), get: () => texture,
+    getFrame: (_key: string, frame: number | string) => frames.get(String(frame)),
     createCanvas: (key: string) => { textures.set(key, texture); return texture; },
   };
   const game = { events: new Emitter(), textures: textureManager };
@@ -37,48 +38,30 @@ function fixture() {
   const scene = { anims: manager, textures: textureManager, sys: { events: new Emitter() } } as unknown as Phaser.Scene;
   const tweenManager = new TweenManager(scene);
   scene.tweens = tweenManager;
-  ensureImpactAnimations(scene);
-  return { scene, manager, tweenManager, frames };
+  const fake = new FakeRuntime();
+  scene.add=fake.scene.add;scene.cameras=fake.scene.cameras;
+  return { scene, manager, tweenManager, frames, created:fake.created };
 }
 
 describe("real Phaser animation clocks", () => {
   afterEach(() => vi.unstubAllGlobals());
-  it("registers exactly 24 padded frames and two shared finite animations once", () => {
-    const { scene, manager, frames } = fixture();
-    const hit = manager.get(IMPACT_ANIMATIONS.hit);
-    ensureImpactAnimations(scene);
-    expect(frames.size).toBe(24);
-    expect(manager.get(IMPACT_ANIMATIONS.hit)).toBe(hit);
-    expect(hit.frames).toHaveLength(12);
-    expect(manager.get(IMPACT_ANIMATIONS.guard).frames).toHaveLength(12);
-    expect(hit.repeat).toBe(0);
+  it("registers eight complete authored cells once without creating global procedural animations", () => {
+    const { scene, frames } = fixture();
+    registerCombatFrames(scene,"vfx:combat_effect_hit");registerCombatFrames(scene,"vfx:combat_effect_hit");
+    expect(frames.size).toBe(8);
   });
-
-  it.each([1, 2] as const)("AnimationState visits all frames, completes and drains at speed %s", async speed => {
-    const { scene } = fixture();
-    const parent = Object.assign(new Emitter(), {
-      scene: { sys: { anims: scene.anims } }, visible: true,
-      setSizeToFrame() {}, setVisible(visible: boolean) { this.visible = visible; },
-    });
-    const animationState = new AnimationState(parent);
-    parent.anims = animationState;
-    parent.play = (config: object) => { animationState.play(config); return parent; };
-    const runtime = createAnimationRuntime(scene, new AbortController().signal, { speed, reducedMotion: false, volume: 0 });
-    const promise = runtime.play(parent, IMPACT_ANIMATIONS.hit);
-    const visited = new Set<string>();
-    let elapsed = 0;
-    while (animationState.isPlaying && elapsed < 1000) {
-      visited.add(animationState.currentFrame.textureFrame);
-      animationState.update(elapsed, 5);
-      elapsed += 5;
-    }
-    await promise;
-    await runtime.drain();
-    expect(visited.size).toBe(12);
-    expect(elapsed).toBeGreaterThanOrEqual(300 / speed - 5);
-    expect(elapsed).toBeLessThanOrEqual(300 / speed + 5);
-    expect(parent.visible).toBe(false);
-    runtime.dispose();
+  it.each([1, 2] as const)("native tween visits authored cells, lands its milestone and cleans up at speed %s", async speed => {
+    const { scene, tweenManager, created } = fixture();
+    const visited=new Set<string>(),add=scene.add.image.bind(scene.add);
+    scene.add.image=((...args:Parameters<typeof add>)=>{const image=add(...args);image.setFrame=((frame:string)=>{visited.add(frame);return image;}) as any;return image;}) as any;
+    const runtime=createAnimationRuntime(scene,new AbortController().signal,{speed,reducedMotion:false,volume:0});
+    let complete=false,elapsed=0,impactTime=-1,impacts=0;
+    const promise=playCombatIllustration(runtime,"effect_hit",{to:{x:100,y:100},duration:300,impactAt:90,onImpact:()=>{impactTime=elapsed;impacts++;}}).then(()=>{complete=true;});
+    for(;!complete&&elapsed<1000;elapsed+=5){for(const tween of [...tweenManager.tweens])tween.update(5);await Promise.resolve();}
+    await promise;await runtime.drain();
+    expect(impacts).toBe(1);expect(impactTime).toBeGreaterThanOrEqual(90/speed-5);expect(impactTime).toBeLessThanOrEqual(90/speed+10);
+    expect(visited.size).toBe(8);expect(elapsed).toBeLessThanOrEqual(300/speed+20);
+    expect(created.every(node=>node.destroyed)).toBe(true);runtime.dispose();
   });
 
   it("native tween scaling halves nested durations, yoyo holds and completion delays", async () => {

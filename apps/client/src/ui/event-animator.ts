@@ -8,17 +8,18 @@ import { resolvePlayedCard, seatAnchors, statusAppliedLabel, statusDisplayValue,
 import type { Point, SeatAnchors } from "./combat-display";
 import type { PublicPlayedCard } from "../net/protocol";
 import { COMBAT_LAYOUT, STATUS_ICONS, STATUS_LABELS, TEXT_BASE } from "./theme";
-import { bloodMoonSurge, castCard, deathBurn, moonWheel, playAttack, reflectStrike, statusPop } from "./vfx";
+import { armorWard, bloodMoonSurge, castCard, deathBurn, healBloom, moonWheel, playAttack, playSupportEffect, reflectStrike, statusPop } from "./vfx";
 import { HAND_AREA, MOON, handSlots } from "./combat-layout";
 import type { CombatLayout } from "./combat-layout";
 import { triggerAnchorKey } from "./combat-inspector";
 import type { AnimationRuntime } from "./animation-runtime";
 import type { CombatAudio } from "./combat-audio";
 import { playAwakening } from "./awakening-showcase";
-import { reactToImpact, finishImpactReaction } from "./impact-reaction";
+import { reactToImpact, finishImpactReaction, ownUnitPose } from "./impact-reaction";
+import { playCombatIllustration } from "./combat-illustration";
 
 const WIDTH = 1280;
-const { midY, unitFlash } = COMBAT_LAYOUT;
+const { midY } = COMBAT_LAYOUT;
 
 export interface AnimContext {
   gameData: GameData;
@@ -77,29 +78,11 @@ function floatText(
   );
   return rt.tween({
     targets: text,
-    y: y - 34,
+    y: rt.reducedMotion ? y : y - 34,
     alpha: 0,
     duration,
     ease: "Sine.easeOut",
     onComplete: () => text.destroy(),
-  });
-}
-
-function flash(
-  rt: AnimationRuntime,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  color: number,
-  duration: number,
-): Promise<void> {
-  const rect = rt.track(rt.scene.add.rectangle(x, y, w, h, color, 0.45).setDepth(90));
-  return rt.tween({
-    targets: rect,
-    alpha: 0,
-    duration,
-    onComplete: () => rect.destroy(),
   });
 }
 
@@ -135,8 +118,8 @@ function triggerFlash(
 ): Promise<void> {
   const anchor = ctx.triggerAnchors?.get(triggerAnchorKey(player ?? ctx.mySeat ?? 0, kind, id));
   if (anchor === undefined) return floatHeld(rt, WIDTH / 2, midY, label, color, 18, 400, 200);
-  const colorNum = parseInt(color.slice(1), 16);
-  return held(rt, 350, flash(rt, anchor.x, anchor.y, 40, 40, colorNum, 400), floatText(rt, anchor.x, anchor.y - 12, label, color, 14, 320));
+  const cue = playCombatIllustration(rt, "effect_cast", { to: anchor, duration: 400, width: 80, height: 80 });
+  return held(rt, 350, cue, floatText(rt, anchor.x, anchor.y - 12, label, color, 14, 320));
 }
 
 /**
@@ -243,22 +226,44 @@ const CARDLESS_SOURCES = new Set<CombatEvent["type"]>([
 
 const css = (color: number) => `#${color.toString(16).padStart(6, "0")}`;
 
-/** The unit's real bounds for flash sizing — its view first, then its layout rect. */
-function unitBounds(ctx: AnimContext, unitId: string): { x: number; y: number; w: number; h: number } | undefined {
-  const bounds = ctx.unitViews.get(unitId)?.getBounds();
-  if (bounds !== undefined && typeof bounds.width === "number") {
-    return { x: bounds.centerX, y: bounds.centerY, w: bounds.width, h: bounds.height };
-  }
-  const rect = ctx.layout?.units.get(unitId);
-  if (rect === undefined) return undefined;
-  return { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2, w: rect.w, h: rect.h };
-}
+const tintPulses = new WeakMap<Phaser.GameObjects.Image, () => void>();
+const tintCorners = ["tintTopLeft", "tintTopRight", "tintBottomLeft", "tintBottomRight"] as const;
 
-/** Flash covering `unitId`'s view bounds — or the layout flash at its anchor. */
-function unitFlashAt(rt: AnimationRuntime, ctx: AnimContext, unitId: string, color: number, duration: number): Promise<void> {
-  const anchor = ctx.unitAnchors.get(unitId);
-  const bounds = unitBounds(ctx, unitId);
-  return flash(rt, bounds?.x ?? anchor?.x ?? 0, bounds?.y ?? anchor?.y ?? 0, bounds?.w ?? unitFlash.w, bounds?.h ?? unitFlash.h, color, duration);
+/** Reuse the portrait pixels; a newer pulse owns its tint, and dead images are untouched. */
+async function unitFlashAt(rt: AnimationRuntime, ctx: AnimContext, unitId: string, color: number, duration: number): Promise<void> {
+  rt.assertActive();
+  const portrait = ctx.unitViews.get(unitId)?.getData("unitPortrait") as Phaser.GameObjects.Image | null | undefined;
+  if (!portrait || !tintCorners.every(corner => typeof portrait[corner] === "number")) {
+    const anchor = ctx.unitAnchors.get(unitId);
+    return anchor ? playSupportEffect(rt, "hit", anchor, duration) : rt.wait(duration);
+  }
+  tintPulses.get(portrait)?.();
+  const original = tintCorners.map(corner => portrait[corner]), alpha = portrait.alpha;
+  // Phaser's Canvas renderer does not support tint, so pulse existing pixel opacity there.
+  const canvas = rt.scene.game?.renderer?.type === 1;
+  const restore = () => {
+    if (tintPulses.get(portrait) !== restore) return;
+    tintPulses.delete(portrait);
+    if (portrait.active === false) return;
+    tintCorners.forEach((corner, i) => { portrait[corner] = original[i]!; });
+    if (canvas) portrait.alpha = alpha;
+  };
+  tintPulses.set(portrait, restore);
+  const pose = { progress: 0 };
+  try {
+    await rt.tween({ targets: pose, progress: 1, duration: duration / 2, yoyo: true, ease: "Sine.easeInOut",
+      onUpdate: () => {
+        if (tintPulses.get(portrait) !== restore || portrait.active === false) return;
+        if (canvas) { portrait.alpha = alpha * (1 - pose.progress * .25); return; }
+        const weight = pose.progress * .45;
+        tintCorners.forEach((corner, i) => {
+          const start = original[i]!;
+          const channel = (shift: number) => Math.round(((start >> shift) & 255) * (1 - weight) + ((color >> shift) & 255) * weight);
+          portrait[corner] = channel(16) << 16 | channel(8) << 8 | channel(0);
+        });
+      },
+    });
+  } finally { restore(); }
 }
 
 /** Card backs traveling between two seat-zone anchors (discard, Luân Hồi). */
@@ -298,23 +303,15 @@ function isBloodMoonLoss(
   return event?.type === "hpLost" && event.cause === "bloodMoon";
 }
 
-/** A line from one unit to another that fades out (enemy aim lines). */
-function beam(
+/** Targeted support/debuff anticipation uses authored artwork, keeping the gameplay hold separate. */
+function intentCue(
   rt: AnimationRuntime,
   from: { x: number; y: number },
   to: { x: number; y: number },
-  color = 0x9fd4ff,
-  duration = 250,
-  width = 3,
+  kind: IntentDef["kind"] | undefined,
 ): Promise<void> {
-  const g = rt.track(rt.scene.add.graphics().setDepth(96));
-  g.lineStyle(width, color, 1).lineBetween(from.x, from.y, to.x, to.y);
-  return rt.tween({
-    targets: g,
-    alpha: 0,
-    duration,
-    onComplete: () => g.destroy(),
-  });
+  const effect = kind === "defend" ? "armor" : kind === "buff" || kind === "debuff" ? "status_apply" : "cast";
+  return playCombatIllustration(rt, `effect_${effect}`, { from, to, duration: 350, impactAt: 150, width: 170, height: 190, rotation: 0, depth: 96 });
 }
 
 /** A status label flying from the victim to the thief (stealBuff). */
@@ -665,18 +662,20 @@ function animateEvent(
         runtime: rt,
         ...(fromHero ? { attackerView: ctx.unitViews.get(event.sourceId) } : {}),
         onImpact: () => {
-          seen();
-          applyBeat(ctx, event);
-          ctx.audio?.play(event.hpLost > 0 ? "hit" : "block");
-          const view = ctx.unitViews.get(event.targetId);
-          if (view) void reactToImpact(rt, view, from, anchor, event.hpLost).catch(() => {});
-          const offset = hitIndex * 14;
-          const jobs = [
-            floatText(rt, anchor.x + offset, anchor.y - 50 - offset, event.hpLost > 0 ? `-${event.hpLost}` : "Chặn",
-              event.hpLost > 0 ? "#ff6b6b" : "#9aa3c0", 20, 350),
-          ];
-          if (event.blocked > 0) jobs.push(floatText(rt, anchor.x + offset, anchor.y - 24 - offset, `🛡 ${event.blocked}`, "#9fd4ff", 13, 300));
-          void Promise.all(jobs).catch(() => {});
+          try {
+            applyBeat(ctx, event);
+            ctx.audio?.play(event.hpLost > 0 ? "hit" : "block");
+            const view = ctx.unitViews.get(event.targetId);
+            if (view) void reactToImpact(rt, view, from, anchor, event.hpLost).catch(() => {});
+            const offset = hitIndex * 14;
+            const jobs = [
+              floatText(rt, anchor.x + offset, anchor.y - 50 - offset, event.hpLost > 0 ? `-${event.hpLost}` : "Chặn",
+                event.hpLost > 0 ? "#ff6b6b" : "#9aa3c0", 20, 350),
+            ];
+            if (event.blocked > 0) jobs.push(floatText(rt, anchor.x + offset, anchor.y - 24 - offset, `🛡 ${event.blocked}`, "#9fd4ff", 13, 300));
+            void Promise.all(jobs).catch(() => {});
+          } catch (error) { impactError = error; throw error; }
+          finally { seen(); }
         },
       });
       // An abort mid-flight rejects the attack before the impact — unblock the
@@ -745,31 +744,19 @@ function animateEvent(
       return held(
         rt,
         200,
-        unitFlashAt(rt, ctx, event.targetId, 0x2e8b57, 250),
+        healBloom(rt, anchor),
         floatText(rt, anchor.x, anchor.y - 50, `+${event.amount}`, "#7fe07f", 18, 300),
       );
     }
     case "armorGained": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
-      return floatHeld(rt, anchor.x, anchor.y - 40, `🛡 +${event.amount}`, "#9fd4ff", 15, 200, 150);
+      return held(rt, 150, armorWard(rt, anchor), floatText(rt, anchor.x, anchor.y - 40, `🛡 +${event.amount}`, "#9fd4ff", 15, 200));
     }
     case "armorRemoved": {
       const anchor = anchorOf(event.targetId);
       if (!anchor) return instant();
-      // The badge shatters at the unit — a ring pop plus the labeled beat.
-      const ring = rt.track(
-        rt.scene.add.circle(anchor.x, anchor.y - 32, 14).setStrokeStyle(2, 0x9fd4ff).setDepth(95),
-      );
-      const shatter = rt.tween({
-        targets: ring,
-        scale: 2,
-        alpha: 0,
-        duration: 280,
-        ease: "Sine.easeOut",
-        onComplete: () => ring.destroy(),
-      });
-      return held(rt, 180, shatter, floatText(rt, anchor.x, anchor.y - 50, "🛡 Vỡ Giáp", "#9fd4ff", 15, 280));
+      return held(rt, 180, armorWard(rt, anchor, true), floatText(rt, anchor.x, anchor.y - 50, "🛡 Vỡ Giáp", "#9fd4ff", 15, 280));
     }
     case "statusApplied": {
       const anchor = anchorOf(event.targetId);
@@ -850,12 +837,21 @@ function animateEvent(
       const dx = target ? (target.x - anchor.x) * 0.18 : 0;
       const dy = target ? (target.y - anchor.y) * 0.18 : (aimed.length > 0 ? 20 : 0);
       // Reduced motion trades the lunge for an alpha pulse with the same beat.
-      const signal = rt.reducedMotion
-        ? rt.tween({ targets: view, alpha: 0.45, duration: 40, yoyo: true })
-        : rt.tween({ targets: view, x: anchor.x + dx, y: anchor.y + dy, duration: 40, yoyo: true });
+      const signal = (async () => {
+        const owner = ownUnitPose(view), pose = { progress: 0 };
+        try {
+          await rt.tween({ targets: pose, progress: 1, duration: 40, yoyo: true,
+            onUpdate: () => {
+              if (!owner.current()) return;
+              if (rt.reducedMotion) view.alpha = owner.base.alpha * (1 - .35 * pose.progress);
+              else { view.x = owner.base.x + dx * pose.progress; view.y = owner.base.y + dy * pose.progress; }
+            },
+          });
+        } finally { owner.restore(); }
+      })();
       void floatText(rt, anchor.x, anchor.y + 90, intent?.name ?? "", "#ffb070", 18, 400).catch(() => {});
       if (intent?.kind !== "attack" && intent?.kind !== "attackDefend") {
-        for (const to of aimed) void beam(rt, anchor, to, 0xff7050, 350, 5).catch(() => {});
+        for (const to of aimed) void intentCue(rt, anchor, to, intent?.kind).catch(() => {});
       }
       return Promise.all([signal, rt.wait(60)]).then(() => undefined);
     }
@@ -952,20 +948,7 @@ function animateEvent(
       // the owner Hero's otherwise.
       const anchor = anchorOf(event.unitId) ?? anchorOf(event.ownerHeroId);
       if (!anchor) return instant();
-      const glow = rt.track(
-        rt.scene.add
-          .circle(anchor.x, anchor.y, 40)
-          .setStrokeStyle(3, 0xf4d35e)
-          .setDepth(95),
-      );
-      const ring = rt.tween({
-        targets: glow,
-        scale: 1.7,
-        alpha: 0,
-        duration: 500,
-        ease: "Sine.easeOut",
-        onComplete: () => glow.destroy(),
-      });
+      const ring = playSupportEffect(rt, "cast", anchor, 500);
       const name = ctx.gameData.summons[event.summonId]?.name ?? "Linh Thú";
       return held(rt, 300, ring, floatText(rt, anchor.x, anchor.y - 62, `Triệu hồi — ${name}`, "#f4d35e", 18, 500));
     }

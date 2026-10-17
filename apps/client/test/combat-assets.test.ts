@@ -115,6 +115,24 @@ describe("combatTextureEntries (`home-ui-redesign` Task 3)", () => {
     expect(keys).not.toContain("gacha:banner");
     expect(keys).not.toContain("backgrounds:home");
   });
+
+  it("loads only roster lore, equipped weapon and enemy attack sheets, plus spell and summon fallbacks", () => {
+    const kinds=["slash","spear","darts","bow","herb","fan","ink","music","ribbon","fire","star","moon","talisman","blood","spell"];
+    const vfx=Object.fromEntries([...kinds.map(kind=>`combat_attack_${kind}`),"combat_effect_heal","combat_effect_guard","combat_glow"].map(stem=>[stem,`${stem}.webp`]));
+    const enemy=Object.values(data.enemies).find(def=>def.attackStyle==="ink")!;
+    const weapon=Object.values(data.weapons).find(def=>def.attackStyle==="bow")!;
+    const keys=combatTextureEntries({vfx},{heroIds:["m05"],enemyIds:[enemy.id],weaponIds:[weapon.id]}).map(entry=>entry.key);
+    expect(keys.filter(key=>key.includes("combat_attack_")).sort()).toEqual(["bow","ink","moon","slash","spear","spell"].map(kind=>`vfx:combat_attack_${kind}`).sort());
+    expect(keys).toEqual(expect.arrayContaining(["vfx:combat_effect_heal","vfx:combat_effect_guard","vfx:combat_glow"]));
+    expect(combatTextureEntries({vfx}).filter(entry=>entry.key.includes("combat_attack_"))).toHaveLength(15);
+  });
+
+  it("retains every visible hero and enemy style in all seats, including reserve heroes", () => {
+    const kinds=new Set([...Object.values(data.heroes),...Object.values(data.enemies),...Object.values(data.weapons)].flatMap(def=>def.attackStyle?[def.attackStyle]:[]));
+    const vfx=Object.fromEntries([...kinds].map(kind=>[`combat_attack_${kind}`,`${kind}.webp`]));
+    const keys=new Set(combatTextureEntries({vfx},{heroIds:Object.keys(data.heroes),enemyIds:Object.keys(data.enemies),weaponIds:Object.keys(data.weapons)}).map(entry=>entry.key));
+    for(const kind of kinds)expect(keys.has(`vfx:combat_attack_${kind}`)).toBe(true);
+  });
 });
 
 describe("prepareCombatAssets (`home-ui-redesign` Task 3)", () => {

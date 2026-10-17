@@ -93,7 +93,9 @@ it.each([false,true])("renders adjacent authored cells and cleans them on comple
   clock.elapsed=260;(config.onUpdate as ()=>void)();
   expect(cells[0]!.setFrame).toHaveBeenLastCalledWith("awakening-3");
   expect(cells[1]!.setFrame).toHaveBeenLastCalledWith("awakening-4");
-  expect(cells.map(c=>c.alpha)).toEqual([.5,.5]);
+  const target=s.rt.created.find(node=>node.frameBlendTarget===true)!;
+  expect(target.compositedAlpha).toBeCloseTo(1);
+  expect(cells.every(cell=>cell.blendMode==="ADD")).toBe(true);
   expect(frames.size).toBe(8);
   if(abort){s.rt.dispose();await expect(result).rejects.toThrow("animation aborted");}
   else {await runToEnd(s.rt,result);await result;expect(s.transform).toHaveBeenCalledTimes(1);}

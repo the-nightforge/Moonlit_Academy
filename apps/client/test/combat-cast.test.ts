@@ -32,11 +32,11 @@ describe("castCard clone ownership", () => {
     expect(clone.destroyed).toBe(true);
   });
 
-  it("a clean cast finishes without destroying the clone", async () => {
+  it("a clean cast destroys its detached clone after the finite tail", async () => {
     const rt = new FakeRuntime();
     const clone = container() as Phaser.GameObjects.Container & { destroyed: boolean };
     await runToEnd(rt, castCard(rt, clone, { x: 640, y: 300 }, 0xff4466));
-    expect(clone.destroyed).toBe(false);
+    expect(clone.destroyed).toBe(true);
   });
 });
 
