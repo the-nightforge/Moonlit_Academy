@@ -37,6 +37,12 @@ it.each(["pve","pvp","coop"] as const)("%s swaps only the event's hero, once at 
       const s=setup(mode,speed,reduced);
       const before=JSON.stringify(s.before), after=JSON.stringify(s.after);
       const result=s.run(); expect(s.updates).toEqual([]);
+      for(let i=0;i<20&&!s.rt.tweenConfigs.length;i++)await Promise.resolve();
+      const config=s.rt.tweenConfigs[0]!,clock=config.targets as {elapsed:number};
+      const charge=reduced?60:HERO_AWAKENINGS[s.hero.defId]!.motion.charge;
+      clock.elapsed=charge-1;s.rt.clock=(charge-1)/speed;(config.onUpdate as ()=>void)();
+      expect(s.updates).toEqual([]);
+      clock.elapsed=charge;s.rt.clock=charge/speed;(config.onUpdate as ()=>void)();
       await runToEnd(s.rt,result); await result;
       expect(s.updates).toEqual([[s.hero.id,(reduced?60:HERO_AWAKENINGS[s.hero.defId]!.motion.charge)/speed,true]]);
       expect(s.rt.clock).toBe((reduced?180:520)/speed);

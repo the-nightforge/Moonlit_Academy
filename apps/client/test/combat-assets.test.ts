@@ -230,12 +230,14 @@ describe("prepareCombatAssets (`home-ui-redesign` Task 3)", () => {
 
 describe("combat selection uses visible roster and equipment", () => {
   it("loads only common and roster-specific awakening artwork, including the remote seat", () => {
-    const vfx = Object.fromEntries(["hit", "awakening_m05_fire_spear", "awakening_bronze_gate", "awakening_omen_pages", "awakening_lunar_aura"].map(stem => [stem, `/${stem}.webp`]));
+    const vfx = Object.fromEntries(["hit", "awakening_m05_fire_spear", "awakening_m05_motion", "awakening_m12_motion", "awakening_f13_motion", "awakening_bronze_gate", "awakening_omen_pages", "awakening_lunar_aura"].map(stem => [stem, `/${stem}.webp`]));
     const keys = (heroIds: string[]) => combatTextureEntries({vfx}, {heroIds}).map(entry => entry.key);
-    expect(keys(["m05"])).toEqual(["vfx:hit", "vfx:awakening_m05_fire_spear"]);
+    expect(keys(["m05"])).toEqual(["vfx:hit", "vfx:awakening_m05_fire_spear", "vfx:awakening_m05_motion"]);
     expect(keys(["m12"])).toContain("vfx:awakening_bronze_gate");
     expect(keys(["m12"])).not.toContain("vfx:awakening_omen_pages");
     expect(keys(["m05", "f13"])).toContain("vfx:awakening_omen_pages");
+    expect(keys(["m05", "f13"])).toContain("vfx:awakening_f13_motion");
+    expect(keys(["m05", "f13"])).not.toContain("vfx:awakening_m12_motion");
     expect(keys([])).toEqual(["vfx:hit"]);
   });
   it("does not queue unrelated gear or roster at a lobby gate", () => {

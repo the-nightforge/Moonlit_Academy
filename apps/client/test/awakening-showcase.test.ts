@@ -1,8 +1,12 @@
 import type Phaser from "phaser";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+import { EventEmitter } from "node:events";
 import { expect, it, vi } from "vitest";
 import { FakeRuntime, runToEnd, stubObject } from "./helpers/fake-runtime";
 import { playAwakening } from "../src/ui/awakening-showcase";
 import { HERO_AWAKENINGS } from "../src/ui/awakening-profiles";
+import { createAnimationRuntime } from "../src/ui/animation-runtime";
 vi.mock("../src/ui/theme", () => ({ TEXT_BASE: {} }));
 
 function setup(settings = {}, heroId = "m12") {
@@ -18,6 +22,10 @@ function setup(settings = {}, heroId = "m12") {
   const images: { key: string; object: ReturnType<typeof stubObject> }[] = [];
   rt.scene.add.image = ((x: number, y: number, key: string) => {
     const object = stubObject({ x, y, width: 1024, height: 1536, texture: { key }, scaleX: 1 });
+    object.setPosition=vi.fn((px:number,py:number)=>{object.x=px;object.y=py;return object;});
+    object.setScale=vi.fn((scale:number)=>{object.scaleX=scale;return object;});
+    object.setAngle=vi.fn((angle:number)=>{object.angle=angle;return object;});
+    object.setAlpha=vi.fn((alpha:number)=>{object.alpha=alpha;return object;});
     images.push({ key, object }); return object;
   }) as unknown as typeof rt.scene.add.image;
   const graphics = vi.spyOn(rt.scene.add, "graphics");
@@ -48,6 +56,17 @@ it("actually plays 25 different illustrated timelines and retains identities wit
   for (const [id,profile] of Object.entries(HERO_AWAKENINGS)) {
     for (const reducedMotion of [false,true]) {
       const s=setup({reducedMotion,speed:2},id), result=s.run();
+      const config=s.rt.tweenConfigs[0]!, clock=config.targets as {elapsed:number};
+      expect(s.rt.tweenConfigs).toHaveLength(1); // no tween restarts at beat boundaries
+      const motif=s.images[0]!.object,frames=[];
+      const positioned=(motif.setPosition as ReturnType<typeof vi.fn>).mock.calls.length;
+      for(let elapsed=0;elapsed<=(reducedMotion?180:520);elapsed+=10) {
+        clock.elapsed=elapsed;(config.onUpdate as ()=>void)();
+        frames.push([motif.x,motif.y,motif.scaleX,motif.angle,motif.alpha]);
+      }
+      if(reducedMotion) expect((motif.setPosition as ReturnType<typeof vi.fn>).mock.calls.length).toBe(positioned);
+      else timelines.push(JSON.stringify(frames));
+      clock.elapsed=0;
       await runToEnd(s.rt,result); await result;
       expect(s.images.map(image=>image.key)).toEqual([`vfx:${profile.texture}`,`heroes:${id}`]);
       expect(s.rt.clock).toBe((reducedMotion?180:520)/2);
@@ -55,7 +74,6 @@ it("actually plays 25 different illustrated timelines and retains identities wit
       expect(s.rt.created.every(o=>o.destroyed)).toBe(true);
       const configs=s.rt.tweenConfigs;
       if(reducedMotion) expect(configs.every(c=>c.x===undefined&&c.y===undefined&&c.scale===undefined&&c.angle===undefined)).toBe(true);
-      else timelines.push(JSON.stringify(configs.map(({duration,x,y,scale,angle,alpha,ease})=>({duration,x,y,scale,angle,alpha,ease}))));
     }
   }
   expect(new Set(timelines).size).toBe(25);
@@ -64,6 +82,36 @@ it("actually plays 25 different illustrated timelines and retains identities wit
 it("keeps the two new heroes' own illustrated motifs", () => {
   expect(HERO_AWAKENINGS.m12!.texture).toBe("awakening_bronze_gate");
   expect(HERO_AWAKENINGS.f13!.texture).toBe("awakening_omen_pages");
+});
+
+it.each([false,true])("renders adjacent authored cells and cleans them on completion or abort (%s)",async abort=>{
+  const s=setup(),frames=new Set<string>();
+  s.rt.scene.textures.get=(()=>({getSourceImage:()=>({width:1536,height:1024}),has:(key:string)=>frames.has(key),add:(key:string)=>frames.add(key)})) as any;
+  const result=s.run(),config=s.rt.tweenConfigs[0]!,clock=config.targets as {elapsed:number};
+  const cells=s.images.slice(0,2).map(i=>i.object);
+  for(const cell of cells)cell.setFrame=vi.fn(()=>cell);
+  clock.elapsed=260;(config.onUpdate as ()=>void)();
+  expect(cells[0]!.setFrame).toHaveBeenLastCalledWith("awakening-3");
+  expect(cells[1]!.setFrame).toHaveBeenLastCalledWith("awakening-4");
+  expect(cells.map(c=>c.alpha)).toEqual([.5,.5]);
+  expect(frames.size).toBe(8);
+  if(abort){s.rt.dispose();await expect(result).rejects.toThrow("animation aborted");}
+  else {await runToEnd(s.rt,result);await result;expect(s.transform).toHaveBeenCalledTimes(1);}
+  expect(cells.every(c=>c.destroyed)).toBe(true);
+});
+
+it("the continuous clock fades the live old portrait after the authoritative refresh", async () => {
+  const s=setup(),result=s.run();
+  const config=s.rt.tweenConfigs[0]!,clock=config.targets as {elapsed:number};
+  clock.elapsed=120;(config.onUpdate as ()=>void)();
+  expect(s.transform).toHaveBeenCalledTimes(1);
+  const overlay=s.rt.created[1]!,setAlpha=vi.fn(); overlay.setAlpha=setAlpha;
+  clock.elapsed=120+80;(config.onUpdate as ()=>void)();
+  expect(setAlpha).toHaveBeenLastCalledWith(.5);
+  clock.elapsed=120+160;(config.onUpdate as ()=>void)();
+  expect(setAlpha).toHaveBeenLastCalledWith(0);
+  await runToEnd(s.rt,result); await result;
+  expect(overlay.destroyed).toBe(true);
 });
 
 it.each([1, 2] as const)("changes the real portrait once after charge and completes in 520 / speed %s", async speed => {
@@ -116,8 +164,59 @@ it("does not leave detached artwork at the scene origin when refreshed art disap
 
 it.each([false, true])("abort before/after the art swap (%s) cleans up without replaying the event", async afterSwap => {
   const s = setup(); const result = s.run();
-  if (afterSwap) { s.rt.step(); for (let i = 0; i < 12; i++) await Promise.resolve(); }
+  if (afterSwap) {
+    const config=s.rt.tweenConfigs[0]!;
+    (config.targets as {elapsed:number}).elapsed=120;(config.onUpdate as ()=>void)();
+  }
   s.rt.dispose(); await expect(result).rejects.toThrow("animation aborted");
   expect(s.transform).toHaveBeenCalledTimes(afterSwap ? 1 : 0);
   expect(s.rt.pendingCount).toBe(0); expect(s.rt.created.every(o => o.destroyed)).toBe(true);
+});
+
+it.each([1,2] as const)("native Phaser keeps swap, fade and cleanup on one clock at speed %s",async speed=>{
+  const require=createRequire(import.meta.url);
+  const TweenManager=require(join(dirname(require.resolve("phaser/package.json")),"src/tweens/TweenManager"));
+  const s=setup();
+  (s.rt.scene as any).sys={events:new EventEmitter()};
+  const manager=new TweenManager(s.rt.scene);s.rt.scene.tweens=manager;
+  const add=vi.spyOn(manager,"add");
+  const runtime=createAnimationRuntime(s.rt.scene,new AbortController().signal,{speed,reducedMotion:false,volume:0});
+  const wait=vi.spyOn(runtime,"wait");
+  let done=false;
+  const promise=playAwakening(runtime,{heroId:"m12",view:s.view,transform:s.transform}).then(()=>{done=true;});
+  const clock=(add.mock.calls[0]![0] as Phaser.Types.Tweens.TweenBuilderConfig).targets as {elapsed:number};
+  let overlay:ReturnType<typeof stubObject>|undefined;
+  for(let wall=0;!done&&wall<1000;wall+=1000/30){
+    for(const tween of [...manager.tweens])tween.update(1000/30);
+    if(clock.elapsed<120)expect(s.transform).not.toHaveBeenCalled();
+    else expect(s.transform).toHaveBeenCalledTimes(1);
+    if(s.rt.created.length>1&&!overlay){
+      overlay=s.rt.created[1];
+      const destroy=overlay!.destroy as ()=>void;
+      overlay!.destroy=()=>{expect(clock.elapsed).toBeGreaterThanOrEqual(280);destroy();};
+    }
+    await Promise.resolve();await Promise.resolve();
+  }
+  expect(done).toBe(true);await promise;
+  expect(wait).not.toHaveBeenCalled();expect(overlay!.destroyed).toBe(true);
+  runtime.dispose();
+});
+
+it("native refresh failure rejects playback and cleans effects without escaping Phaser update",async()=>{
+  const require=createRequire(import.meta.url);
+  const TweenManager=require(join(dirname(require.resolve("phaser/package.json")),"src/tweens/TweenManager"));
+  const s=setup();(s.rt.scene as any).sys={events:new EventEmitter()};
+  const manager=new TweenManager(s.rt.scene);s.rt.scene.tweens=manager;
+  const runtime=createAnimationRuntime(s.rt.scene,new AbortController().signal,{speed:1,reducedMotion:false,volume:0});
+  s.transform.mockImplementation(()=>{throw new Error("refresh failed");});
+  const promise=playAwakening(runtime,{heroId:"m12",view:s.view,transform:s.transform});
+  const rejected=expect(promise).rejects.toThrow("refresh failed");
+  for(let wall=0;wall<300;wall+=1000/30){
+    expect(()=>{for(const tween of [...manager.tweens])tween.update(1000/30);}).not.toThrow();
+    await Promise.resolve();await Promise.resolve();
+  }
+  await rejected;await runtime.drain();
+  expect(s.transform).toHaveBeenCalledTimes(1);
+  expect(s.rt.created.every(o=>o.destroyed)).toBe(true);
+  runtime.dispose();
 });

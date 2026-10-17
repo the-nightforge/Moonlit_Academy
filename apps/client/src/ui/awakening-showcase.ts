@@ -1,6 +1,8 @@
 import type Phaser from "phaser";
 import type { AnimationRuntime } from "./animation-runtime";
-import { HERO_AWAKENINGS, type AwakeningPose } from "./awakening-profiles";
+import { HERO_AWAKENINGS } from "./awakening-profiles";
+import { sampleAwakening } from "./awakening-motion";
+import { awakeningSheet, registerAwakeningFrames, sampleAwakeningFrame } from "./awakening-flipbook";
 export { AWAKENING_EFFECTS, awakeningEffectsFor } from "./awakening-profiles";
 
 export interface AwakeningDetails {
@@ -37,46 +39,63 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
       image.setScale(Math.min((width + 80) / image.width, targetHeight / image.height));
       effects.add(image); return image;
     };
-    // Every hero uses their own authored illustration in its original colors.
-    const motif = sprite(profile.texture, height + 36);
+    // Each illustrated cell changes the actual flame/cloth/petal shapes, not just the whole quad.
+    const sheetKey=`vfx:${awakeningSheet(details.heroId)}`;
+    const sheet=!rt.reducedMotion?registerAwakeningFrames(scene,sheetKey):null;
+    const motif=sheet?scene.add.container(old.x,old.y):sprite(profile.texture,height+36);
+    const cells:Phaser.GameObjects.Image[]=[];
+    if(sheet && motif) {
+      motif.setScale(Math.min((width+80)/sheet.width,(height+36)/sheet.height));
+      effects.add(motif);
+      for(let i=0;i<2;i++) {
+        const image=scene.add.image(0,0,sheetKey,`awakening-${i}`).setAlpha(i===0?1:0);
+        (motif as Phaser.GameObjects.Container).add(image);cells.push(image);
+      }
+    }
     const motifScale = motif?.scaleX ?? 1;
-    const pose = (p: AwakeningPose) => ({
-      x: old.x + (p.x ?? 0) * width / 160,
-      y: old.y - 8 + (p.y ?? 0) * height / 240,
-      angle: p.angle ?? 0, scale: motifScale * (p.scale ?? 1),
-    });
-    const start = pose(rt.reducedMotion ? {} : motion.from);
-    motif?.setPosition(start.x, start.y).setAngle(start.angle).setScale(start.scale);
-    const phase = (duration: number, configs: Phaser.Types.Tweens.TweenBuilderConfig[]) =>
-      configs.length ? Promise.all(configs.map(config => rt.tween({ ...config, duration }))) : rt.wait(duration);
-    await phase(rt.reducedMotion ? 60 : motion.charge, [
-      ...(motif ? [{ targets: motif, alpha: rt.reducedMotion ? .16 : .95,
-        ...(!rt.reducedMotion ? pose({}) : {}), ease: motion.ease }] : []),
-    ]);
+    const clock={elapsed:0};
+    const charge=rt.reducedMotion?60:motion.charge, blendDuration=rt.reducedMotion?100:motion.blend;
+    let transformed=false;
+    const swap=()=>{
+      rt.assertActive();
+      transformed=true;
+      // The authoritative refresh destroys old children, so detach temporary art first.
+      view.remove(effects);
+      details.transform();
+      const next=view.getData("unitPortrait") as Phaser.GameObjects.Image | null | undefined;
+      if(next && typeof next.texture?.key==="string") {
+        blend=rt.track(scene.add.container(old.x,old.y));
+        const image=scene.add.image(0,0,old.key);
+        image.setScale(Math.min(width/image.width,height/image.height));
+        const frame=scene.add.rectangle(0,0,width+2,height+2,color,0).setStrokeStyle(1,color);
+        blend.add([image,frame]);
+        view.addAt(blend,view.getIndex(next)+1);
+        view.addAt(effects,view.getIndex(next)+2);
+      } else effects.setVisible(false);
+    };
+    const draw=()=>{
+      // Native Phaser initializes tween data on its first tick. All milestones must
+      // use this same clock, rather than scene timers that start a frame earlier.
+      if(!transformed && clock.elapsed>=charge)swap();
+      const pose=sampleAwakening(profile,clock.elapsed,rt.reducedMotion);
+      if(cells.length) {
+        const frame=sampleAwakeningFrame(clock.elapsed/(motion.charge+motion.blend+motion.release));
+        cells[0]!.setFrame(`awakening-${frame.from}`).setAlpha(1-frame.mix);
+        cells[1]!.setFrame(`awakening-${frame.to}`).setAlpha(frame.mix);
+      }
+      motif?.setAlpha(pose.alpha);
+      if(!rt.reducedMotion) motif?.setPosition(old.x+pose.x*width/160,old.y-8+pose.y*height/240)
+        .setAngle(pose.angle).setScale(motifScale*pose.scale);
+      blend?.setAlpha(pose.oldAlpha);
+      if(blend && clock.elapsed>=charge+blendDuration){blend.destroy(true);blend=undefined;}
+    };
+    motif?.setPosition(old.x,old.y-8);
+    draw();
+    const total=rt.reducedMotion?180:motion.charge+motion.blend+motion.release;
+    // A single linear clock drives the whole curve; phase changes never restart its velocity.
+    await rt.tween({targets:clock,elapsed:total,duration:total,ease:"Linear",onUpdate:draw});
     rt.assertActive();
-    // refreshUnit destroys the old children; detach our temporary art first.
-    view.remove(effects);
-    details.transform();
-    const next = view.getData("unitPortrait") as Phaser.GameObjects.Image | null | undefined;
-    if (next && typeof next.texture?.key === "string") {
-      // Above the new art, below the existing name, health and status badges.
-      blend = rt.track(scene.add.container(old.x, old.y));
-      const image = scene.add.image(0, 0, old.key);
-      image.setScale(Math.min(width / image.width, height / image.height));
-      const frame = scene.add.rectangle(0, 0, width + 2, height + 2, color, 0).setStrokeStyle(1, color);
-      blend.add([image, frame]);
-      view.addAt(blend, view.getIndex(next) + 1);
-      view.addAt(effects, view.getIndex(next) + 2);
-    } else effects.setVisible(false);
-    await phase(rt.reducedMotion ? 100 : motion.blend, [
-      ...(blend ? [{ targets: blend, alpha: 0, ease: "Sine.easeInOut" }] : []),
-      ...(motif && !rt.reducedMotion ? [{ targets: motif, ...pose(motion.peak), ease: motion.ease }] : []),
-    ]);
-    blend?.destroy(true); blend = undefined;
-    rt.assertActive();
-    await phase(rt.reducedMotion ? 20 : motion.release, [
-      ...(motif ? [{ targets: motif, alpha: 0, ...(!rt.reducedMotion ? pose(motion.out) : {}), ease: motion.ease }] : []),
-    ]);
+    clock.elapsed=total;draw();
   } finally {
     blend?.destroy(true); effects.destroy(true);
   }

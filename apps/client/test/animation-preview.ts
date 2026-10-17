@@ -8,7 +8,8 @@ import type { AttackKind } from "../src/ui/attack-style";
 import { addButton, showModal } from "../src/ui/widgets";
 import { DialogueView } from "../src/ui/dialogue-view";
 import { installUiMotion } from "../src/ui/ui-motion";
-import { playAwakening, AWAKENING_EFFECTS } from "../src/ui/awakening-showcase";
+import { playAwakening, awakeningEffectsFor } from "../src/ui/awakening-showcase";
+import { prepareCombatAssets } from "../src/ui/combat-assets";
 import { reactToImpact } from "../src/ui/impact-reaction";
 import "../src/ui/motion.css";
 
@@ -38,13 +39,12 @@ let controller: AbortController | undefined;
 
 class Preview extends Phaser.Scene {
   preload() {
-    this.load.image("preview-hero", manifest.heroes!.m05!);
     this.load.image("preview-enemy", manifest.enemies!.puppet_guard!);
-    for (const stem of AWAKENING_EFFECTS) {
+    for (const stem of awakeningEffectsFor("m12")) {
       const url = manifest.vfx?.[stem];
       if (url) this.load.image(`vfx:${stem}`, url);
     }
-    for (const id of heroIds) {
+    for (const id of ["m12"]) {
       this.load.image(`heroes:${id}`, manifest.heroes![id]!);
       this.load.image(`heroes:${id}_up`, manifest.heroes![`${id}_up`]!);
     }
@@ -72,7 +72,32 @@ class Preview extends Phaser.Scene {
       (attacker.getData("border") as Phaser.GameObjects.Rectangle).setSize(image.displayWidth+1,image.displayHeight+1);
       (attacker.getData("label") as Phaser.GameObjects.Text).setText(data.heroes[heroSelect.value]!.name);
     };
-    heroSelect.onchange=()=>{if(!controller)resetHero();};
+    let request=0, ready=true, alive=true;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>{alive=false;request++;controller?.abort();});
+    const loadHero=async()=>{
+      const ticket=++request,id=heroSelect.value;
+      ready=false; play.disabled=true; awaken.disabled=true; heroSelect.disabled=true;
+      result.textContent=`Đang tải hình ${data.heroes[id]!.name}…`;
+      const entries=[{key:`heroes:${id}`,url:manifest.heroes![id]!},{key:`heroes:${id}_up`,url:manifest.heroes![`${id}_up`]!},
+        ...awakeningEffectsFor(id).flatMap(stem=>manifest.vfx?.[stem]?[{key:`vfx:${stem}`,url:manifest.vfx[stem]!}]:[])];
+      await prepareCombatAssets(this,{files:entries,isCurrent:()=>alive&&ticket===request});
+      if(!alive||ticket!==request)return;
+      heroSelect.disabled=false;
+      ready=this.textures.exists(`heroes:${id}`)&&this.textures.exists(`heroes:${id}_up`);
+      if(ready){
+        resetHero();
+        // This preview has a single hero seat. Release old GPU textures after the
+        // new portrait is attached, so browsing all heroes never retains every atlas.
+        for(const other of heroIds.filter(hero=>hero!==id)) {
+          for(const key of [`heroes:${other}`,`heroes:${other}_up`,...awakeningEffectsFor(other).map(stem=>`vfx:${stem}`)]) {
+            if(this.textures.exists(key))this.textures.remove(key);
+          }
+        }
+      }
+      play.disabled=!ready; awaken.disabled=!ready;
+      result.textContent=ready?"Sẵn sàng. Chọn hiệu ứng và tốc độ để xem thử.":"Chưa tải được hình nhân vật. Chọn lại nhân vật để thử lại.";
+    };
+    heroSelect.onchange=()=>{if(!controller)void loadHero();};
     const defender = portrait("preview-enemy", to.x, data.enemies.puppet_guard!.name);
     const root = this.add.container(0, 0);
     addButton(this, root, 360, 610, 230, "Xem popup", () => {
@@ -89,7 +114,7 @@ class Preview extends Phaser.Scene {
     play.disabled = false;
     awaken.disabled = false;
     const run = async (kind: "attack" | "awakening") => {
-      if (controller) return;
+      if (controller || !ready || !alive) return;
       // Preview-only slow observation; production settings remain the normal two speeds.
       const scale = document.querySelector<HTMLInputElement>("#slow")!.checked ? 0.2 : 1;
       this.time.timeScale = scale;
@@ -117,7 +142,7 @@ class Preview extends Phaser.Scene {
         await runtime.drain();
         result.textContent = `Hoàn tất sau ${Math.round(performance.now() - started)} mili giây.${kind === "attack" ? ` Điểm chạm: ${impacts}.` : ` ${hero.name} — ${hero.levelUp.name}.`}`;
       } catch { result.textContent = "Đã hủy hiệu ứng và trả nhân vật về vị trí ban đầu."; }
-      finally { runtime.dispose(); controller = undefined; play.disabled = false; awaken.disabled = false; heroSelect.disabled = false; abort.disabled = true; }
+      finally { runtime.dispose(); controller = undefined; play.disabled = !ready; awaken.disabled = !ready; heroSelect.disabled = false; abort.disabled = true; }
     };
     play.onclick = () => { void run("attack"); };
     awaken.onclick = () => { void run("awakening"); };

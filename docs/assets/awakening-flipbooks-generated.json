@@ -1,0 +1,2189 @@
+{
+  "date": "2026-10-17",
+  "tool": "built-in image_gen.imagegen",
+  "layout": {
+    "columns": 4,
+    "rows": 2,
+    "frames": 8,
+    "width": 1536,
+    "height": 1024
+  },
+  "assets": [
+    {
+      "heroId": "f08",
+      "stem": "awakening_f08_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-2b368406-8a6e-4505-b001-eeb04ec552c7.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly 1536x1024 pixels LANDSCAPE, a strict 4-column by 2-row grid of EIGHT equal 384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background in EVERY CELL, no background color, no labels, numbers, grid lines, margins or borders. Each cell is a complete self-contained portrait-shaped magical effect with generous transparent safety padding; no art crossing between cells. Same camera, same placement, same scale and same coordinate center across all frames. No person or character at all. The middle 60% of each cell must remain EMPTY TRANSPARENT to show a hero's face and torso underneath. Use supplied Phuong Chieu Dung hero art and her existing crimson phoenix VFX as direct style/material references: rich crisp wuxia anime rendering, dimensional black-crimson-gold feathers, exquisitely shaded flames with soft thin luminous edges, elegant polished game art. Do not make eight copies of a static wreath moved/scaled/rotated. Animate the PHYSICAL SHAPE of two independently undulating phoenix flame wings along the outer left and right edges, with flame ribbons and feather tips flowing and dissolving naturally. NO static oval aura or card frame. Every frame must be visibly different in feather, flame and ribbon shape, but coherent and consecutive, with each object moving only a short distance between adjacent frames. Frame1: thin crimson wisps gathering at lower outer sides. Frame2: small dark red-gold feather tips and flame strands grow upward. Frame3: left wing curls outward/up, right wing unfurls slightly later, asymmetry. Frame4: both wings spread at outer sides, strongest dimensional ruby-gold feather details and fire motion, center completely clear. Frame5: feather tips arc upward, gold-red flame ribbons detach at outer edges. Frame6: wings dissolve into trailing feather fragments and fluid sparks, visible flowing movement. Frame7: only fine red-gold ribbon wisps and sparse feathers remain. Frame8: near-transparent fading embers at extreme outer corners. Ensure no face, hero, text, full-screen flash or opaque center. Each cell exactly384x512, consistent registration, all eight cells well separated by transparent space. Professional coherent animation keyframes, not comic panels.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f08_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f08_blood_phoenix.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f08_motion.webp",
+      "sha256": "901cf5d73f5d577f4b6e01541e8fba4330fef1a4d81d13a5ca753c36151b33f8",
+      "bytes": 2122198,
+      "frames": [
+        {
+          "sha256": "1afb2a6b8bb4d2f5da1cee18990d5c378330c6b895eb676e2f350acc3c577d28",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "5425c14c180545ba8c3fa5987a0ba8bcb8b1cacc1d21fd51675930004214a3de",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "96a53cb72511353688a5e824a08e3835acb5c95ebb4504248b8c581cf531f065",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "ce32154c42965ae065502a2757ac61480fd5c39be7570226ffd4223abaf748c0",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "16dfafab7a1e2dfe33f046e458b76ea1c502a9bc8c24351e2c698f8da6ae21b0",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "1820672d5a4193086107abf2d18d59cf33da57f48d704cb5d8d22b2a7cbf4eee",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "f4a0d5086d9d770e36379dfed774e65eb0e31619670189e90d1adcce0ad9c2ef",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "c23f35959ce4296df1c951092865da4ac1bb6f7296a7a051f6e86d766ed6512c",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "m05",
+      "stem": "awakening_m05_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-98b82661-2558-4905-bfea-f68f5e8dd9e5.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Fire spearheads sweep upward, flame dragon ribbons coil, then split into embers; physical flame tongues change continuously, left and right arcs move with a slight phase offset.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m05_fire_spear.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m05_motion.webp",
+      "sha256": "a3e9959b99ce95dcc4868983a1f9f0a63531f6d6018a5f1b3b3bc694950f59fa",
+      "bytes": 2113256,
+      "frames": [
+        {
+          "sha256": "9b9c5231088bad4a4a2e8e41c3625fbaaa75e68cbd02845316589f6a114a2538",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "21c1a32e76e982aada93dfdeb9b92d3645c0097f87993248b094a1696f658955",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 12
+        },
+        {
+          "sha256": "b328e898509cd8cc91f6a5da1f2d14f32db3727598f2f300e8c3b12954cd207b",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 13
+        },
+        {
+          "sha256": "472fa37b6ba176f3bfa8d7fdea6b815c40a84c00bcfc853ecc30d50c51398b3e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "cd0d187621ef14f72a4b41e4385052396334d2dd884c3547e2853021da9f190c",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "969d4dbbfb0c2e95bf1ff84dff275050989e9a16a45b150f474a38d2ee8545d0",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "be1118e1cb5fb57a2fb790cbc199a04d7ce9f860ee0b37469d03b0ab171b9894",
+          "alphaRange": [
+            0,
+            247
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "c95687b55cc236601dff7cf2163d338a8d0e6b56149f36fdf0f803bc99a3040e",
+          "alphaRange": [
+            0,
+            237
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f04",
+      "stem": "awakening_f04_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-d6fad117-b28c-42a4-b9af-7183e3bbe756.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Tiny medicinal leaves sprout and unfurl, white blossoms open at outer corners, jade dew drops lift and pollen drifts upward, then vines dissolve gracefully.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f04_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f04_herbal_bloom.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f04_motion.webp",
+      "sha256": "df44bc32782d19a57dad5faa135af56f661c305a586ce8393d3d3af367300940",
+      "bytes": 2009136,
+      "frames": [
+        {
+          "sha256": "fc82d145e30bf878485df55a6f9b2fa496bc8fa48c46d527e8974277130983f6",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "dfd83adc5113121734f2d4dbb5795c820b0b955476ad25138686dd7b083c3e92",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "54afebb6b82aecfa04b113e7d2a02e0900832be02a1489c6ee13f91b6ecba979",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "4b7180661be1676b173992770ffb91dd6c11fd6371e75934fab2191df9236179",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 13
+        },
+        {
+          "sha256": "9dcd62f9bd11e1eb9040cae1c944e69c54f0dcf987d87678a65cbc5b77efd2aa",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "4b59d97e87f93776b4953c69d672ccd5ec1752c100f32f6c90617f380c1637f3",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "49849a374959df393e9e0817f93f662bf722bd21311e31439ca16e6ad8ccb008",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "0484f2b2ee48bc0d78fa4b7faa0a1c38a47d14acdc28caf5df2a9f20c9dfcfc5",
+          "alphaRange": [
+            0,
+            243
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f03",
+      "stem": "awakening_f03_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-5382f66f-5635-4af3-a245-741e01624afe.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Frost vapor condenses into seven slender ice sword shards, shards lift and tilt in a coordinated stagger, crystalline snow blooms and trails dissipate.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f03_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f03_frost_swords.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f03_motion.webp",
+      "sha256": "c8a773c783db44f2e7c986a6cdd4b46817d9af1ed750c624c90b406ef83178fb",
+      "bytes": 1916492,
+      "frames": [
+        {
+          "sha256": "4082e99cb8840511f558979d72399d16dac3891c831dcd3523abed71908edc06",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 7
+        },
+        {
+          "sha256": "71dbef4594642043130e0e5cbda2c280a2e1e09a74d6461863033ef27c1ae280",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "63620a393a2e912a89bb76c4f7217167180868185dfeec1357b3e655e5bf2eab",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 34
+        },
+        {
+          "sha256": "4ee5a9eb49809b8e9d106d7a6e54108018c6c86f902e428c6278e9f3a7a8d882",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 10
+        },
+        {
+          "sha256": "3b57c2262158a8e00f5a33ce8e8e4bb36178503e29ae7c4d3d06299407682204",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 5
+        },
+        {
+          "sha256": "42df7c4cc4c4d1349faaba2bbaa0d95821d804dc2947a12fd18bed8b06b18a8c",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "08525773b44e3443452e4ea76f2898e46ca93b77c09cae541fba744ec8a57194",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "2481e0c98af404e9adf3489e30f627bff0a5349fc42f1b7bfc182927d8a74a40",
+          "alphaRange": [
+            0,
+            248
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f02",
+      "stem": "awakening_f02_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-ae3d0477-8a12-4045-8063-da8c32dcfa75.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Three distinct ivory fox masks materialize at outer corners, turn slightly and bob independently, vermilion foxfire ribbons twist around them and cherry petals scatter.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f02_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f02_fox_masks.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f02_motion.webp",
+      "sha256": "ee60cd3cfa94d31b05553b9df744bc693996391757226c4976058cd67db9d81e",
+      "bytes": 2141476,
+      "frames": [
+        {
+          "sha256": "7f4b79d50ee16d525d09e649c23601b204fa58474e1efba311f3d54e482649a9",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "e3135d8c63ffe5f819b17a993e51d280bfc2b0aa93123187d64ab0c2f19697b2",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "44676f51eec5d5a4bca3701fb8966b541c372896863172348a68c9c8ffa73899",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "49f8a96c731e76a829155b1dded27489a9931a31de0ac81356eef8dc2253dc1d",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 11
+        },
+        {
+          "sha256": "312b7bc4e8d81f1a8f9fb28a6f484f7131c6796e3d50674a4f1ec3046dc5237a",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "bbe7a11ff3c374c4e6c0b068f0466fc773ac91fd425805f28e8e6c32db818f55",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "637357f8e556e543b803360ee92c6d01c8c577629a702bd8dc5a0f18a8fb60bb",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "1d032e00696f7a0eaf5f16e69fc5a8516381277daa21eada17c9f6bd9c43c4d7",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "m01",
+      "stem": "awakening_m01_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-44e06f7d-5edf-403a-a7c9-ac3c1fa79dc3.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Blue-silver talisman slips curl and flutter one after another, an ornate divination compass gently tilts and turns at an upper corner, celestial threads shimmer then dissolve.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m01_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m01_heaven_talismans.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m01_motion.webp",
+      "sha256": "4585807ac8602a384ca3735869a8cd0e6996045db76cd2859d9a84f85546b753",
+      "bytes": 1934292,
+      "frames": [
+        {
+          "sha256": "2f5083181d22053815d393f769de3a9c1f09c1558a483555ab7cc2f8c1e99d3b",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "3b799614fb0635a4459a6079be5b27b5ae693f84a0c99fdffbe1406ba13907b6",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "de1531b2f58b7aa078cffe0411893122789b82e8f12f10cf94823a4c41de57ec",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "66aefa22a2f981101abbed4c4da20f5856227fdd4f5833be6260dbcd2dd2e194",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "ba50ca7f61a47046ba11bc93a6c3c60ab2f8e71663cc82fb13842b89e7800739",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "a073a7ef6dad5bfa4fb24ef93ed443675f69ea69b94a5493a952ca24dc202aac",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "df83478ca4f35985166b205304817b6f679ffe0c53ea5f90683563582b3ebcc5",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "b7409b1b9519490a323563e21b8303b7466c5327eace706195be22709b0013bd",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "m02",
+      "stem": "awakening_m02_motion",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-37cf4e3e-aa75-4de1-8585-0d0afa8700ce.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Heavy engraved steel shield fragments assemble at the outer sides, brace firmly with a small weighted settling motion, red cords and hot sparks continue moving after the metal settles.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m02_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m02_iron_bulwark.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m02_motion.webp",
+      "sha256": "d17097ce7986a8f96d69e2b720cb5374c825131c24f82795c033c782f82ea49e",
+      "bytes": 2334426,
+      "frames": [
+        {
+          "sha256": "2cca2eacb14fc8a3b6ddd718467ba50c3d0cd23d2841925f1964758bb91bb05a",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "5c278ac83f9dd39476073ee0d57a5a36411c91d4aabf75c7219d284b0f6b844a",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "c975652a2bebbb7cf6ac8e74718619ba51428e29e925c1c3898ae0b40c43ccfc",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "bff173d32c3a7f2cb9ea8f28001e7b94e9188b3eee38a702c19fa36c39d893f5",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 40
+        },
+        {
+          "sha256": "a46a9974f7b62a80b4f59362bf7a3709619e8314cdb92f35d1bbd6c643d7bbef",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "ab5ed12fa2f938f7785dafac090904cbfba0dd2bd79b5974d84575fc466a3d19",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "d309fdf07fb012b32ed3c261e990b09d69021f7e9ea96dcd1016faa3a53b6174",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "016ad4dcda19807ffb8741cbe75e1a2bdcd692c14e3ca47f333fdc557a44487b",
+          "alphaRange": [
+            0,
+            240
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "m03",
+      "stem": "awakening_m03_motion",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-a0d4898d-0969-48ac-8537-4131e82d1954.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: An ivory-gold folding fan opens gradually at upper left, individual gold coins and small ingots tumble down the right edge, lavender ribbons lag behind then unwind.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m03_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m03_golden_fan.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m03_motion.webp",
+      "sha256": "674dfd2f42b3508dc4b2db87a107c71df1267bef93086958c7ff355b34c504ed",
+      "bytes": 1943736,
+      "frames": [
+        {
+          "sha256": "3c99cd903201c582728d36d670403e6a2419c70ab0602c007ee2808799ae703c",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "741e15a184351eefaf8eccedab1c40287d396cb5e3a3635452cc9c249a377419",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "5a799e1ea19011328aeb5592632fbc2505730a151bb5896e75ada29eeeb3128f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "bccafbf265c45cae6ad4b1d837bb725541f5308d47fd0c6d84c29099b4e05fde",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 1
+        },
+        {
+          "sha256": "a2b239373ef2c8a843533658a15faf9e67bd5209316561e878681fdd0503b975",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 28
+        },
+        {
+          "sha256": "e30fee40986151ee2f2c3358ef23f92878174ed24035070c797593b3c2367c8a",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 12
+        },
+        {
+          "sha256": "794fa0b1ab215105b5937191f2e2cc6f8cb86d1e564503582960c6cffb28cf19",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "17fdc352c372e8bf5f324167eccb883fc9f55509f351fadbf833e347656f2251",
+          "alphaRange": [
+            0,
+            247
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "m04",
+      "stem": "awakening_m04_motion",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-dadd0b92-6e4c-4c3a-9211-04d88ddd3c1e.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: A jade medicine gourd at bottom right releases floating droplets, three lotus flowers open independently at outer corners, bamboo leaves sway and cleansing ribbons lift away.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m04_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m04_jade_remedy.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m04_motion.webp",
+      "sha256": "64c5cfdaf60485fde14b5c24a4b5be6eb23b0516b22c3115c198d62e37ec6cd8",
+      "bytes": 2224264,
+      "frames": [
+        {
+          "sha256": "d22f133d2c5fbd81ab663b85b9a22a26a322bda96defcd37cb8795f2fdabf940",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "9f9702e67545d196b974695975ef83dcaa3b32b91bc51f4a01d50969fd6e1fb5",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "c23b12320e69c267edc247b07658949550173ee6d3315744f1e5415038d616b6",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "066a1b225b86570163db4522234c24ec469b5fc1c15dd1054c91dbc6e92b352c",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "3f29d81f576a93bf0fe22a88abf20984d65f192bce4a54fabb0295cd309327f7",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "597f60094dfe1a7d6ca077fb650386fa8b6d89c72032f0b21a03a98b5d5474e7",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 19,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "0ca966c23d934dc25d66a45f2b3784d35c73d650e7adc7ebb629d2459068d24a",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "89787eed0f62e72d3deb76e0c2fb8ea33912475663fb753fc6126bca85b1b270",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f01",
+      "stem": "awakening_f01_motion",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-1eb2832e-cb64-4964-861f-979b47f2f314.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: A silver crescent blooms at the extreme top, white plum buds open along outer sides, moonbeam silk flows downward and petals slowly separate into silver motes.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f01_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f01_moon_blossoms.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f01_motion.webp",
+      "sha256": "57666b1921460ea5ad0401e99bc184de0066a33b03bd221e097a4425a1a06ca4",
+      "bytes": 1910328,
+      "frames": [
+        {
+          "sha256": "d085d79762eda3a6310c09335690a94eecfa24e74db70e55518af9096a4a09d0",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "d45415543b936721d74883811e740607bce4eaeb7df8b7aac2acbfb9fa8a259a",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "896304fd12f6e4650c8fd0218c473e25105b05059810531692543421a883a992",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "a32eb8e61a7cf26aff272beee2855ec8e380b85eebbb2c0835412c4fc0f8a860",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "0db6327651a366cefbfa04416cdc904482fe895c322f71d006ce2a9c0d8332ea",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 6,
+          "opaqueEdgePixels": 36
+        },
+        {
+          "sha256": "4165a82ff2dc870c4cf1e25945dc1810a0f65171a4e99416dce089f38dcfea88",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "f3116dfc99d41147c7c727ba21419bb4d95e7d9a68be0e576f598d4a74ecc3eb",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "b01667075eb7b0a087ad80bd79b2ce7969ac14cdf4ded7fb6e4ffad4a87da831",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "m06",
+      "stem": "awakening_m06_motion",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-c50f51c1-9907-4410-9565-b71755ec2031.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Black-sapphire daggers emerge from translucent indigo shadow at outer corners, silver feather blades fan open then streak upward, smoke curls and dissipates behind them.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m06_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m06_shadow_daggers.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m06_motion.webp",
+      "sha256": "e7455cc5f132cf17fd9ef5da0e27b01f1b8be6ebf722bcd74cc463a8ac28eb49",
+      "bytes": 2116202,
+      "frames": [
+        {
+          "sha256": "d176d53b83207a593bf51e973ccba2d87c36fc6d1992453ceee90c8622ffbcd7",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "02c63a441adc61aff086e6c7ae3e4979fbf5ea14d14ef5031f3975860fe4436d",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "708496785d8469c0caf6d942b136f29c389d02e6e0471eb6be2ad068cafca63f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "7999c700b5ef01df36bfeee721151765aed9d2a7e22e9f29a70d14927711bfdd",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 5,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "f623c906d834fda589b0a9c9419cdf9962c189cf41df17f13b4f54bf37c46e10",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "0b9f2e8ea0455ab0384fb99e18f5359f3dda25ac892974a60e5148e4106ecbe7",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 2,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "9eb0945c65d327979c68aadee3a6b731167a1251d427c5f5b6ee2572d4956c3c",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "de3139093d0db6c85618805a7123d827584382c3ee7ac7a2811c9d21764f58b0",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "m07",
+      "stem": "awakening_m07_motion",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-428f121f-c2a5-4ad2-8089-8db37f5b82af.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Ruby droplets travel upward along branching jade-gold veins at outer sides, the veins pulse in a travelling wave, red lotus petals unfurl then scatter, non-gory.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m07_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m07_blood_meridians.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m07_motion.webp",
+      "sha256": "f9e6b0250bf5bd897e2efb58cbbc67324fd1b28b59ec120f53a3f820d3c6879a",
+      "bytes": 2151394,
+      "frames": [
+        {
+          "sha256": "c5ef69e784e1a93283ac975e4332236cf3fa48716e063ead5f2a53c21914e0f0",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "ea16047cb38cb06eff753667bb3976f8cb07dc779d70cba647170cd571b54865",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "556b9ce1d310c13e1e2472e57e979bc28fc699f4e64729b42ba6e5638d80c547",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "49a6664b24a324ce6621ee4a369c89366d3eab55af323d48375b7d93b966d9c3",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "f00ea6592d37b50e40366f080c3855607936a512f068ad0f6f99461a8169058c",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "3f6e5937456151d810bb086f89bed6783a04c02627555d1a1c1051d68af58c45",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "1631ec02547972da069e402bf3333cbea4edd49527471e127727037e9d6c5b4f",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "d60a2eaad6492bd690b40c0ba9ce9dff415fa064ae56dd1dbd85fb700bac5f11",
+          "alphaRange": [
+            0,
+            241
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "m08",
+      "stem": "awakening_m08_motion",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-4da81f45-ebdd-4540-81a1-188ed1ef2863.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Seven sapphire stars light in sequence, thin celestial filigree joins them, corner astrolabe fragments turn slowly while lunar beads orbit, then dissolve into drifting points.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m08_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m08_star_astrolabe.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m08_motion.webp",
+      "sha256": "3ad4d6301cc8bcbb9808135a9b7fec4b0c7049185c84acc5f3b889be9f56e004",
+      "bytes": 1910606,
+      "frames": [
+        {
+          "sha256": "09ea5c472387f497b540b25be82898b1c64051cbd7a8e0b6dd281ec86963adde",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "d495a29e0a146edefe3b77a25b3c6b00af006c0ffa0889fcb272917fc62441f2",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "48cd7281a8fce84fbc0da430df3d7895db4de36922b0f9db0de3e2de8eaaa7c1",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "8a31722d75ca49a3d8e720459c5008b81e16dc8bf7489d0a201970af0dc0e84b",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "38d9cb72c04f23e655aac5e6c517f99fa93dfa19e81ebab8d6f6e60b83491fbe",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "04b4caaafcfa68aff728ebbf18e276099eb8d981e9392c06581286de16100ab6",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 3,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "f6547c714ae55572a3430596017f1f9f9f6c7531c579180427bf843ba987461f",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "d2cb76e26db9ac7860866fa65e2d2566484780a93ecd23529e015b8479107bdd",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "m10",
+      "stem": "awakening_m10_motion",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-ef6babbd-e54b-495c-b465-6861a39a308b.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Two corner book fragments open, ivory pages bend and flutter independently, blue-gold knowledge sparks run along the paper, page pieces lift and dissolve.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m10_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m10_scholar_scrolls.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m10_motion.webp",
+      "sha256": "9d1c32c8785ee2b51f09e0a3ffe3f3d719ace0f086eec968fc19f8c4af3930a2",
+      "bytes": 1940462,
+      "frames": [
+        {
+          "sha256": "8ce0b8b183588ba9e3f55f2bc7685058f8ed413966196d658cb368d6e8da1578",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "466718f91401ff56a76dd206d604ecf346c2401fc6747ea742da397269b6d0df",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "6dd04c7ed01a1de0bace502d89cf85a54a9127e18abce2897925fdfc52712817",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "a4d3a31a16d29326247266a21d511c8e605e1553adc11f91b2d93b2c8f5f0f1f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "07414e71722c3abc294168c0693c2bf469e894457b352e04c9a40cfd8c90abb9",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "87c446e0533c69234620af21bd425188126086a77da2165865a0af2d87970ca9",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "a57c0a881691df8218592bf5ca97b183214419b4e6db8319f03b4544e4a6d9cf",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "6ae1e11977523ab4edea177695ede18a6c2962fc294f26f3c7ac96976fd91fa9",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f05",
+      "stem": "awakening_f05_motion",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-e21d5ec6-c0c1-4eaf-8d9b-88afc4ad4b94.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: An arrow of amber-gold light pierces upward at the outer right, ivory clouds peel outward and break into wisps, feather fletchings twist and trail near bottom left.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f05_cloud_arrow.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f05_motion.webp",
+      "sha256": "9997d2c64e6b95381890d5dac1cfcd478f1d3fc15b60047dde1f368aa124acbd",
+      "bytes": 1880672,
+      "frames": [
+        {
+          "sha256": "f995984ea6572584f7b228ce65cdbd9e4405881567fca6c5108d322ca8eb3569",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "3785bdade845503de63bc101fca5ef3178174095c06c3180067baa44738c341f",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "74a3e8f48ffac43880ce43624659527069d84ab595ba0f9031675c063933edc5",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "4a288f87b80d91840babbeb0542275db7bdb67712b6375f1817396c055d2eaa8",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "11be3ee91219f308cffad4f511f25ea0713967040a18fda6ba4337de65276ddc",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "5a5b60d3c63fd0f265778d2b798b825b51b4270f4acf739ebe4850363edec40a",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "d9bab94ab105b24ecdd67a4d888ffcefbd2f51c97a14b0de072d71866d426503",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "e0e1a4f433d5366ff5c8281eadea401a86d1143eef7be4ce60d25f4ce932124e",
+          "alphaRange": [
+            0,
+            246
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f06",
+      "stem": "awakening_f06_motion",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-8a400485-0ff5-4b5b-9b73-be66d287487b.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Two long sapphire and pearl-blue silk ribbons UNDULATE with changing folds and lag, silver bells swing lightly and tiny blue petals follow their curves, no rigid oval.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f06_azure_ribbons.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f06_motion.webp",
+      "sha256": "0a0c5a0e59073a2c66dc7d2ebbf45a993195d00f854f77975817d5845afef35f",
+      "bytes": 2023362,
+      "frames": [
+        {
+          "sha256": "9da2aca4f456f150c1afb7a4f771791d84f53c9e8debcc9446a393092bc9b119",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "b43841d7dfa10c1f5d42db06c69de38a2a94ab38e83f5767174bd19181872526",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "993bed9ba062b11a611bc699359f2e87d29bc6ec07b38789fcd2fef5b003b106",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "06a60b81038b2c3d84c171a77bf9b58a1aea0f0d2f70ec8cee8aec8ffce320dd",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "578cb0907a3b8eba4efbba095a877db79609372f3efb16bcac2452f9776aa4ef",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "771a4ea0ad5bd73b63a65766aacdabbaa285c77784b227fb3bbd51b761439ff6",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "2fc2c70e2753938068bcb756e8ca196ee140402ad12a44d08f18a2c3c9071b65",
+          "alphaRange": [
+            0,
+            247
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "8e4a599b6ca522c23896c0769592bc3697ca6d7d7c6acae4e4207dda8631a8a3",
+          "alphaRange": [
+            0,
+            244
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f07",
+      "stem": "awakening_f07_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-843dc063-1b9d-46ac-9a8d-babb587b4512.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: A blue-gold brush makes a fluid stroke at the outer left, sapphire ink transforms into small white plum petals, a corner history scroll curls open then recedes.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f07_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f07_history_brush.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f07_motion.webp",
+      "sha256": "1229ba485e822786c628f836a23b2177bad4d330b5fea553cf3ed421b9dcfcae",
+      "bytes": 2052376,
+      "frames": [
+        {
+          "sha256": "241f39d159f3c1bdd1532e6e69969022931d5b12b320faf57275a8cde2e73971",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "799f65d29857dd3f3541c73c5176db79504b2d54a4f939e67f935c99adb920f9",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "161e0b698860a13286a4b44d365de1db324cb08bcb53dad72ae6ff06f7ac1dc2",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "85a8686ceeaab0c8ceb76609d696cb9f004ca0132af721308b0c2dfe61a124a2",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "dbfcfcc81d19090c35bc5c6c52140f1822eb5219e535c9955b66ab56dee176fc",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "f37db7ae9d9a091bc5eaa5407f68f02ef325cc286415ef621cd5d6f7278e6825",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 2,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "056e3638032fcb535c369480a901b3fb46267f4fac86d3ea9d7dbd682db99766",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "544e24bf8964702d96fd82c07d89d32fa1aa8720349cb673ac28f1e8d61cfa6d",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f09",
+      "stem": "awakening_f09_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-68c4e996-2520-4bc0-8eb3-082ccf08ac04.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Two small jade-white spirit rabbits leap gently along the outer corners with changing ear and leg poses, osmanthus petals swirl after them and gold cloud wisps fade.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f09_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f09_jade_rabbit.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f09_motion.webp",
+      "sha256": "0e57ed701beef686901a3e5dd569518468b83bdce82da350f23efff384542ce7",
+      "bytes": 1729168,
+      "frames": [
+        {
+          "sha256": "d7e1eb0862706027d9998f9a0f0ffd043a1fbc4975534420ca8023b6ec2170f7",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "8324d910956e7fa1a348bcc33773c3b1bd6e7eb63ed32e508126a72b2692360e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "1d3e371dd4338a989a8d570978c07b71bd8037dfce693bd4a9264e5a39ba63f4",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "66f82ad149c9449cda72b8b6fa0e7caf3a59cc760cc7b27c86d5758c6471f738",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "f2c92bfb95576c6679add91170838672fba1864a82e54efd4ccc40c5d7fc3043",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "c2b03d3bac599ca79cc33abacbc60219f3fed48468c12a8c8c9f3240f0e65252",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 2,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "b826a3aee02f185d11840beef0db1d1b23d08feb06a47a124b6e1d55e9c1206b",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "2b11d39b75206fd5e5bbf61bdb86c14e9f806908d01d701af175bcd9885d8b03",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f10",
+      "stem": "awakening_f10_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-a5d2c52a-9735-4b0a-a7b9-52b7e600a863.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Three pearl-lavender lotus lanterns open their petals, tiny golden flames flicker and lanterns float upward at different speeds along the sides, thin soul threads trail behind.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f10_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f10_soul_lotus.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f10_motion.webp",
+      "sha256": "6663cda093f77a5ad8c5d850655a6ae6d0aaecc6d32f26d28ae72a896d597ffb",
+      "bytes": 1885758,
+      "frames": [
+        {
+          "sha256": "2a25a5b47fa197ae50a52438659f8e48af25f484615386fe0adff59d8e493066",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "bc9725c42a19c6971098391d7a134ac8a134bba37dca15616d36bcd073602549",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "36a522269d28f7f69e38e028937ce9393fef5724d69b5d40b52587a5e6758121",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "4beaa285017b5201c846be465236a71cfb04c902e3bebfaa7bd014bb4079e8f1",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "1e4b7d02b0ff0c3f04cc9c862e0eac80a15d6374520d6362b404e52da0ad9074",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "9c09af81033ca0f4a7f2e37872c60e9d321edae03401df34c9a58eba7ed6fa0a",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "a531b53934996496ec5a3684e2d925cb9f2263e07e8af9b3e83c9bacd3a553e6",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "33a80cee1355014016ec480c2fd50fe28ccbb41be611435a192743965463ff06",
+          "alphaRange": [
+            0,
+            245
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "m09",
+      "stem": "awakening_m09_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-2435d603-50e0-4a28-9509-af0b2844f002.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: A dark-green corner guqin's gold strings ripple with travelling vibration, six teal-silver waves expand along the edges at staggered phases, leaf-shaped resonators drift and fade.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m09_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m09_sorrow_strings.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m09_motion.webp",
+      "sha256": "e37be200bafc8fb8e186d11044c8cd902ad0f6ab598fdcab5f2da68011782d6e",
+      "bytes": 2137188,
+      "frames": [
+        {
+          "sha256": "1717684a421bdda6644fcb57c1cbff2b6e5ab7e7a2ed9daee4e065da32c57620",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "3ef57ec5e5600be039ae457f53fd3a11e2a35ba916fc0e4ed5d088166cb793ed",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "86653c59d741c8d8f88631b68e824b6c52ea975ed9fbbe8c1b9c3246f982949d",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "db7aeefda35db8aa3226b2aaf905ef538a89dca3b63486fb0de8ea869002add6",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "88dd28551790b4b2b90ed3a5493fb56f2374204b59e63528b69724cb59ad8ee5",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "89310c271f72d1106367f1ebee1219a10d1c7c2b06c373a5635fd14197d6146f",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "e06b23327d446936bd78d9d95cd8f0a41f4450e49e49d797b2c55544f499194d",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "e8916a7de17b7cf55a864185a5a162fbd8c7c613d7a96c8961f9ddba6e0a3a18",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "m11",
+      "stem": "awakening_m11_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-5374115f-2c01-4997-bd22-a4709f9ad5cb.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Six black-silver leaf-shaped knives fan outward and turn, red binding threads lag in fluid curves, maple leaves tumble independently and charcoal wisps dissolve.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m11_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_m11_hidden_leaves.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m11_motion.webp",
+      "sha256": "00f6ea682b454afe338b90dff66f221279ea1cea69b04e546107f933ec080c3a",
+      "bytes": 1874020,
+      "frames": [
+        {
+          "sha256": "e8e39477678a85134567bb97c8965c9aa95630bff6853d788f747f74cff8b39a",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "2c138613932f9a502da3fe3b997e4d00defe2da46be48823a7a0775d0062af77",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "f6898994d6d56eccd9b54e32ddf1cda7b7348621d542daa3c4943d6346cb4b03",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "479c0daf8a3f1b394296be436d62f8aec57273eef33bdb61629d5b43b6decfc7",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "d072ada0e515deb33a098e792c9a94bb7f1e12b544f1fe30452b2d4089408776",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "4e6085ca00651c4affe99d6dfed89bbc863b682b6384078cf25504b0769adfa4",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "c7cd587c1d4e0cdb6cbe9bb9c89a8a17e4bfe6b58d70e70704f2ca57c532a439",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "a304cd158b89a375618a7a619049a811e11739c19f26153b3421d581174ff256",
+          "alphaRange": [
+            0,
+            246
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f11",
+      "stem": "awakening_f11_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-a92bf717-1c59-4116-a160-4404a75958fd.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Five jade butterflies beat their wings at alternating phases and arc upward around the outer sides, a corner green fan opens slightly, jasmine petals trail behind.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f11_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f11_butterfly_fans.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f11_motion.webp",
+      "sha256": "4b895bed97d86bc600214a8c1660fdc51ac324ea09539bd4c902f3e5b66e212a",
+      "bytes": 1923088,
+      "frames": [
+        {
+          "sha256": "94c0b8d8cfb939c3b39ffaed16e3b72265255acbed8607dd15d7974985e5469e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "10be4b0cf239e123b5311f5590b0b270e430917a6091631f81cfe3b0726a4fc0",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "2b5ea06bd66f24dfc0e3ffba62362b426db84f82a17c8dc844dac129a6d44c4a",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "7d9367e2042790cce803b8668a7b09ff3ae62b0e8e99ecefd67dbb839de890e8",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "d2a27b4e85adcb1a119b175b2d922e6ef9e7cb4f8cf46414e6c06b381bc504c1",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "fe6dca231d9549c376d2fa3ce2102ea463ba42868f8ffb1439361481311ac0ce",
+          "alphaRange": [
+            0,
+            250
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "e475d510112fabac39bf14eb60a522433ff6c4e35e20cfca0195a35757b4e043",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "2cb69485f48d9636927ece9c4d466f9930a41dc3c35dd132d2a18b3bde299479",
+          "alphaRange": [
+            0,
+            246
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f12",
+      "stem": "awakening_f12_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-e8b33d47-86cd-49f0-8121-2e80c395054a.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: A pointed silver-steel brush nib sweeps down the outer right leaving cobalt ink, the ink splits into three sharp calligraphic blade arcs that stretch, break and dissipate. CRITICAL REVISION: leave the entire central rectangle x=96..288,y=96..416 IN EVERY384x512 CELL fully transparent alpha0. Shrink all brushes and ink strokes to the extreme left/right 64px strips. Every physical object must have at least24px transparent clearance from EACH cell edge; no cut handles, no clipped ink. Fine trails only, reduce density by40%.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f12_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f12_iron_brush.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f12_motion.webp",
+      "sha256": "719c70bb62bd473c5d91b918523cb865e81c64275c274819432ed182fe287215",
+      "bytes": 1611346,
+      "frames": [
+        {
+          "sha256": "d1f18fa197d35768c646467e780e03a155932cbf1140e15501bc4eb2230edcb8",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "3c6aae1a6f3a879af1338ca8b6952f67da21043f0a7633012cdf49e7c78a4ca0",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "d22d494d8a79728a67804d66b0a4b8d6328e9f74f744a457092eabba1b067d75",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "2c85de55d49e4970392e49256be2b63bb165657fcf7de63517e2336088476a5b",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "07a59ab1a6e30f77f17375085fd8544953f9e211c7391a2683143904988af37a",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "bc91b8892ca89b01bf5ab88e3aec333b13f5e948ea67cc4affa547eda7a8a5a8",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "fea3a4578c768b756a50fccec92230eed61266eb9b1abbba458dd6bc9972a293",
+          "alphaRange": [
+            0,
+            249
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "6eedb75b184498b6528d30ecfdb989d5f818046ccc4abb11ce027a7c1a072144",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        }
+      ],
+      "replacedSource": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-7e8d657d-5239-4427-a420-540d45910306.png"
+    },
+    {
+      "heroId": "m12",
+      "stem": "awakening_m12_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-2f22e6d2-6a5d-4dc4-aa48-f34c7d18e9f7.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Two substantial blackened bronze guardian pillars assemble along the outer edges with weighted settling, carved dragon relief glows in a rising wave, golden silk wisps unfurl and embers float after the heavy gate becomes still.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/m12_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_bronze_gate.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_m12_motion.webp",
+      "sha256": "b3b1e9e9898c399f5d0873cad74ad256c0da6fc15b1f3ed7b33b0811d182fe54",
+      "bytes": 2294640,
+      "frames": [
+        {
+          "sha256": "705e46534021d94fc2f1b246961694dc667d87ae19352661409c51466d31c6cd",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "9b8567fea0df00afc1bbd7d5f7997ef069784e9244dfbc243e73ca54b2ce8142",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "754874d4bde3701ebc05510806711b7035117ce3a9ca62f653a8b35d949638db",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "b5a87eaa8d93b36020c92109c8542abdca0f0322ae646a2c804e72b1e5cd5117",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "f1a79e8a03a0032dedf8e035fd19b7b777de4ea5ce9882dbd3627b7a7ed21835",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "5f6b892ef53b8767704aa04872821582a4ad30209dc5c5ee26f973120370e1c0",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "5e4ad15803a31702d0a7d4fb0200ef19c9a4e85bd0813b3adec9e318ebc72dc6",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "408529f22e1aa15a51e647f68081fc341cbe3ac6801427e9d3a7a304d42f8a46",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        }
+      ]
+    },
+    {
+      "heroId": "f13",
+      "stem": "awakening_f13_motion",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-ba3412e2-309c-41ac-be97-70ce1757cb18.png",
+      "prompt": "Create a production VFX ANIMATION SPRITESHEET, exactly1536x1024 pixels LANDSCAPE. STRICT 4 columns by2 rows: EIGHT equal384x512 cells, row-major chronological order. TRUE TRANSPARENT ALPHA background throughout every cell. No text, numbers, labels, separators, grid lines, cell borders or margins. Each cell contains a COMPLETE effect with 6% transparent safety padding, nothing crosses cell edges. Same fixed camera, same scale, same coordinate center in every cell. No hero/person/face, no scene or background plate. The middle60% of each cell must remain EMPTY transparent for the face and torso of a hero beneath; all physical motifs stay near outer sides or extreme corners. Use BOTH supplied references directly: match the hero illustration's crisp polished wuxia anime linework, dimensional finely shaded materials and palette, and preserve the identity of the existing dedicated effect illustration. Professional coherent animation KEYFRAMES with physical SHAPE CHANGES and independent secondary motion, NOT eight static copies translated/rotated/scaled. No static oval wreath or UI frame. Build a readable short arc: frame1 faint small gathering wisps; frame2 objects begin forming; frame3 unfurl with asymmetry and trailing material; frame4 full strongest shape/action at outer sides; frame5 action flows onward with independent trailing pieces; frame6 objects break into flowing strands/particles; frame7 sparse graceful trails; frame8 almost-transparent final motes. Adjacent frames must be consecutive, same objects, short consistent movements, no jumps or new random designs. Rich illustrated material details and soft translucent luminous edges, no thick opaque central glow. Keep the whole effect within EACH384x512 cell. Unique subject/action: Four moon-white omen manuscript pages curl, flutter and turn slightly at independent phases along outer edges, silver-aqua silk winds between them, pearl lights drift and paper fades into soft lunar motes.",
+      "references": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f13_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_omen_pages.webp"
+      ],
+      "path": "apps/client/public/assets/vfx/awakening_f13_motion.webp",
+      "sha256": "ea3da38f22ec889ae0779a5b83bbbe05f01790dbd3dbc2f805588d548d7787c2",
+      "bytes": 1894446,
+      "frames": [
+        {
+          "sha256": "269c38d47c6dee2bb760d35bf2ac24a16842eb74023cac963032d7e62d01a3da",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 0,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "7e567e04d743c1fcbd73b6cc404da1371256b973ed76e5a250cb6c0ef5537da9",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "24da03b8c5dee6e7495c17916681572958a3dd42c048d83bce842358df6ce1ad",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 21
+        },
+        {
+          "sha256": "4d50324d8f62a8bb3fa87d70d6b7f6f487bd2565d8c99dcfe58d8bc0cd32e7ab",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 86
+        },
+        {
+          "sha256": "79f92ba92e468aaba97ab4027f0da131bcc553d3d48bd46ee10bd9f5b97f435c",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "739f6c529796dcac5d668a1f65767a30da76aa9418bf4a8f597ba35171af0800",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 0
+        },
+        {
+          "sha256": "9edd2cc1f014a9f1203c6a2c75eb87b9d27c06122e94f2d3eeacd90c7bb34467",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 17
+        },
+        {
+          "sha256": "d25aa50b1e5b8b8a7ee6e4a7a725c46d793af7d55c181a9a48e4a8577ac00c24",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "centerAlpha": 1,
+          "opaqueEdgePixels": 71
+        }
+      ]
+    }
+  ]
+}

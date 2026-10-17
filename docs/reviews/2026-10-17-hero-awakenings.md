@@ -31,8 +31,9 @@ thước gốc, alpha và mã hóa WebP lossless. Trận chỉ tải hiệu ứn
 trong đội hình công khai; trang xem thử tải cả bộ để chọn xem từng người.
 Hồ sơ tạo ảnh, prompt, nguồn và hash: `docs/assets/awakening-heroes-generated.json`.
 
-Đã kiểm tra toàn bộ ảnh nguồn và bảng ghép tĩnh dưới đây. Lượt kiểm tra trực
-tiếp phiên bản mới trong trình duyệt bị lỗi kết nối webview; chưa chơi trọn
-trận trực tuyến hoặc đo hiệu năng trên thiết bị yếu.
+Đã kiểm tra toàn bộ ảnh nguồn và bảng ghép tĩnh dưới đây. Bản làm mềm chuyển
+động tiếp theo đã kiểm tra lại trong renderer thật với Phượng Chiêu Dung và
+Lam Khê; chi tiết ở `2026-10-17-smooth-awakening.md`. Chưa chơi trọn trận trực
+tuyến hoặc đo hiệu năng trên thiết bị yếu.
 
 ![Đối chiếu tĩnh đủ 25 hero và hiệu ứng riêng](assets/2026-10-17-25-hero-awakenings.jpg)

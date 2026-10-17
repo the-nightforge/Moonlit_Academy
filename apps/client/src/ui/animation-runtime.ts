@@ -112,6 +112,10 @@ class SceneAnimationRuntime implements AnimationRuntime {
     const op = new Promise<void>((resolve, reject) => {
       tween = this.scene.tweens.add({
         ...config,
+        onUpdate: (...args) => {
+          try { config.onUpdate?.apply(config.callbackScope ?? args[0], args); }
+          catch (error) { tween?.remove(); reject(error); }
+        },
         onComplete: (t, targets, ...param) => {
           config.onComplete?.(t, targets, ...param);
           resolve();
