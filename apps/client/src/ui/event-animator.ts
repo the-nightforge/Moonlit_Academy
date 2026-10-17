@@ -514,10 +514,9 @@ export async function playEventQueue(
     }
     if (event.type === "heroLeveledUp") {
       const hero = ctx.presentation.heroes.find(unit => unit.id === event.heroId);
-      const def = hero && ctx.gameData.heroes[hero.defId];
       ctx.audio?.play("levelUp");
       await playAwakening(rt, {
-        heroId: hero?.defId ?? "", style: def?.attackStyle ?? "moon",
+        heroId: hero?.defId ?? "",
         view: ctx.unitViews.get(event.heroId), transform: () => applyBeat(ctx, event),
       });
       previous = event;

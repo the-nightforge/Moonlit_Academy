@@ -1,0 +1,237 @@
+{
+  "date": "2026-10-17",
+  "scope": "25 dedicated hero awakenings; existing m12 bronze gate and f13 omen pages retained, 23 dedicated generated illustrations added",
+  "basePrompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. ",
+  "jobs": [
+    {
+      "heroId": "m05",
+      "stem": "awakening_m05_fire_spear",
+      "name": "Liệt Hỏa",
+      "subject": "A fiery spear awakening: two asymmetric blazing spearhead arcs climb the left and right outer edges, one carved black-gold spear tip at upper right and a flame-dragon tail curling at lower left. Rich dimensional orange-red flame tongues, gold embers, sweeping ascending energy. Keep the middle 68 percent empty. Not a phoenix, not a ring.",
+      "motion": "rise",
+      "chargeY": -8,
+      "releaseY": 12,
+      "scale": 1.12
+    },
+    {
+      "heroId": "f04",
+      "stem": "awakening_f04_herbal_bloom",
+      "name": "Bách Thảo",
+      "subject": "A medicinal herb awakening: delicate green and gold vines unfurl up both outer sides with many distinct tiny medicinal leaves, white five-petal blossoms and floating golden pollen. A small open woven herb basket at lower left only, leaves lifting toward the top, luminous pale jade sap beads. Center 68 percent empty, no person.",
+      "motion": "bloom",
+      "chargeY": 7,
+      "releaseY": -8,
+      "scale": 1.1
+    },
+    {
+      "heroId": "f03",
+      "stem": "awakening_f03_frost_swords",
+      "name": "Hàn Sơn Kiếm",
+      "subject": "A frost sword awakening: seven slender translucent ice sword shards along the outer edges, icy mist and exquisite snow plum crystals. Shards point upward at staggered angles, a cool blue curved frost surge at the bottom corners. Silver-white and sapphire, tactile faceted edges, keep center 68 percent empty.",
+      "motion": "pierce",
+      "chargeY": 12,
+      "releaseY": -16,
+      "scale": 1.08
+    },
+    {
+      "heroId": "f02",
+      "stem": "awakening_f02_fox_masks",
+      "name": "Thiên Diện",
+      "subject": "A thousand-face trickster awakening: three DIFFERENT exquisite ivory fox spirit masks float only near the outer top-left, outer middle-right and bottom-left corners. Crimson vermilion markings, tiny gold filigree, a few foxfire orange sparks and pink cherry petals, thin curved scarlet silk trails around the perimeter. No face in the transparent center; center 68 percent empty.",
+      "motion": "reveal",
+      "chargeY": -4,
+      "releaseY": 4,
+      "scale": 1.08
+    },
+    {
+      "heroId": "m01",
+      "stem": "awakening_m01_heaven_talismans",
+      "name": "Thiên Cơ",
+      "subject": "A celestial strategist awakening: five narrow hand-painted blue-silver talisman slips and a small ornate gold divination compass float around the OUTER border region. Elegant tiny nonlinguistic seal diagrams, thin silver thread constellations join the outer objects, white plum petals. Luminous navy, silver and antique gold. Not rectangular wireframes. Center 68 percent empty.",
+      "motion": "orbit",
+      "chargeY": -6,
+      "releaseY": 8,
+      "scale": 1.06
+    },
+    {
+      "heroId": "m02",
+      "stem": "awakening_m02_iron_bulwark",
+      "name": "Thiết Bích",
+      "subject": "An iron bulwark awakening: two broad substantial engraved iron shield fragments with dark steel and worn gold dragon relief brace both outer sides; an arcing red silk cord and heavy sparks at the lower corners. Red, blackened steel, gold like the armor in reference. Solid dimensional shield metal, no door or pillars, no ring. Center 68 percent empty.",
+      "motion": "brace",
+      "chargeY": 6,
+      "releaseY": 0,
+      "scale": 1.03
+    },
+    {
+      "heroId": "m03",
+      "stem": "awakening_m03_golden_fan",
+      "name": "Vạn Kim",
+      "subject": "A golden fortune awakening: a finely illustrated partially opened ivory-and-gold folding fan curves along the TOP LEFT outside edge, small floating gold ingots and square-holed antique coins cascade down the RIGHT and lower corners. Pale lavender silk wisps, detailed metallic sparkle. Keep center 68 percent clear, not a full fan covering the center.",
+      "motion": "cascade",
+      "chargeY": -14,
+      "releaseY": 18,
+      "scale": 1.07
+    },
+    {
+      "heroId": "m04",
+      "stem": "awakening_m04_jade_remedy",
+      "name": "Thần Y",
+      "subject": "A divine physician awakening: a small ornate green jade medicine gourd at bottom right and three luminous medicinal lotus blossoms at outer left/top right. Soft jade healing dew droplets, silvery bamboo leaves, warm gold pollen, elegant flowing white ribbons. Distinct from a vine wreath: large lotus blooms and gourd are key objects, no basket. Center 68 percent empty.",
+      "motion": "cleanse",
+      "chargeY": 12,
+      "releaseY": -12,
+      "scale": 1.12
+    },
+    {
+      "heroId": "f01",
+      "stem": "awakening_f01_moon_blossoms",
+      "name": "Nguyệt Chủ",
+      "subject": "A moon sovereign awakening: a bright sculptural silver crescent only at the TOP edge, with white plum blossom branches curving along outer left and right and narrow blue moonbeam ribbons falling toward bottom corners. Fine gold stamen and tiny pearl moonlights, navy silver white and blue from reference. No solid disk behind the center. Center 68 percent empty.",
+      "motion": "descend",
+      "chargeY": -12,
+      "releaseY": 6,
+      "scale": 1.08
+    },
+    {
+      "heroId": "m06",
+      "stem": "awakening_m06_shadow_daggers",
+      "name": "Vô Nguyệt",
+      "subject": "A moonless assassin awakening: three refined black-sapphire throwing daggers and two delicate silver feather blades hover only along outer corners. Dark indigo ink-like smoke ribbons that are translucent rather than a solid black mass, silver speed streaks, a few pink plum petals. Distinct sharp asymmetry and restrained shadow, no moon disk. Center 68 percent empty.",
+      "motion": "split",
+      "chargeY": -5,
+      "releaseY": -8,
+      "scale": 1.15
+    },
+    {
+      "heroId": "m07",
+      "stem": "awakening_m07_blood_meridians",
+      "name": "Huyết Mạch",
+      "subject": "A bloodline awakening: ornate crimson ruby droplets within thin branching jade-gold living energy veins at the outer sides, small red lotus petals and gold sparks spiralling up the perimeter. Jewel-like and elegant, non-gory, no anatomy. Match the teal-gold reference costume. No generic circular aura. Center 68 percent empty.",
+      "motion": "pulse",
+      "chargeY": 0,
+      "releaseY": -4,
+      "scale": 1.12
+    },
+    {
+      "heroId": "m08",
+      "stem": "awakening_m08_star_astrolabe",
+      "name": "Quan Tinh",
+      "subject": "A stellar diviner awakening: ornate golden and silver ASTROLABE fragments at upper left and lower right, seven glowing sapphire stars connected by fine illustrated celestial filigree around only the outer edge. Small lunar phase ornaments, pearl glints, deep blue and gold. Interrupted arcs, not a complete flat circle, center 68 percent empty.",
+      "motion": "align",
+      "chargeY": -3,
+      "releaseY": -3,
+      "scale": 1.08
+    },
+    {
+      "heroId": "m10",
+      "stem": "awakening_m10_scholar_scrolls",
+      "name": "Bác Học",
+      "subject": "A scholar awakening: two open floating book fragments at lower left and upper right, warm ivory curled parchment leaves with gold decorative diagram strokes and tiny cobalt seals, soft gold knowledge sparks along outer sides. Voluminous blue-gold book bindings, no readable writing. Pages remain outside transparent center, center 68 percent empty.",
+      "motion": "unfold",
+      "chargeY": 6,
+      "releaseY": -8,
+      "scale": 1.08
+    },
+    {
+      "heroId": "f08",
+      "stem": "awakening_f08_blood_phoenix",
+      "name": "Huyết Phượng",
+      "subject": "A blood phoenix awakening: two richly detailed crimson and black phoenix WINGS at far left and right extend upward, with flame-tipped feather tails curling around bottom corners and a small golden phoenix head silhouette near upper left edge. Red-gold feathers, pink-red magical flame, black lacquer jewel accents. Elegant and fierce, no full bird blocking center. Center 68 percent empty.",
+      "motion": "wings",
+      "chargeY": 8,
+      "releaseY": -10,
+      "scale": 1.18
+    },
+    {
+      "heroId": "f05",
+      "stem": "awakening_f05_cloud_arrow",
+      "name": "Xuyên Vân Tiễn",
+      "subject": "A cloud-piercing archer awakening: one refined golden-arrow head at upper right, a thin rising curved arrow trail along right edge and two amber feather fletchings at bottom left. Broken ivory cloud wisps swept aside, orange-gold speed sparks, green silk bowstring accent. Keep all objects at perimeter, center 68 percent empty.",
+      "motion": "shoot",
+      "chargeY": 16,
+      "releaseY": -20,
+      "scale": 1.1
+    },
+    {
+      "heroId": "f06",
+      "stem": "awakening_f06_azure_ribbons",
+      "name": "Kinh Hồng Vũ",
+      "subject": "A graceful azure dance awakening: two vividly shaded long translucent silk RIBBONS, one sapphire and one pearl blue, form asymmetric flowing S curves on the outer left and right, with silver bell ornaments and tiny blue flower petals at the ends. Rich cloth folds and specular moonlight, elegant dancer motion implied; not a simple luminous oval. Center 68 percent empty.",
+      "motion": "sway",
+      "chargeY": -5,
+      "releaseY": -8,
+      "scale": 1.14
+    },
+    {
+      "heroId": "f07",
+      "stem": "awakening_f07_history_brush",
+      "name": "Sử Bút",
+      "subject": "A historian awakening: a finely ornamented dark blue and gold calligraphy brush at upper left and a partial curled ivory history scroll at lower right, trailing sapphire ink splashes that transform into white plum petals along the outer sides. Volumetric ink with silver glints, nonlinguistic brush patterns, no writing or letters. Center 68 percent empty.",
+      "motion": "inscribe",
+      "chargeY": -10,
+      "releaseY": 8,
+      "scale": 1.06
+    },
+    {
+      "heroId": "f09",
+      "stem": "awakening_f09_jade_rabbit",
+      "name": "Thỏ Ngọc Thức Tỉnh",
+      "subject": "A jade rabbit spirit awakening: two tiny adorable luminous jade-white rabbit SPIRITS, one leaping upward at outer lower left and one at upper right; fluffy dimensional ears and fur, pale yellow osmanthus petals, small gold moon-cloud curls. Keep rabbits fully visible but confined to OUTER corners; no large central rabbit, no crescent disk, center 68 percent empty.",
+      "motion": "leap",
+      "chargeY": 14,
+      "releaseY": -15,
+      "scale": 1.12
+    },
+    {
+      "heroId": "f10",
+      "stem": "awakening_f10_soul_lotus",
+      "name": "Nguyệt Hồn",
+      "subject": "A lunar soul awakening: three translucent pearl-white lotus soul lanterns float upward at the outer edges, each has delicate lavender-silver layered petals and a tiny golden inner flame. Long almost invisible silver soul threads, lilac mist wisps, warm gold motes. Sacred gentle return of life, no ghosts or people, no opaque central disk. Center 68 percent empty.",
+      "motion": "ascend",
+      "chargeY": 15,
+      "releaseY": -14,
+      "scale": 1.1
+    },
+    {
+      "heroId": "m09",
+      "stem": "awakening_m09_sorrow_strings",
+      "name": "Vong Quốc Khúc",
+      "subject": "A mournful music awakening: a fragment of richly carved dark green guqin zither with gold strings at lower left only, six flowing teal-silver musical string ripples sweep around OUTER edge and small silver leaf-shaped resonators hover at upper right. Dim emerald ripples, gold sparks, melancholic elegance. No text or musical glyph letters, center 68 percent empty.",
+      "motion": "resonate",
+      "chargeY": -3,
+      "releaseY": 3,
+      "scale": 1.13
+    },
+    {
+      "heroId": "m11",
+      "stem": "awakening_m11_hidden_leaves",
+      "name": "Ẩn Diệp",
+      "subject": "A hidden leaf assassin awakening: six small sharp blackened silver leaf-shaped throwing knives with RED binding threads swirl along OUTER sides, red maple leaves and charcoal ink smoke dissolve at the lower corners. Sleek silver and black metal, restrained crimson shine and tiny cherry petals, reference's red-black assassin palette. Center 68 percent empty.",
+      "motion": "scatter",
+      "chargeY": 0,
+      "releaseY": -10,
+      "scale": 1.19
+    },
+    {
+      "heroId": "f11",
+      "stem": "awakening_f11_butterfly_fans",
+      "name": "Vũ Điệp",
+      "subject": "A butterfly dance awakening: five jade and emerald luminous butterflies with exquisitely detailed translucent wings flutter around OUTER left and right edges, one ornate green folding fan fragment at lower right, white jasmine petals and faint chartreuse trails. Dimensional insect wing shading, graceful airy motion, no large central butterfly. Center 68 percent empty.",
+      "motion": "flutter",
+      "chargeY": 7,
+      "releaseY": -10,
+      "scale": 1.17
+    },
+    {
+      "heroId": "f12",
+      "stem": "awakening_f12_iron_brush",
+      "name": "Thiết Bút",
+      "subject": "An iron brush awakening: a substantial pointed silver-steel calligraphy pen nib at upper right, its dark cobalt ink splits into three blade-like brushstroke fragments along the outer left edge. Silver-and-gold metallic etched nib, white paper shard sparks and powerful deep sapphire ink, no letters or readable text. More martial than a parchment-scroll effect, center 68 percent empty.",
+      "motion": "strike",
+      "chargeY": -12,
+      "releaseY": 12,
+      "scale": 1.12
+    }
+  ]
+}

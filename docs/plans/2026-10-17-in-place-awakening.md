@@ -27,3 +27,13 @@ and production build pass. Existing large bundle warning remains. Independent
 fresh-context review approved with no scoped findings. Native preview visually
 checked for m12/f13/Hoắc Liệt, double speed, reduced motion and cancellation.
 No full live server match or low-end device benchmark was performed.
+
+Follow-up approved: the user requires one illustration AND distinct motion for
+each hero, not a tinted generic aura. Implemented all 25 profiles, retaining
+m12/f13 and generating 23 dedicated assets against their own portrait references.
+Per-hero phases still total 520 milliseconds; reduced motion retains the unique
+illustration with 180 milliseconds of fades. Art layers are inserted under the
+unit HUD and detached safely across refresh. No generic fallback is used.
+Final checks: 61 client test files / 443 tests, typecheck and build pass. Fresh
+independent review approved without scoped findings. All 25 static compositions
+were inspected; new live browser verification was blocked by webview connection.

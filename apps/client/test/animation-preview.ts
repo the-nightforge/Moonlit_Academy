@@ -108,7 +108,7 @@ class Preview extends Phaser.Scene {
         const heroId = document.querySelector<HTMLSelectElement>("#hero")!.value, hero = data.heroes[heroId]!;
         if (kind === "awakening") {
           resetHero();
-          await playAwakening(runtime,{heroId,style:hero.attackStyle??"moon",view:attacker,transform:()=>resetHero(true)});
+          await playAwakening(runtime,{heroId,view:attacker,transform:()=>resetHero(true)});
         }
         else await playAttack({ kind: document.querySelector<HTMLSelectElement>("#style")!.value as AttackKind, color: 0xf4d35e }, from, to, {
           runtime, attackerView: attacker, blocked: document.querySelector<HTMLInputElement>("#guard")!.checked,

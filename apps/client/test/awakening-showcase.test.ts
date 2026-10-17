@@ -1,17 +1,18 @@
 import type Phaser from "phaser";
 import { expect, it, vi } from "vitest";
 import { FakeRuntime, runToEnd, stubObject } from "./helpers/fake-runtime";
-import { playAwakening, awakeningTheme } from "../src/ui/awakening-showcase";
+import { playAwakening } from "../src/ui/awakening-showcase";
+import { HERO_AWAKENINGS } from "../src/ui/awakening-profiles";
 vi.mock("../src/ui/theme", () => ({ TEXT_BASE: {} }));
 
-function setup(settings = {}) {
+function setup(settings = {}, heroId = "m12") {
   const rt = new FakeRuntime(settings);
-  const portrait = stubObject({ texture: { key: "heroes:m12" }, x: 0, y: 0, displayWidth: 80, displayHeight: 120 });
-  const fresh = stubObject({ texture: { key: "heroes:m12_up" } });
+  const portrait = stubObject({ texture: { key: `heroes:${heroId}` }, x: 0, y: 0, displayWidth: 80, displayHeight: 120 });
+  const fresh = stubObject({ texture: { key: `heroes:${heroId}_up` } });
   let current = portrait;
   const view = stubObject({ x: 600, y: 480, scaleX: 1, scaleY: 1, angle: 0, depth: 0,
     getData: (key: string) => key === "unitPortrait" ? current : undefined,
-    getIndex: () => 3, addAt: vi.fn(), parentContainer: null,
+    getIndex: () => 3, addAt: vi.fn(), remove: vi.fn(), parentContainer: null,
   }) as unknown as Phaser.GameObjects.Container;
   const transform = vi.fn(() => { (portrait.destroy as () => void)(); current = fresh; });
   const images: { key: string; object: ReturnType<typeof stubObject> }[] = [];
@@ -32,12 +33,37 @@ function setup(settings = {}) {
     return node;
   }) as typeof rt.scene.add.container;
   return { rt, portrait, view, transform, images, graphics,
-    run: () => playAwakening(rt, { heroId: "m12", style: "slash", view, transform }) };
+    run: () => playAwakening(rt, { heroId, view, transform }) };
 }
 
+it("keeps illustrated effects inside the card below badges even during charge", async () => {
+  const s=setup(); const result=s.run();
+  const inserted = (s.view.addAt as ReturnType<typeof vi.fn>).mock.calls.length;
+  s.rt.dispose(); await expect(result).rejects.toThrow("animation aborted");
+  expect(inserted).toBe(1);
+});
+
+it("actually plays 25 different illustrated timelines and retains identities with reduced motion", async () => {
+  const timelines:string[]=[];
+  for (const [id,profile] of Object.entries(HERO_AWAKENINGS)) {
+    for (const reducedMotion of [false,true]) {
+      const s=setup({reducedMotion,speed:2},id), result=s.run();
+      await runToEnd(s.rt,result); await result;
+      expect(s.images.map(image=>image.key)).toEqual([`vfx:${profile.texture}`,`heroes:${id}`]);
+      expect(s.rt.clock).toBe((reducedMotion?180:520)/2);
+      expect(s.transform).toHaveBeenCalledTimes(1);
+      expect(s.rt.created.every(o=>o.destroyed)).toBe(true);
+      const configs=s.rt.tweenConfigs;
+      if(reducedMotion) expect(configs.every(c=>c.x===undefined&&c.y===undefined&&c.scale===undefined&&c.angle===undefined)).toBe(true);
+      else timelines.push(JSON.stringify(configs.map(({duration,x,y,scale,angle,alpha,ease})=>({duration,x,y,scale,angle,alpha,ease}))));
+    }
+  }
+  expect(new Set(timelines).size).toBe(25);
+});
+
 it("keeps the two new heroes' own illustrated motifs", () => {
-  expect(awakeningTheme("m12", "slash").motif).toBe("gate");
-  expect(awakeningTheme("f13", "moon").motif).toBe("pages");
+  expect(HERO_AWAKENINGS.m12!.texture).toBe("awakening_bronze_gate");
+  expect(HERO_AWAKENINGS.f13!.texture).toBe("awakening_omen_pages");
 });
 
 it.each([1, 2] as const)("changes the real portrait once after charge and completes in 520 / speed %s", async speed => {
@@ -59,11 +85,11 @@ it("uses the unit's local art bounds, with the old art underneath badges and no 
   expect(s.rt.shakes).toEqual([]);
 });
 
-it("reduced motion only fades for 180 milliseconds, with no travelling or scaling motif", async () => {
+it("reduced motion retains the hero's own illustration and only fades for 180 milliseconds", async () => {
   const s = setup({ reducedMotion: true }); await runToEnd(s.rt, s.run());
   expect(s.rt.clock).toBe(180);
-  expect(s.images.map(i => i.key)).not.toContain("vfx:awakening_bronze_gate");
-  expect(s.rt.tweenConfigs.every(c => c.x === undefined && c.y === undefined && c.scale === undefined && c.rotation === undefined)).toBe(true);
+  expect(s.images.map(i => i.key)).toContain("vfx:awakening_bronze_gate");
+  expect(s.rt.tweenConfigs.every(c => c.x === undefined && c.y === undefined && c.scale === undefined && c.angle === undefined && c.rotation === undefined)).toBe(true);
 });
 
 it("missing art still applies the event exactly once without an empty frame or textual substitute", async () => {
@@ -75,6 +101,16 @@ it("missing art still applies the event exactly once without an empty frame or t
 it("missing effect assets preserve the charge/blend timing and event", async () => {
   const s = setup(); s.rt.scene.textures.exists = key => !String(key).startsWith("vfx:");
   await runToEnd(s.rt, s.run()); expect(s.rt.clock).toBe(520);
+  expect(s.transform).toHaveBeenCalledTimes(1);
+});
+
+it("does not leave detached artwork at the scene origin when refreshed art disappears", async () => {
+  const s=setup();
+  s.transform.mockImplementation(()=>{s.view.getData=()=>null;});
+  const result=s.run(); const effects=s.rt.created[0]!;
+  const setVisible=vi.fn(); effects.setVisible=setVisible;
+  await runToEnd(s.rt,result); await result;
+  expect(setVisible).toHaveBeenCalledWith(false);
   expect(s.transform).toHaveBeenCalledTimes(1);
 });
 

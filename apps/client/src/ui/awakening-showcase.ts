@@ -1,28 +1,10 @@
 import type Phaser from "phaser";
-import type { AttackStyle } from "rules";
 import type { AnimationRuntime } from "./animation-runtime";
-
-type Motif = "gate" | "pages" | "moon" | "rays";
-
-export function awakeningTheme(heroId: string, style: AttackStyle): { color: number; motif: Motif } {
-  if (heroId === "m12") return { color: 0xe7b86a, motif: "gate" };
-  if (heroId === "f13") return { color: 0xbceef0, motif: "pages" };
-  if (style === "ink" || style === "talisman") return { color: 0xb8cafa, motif: "pages" };
-  if (style === "moon" || style === "star") return { color: 0xdceaff, motif: "moon" };
-  if (style === "herb" || style === "fan" || style === "music") return { color: 0xa0e6c9, motif: "rays" };
-  return { color: style === "blood" || style === "fire" ? 0xf2a08d : 0xf0d397, motif: "rays" };
-}
-
-export const AWAKENING_EFFECTS = ["awakening_bronze_gate", "awakening_omen_pages", "awakening_lunar_aura"] as const;
-
-/** Only the public roster determines the illustrated effect preload. */
-export function awakeningEffectsFor(heroId: string): string[] {
-  return ["awakening_lunar_aura", ...(heroId === "m12" ? ["awakening_bronze_gate"] : heroId === "f13" ? ["awakening_omen_pages"] : [])];
-}
+import { HERO_AWAKENINGS, type AwakeningPose } from "./awakening-profiles";
+export { AWAKENING_EFFECTS, awakeningEffectsFor } from "./awakening-profiles";
 
 export interface AwakeningDetails {
   heroId: string;
-  style: AttackStyle;
   view?: Phaser.GameObjects.Container;
   /** Applies the event and rebuilds the actual card once; old image references die here. */
   transform: () => void;
@@ -32,19 +14,20 @@ export interface AwakeningDetails {
 export async function playAwakening(rt: AnimationRuntime, details: AwakeningDetails): Promise<void> {
   rt.assertActive();
   const scene = rt.scene, view = details.view;
+  const profile = HERO_AWAKENINGS[details.heroId];
   const portrait = view?.getData("unitPortrait") as Phaser.GameObjects.Image | null | undefined;
   const key = portrait?.texture?.key;
   const width = portrait?.displayWidth, height = portrait?.displayHeight;
-  if (!view || typeof key !== "string" || !width || !height || !Number.isFinite(width + height)
+  if (!profile || !view || typeof key !== "string" || !width || !height || !Number.isFinite(width + height)
     || !scene.textures.exists(key) || !scene.textures.exists(`heroes:${details.heroId}_up`)) {
     details.transform(); return;
   }
   // Capture values, not an image the authoritative refresh is about to destroy.
   const old = { key, width, height, x: portrait!.x, y: portrait!.y };
-  const { color } = awakeningTheme(details.heroId, details.style);
-  const effects = rt.track(scene.add.container(view.x, view.y).setDepth(view.depth + 1)
-    .setScale(view.scaleX, view.scaleY).setAngle(view.angle));
-  view.parentContainer?.add(effects);
+  const { color, motion } = profile;
+  // Inside the same unit hierarchy: follow its seat transform, behind all HUD.
+  const effects = rt.track(scene.add.container(0, 0));
+  view.addAt(effects, view.getIndex(portrait!) + 1);
   let blend: Phaser.GameObjects.Container | undefined;
   try {
     const sprite = (stem: string, targetHeight: number) => {
@@ -54,20 +37,25 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
       image.setScale(Math.min((width + 80) / image.width, targetHeight / image.height));
       effects.add(image); return image;
     };
-    const aura = sprite("awakening_lunar_aura", height + 52);
-    aura?.setTint(color).setBlendMode("ADD");
-    const motifStem = awakeningEffectsFor(details.heroId).find(stem => stem !== "awakening_lunar_aura");
-    const motif = !rt.reducedMotion && motifStem ? sprite(motifStem, height + 36) : null;
-    motif?.setY(old.y - 8);
-    const auraScale = aura?.scaleX ?? 1, motifScale = motif?.scaleX ?? 1;
-    if (!rt.reducedMotion) { aura?.setScale(auraScale * .94); motif?.setScale(motifScale * .96); }
+    // Every hero uses their own authored illustration in its original colors.
+    const motif = sprite(profile.texture, height + 36);
+    const motifScale = motif?.scaleX ?? 1;
+    const pose = (p: AwakeningPose) => ({
+      x: old.x + (p.x ?? 0) * width / 160,
+      y: old.y - 8 + (p.y ?? 0) * height / 240,
+      angle: p.angle ?? 0, scale: motifScale * (p.scale ?? 1),
+    });
+    const start = pose(rt.reducedMotion ? {} : motion.from);
+    motif?.setPosition(start.x, start.y).setAngle(start.angle).setScale(start.scale);
     const phase = (duration: number, configs: Phaser.Types.Tweens.TweenBuilderConfig[]) =>
       configs.length ? Promise.all(configs.map(config => rt.tween({ ...config, duration }))) : rt.wait(duration);
-    await phase(rt.reducedMotion ? 60 : 120, [
-      ...(aura ? [{ targets: aura, alpha: rt.reducedMotion ? .16 : .4, ease: "Sine.easeIn" }] : []),
-      ...(motif ? [{ targets: motif, alpha: .95, scale: motifScale, ease: "Sine.easeOut" }] : []),
+    await phase(rt.reducedMotion ? 60 : motion.charge, [
+      ...(motif ? [{ targets: motif, alpha: rt.reducedMotion ? .16 : .95,
+        ...(!rt.reducedMotion ? pose({}) : {}), ease: motion.ease }] : []),
     ]);
     rt.assertActive();
+    // refreshUnit destroys the old children; detach our temporary art first.
+    view.remove(effects);
     details.transform();
     const next = view.getData("unitPortrait") as Phaser.GameObjects.Image | null | undefined;
     if (next && typeof next.texture?.key === "string") {
@@ -78,14 +66,16 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
       const frame = scene.add.rectangle(0, 0, width + 2, height + 2, color, 0).setStrokeStyle(1, color);
       blend.add([image, frame]);
       view.addAt(blend, view.getIndex(next) + 1);
-      await rt.tween({ targets: blend, alpha: 0, duration: rt.reducedMotion ? 100 : 160, ease: "Sine.easeInOut" });
-      blend.destroy(true); blend = undefined;
-    } else await rt.wait(rt.reducedMotion ? 100 : 160);
+      view.addAt(effects, view.getIndex(next) + 2);
+    } else effects.setVisible(false);
+    await phase(rt.reducedMotion ? 100 : motion.blend, [
+      ...(blend ? [{ targets: blend, alpha: 0, ease: "Sine.easeInOut" }] : []),
+      ...(motif && !rt.reducedMotion ? [{ targets: motif, ...pose(motion.peak), ease: motion.ease }] : []),
+    ]);
+    blend?.destroy(true); blend = undefined;
     rt.assertActive();
-    if (!rt.reducedMotion) aura?.setAlpha(.7);
-    await phase(rt.reducedMotion ? 20 : 240, [
-      ...(aura ? [{ targets: aura, alpha: 0, ...(!rt.reducedMotion ? { scale: auraScale * 1.13 } : {}), ease: "Cubic.easeOut" }] : []),
-      ...(motif ? [{ targets: motif, alpha: 0, scale: motifScale * 1.04, y: old.y - 13, ease: "Cubic.easeOut" }] : []),
+    await phase(rt.reducedMotion ? 20 : motion.release, [
+      ...(motif ? [{ targets: motif, alpha: 0, ...(!rt.reducedMotion ? pose(motion.out) : {}), ease: motion.ease }] : []),
     ]);
   } finally {
     blend?.destroy(true); effects.destroy(true);

@@ -1,0 +1,450 @@
+{
+  "date": "2026-10-17",
+  "tool": "built-in image_gen.imagegen",
+  "assets": [
+    {
+      "heroId": "m05",
+      "stem": "awakening_m05_fire_spear",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-61c91bdc-f052-4d89-9491-bfc495e8fd60.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m05_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A fiery spear awakening: two asymmetric blazing spearhead arcs climb the left and right outer edges, one carved black-gold spear tip at upper right and a flame-dragon tail curling at lower left. Rich dimensional orange-red flame tongues, gold embers, sweeping ascending energy. Keep the middle 68 percent empty. Not a phoenix, not a ring.",
+      "file": "apps/client/public/assets/vfx/awakening_m05_fire_spear.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2017208,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "e383d917a629901e58d38ecf019763c112a186297b62e0edbae1219532d394b0",
+      "outputSha256": "d51a16578e2b097077191391fbfe6c36770d110d7cc4dc4510e1fde383efac99",
+      "referenceSha256": "3cdf4a33ab8c0f4a9d3ac5e6e4329665f5f3904a550247c164e55cd91a0d639a"
+    },
+    {
+      "heroId": "f04",
+      "stem": "awakening_f04_herbal_bloom",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-a62ae161-c28e-4276-8441-8e01f94ac09c.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f04_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A medicinal herb awakening: delicate green and gold vines unfurl up both outer sides with many distinct tiny medicinal leaves, white five-petal blossoms and floating golden pollen. A small open woven herb basket at lower left only, leaves lifting toward the top, luminous pale jade sap beads. Center 68 percent empty, no person.",
+      "file": "apps/client/public/assets/vfx/awakening_f04_herbal_bloom.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2118588,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "15b6ceec7d82dbcf3a28c807993d6209a5bd1bb570c0f22a24ed7a11f548996d",
+      "outputSha256": "27874d57a29709353cf80c34facc9dc2c167ef93061bec734973b9dbf16301e3",
+      "referenceSha256": "3c2a88c521e83c993a80a6c8edbb8c1ddc0f0cd374da37e2443a622e186ae37e"
+    },
+    {
+      "heroId": "f03",
+      "stem": "awakening_f03_frost_swords",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-9820f641-50c5-412c-95df-47d04391ef4a.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f03_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A frost sword awakening: seven slender translucent ice sword shards along the outer edges, icy mist and exquisite snow plum crystals. Shards point upward at staggered angles, a cool blue curved frost surge at the bottom corners. Silver-white and sapphire, tactile faceted edges, keep center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_f03_frost_swords.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1789054,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "fe7321c746d5e4721ab77302036fdc8f7d99ee0499e1043a776517546e102534",
+      "outputSha256": "b6c24e05dadc5eeb67b14ff9e8886dcc829b7547c1b03c4c68d78cbf71df0080",
+      "referenceSha256": "4ba1224fa618ba19dd34f7f0c13847ec3c8caabdf0b028368a798978efb8d89d"
+    },
+    {
+      "heroId": "f02",
+      "stem": "awakening_f02_fox_masks",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-5c695022-1bfa-44fb-b574-98c3a70c397d.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f02_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A thousand-face trickster awakening: three DIFFERENT exquisite ivory fox spirit masks float only near the outer top-left, outer middle-right and bottom-left corners. Crimson vermilion markings, tiny gold filigree, a few foxfire orange sparks and pink cherry petals, thin curved scarlet silk trails around the perimeter. No face in the transparent center; center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_f02_fox_masks.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1983492,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "41f4459b251cadbda341e517ae42db751a24db05933f6a9635fcb9a92424eecf",
+      "outputSha256": "456a938b477b2226ab196312ea3b02e5309723caf93971e52aa17f5c70816beb",
+      "referenceSha256": "3f21927b74830d775a92ec283a55104761a67c112eee32d988e5196072374352"
+    },
+    {
+      "heroId": "m01",
+      "stem": "awakening_m01_heaven_talismans",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-38710056-dc29-4fbe-b366-887fcf20e94b.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m01_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A celestial strategist awakening: five narrow hand-painted blue-silver talisman slips and a small ornate gold divination compass float around the OUTER border region. Elegant tiny nonlinguistic seal diagrams, thin silver thread constellations join the outer objects, white plum petals. Luminous navy, silver and antique gold. Not rectangular wireframes. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_m01_heaven_talismans.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1975834,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "09ad3fe1ff81be07514240bf2627c14e769bab694b083ba05d7183d536273727",
+      "outputSha256": "818a6ef8329aa734982c8fa3d73cc663467fd62fa159e4bc5ce23411bebc4fb5",
+      "referenceSha256": "b62c0b34904dfc2f1757ed7a4e89feb9090b524add8fe1e6995adee5d7944bca"
+    },
+    {
+      "heroId": "m02",
+      "stem": "awakening_m02_iron_bulwark",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-9bc3365b-fc67-4b80-9735-ac7d58ec11e6.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m02_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. An iron bulwark awakening: two broad substantial engraved iron shield fragments with dark steel and worn gold dragon relief brace both outer sides; an arcing red silk cord and heavy sparks at the lower corners. Red, blackened steel, gold like the armor in reference. Solid dimensional shield metal, no door or pillars, no ring. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_m02_iron_bulwark.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2262194,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "23c02dcf67902ece332b244f1c190313d3d90d0164f16abe7932c20fb5ccf74f",
+      "outputSha256": "6573a7e74c08ef5f5f96b14a2771b2f1ec9dd4948fb239dfc2fcc9c32f9da19b",
+      "referenceSha256": "9cda04f290efae6a5f7c9e75a17600d349c784efc08e1e16b3c1203dd025679e"
+    },
+    {
+      "heroId": "m03",
+      "stem": "awakening_m03_golden_fan",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-0db98b66-d305-4a65-b2cf-3d11d9881de0.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m03_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A golden fortune awakening: a finely illustrated partially opened ivory-and-gold folding fan curves along the TOP LEFT outside edge, small floating gold ingots and square-holed antique coins cascade down the RIGHT and lower corners. Pale lavender silk wisps, detailed metallic sparkle. Keep center 68 percent clear, not a full fan covering the center.",
+      "file": "apps/client/public/assets/vfx/awakening_m03_golden_fan.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1945156,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "ee68018df90e2bff0ddaf2ab0699fb7f512c362369082d4fa72a816f3f71db52",
+      "outputSha256": "af6b4a3b2f554170be29d505d3d8d49085a90512ede8cddbe2e49a41249a02f6",
+      "referenceSha256": "dd765f8ae716a41dcda09f678e523d2f0300499c1e7c33730d36668c33bf542d"
+    },
+    {
+      "heroId": "m04",
+      "stem": "awakening_m04_jade_remedy",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-f29b0c20-6be0-40f1-b171-90a358ce269d.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m04_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A divine physician awakening: a small ornate green jade medicine gourd at bottom right and three luminous medicinal lotus blossoms at outer left/top right. Soft jade healing dew droplets, silvery bamboo leaves, warm gold pollen, elegant flowing white ribbons. Distinct from a vine wreath: large lotus blooms and gourd are key objects, no basket. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_m04_jade_remedy.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2116512,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "a78c977ca143c6701755e3a4cf415dab67c39b719c9abffa800e8734de656706",
+      "outputSha256": "a7b51addd8b7d4ffb98d9145f222f09fa875bc7df1ac11b576a6654b3ccc7f73",
+      "referenceSha256": "19c731d1fc6d1b006a4b6526ac25baac5cc642dacca38734ee90e6d9457d85fc"
+    },
+    {
+      "heroId": "f01",
+      "stem": "awakening_f01_moon_blossoms",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-50eafa29-b6fd-4596-8d06-f1c3662427e4.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f01_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A moon sovereign awakening: a bright sculptural silver crescent only at the TOP edge, with white plum blossom branches curving along outer left and right and narrow blue moonbeam ribbons falling toward bottom corners. Fine gold stamen and tiny pearl moonlights, navy silver white and blue from reference. No solid disk behind the center. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_f01_moon_blossoms.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1855672,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "d9b9eded20dd7c38787b6c82c845f219956a3aa636fa293a20df695f28a896d5",
+      "outputSha256": "fb358b0a16a56b35425f1879d945ab96cef0ecb91eeab7a8e21b01f535c30a51",
+      "referenceSha256": "5f010309c104937e36f91a0e669434ce57dbec3f3f9e3feca947e7b166ba269d"
+    },
+    {
+      "heroId": "m06",
+      "stem": "awakening_m06_shadow_daggers",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-6aa19759-ee4a-4cf1-9cc4-906a849409e8.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m06_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A moonless assassin awakening: three refined black-sapphire throwing daggers and two delicate silver feather blades hover only along outer corners. Dark indigo ink-like smoke ribbons that are translucent rather than a solid black mass, silver speed streaks, a few pink plum petals. Distinct sharp asymmetry and restrained shadow, no moon disk. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_m06_shadow_daggers.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1812232,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "959cd29785eb50ec50c61cf0b82ff05dc34eaa4d01ea664daf0a788b98965df5",
+      "outputSha256": "a062105d24e932c4cb88d8b1cf797e0ca0954785b4ab3d863c124e8cdfe7d577",
+      "referenceSha256": "5c59cc2e88272a91541ea55c3f0a4d3862b8c81604b3ad62c4c66af5beec5fc5"
+    },
+    {
+      "heroId": "m07",
+      "stem": "awakening_m07_blood_meridians",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-c0fb06f3-cdd9-4673-a413-9d68bc24c5ef.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m07_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A bloodline awakening: ornate crimson ruby droplets within thin branching jade-gold living energy veins at the outer sides, small red lotus petals and gold sparks spiralling up the perimeter. Jewel-like and elegant, non-gory, no anatomy. Match the teal-gold reference costume. No generic circular aura. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_m07_blood_meridians.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2119574,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "fb2e685442307c9c4bdfa854decff792b2f38bf4bff0034b7d591252ac79f00e",
+      "outputSha256": "c2658bfcceb6301e383108c9a02a6cf351a078babaff1f9f6579f59f9290ceb3",
+      "referenceSha256": "bad489edcc2810b8cdd89e02875c86ab47c166026a7d21b3739f07b81ece5f93"
+    },
+    {
+      "heroId": "m08",
+      "stem": "awakening_m08_star_astrolabe",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-064c3d2d-77f0-4d5c-96ea-f1e42dbb34f1.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m08_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A stellar diviner awakening: ornate golden and silver ASTROLABE fragments at upper left and lower right, seven glowing sapphire stars connected by fine illustrated celestial filigree around only the outer edge. Small lunar phase ornaments, pearl glints, deep blue and gold. Interrupted arcs, not a complete flat circle, center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_m08_star_astrolabe.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1951656,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "4a047ff43a49cb95e461061b024ca6e8bf123d1914cc6ab2153e02522137b3d9",
+      "outputSha256": "32a40394fc61018e80c7cbb8f22c9210194b65e18860ad1b61736934da53db6a",
+      "referenceSha256": "392c1e9fa00ad5fecd5a355f8e71c73b89dcee801c5e94ddc50b4872a4dd827c"
+    },
+    {
+      "heroId": "m10",
+      "stem": "awakening_m10_scholar_scrolls",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-5abea244-017f-4c99-b61a-2a2324d1e114.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m10_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A scholar awakening: two open floating book fragments at lower left and upper right, warm ivory curled parchment leaves with gold decorative diagram strokes and tiny cobalt seals, soft gold knowledge sparks along outer sides. Voluminous blue-gold book bindings, no readable writing. Pages remain outside transparent center, center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_m10_scholar_scrolls.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1839130,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "1d455704a6be8e5231752cb0e2c478d5b1765f81ac0bf1d4b67413ef16909020",
+      "outputSha256": "4d05db4c097c928504b5d4e749f50b6f1f29508c90a66f2b45c077fcc3d467ca",
+      "referenceSha256": "ac51901dcf8a7cbbaeeb34ee7e734c1669cd36a522e17abc2fd305fe4ffefcee"
+    },
+    {
+      "heroId": "f08",
+      "stem": "awakening_f08_blood_phoenix",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-f9d91a6b-2f51-4c8d-9e51-201abcbe56f7.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f08_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A blood phoenix awakening: two richly detailed crimson and black phoenix WINGS at far left and right extend upward, with flame-tipped feather tails curling around bottom corners and a small golden phoenix head silhouette near upper left edge. Red-gold feathers, pink-red magical flame, black lacquer jewel accents. Elegant and fierce, no full bird blocking center. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_f08_blood_phoenix.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2133360,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "25c6e211fbf5c318bf34ad88b45625f61e59c56b06bb9fe7f44354fbe93f70e0",
+      "outputSha256": "153983e428c865097a8a90fce86fb0b25c2ccbaac606d0b9dedcc7d96c5e6491",
+      "referenceSha256": "6cade5be59b86a21829189da807b21b2ee25a28619d753e9225da764eb512b65"
+    },
+    {
+      "heroId": "f05",
+      "stem": "awakening_f05_cloud_arrow",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-c975fc6d-7f40-408a-bf16-160933e82014.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f05_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A cloud-piercing archer awakening: one refined golden-arrow head at upper right, a thin rising curved arrow trail along right edge and two amber feather fletchings at bottom left. Broken ivory cloud wisps swept aside, orange-gold speed sparks, green silk bowstring accent. Keep all objects at perimeter, center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_f05_cloud_arrow.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1742298,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "dcc7762cfb2bbd6428865ba012be00b89e9e71a1f9edd8baca79ec6bd586048e",
+      "outputSha256": "ed38fd54a0e6f8fae0bbeac426ac1aca76de3030d75b559df0bd7d2488a53ac7",
+      "referenceSha256": "062d211a558b57b0dba43142dac131fe2ac599c11e4c6921a80c0aecdf38ebfb"
+    },
+    {
+      "heroId": "f06",
+      "stem": "awakening_f06_azure_ribbons",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-d8348bc8-f53a-44cc-9b48-1babba1bb575.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A graceful azure dance awakening: two vividly shaded long translucent silk RIBBONS, one sapphire and one pearl blue, form asymmetric flowing S curves on the outer left and right, with silver bell ornaments and tiny blue flower petals at the ends. Rich cloth folds and specular moonlight, elegant dancer motion implied; not a simple luminous oval. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_f06_azure_ribbons.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1854696,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "526904ed85b18411a63777cbcfda4e391b72979383876be574bf3b92f48bface",
+      "outputSha256": "eeb0b35b1d18f66b78130a36436210ee7349c437395c9ebdf90ad193cfe8be58",
+      "referenceSha256": "ebb132986bd02759590a833e23b3998268018efd9961b58113075d285afc0dc3"
+    },
+    {
+      "heroId": "f07",
+      "stem": "awakening_f07_history_brush",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-86b95896-1c2a-4dac-b5fd-8aa9c044d32d.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f07_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A historian awakening: a finely ornamented dark blue and gold calligraphy brush at upper left and a partial curled ivory history scroll at lower right, trailing sapphire ink splashes that transform into white plum petals along the outer sides. Volumetric ink with silver glints, nonlinguistic brush patterns, no writing or letters. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_f07_history_brush.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1900262,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "8e9ad43d9bb141929f50d7f5480c2f5e038a3d3ed3956d45eb005450f601480a",
+      "outputSha256": "eb9119fb864b372c9744b26e21d54225ced080cf08c2cb93845174a83fc2751c",
+      "referenceSha256": "a86a2e86fd3a8ac8d630d45ee299cfeac659b789afc99883387e3e231083ef1c"
+    },
+    {
+      "heroId": "f09",
+      "stem": "awakening_f09_jade_rabbit",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-dc5d6a0c-7e0b-4848-b30f-40851526b7d9.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f09_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A jade rabbit spirit awakening: two tiny adorable luminous jade-white rabbit SPIRITS, one leaping upward at outer lower left and one at upper right; fluffy dimensional ears and fur, pale yellow osmanthus petals, small gold moon-cloud curls. Keep rabbits fully visible but confined to OUTER corners; no large central rabbit, no crescent disk, center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_f09_jade_rabbit.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1797762,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "b47af11ed0ccd39eebfc659da7add1b29d569718d01a61ff69add3673ce54bd9",
+      "outputSha256": "b1f37b60cdb3e464ffac99a8195983de457a7532127caf68a86c8b476b104aaf",
+      "referenceSha256": "28bd2258ff3dc8d579982202c8582f0a290e8c79a4a885972255b3e7c8b9580e"
+    },
+    {
+      "heroId": "f10",
+      "stem": "awakening_f10_soul_lotus",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-72979ed6-c0b0-4a48-bc49-87becc8551d3.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f10_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A lunar soul awakening: three translucent pearl-white lotus soul lanterns float upward at the outer edges, each has delicate lavender-silver layered petals and a tiny golden inner flame. Long almost invisible silver soul threads, lilac mist wisps, warm gold motes. Sacred gentle return of life, no ghosts or people, no opaque central disk. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_f10_soul_lotus.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1894648,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "fa60fbf268006db592cab01977e8da0acfde26fbf2bf87eeb99d9b92a25f1c03",
+      "outputSha256": "8a63aef4cfdb12e131a045cfc020fe97788202b4307bc4977b179f35a6a9d9f0",
+      "referenceSha256": "76aaf1fbc4b06b8b5cdc15508cd0ed4cefff22d7dd7a153b6c974d9c7fe1a6d7"
+    },
+    {
+      "heroId": "m09",
+      "stem": "awakening_m09_sorrow_strings",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-bc31d451-28af-45f5-8a5f-a27f00c83947.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m09_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A mournful music awakening: a fragment of richly carved dark green guqin zither with gold strings at lower left only, six flowing teal-silver musical string ripples sweep around OUTER edge and small silver leaf-shaped resonators hover at upper right. Dim emerald ripples, gold sparks, melancholic elegance. No text or musical glyph letters, center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_m09_sorrow_strings.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2061852,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "3d0fb217678d96b7494cab970f2fa7ce6e8f2db421c7f728e3c86ea81fbbbda2",
+      "outputSha256": "1983b83d29c8c13689ef8810bab9b052d68f49442caf1d6b709da1fb5602b5d0",
+      "referenceSha256": "fd1c66f7a3c9d7fc6546cd874ad68e253f07f296b6e502b86893d1565ee98dfe"
+    },
+    {
+      "heroId": "m11",
+      "stem": "awakening_m11_hidden_leaves",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-7e280339-9ff2-4ba5-ae70-673286009c94.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/m11_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A hidden leaf assassin awakening: six small sharp blackened silver leaf-shaped throwing knives with RED binding threads swirl along OUTER sides, red maple leaves and charcoal ink smoke dissolve at the lower corners. Sleek silver and black metal, restrained crimson shine and tiny cherry petals, reference's red-black assassin palette. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_m11_hidden_leaves.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1779466,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "8361624d2f36d2aa9b6c26215fa189693c1f58eb51875c028c5a267b43519e2c",
+      "outputSha256": "a667c0e01d8f4cd91acf755f00d6b40baa391de3cb5de372d9f7e062bffb1ae5",
+      "referenceSha256": "8651d76951f92743340ca86554ca72b0f5df94bf074662af8bae7227eec9e5ca"
+    },
+    {
+      "heroId": "f11",
+      "stem": "awakening_f11_butterfly_fans",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-6f9247a2-9d02-4223-aa67-a51f397b44f4.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f11_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. A butterfly dance awakening: five jade and emerald luminous butterflies with exquisitely detailed translucent wings flutter around OUTER left and right edges, one ornate green folding fan fragment at lower right, white jasmine petals and faint chartreuse trails. Dimensional insect wing shading, graceful airy motion, no large central butterfly. Center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_f11_butterfly_fans.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1870308,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "28c420e48c5faaef1ec7b0ac01730fd627409cfd4a188b5f6ae419a408e43b71",
+      "outputSha256": "fcf5614a76bf6a39c84286c5a40d747e6a6f9ab3e477eb235cb3d217605f7e63",
+      "referenceSha256": "d9a74e65a1bc2e40df5dfcd3cadd502a3b5f5dbfd3940731aa0606e77efaba29"
+    },
+    {
+      "heroId": "f12",
+      "stem": "awakening_f12_iron_brush",
+      "source": "C:\\Users\\Hienq\\.codex\\generated_images\\01a12e29-cf4f-76a0-b9db-8e6390c75c8a\\exec-e0600c0f-e219-4e7f-9d4c-cb5deadc8548.png",
+      "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f12_up.webp",
+      "prompt": "Create ONE production 2D game VFX sprite with REAL transparent alpha background, portrait 1024x1536 composition. Use the supplied hero artwork as a DIRECT STYLE reference: match its crisp polished wuxia anime linework, intricate finely shaded materials, dimensional painterly rendering, saturated but elegant fantasy color, soft luminous edges. No character, human, portrait, face, background scene, panel, rectangular border, text, letters, watermark, UI or geometric wireframe illustration. It is an isolated surrounding EFFECT to overlay a 2:3 hero portrait. The central 68% of width across the middle 80% of height must be EMPTY TRANSPARENT so the face and torso remain unobstructed. Put richly rendered physical motifs only in narrow OUTER SIDE regions or extreme top/bottom corners. Do not fill the center with a glow plate. Keep every object, glow and wisp fully inside the canvas with 6% transparent edge padding, no cropping. The reference is style and material guidance; do not reproduce the hero itself. An iron brush awakening: a substantial pointed silver-steel calligraphy pen nib at upper right, its dark cobalt ink splits into three blade-like brushstroke fragments along the outer left edge. Silver-and-gold metallic etched nib, white paper shard sparks and powerful deep sapphire ink, no letters or readable text. More martial than a parchment-scroll effect, center 68 percent empty.",
+      "file": "apps/client/public/assets/vfx/awakening_f12_iron_brush.webp",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2008928,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "centerAlpha": 0,
+      "sourceSha256": "7d8192f997f20275f6d4f6061c3daef4a7da91077f237096633640b317276fe7",
+      "outputSha256": "de1303f4560bdc339877a3689821819120aef67e8eb1e635da86ac0d973e75ca",
+      "referenceSha256": "7f946d4cee31662d373de9aa17c45929559a8622c6e2695d109cd114bf89ad8f"
+    }
+  ],
+  "encoding": {
+    "format": "webp",
+    "lossless": true,
+    "resize": false,
+    "crop": false,
+    "alphaPreserved": true
+  }
+}

@@ -4,6 +4,7 @@ import { cloneState, type CombatEvent } from "rules";
 import { fixture } from "./helpers/combat-fixture";
 import { FakeRuntime, runToEnd, stubObject } from "./helpers/fake-runtime";
 import { createPresentation } from "../src/ui/combat-presentation";
+import { HERO_AWAKENINGS } from "../src/ui/awakening-profiles";
 
 vi.stubGlobal("window", {devicePixelRatio:1,screen:{width:1280,height:720},location:{href:"http://localhost/"}});
 const { playEventQueue } = await import("../src/ui/event-animator");
@@ -37,7 +38,7 @@ it.each(["pve","pvp","coop"] as const)("%s swaps only the event's hero, once at 
       const before=JSON.stringify(s.before), after=JSON.stringify(s.after);
       const result=s.run(); expect(s.updates).toEqual([]);
       await runToEnd(s.rt,result); await result;
-      expect(s.updates).toEqual([[s.hero.id,(reduced?60:120)/speed,true]]);
+      expect(s.updates).toEqual([[s.hero.id,(reduced?60:HERO_AWAKENINGS[s.hero.defId]!.motion.charge)/speed,true]]);
       expect(s.rt.clock).toBe((reduced?180:520)/speed);
       expect(JSON.stringify(s.before)).toBe(before); expect(JSON.stringify(s.after)).toBe(after);
     }

@@ -2,7 +2,7 @@ import type Phaser from "phaser";
 import type { CombatState, SavedDeck } from "rules";
 import manifest from "virtual:assets-manifest";
 import { queueTexture } from "./texture-queue";
-import { AWAKENING_EFFECTS, awakeningEffectsFor } from "./awakening-showcase";
+import { awakeningEffectsFor } from "./awakening-profiles";
 
 /**
  * Combat art manifest (`home-ui-redesign` §7): every category a fight can
@@ -47,7 +47,7 @@ export function combatTextureEntries(files: Record<string, Record<string, string
   for (const category of COMBAT_CATEGORIES) {
     for (const [stem, url] of Object.entries(files[category] ?? {})) {
       if (selected[category] && !selected[category].has(stem)) continue;
-      if (category === "vfx" && (AWAKENING_EFFECTS as readonly string[]).includes(stem) && !awakening.has(stem)) continue;
+      if (category === "vfx" && stem.startsWith("awakening_") && !awakening.has(stem)) continue;
       entries.push({ key: `${category}:${stem}`, url });
     }
   }
