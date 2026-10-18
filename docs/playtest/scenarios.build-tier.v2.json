@@ -1,0 +1,510 @@
+{
+  "schemaVersion": 1,
+  "id": "pool-build-tier-v2",
+  "note": "Build-tier v2: heroes whose damage-leaning branch underperformed their mixed starter in v1 (f13/f10/m12/m01/f01/m02) get best-6 mixes across both branches; everyone else keeps the v1 branch pick. Plus two m05 A/B entries: build_ab_m05_chien swaps huyet_chien->thuong_pha, build_ab_m05_thien swaps liet_hoa_phan_thien->bat_dong_nhu_son (same trio, isolates each Pha?n Huye?t card).",
+  "entries": [
+    {
+      "id": "build_m05_m09_f04",
+      "label": "Mộc Cừu chủ trận (build)",
+      "tags": [
+        "build",
+        "defensive",
+        "veteran"
+      ],
+      "heroIds": [
+        "m05",
+        "m09",
+        "f04"
+      ],
+      "deck": [
+        "m05_tran_bac_huyet_tinh",
+        "m05_bat_khuat",
+        "m05_liet_hoa_xung_phong",
+        "m05_huyet_chien",
+        "m05_no_hoa_lien_hoan",
+        "m05_liet_hoa_phan_thien",
+        "m09_khuc_sau",
+        "m09_sau_cam",
+        "m09_doan_truong",
+        "m09_ai_khuc",
+        "m09_ly_biet",
+        "m09_quoc_pha",
+        "f04_bach_thao_huong",
+        "f04_linh_chi_ho_the",
+        "f04_hoi_xuan_tan",
+        "f04_xuan_phong",
+        "f04_thanh_tam_chu",
+        "f04_bach_hoa_tu_duoc"
+      ]
+    },
+    {
+      "id": "build_f06_f03_f09",
+      "label": "Tam nữ đa dụng (build)",
+      "tags": [
+        "build",
+        "control",
+        "fragile"
+      ],
+      "heroIds": [
+        "f06",
+        "f03",
+        "f09"
+      ],
+      "deck": [
+        "f06_me_vu",
+        "f06_quyen_muc",
+        "f06_hong_vu",
+        "f06_dien_dao",
+        "f06_khuynh_tam",
+        "f06_kinh_hong_chieu",
+        "f03_suong_tram",
+        "f03_bang_phach_lien_kich",
+        "f03_tuyet_han",
+        "f03_han_phong",
+        "f03_bang_toai",
+        "f03_han_son_nhat_kiem",
+        "f09_trieu_hoi",
+        "f09_ngoc_anh",
+        "f09_moi_duong",
+        "f09_tho_tinh",
+        "f09_linh_ke",
+        "f09_nguyet_tho"
+      ]
+    },
+    {
+      "id": "build_f10_f05_m04",
+      "label": "Song Hành tốc độ (build)",
+      "tags": [
+        "build",
+        "tempo",
+        "fragile"
+      ],
+      "heroIds": [
+        "f10",
+        "f05",
+        "m04"
+      ],
+      "deck": [
+        "f10_dan_hon",
+        "f10_ho_phach",
+        "f10_tay_tran",
+        "f10_hoi_hon",
+        "f10_hon_quy",
+        "f10_luan_hoi",
+        "f05_liet_nham",
+        "f05_truy_anh",
+        "f05_diem_menh",
+        "f05_ha_uy",
+        "f05_xa_nhat",
+        "f05_tuyet_diem",
+        "m04_ho_mach",
+        "m04_ngoc_bi",
+        "m04_duong_mach",
+        "m04_dinh_mach",
+        "m04_bao_mach",
+        "m04_hoi_duong"
+      ]
+    },
+    {
+      "id": "build_m01_f01_m02",
+      "label": "Tam kiếm cân bằng (build)",
+      "tags": [
+        "build",
+        "balanced"
+      ],
+      "heroIds": [
+        "m01",
+        "f01",
+        "m02"
+      ],
+      "deck": [
+        "m01_muu_co",
+        "m01_toa_nguyet_phu",
+        "m01_mat_thu",
+        "m01_phan_gian_ke",
+        "m01_khong_thanh_ke",
+        "m01_doat_cuc",
+        "f01_ho_nguyet",
+        "f01_tinh_dich",
+        "f01_nguyet_quang",
+        "f01_thieu_nguyet",
+        "f01_tu_nguyet",
+        "f01_hung_nguyet",
+        "m02_phan_kich",
+        "m02_khieu_dich",
+        "m02_xung_tran",
+        "m02_doi_thuong",
+        "m02_ngich_pha",
+        "m02_van_quan"
+      ]
+    },
+    {
+      "id": "build_f08_m07_f07",
+      "label": "Hộ tống ẩn thân (build)",
+      "tags": [
+        "build",
+        "defensive"
+      ],
+      "heroIds": [
+        "f08",
+        "m07",
+        "f07"
+      ],
+      "deck": [
+        "f08_huyet_vu",
+        "f08_phe_mac",
+        "f08_phan_huyet",
+        "f08_lieu_hoa",
+        "f08_cam_chu",
+        "f08_niet_ban",
+        "m07_trieu_huyet",
+        "m07_huyet_anh",
+        "m07_dong_huyet",
+        "m07_huyet_te",
+        "m07_tinh_huyet",
+        "m07_xich_nguyet",
+        "f07_phong_an",
+        "f07_doat_but",
+        "f07_phe_but",
+        "f07_thiet_but",
+        "f07_cam_su",
+        "f07_doan_su"
+      ]
+    },
+    {
+      "id": "build_m03_f11_m08",
+      "label": "Thất Diệp săn mồi cùng song phong (build)",
+      "tags": [
+        "build",
+        "combo",
+        "wave3"
+      ],
+      "heroIds": [
+        "m03",
+        "f11",
+        "m08"
+      ],
+      "deck": [
+        "m03_tham_bao",
+        "m03_tu_tin",
+        "m03_kim_tien",
+        "m03_than_toan",
+        "m03_diem_tin",
+        "m03_tien_tri",
+        "f11_mo_nhac",
+        "f11_dao_mo_man",
+        "f11_quat_dao",
+        "f11_bach_diep",
+        "f11_diep_tan",
+        "f11_liet_quoc_tau",
+        "m08_doi_van",
+        "m08_tinh_tuong",
+        "m08_chuyen_van",
+        "m08_suy_van",
+        "m08_nghich_van",
+        "m08_thien_doi"
+      ]
+    },
+    {
+      "id": "build_m10_f02_m06",
+      "label": "Nguyệt sát áp lực (build)",
+      "tags": [
+        "build",
+        "aggressive"
+      ],
+      "heroIds": [
+        "m10",
+        "f02",
+        "m06"
+      ],
+      "deck": [
+        "m10_han_mon",
+        "m10_liet_but",
+        "m10_phan_doc",
+        "m10_bach_chien",
+        "m10_dien_kinh",
+        "m10_lien_nguyen",
+        "f02_huyet_tram",
+        "f02_doi_van_chu",
+        "f02_phe_hon",
+        "f02_huyet_khe",
+        "f02_ta_nguyet_chu",
+        "f02_huyet_nguyet_than_cong",
+        "m06_anh_bo",
+        "m06_am_tien",
+        "m06_doat_menh",
+        "m06_tang_anh_thich",
+        "m06_anh_phan_than",
+        "m06_tuyet_menh"
+      ]
+    },
+    {
+      "id": "build_f05_m04_f10",
+      "label": "Phong nguyệt nghịch (build)",
+      "tags": [
+        "build",
+        "tempo"
+      ],
+      "heroIds": [
+        "f05",
+        "m04",
+        "f10"
+      ],
+      "deck": [
+        "f05_liet_nham",
+        "f05_truy_anh",
+        "f05_diem_menh",
+        "f05_ha_uy",
+        "f05_xa_nhat",
+        "f05_tuyet_diem",
+        "m04_ho_mach",
+        "m04_ngoc_bi",
+        "m04_duong_mach",
+        "m04_dinh_mach",
+        "m04_bao_mach",
+        "m04_hoi_duong",
+        "f10_dan_hon",
+        "f10_ho_phach",
+        "f10_tay_tran",
+        "f10_hoi_hon",
+        "f10_hon_quy",
+        "f10_luan_hoi"
+      ]
+    },
+    {
+      "id": "build_m11_m03_f05",
+      "label": "Thất Diệp song hành (build)",
+      "tags": [
+        "build",
+        "aggressive",
+        "wave3"
+      ],
+      "heroIds": [
+        "m11",
+        "m03",
+        "f05"
+      ],
+      "deck": [
+        "m11_liet_dao",
+        "m11_bay_an",
+        "m11_that_diem",
+        "m11_truy_an",
+        "m11_liet_anh_loan",
+        "m11_tuyet_menh_thu",
+        "m03_tham_bao",
+        "m03_tu_tin",
+        "m03_kim_tien",
+        "m03_than_toan",
+        "m03_diem_tin",
+        "m03_tien_tri",
+        "f05_liet_nham",
+        "f05_truy_anh",
+        "f05_diem_menh",
+        "f05_ha_uy",
+        "f05_xa_nhat",
+        "f05_tuyet_diem"
+      ]
+    },
+    {
+      "id": "build_m10_m08_m06",
+      "label": "Song sát chủ lực (build)",
+      "tags": [
+        "build",
+        "tempo"
+      ],
+      "heroIds": [
+        "m10",
+        "m08",
+        "m06"
+      ],
+      "deck": [
+        "m10_han_mon",
+        "m10_liet_but",
+        "m10_phan_doc",
+        "m10_bach_chien",
+        "m10_dien_kinh",
+        "m10_lien_nguyen",
+        "m08_doi_van",
+        "m08_tinh_tuong",
+        "m08_chuyen_van",
+        "m08_suy_van",
+        "m08_nghich_van",
+        "m08_thien_doi",
+        "m06_anh_bo",
+        "m06_am_tien",
+        "m06_doat_menh",
+        "m06_tang_anh_thich",
+        "m06_anh_phan_than",
+        "m06_tuyet_menh"
+      ]
+    },
+    {
+      "id": "build_m10_f12_m06",
+      "label": "Nguyệt án áp lực (build)",
+      "tags": [
+        "build",
+        "control",
+        "wave3"
+      ],
+      "heroIds": [
+        "m10",
+        "f12",
+        "m06"
+      ],
+      "deck": [
+        "m10_han_mon",
+        "m10_liet_but",
+        "m10_phan_doc",
+        "m10_bach_chien",
+        "m10_dien_kinh",
+        "m10_lien_nguyen",
+        "f12_lap_an",
+        "f12_tam_tuc_dien",
+        "f12_phan_lenh",
+        "f12_nghiem_hinh",
+        "f12_xu_quyet",
+        "f12_sat_luc",
+        "m06_anh_bo",
+        "m06_am_tien",
+        "m06_doat_menh",
+        "m06_tang_anh_thich",
+        "m06_anh_phan_than",
+        "m06_tuyet_menh"
+      ]
+    },
+    {
+      "id": "build_m12_f10_m07",
+      "label": "Trấn môn hộ tống (build)",
+      "tags": [
+        "build",
+        "defensive",
+        "wave4"
+      ],
+      "heroIds": [
+        "m12",
+        "f10",
+        "m07"
+      ],
+      "deck": [
+        "m12_tran_mon_dao",
+        "m12_phan_cong",
+        "m12_nhat_kich",
+        "m12_thiet_quan",
+        "m12_van_quan",
+        "m12_dong_giap",
+        "f10_dan_hon",
+        "f10_ho_phach",
+        "f10_tay_tran",
+        "f10_hoi_hon",
+        "f10_hon_quy",
+        "f10_luan_hoi",
+        "m07_trieu_huyet",
+        "m07_huyet_anh",
+        "m07_dong_huyet",
+        "m07_huyet_te",
+        "m07_tinh_huyet",
+        "m07_xich_nguyet"
+      ]
+    },
+    {
+      "id": "build_f13_f07_f12",
+      "label": "Điềm giả song hành (build)",
+      "tags": [
+        "build",
+        "control",
+        "wave4"
+      ],
+      "heroIds": [
+        "f13",
+        "f07",
+        "f12"
+      ],
+      "deck": [
+        "f13_quan_tuong",
+        "f13_diem_du",
+        "f13_nguyet_thi",
+        "f13_song_nguyet",
+        "f13_bach_dong",
+        "f13_nghich_menh",
+        "f07_phong_an",
+        "f07_doat_but",
+        "f07_phe_but",
+        "f07_thiet_but",
+        "f07_cam_su",
+        "f07_doan_su",
+        "f12_lap_an",
+        "f12_tam_tuc_dien",
+        "f12_phan_lenh",
+        "f12_nghiem_hinh",
+        "f12_xu_quyet",
+        "f12_sat_luc"
+      ]
+    },
+    {
+      "id": "build_ab_m05_chien",
+      "label": "AB m05 bỏ Huyết Chiến",
+      "tags": [
+        "build",
+        "ab"
+      ],
+      "heroIds": [
+        "m05",
+        "m09",
+        "f04"
+      ],
+      "deck": [
+        "m05_tran_bac_huyet_tinh",
+        "m05_bat_khuat",
+        "m05_liet_hoa_xung_phong",
+        "m05_thuong_pha",
+        "m05_no_hoa_lien_hoan",
+        "m05_liet_hoa_phan_thien",
+        "m09_khuc_sau",
+        "m09_sau_cam",
+        "m09_doan_truong",
+        "m09_ai_khuc",
+        "m09_ly_biet",
+        "m09_quoc_pha",
+        "f04_bach_thao_huong",
+        "f04_linh_chi_ho_the",
+        "f04_hoi_xuan_tan",
+        "f04_xuan_phong",
+        "f04_thanh_tam_chu",
+        "f04_bach_hoa_tu_duoc"
+      ]
+    },
+    {
+      "id": "build_ab_m05_thien",
+      "label": "AB m05 bỏ Phần Thiên",
+      "tags": [
+        "build",
+        "ab"
+      ],
+      "heroIds": [
+        "m05",
+        "m09",
+        "f04"
+      ],
+      "deck": [
+        "m05_tran_bac_huyet_tinh",
+        "m05_bat_khuat",
+        "m05_liet_hoa_xung_phong",
+        "m05_huyet_chien",
+        "m05_no_hoa_lien_hoan",
+        "m05_bat_dong_nhu_son",
+        "m09_khuc_sau",
+        "m09_sau_cam",
+        "m09_doan_truong",
+        "m09_ai_khuc",
+        "m09_ly_biet",
+        "m09_quoc_pha",
+        "f04_bach_thao_huong",
+        "f04_linh_chi_ho_the",
+        "f04_hoi_xuan_tan",
+        "f04_xuan_phong",
+        "f04_thanh_tam_chu",
+        "f04_bach_hoa_tu_duoc"
+      ]
+    }
+  ]
+}

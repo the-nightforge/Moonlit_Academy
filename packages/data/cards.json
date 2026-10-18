@@ -310,11 +310,11 @@
       },
       {
         "type": "missingHpDamage",
-        "ratio": 1,
+        "ratio": 0.5,
         "to": "allEnemies"
       }
     ],
-    "text": "Mất 6 HP. Phẫn Huyết lên mọi kẻ địch: gây damage bằng số HP Hoắc Liệt đã mất.",
+    "text": "Mất 6 HP. Phẫn Huyết lên mọi kẻ địch: gây damage bằng 50% số HP Hoắc Liệt đã mất.",
     "keywords": [
       "phan_huyet"
     ]

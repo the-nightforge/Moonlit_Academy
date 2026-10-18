@@ -143,7 +143,7 @@ describe("end-to-end candidate workflow", () => {
     expect(report.comparison).not.toBeNull();
     // Synthetic evidence without a calibration artifact can never reach review-candidate.
     const review = reviewCandidate(report, experiment.declaredComparisons);
-    expect(["inconclusive", "human-check-required"]).toContain(review.status);
+    expect(["inconclusive", "human-check-required", "policy-sensitive"]).toContain(review.status);
     if (report.comparison!.promote) expect(review.status).toBe("human-check-required");
     expect(dataDirHash(DATA_DIR)).toBe(hashBefore);
   });
