@@ -8799,7 +8799,7 @@
         "then": [
           {
             "type": "damage",
-            "amount": 13,
+            "amount": 10,
             "to": "chosen"
           }
         ],
@@ -8812,7 +8812,7 @@
         ]
       }
     ],
-    "text": "Gây 6 damage; mục tiêu đang bị Đánh Dấu: gây 13."
+    "text": "Gây 6 damage; mục tiêu đang bị Đánh Dấu: gây 10."
   },
   {
     "id": "m11_that_diem_plus",
@@ -8868,16 +8868,16 @@
       {
         "type": "applyStatus",
         "status": "stealth",
-        "amount": 2,
+        "amount": 1,
         "to": "self"
       },
       {
         "type": "gainArmor",
-        "amount": 4,
+        "amount": 2,
         "to": "self"
       }
     ],
-    "text": "Ẩn Thân 2 vòng, nhận 4 giáp."
+    "text": "Ẩn Thân 1 vòng, nhận 2 giáp."
   },
   {
     "id": "m11_vo_thanh",
@@ -8932,7 +8932,7 @@
         "type": "damage",
         "amount": 3,
         "to": "chosen",
-        "hits": 3
+        "hits": 2
       },
       {
         "type": "applyStatus",
@@ -8941,7 +8941,7 @@
         "to": "chosen"
       }
     ],
-    "text": "Gây 3 damage ×3, rồi Đánh Dấu 1 vòng."
+    "text": "Gây 3 damage ×2, rồi Đánh Dấu 1 vòng."
   },
   {
     "id": "m11_that_da",
@@ -10181,11 +10181,15 @@
     "target": "none",
     "effects": [
       {
+        "type": "gainMoonPower",
+        "amount": 1
+      },
+      {
         "type": "chooseCard",
         "look": 2
       }
     ],
-    "text": "Chiêm Bài 2."
+    "text": "Nhận 1 Nguyệt Lực. Chiêm Bài 2."
   },
   {
     "id": "f13_diem_lanh",
@@ -10226,8 +10230,19 @@
     "target": "enemy",
     "effects": [
       {
+        "type": "damage",
+        "amount": 6,
+        "to": "chosen"
+      },
+      {
         "type": "applyStatus",
         "status": "vulnerable",
+        "amount": 1,
+        "to": "chosen"
+      },
+      {
+        "type": "applyStatus",
+        "status": "weak",
         "amount": 1,
         "to": "chosen"
       },
@@ -10247,7 +10262,7 @@
         ]
       }
     ],
-    "text": "Dễ Vỡ 1 vòng; nếu đang Trăng Tròn: thêm Đóng Băng."
+    "text": "Gây 6 sát thương; Dễ Vỡ 1 và Suy Yếu 1 vòng; nếu đang Trăng Tròn: thêm Đóng Băng."
   },
   {
     "id": "f13_nguyet_thi",
@@ -10264,9 +10279,13 @@
       {
         "type": "shiftMoon",
         "amount": 1
+      },
+      {
+        "type": "gainMoonPower",
+        "amount": 2
       }
     ],
-    "text": "Đẩy Nguyệt Luân 1 pha."
+    "text": "Đẩy Nguyệt Luân 1 pha và nhận 2 Nguyệt Lực."
   },
   {
     "id": "f13_song_nguyet",
@@ -10280,6 +10299,14 @@
     ],
     "target": "none",
     "effects": [
+      {
+        "type": "scaledDamage",
+        "per": "moonPower",
+        "amount": 1,
+        "base": 6,
+        "max": 10,
+        "to": "allEnemies"
+      },
       {
         "type": "applyStatus",
         "status": "empower",
@@ -10297,7 +10324,7 @@
         "look": 3
       }
     ],
-    "text": "Đồng đội nhận Cường Hóa 1; mọi kẻ địch Suy Yếu 1 vòng. Chiêm Bài 3."
+    "text": "Gây 6 + sát thương bằng Nguyệt Lực của ngươi lên mọi kẻ địch (tối đa 10). Đồng đội nhận Cường Hóa 1; mọi kẻ địch Suy Yếu 1 vòng. Chiêm Bài 3."
   },
   {
     "id": "f13_song_nguyet_plus",
@@ -10311,6 +10338,14 @@
     ],
     "target": "none",
     "effects": [
+      {
+        "type": "scaledDamage",
+        "per": "moonPower",
+        "amount": 1,
+        "base": 7,
+        "max": 12,
+        "to": "allEnemies"
+      },
       {
         "type": "applyStatus",
         "status": "empower",
@@ -10328,7 +10363,7 @@
         "look": 4
       }
     ],
-    "text": "Đồng đội nhận Cường Hóa 1; mọi kẻ địch Suy Yếu 2 vòng. Chiêm Bài 4.",
+    "text": "Gây 7 + sát thương bằng Nguyệt Lực của ngươi lên mọi kẻ địch (tối đa 12). Đồng đội nhận Cường Hóa 1; mọi kẻ địch Suy Yếu 2 vòng. Chiêm Bài 4.",
     "plusOf": "f13_song_nguyet"
   },
   {

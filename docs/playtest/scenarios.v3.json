@@ -120,8 +120,8 @@
       "deck": "starter"
     },
     {
-      "id": "pool_m11_f04_m06",
-      "label": "Thất Diệp sát ảnh",
+      "id": "pool_m11_m03_f05",
+      "label": "Thất Diệp song hành",
       "tags": [
         "starter",
         "aggressive",
@@ -129,8 +129,8 @@
       ],
       "heroIds": [
         "m11",
-        "f04",
-        "m06"
+        "m03",
+        "f05"
       ],
       "deck": "starter"
     },
@@ -179,8 +179,8 @@
       "deck": "starter"
     },
     {
-      "id": "pool_f13_m05_f08",
-      "label": "Điềm giả hộ vệ",
+      "id": "pool_f13_f07_f12",
+      "label": "Điềm giả song hành",
       "tags": [
         "starter",
         "control",
@@ -188,8 +188,8 @@
       ],
       "heroIds": [
         "f13",
-        "m05",
-        "f08"
+        "f07",
+        "f12"
       ],
       "deck": "starter"
     }
