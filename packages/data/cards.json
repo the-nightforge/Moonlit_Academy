@@ -8737,7 +8737,7 @@
     "id": "m11_am_anh_thu",
     "name": "Ám Ảnh Thứ",
     "ownerId": "m11",
-    "cost": 1,
+    "cost": 2,
     "copies": 3,
     "type": "skill",
     "tags": [
@@ -8799,20 +8799,20 @@
         "then": [
           {
             "type": "damage",
-            "amount": 10,
+            "amount": 8,
             "to": "chosen"
           }
         ],
         "else": [
           {
             "type": "damage",
-            "amount": 6,
+            "amount": 5,
             "to": "chosen"
           }
         ]
       }
     ],
-    "text": "Gây 6 damage; mục tiêu đang bị Đánh Dấu: gây 10."
+    "text": "Gây 5 damage; mục tiêu đang bị Đánh Dấu: gây 8."
   },
   {
     "id": "m11_that_diem_plus",
@@ -8836,20 +8836,20 @@
         "then": [
           {
             "type": "damage",
-            "amount": 16,
+            "amount": 14,
             "to": "chosen"
           }
         ],
         "else": [
           {
             "type": "damage",
-            "amount": 8,
+            "amount": 7,
             "to": "chosen"
           }
         ]
       }
     ],
-    "text": "Gây 8 damage; mục tiêu đang bị Đánh Dấu: gây 16.",
+    "text": "Gây 7 damage; mục tiêu đang bị Đánh Dấu: gây 14.",
     "plusOf": "m11_that_diem"
   },
   {
@@ -8870,14 +8870,9 @@
         "status": "stealth",
         "amount": 1,
         "to": "self"
-      },
-      {
-        "type": "gainArmor",
-        "amount": 2,
-        "to": "self"
       }
     ],
-    "text": "Ẩn Thân 1 vòng, nhận 2 giáp."
+    "text": "Ẩn Thân 1 vòng."
   },
   {
     "id": "m11_vo_thanh",
@@ -8894,7 +8889,7 @@
     "effects": [
       {
         "type": "damage",
-        "amount": 5,
+        "amount": 4,
         "to": "chosen"
       },
       {
@@ -8913,7 +8908,7 @@
         ]
       }
     ],
-    "text": "Gây 5 damage; mục tiêu đang bị Đánh Dấu: thêm Suy Yếu 1 vòng."
+    "text": "Gây 4 damage; mục tiêu đang bị Đánh Dấu: thêm Suy Yếu 1 vòng."
   },
   {
     "id": "m11_bay_an",
@@ -8930,7 +8925,7 @@
     "effects": [
       {
         "type": "damage",
-        "amount": 3,
+        "amount": 2,
         "to": "chosen",
         "hits": 2
       },
@@ -8941,7 +8936,7 @@
         "to": "chosen"
       }
     ],
-    "text": "Gây 3 damage ×2, rồi Đánh Dấu 1 vòng."
+    "text": "Gây 2 damage ×2, rồi Đánh Dấu 1 vòng."
   },
   {
     "id": "m11_that_da",
@@ -10231,7 +10226,7 @@
     "effects": [
       {
         "type": "damage",
-        "amount": 6,
+        "amount": 10,
         "to": "chosen"
       },
       {
@@ -10262,7 +10257,7 @@
         ]
       }
     ],
-    "text": "Gây 6 sát thương; Dễ Vỡ 1 và Suy Yếu 1 vòng; nếu đang Trăng Tròn: thêm Đóng Băng."
+    "text": "Gây 10 sát thương; Dễ Vỡ 1 và Suy Yếu 1 vòng; nếu đang Trăng Tròn: thêm Đóng Băng."
   },
   {
     "id": "f13_nguyet_thi",
@@ -10282,10 +10277,10 @@
       },
       {
         "type": "gainMoonPower",
-        "amount": 2
+        "amount": 3
       }
     ],
-    "text": "Đẩy Nguyệt Luân 1 pha và nhận 2 Nguyệt Lực."
+    "text": "Đẩy Nguyệt Luân 1 pha và nhận 3 Nguyệt Lực."
   },
   {
     "id": "f13_song_nguyet",
@@ -10302,9 +10297,9 @@
       {
         "type": "scaledDamage",
         "per": "moonPower",
-        "amount": 1,
-        "base": 6,
-        "max": 10,
+        "amount": 2,
+        "base": 8,
+        "max": 12,
         "to": "allEnemies"
       },
       {
@@ -10324,7 +10319,7 @@
         "look": 3
       }
     ],
-    "text": "Gây 6 + sát thương bằng Nguyệt Lực của ngươi lên mọi kẻ địch (tối đa 10). Đồng đội nhận Cường Hóa 1; mọi kẻ địch Suy Yếu 1 vòng. Chiêm Bài 3."
+    "text": "Gây 8 + sát thương bằng 2× Nguyệt Lực của ngươi lên mọi kẻ địch (tối đa 12). Đồng đội nhận Cường Hóa 1; mọi kẻ địch Suy Yếu 1 vòng. Chiêm Bài 3."
   },
   {
     "id": "f13_song_nguyet_plus",
@@ -10341,9 +10336,9 @@
       {
         "type": "scaledDamage",
         "per": "moonPower",
-        "amount": 1,
-        "base": 7,
-        "max": 12,
+        "amount": 2,
+        "base": 9,
+        "max": 14,
         "to": "allEnemies"
       },
       {
@@ -10363,7 +10358,7 @@
         "look": 4
       }
     ],
-    "text": "Gây 7 + sát thương bằng Nguyệt Lực của ngươi lên mọi kẻ địch (tối đa 12). Đồng đội nhận Cường Hóa 1; mọi kẻ địch Suy Yếu 2 vòng. Chiêm Bài 4.",
+    "text": "Gây 9 + sát thương bằng 2× Nguyệt Lực của ngươi lên mọi kẻ địch (tối đa 14). Đồng đội nhận Cường Hóa 1; mọi kẻ địch Suy Yếu 2 vòng. Chiêm Bài 4.",
     "plusOf": "f13_song_nguyet"
   },
   {
