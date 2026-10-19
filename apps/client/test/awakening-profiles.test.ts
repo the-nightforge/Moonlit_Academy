@@ -13,7 +13,7 @@ it("assigns a dedicated illustration and distinct motion to every hero, with no 
   expect(awakeningEffectsFor("unknown")).toEqual([]);
   for (const id of ids) {
     const p=HERO_AWAKENINGS[id]!;
-    expect(awakeningEffectsFor(id)).toEqual([p.texture,`awakening_${id}_motion`]);
+    expect(awakeningEffectsFor(id)).toEqual([p.texture,`awakening_${id}_motion`,...(id==="f06"?["awakening_f06_flow"]:[])]);
     expect(p.motion.charge + p.motion.blend + p.motion.release).toBe(520);
     expect(p.motion.charge % 2).toBe(0);
   }

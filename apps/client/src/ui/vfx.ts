@@ -5,6 +5,7 @@ import { playCombatIllustration } from "./combat-illustration";
 import type { CombatPoint as Point } from "./combat-illustration";
 import { impactAnimation } from "./impact-animation";
 import { ownUnitPose } from "./impact-reaction";
+import type { IllustrationMode } from "./illustrated-flow";
 
 /** These small authored textures also dress the persistent combat scene. */
 export const GLOW = "vfx:combat_glow";
@@ -43,6 +44,7 @@ export interface AttackOptions {
   attackerView?: Phaser.GameObjects.Container;
   runtime: AnimationRuntime;
   onImpact?: () => void;
+  illustrationMode?: IllustrationMode;
 }
 
 /** The attack, gameplay milestone and card pose use one clock; promise includes the tail. */
@@ -58,6 +60,7 @@ export async function playAttack(look: AttackLook, from: Point, to: Point, opts:
     await playCombatIllustration(rt, `attack_${look.kind}`, {
       from, to, duration: profile.duration, impactAt: profile.impactAt, width: profile.size, height: profile.size,
       rotation: angle,
+      illustrationMode: opts.illustrationMode,
       motion: elapsed => {
         const flight = smooth((elapsed - profile.anticipation) / (profile.impactAt - profile.anticipation));
         const tail = smooth((elapsed - profile.impactAt) / (profile.duration - profile.impactAt));

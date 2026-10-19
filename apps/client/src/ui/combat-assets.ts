@@ -4,6 +4,7 @@ import { rawGameInput } from "data";
 import manifest from "virtual:assets-manifest";
 import { queueTexture } from "./texture-queue";
 import { awakeningEffectsFor } from "./awakening-profiles";
+import { ATTACK_FLOWS } from "./illustrated-flow";
 
 /**
  * Combat art manifest (`home-ui-redesign` §7): every category a fight can
@@ -15,6 +16,15 @@ const styleData = rawGameInput();
 const heroStyles = new Map(styleData.heroes.map(hero => [hero.id, hero.attackStyle ?? (hero.archetype === "support" ? "herb" : "slash")]));
 const enemyStyles = new Map(styleData.enemies.map(enemy => [enemy.id, enemy.attackStyle ?? "slash"]));
 const weaponStyles = new Map(styleData.weapons.map(weapon => [weapon.id, weapon.attackStyle]));
+const flowFallbacks = new Map<string, readonly string[]>([
+  ...Object.entries(ATTACK_FLOWS).flatMap(([style, flow]): [string, readonly string[]][] => [
+    [`vfx:combat_attack_${style}_flow`, [`vfx:combat_attack_${style}`]],
+    ...flow.layers.map((stem): [string, readonly string[]] => [`vfx:${stem}`, [
+      `vfx:combat_attack_${style}`, ...(style === "ribbon" ? ["vfx:awakening_f06_motion"] : []),
+    ]]),
+  ]),
+  ["vfx:awakening_f06_flow", ["vfx:awakening_f06_motion"]],
+]);
 
 export interface CombatTextureEntry {
   key: string;
@@ -61,7 +71,8 @@ export function combatTextureEntries(files: Record<string, Record<string, string
     for (const [stem, url] of Object.entries(files[category] ?? {})) {
       if (selected[category] && !selected[category].has(stem)) continue;
       if (category === "vfx" && stem.startsWith("awakening_") && !awakening.has(stem)) continue;
-      if (category === "vfx" && attacks && stem.startsWith("combat_attack_") && !attacks.has(stem.slice("combat_attack_".length))) continue;
+      if (category === "vfx" && attacks && stem.startsWith("combat_attack_") && !attacks.has(stem.slice("combat_attack_".length).replace(/_flow$/, ""))) continue;
+      if (category === "vfx" && attacks && stem.startsWith("combat_layer_") && !Object.entries(ATTACK_FLOWS).some(([style, flow]) => attacks.has(style) && (flow.layers as readonly string[]).includes(stem))) continue;
       entries.push({ key: `${category}:${stem}`, url });
     }
   }
@@ -84,12 +95,13 @@ export interface PrepareCombatAssetsOptions {
 /**
  * Waits until every combat texture exists in the TextureManager. A rejection
  * from `queueTexture` (owner scene died, file error) is retried once on this
- * scene's own loader before landing in `failed`.
+ * scene's own loader before landing in `failed`. New sample art is optional
+ * when its legacy source loaded; keep those failures separately for diagnostics.
  */
 export async function prepareCombatAssets(
   scene: Phaser.Scene,
   options: PrepareCombatAssetsOptions = {},
-): Promise<{ loaded: number; failed: string[] }> {
+): Promise<{ loaded: number; failed: string[]; optionalFailed?: string[] }> {
   // Phaser sets RUNNING only after synchronous create() returns. Callers attach
   // shutdown/request guards before entering this gate, including on restart.
   await Promise.resolve();
@@ -124,6 +136,8 @@ export async function prepareCombatAssets(
     }
   };
   await Promise.all(Array.from({ length: Math.max(1, Math.min(total, options.concurrency ?? 6)) }, worker));
-  const failed = results.filter((key): key is string => key !== null);
-  return { loaded: total - failed.length, failed };
+  const allFailed = results.filter((key): key is string => key !== null);
+  const optionalFailed = allFailed.filter(key => flowFallbacks.get(key)?.some(legacy => scene.textures.exists(legacy)));
+  const optional = new Set(optionalFailed), failed = allFailed.filter(key => !optional.has(key));
+  return { loaded: total - allFailed.length, failed, ...(optionalFailed.length ? { optionalFailed } : {}) };
 }

@@ -138,6 +138,7 @@ describe("combatTextureEntries (`home-ui-redesign` Task 3)", () => {
 describe("prepareCombatAssets (`home-ui-redesign` Task 3)", () => {
   class Loader extends EventEmitter {
     files: string[] = [];
+    failures = new Set(["cards:broken"]);
     loading = false;
     constructor(private textures: Set<string>) {
       super();
@@ -156,7 +157,7 @@ describe("prepareCombatAssets (`home-ui-redesign` Task 3)", () => {
       queueMicrotask(() => {
         for (const file of this.files.splice(0)) {
           const key = file.split("=")[0]!;
-          if (key === "cards:broken") {
+          if (this.failures.has(key!)) {
             this.emit("loaderror", { key });
             continue;
           }
@@ -243,10 +244,32 @@ describe("prepareCombatAssets (`home-ui-redesign` Task 3)", () => {
     expect(result).toEqual({ loaded: 3, failed: [] });
     expect(target.loader!.files).toHaveLength(0);
   });
+  it("lets the production gate continue with legacy artwork when optional new sheets or layers fail",async()=>{
+    const target=scene(),stems=["combat_attack_bow","combat_attack_ribbon","awakening_f06_motion","combat_attack_bow_flow","combat_attack_ribbon_flow","awakening_f06_flow","combat_layer_bow_air","combat_layer_ribbon_petals"];
+    for(const stem of stems.slice(3))target.loader!.failures.add(`vfx:${stem}`);
+    const result=await prepareCombatAssets(target,{files:stems.map(stem=>({key:`vfx:${stem}`,url:`/${stem}.webp`}))});
+    expect(result).toEqual({loaded:3,failed:[],optionalFailed:stems.slice(3).map(stem=>`vfx:${stem}`)});
+  });
+  it("keeps the gate closed when new artwork and its legacy fallback both fail",async()=>{
+    const target=scene(),stems=["combat_attack_bow","combat_attack_bow_flow","combat_layer_bow_air"];
+    for(const stem of stems)target.loader!.failures.add(`vfx:${stem}`);
+    const result=await prepareCombatAssets(target,{files:stems.map(stem=>({key:`vfx:${stem}`,url:`/${stem}.webp`}))});
+    expect(result.failed).toEqual(stems.map(stem=>`vfx:${stem}`));expect(result.loaded).toBe(0);
+  });
 });
 
 
 describe("combat selection uses visible roster and equipment", () => {
+  it("filters new flow and secondary layer assets by equipped style and f06 ownership",()=>{
+    const stems=["combat_attack_bow_flow","combat_attack_ribbon_flow","combat_layer_bow_air","combat_layer_bow_leaves","combat_layer_ribbon_silk","combat_layer_ribbon_petals","awakening_f06_flow"];
+    const vfx=Object.fromEntries(stems.map(s=>[s,`/${s}.webp`]));
+    const keys=(heroIds:string[],weaponIds:string[]=[])=>combatTextureEntries({vfx},{heroIds,weaponIds}).map(e=>e.key);
+    expect(keys(["m05"])).toEqual([]);
+    expect(keys(["f05"])).toEqual(["vfx:combat_attack_bow_flow","vfx:combat_layer_bow_air","vfx:combat_layer_bow_leaves"]);
+    expect(keys(["f06"])).toEqual(["vfx:combat_attack_ribbon_flow","vfx:combat_layer_ribbon_silk","vfx:combat_layer_ribbon_petals","vfx:awakening_f06_flow"]);
+    const bow=Object.values(data.weapons).find(w=>w.attackStyle==="bow")!;
+    expect(keys(["m05"],[bow.id])).toContain("vfx:combat_attack_bow_flow");
+  });
   it("loads only common and roster-specific awakening artwork, including the remote seat", () => {
     const vfx = Object.fromEntries(["hit", "awakening_m05_fire_spear", "awakening_m05_motion", "awakening_m12_motion", "awakening_f13_motion", "awakening_bronze_gate", "awakening_omen_pages", "awakening_lunar_aura"].map(stem => [stem, `/${stem}.webp`]));
     const keys = (heroIds: string[]) => combatTextureEntries({vfx}, {heroIds}).map(entry => entry.key);

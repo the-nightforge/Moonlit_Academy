@@ -67,5 +67,5 @@ export const HERO_AWAKENINGS: Readonly<Record<string, AwakeningProfile>> = {
 export const AWAKENING_EFFECTS = Object.keys(HERO_AWAKENINGS).flatMap(awakeningEffectsFor);
 export function awakeningEffectsFor(heroId: string): string[] {
   const profile = HERO_AWAKENINGS[heroId];
-  return profile ? [profile.texture,awakeningSheet(heroId)] : [];
+  return profile ? [profile.texture,awakeningSheet(heroId),...(heroId === "f06" ? ["awakening_f06_flow"] : [])] : [];
 }

@@ -2,6 +2,8 @@ import type Phaser from "phaser";
 import type { AnimationRuntime } from "./animation-runtime";
 import { createFrameBlend } from "./frame-blend";
 import type { FrameBlend } from "./frame-blend";
+import { attackFlow, createFrameSequence, flowFrame, registerFlowFrames } from "./illustrated-flow";
+import type { IllustrationMode } from "./illustrated-flow";
 
 export interface CombatPoint { x: number; y: number }
 export interface CombatPose extends CombatPoint { rotation?: number; scale?: number }
@@ -19,11 +21,16 @@ export interface CombatIllustrationOptions {
   motion?: (elapsed: number) => CombatPose;
   /** Shares the illustration clock with the persistent unit's anticipation/recovery. */
   onUpdate?: (elapsed: number) => void;
+  illustrationMode?: IllustrationMode;
 }
 
-/** Only authored four-by-two effect atlases are partitioned; portraits remain whole. */
+/** Partition only recognized authored effect atlases; portraits remain whole. */
 export function registerCombatFrames(scene: Phaser.Scene, key: string): { width: number; height: number } | null {
   if (!/^vfx:combat_(attack|effect)_/.test(key) || !scene.textures.exists(key)) return null;
+  if (key.endsWith("_flow")) {
+    const flow = attackFlow(key.replace("vfx:combat_", "").replace(/_flow$/, ""));
+    return flow ? registerFlowFrames(scene, key, "combat", flow) : null;
+  }
   const texture = scene.textures.get(key);
   const source = texture.getSourceImage() as { width: number; height: number };
   if (!source.width || !source.height || source.width % 4 || source.height % 2
@@ -36,20 +43,32 @@ export function registerCombatFrames(scene: Phaser.Scene, key: string): { width:
   return { width, height };
 }
 
-/** Peak cell three and the gameplay milestone share one elapsed-time clock. */
+/** The authored peak cell and gameplay milestone share one elapsed-time clock. */
 export async function playCombatIllustration(rt: AnimationRuntime, id: string, options: CombatIllustrationOptions): Promise<void> {
   rt.assertActive();
   const duration = Math.max(1, options.duration);
   const impactAt = Math.max(0, Math.min(duration, options.impactAt ?? duration * 3 / 7));
-  const key = `vfx:combat_${id}`, frame = registerCombatFrames(rt.scene, key);
+  const candidate = options.illustrationMode !== "legacy" ? attackFlow(id) : undefined;
+  const flowKey = `vfx:combat_${id}_flow`, flowBounds = candidate ? registerCombatFrames(rt.scene, flowKey) : null;
+  const flow = flowBounds ? candidate : undefined;
+  const key = flow ? flowKey : `vfx:combat_${id}`, frame = flowBounds ?? registerCombatFrames(rt.scene, key);
   const rotation = options.rotation ?? (options.from ? Math.atan2(options.to.y - options.from.y, options.to.x - options.from.x) : 0);
   let art: FrameBlend | undefined;
+  const layers: Phaser.GameObjects.Image[] = [];
   let impacted = false;
   const clock = { elapsed: 0 };
   try {
     if (frame) {
-      art = createFrameBlend(rt, key, frame.width, frame.height, "combat");
+      art = flow ? createFrameSequence(rt, key, "combat") : createFrameBlend(rt, key, frame.width, frame.height, "combat");
       art.view.setDepth(options.depth ?? 97).setAlpha(0);
+      if (flow && !rt.reducedMotion) for (const stem of flow.layers) {
+        const layerKey = `vfx:${stem}`;
+        if (!rt.scene.textures.exists(layerKey)) continue;
+        const image = rt.track(rt.scene.add.image(0, 0, layerKey).setDepth((options.depth ?? 97) + .1).setAlpha(0));
+        const source = rt.scene.textures.get(layerKey).getSourceImage() as { width: number; height: number };
+        image.setScale(Math.min((options.width ?? 220) / source.width, (options.height ?? 260) / source.height));
+        layers.push(image);
+      }
     }
     const scale = frame ? Math.min((options.width ?? 220) / frame.width, (options.height ?? 260) / frame.height) : 1;
     const update = () => {
@@ -65,12 +84,27 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
         y: options.from.y + (options.to.y - options.from.y) * travel } : options.to;
       const pose: CombatPose = rt.reducedMotion ? options.to : options.motion ? options.motion(elapsed) : defaultPose;
       if (art) {
-        art.setFrames(cell, Math.min(7, cell + 1), mix);
+        const coherent = flow ? rt.reducedMotion ? flow.peak : flowFrame(elapsed, duration, impactAt, flow.count, flow.peak) : cell;
+        art.setFrames(coherent, flow ? coherent : Math.min(7, cell + 1), flow ? 0 : mix);
         art.view
           .setPosition(pose.x, pose.y).setRotation(rt.reducedMotion ? rotation : (pose.rotation ?? rotation))
           .setScale(scale * (rt.reducedMotion ? 1 : (pose.scale ?? 1)))
           .setAlpha(Math.max(0, fade));
       }
+      layers.forEach((layer, index) => {
+        const delay = index === 0 ? 24 : 76, local = Math.max(0, elapsed - delay);
+        const lag = options.motion ? options.motion(local) : options.from ? {
+          x: options.from.x + (options.to.x - options.from.x) * Math.min(1, local / Math.max(1, impactAt)),
+          y: options.from.y + (options.to.y - options.from.y) * Math.min(1, local / Math.max(1, impactAt)),
+        } : options.to;
+        const tail = Math.max(0, (elapsed - impactAt) / Math.max(1, duration - impactAt));
+        const side = Math.sin(local / duration * Math.PI * (index + 1)) * (index ? 20 : 9);
+        const drift = tail * (index ? 25 : 10);
+        layer.setPosition(lag.x - Math.sin(rotation) * side + Math.cos(rotation) * drift,
+          lag.y + Math.cos(rotation) * side + Math.sin(rotation) * drift)
+          .setRotation(rotation + (index ? -.16 : .08) * Math.sin(local / duration * Math.PI * 2))
+          .setAlpha(Math.max(0, Math.min(1, local / 90, (duration - elapsed) / (index ? 180 : 140))) * (index ? .72 : .58));
+      });
       options.onUpdate?.(elapsed);
       if (!impacted && elapsed >= impactAt) {
         impacted = true;
@@ -83,5 +117,6 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
     update();
   } finally {
     art?.destroy();
+    layers.forEach(layer => layer.destroy());
   }
 }

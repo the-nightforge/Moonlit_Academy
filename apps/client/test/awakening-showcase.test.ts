@@ -222,3 +222,29 @@ it("native refresh failure rejects playback and cleans effects without escaping 
   expect(s.rt.created.every(o=>o.destroyed)).toBe(true);
   runtime.dispose();
 });
+
+it.each([false,true])("f06 flow uses coherent cells, its own secondary motion, one refresh and owned cleanup (reduced=%s)",async reducedMotion=>{
+  const s=setup({reducedMotion},"f06"),frames=new Set<string>();
+  s.rt.scene.textures.get=(()=>({getSourceImage:()=>({width:1024,height:1536}),has:(name:string)=>frames.has(name),add:(name:string)=>frames.add(name)})) as any;
+  const promise=s.run(),config=s.rt.tweenConfigs[0]!,clock=config.targets as {elapsed:number};
+  expect(s.images[0]!.key).toBe("vfx:awakening_f06_flow");expect(frames.size).toBe(16);
+  const motif=s.images[0]!.object;motif.setFrame=vi.fn(()=>motif);
+  const peak=reducedMotion?60:130;
+  clock.elapsed=peak;(config.onUpdate as ()=>void)();
+  expect(motif.setFrame).toHaveBeenLastCalledWith("awakening-7");expect(s.transform).toHaveBeenCalledTimes(1);
+  if(reducedMotion)expect(s.images.filter(i=>i.key.startsWith("vfx:"))).toHaveLength(1);
+  else expect(s.images.map(i=>i.key)).toEqual(expect.arrayContaining(["vfx:combat_layer_ribbon_silk","vfx:combat_layer_ribbon_petals"]));
+  clock.elapsed=reducedMotion?180:520;(config.onUpdate as ()=>void)();
+  expect(motif.setFrame).toHaveBeenLastCalledWith(`awakening-${reducedMotion?7:15}`);
+  if(!reducedMotion)expect(s.images.filter(i=>i.key.includes("combat_layer_")).map(i=>i.object.alpha)).toEqual([0,0]);
+  await runToEnd(s.rt,promise);await promise;expect(s.transform).toHaveBeenCalledTimes(1);expect(s.rt.created.every(n=>n.destroyed)).toBe(true);expect(s.rt.shakes).toEqual([]);
+});
+it.each([false,true])("f06 layer cancellation cleans every child around the authoritative refresh (%s)",async after=>{
+  const s=setup({},"f06"),frames=new Set<string>();
+  s.rt.scene.textures.get=(()=>({getSourceImage:()=>({width:1024,height:1536}),has:(name:string)=>frames.has(name),add:(name:string)=>frames.add(name)})) as any;
+  const promise=s.run(),config=s.rt.tweenConfigs[0]!,clock=config.targets as {elapsed:number};
+  clock.elapsed=after?130:60;(config.onUpdate as ()=>void)();
+  expect(s.images.filter(i=>i.key.includes("combat_layer_"))).toHaveLength(2);
+  s.rt.dispose();await expect(promise).rejects.toThrow("animation aborted");
+  expect(s.transform).toHaveBeenCalledTimes(after?1:0);expect(s.rt.created.every(n=>n.destroyed)).toBe(true);expect(s.images.every(i=>i.object.destroyed)).toBe(true);
+});

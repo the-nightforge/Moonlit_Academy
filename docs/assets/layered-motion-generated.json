@@ -1,0 +1,1479 @@
+{
+  "date": "2026-10-19",
+  "tool": "built-in image_gen.imagegen",
+  "encoding": "lossless WebP; single layer images uniformly downsampled to fit768x512; atlas pixels preserved",
+  "rejectedAttempts": [
+    {
+      "source": "exec-68277c05-c4c6-4c91-9535-f24d5c31145b.png",
+      "reason": "dense bow silhouettes crossed nominal frame boundaries; replaced by a smaller coherent subject"
+    },
+    {
+      "source": "exec-48305efe-aa1e-4680-ad95-48d0a92cf89f.png",
+      "reason": "24 frames present but dense silk crossed several nominal cell edges; replaced by the padded subject"
+    },
+    {
+      "source": "exec-9810c3f1-90f3-4113-a947-1ff13c09f86e.png",
+      "reason": "18 illustrations instead of24; not shipped"
+    },
+    {
+      "source": "exec-2f56f1f3-407e-4d57-aaff-578fe5f554d3.png",
+      "reason": "layout correction still18 illustrations; not shipped"
+    },
+    {
+      "source": "exec-4fb25cdf-f9db-4a23-9365-bbe7ec492c82.png",
+      "reason": "layer art crossed quadrant boundaries; not shipped"
+    }
+  ],
+  "assets": [
+    {
+      "id": "bow_flow_padded",
+      "refs": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f05_up.webp"
+      ],
+      "prompt": "Production TRANSPARENT animation spritesheet,1536x1024,5columns4rows,20chronologicalframes. Most of image is EMPTY TRANSPARENT SPACE. Twenty MINIATURE ornate right-facing gold arrows with tiny turquoise jewels and ivory/jade silk wake, matching own referencehero polished wuxia-anime style. Each arrow effect must be SMALL: no more than160pxWIDE and100pxTALL, centered inside its307x256cell; at least60pixels completelyclear space around entire effect, including everyfeather/spark. This deliberate smallness is essential: no objects anywhere nearcellboundaries. Fixed identical arrowbody/center/scale/rightdirection in all20cells. Sequence rowmajor: continuous small silk-wave changes across same two jade/ivory trailingstrands; frames1-5 gathering,6-10unfurl,11-15followthrough,16-20feather tipsdisperse. Not independent designs, no growingwholeobject, no diagonal or spinningarrows. Shapes change subtly betweenadjacentframes. Realalpha0 background, no haze fillingcells, no rectangular glowpatches, no scenery, people, text/numbers/gridlines. Count20, fiveequalcolumns,fourequalrows. Use emptyspace generously; all artfits strictly central160x100region ofeachcell.",
+      "stem": "combat_attack_bow_flow",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-c68fd684-0370-404e-8c6c-8e95238056bd.png",
+      "layout": {
+        "columns": 5,
+        "rows": 4,
+        "count": 20,
+        "offsetX": -20,
+        "offsetY": 0
+      },
+      "path": "apps/client/public/assets/vfx/combat_attack_bow_flow.webp",
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1240114,
+      "sha256": "25ea21e3405527110e0bb7672659a2d9a594e5c7be1d42be527d66a926505a5e",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "frames": [
+        {
+          "index": 0,
+          "bounds": [
+            -20,
+            0,
+            287,
+            256
+          ],
+          "sha256": "abb91d42e8c01a70b214fa22debacbcfe10ea36dbd33f6fcccdfe47bbd9cf7d8",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            20,
+            9,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 1,
+          "bounds": [
+            287,
+            0,
+            594,
+            256
+          ],
+          "sha256": "3fbfef7388808af8750bf1adc7ce519083a77714a561d9586844696fbfcd4bf7",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "visibleBounds": [
+            0,
+            15,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 2,
+          "bounds": [
+            594,
+            0,
+            902,
+            256
+          ],
+          "sha256": "a63e7d05e81e9c1b95df7c60fe02e529713cfc5f5f6a9122dc33e6598064e162",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            15,
+            308,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 3,
+          "bounds": [
+            902,
+            0,
+            1209,
+            256
+          ],
+          "sha256": "ae8267f699ea0695f70ca3129dd347dc12bdc37c9424ad135deb0859d9698786",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 4,
+          "bounds": [
+            1209,
+            0,
+            1516,
+            256
+          ],
+          "sha256": "e755652fecdc19b5b7b49986d2d8b715cad9d140cfb142ba806ae3f962e0a5e5",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 5,
+          "bounds": [
+            -20,
+            256,
+            287,
+            512
+          ],
+          "sha256": "17a41880eec121fa746ad0c24dcc9ded11ba328446532c36222e5e2bcf17019b",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "visibleBounds": [
+            20,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 6,
+          "bounds": [
+            287,
+            256,
+            594,
+            512
+          ],
+          "sha256": "4b9bdb71c7f374a4ba799366163559815bd38a6c5dadb2c48573ba8484c10e98",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 7,
+          "bounds": [
+            594,
+            256,
+            902,
+            512
+          ],
+          "sha256": "78615baaded4f095b3f71b761a5e4564773d83a03bffdb364a2407079623a701",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            308,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 8,
+          "bounds": [
+            902,
+            256,
+            1209,
+            512
+          ],
+          "sha256": "e25199b03c3d01aa136e9dc4a0d5e1ab42a2997be32ace07a852a79dc5f83382",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 9,
+          "bounds": [
+            1209,
+            256,
+            1516,
+            512
+          ],
+          "sha256": "6ae35930a97e0ede0fbe6e15e477cb9f1bb556a5159c2c74bc7e21e26930b908",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 10,
+          "bounds": [
+            -20,
+            512,
+            287,
+            768
+          ],
+          "sha256": "09116e9d5bf1612d79b4d74eade79a5c84c889491b99e56d31c15dbee523e2a3",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            20,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 11,
+          "bounds": [
+            287,
+            512,
+            594,
+            768
+          ],
+          "sha256": "c6cf9760c60a2947bc397c722a7524cdc5924cd9c74b63442abc2de7249dac95",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 12,
+          "bounds": [
+            594,
+            512,
+            902,
+            768
+          ],
+          "sha256": "47782af2c7857859cee5165464c0e6ae69beb6a65200158f112c92d09a2ea27b",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            308,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 13,
+          "bounds": [
+            902,
+            512,
+            1209,
+            768
+          ],
+          "sha256": "6d725d14c4656234b3fdc6b987e297e32d7822952857d3b554425eab762519d7",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 14,
+          "bounds": [
+            1209,
+            512,
+            1516,
+            768
+          ],
+          "sha256": "e49528966ce0cc340a7099c4c44f2e8ab0cd7c3ea7ade2d5f5867e6612f302dc",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 15,
+          "bounds": [
+            -20,
+            768,
+            287,
+            1024
+          ],
+          "sha256": "92e64c5a469b61857a8c1653b9130b7967ec802c5c0dcbb758dedd5e08fc7d10",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            20,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 16,
+          "bounds": [
+            287,
+            768,
+            594,
+            1024
+          ],
+          "sha256": "7f4c6a7dfaf54b013c88172022553484b9afb9e7481e1f84e4957e1949598ad7",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 17,
+          "bounds": [
+            594,
+            768,
+            902,
+            1024
+          ],
+          "sha256": "9691710acc3e88ae23d52b1949754a7a09b8f5f6e54242c98132b58a829f3acf",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            308,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 18,
+          "bounds": [
+            902,
+            768,
+            1209,
+            1024
+          ],
+          "sha256": "1ca7c8d5622e42aecc7937cf108b357b41dd162a771dbb379359ba86c98772d9",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 19,
+          "bounds": [
+            1209,
+            768,
+            1516,
+            1024
+          ],
+          "sha256": "3efbdeaee5617a72e562e7b1c0140f489ce6dc8cd614e0f0954eaff0a74047ca",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            307,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        }
+      ]
+    },
+    {
+      "id": "ribbon_flow_padded",
+      "refs": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06_up.webp"
+      ],
+      "prompt": "PORTRAIT transparent game-animation spritesheet1024x1536. FOUR COLUMNS, SIX ROWS, TWENTYFOUR equally-spaced MINIATURE azure silk ribbon motifs. Most of canvas must be EMPTYtransparent space. Each256x256invisible cell contains one SMALL motif atcellcenter, at most120pxWIDE and140pxTALL. Atleast50px transparent emptyspace onall4sides ofEVERYmotif includingpetals/goldtips. Do NOT enlargeeffects tofillcells. No overlap, no clippedtips. Directstyle reference ownhero bluegoldsilkcostume, fine shaded satin and whiteblueblossoms, tinygoldbellknot. ONE consistent two-strandS-shapedribbon with identical flowerbellknot throughout24CONSECUTIVEinbetweenframes. Fixeddesign/camera/center/scale. Rows1-2 show subtlygradualunfurl,rows3-4 wave travels gradually fromknotdownsilk,rows5-6samewave settlesandfewpetalsdrift, no suddenredesign. SIX ROWS EACHFOURobjects, never3rows6columns. Transparentalpha0, no opaque coloredbackdrop or backgroundhaze, no largeglow, no text/numbers/cellborders/gridlines/person/scenery. Maintain small120x140motif strict size; preserve ample transparent cellmargins.",
+      "stem": "combat_attack_ribbon_flow",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-9d7aa1f9-b75d-43f2-a630-0772b5794737.png",
+      "layout": {
+        "columns": 4,
+        "rows": 6,
+        "count": 24,
+        "offsetX": 10,
+        "offsetY": 32
+      },
+      "path": "apps/client/public/assets/vfx/combat_attack_ribbon_flow.webp",
+      "sourceSize": [
+        1024,
+        1536
+      ],
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1786042,
+      "sha256": "b91e8e5848eb256326088e954fbe296dc6b96651f5c73a9228bb68e160654d56",
+      "alphaRange": [
+        0,
+        253
+      ],
+      "frames": [
+        {
+          "index": 0,
+          "bounds": [
+            10,
+            32,
+            266,
+            288
+          ],
+          "sha256": "c8bdd3dff87b5e585331ae9d6742db43a3cee0200bf1eb94de8d5af5b9791763",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            5,
+            1,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 1,
+          "bounds": [
+            266,
+            32,
+            522,
+            288
+          ],
+          "sha256": "ffb68d89c2a6fa3a87854d05d604ef05c475d465408044ace6ad102c220be161",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            1,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 2,
+          "bounds": [
+            522,
+            32,
+            778,
+            288
+          ],
+          "sha256": "999d4e7e54726d3a6664a73f2100d26712d85d6c28b288a8ff69e80258f3ce93",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 3,
+          "bounds": [
+            778,
+            32,
+            1034,
+            288
+          ],
+          "sha256": "ca0ddd628535b5d1eb218ff8b4872544f09c5bd80923e90ae7f867d2ead28c9e",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            245,
+            256
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 4,
+          "bounds": [
+            10,
+            288,
+            266,
+            544
+          ],
+          "sha256": "a994d347e53effc8129089f3f397608e6f520bd6a63ebaeddf889fceb19029dc",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 5,
+          "bounds": [
+            266,
+            288,
+            522,
+            544
+          ],
+          "sha256": "6bc4d87a64011671ec5ea99bb408613cd5298c3342f7d57716644573f77d9be0",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 6,
+          "bounds": [
+            522,
+            288,
+            778,
+            544
+          ],
+          "sha256": "e9941c6ab50c2cbee6ccab8b491a47b022191fa2f339eae364546c914f04fc23",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 3
+        },
+        {
+          "index": 7,
+          "bounds": [
+            778,
+            288,
+            1034,
+            544
+          ],
+          "sha256": "9020262125b0ff3f78bd268925b736b4f55722666246a7b6eb58c2c08fcd4258",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            246,
+            256
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 8,
+          "bounds": [
+            10,
+            544,
+            266,
+            800
+          ],
+          "sha256": "f73570e3aa39a035e86ea2289f569eac025ff6ed31a3e99ffa67fc530fcd5efd",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 3
+        },
+        {
+          "index": 9,
+          "bounds": [
+            266,
+            544,
+            522,
+            800
+          ],
+          "sha256": "d633688261a2526a6b04b112021bb80c4a4eba0e0f24f2d2b6e8bb0c1cdab98c",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 10,
+          "bounds": [
+            522,
+            544,
+            778,
+            800
+          ],
+          "sha256": "bd532ee413bb1bf0eb83851f7f99abf146ccedf6a266b88d829fce0f9cd8ad46",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 5
+        },
+        {
+          "index": 11,
+          "bounds": [
+            778,
+            544,
+            1034,
+            800
+          ],
+          "sha256": "5309664c68dabd58dc7d0dbd5f4748dbd659a12b9d777bdec289497d1598bea4",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            246,
+            256
+          ],
+          "maxEdgeAlpha": 3
+        },
+        {
+          "index": 12,
+          "bounds": [
+            10,
+            800,
+            266,
+            1056
+          ],
+          "sha256": "db16d09d09e45280aa273696838872b9ae06559af3845452411cb6d3fb801bba",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 3
+        },
+        {
+          "index": 13,
+          "bounds": [
+            266,
+            800,
+            522,
+            1056
+          ],
+          "sha256": "9fd0f576398d55f1e8807f49874af7010c2fcb75992dbb0d2fcddfb342db5c4a",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 14,
+          "bounds": [
+            522,
+            800,
+            778,
+            1056
+          ],
+          "sha256": "3658544527c355a3d4f16e61488688cef8cc3fb6e5a7c38855a2dc9e2b81c855",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 15,
+          "bounds": [
+            778,
+            800,
+            1034,
+            1056
+          ],
+          "sha256": "510d82be5fb990d606e63302f6fb9c33c530068e42d7473f404fb66c91884305",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            246,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 16,
+          "bounds": [
+            10,
+            1056,
+            266,
+            1312
+          ],
+          "sha256": "3007c29e748aca1311896370db3f32152690eec85ff01a878a874398702f1fb7",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            1,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 17,
+          "bounds": [
+            266,
+            1056,
+            522,
+            1312
+          ],
+          "sha256": "f67242675caefc90222c95d848da9cd5b2ba75f6d81380378ad874b9075d1556",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 18,
+          "bounds": [
+            522,
+            1056,
+            778,
+            1312
+          ],
+          "sha256": "8b5cc3e3b591c5225b93ec5c63ac8276c16b935424064ff81172de2ea2d98fae",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 19,
+          "bounds": [
+            778,
+            1056,
+            1034,
+            1312
+          ],
+          "sha256": "0eefeb5e60260f7f3fc1fbf7e32649ad24f0e1291821505af0ef08f590a09967",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            242,
+            256
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 20,
+          "bounds": [
+            10,
+            1312,
+            266,
+            1568
+          ],
+          "sha256": "59af80602b9aa3c67bab7aa51ff607627d5d86fe30ff1a375109d7ee8f7e85f2",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            224
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 21,
+          "bounds": [
+            266,
+            1312,
+            522,
+            1568
+          ],
+          "sha256": "a3bdda6f90226c613d03873ded40518ce4cf48c0e5b06ef110450725c65db453",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            224
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 22,
+          "bounds": [
+            522,
+            1312,
+            778,
+            1568
+          ],
+          "sha256": "6cb76e5367c2e86253bab39917d7eb5bcd6b34a0b7ab6d384ff433c37b4ff0b1",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            224
+          ],
+          "maxEdgeAlpha": 1
+        },
+        {
+          "index": 23,
+          "bounds": [
+            778,
+            1312,
+            1034,
+            1568
+          ],
+          "sha256": "257f7d07ccc1a6c785209f1a937f0e30a696ff89341ddc1a20d8c682c3c22371",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            236,
+            224
+          ],
+          "maxEdgeAlpha": 1
+        }
+      ]
+    },
+    {
+      "id": "awakening_f06_flow",
+      "refs": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/vfx/awakening_f06_motion.webp"
+      ],
+      "prompt": "Create a NEW transparent RGBA animation sprite sheet requested1024x1536 PORTRAIT, EXACTLY4columns and4rows=SIXTEEN chronological frames, rowmajor. Style supplied own Hạ Chi hero and her own previous awakening sheet are DIRECTstyle refs. Subject an elegant vertical open S-shaped pair of azure silk ribbons with fine gold trim, two tiny hanging gold bells, whiteblue blossom accents and small crystalline petals. This is the SAME precise ribbon/bell/blossom object in16consecutive inbetween frames: stable fixed camera, stable knot roots, consistent bells and strand count. Continuous small incremental silk waving and unrolling; never redraw unrelated variants. Frame1 thin gathering strand;2-5 unroll into openS;6-9 flower motif opens and silk waves around a transparent EMPTY center reserved for hero portrait;10-12 wave travels to tips;13-16 separate a few petals while ribbons settle and dissolve. No hero, face, body, portal, solid ring or scenery. Eachcell must have24px transparent margin fromALLedges, every ribbon tip entirely visible, cells do not touch. Entire image background realalpha0, no opaque haze/black/white/checkerboard grid, no text, frame numbers or borders. Match crisp polished wuxia illustration, satin folds and delicate gold material. Restrained light, no flashes. This will play in place on hero portrait, not a cinematic overlay.",
+      "stem": "awakening_f06_flow",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-525fc0e3-a463-4e48-bb13-25c6fa0d6b26.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "count": 16,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "path": "apps/client/public/assets/vfx/awakening_f06_flow.webp",
+      "sourceSize": [
+        1024,
+        1536
+      ],
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1984914,
+      "sha256": "f9c4cb28c1368e445b5c2761f88c5137aab0ed5e9fd318066b0ceeedb952f43a",
+      "alphaRange": [
+        0,
+        253
+      ],
+      "frames": [
+        {
+          "index": 0,
+          "bounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "sha256": "976c74836f2a255f515a8a211161bcc6395a696e6fc944a31c45a8f7bcc1c589",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "visibleBounds": [
+            0,
+            10,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 1,
+          "bounds": [
+            256,
+            0,
+            512,
+            384
+          ],
+          "sha256": "9ccda2710153a77d3a8c8571b57360bbfe40098ea56865f9936f9603c9da80b9",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            1,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 2,
+          "bounds": [
+            512,
+            0,
+            768,
+            384
+          ],
+          "sha256": "4b78c285e4c27930c2a68b70ed1ba467a25f901754385c62cb9a285af95d868a",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 4
+        },
+        {
+          "index": 3,
+          "bounds": [
+            768,
+            0,
+            1024,
+            384
+          ],
+          "sha256": "8c3aa8451b265750114454de8edcbace1e6a0d9b75c8b99555d54ea61ac81ead",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 4,
+          "bounds": [
+            0,
+            384,
+            256,
+            768
+          ],
+          "sha256": "8150ecef7853446b9810203d9d600a97046a89abbde83bc351c5b3fdb0dcb174",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 3
+        },
+        {
+          "index": 5,
+          "bounds": [
+            256,
+            384,
+            512,
+            768
+          ],
+          "sha256": "6dec974c6b16210c73184f6bfb51f736d9518357842668d28f6f6ab89fa587ce",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 6,
+          "bounds": [
+            512,
+            384,
+            768,
+            768
+          ],
+          "sha256": "be36e38a4e8c846b47c6ee0fdfd73feb89e37263e41663a758ca1653901d566b",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 5
+        },
+        {
+          "index": 7,
+          "bounds": [
+            768,
+            384,
+            1024,
+            768
+          ],
+          "sha256": "a29ae9acaca75f61a39210d56c91798b2359662b1caa21aab9526a84d1cf25f3",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 7
+        },
+        {
+          "index": 8,
+          "bounds": [
+            0,
+            768,
+            256,
+            1152
+          ],
+          "sha256": "d8688cd2f5eaffdad81b2b9bba5198a2429b5ae081b254a3bd11268c367d5bfb",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 3
+        },
+        {
+          "index": 9,
+          "bounds": [
+            256,
+            768,
+            512,
+            1152
+          ],
+          "sha256": "b8ce41cd305807546e6a95d8d563da899cf2c6f74ca96bea47c80ff4967ab4a0",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 10,
+          "bounds": [
+            512,
+            768,
+            768,
+            1152
+          ],
+          "sha256": "8d16312949139a9f62f66658f6d27f317e7fc5891278bd098bbf032eccf14b0f",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 11,
+          "bounds": [
+            768,
+            768,
+            1024,
+            1152
+          ],
+          "sha256": "5ddd03cd43cc5a78ae739fab0c2f842aca3feac2afa6849b180ec16259a2f1a0",
+          "alphaRange": [
+            0,
+            252
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 7
+        },
+        {
+          "index": 12,
+          "bounds": [
+            0,
+            1152,
+            256,
+            1536
+          ],
+          "sha256": "49f040a14da8093b3431bc76fb28e05bf0d046a80b002bbe32b4af9102f6f52a",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 3
+        },
+        {
+          "index": 13,
+          "bounds": [
+            256,
+            1152,
+            512,
+            1536
+          ],
+          "sha256": "9784d87b5d082f6c6b2c3147a5197a2ed912d2e836dbf3b2e9aea7a988368249",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 3
+        },
+        {
+          "index": 14,
+          "bounds": [
+            512,
+            1152,
+            768,
+            1536
+          ],
+          "sha256": "dfd46af20531ee57100bb09a9cfd2cc1076a495cd3ea28af615765f31d249996",
+          "alphaRange": [
+            0,
+            251
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            256,
+            384
+          ],
+          "maxEdgeAlpha": 2
+        },
+        {
+          "index": 15,
+          "bounds": [
+            768,
+            1152,
+            1024,
+            1536
+          ],
+          "sha256": "abb2ad1defd6c89ec9dfdd78c13ed07ca2f513084530d04d9d1bf846f389c4cb",
+          "alphaRange": [
+            0,
+            253
+          ],
+          "visibleBounds": [
+            0,
+            0,
+            253,
+            384
+          ],
+          "maxEdgeAlpha": 2
+        }
+      ]
+    },
+    {
+      "id": "combat_layer_bow_air",
+      "refs": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06_up.webp"
+      ],
+      "prompt": "Generate ONE independent game visual-effect layer image, requested1536x1024landscape, genuine transparentRGBA. Subject:ONE slender ivory wind slipstream with two jade silk filaments, tapering toRIGHT, no arrowhead/shaft/bow/weapon; long airy wake. Ivory and jade colors fromreference1. Directstyle refs are our own f05 archer and f06 ribbonhero; match their crisp polished wuxiaanime illustrated materials, delicate linework and shading, NOT flat graphic. Fixed orthographicview. Center the entire subject within middle60%width andmiddle60%height, at least200pixels COMPLETELY transparentpadding onALLsides. Nothing cut or touchingimageedges. No panels/spritesheet/multiplevariants. No text/logos/labels/people/landscape. Transparentbackground, NO opaquehaze/coloredbackdrop/checkerboard/blackrectangle. Codewillmoveandrotate thissinglecomplete illustratedlayer.",
+      "stem": "combat_layer_bow_air",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-27d35c70-fc8d-4022-8ded-517858cd524b.png",
+      "layout": null,
+      "path": "apps/client/public/assets/vfx/combat_layer_bow_air.webp",
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "width": 768,
+      "height": 512,
+      "bytes": 201778,
+      "sha256": "167c0ad4571cd97022966b87f1792e1e938d496058e3548a418f9bf0cd6eb8c2",
+      "alphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "id": "combat_layer_bow_leaves",
+      "refs": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06_up.webp"
+      ],
+      "prompt": "Generate ONE independent game visual-effect layer image, requested1536x1024landscape, genuine transparentRGBA. Subject:A small sparse flowing cluster of five amber-gold featherleaf fragments facingRIGHT, tiny illustrated golden sparks, generous transparent gaps between feathers. No shared solidstream/background. Directstyle refs are our own f05 archer and f06 ribbonhero; match their crisp polished wuxiaanime illustrated materials, delicate linework and shading, NOT flat graphic. Fixed orthographicview. Center the entire subject within middle60%width andmiddle60%height, at least200pixels COMPLETELY transparentpadding onALLsides. Nothing cut or touchingimageedges. No panels/spritesheet/multiplevariants. No text/logos/labels/people/landscape. Transparentbackground, NO opaquehaze/coloredbackdrop/checkerboard/blackrectangle. Codewillmoveandrotate thissinglecomplete illustratedlayer.",
+      "stem": "combat_layer_bow_leaves",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-651f1e55-43d2-4a55-b943-9f186fcb25e0.png",
+      "layout": null,
+      "path": "apps/client/public/assets/vfx/combat_layer_bow_leaves.webp",
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "width": 768,
+      "height": 512,
+      "bytes": 154974,
+      "sha256": "279fe1b59c5033c0e954c9bbc41a0a9bca2b3da5ce422c0d68e9fa83059195e9",
+      "alphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "id": "combat_layer_ribbon_silk",
+      "refs": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06_up.webp"
+      ],
+      "prompt": "Generate ONE independent game visual-effect layer image, requested1536x1024landscape, genuine transparentRGBA. Subject:ONE long open S-curved sapphireblue silk filament with very thin goldedge and finely shaded blue/satin folds, elegant complete long tips. No knot, flower, bell or completehero. Colorsfromreference2. Directstyle refs are our own f05 archer and f06 ribbonhero; match their crisp polished wuxiaanime illustrated materials, delicate linework and shading, NOT flat graphic. Fixed orthographicview. Center the entire subject within middle60%width andmiddle60%height, at least200pixels COMPLETELY transparentpadding onALLsides. Nothing cut or touchingimageedges. No panels/spritesheet/multiplevariants. No text/logos/labels/people/landscape. Transparentbackground, NO opaquehaze/coloredbackdrop/checkerboard/blackrectangle. Codewillmoveandrotate thissinglecomplete illustratedlayer.",
+      "stem": "combat_layer_ribbon_silk",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-144960ed-f923-44eb-99e0-597875107bfc.png",
+      "layout": null,
+      "path": "apps/client/public/assets/vfx/combat_layer_ribbon_silk.webp",
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "width": 768,
+      "height": 512,
+      "bytes": 164186,
+      "sha256": "ccca18afbbfdd3de086ce88b547f81a25ca1d89d8de06a8d905d25f2eb41d2b2",
+      "alphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "id": "combat_layer_ribbon_petals",
+      "refs": [
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f05_up.webp",
+        "D:/Source/VongNguyet/apps/client/public/assets/heroes/f06_up.webp"
+      ],
+      "prompt": "Generate ONE independent game visual-effect layer image, requested1536x1024landscape, genuine transparentRGBA. Subject:A small sparse cluster of five crystallineblue blossompetals, tinywhitehighlight and few delicate goldenpollenspecks. Cleartransparentgapsbetweenpetals, no enclosing shape/ring or background. Palettefromreference2. Directstyle refs are our own f05 archer and f06 ribbonhero; match their crisp polished wuxiaanime illustrated materials, delicate linework and shading, NOT flat graphic. Fixed orthographicview. Center the entire subject within middle60%width andmiddle60%height, at least200pixels COMPLETELY transparentpadding onALLsides. Nothing cut or touchingimageedges. No panels/spritesheet/multiplevariants. No text/logos/labels/people/landscape. Transparentbackground, NO opaquehaze/coloredbackdrop/checkerboard/blackrectangle. Codewillmoveandrotate thissinglecomplete illustratedlayer.",
+      "stem": "combat_layer_ribbon_petals",
+      "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-5491f7b0-ee5a-4e26-a44c-2803a25cb29d.png",
+      "layout": null,
+      "path": "apps/client/public/assets/vfx/combat_layer_ribbon_petals.webp",
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "width": 768,
+      "height": 512,
+      "bytes": 111468,
+      "sha256": "eb9922734816eae45f2bc155f7e5dd8ca20d90e9d306134ae6aeec1a5a66ccbd",
+      "alphaRange": [
+        0,
+        255
+      ]
+    }
+  ]
+}

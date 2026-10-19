@@ -37,7 +37,7 @@ describe("authored combat attacks", () => {
     sample(rt,profile.impactAt-1);expect(impact).not.toHaveBeenCalled();
     sample(rt,profile.impactAt);expect(impact).toHaveBeenCalledTimes(1);
     sample(rt,profile.duration-1);expect(impact).toHaveBeenCalledTimes(1);
-    expect(keys).toContain(`vfx:combat_attack_${kind}`);expect(keys).toContain("vfx:combat_effect_hit");
+    expect(keys).toContain(`vfx:combat_attack_${kind}${kind==="bow"||kind==="ribbon"?"_flow":""}`);expect(keys).toContain("vfx:combat_effect_hit");
     expect(profile.duration).toBeGreaterThan(profile.impactAt+120);
     await runToEnd(rt,attack);await attack;await rt.drain();expect(rt.created.every(node=>node.destroyed)).toBe(true);
   });
@@ -51,6 +51,24 @@ describe("authored combat attacks", () => {
     expect(rt.created[0]!.rotation).toBeCloseTo(Math.atan2(target.y-from.y,target.x-from.x));
     expect(rt.created[0]!.scaleX).toBe(rt.created[0]!.scaleY);
     await runToEnd(rt,attack);await attack;
+  });
+  it.each(["bow","ribbon"] as const)("legacy %s remains available and missing flow art falls back to eight blended cells",async kind=>{
+    for(const missing of [false,true]) {
+      const rt=new FakeRuntime(),keys=authored(rt),impact=vi.fn();
+      if(missing)rt.scene.textures.exists=key=>!key.endsWith("_flow");
+      const promise=playAttack({kind,color:0xffffff},from,to,{runtime:rt,blocked:true,onImpact:impact,illustrationMode:missing?"improved":"legacy"});
+      expect(keys).toContain(`vfx:combat_attack_${kind}`);expect(keys).not.toContain(`vfx:combat_attack_${kind}_flow`);
+      await runToEnd(rt,promise);await promise;await rt.drain();expect(impact).toHaveBeenCalledTimes(1);expect(rt.created.every(n=>n.destroyed)).toBe(true);
+    }
+  });
+  it.each(["bow","ribbon"] as const)("%s layer cancellation restores the unit before and after its single impact",async kind=>{
+    for(const after of [false,true]) {
+      const rt=new FakeRuntime(),keys=authored(rt),view=stubObject({x:640,y:450}) as unknown as Phaser.GameObjects.Container,impact=vi.fn();
+      const promise=playAttack({kind,color:0xffffff},from,to,{runtime:rt,blocked:false,onImpact:impact,attackerView:view});
+      sample(rt,after?ATTACK_MOTION[kind].impactAt:45);expect(keys.filter(k=>k.includes("combat_layer_"))).toHaveLength(2);
+      rt.dispose();await expect(promise).rejects.toBeInstanceOf(AnimationAbortedError);
+      expect(impact).toHaveBeenCalledTimes(after?1:0);expect(view).toMatchObject({x:640,y:450});expect(rt.created.every(n=>n.destroyed)).toBe(true);expect(rt.pendingCount).toBe(0);
+    }
   });
   it("reduced motion stays at the target with the peak artwork and one impact",async()=>{
     const rt=new FakeRuntime({reducedMotion:true});authored(rt);const view=stubObject({x:640,y:450}) as unknown as Phaser.GameObjects.Container;
