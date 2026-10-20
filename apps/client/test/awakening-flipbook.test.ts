@@ -29,8 +29,13 @@ it("rejects missing or malformed sheets so the dedicated static illustration rem
   const invalid={textures:{exists:()=>true,get:()=>({getSourceImage:()=>({width:1001,height:1000}),has:()=>false,add:vi.fn()})}} as unknown as Phaser.Scene;
   expect(registerAwakeningFrames(invalid,"bad")).toBeNull();
 });
-it.each([[1536,1024],[1024,1536]])("registers sixteen full f06 flow cells at %s by %s",(width,height)=>{
+it("registers sixteen full Aseprite f06 flow cells at 1024 by 1536",()=>{
+  const width=1024,height=1536;
   const add=vi.fn(),scene={textures:{exists:()=>true,get:()=>({getSourceImage:()=>({width,height}),has:()=>false,add})}} as unknown as Phaser.Scene;
   expect(registerAwakeningFrames(scene,"vfx:awakening_f06_flow")).toEqual({width:width/4,height:height/4});
   expect(add).toHaveBeenCalledTimes(16);expect(add).toHaveBeenLastCalledWith("awakening-15",0,width*3/4,height*3/4,width/4,height/4);
+});
+it("rejects an outdated f06 sheet whose dimensions do not match the Aseprite metadata",()=>{
+  const add=vi.fn(),scene={textures:{exists:()=>true,get:()=>({getSourceImage:()=>({width:1536,height:1024}),has:()=>false,add})}} as unknown as Phaser.Scene;
+  expect(registerAwakeningFrames(scene,"vfx:awakening_f06_flow")).toBeNull();expect(add).not.toHaveBeenCalled();
 });

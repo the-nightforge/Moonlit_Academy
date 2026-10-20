@@ -4,6 +4,7 @@ import { AnimationAbortedError } from "../../src/ui/animation-runtime";
 import type { AnimationRuntime } from "../../src/ui/animation-runtime";
 import { ShakeBudget } from "../../src/ui/combat-settings";
 import type { CombatSettings } from "../../src/ui/combat-settings";
+import { ATTACK_FLOWS } from "../../src/ui/illustrated-flow";
 
 /**
  * A chainable stand-in for any Phaser game object: unknown property reads
@@ -35,7 +36,10 @@ export function stubObject(fields: Record<string, unknown> = {}): Record<string 
 export function fakeScene(shakeLog: number[], created?: Record<string | symbol, unknown>[], texts?: string[]): Phaser.Scene {
   const textures = { exists: () => true, addCanvas: () => undefined, createCanvas: () => undefined,
     get: (key: string) => /^vfx:combat_(attack|effect)_/.test(key)
-      ? { getSourceImage: () => ({ width: 1536, height: 1024 }), has: () => false, add: () => undefined }
+      ? { getSourceImage: () => {
+        const flow = key.endsWith("_flow") ? ATTACK_FLOWS[key.replace("vfx:combat_attack_", "").replace("_flow", "") as keyof typeof ATTACK_FLOWS] : undefined;
+        return flow ? { width: flow.atlas.meta.size.w, height: flow.atlas.meta.size.h } : { width: 1536, height: 1024 };
+      }, has: () => false, add: () => undefined }
       : { getSourceImage: () => ({ width: 128, height: 128 }) } };
   const spawn = () => () => {
     const object = stubObject();

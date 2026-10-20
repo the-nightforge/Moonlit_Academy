@@ -3,11 +3,15 @@ import type Phaser from "phaser";
 import { FakeRuntime, runToEnd } from "./helpers/fake-runtime";
 import { playCombatIllustration, registerCombatFrames } from "../src/ui/combat-illustration";
 import { createAnimationRuntime } from "../src/ui/animation-runtime";
+import { ATTACK_FLOWS, attackFlow } from "../src/ui/illustrated-flow";
 
-function atlas(rt: FakeRuntime, width = 1536, height = 1024) {
+function atlas(rt: FakeRuntime, width?: number, height?: number) {
   const frames = new Map<string, number[]>();
   const trims = new Map<string, number[]>();
-  rt.scene.textures.get = (() => ({ getSourceImage: () => ({ width, height }), has: (n: string) => frames.has(n),
+  rt.scene.textures.get = ((key: string) => ({ getSourceImage: () => {
+    const flow=key.endsWith("_flow")?attackFlow(key.replace("vfx:combat_", "").replace(/_flow$/, "")):undefined;
+    return { width: width??flow?.atlas.meta.size.w??1536, height: height??flow?.atlas.meta.size.h??1024 };
+  }, has: (n: string) => frames.has(n),
     add: (n: string, ...bounds: number[]) => { frames.set(n,bounds);return {setTrim:(...trim:number[])=>trims.set(n,trim)}; } })) as any;
   const image = rt.scene.add.image.bind(rt.scene.add), nodes: any[] = [];
   const texture = rt.scene.add.renderTexture.bind(rt.scene.add);
@@ -72,17 +76,13 @@ it("callback failures reject through the real runtime wrapper and dispose both i
   await expect(promise).rejects.toBe(failure); expect(remove).toHaveBeenCalled(); expect(nodes.every(node => node.destroyed)).toBe(true);
 });
 
-it.each([["bow",20,5,4,-20,0],["ribbon",24,4,6,10,32]] as const)("partitions the %s flow sheet with safe shifted bounds and uniform contain dimensions",(kind,count,cols,rows,offsetX,offsetY)=>{
-  for(const [width,height] of [[1536,1024],[1024,1536]] as const) {
-    const rt=new FakeRuntime(),{frames,trims}=atlas(rt,width,height);
-    expect(registerCombatFrames(rt.scene,`vfx:combat_attack_${kind}_flow`)).toMatchObject({width:Math.ceil(width/cols),height:Math.ceil(height/rows)});
-    expect(frames.size).toBe(count);
-    for(let i=0;i<count;i++) {
-      const x=Math.round(i%cols*width/cols)+offsetX, y=Math.round(Math.floor(i/cols)*height/rows)+offsetY;
-      const left=Math.max(0,x),top=Math.max(0,y),right=Math.min(width,Math.round((i%cols+1)*width/cols)+offsetX),bottom=Math.min(height,Math.round((Math.floor(i/cols)+1)*height/rows)+offsetY);
-      expect(frames.get(`combat-${i}`)).toEqual([0,left,top,right-left,bottom-top]);
-      expect(trims.get(`combat-${i}`)).toEqual([Math.ceil(width/cols),Math.ceil(height/rows),left-x,top-y,right-left,bottom-top]);
-    }
+it.each(["bow","ribbon"] as const)("partitions the %s Aseprite sheet without a second shift or trim",kind=>{
+  const rt=new FakeRuntime(),{frames,trims}=atlas(rt);
+  const flow=ATTACK_FLOWS[kind];
+  expect(registerCombatFrames(rt.scene,`vfx:combat_attack_${kind}_flow`)).toEqual({width:flow.atlas.frames[0]!.sourceSize.w,height:flow.atlas.frames[0]!.sourceSize.h});
+  expect(frames.size).toBe(flow.count);expect(trims.size).toBe(0);
+  for(const [i,entry] of flow.atlas.frames.entries()) {
+    expect(frames.get(`combat-${i}`)).toEqual([0,entry.frame.x,entry.frame.y,entry.frame.w,entry.frame.h]);
   }
 });
 it.each(["bow","ribbon"] as const)("plays %s coherent flow cells and secondary layers on one impact clock",async kind=>{

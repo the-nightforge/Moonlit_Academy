@@ -40,7 +40,7 @@
         "offsetX": -20,
         "offsetY": 0
       },
-      "path": "apps/client/public/assets/vfx/combat_attack_bow_flow.webp",
+      "path": "art/animations/references/combat_attack_bow_flow.webp",
       "sourceSize": [
         1536,
         1024
@@ -491,7 +491,7 @@
         "offsetX": 10,
         "offsetY": 32
       },
-      "path": "apps/client/public/assets/vfx/combat_attack_ribbon_flow.webp",
+      "path": "art/animations/references/combat_attack_ribbon_flow.webp",
       "sourceSize": [
         1024,
         1536
@@ -1027,7 +1027,7 @@
         "offsetX": 0,
         "offsetY": 0
       },
-      "path": "apps/client/public/assets/vfx/awakening_f06_flow.webp",
+      "path": "art/animations/references/awakening_f06_flow.webp",
       "sourceSize": [
         1024,
         1536

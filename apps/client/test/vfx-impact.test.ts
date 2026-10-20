@@ -10,7 +10,6 @@ const from = { x: 640, y: 450 }, to = { x: 640, y: 160 };
 const kinds: AttackKind[] = ["slash","spear","darts","bow","herb","fan","ink","music","ribbon","fire","star","moon","talisman","blood","spell"];
 function authored(rt: FakeRuntime) {
   const keys: string[] = [];
-  rt.scene.textures.get = (() => ({ getSourceImage: () => ({ width: 1536, height: 1024 }), has: () => false, add: () => {} })) as any;
   const add = rt.scene.add.image.bind(rt.scene.add);
   const texture = rt.scene.add.renderTexture.bind(rt.scene.add);
   const instrument = (image: Phaser.GameObjects.Image | Phaser.GameObjects.RenderTexture) => {

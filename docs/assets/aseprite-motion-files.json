@@ -1,0 +1,38 @@
+[
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_bow_flow.png",
+    "sha256": "ef4a1d378e6cd1d1a5507184f1f0612614dc50aa336a9a1f0c610563869d3a64"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_bow_flow.json",
+    "sha256": "c2dd7444cfe97acf6fe707acee1efb21bee9edc0d0fa5ed9aebf605709880c0b"
+  },
+  {
+    "path": "art/animations/combat_attack_bow_flow.aseprite",
+    "sha256": "05e7148cd8056f60dabb1183ceec8838745409f5c76c074dea82b14116a985c6"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_ribbon_flow.png",
+    "sha256": "d40b61641ce4a5319e984bb62209a6c67311e8fb029d89c97351cc3d2bcf9003"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_ribbon_flow.json",
+    "sha256": "92f2d2d15201e7e47a7a2c8e5512ce1986fbe68cab06fb522916432b41109619"
+  },
+  {
+    "path": "art/animations/combat_attack_ribbon_flow.aseprite",
+    "sha256": "41c6661a4dae33dd8777891bb295f2e51395b7c51f08a1d62a6608f37d1a6e89"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f06_flow.png",
+    "sha256": "e99089ab2605d95cb670dd8153f68102aac89326204ae0a1fe11f2064e40843b"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f06_flow.json",
+    "sha256": "a482fc9eb605f8fb739efd9b619a794c3410951a637bb518cb83197cf315d5eb"
+  },
+  {
+    "path": "art/animations/awakening_f06_flow.aseprite",
+    "sha256": "5181dabb003504a2cd58600a23eb9cf2d8b11c006204214de8659260cc358ec2"
+  }
+]
