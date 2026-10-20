@@ -5,7 +5,7 @@ import { sampleAwakening } from "./awakening-motion";
 import { awakeningSheet, registerAwakeningFrames, sampleAwakeningFrame } from "./awakening-flipbook";
 import { createFrameBlend } from "./frame-blend";
 import type { FrameBlend } from "./frame-blend";
-import { ATTACK_FLOWS, createFrameSequence, F06_FLOW, FLOW_PLAYBACK_STRETCH, flowFrame } from "./illustrated-flow";
+import { ATTACK_FLOWS, createFrameSequence, F06_FLOW, FLOW_PLAYBACK_STRETCH, flowPosition } from "./illustrated-flow";
 import type { IllustrationMode } from "./illustrated-flow";
 export { AWAKENING_EFFECTS, awakeningEffectsFor } from "./awakening-profiles";
 
@@ -49,10 +49,12 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
     const flowBounds=details.heroId==="f06" && details.illustrationMode!=="legacy" ? registerAwakeningFrames(scene,"vfx:awakening_f06_flow") : null;
     const sheetKey=flowBounds?"vfx:awakening_f06_flow":`vfx:${awakeningSheet(details.heroId)}`;
     const sheet=flowBounds??(!rt.reducedMotion?registerAwakeningFrames(scene,sheetKey):null);
-    frameBlend=sheet?flowBounds?createFrameSequence(rt,sheetKey,"awakening"):createFrameBlend(rt,sheetKey,sheet.width,sheet.height,"awakening"):undefined;
+    frameBlend=sheet?flowBounds&&rt.reducedMotion?createFrameSequence(rt,sheetKey,"awakening"):createFrameBlend(rt,sheetKey,sheet.width,sheet.height,"awakening"):undefined;
     const motif=frameBlend?frameBlend.view.setPosition(old.x,old.y):sprite(profile.texture,height+36);
     if(sheet && motif) {
-      motif.setScale(Math.min((width+80)/sheet.width,(height+36)/sheet.height));
+      const sizing=flowBounds?F06_FLOW.presentationSize:sheet;
+      motif.setScale(Math.min((width+80)/sizing.width,(height+36)/sizing.height));
+      if(flowBounds)motif.setOrigin(F06_FLOW.anchor.x/sheet.width,F06_FLOW.anchor.y/sheet.height);
       effects.add(motif);
     }
     const motifScale = motif?.scaleX ?? 1;
@@ -85,8 +87,9 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
       if(!transformed && clock.elapsed>=charge)swap();
       const pose=sampleAwakening(profile,clock.elapsed,rt.reducedMotion);
       if(frameBlend) {
-        const coherent=rt.reducedMotion?F06_FLOW.peak:flowFrame(clock.elapsed,520,motion.charge,F06_FLOW.count,F06_FLOW.peak);
-        const frame=flowBounds?{from:coherent,to:coherent,mix:0}:sampleAwakeningFrame(clock.elapsed/(motion.charge+motion.blend+motion.release));
+        const coherent=rt.reducedMotion?F06_FLOW.peak:flowPosition(clock.elapsed,520,motion.charge,F06_FLOW.count,F06_FLOW.peak);
+        const from=Math.floor(coherent);
+        const frame=flowBounds?{from,to:rt.reducedMotion?from:Math.min(F06_FLOW.count-1,from+1),mix:rt.reducedMotion?0:coherent-from}:sampleAwakeningFrame(clock.elapsed/(motion.charge+motion.blend+motion.release));
         frameBlend.setFrames(frame.from,frame.to,frame.mix);
       }
       motif?.setAlpha(pose.alpha);

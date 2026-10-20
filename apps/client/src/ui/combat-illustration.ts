@@ -72,7 +72,8 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
         layers.push(image);
       }
     }
-    const scale = frame ? Math.min((options.width ?? 220) / frame.width, (options.height ?? 260) / frame.height) : 1;
+    const sizing = flow?.presentationSize ?? frame;
+    const scale = sizing ? Math.min((options.width ?? 220) / sizing.width, (options.height ?? 260) / sizing.height) : 1;
     const update = () => {
       rt.assertActive();
       const elapsed = Math.max(0, Math.min(duration, clock.elapsed));
@@ -87,7 +88,7 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
       if (art) {
         const coherent = flow ? rt.reducedMotion ? flow.peak : flowPosition(elapsed, duration, impactAt, flow.count, flow.peak) : position;
         const fromFrame = Math.floor(coherent), nextFrame = Math.min((flow?.count ?? 8) - 1, fromFrame + 1);
-        // Bow's rigid pixels are identical in all Aseprite cels: only the feathers/wake dissolve.
+        // Aseprite keeps the physical pivot stable while premultiplied source frames blend.
         art.setFrames(fromFrame, flow && !interpolate ? fromFrame : nextFrame, flow && !interpolate ? 0 : coherent - fromFrame);
         art.view
           .setPosition(pose.x, pose.y).setRotation(rt.reducedMotion ? rotation : (pose.rotation ?? rotation))

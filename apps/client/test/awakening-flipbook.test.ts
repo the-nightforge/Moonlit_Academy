@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import { expect, it, vi } from "vitest";
 import { registerAwakeningFrames, sampleAwakeningFrame } from "../src/ui/awakening-flipbook";
+import { F06_FLOW } from "../src/ui/illustrated-flow";
 
 it("registers eight full illustrated cells once, without slicing hero portraits", () => {
   const frames=new Set<string>();
@@ -29,8 +30,8 @@ it("rejects missing or malformed sheets so the dedicated static illustration rem
   const invalid={textures:{exists:()=>true,get:()=>({getSourceImage:()=>({width:1001,height:1000}),has:()=>false,add:vi.fn()})}} as unknown as Phaser.Scene;
   expect(registerAwakeningFrames(invalid,"bad")).toBeNull();
 });
-it("registers sixteen full Aseprite f06 flow cells at 1024 by 1536",()=>{
-  const width=1024,height=1536;
+it("registers sixteen full padded Aseprite f06 flow cells",()=>{
+  const {w:width,h:height}=F06_FLOW.atlas.meta.size;
   const add=vi.fn(),scene={textures:{exists:()=>true,get:()=>({getSourceImage:()=>({width,height}),has:()=>false,add})}} as unknown as Phaser.Scene;
   expect(registerAwakeningFrames(scene,"vfx:awakening_f06_flow")).toEqual({width:width/4,height:height/4});
   expect(add).toHaveBeenCalledTimes(16);expect(add).toHaveBeenLastCalledWith("awakening-15",0,width*3/4,height*3/4,width/4,height/4);

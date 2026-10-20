@@ -13,26 +13,26 @@
   },
   {
     "path": "apps/client/public/assets/vfx/combat_attack_ribbon_flow.png",
-    "sha256": "d40b61641ce4a5319e984bb62209a6c67311e8fb029d89c97351cc3d2bcf9003"
+    "sha256": "64d3c7baa2b466538a8eaeaaf78a77cc3a3b65174b1a2dc081a1e842ce2ccbb6"
   },
   {
     "path": "apps/client/public/assets/vfx/combat_attack_ribbon_flow.json",
-    "sha256": "92f2d2d15201e7e47a7a2c8e5512ce1986fbe68cab06fb522916432b41109619"
+    "sha256": "e32a2a1dd9d2c3a1f29c04f726157a479a9837e16de7282b2f56897d374d3e86"
   },
   {
     "path": "art/animations/combat_attack_ribbon_flow.aseprite",
-    "sha256": "41c6661a4dae33dd8777891bb295f2e51395b7c51f08a1d62a6608f37d1a6e89"
+    "sha256": "e136b558ced112261cca5b9e5533da33c46c400aebb406f8d83a4efc4460698a"
   },
   {
     "path": "apps/client/public/assets/vfx/awakening_f06_flow.png",
-    "sha256": "e99089ab2605d95cb670dd8153f68102aac89326204ae0a1fe11f2064e40843b"
+    "sha256": "b7f5b31ae5eb336a150d93caadf92b3d66518896aac535bc077f4bd645f79f90"
   },
   {
     "path": "apps/client/public/assets/vfx/awakening_f06_flow.json",
-    "sha256": "a482fc9eb605f8fb739efd9b619a794c3410951a637bb518cb83197cf315d5eb"
+    "sha256": "e8a7e22e30ba39e7e2b7bf120afb96e317068928639698f1e38b122f4e1d6358"
   },
   {
     "path": "art/animations/awakening_f06_flow.aseprite",
-    "sha256": "5181dabb003504a2cd58600a23eb9cf2d8b11c006204214de8659260cc358ec2"
+    "sha256": "1c040f174cf04f4f7e2b61816acf0fbc455087cf8dbe2f14115e064b3b971c9e"
   }
 ]

@@ -32,15 +32,18 @@ function atlas(rt: FakeRuntime, width?: number, height?: number) {
 function sample(rt: FakeRuntime, elapsed: number) {
   const config = rt.tweenConfigs[0]!; (config.targets as { elapsed: number }).elapsed = elapsed; (config.onUpdate as () => void)();
 }
-it("smooth bow playback interpolates between aligned source frames at subframe times",async()=>{
+it.each(["bow","ribbon"] as const)("smooth %s playback interpolates between aligned source frames at subframe times",async kind=>{
   const rt=new FakeRuntime(),{nodes,view}=atlas(rt);
-  const promise=playCombatIllustration(rt,"attack_bow",{to:{x:100,y:50},duration:640,impactAt:310});
-  sample(rt,155/9);
+  const impactAt=kind==="bow"?310:340;
+  const promise=playCombatIllustration(rt,`attack_${kind}`,{to:{x:100,y:50},duration:kind==="bow"?640:830,impactAt});
+  sample(rt,impactAt/ATTACK_FLOWS[kind].peak/2);
   expect(view()).toBeDefined();
   expect(nodes[0]).toMatchObject({frame:"combat-0",alpha:.5});
   expect(nodes[1]).toMatchObject({frame:"combat-1",alpha:.5});
   expect(view().compositedAlpha).toBeCloseTo(1);
-  expect([view().originX,view().originY]).toEqual([ATTACK_FLOWS.bow.anchor.x/ATTACK_FLOWS.bow.atlas.frames[0]!.sourceSize.w,ATTACK_FLOWS.bow.anchor.y/ATTACK_FLOWS.bow.atlas.frames[0]!.sourceSize.h]);
+  expect([view().originX,view().originY]).toEqual([ATTACK_FLOWS[kind].anchor.x/ATTACK_FLOWS[kind].atlas.frames[0]!.sourceSize.w,ATTACK_FLOWS[kind].anchor.y/ATTACK_FLOWS[kind].atlas.frames[0]!.sourceSize.h]);
+  expect(view().scaleX).toBeCloseTo(Math.min(220/ATTACK_FLOWS[kind].presentationSize.width,260/ATTACK_FLOWS[kind].presentationSize.height));
+  expect(view().scaleY).toBe(view().scaleX);
   await runToEnd(rt,promise);await promise;expect(nodes.every(node=>node.destroyed)).toBe(true);
 });
 it("crossfades adjacent authored cells and lands one milestone on the same clock", async () => {
@@ -100,9 +103,9 @@ it.each(["bow","ribbon"] as const)("plays %s coherent flow cells and secondary l
   const rt=new FakeRuntime(),{nodes}=atlas(rt),beat=vi.fn(),count=kind==="bow"?20:24,peak=kind==="bow"?9:10;
   const duration=kind==="bow"?640:830,impactAt=kind==="bow"?310:340;
   const promise=playCombatIllustration(rt,`attack_${kind}`,{from:{x:640,y:450},to:{x:640,y:160},duration,impactAt,onImpact:beat});
-  expect(nodes.map(n=>n.textureKey)).toEqual([...Array(kind==="bow"?2:1).fill(`vfx:combat_attack_${kind}_flow`),...kind==="bow"?["vfx:combat_layer_bow_air","vfx:combat_layer_bow_leaves"]:["vfx:combat_layer_ribbon_silk","vfx:combat_layer_ribbon_petals"]]);
+  expect(nodes.map(n=>n.textureKey)).toEqual([...Array(2).fill(`vfx:combat_attack_${kind}_flow`),...kind==="bow"?["vfx:combat_layer_bow_air","vfx:combat_layer_bow_leaves"]:["vfx:combat_layer_ribbon_silk","vfx:combat_layer_ribbon_petals"]]);
   expect(nodes[0].frame).toBe("combat-0");
-  const layerStart=kind==="bow"?2:1;
+  const layerStart=2;
   sample(rt,100);const early=nodes.slice(layerStart).map(n=>[n.x,n.y,n.rotation]);
   sample(rt,impactAt);expect(nodes[0].frame).toBe(`combat-${peak}`);expect(beat).toHaveBeenCalledTimes(1);
   expect(nodes.slice(layerStart).map(n=>[n.x,n.y,n.rotation])).not.toEqual(early);

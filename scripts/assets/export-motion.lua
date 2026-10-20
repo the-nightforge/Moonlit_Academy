@@ -27,7 +27,7 @@ for _, source in ipairs(sources.assets) do
     local editable="art/animations/"..source.stem..".aseprite"
     local rebuilding=app.params.rebuild=="true" or not app.fs.isFile(path(editable))
     local sprite = rebuilding and Sprite(width, height, ColorMode.RGB) or Sprite{fromFile=path(editable)}
-    if source.stem=="combat_attack_bow_flow" and not rebuilding then width=sprite.width;height=sprite.height end
+    if not rebuilding then width=sprite.width;height=sprite.height end
     assert(sprite.width==width and sprite.height==height,"Editable canvas dimensions changed")
     if rebuilding then
       sprite.layers[1].name = "Illustrated frames"
@@ -36,19 +36,25 @@ for _, source in ipairs(sources.assets) do
     local item = { stem=source.stem, source=source.path, width=width, height=height,
       anchor={x=width/2,y=height/2}, duration=timing.duration, impactAt=timing.impact, frames={} }
     local valid,alignment=pcall(json.decode,sprite.data)
-    if valid and alignment and alignment.alignment=="arrowhead" then
-      item.anchor={x=alignment.anchor.x,y=alignment.anchor.y};item.rigidCoreVerified=true
+    if valid and alignment and (alignment.alignment=="arrowhead" or alignment.alignment=="flower") then
+      item.anchor={x=alignment.anchor.x,y=alignment.anchor.y}
       local bounds=alignment.rigidCoreBounds
-      item.alignment={alignment=alignment.alignment,revision=alignment.revision,
-        rigidCoreBounds={x=bounds.x,y=bounds.y,w=bounds.w,h=bounds.h},sourceAnchors={}}
+      item.alignment={alignment=alignment.alignment,revision=alignment.revision,sourceAnchors={}}
+      if alignment.featureAnchor then item.alignment.featureAnchor={x=alignment.featureAnchor.x,y=alignment.featureAnchor.y} end
       for index=1,#alignment.sourceAnchors do
         table.insert(item.alignment.sourceAnchors,{x=alignment.sourceAnchors[index].x,y=alignment.sourceAnchors[index].y})
       end
+      if alignment.alignment=="arrowhead" then
+      item.rigidCoreVerified=true
+      item.alignment.rigidCoreBounds={x=bounds.x,y=bounds.y,w=bounds.w,h=bounds.h}
       local coreReference=Image(width,height,ColorMode.RGB);coreReference:drawSprite(sprite,10)
       local referencePixels=Image(coreReference,Rectangle(bounds.x,bounds.y,bounds.w,bounds.h))
       for index=1,#sprite.frames do
         local actual=Image(width,height,ColorMode.RGB);actual:drawSprite(sprite,index)
         assert(Image(actual,Rectangle(bounds.x,bounds.y,bounds.w,bounds.h)):isEqual(referencePixels),"Rigid arrowhead changed")
+      end
+      else
+        item.landmarkAligned=true;item.sourcePixelsPreserved=alignment.sourcePixelsPreserved
       end
     end
     local function boundary(index)

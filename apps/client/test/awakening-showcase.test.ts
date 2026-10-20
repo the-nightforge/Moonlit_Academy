@@ -7,6 +7,7 @@ import { FakeRuntime, runToEnd, stubObject } from "./helpers/fake-runtime";
 import { playAwakening } from "../src/ui/awakening-showcase";
 import { HERO_AWAKENINGS } from "../src/ui/awakening-profiles";
 import { createAnimationRuntime } from "../src/ui/animation-runtime";
+import { F06_FLOW } from "../src/ui/illustrated-flow";
 vi.mock("../src/ui/theme", () => ({ TEXT_BASE: {} }));
 
 function setup(settings = {}, heroId = "m12") {
@@ -28,6 +29,13 @@ function setup(settings = {}, heroId = "m12") {
     object.setAlpha=vi.fn((alpha:number)=>{object.alpha=alpha;return object;});
     images.push({ key, object }); return object;
   }) as unknown as typeof rt.scene.add.image;
+  const addTarget=rt.scene.add.renderTexture.bind(rt.scene.add);
+  rt.scene.add.renderTexture=((...args:Parameters<typeof addTarget>)=>{
+    const target=addTarget(...args);
+    target.setOrigin=vi.fn((x:number,y:number)=>{target.originX=x;target.originY=y;return target;});
+    target.setScale=vi.fn((scale:number)=>{target.scaleX=scale;target.scaleY=scale;return target;});
+    return target;
+  }) as typeof rt.scene.add.renderTexture;
   const graphics = vi.spyOn(rt.scene.add, "graphics");
   const createContainer = rt.scene.add.container.bind(rt.scene.add);
   rt.scene.add.container = ((...args: Parameters<typeof createContainer>) => {
@@ -223,9 +231,27 @@ it("native refresh failure rejects playback and cleans effects without escaping 
   runtime.dispose();
 });
 
+it("f06 continuously blends aligned silk frames while preserving one in-place portrait refresh",async()=>{
+  const s=setup({},"f06");
+  s.rt.scene.textures.get=(()=>({getSourceImage:()=>({width:F06_FLOW.atlas.meta.size.w,height:F06_FLOW.atlas.meta.size.h}),has:()=>false,add:()=>{}})) as any;
+  const promise=s.run(),config=s.rt.tweenConfigs[0]!,clock=config.targets as {elapsed:number};
+  clock.elapsed=65/7;(config.onUpdate as ()=>void)();
+  expect(s.images[0]!.object.alpha).toBeCloseTo(.5);
+  expect(s.images[1]!.key).toBe("vfx:awakening_f06_flow");
+  expect(s.images[1]!.object.alpha).toBeCloseTo(.5);
+  const target=s.rt.created.find(node=>node.frameBlendTarget===true)!;
+  expect(target.compositedAlpha).toBeCloseTo(1);
+  expect(target.setOrigin).toHaveBeenCalledWith(F06_FLOW.anchor.x/F06_FLOW.atlas.frames[0]!.sourceSize.w,F06_FLOW.anchor.y/F06_FLOW.atlas.frames[0]!.sourceSize.h);
+  expect((target.setScale as ReturnType<typeof vi.fn>).mock.calls[0]).toEqual([156/384]);
+  expect(s.transform).not.toHaveBeenCalled();
+  await runToEnd(s.rt,promise);await promise;
+  expect(s.rt.clock).toBe(832);expect(s.transform).toHaveBeenCalledTimes(1);
+  expect(s.images.every(image=>image.object.destroyed)).toBe(true);
+});
+
 it.each([false,true])("f06 flow uses coherent cells, its own secondary motion, one refresh and owned cleanup (reduced=%s)",async reducedMotion=>{
   const s=setup({reducedMotion},"f06"),frames=new Set<string>();
-  s.rt.scene.textures.get=(()=>({getSourceImage:()=>({width:1024,height:1536}),has:(name:string)=>frames.has(name),add:(name:string)=>frames.add(name)})) as any;
+  s.rt.scene.textures.get=(()=>({getSourceImage:()=>({width:F06_FLOW.atlas.meta.size.w,height:F06_FLOW.atlas.meta.size.h}),has:(name:string)=>frames.has(name),add:(name:string)=>frames.add(name)})) as any;
   const promise=s.run(),config=s.rt.tweenConfigs[0]!,clock=config.targets as {elapsed:number};
   expect(s.images[0]!.key).toBe("vfx:awakening_f06_flow");expect(frames.size).toBe(16);
   const motif=s.images[0]!.object;motif.setFrame=vi.fn(()=>motif);
@@ -242,7 +268,7 @@ it.each([false,true])("f06 flow uses coherent cells, its own secondary motion, o
 });
 it.each([1, 2] as const)("f06 gives the full layered transition 832 milliseconds at normal speed, with a synchronized refresh (speed %s)", async speed => {
   const s = setup({ speed }, "f06");
-  s.rt.scene.textures.get = (() => ({ getSourceImage: () => ({ width: 1024, height: 1536 }), has: () => false, add: () => {} })) as any;
+  s.rt.scene.textures.get = (() => ({ getSourceImage: () => ({ width: F06_FLOW.atlas.meta.size.w, height: F06_FLOW.atlas.meta.size.h }), has: () => false, add: () => {} })) as any;
   const refreshedAt: number[] = [];
   const refresh = s.transform.getMockImplementation()!;
   s.transform.mockImplementation(() => { refreshedAt.push(s.rt.clock); refresh(); });
@@ -256,7 +282,7 @@ it.each([1, 2] as const)("f06 gives the full layered transition 832 milliseconds
 });
 it.each([false,true])("f06 layer cancellation cleans every child around the authoritative refresh (%s)",async after=>{
   const s=setup({},"f06"),frames=new Set<string>();
-  s.rt.scene.textures.get=(()=>({getSourceImage:()=>({width:1024,height:1536}),has:(name:string)=>frames.has(name),add:(name:string)=>frames.add(name)})) as any;
+  s.rt.scene.textures.get=(()=>({getSourceImage:()=>({width:F06_FLOW.atlas.meta.size.w,height:F06_FLOW.atlas.meta.size.h}),has:(name:string)=>frames.has(name),add:(name:string)=>frames.add(name)})) as any;
   const promise=s.run(),config=s.rt.tweenConfigs[0]!,clock=config.targets as {elapsed:number};
   clock.elapsed=after?130:60;(config.onUpdate as ()=>void)();
   expect(s.images.filter(i=>i.key.includes("combat_layer_"))).toHaveLength(2);

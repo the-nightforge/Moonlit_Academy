@@ -8,13 +8,19 @@ import awakeningAtlas from "../../public/assets/vfx/awakening_f06_flow.json";
 export type IllustrationMode = "improved" | "legacy";
 /** Stretch the shared artwork clock, including its gameplay milestones and secondary layers. */
 export const FLOW_PLAYBACK_STRETCH = 1.6;
+function presentation(atlas: { meta: { slices: { name: string; keys: { bounds: { x: number; y: number; w: number; h: number }; pivot: { x: number; y: number } }[] }[] } }, name: string) {
+  const { bounds, pivot } = atlas.meta.slices.find(slice => slice.name === name)!.keys[0]!;
+  return { anchor: { x: bounds.x + pivot.x, y: bounds.y + pivot.y }, presentationSize: { width: bounds.w, height: bounds.h } };
+}
 export const ATTACK_FLOWS = {
   bow: { count: 20, columns: 5, rows: 4, atlas: bowAtlas, peak: 9, interpolate: true,
-    anchor: bowAtlas.meta.slices.find(slice => slice.name === "arrowhead")!.keys[0]!.pivot,
+    ...presentation(bowAtlas, "arrowhead"),
     layers: ["combat_layer_bow_air", "combat_layer_bow_leaves"] },
-  ribbon: { count: 24, columns: 4, rows: 6, atlas: ribbonAtlas, peak: 10, layers: ["combat_layer_ribbon_silk", "combat_layer_ribbon_petals"] },
+  ribbon: { count: 24, columns: 4, rows: 6, atlas: ribbonAtlas, peak: 10, interpolate: true,
+    ...presentation(ribbonAtlas, "presentation"), layers: ["combat_layer_ribbon_silk", "combat_layer_ribbon_petals"] },
 } as const;
-export const F06_FLOW = { count: 16, columns: 4, rows: 4, atlas: awakeningAtlas, peak: 7 } as const;
+export const F06_FLOW = { count: 16, columns: 4, rows: 4, atlas: awakeningAtlas, peak: 7,
+  ...presentation(awakeningAtlas, "presentation") } as const;
 export function attackFlow(id: string) { return ATTACK_FLOWS[id.replace(/^attack_/, "") as keyof typeof ATTACK_FLOWS]; }
 
 interface AsepriteAtlas {
