@@ -65,7 +65,11 @@ it("ships the verified Aseprite documents and matching PNG/JSON exports with int
     expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([atlas.meta.size.w, atlas.meta.size.h]);
     expect(editable.readUInt16LE(4)).toBe(0xa5e0);
     expect([editable.readUInt16LE(6), editable.readUInt16LE(8), editable.readUInt16LE(10)]).toEqual([atlas.frames.length, entry.width, entry.height]);
-    expect(entry.anchor).toEqual({ x: entry.width / 2, y: entry.height / 2 });
+    if(entry.stem==="combat_attack_bow_flow"){
+      expect(entry.rigidCoreVerified).toBe(true);
+      expect(entry.alignment.alignment).toBe("arrowhead");
+      expect(entry.anchor).toEqual(atlas.meta.slices.find((slice:any)=>slice.name==="arrowhead").keys[0].pivot);
+    } else expect(entry.anchor).toEqual({ x: entry.width / 2, y: entry.height / 2 });
     expect(entry.reimportVerified).toBe(true);
     expect(entry.frames.every((frame: any) => frame.maxEdgeAlpha < 16 && frame.visiblePixels > 0)).toBe(true);
     expect(entry.frames.map((frame: any) => frame.duration)).toEqual(atlas.frames.map((frame: any) => frame.duration));

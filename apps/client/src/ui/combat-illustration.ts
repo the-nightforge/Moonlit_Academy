@@ -2,7 +2,7 @@ import type Phaser from "phaser";
 import type { AnimationRuntime } from "./animation-runtime";
 import { createFrameBlend } from "./frame-blend";
 import type { FrameBlend } from "./frame-blend";
-import { attackFlow, createFrameSequence, FLOW_PLAYBACK_STRETCH, flowFrame, registerFlowFrames } from "./illustrated-flow";
+import { attackFlow, createFrameSequence, FLOW_PLAYBACK_STRETCH, flowPosition, registerFlowFrames } from "./illustrated-flow";
 import type { IllustrationMode } from "./illustrated-flow";
 
 export interface CombatPoint { x: number; y: number }
@@ -51,6 +51,7 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
   const candidate = options.illustrationMode !== "legacy" ? attackFlow(id) : undefined;
   const flowKey = `vfx:combat_${id}_flow`, flowBounds = candidate ? registerCombatFrames(rt.scene, flowKey) : null;
   const flow = flowBounds ? candidate : undefined;
+  const interpolate = flow && "interpolate" in flow && flow.interpolate && !rt.reducedMotion;
   const key = flow ? flowKey : `vfx:combat_${id}`, frame = flowBounds ?? registerCombatFrames(rt.scene, key);
   const rotation = options.rotation ?? (options.from ? Math.atan2(options.to.y - options.from.y, options.to.x - options.from.x) : 0);
   let art: FrameBlend | undefined;
@@ -59,7 +60,8 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
   const clock = { elapsed: 0 };
   try {
     if (frame) {
-      art = flow ? createFrameSequence(rt, key, "combat") : createFrameBlend(rt, key, frame.width, frame.height, "combat");
+      art = flow && !interpolate ? createFrameSequence(rt, key, "combat") : createFrameBlend(rt, key, frame.width, frame.height, "combat");
+      if (flow && "anchor" in flow) art.view.setOrigin(flow.anchor.x / frame.width, flow.anchor.y / frame.height);
       art.view.setDepth(options.depth ?? 97).setAlpha(0);
       if (flow && !rt.reducedMotion) for (const stem of flow.layers) {
         const layerKey = `vfx:${stem}`;
@@ -77,15 +79,16 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
       const position = rt.reducedMotion ? 3 : elapsed <= impactAt
         ? (impactAt === 0 ? 3 : elapsed / impactAt * 3)
         : 3 + (elapsed - impactAt) / Math.max(1, duration - impactAt) * 4;
-      const cell = Math.min(7, Math.floor(position)), mix = position - cell;
       const fade = Math.min(1, elapsed / Math.min(65, duration / 4), (duration - elapsed) / Math.min(130, duration / 3));
       const travel = Math.min(1, elapsed / Math.max(1, impactAt));
       const defaultPose = options.from ? { x: options.from.x + (options.to.x - options.from.x) * travel,
         y: options.from.y + (options.to.y - options.from.y) * travel } : options.to;
       const pose: CombatPose = rt.reducedMotion ? options.to : options.motion ? options.motion(elapsed) : defaultPose;
       if (art) {
-        const coherent = flow ? rt.reducedMotion ? flow.peak : flowFrame(elapsed, duration, impactAt, flow.count, flow.peak) : cell;
-        art.setFrames(coherent, flow ? coherent : Math.min(7, cell + 1), flow ? 0 : mix);
+        const coherent = flow ? rt.reducedMotion ? flow.peak : flowPosition(elapsed, duration, impactAt, flow.count, flow.peak) : position;
+        const fromFrame = Math.floor(coherent), nextFrame = Math.min((flow?.count ?? 8) - 1, fromFrame + 1);
+        // Bow's rigid pixels are identical in all Aseprite cels: only the feathers/wake dissolve.
+        art.setFrames(fromFrame, flow && !interpolate ? fromFrame : nextFrame, flow && !interpolate ? 0 : coherent - fromFrame);
         art.view
           .setPosition(pose.x, pose.y).setRotation(rt.reducedMotion ? rotation : (pose.rotation ?? rotation))
           .setScale(scale * (rt.reducedMotion ? 1 : (pose.scale ?? 1)))
@@ -98,11 +101,11 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
           y: options.from.y + (options.to.y - options.from.y) * Math.min(1, local / Math.max(1, impactAt)),
         } : options.to;
         const tail = Math.max(0, (elapsed - impactAt) / Math.max(1, duration - impactAt));
-        const side = Math.sin(local / duration * Math.PI * (index + 1)) * (index ? 20 : 9);
+        const side = id === "attack_bow" ? 0 : Math.sin(local / duration * Math.PI * (index + 1)) * (index ? 20 : 9);
         const drift = tail * (index ? 25 : 10);
         layer.setPosition(lag.x - Math.sin(rotation) * side + Math.cos(rotation) * drift,
           lag.y + Math.cos(rotation) * side + Math.sin(rotation) * drift)
-          .setRotation(rotation + (index ? -.16 : .08) * Math.sin(local / duration * Math.PI * 2))
+          .setRotation(rotation + (id === "attack_bow" ? 0 : (index ? -.16 : .08) * Math.sin(local / duration * Math.PI * 2)))
           .setAlpha(Math.max(0, Math.min(1, local / 90, (duration - elapsed) / (index ? 180 : 140))) * (index ? .72 : .58));
       });
       options.onUpdate?.(elapsed);

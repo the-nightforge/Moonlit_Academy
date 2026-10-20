@@ -29,6 +29,21 @@ function sample(rt: FakeRuntime, elapsed: number, index=0) {
   const config=rt.tweenConfigs[index]!;(config.targets as {elapsed:number}).elapsed=elapsed;(config.onUpdate as ()=>void)();
 }
 describe("authored combat attacks", () => {
+  it.each([to, {x:640,y:650}, {x:980,y:200}])("bow keeps its shaft on the straight line to %j, with constant heading and size", async target => {
+    const rt=new FakeRuntime();authored(rt);
+    const attack=playAttack({kind:"bow",color:0xffffff},from,target,{runtime:rt,blocked:true});
+    const view=rt.created[0]!;
+    const profile=ATTACK_MOTION.bow,dx=target.x-from.x,dy=target.y-from.y;
+    const scales:number[]=[];
+    for(let elapsed=profile.anticipation;elapsed<=profile.impactAt;elapsed+=5){
+      sample(rt,elapsed);
+      expect((Number(view.x)-from.x)*dy-(Number(view.y)-from.y)*dx).toBeCloseTo(0,6);
+      expect(view.rotation).toBeCloseTo(Math.atan2(dy,dx));scales.push(Number(view.scaleX));
+    }
+    sample(rt,profile.impactAt);expect([view.x,view.y]).toEqual([target.x,target.y]);
+    expect(Math.max(...scales)-Math.min(...scales)).toBeLessThan(.000001);
+    await runToEnd(rt,attack);await attack;
+  });
   it.each(["bow", "ribbon"] as const)("%s gives the layered artwork 60 percent more time with synchronized impact at either speed", async kind => {
     for (const speed of [1, 2] as const) {
       const rt = new FakeRuntime({ speed }); authored(rt);

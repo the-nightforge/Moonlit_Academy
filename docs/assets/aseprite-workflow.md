@@ -6,7 +6,7 @@ Use the installed Aseprite application for frame alignment and sprite sheet expo
 
 Run `./scripts/assets/export-motion.ps1` from PowerShell. It executes `export-motion.lua` inside Aseprite in batch mode, checks the exit code and verifies output files. Normally it exports the existing editable sources in `art/animations/`, preserving saved art edits. When a source is absent, the script imports the accepted illustrated source cuts and normalizes them onto one unscaled canvas per animation. Original generated sheets remain in `art/animations/references/`; their original layouts, prompts and hashes remain in `layered-motion-generated.json`. `-RebuildFromReferences` explicitly discards editable changes and reconstructs all three sources from those references; use it only when intentionally rebuilding.
 
-Game exports are PNG sheets and Aseprite JSON under `apps/client/public/assets/vfx/`. Frame rectangles come from that JSON. No per-frame trimming, packing rotation, duplicate removal or recentering is permitted. Do not estimate fractional grid cuts again at runtime. Full frame dimensions and the center anchor stay consistent, including transparent padding. Do not change the motion's intended direction: the right-authored attack illustration rotates toward the actual target in combat.
+Game exports are PNG sheets and Aseprite JSON under `apps/client/public/assets/vfx/`. Frame rectangles come from that JSON. No per-frame trimming, packing rotation, duplicate removal or bounding-box recentering is permitted. Do not estimate fractional grid cuts again at runtime. Full frame dimensions and the physical anchor stay consistent, including transparent padding. Bow uses its exported `arrowhead` slice pivot; other samples use the canvas center. Do not change the motion's intended direction: the right-authored attack illustration rotates toward the actual target in combat.
 
 The Aseprite timeline contains Preparation, Impact and Recovery tags. Normal durations are 1024 milliseconds for bow, 1328 for ribbon and 832 for Lam Khê awakening. The peak begins at 496, 544 and 208 milliseconds respectively. Integer frame durations retain these milestones and total durations; the terminal source frame has a one-millisecond editor hold. The game still samples its continuous shared clock so secondary layers, movement and the gameplay callback remain synchronized. Combat double speed is applied once by the runtime. Legacy and reduced-motion timing remain unchanged.
 
@@ -19,6 +19,12 @@ The Aseprite timeline contains Preparation, Impact and Recovery tags. Normal dur
 5. Recheck the production animation preview after integration. A static sheet establishes framing, not real-time smoothness or frame rate.
 
 Aseprite export/API references: [command-line interface](https://www.aseprite.org/docs/cli/), [ExportSpriteSheet](https://www.aseprite.org/api/command/ExportSpriteSheet), [image operations](https://www.aseprite.org/api/image).
+
+## Straight, stabilized bow
+
+The former source placed the same arrowhead feature between x=287–296 and y=114–140 in its 308 × 256 cels. `scripts/assets/stabilize-bow.lua` aligns that physical feature, pads to 317 × 282 without cutting the original cel, and separates a fixed illustrated shaft/head from the changing feathers/wake. The previous editable document remains in `art/animations/references/combat_attack_bow_flow-before-stabilization.aseprite`. The aligned head pivot is (296, 140), exported as an Aseprite slice. Normal exports preserve the saved document; a reference rebuild also runs the stabilization step automatically.
+
+The export audit compares the rigid region pixel-for-pixel across all 20 cels. The game blends the aligned cells using premultiplied artwork compositing, so the identical rigid region stays sharp while the feathers/wake transition continuously between source images. This remains 20 authored source frames, not a claim of 60 new illustrated frames or measured 60-frame-per-second playback. Reduced motion keeps its single peak image. The arrow's path and wake axis are straight, rotation and size stay constant, and the head pivot meets the target at the single impact callback. Shorter preparation gives the flight more of the same 1024-millisecond total duration.
 
 ## Applied on October 20, 2026
 

@@ -17,7 +17,7 @@ function atlas(rt: FakeRuntime, width?: number, height?: number) {
   const texture = rt.scene.add.renderTexture.bind(rt.scene.add);
   let view: any;
   const instrument = (node: any) => {
-    for (const [method, fields] of [["setPosition", ["x", "y"]], ["setRotation", ["rotation"]], ["setScale", ["scaleX", "scaleY"]], ["setFrame", ["frame"]], ["setAlpha", ["alpha"]]] as const) {
+    for (const [method, fields] of [["setPosition", ["x", "y"]], ["setOrigin", ["originX", "originY"]], ["setRotation", ["rotation"]], ["setScale", ["scaleX", "scaleY"]], ["setFrame", ["frame"]], ["setAlpha", ["alpha"]]] as const) {
       node[method] = (...values: unknown[]) => { fields.forEach((field, i) => node[field] = values[i] ?? values[0]); return node; };
     }
     return node;
@@ -32,6 +32,17 @@ function atlas(rt: FakeRuntime, width?: number, height?: number) {
 function sample(rt: FakeRuntime, elapsed: number) {
   const config = rt.tweenConfigs[0]!; (config.targets as { elapsed: number }).elapsed = elapsed; (config.onUpdate as () => void)();
 }
+it("smooth bow playback interpolates between aligned source frames at subframe times",async()=>{
+  const rt=new FakeRuntime(),{nodes,view}=atlas(rt);
+  const promise=playCombatIllustration(rt,"attack_bow",{to:{x:100,y:50},duration:640,impactAt:310});
+  sample(rt,155/9);
+  expect(view()).toBeDefined();
+  expect(nodes[0]).toMatchObject({frame:"combat-0",alpha:.5});
+  expect(nodes[1]).toMatchObject({frame:"combat-1",alpha:.5});
+  expect(view().compositedAlpha).toBeCloseTo(1);
+  expect([view().originX,view().originY]).toEqual([ATTACK_FLOWS.bow.anchor.x/ATTACK_FLOWS.bow.atlas.frames[0]!.sourceSize.w,ATTACK_FLOWS.bow.anchor.y/ATTACK_FLOWS.bow.atlas.frames[0]!.sourceSize.h]);
+  await runToEnd(rt,promise);await promise;expect(nodes.every(node=>node.destroyed)).toBe(true);
+});
 it("crossfades adjacent authored cells and lands one milestone on the same clock", async () => {
   const rt = new FakeRuntime(), { frames, nodes, view } = atlas(rt);
   const beat = vi.fn(), promise = playCombatIllustration(rt, "attack_slash", { from: { x: 0, y: 0 }, to: { x: 100, y: 20 }, duration: 500, impactAt: 200, onImpact: beat });
@@ -89,11 +100,12 @@ it.each(["bow","ribbon"] as const)("plays %s coherent flow cells and secondary l
   const rt=new FakeRuntime(),{nodes}=atlas(rt),beat=vi.fn(),count=kind==="bow"?20:24,peak=kind==="bow"?9:10;
   const duration=kind==="bow"?640:830,impactAt=kind==="bow"?310:340;
   const promise=playCombatIllustration(rt,`attack_${kind}`,{from:{x:640,y:450},to:{x:640,y:160},duration,impactAt,onImpact:beat});
-  expect(nodes.map(n=>n.textureKey)).toEqual([`vfx:combat_attack_${kind}_flow`,...kind==="bow"?["vfx:combat_layer_bow_air","vfx:combat_layer_bow_leaves"]:["vfx:combat_layer_ribbon_silk","vfx:combat_layer_ribbon_petals"]]);
+  expect(nodes.map(n=>n.textureKey)).toEqual([...Array(kind==="bow"?2:1).fill(`vfx:combat_attack_${kind}_flow`),...kind==="bow"?["vfx:combat_layer_bow_air","vfx:combat_layer_bow_leaves"]:["vfx:combat_layer_ribbon_silk","vfx:combat_layer_ribbon_petals"]]);
   expect(nodes[0].frame).toBe("combat-0");
-  sample(rt,100);const early=nodes.slice(1).map(n=>[n.x,n.y,n.rotation]);
+  const layerStart=kind==="bow"?2:1;
+  sample(rt,100);const early=nodes.slice(layerStart).map(n=>[n.x,n.y,n.rotation]);
   sample(rt,impactAt);expect(nodes[0].frame).toBe(`combat-${peak}`);expect(beat).toHaveBeenCalledTimes(1);
-  expect(nodes.slice(1).map(n=>[n.x,n.y,n.rotation])).not.toEqual(early);
+  expect(nodes.slice(layerStart).map(n=>[n.x,n.y,n.rotation])).not.toEqual(early);
   sample(rt,duration);expect(nodes[0].frame).toBe(`combat-${count-1}`);expect(beat).toHaveBeenCalledTimes(1);
   expect(rt.tweenConfigs).toHaveLength(1);
   await runToEnd(rt,promise);await promise;expect(nodes.every(n=>n.destroyed)).toBe(true);

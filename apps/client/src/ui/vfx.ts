@@ -23,7 +23,7 @@ export const ATTACK_MOTION: Record<AttackKind, AttackMotion> = {
   slash:    { duration: 410, impactAt: 95, anticipation: 28, arc: -14, sway: 0, turn: -.34, reach: 27, size: 245, local: true },
   spear:    { duration: 480, impactAt: 155, anticipation: 55, arc: 0, sway: 0, turn: 0, reach: 34, size: 260 },
   darts:    { duration: 590, impactAt: 270, anticipation: 50, arc: -12, sway: 9, turn: .14, reach: 5, size: 200 },
-  bow:      { duration: 640, impactAt: 310, anticipation: 125, arc: -38, sway: 0, turn: 0, reach: -5, size: 230 },
+  bow:      { duration: 640, impactAt: 310, anticipation: 70, arc: 0, sway: 0, turn: 0, reach: -5, size: 237 },
   herb:     { duration: 750, impactAt: 360, anticipation: 100, arc: 28, sway: 14, turn: -.25, reach: 3, size: 240 },
   fan:      { duration: 680, impactAt: 295, anticipation: 85, arc: -24, sway: -10, turn: .45, reach: 9, size: 265 },
   ink:      { duration: 720, impactAt: 330, anticipation: 110, arc: -18, sway: 18, turn: -.18, reach: 7, size: 250 },
@@ -68,7 +68,7 @@ export async function playAttack(look: AttackLook, from: Point, to: Point, opts:
         const bend = Math.sin(flight * Math.PI) * profile.arc + Math.sin(flight * Math.PI * 2) * profile.sway;
         return { x: start.x + (to.x - start.x) * flight - dy * bend + dx * tail * 8,
           y: start.y + (to.y - start.y) * flight + dx * bend + dy * tail * 8,
-          rotation: angle + profile.turn * (1 - flight), scale: .82 + .18 * flight - .04 * tail };
+          rotation: angle + profile.turn * (1 - flight), scale: look.kind === "bow" ? 1 : .82 + .18 * flight - .04 * tail };
       },
       onUpdate: elapsed => {
         if (!view || !owner?.current() || rt.reducedMotion) return;

@@ -1,15 +1,15 @@
 [
   {
     "path": "apps/client/public/assets/vfx/combat_attack_bow_flow.png",
-    "sha256": "ef4a1d378e6cd1d1a5507184f1f0612614dc50aa336a9a1f0c610563869d3a64"
+    "sha256": "3f618d410778430de3ae2ddef7c9d89fada5d8944898812da9498fad5e66c6f7"
   },
   {
     "path": "apps/client/public/assets/vfx/combat_attack_bow_flow.json",
-    "sha256": "c2dd7444cfe97acf6fe707acee1efb21bee9edc0d0fa5ed9aebf605709880c0b"
+    "sha256": "0a9cc81021b7d2508f1865d8824d4a74e3a7aaf22721c0a46a9f25d426d7d6b3"
   },
   {
     "path": "art/animations/combat_attack_bow_flow.aseprite",
-    "sha256": "05e7148cd8056f60dabb1183ceec8838745409f5c76c074dea82b14116a985c6"
+    "sha256": "bac27ad47d73da1d81e71c28bbda92ae3f443225aed3f66862f6e4c9d29b59e2"
   },
   {
     "path": "apps/client/public/assets/vfx/combat_attack_ribbon_flow.png",

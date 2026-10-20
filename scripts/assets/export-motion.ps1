@@ -9,12 +9,22 @@ if (-not (Test-Path -LiteralPath $AsepritePath -PathType Leaf)) {
 $motionRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $luaScript = Join-Path $PSScriptRoot 'export-motion.lua'
 New-Item -ItemType Directory -Force -Path (Join-Path $motionRoot 'art\animations') | Out-Null
+$rebuildBow = $RebuildFromReferences -or -not (Test-Path -LiteralPath (Join-Path $motionRoot 'art\animations\combat_attack_bow_flow.aseprite'))
 $arguments = @('-b', '--script-param', ('"root={0}"' -f $motionRoot), '--script', ('"{0}"' -f $luaScript))
 if ($RebuildFromReferences) {
   $arguments = @('-b', '--script-param', ('"root={0}"' -f $motionRoot), '--script-param', 'rebuild=true', '--script', ('"{0}"' -f $luaScript))
 }
 $process = Start-Process -FilePath $AsepritePath -ArgumentList $arguments -WindowStyle Hidden -Wait -PassThru
 if ($process.ExitCode -ne 0) { throw "Aseprite export failed (exit $($process.ExitCode))." }
+if ($rebuildBow) {
+  $stabilizeScript = Join-Path $PSScriptRoot 'stabilize-bow.lua'
+  $alignArguments = @('-b', '--script-param', ('"root={0}"' -f $motionRoot), '--script', ('"{0}"' -f $stabilizeScript))
+  $alignment = Start-Process -FilePath $AsepritePath -ArgumentList $alignArguments -WindowStyle Hidden -Wait -PassThru
+  if ($alignment.ExitCode -ne 0) { throw "Bow stabilization failed (exit $($alignment.ExitCode))." }
+  $exportArguments = @('-b', '--script-param', ('"root={0}"' -f $motionRoot), '--script', ('"{0}"' -f $luaScript))
+  $alignedExport = Start-Process -FilePath $AsepritePath -ArgumentList $exportArguments -WindowStyle Hidden -Wait -PassThru
+  if ($alignedExport.ExitCode -ne 0) { throw "Aligned export failed (exit $($alignedExport.ExitCode))." }
+}
 $exports = @()
 foreach ($stem in @('combat_attack_bow_flow','combat_attack_ribbon_flow','awakening_f06_flow')) {
   foreach ($extension in @('png','json')) {

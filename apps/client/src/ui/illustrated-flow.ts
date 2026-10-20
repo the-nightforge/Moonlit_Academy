@@ -9,7 +9,9 @@ export type IllustrationMode = "improved" | "legacy";
 /** Stretch the shared artwork clock, including its gameplay milestones and secondary layers. */
 export const FLOW_PLAYBACK_STRETCH = 1.6;
 export const ATTACK_FLOWS = {
-  bow: { count: 20, columns: 5, rows: 4, atlas: bowAtlas, peak: 9, layers: ["combat_layer_bow_air", "combat_layer_bow_leaves"] },
+  bow: { count: 20, columns: 5, rows: 4, atlas: bowAtlas, peak: 9, interpolate: true,
+    anchor: bowAtlas.meta.slices.find(slice => slice.name === "arrowhead")!.keys[0]!.pivot,
+    layers: ["combat_layer_bow_air", "combat_layer_bow_leaves"] },
   ribbon: { count: 24, columns: 4, rows: 6, atlas: ribbonAtlas, peak: 10, layers: ["combat_layer_ribbon_silk", "combat_layer_ribbon_petals"] },
 } as const;
 export const F06_FLOW = { count: 16, columns: 4, rows: 4, atlas: awakeningAtlas, peak: 7 } as const;
@@ -48,8 +50,12 @@ export function createFrameSequence(rt: AnimationRuntime, key: string, prefix: s
   return { view, setFrames: from => { view.setFrame(`${prefix}-${from}`); }, destroy: () => view.destroy() };
 }
 
-export function flowFrame(elapsed: number, duration: number, peakAt: number, count: number, peak: number): number {
+export function flowPosition(elapsed: number, duration: number, peakAt: number, count: number, peak: number): number {
   const time = Math.max(0, Math.min(duration, elapsed));
-  return Math.min(count - 1, Math.floor(time <= peakAt ? time / Math.max(1, peakAt) * peak
-    : peak + (time - peakAt) / Math.max(1, duration - peakAt) * (count - 1 - peak)));
+  return Math.min(count - 1, time <= peakAt ? time / Math.max(1, peakAt) * peak
+    : peak + (time - peakAt) / Math.max(1, duration - peakAt) * (count - 1 - peak));
+}
+
+export function flowFrame(elapsed: number, duration: number, peakAt: number, count: number, peak: number): number {
+  return Math.floor(flowPosition(elapsed, duration, peakAt, count, peak));
 }
