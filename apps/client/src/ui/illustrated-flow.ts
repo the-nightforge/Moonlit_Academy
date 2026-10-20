@@ -3,6 +3,8 @@ import type { AnimationRuntime } from "./animation-runtime";
 import type { FrameBlend } from "./frame-blend";
 
 export type IllustrationMode = "improved" | "legacy";
+/** Stretch the shared artwork clock, including its gameplay milestones and secondary layers. */
+export const FLOW_PLAYBACK_STRETCH = 1.6;
 export const ATTACK_FLOWS = {
   bow: { count: 20, columns: 5, rows: 4, offsetX: -20, offsetY: 0, peak: 9, layers: ["combat_layer_bow_air", "combat_layer_bow_leaves"] },
   ribbon: { count: 24, columns: 4, rows: 6, offsetX: 10, offsetY: 32, peak: 10, layers: ["combat_layer_ribbon_silk", "combat_layer_ribbon_petals"] },

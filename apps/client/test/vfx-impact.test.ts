@@ -30,6 +30,22 @@ function sample(rt: FakeRuntime, elapsed: number, index=0) {
   const config=rt.tweenConfigs[index]!;(config.targets as {elapsed:number}).elapsed=elapsed;(config.onUpdate as ()=>void)();
 }
 describe("authored combat attacks", () => {
+  it.each(["bow", "ribbon"] as const)("%s gives the layered artwork 60 percent more time with synchronized impact at either speed", async kind => {
+    for (const speed of [1, 2] as const) {
+      const rt = new FakeRuntime({ speed }); authored(rt);
+      const impactTimes: number[] = [];
+      const attack = playAttack({ kind, color: 0xffffff }, from, to, {
+        runtime: rt, blocked: true, onImpact: () => impactTimes.push(rt.clock),
+      });
+      await runToEnd(rt, attack); await attack;
+      expect(rt.clock).toBe(Math.round(ATTACK_MOTION[kind].duration * 1.6 / speed));
+      expect(impactTimes).toHaveLength(1);
+      const expectedImpact = ATTACK_MOTION[kind].impactAt * 1.6 / speed;
+      expect(impactTimes[0]).toBeGreaterThanOrEqual(expectedImpact);
+      expect(impactTimes[0]).toBeLessThanOrEqual(expectedImpact + 16 / speed);
+      expect(rt.created.every(node => node.destroyed)).toBe(true);
+    }
+  });
   it.each(kinds)("%s has a dedicated illustration, one exact impact, a tail and complete cleanup", async kind => {
     const rt=new FakeRuntime(),keys=authored(rt),impact=vi.fn();
     const attack=playAttack({kind,color:0xff4466},from,to,{runtime:rt,blocked:false,onImpact:impact});
@@ -59,6 +75,7 @@ describe("authored combat attacks", () => {
       const promise=playAttack({kind,color:0xffffff},from,to,{runtime:rt,blocked:true,onImpact:impact,illustrationMode:missing?"improved":"legacy"});
       expect(keys).toContain(`vfx:combat_attack_${kind}`);expect(keys).not.toContain(`vfx:combat_attack_${kind}_flow`);
       await runToEnd(rt,promise);await promise;await rt.drain();expect(impact).toHaveBeenCalledTimes(1);expect(rt.created.every(n=>n.destroyed)).toBe(true);
+      expect(rt.clock).toBe(ATTACK_MOTION[kind].duration);
     }
   });
   it.each(["bow","ribbon"] as const)("%s layer cancellation restores the unit before and after its single impact",async kind=>{
@@ -70,12 +87,13 @@ describe("authored combat attacks", () => {
       expect(impact).toHaveBeenCalledTimes(after?1:0);expect(view).toMatchObject({x:640,y:450});expect(rt.created.every(n=>n.destroyed)).toBe(true);expect(rt.pendingCount).toBe(0);
     }
   });
-  it("reduced motion stays at the target with the peak artwork and one impact",async()=>{
+  it.each(["spear", "bow", "ribbon"] as const)("reduced motion %s stays at the target with the peak artwork and one impact",async kind=>{
     const rt=new FakeRuntime({reducedMotion:true});authored(rt);const view=stubObject({x:640,y:450}) as unknown as Phaser.GameObjects.Container;
-    const impact=vi.fn(),attack=playAttack({kind:"spear",color:0xffffff},from,to,{runtime:rt,blocked:true,attackerView:view,onImpact:impact});
-    sample(rt,ATTACK_MOTION.spear.impactAt);
+    const impact=vi.fn(),attack=playAttack({kind,color:0xffffff},from,to,{runtime:rt,blocked:true,attackerView:view,onImpact:impact});
+    sample(rt,ATTACK_MOTION[kind].impactAt);
     expect(view.x).toBe(640);expect(view.y).toBe(450);expect(rt.created[0]).toMatchObject({x:to.x,y:to.y});
     expect(rt.shakes).toEqual([]);await runToEnd(rt,attack);await attack;expect(impact).toHaveBeenCalledTimes(1);
+    expect(rt.clock).toBe(ATTACK_MOTION[kind].duration);
   });
   it.each([false,true])("abort after impact=%s restores ownership without repeating gameplay",async after=>{
     const rt=new FakeRuntime();authored(rt);const view=stubObject({x:640,y:450}) as unknown as Phaser.GameObjects.Container;

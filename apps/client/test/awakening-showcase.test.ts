@@ -238,6 +238,21 @@ it.each([false,true])("f06 flow uses coherent cells, its own secondary motion, o
   expect(motif.setFrame).toHaveBeenLastCalledWith(`awakening-${reducedMotion?7:15}`);
   if(!reducedMotion)expect(s.images.filter(i=>i.key.includes("combat_layer_")).map(i=>i.object.alpha)).toEqual([0,0]);
   await runToEnd(s.rt,promise);await promise;expect(s.transform).toHaveBeenCalledTimes(1);expect(s.rt.created.every(n=>n.destroyed)).toBe(true);expect(s.rt.shakes).toEqual([]);
+  expect(s.rt.clock).toBe(reducedMotion?180:832);
+});
+it.each([1, 2] as const)("f06 gives the full layered transition 832 milliseconds at normal speed, with a synchronized refresh (speed %s)", async speed => {
+  const s = setup({ speed }, "f06");
+  s.rt.scene.textures.get = (() => ({ getSourceImage: () => ({ width: 1024, height: 1536 }), has: () => false, add: () => {} })) as any;
+  const refreshedAt: number[] = [];
+  const refresh = s.transform.getMockImplementation()!;
+  s.transform.mockImplementation(() => { refreshedAt.push(s.rt.clock); refresh(); });
+  const promise = s.run();
+  await runToEnd(s.rt, promise); await promise;
+  expect(s.rt.clock).toBe(832 / speed);
+  expect(refreshedAt).toHaveLength(1);
+  expect(refreshedAt[0]).toBeGreaterThanOrEqual(208 / speed);
+  expect(refreshedAt[0]).toBeLessThanOrEqual(224 / speed);
+  expect(s.images.every(image => image.object.destroyed)).toBe(true);
 });
 it.each([false,true])("f06 layer cancellation cleans every child around the authoritative refresh (%s)",async after=>{
   const s=setup({},"f06"),frames=new Set<string>();

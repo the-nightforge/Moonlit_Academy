@@ -14,7 +14,7 @@ import { playAwakening, awakeningEffectsFor } from "../src/ui/awakening-showcase
 import { prepareCombatAssets } from "../src/ui/combat-assets";
 import { reactToImpact } from "../src/ui/impact-reaction";
 import { ATTACK_MOTION } from "../src/ui/vfx";
-import { ATTACK_FLOWS, F06_FLOW } from "../src/ui/illustrated-flow";
+import { ATTACK_FLOWS, F06_FLOW, FLOW_PLAYBACK_STRETCH } from "../src/ui/illustrated-flow";
 import type { IllustrationMode } from "../src/ui/illustrated-flow";
 import { registerCombatFrames } from "../src/ui/combat-illustration";
 import { registerAwakeningFrames } from "../src/ui/awakening-flipbook";
@@ -141,7 +141,8 @@ class Preview extends Phaser.Scene {
       const flow=ATTACK_FLOWS[styleSelect.value as keyof typeof ATTACK_FLOWS];
       const improved=illustrationMode()!=="legacy" && (kind==="awakening" ? heroSelect.value==="f06" && !!registerAwakeningFrames(this,"vfx:awakening_f06_flow") : !!flow && !!registerCombatFrames(this,`vfx:combat_attack_${styleSelect.value}_flow`));
       const count=kind==="awakening" ? improved?F06_FLOW.count:reduced.checked?1:8 : kind==="attack"&&improved?flow!.count:8;
-      const duration=kind==="awakening"?reduced.checked?180:520:ATTACK_MOTION[styleSelect.value as AttackKind].duration;
+      const sourceDuration=kind==="awakening"?reduced.checked?180:520:ATTACK_MOTION[styleSelect.value as AttackKind].duration;
+      const duration=sourceDuration*(improved&&!reduced.checked?FLOW_PLAYBACK_STRETCH:1);
       const speed=Number(document.querySelector<HTMLSelectElement>("#speed")!.value), slow=document.querySelector<HTMLInputElement>("#slow")!.checked?5:1;
       sampleDetails.textContent=`${comparison.options[comparison.selectedIndex]!.text}: ${count} khung hình nguồn${reduced.checked?", giữ khung hình đỉnh và chỉ mờ dần":""} · ${duration} mili giây gốc · ${Math.round(duration/speed*slow)} mili giây khi phát${!improved&&illustrationMode()!=="legacy"&&(kind==="awakening"?heroSelect.value==="f06":!!flow)?" · Dùng bản trước vì hình mới chưa sẵn sàng":""}.`;
     };

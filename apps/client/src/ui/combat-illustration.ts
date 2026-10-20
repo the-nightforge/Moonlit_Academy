@@ -2,7 +2,7 @@ import type Phaser from "phaser";
 import type { AnimationRuntime } from "./animation-runtime";
 import { createFrameBlend } from "./frame-blend";
 import type { FrameBlend } from "./frame-blend";
-import { attackFlow, createFrameSequence, flowFrame, registerFlowFrames } from "./illustrated-flow";
+import { attackFlow, createFrameSequence, FLOW_PLAYBACK_STRETCH, flowFrame, registerFlowFrames } from "./illustrated-flow";
 import type { IllustrationMode } from "./illustrated-flow";
 
 export interface CombatPoint { x: number; y: number }
@@ -112,7 +112,9 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
       }
     };
     update();
-    await rt.tween({ targets: clock, elapsed: duration, duration, ease: "Linear", onUpdate: update });
+    // Keep authored phase coordinates intact; slow their one shared clock instead.
+    const playbackDuration = duration * (flow && !rt.reducedMotion ? FLOW_PLAYBACK_STRETCH : 1);
+    await rt.tween({ targets: clock, elapsed: duration, duration: playbackDuration, ease: "Linear", onUpdate: update });
     clock.elapsed = duration;
     update();
   } finally {

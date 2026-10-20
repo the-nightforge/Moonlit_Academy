@@ -4,9 +4,11 @@ Implements the approved first comparison pass on `main`: bow, ribbon, and Lam Kh
 
 | Sample | Previous source frames | New source frames | Normal duration |
 | --- | ---: | ---: | ---: |
-| Bow / Hạ Chi | 8 | 20 | 640 milliseconds |
-| Ribbon / Lam Khê | 8 | 24 | 830 milliseconds |
-| Lam Khê awakening | 8 | 16 | 520 milliseconds |
+| Bow / Hạ Chi | 8 | 20 | 1024 milliseconds |
+| Ribbon / Lam Khê | 8 | 24 | 1328 milliseconds |
+| Lam Khê awakening | 8 | 16 | 832 milliseconds |
+
+On October 20, normal improved playback was lengthened by 60 percent following feedback that the motion felt smooth but too fast. One shared clock stretches all authored phases, secondary movement and impact/portrait-refresh milestones together. Combat double speed still halves these durations. Legacy comparison, missing-flow fallback and reduced-motion playback retain their previous timing. The preview displays the updated configured duration. The browser observations below were captured before this timing adjustment.
 
 The new samples play discrete authored in-between images instead of dissolving whole adjacent silhouettes together. Two independently delayed, moving illustrated layers give each sample secondary motion: ivory/jade air and gold feather fragments for bow; azure silk and crystalline petals for ribbon and the matching awakening. Main art, secondary layers, unit motion and the one gameplay impact use the same elapsed-time clock. The source art faces right; movement and rotation follow the actual source and target, including vertical combat.
 

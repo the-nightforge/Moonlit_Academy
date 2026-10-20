@@ -5,7 +5,7 @@ import { sampleAwakening } from "./awakening-motion";
 import { awakeningSheet, registerAwakeningFrames, sampleAwakeningFrame } from "./awakening-flipbook";
 import { createFrameBlend } from "./frame-blend";
 import type { FrameBlend } from "./frame-blend";
-import { ATTACK_FLOWS, createFrameSequence, F06_FLOW, flowFrame } from "./illustrated-flow";
+import { ATTACK_FLOWS, createFrameSequence, F06_FLOW, FLOW_PLAYBACK_STRETCH, flowFrame } from "./illustrated-flow";
 import type { IllustrationMode } from "./illustrated-flow";
 export { AWAKENING_EFFECTS, awakeningEffectsFor } from "./awakening-profiles";
 
@@ -106,7 +106,8 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
     draw();
     const total=rt.reducedMotion?180:motion.charge+motion.blend+motion.release;
     // A single linear clock drives the whole curve; phase changes never restart its velocity.
-    await rt.tween({targets:clock,elapsed:total,duration:total,ease:"Linear",onUpdate:draw});
+    const playbackDuration=total*(flowBounds&&!rt.reducedMotion?FLOW_PLAYBACK_STRETCH:1);
+    await rt.tween({targets:clock,elapsed:total,duration:playbackDuration,ease:"Linear",onUpdate:draw});
     rt.assertActive();
     clock.elapsed=total;draw();
   } finally {
