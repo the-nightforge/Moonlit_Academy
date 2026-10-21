@@ -7,6 +7,8 @@ import { createFrameBlend } from "./frame-blend";
 import type { FrameBlend } from "./frame-blend";
 import { ATTACK_FLOWS, createFrameSequence, F06_FLOW, FLOW_PLAYBACK_STRETCH, flowPosition } from "./illustrated-flow";
 import type { IllustrationMode } from "./illustrated-flow";
+import { libraryMotion } from "./motion-library";
+import { libraryFramePosition } from "./library-motion-clock";
 export { AWAKENING_EFFECTS, awakeningEffectsFor } from "./awakening-profiles";
 
 export interface AwakeningDetails {
@@ -47,14 +49,19 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
     };
     // Each illustrated cell changes the actual flame/cloth/petal shapes, not just the whole quad.
     const flowBounds=details.heroId==="f06" && details.illustrationMode!=="legacy" ? registerAwakeningFrames(scene,"vfx:awakening_f06_flow") : null;
-    const sheetKey=flowBounds?"vfx:awakening_f06_flow":`vfx:${awakeningSheet(details.heroId)}`;
-    const sheet=flowBounds??(!rt.reducedMotion?registerAwakeningFrames(scene,sheetKey):null);
-    frameBlend=sheet?flowBounds&&rt.reducedMotion?createFrameSequence(rt,sheetKey,"awakening"):createFrameBlend(rt,sheetKey,sheet.width,sheet.height,"awakening"):undefined;
+    const originalKey=`vfx:${awakeningSheet(details.heroId)}`;
+    const candidate=!flowBounds && details.illustrationMode!=="legacy" ? libraryMotion(originalKey) : undefined;
+    const libraryBounds=candidate?registerAwakeningFrames(scene,candidate.textureKey):null;
+    const library=libraryBounds?candidate:undefined;
+    const improved=flowBounds?F06_FLOW:library;
+    const sheetKey=flowBounds?"vfx:awakening_f06_flow":library?library.textureKey:originalKey;
+    const sheet=flowBounds??libraryBounds??(!rt.reducedMotion?registerAwakeningFrames(scene,sheetKey):null);
+    frameBlend=sheet?improved&&rt.reducedMotion?createFrameSequence(rt,sheetKey,"awakening"):createFrameBlend(rt,sheetKey,sheet.width,sheet.height,"awakening"):undefined;
     const motif=frameBlend?frameBlend.view.setPosition(old.x,old.y):sprite(profile.texture,height+36);
     if(sheet && motif) {
-      const sizing=flowBounds?F06_FLOW.presentationSize:sheet;
+      const sizing=improved?.presentationSize??sheet;
       motif.setScale(Math.min((width+80)/sizing.width,(height+36)/sizing.height));
-      if(flowBounds)motif.setOrigin(F06_FLOW.anchor.x/sheet.width,F06_FLOW.anchor.y/sheet.height);
+      if(improved)motif.setOrigin(improved.anchor.x/sheet.width,improved.anchor.y/sheet.height);
       effects.add(motif);
     }
     const motifScale = motif?.scaleX ?? 1;
@@ -63,6 +70,7 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
     }):[];
     const clock={elapsed:0};
     const charge=rt.reducedMotion?60:motion.charge, blendDuration=rt.reducedMotion?100:motion.blend;
+    const total=rt.reducedMotion?180:motion.charge+motion.blend+motion.release;
     let transformed=false;
     const swap=()=>{
       rt.assertActive();
@@ -87,9 +95,11 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
       if(!transformed && clock.elapsed>=charge)swap();
       const pose=sampleAwakening(profile,clock.elapsed,rt.reducedMotion);
       if(frameBlend) {
-        const coherent=rt.reducedMotion?F06_FLOW.peak:flowPosition(clock.elapsed,520,motion.charge,F06_FLOW.count,F06_FLOW.peak);
+        const coherent=rt.reducedMotion?(improved?.peak??3):library
+          ?libraryFramePosition(clock.elapsed,total,motion.charge,library.count,library.peak)
+          :flowPosition(clock.elapsed,520,motion.charge,F06_FLOW.count,F06_FLOW.peak);
         const from=Math.floor(coherent);
-        const frame=flowBounds?{from,to:rt.reducedMotion?from:Math.min(F06_FLOW.count-1,from+1),mix:rt.reducedMotion?0:coherent-from}:sampleAwakeningFrame(clock.elapsed/(motion.charge+motion.blend+motion.release));
+        const frame=improved?{from,to:rt.reducedMotion?from:Math.min(improved.count-1,from+1),mix:rt.reducedMotion?0:coherent-from}:sampleAwakeningFrame(clock.elapsed/(motion.charge+motion.blend+motion.release));
         frameBlend.setFrames(frame.from,frame.to,frame.mix);
       }
       motif?.setAlpha(pose.alpha);
@@ -107,9 +117,8 @@ export async function playAwakening(rt: AnimationRuntime, details: AwakeningDeta
     };
     motif?.setPosition(old.x,old.y-8);
     draw();
-    const total=rt.reducedMotion?180:motion.charge+motion.blend+motion.release;
     // A single linear clock drives the whole curve; phase changes never restart its velocity.
-    const playbackDuration=total*(flowBounds&&!rt.reducedMotion?FLOW_PLAYBACK_STRETCH:1);
+    const playbackDuration=total*(!rt.reducedMotion?flowBounds?FLOW_PLAYBACK_STRETCH:library?.stretch??1:1);
     await rt.tween({targets:clock,elapsed:total,duration:playbackDuration,ease:"Linear",onUpdate:draw});
     rt.assertActive();
     clock.elapsed=total;draw();

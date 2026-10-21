@@ -1,0 +1,94 @@
+{ "frames": [
+   {
+    "filename": "0",
+    "frame": { "x": 0, "y": 0, "w": 634, "h": 714 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 634, "h": 714 },
+    "sourceSize": { "w": 634, "h": 714 },
+    "duration": 275
+   },
+   {
+    "filename": "1",
+    "frame": { "x": 634, "y": 0, "w": 634, "h": 714 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 634, "h": 714 },
+    "sourceSize": { "w": 634, "h": 714 },
+    "duration": 150
+   },
+   {
+    "filename": "2",
+    "frame": { "x": 1268, "y": 0, "w": 634, "h": 714 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 634, "h": 714 },
+    "sourceSize": { "w": 634, "h": 714 },
+    "duration": 159
+   },
+   {
+    "filename": "3",
+    "frame": { "x": 1902, "y": 0, "w": 634, "h": 714 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 634, "h": 714 },
+    "sourceSize": { "w": 634, "h": 714 },
+    "duration": 153
+   },
+   {
+    "filename": "4",
+    "frame": { "x": 0, "y": 714, "w": 634, "h": 714 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 634, "h": 714 },
+    "sourceSize": { "w": 634, "h": 714 },
+    "duration": 132
+   },
+   {
+    "filename": "5",
+    "frame": { "x": 634, "y": 714, "w": 634, "h": 714 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 634, "h": 714 },
+    "sourceSize": { "w": 634, "h": 714 },
+    "duration": 140
+   },
+   {
+    "filename": "6",
+    "frame": { "x": 1268, "y": 714, "w": 634, "h": 714 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 634, "h": 714 },
+    "sourceSize": { "w": 634, "h": 714 },
+    "duration": 270
+   },
+   {
+    "filename": "7",
+    "frame": { "x": 1902, "y": 714, "w": 634, "h": 714 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 634, "h": 714 },
+    "sourceSize": { "w": 634, "h": 714 },
+    "duration": 1
+   }
+ ],
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.18.6-dev",
+  "image": "combat_attack_moon_smooth.png",
+  "format": "RGBA8888",
+  "size": { "w": 2536, "h": 1428 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "Preparation", "from": 0, "to": 2, "direction": "forward", "color": "#000000ff" },
+   { "name": "Impact", "from": 3, "to": 3, "direction": "forward", "color": "#000000ff" },
+   { "name": "Recovery", "from": 4, "to": 7, "direction": "forward", "color": "#000000ff" }
+  ],
+  "layers": [
+   { "name": "Illustrated frames", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+   { "name": "presentation", "keys": [{ "frame": 0, "bounds": {"x": 111, "y": 72, "w": 384, "h": 512 }, "pivot": {"x": 192, "y": 256 } }] }
+  ]
+ }
+}

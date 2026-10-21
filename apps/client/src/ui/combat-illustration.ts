@@ -4,6 +4,8 @@ import { createFrameBlend } from "./frame-blend";
 import type { FrameBlend } from "./frame-blend";
 import { attackFlow, createFrameSequence, FLOW_PLAYBACK_STRETCH, flowPosition, registerFlowFrames } from "./illustrated-flow";
 import type { IllustrationMode } from "./illustrated-flow";
+import { libraryMotion } from "./motion-library";
+import { libraryFade, libraryFramePosition } from "./library-motion-clock";
 
 export interface CombatPoint { x: number; y: number }
 export interface CombatPose extends CombatPoint { rotation?: number; scale?: number }
@@ -27,6 +29,10 @@ export interface CombatIllustrationOptions {
 /** Partition only recognized authored effect atlases; portraits remain whole. */
 export function registerCombatFrames(scene: Phaser.Scene, key: string): { width: number; height: number } | null {
   if (!/^vfx:combat_(attack|effect)_/.test(key) || !scene.textures.exists(key)) return null;
+  if (key.endsWith("_smooth")) {
+    const motion = libraryMotion(key.replace(/_smooth$/, ""));
+    return motion ? registerFlowFrames(scene, key, "combat", motion) : null;
+  }
   if (key.endsWith("_flow")) {
     const flow = attackFlow(key.replace("vfx:combat_", "").replace(/_flow$/, ""));
     return flow ? registerFlowFrames(scene, key, "combat", flow) : null;
@@ -51,8 +57,15 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
   const candidate = options.illustrationMode !== "legacy" ? attackFlow(id) : undefined;
   const flowKey = `vfx:combat_${id}_flow`, flowBounds = candidate ? registerCombatFrames(rt.scene, flowKey) : null;
   const flow = flowBounds ? candidate : undefined;
-  const interpolate = flow && "interpolate" in flow && flow.interpolate && !rt.reducedMotion;
-  const key = flow ? flowKey : `vfx:combat_${id}`, frame = flowBounds ?? registerCombatFrames(rt.scene, key);
+  const originalKey = `vfx:combat_${id}`;
+  const motionCandidate = !flow && options.illustrationMode !== "legacy" ? libraryMotion(originalKey) : undefined;
+  const motionBounds = motionCandidate ? registerCombatFrames(rt.scene, motionCandidate.textureKey) : null;
+  const library = motionBounds ? motionCandidate : undefined;
+  const improved = flow ?? library;
+  const interpolate = !rt.reducedMotion && (!!library || !!flow && "interpolate" in flow && flow.interpolate);
+  const sequence = !!improved && !interpolate;
+  const key = flow ? flowKey : library ? library.textureKey : originalKey;
+  const frame = flowBounds ?? motionBounds ?? registerCombatFrames(rt.scene, key);
   const rotation = options.rotation ?? (options.from ? Math.atan2(options.to.y - options.from.y, options.to.x - options.from.x) : 0);
   let art: FrameBlend | undefined;
   const layers: Phaser.GameObjects.Image[] = [];
@@ -60,8 +73,8 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
   const clock = { elapsed: 0 };
   try {
     if (frame) {
-      art = flow && !interpolate ? createFrameSequence(rt, key, "combat") : createFrameBlend(rt, key, frame.width, frame.height, "combat");
-      if (flow && "anchor" in flow) art.view.setOrigin(flow.anchor.x / frame.width, flow.anchor.y / frame.height);
+      art = sequence ? createFrameSequence(rt, key, "combat") : createFrameBlend(rt, key, frame.width, frame.height, "combat");
+      if (improved) art.view.setOrigin(improved.anchor.x / frame.width, improved.anchor.y / frame.height);
       art.view.setDepth(options.depth ?? 97).setAlpha(0);
       if (flow && !rt.reducedMotion) for (const stem of flow.layers) {
         const layerKey = `vfx:${stem}`;
@@ -72,7 +85,7 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
         layers.push(image);
       }
     }
-    const sizing = flow?.presentationSize ?? frame;
+    const sizing = improved?.presentationSize ?? frame;
     const scale = sizing ? Math.min((options.width ?? 220) / sizing.width, (options.height ?? 260) / sizing.height) : 1;
     const update = () => {
       rt.assertActive();
@@ -80,16 +93,19 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
       const position = rt.reducedMotion ? 3 : elapsed <= impactAt
         ? (impactAt === 0 ? 3 : elapsed / impactAt * 3)
         : 3 + (elapsed - impactAt) / Math.max(1, duration - impactAt) * 4;
-      const fade = Math.min(1, elapsed / Math.min(65, duration / 4), (duration - elapsed) / Math.min(130, duration / 3));
+      const fadeProgress = Math.min(1, elapsed / Math.min(65, duration / 4), (duration - elapsed) / Math.min(130, duration / 3));
+      const fade = library ? libraryFade(fadeProgress) : fadeProgress;
       const travel = Math.min(1, elapsed / Math.max(1, impactAt));
       const defaultPose = options.from ? { x: options.from.x + (options.to.x - options.from.x) * travel,
         y: options.from.y + (options.to.y - options.from.y) * travel } : options.to;
       const pose: CombatPose = rt.reducedMotion ? options.to : options.motion ? options.motion(elapsed) : defaultPose;
       if (art) {
-        const coherent = flow ? rt.reducedMotion ? flow.peak : flowPosition(elapsed, duration, impactAt, flow.count, flow.peak) : position;
-        const fromFrame = Math.floor(coherent), nextFrame = Math.min((flow?.count ?? 8) - 1, fromFrame + 1);
+        const coherent = improved ? rt.reducedMotion ? improved.peak : library
+          ? libraryFramePosition(elapsed, duration, impactAt, library.count, library.peak)
+          : flowPosition(elapsed, duration, impactAt, improved.count, improved.peak) : position;
+        const fromFrame = Math.floor(coherent), nextFrame = Math.min((improved?.count ?? 8) - 1, fromFrame + 1);
         // Aseprite keeps the physical pivot stable while premultiplied source frames blend.
-        art.setFrames(fromFrame, flow && !interpolate ? fromFrame : nextFrame, flow && !interpolate ? 0 : coherent - fromFrame);
+        art.setFrames(fromFrame, sequence ? fromFrame : nextFrame, sequence ? 0 : coherent - fromFrame);
         art.view
           .setPosition(pose.x, pose.y).setRotation(rt.reducedMotion ? rotation : (pose.rotation ?? rotation))
           .setScale(scale * (rt.reducedMotion ? 1 : (pose.scale ?? 1)))
@@ -117,7 +133,7 @@ export async function playCombatIllustration(rt: AnimationRuntime, id: string, o
     };
     update();
     // Keep authored phase coordinates intact; slow their one shared clock instead.
-    const playbackDuration = duration * (flow && !rt.reducedMotion ? FLOW_PLAYBACK_STRETCH : 1);
+    const playbackDuration = duration * (!rt.reducedMotion ? flow ? FLOW_PLAYBACK_STRETCH : library?.stretch ?? 1 : 1);
     await rt.tween({ targets: clock, elapsed: duration, duration: playbackDuration, ease: "Linear", onUpdate: update });
     clock.elapsed = duration;
     update();

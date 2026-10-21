@@ -1,5 +1,6 @@
 import type Phaser from "phaser";
 import { F06_FLOW, registerFlowFrames } from "./illustrated-flow";
+import { libraryMotion } from "./motion-library";
 
 export const AWAKENING_FRAME_COUNT=8;
 export const awakeningSheet=(heroId:string)=>`awakening_${heroId}_motion`;
@@ -7,6 +8,10 @@ export const awakeningSheet=(heroId:string)=>`awakening_${heroId}_motion`;
 /** Frames partition an authored effect sheet only; hero portraits are never cut. */
 export function registerAwakeningFrames(scene:Phaser.Scene,key:string):{width:number;height:number}|null {
   if(key === "vfx:awakening_f06_flow") return registerFlowFrames(scene,key,"awakening",F06_FLOW);
+  if(key.endsWith("_smooth")) {
+    const motion=libraryMotion(key.replace(/_smooth$/, ""));
+    return motion ? registerFlowFrames(scene,key,"awakening",motion) : null;
+  }
   if(!scene.textures.exists(key)) return null;
   const texture=scene.textures.get(key),source=texture.getSourceImage() as {width:number;height:number};
   if(!source.width||!source.height||source.width%4!==0||source.height%2!==0||source.width*2!==source.height*3

@@ -3,19 +3,23 @@ import { dirname, join } from "node:path";
 import type Phaser from "phaser";
 import { expect,it } from "vitest";
 import { ATTACK_FLOWS, F06_FLOW, registerFlowFrames } from "../src/ui/illustrated-flow";
+import { libraryMotions } from "../src/ui/motion-library";
 
 const require=createRequire(import.meta.url);
 const Frame=require(join(dirname(require.resolve("phaser/package.json")),"src/textures/Frame"));
 const TextureComponent=require(join(dirname(require.resolve("phaser/package.json")),"src/gameobjects/components/Texture"));
 const Size=require(join(dirname(require.resolve("phaser/package.json")),"src/gameobjects/components/Size"));
 const Origin=require(join(dirname(require.resolve("phaser/package.json")),"src/gameobjects/components/Origin"));
-it.each(["bow","ribbon","awakening"] as const)("native Phaser %s exports retain one image size and origin across every frame",style=>{
-    const grid=style==="awakening"?F06_FLOW:ATTACK_FLOWS[style];
+const exports = [
+  ...(["bow", "ribbon", "awakening"] as const).map(style => ({ name: style, grid: style === "awakening" ? F06_FLOW : ATTACK_FLOWS[style] })),
+  ...libraryMotions.map(grid => ({ name: grid.textureKey, grid })),
+];
+it.each(exports)("native Phaser $name exports retain one image size and origin across every frame",({name,grid})=>{
     const {w:width,h:height}=grid.atlas.meta.size;
     const frames=new Map<string,any>(),texture:any={source:[{width,height}],getSourceImage:()=>({width,height}),has:(name:string)=>frames.has(name),
       add(name:string,index:number,x:number,y:number,w:number,h:number) {const frame=new Frame(texture,name,index,x,y,w,h);frames.set(name,frame);return frame;}};
     const scene={textures:{exists:()=>true,get:()=>texture}} as unknown as Phaser.Scene;
-    const bounds=registerFlowFrames(scene,`vfx:${style}_flow`,"combat",grid)!;
+    const bounds=registerFlowFrames(scene,name,"combat",grid)!;
     expect(frames.size).toBe(grid.count);
     const image:any={texture:{get:(name:string)=>frames.get(name)},_sizeComponent:true,_originComponent:true,renderFlags:15,originX:.5,originY:.5,
       setSizeToFrame:Size.setSizeToFrame,updateDisplayOrigin:Origin.updateDisplayOrigin};

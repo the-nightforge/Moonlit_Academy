@@ -1,0 +1,590 @@
+[
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_slash_smooth.png",
+    "sha256": "fbcc3d4ed045e6de82cff7295d9b16fe86933201dfa6256774984ac1d9cf0def"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_slash_smooth.json",
+    "sha256": "81de692e9d46da52b43f05908b07e5d97eaf76f87da04d096bdb9d0b7f4daaeb"
+  },
+  {
+    "path": "art/animations/combat_attack_slash_smooth.aseprite",
+    "sha256": "c703def7976da94bff881afac9455af972f40885055165aebeb3ea340717112b"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_spear_smooth.png",
+    "sha256": "fd7976f1251f6b173dc12574972b1b9f854ed704a57e0359374749b8134ecb69"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_spear_smooth.json",
+    "sha256": "5bcddb6bd6984b94e537b1c64c47a67d97176919d029435f66721fddee03d227"
+  },
+  {
+    "path": "art/animations/combat_attack_spear_smooth.aseprite",
+    "sha256": "6d37ddb1b2d0646972a5f193a2d7598c0ecea9a11857272fa3ecbc1fac094c9e"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_darts_smooth.png",
+    "sha256": "11abb4a44421fe5ec901cba5e22fb01c621afe3d4515038689f71c5c0abbab66"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_darts_smooth.json",
+    "sha256": "6d1eac8efe59273252a0c5ac506f3c331b1e9c8abc78a8ddc4dbdd3c17098646"
+  },
+  {
+    "path": "art/animations/combat_attack_darts_smooth.aseprite",
+    "sha256": "4024fdf883ebcf751fc8bb142d5c1a99b7d08841fa0d6631b1bb18545d6b765c"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_herb_smooth.png",
+    "sha256": "2b349fd2231e2d078057ef8fdbffa1a6fe1551f4c0d82bff31cc1dcd20afdf76"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_herb_smooth.json",
+    "sha256": "a331bfe2f36997970327b7ec3c0a0f94f818113facc3b232b5f6ee98a42fe924"
+  },
+  {
+    "path": "art/animations/combat_attack_herb_smooth.aseprite",
+    "sha256": "6d27281ad37c0681a815bb7cdb089247fcfc37fc9d65f88c16c2ea5fbf123553"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_fan_smooth.png",
+    "sha256": "fc71b227ace8ff0ade119bd91948e0fd5a4e995bc573a0797298492cc228d895"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_fan_smooth.json",
+    "sha256": "4ccb5fd1a7a9e5b88b0fd1272cb4e59f63536b345d5f38142e02125cfa6126fa"
+  },
+  {
+    "path": "art/animations/combat_attack_fan_smooth.aseprite",
+    "sha256": "b7ac64447dec1ca367c1b945c4380926fc8e6ff839f259ce4c62fe5308bfcdc8"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_ink_smooth.png",
+    "sha256": "67fdccaa7317992759d17e020016a30267df252d75e18c423a9eaf2ff8bf23cf"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_ink_smooth.json",
+    "sha256": "9b4e18a49e8ff864f0396577d492deeaa5a3fc04888ba504f3b2873a02a42a79"
+  },
+  {
+    "path": "art/animations/combat_attack_ink_smooth.aseprite",
+    "sha256": "ddd62c0996f584c65a64c1a0ed9a721f0a16f09be2d77dd74d2bb082402e5106"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_music_smooth.png",
+    "sha256": "da24844273d97441be0fdfb8aabe5b474ed988ed0695a2a7a3e2ad7cea0d5029"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_music_smooth.json",
+    "sha256": "663926a0876432b7cbc0da6dafb98240d3630a7f34e8ccae59a39d5d5db797eb"
+  },
+  {
+    "path": "art/animations/combat_attack_music_smooth.aseprite",
+    "sha256": "3f98feda2a494964a227e9b7b47a6a71af94b2ac8c8ff748a899302e8d8b7e88"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_fire_smooth.png",
+    "sha256": "d4ec27282c2f1d7a5ec1d1ef475b857c7195524c0866af8eddc276ded854766a"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_fire_smooth.json",
+    "sha256": "8d5ead9a80d8649387545804d5492b6ce6713c5cbd0a88e47ad4bb049d71bc21"
+  },
+  {
+    "path": "art/animations/combat_attack_fire_smooth.aseprite",
+    "sha256": "5fe9e67c171c065f4ab5963d844073566de438ec611c2abd3a9adbd2e4234199"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_star_smooth.png",
+    "sha256": "b4aa93ce901358f696ec26790ae8324dfeb294553de70eb1c5758645aa9bb542"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_star_smooth.json",
+    "sha256": "ff42ab6218643b3f0725297e440ce533587d922b292d406f9350617a0672f233"
+  },
+  {
+    "path": "art/animations/combat_attack_star_smooth.aseprite",
+    "sha256": "0782efdf1f06b48c8183ebc34aaded030b6052c52ec4a49331ad08ac505e9faa"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_moon_smooth.png",
+    "sha256": "14f9633de4c5dbd4ecc8143e0074f52423061e4ae915d41a04dad83c00387fbb"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_moon_smooth.json",
+    "sha256": "e90bfa3c6667fad97407e340546227ba1a8f52bbb7a09e5a1125f9ba41a88b00"
+  },
+  {
+    "path": "art/animations/combat_attack_moon_smooth.aseprite",
+    "sha256": "a050b424b60a066cea22d600d7e08c2a7083c280a71ead0629fbcedd69f7adc5"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_talisman_smooth.png",
+    "sha256": "74cb68cc7517ec56c2d329630eb578bf4ac93f18546b821efec933ba79667361"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_talisman_smooth.json",
+    "sha256": "44a3c2d988e1f3b6571c55a3905bda44075e87df9aa565c1fb39a7e4c61d6b51"
+  },
+  {
+    "path": "art/animations/combat_attack_talisman_smooth.aseprite",
+    "sha256": "d340225d0006c9a7db25db595e4ef1eee9c482ce08c9b131aa4d299d0d8d6289"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_blood_smooth.png",
+    "sha256": "5885b2347e667d64d22849577845c55a4198ffb1e32f62e7380681d60cfc129b"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_blood_smooth.json",
+    "sha256": "d0a050db4de89af7cbc1c4408d7f9f02df914aaacd658ea3859bb24723a34b72"
+  },
+  {
+    "path": "art/animations/combat_attack_blood_smooth.aseprite",
+    "sha256": "4368f4b852b25aad1e4e43f969cd15360ec689c523280b5ae2c9c590e1dddd56"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_spell_smooth.png",
+    "sha256": "f8cd58c1f9dd8d0c7a2b63fc04deff648911fce9d39f4efbce9e0b7d8c9683bd"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_attack_spell_smooth.json",
+    "sha256": "ef81e92a02607c745267f46ff95e4be364568678801469574a2de6bfd8d47caf"
+  },
+  {
+    "path": "art/animations/combat_attack_spell_smooth.aseprite",
+    "sha256": "033af35b7e3f15fd83994a63a50cade1d50c7dfda9fa4bc18d68570dd38385cc"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_hit_smooth.png",
+    "sha256": "3b58661ad4d7fdb60d07770fd72a375ea378a5e8f444e1e8a02c3bbdd6d3278e"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_hit_smooth.json",
+    "sha256": "00f4f0a24f81ab1dcdb7ffc4e518fc89c55a2f46a6c6be6aec2bccecd45a7ca1"
+  },
+  {
+    "path": "art/animations/combat_effect_hit_smooth.aseprite",
+    "sha256": "0ce4a49fc47d2da23e095f669a7bf359a13278dce75045bc51563527a73a956b"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_guard_smooth.png",
+    "sha256": "25fb6e465e27b4036f40e8086e9387811d86c24fdc9ae7529ada294735128424"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_guard_smooth.json",
+    "sha256": "369ba0ec8cd221a0c3acf07648fcbd602b253a3dcd0e05f713b631f528ceaff4"
+  },
+  {
+    "path": "art/animations/combat_effect_guard_smooth.aseprite",
+    "sha256": "c992eda948d6c26cf41866b3c3e4b1d057df71834f2fad4b17663934ab503d5e"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_heal_smooth.png",
+    "sha256": "1a46493d85be1cf063633a2a60f08090aed85f7fea6a0ac5605666fe2457a175"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_heal_smooth.json",
+    "sha256": "6c1c5a3b7c58eb25270bc4aff84ab795de5fea75de2cc13529a25465a2c21937"
+  },
+  {
+    "path": "art/animations/combat_effect_heal_smooth.aseprite",
+    "sha256": "941c4fc803a492d9cf8c8506dd1dee4d77edb50663cd272b35b0c158e490f653"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_armor_smooth.png",
+    "sha256": "74a5b1c5d008fd1cf676d2513733135db5a188bb719b84acab6a86b1653cd8d7"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_armor_smooth.json",
+    "sha256": "4fd7fdea2d03a6d68ffad649f4ec6a5784f7994b46b792e9d539b167cc3a310b"
+  },
+  {
+    "path": "art/animations/combat_effect_armor_smooth.aseprite",
+    "sha256": "2740bb08af0d32b3e87fac514fd04a5452711104c4413cbc479ae760794c1a0d"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_armor_break_smooth.png",
+    "sha256": "6f77b146bcb32817e5ef00113f6c141c90adb22f843f87e23f9b4a2d809babf2"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_armor_break_smooth.json",
+    "sha256": "b882220d5894d3894fa0baf689c174f18223f345f0116f22adc5a8ffaf247258"
+  },
+  {
+    "path": "art/animations/combat_effect_armor_break_smooth.aseprite",
+    "sha256": "13796f6040e816dbf21f2c9d0fbb26c37140ed8a39d75432f74890b4bf6ca7e6"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_status_apply_smooth.png",
+    "sha256": "3961501c5f786622bf47c6c01095577a5c6152858cf3447177d69b6d64695810"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_status_apply_smooth.json",
+    "sha256": "d62155752e3e6fc7cba631086fb7631c2a1bd44ed0fe54555e0e581d33fb1b4f"
+  },
+  {
+    "path": "art/animations/combat_effect_status_apply_smooth.aseprite",
+    "sha256": "77c78ece84c063f2b119b31aed2c5ee8e1d9688f623a5b8fbad0c573648aabb8"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_status_remove_smooth.png",
+    "sha256": "0a3aac1db5ffedc7c99dbf09986968af8d066a1c65cc984a84022d88869cfc08"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_status_remove_smooth.json",
+    "sha256": "181073aa451834b1bd69a0ef951bd9c083e39bca32a528080f6ffe7f28c47334"
+  },
+  {
+    "path": "art/animations/combat_effect_status_remove_smooth.aseprite",
+    "sha256": "9400f385973a533369a7368be6b13db0db7885caf63d1f8e06fc179835986383"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_death_smooth.png",
+    "sha256": "707329de79c8b2fbac8d17dd3cbc95560b1c3ce825d976d5598c4980b13853c2"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_death_smooth.json",
+    "sha256": "2a2283563507f927b63e2433fe3c5c6de21e927d99968dad36fa5a2fb29d6af9"
+  },
+  {
+    "path": "art/animations/combat_effect_death_smooth.aseprite",
+    "sha256": "d0488dda1205dffe78a26b203524aa4a3e2f3d499501f4dc046743c88e24b843"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_blood_moon_smooth.png",
+    "sha256": "ff024d32af371a6afbe3f5e0d3a632d91aa598a28cf55a0e43b860f2ab0d3582"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_blood_moon_smooth.json",
+    "sha256": "540e05f03420097f37aa7813829d4c56f28cf8518c875b9c8850e453d7cee5a8"
+  },
+  {
+    "path": "art/animations/combat_effect_blood_moon_smooth.aseprite",
+    "sha256": "bf3f17bc5fd80ce3bee818c8fcb69b4022900b91028df5e1eb90fc1dbb3a3661"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_cast_smooth.png",
+    "sha256": "a00f34873f60aef1275c8be5e36446a6d422d0bba8fed2ff0c1b589686bd304c"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_cast_smooth.json",
+    "sha256": "d09a1445420061feb788e43e136a83745eb959d425ba8d2a2ab5242c86cfa1e3"
+  },
+  {
+    "path": "art/animations/combat_effect_cast_smooth.aseprite",
+    "sha256": "e689d56952551c41d7772b1d6449090732fe766c39052d2b61dfcfa0a2517f55"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_moon_shift_smooth.png",
+    "sha256": "ce2ecb88e26429b504229eb4784e001a106dea52585837f4eb2aaf4f3feee371"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_moon_shift_smooth.json",
+    "sha256": "df7a5a6c8765a1b7757bfda8f5ecfbbeb054313bfc3e2ce84c2b7d59afdb826e"
+  },
+  {
+    "path": "art/animations/combat_effect_moon_shift_smooth.aseprite",
+    "sha256": "eaf6a9c29fdefdcedd1155908ddae29ee33fe8b1bfbd67046071924e73fafaec"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_reflect_smooth.png",
+    "sha256": "efaf3ed6368c8096b440774ba3b53e29da4d590e7b97e6f4a6e5e26de21e399f"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/combat_effect_reflect_smooth.json",
+    "sha256": "4671d6da5edc79aa07bfcf5dd1d63fa1d69eacc7b2dd8d3986a4584fa0f1121f"
+  },
+  {
+    "path": "art/animations/combat_effect_reflect_smooth.aseprite",
+    "sha256": "eca05cfa82b5868a78926110beb4c1e0b4b1f8ebce5b8fca12c2855ef793f544"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f08_motion_smooth.png",
+    "sha256": "587f1e5ea385bb9c041de1cb36f647dfd9033bf65f294ea8d56e3d589eeda8b6"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f08_motion_smooth.json",
+    "sha256": "8295b5fd6dc235174e367ff560cb7fdd5eda05cce09faa727af76945e7feabc3"
+  },
+  {
+    "path": "art/animations/awakening_f08_motion_smooth.aseprite",
+    "sha256": "473d7d7b1c7e72e4f38d01e18609c16c33e75080915caf146719689aa1f8385e"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m05_motion_smooth.png",
+    "sha256": "eac32b56e543718fe21c3b984e2c60670d532ead09e6afd362ff88c80b718edf"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m05_motion_smooth.json",
+    "sha256": "8e84a1d280e0720ce3b5d34155961dc0a54bb578ef06963d5688e2e6a4b067d2"
+  },
+  {
+    "path": "art/animations/awakening_m05_motion_smooth.aseprite",
+    "sha256": "1f107ce7c4fb7050fdd6d9c82387ed7b22530a06a9a8331c5be1a42abd446bf8"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f04_motion_smooth.png",
+    "sha256": "aca1ba146abe12a4a6673793485ddfad6f0adce991d7911409db6eac046ddfd6"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f04_motion_smooth.json",
+    "sha256": "1274226bfb362cd039b40fbf37000891bc745157233775865f390eacfa054d11"
+  },
+  {
+    "path": "art/animations/awakening_f04_motion_smooth.aseprite",
+    "sha256": "5fd3262aed307290b529fd2ea30103b9380472da768124ba19d341d5683930e3"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f03_motion_smooth.png",
+    "sha256": "bdaf0e8863884cc0a30add026f0c9c8a797e4b3cc25300102a134ecc599c6c87"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f03_motion_smooth.json",
+    "sha256": "090d2042099be6860fe909ed5dbfbb6e51a365de340ebb6e7e3cddcd8c438928"
+  },
+  {
+    "path": "art/animations/awakening_f03_motion_smooth.aseprite",
+    "sha256": "bb3992097608edb8b4c2bcd6a4334c15694255c5bd5a0af42e9261f4bfd225ab"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f02_motion_smooth.png",
+    "sha256": "af6cbc0050baa04867543a62fa5ca755e638b82e5dc0599ae62ff717d5b9d0c2"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f02_motion_smooth.json",
+    "sha256": "d8a878e69b07877a0804237da2b15caccd52fbc8a6bdf34891eedb51f930ce30"
+  },
+  {
+    "path": "art/animations/awakening_f02_motion_smooth.aseprite",
+    "sha256": "87222dba9f09451c8c974a5f043bd3389783394eb055bac0c5491e6250b0ff8f"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m01_motion_smooth.png",
+    "sha256": "8a27b04f881ec0e5939e7354bd1da642052dcf2dff705b330ed51b816d8c7e22"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m01_motion_smooth.json",
+    "sha256": "4d68007de083dc4961b644870b63c3967f944ff740648cc5d0f9b6ca440302a8"
+  },
+  {
+    "path": "art/animations/awakening_m01_motion_smooth.aseprite",
+    "sha256": "77a1e8f97787cd3144da76f26316067007ebbc14f54675959c5ad27a6205bd4c"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m02_motion_smooth.png",
+    "sha256": "d479f37546019850533b8a3a8afdf77c29412d3049b432c9b947cdf6e5e300f8"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m02_motion_smooth.json",
+    "sha256": "b2ec4169d5c52d3db4493ce32f6cf1e992be701fdc5d2b8786c5d81416e9805b"
+  },
+  {
+    "path": "art/animations/awakening_m02_motion_smooth.aseprite",
+    "sha256": "05ad900fec015ccb41b5a6dda369c236a5ae5d6ede7f039e6b7e35624f010784"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m03_motion_smooth.png",
+    "sha256": "31bcbfe68d8f66564719f85d129cb152e10bb7bdb15922946ada605d22d1f947"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m03_motion_smooth.json",
+    "sha256": "f5c82e10f51fccf19d749bb206dda01e57c125a7d6e6a9c8bae2059e45c65097"
+  },
+  {
+    "path": "art/animations/awakening_m03_motion_smooth.aseprite",
+    "sha256": "62eef19b6cf25a6b2cc0251ebf0fdcac46bbf580dda33e8c6144334c5147ee63"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m04_motion_smooth.png",
+    "sha256": "2e3382a70c966d1df903c63a1e1c1143c98c5123dd4fb2a7d82ec39e8c5edf46"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m04_motion_smooth.json",
+    "sha256": "108ba52cf94ac13867793279141bf4f15b4d00f1b66b0a762e7f269aebadb0c0"
+  },
+  {
+    "path": "art/animations/awakening_m04_motion_smooth.aseprite",
+    "sha256": "c5c02fee507752b117cf420f58fb5031d68702c9d22bada26e6d24398ca286a7"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f01_motion_smooth.png",
+    "sha256": "2f1b637aac34c58c12894bec2a89ff592593eba54aa49126c8352f2af4726b81"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f01_motion_smooth.json",
+    "sha256": "929e77f3ea1896e8c06d499041acdbe993c05fffd3fb8ee03d0297fb00b28548"
+  },
+  {
+    "path": "art/animations/awakening_f01_motion_smooth.aseprite",
+    "sha256": "fc9b3ebcd0b68e4ad080dc69ce6501b63e40138a4403e41a33a06e2e85ce6f5c"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m06_motion_smooth.png",
+    "sha256": "a266563f692c1d5153d8d53bc5045c02a732f4e40fc1816b084ef5836fc1b44f"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m06_motion_smooth.json",
+    "sha256": "8e60278bcfc3efc41d67ab9fc44cba73251d60f2b3955064c9d1bb4dc3c95497"
+  },
+  {
+    "path": "art/animations/awakening_m06_motion_smooth.aseprite",
+    "sha256": "691f44391833ab2c07819266716913509f474005c3cb9de0f2dd1f2b8d4a8e32"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m07_motion_smooth.png",
+    "sha256": "8bf7b23e1834eba5c08d809ca453fb90ac9bdd5f202507879e33de26b9ac1ec8"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m07_motion_smooth.json",
+    "sha256": "c1b46d641bf7e3f230d455e96c85da9caaba1d1bfe9bf17b9d90fa1120d24bee"
+  },
+  {
+    "path": "art/animations/awakening_m07_motion_smooth.aseprite",
+    "sha256": "332c2e01c08cb753b3bd6d66f58f238893cb86fbec46d1ebda035d8d1dd19dfa"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m08_motion_smooth.png",
+    "sha256": "354b8912c55ebc07146476aed6280cc05e6848739122caddb390da9215aeebb9"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m08_motion_smooth.json",
+    "sha256": "8307f07485449105ee0792b20d08b6f00cb5191b7cc77803492fba6267439ded"
+  },
+  {
+    "path": "art/animations/awakening_m08_motion_smooth.aseprite",
+    "sha256": "8da17d638edc45db766d80f94bff38e2d3ec042f36d082b8c8bf20ce01950f68"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m10_motion_smooth.png",
+    "sha256": "e8f02247431dff27dda782b39b606db118f78eb198d606526a1aac134d3b334e"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m10_motion_smooth.json",
+    "sha256": "d8baed77febdd95f02176b3feba944eb68d030dfc2a85fafb057d53e425318d6"
+  },
+  {
+    "path": "art/animations/awakening_m10_motion_smooth.aseprite",
+    "sha256": "382d7a8b4774be693e580d7979e2e001071e5042669aeca82ceefe0000d4b6c2"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f05_motion_smooth.png",
+    "sha256": "69ecfe18e13bf351da88f1364e2bb01bf0c1a7b8d1a0d6b6bf796c43b593639e"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f05_motion_smooth.json",
+    "sha256": "c8958066d0ceab8eebaf25074dc4490820e8fe8a1ff008b8a4ac3a2bf2d6b541"
+  },
+  {
+    "path": "art/animations/awakening_f05_motion_smooth.aseprite",
+    "sha256": "1c96f39a3f4b1e39c24560c25da89914caf68d840b54a2b6161fd53ae3f3294f"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f07_motion_smooth.png",
+    "sha256": "4f7e44f04a0981d9538158d750f68e050859d64df842f99e3187b923542f3695"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f07_motion_smooth.json",
+    "sha256": "d2d7c741688777b65d794a330d80ed00d133b767c968b7c93b81093236fe1126"
+  },
+  {
+    "path": "art/animations/awakening_f07_motion_smooth.aseprite",
+    "sha256": "d465f531163ba72ccf32875e0ba883ae6202f498bf68ec0b0e9ca9a188493d9f"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f09_motion_smooth.png",
+    "sha256": "706a124ea87aae9f6b7b3ee290a26c93b5aeaf2a14ad28268fe14f5d46e41abf"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f09_motion_smooth.json",
+    "sha256": "ca9ea26ceec2e7f3cf2c67de8944c942f968b0d800472db6ba8d597de6e4b937"
+  },
+  {
+    "path": "art/animations/awakening_f09_motion_smooth.aseprite",
+    "sha256": "1a8de3b7ea5c48fbdb0ea58415e7be9eede1b8f2d7fa8a20d935864396009b39"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f10_motion_smooth.png",
+    "sha256": "e4f8e5deb953d947e5d9cfa30d5a2c07845a4317948cefe20729e8f9332c3cce"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f10_motion_smooth.json",
+    "sha256": "9e4a5a3b91175e782483c0633a8a7b64d57c7cb93eae627162696eb8c0a8e6ee"
+  },
+  {
+    "path": "art/animations/awakening_f10_motion_smooth.aseprite",
+    "sha256": "5aef215d730092bbf29da2ea081d6bc5eeed42e5402f03e0652e89455417fd5a"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m09_motion_smooth.png",
+    "sha256": "349382912a3477967aa5071236dd73148b3f5155a6e105bbd972f9936dc4be1c"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m09_motion_smooth.json",
+    "sha256": "d9bf4f764a378f2939538ed4e2ba5080e5f1b5dff079b3662745629936841d1b"
+  },
+  {
+    "path": "art/animations/awakening_m09_motion_smooth.aseprite",
+    "sha256": "be315a4d71a6a3aad929535716afa4eced092bea5714d67652a4379c64b9cd85"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m11_motion_smooth.png",
+    "sha256": "35670a1df0204ef8289f95fd7deaae5473c5cfaed28e69131f43e9e9e4f2058d"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m11_motion_smooth.json",
+    "sha256": "354d932d32fb224f4edbb8b6ac260e15727c8526475611bd6170dd4a4d613a11"
+  },
+  {
+    "path": "art/animations/awakening_m11_motion_smooth.aseprite",
+    "sha256": "3160e8eaf4b8e9b7c8d5fec520e633a0c07375c691245c367d8d9facedcb2ce5"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f11_motion_smooth.png",
+    "sha256": "a608d355df65526cadeec9ab9d9215e5c4a541323457dfb6fd300d82b805f2f4"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f11_motion_smooth.json",
+    "sha256": "adc393edec5da7f0cddacb3b10589a4e7a0554b0f9cab304473faf7bfb2d876d"
+  },
+  {
+    "path": "art/animations/awakening_f11_motion_smooth.aseprite",
+    "sha256": "340506393b07dd749cbe32ca48157aa0f36863d5f8086c126187dbe5212b4a62"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f12_motion_smooth.png",
+    "sha256": "e9308b2a4c97f746f6334caf99cf26598ea56396b12ce2574f5ac5eb5ed1286b"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f12_motion_smooth.json",
+    "sha256": "6ef63e7b88ed50c126ad29006e60f314aecf6af16ecd7f5a87c6471afea9be07"
+  },
+  {
+    "path": "art/animations/awakening_f12_motion_smooth.aseprite",
+    "sha256": "82e552e90aca0a87453a4daa6d4b45505648f3ec6d29e02bcd73927b27105c67"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m12_motion_smooth.png",
+    "sha256": "51abd5f2d818e28bf04710859f50379671cbaa2322bf7371cf67d804440b162a"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_m12_motion_smooth.json",
+    "sha256": "a84531ac5f1c0ad264a3130d7ab56898a0693130b393864e1dfe03b79b5113e9"
+  },
+  {
+    "path": "art/animations/awakening_m12_motion_smooth.aseprite",
+    "sha256": "634490fae1b1efdb5582da8f20d710d2731858073f47408bfcbef683f64f1c53"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f13_motion_smooth.png",
+    "sha256": "406d8e24651f22abf8bf6c7acc868263a6ef950e1656f56bfe84ede5fd4d33ab"
+  },
+  {
+    "path": "apps/client/public/assets/vfx/awakening_f13_motion_smooth.json",
+    "sha256": "3d9cd83bb1609b9ddc494b95cc7b5f658eb89d06b1b0b63b06db55a747ee89a9"
+  },
+  {
+    "path": "art/animations/awakening_f13_motion_smooth.aseprite",
+    "sha256": "5f2f3a1530f1962055e614124ff3d70cd6ac675755b4179761f40e94e35d026c"
+  }
+]

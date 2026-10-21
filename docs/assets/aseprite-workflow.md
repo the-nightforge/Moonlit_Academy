@@ -18,6 +18,18 @@ The Aseprite timeline contains Preparation, Impact and Recovery tags. Normal dur
 4. Inspect exported sheets visually and run client asset/native-frame/playback tests. Check vertical and diagonal directions, one impact or portrait refresh, normal/double speed, reduced motion and cancellation cleanup.
 5. Recheck the production animation preview after integration. A static sheet establishes framing, not real-time smoothness or frame rate.
 
+## Remaining combat library
+
+`./scripts/assets/export-motion-library.ps1` exports the other 49 animations: 13 attacks, 12 support effects and 24 awakenings. It reads the saved `art/animations/*_smooth.aseprite` documents, preserves edits, exports PNG plus JSON and reopens both outputs to compare pixels and durations. Set `ASEPRITE_PATH` or pass `-AsepritePath` when using another Aseprite installation. The original three approved samples still use `export-motion.ps1` independently.
+
+The first import, or an intentional `-RebuildFromReferences`, consumes a matching `art/animations/recovered/<original-stem>.aseprite` when present; otherwise it preserves the original full 384 × 512 cut on a padded canvas. Recovery is separate: run `recover-motion-sources.lua` inside Aseprite with `root=<repository>`. Its inspected ownership/landmark configuration is `motion-source-recovery.json`. Original pixels that cross nominal grid lines are recovered only where source ownership can be established. Ambiguous merged motifs remain diagnosed; adding padding is never recorded as restoring missing artwork. Generated replacements and rejected candidates have separate provenance in `motion-library-replacements.json`.
+
+The accepted library has 49 recovered sources and 392 cels, including twelve corrected illustrated source sheets. Recovery verifies every nonzero source pixel exactly once after reopening the saved document. Five glow-joined sources use an inspected per-source alpha96 ownership threshold; this changes segmentation seeds only and never removes softer pixels. Use `only=stem1,stem2` for partial recovery; its merged audit must retain all prior nested provenance records. Fifteen original references retain documented weak outer-edge glow contacts; no accepted reference has a strong outer-edge contact. These diagnostics distinguish source limitations from new export clipping.
+
+Each export has one `presentation` slice. Its bounds preserve the original 384 × 512 sizing; the slice pivot supplies the runtime origin, so extra canvas padding does not shrink or shift the effect. The runtime uses the exact exported rectangles from `motion-library-data.json`. The timeline starts each source cel at the inverse of the game's monotone Hermite frame curve, with the peak exactly at impact/charge and a terminal one-millisecond editor hold. Normal playback uses one shared clock stretched by 1.6; speed is applied once by the runtime. Each source remains eight authored cels. Reduced motion keeps one stationary peak and fades; awakenings remain 180 milliseconds.
+
+`motion-library-audit.json` records reimport checks, original grid contacts and the actual source reference. `motion-library-files.json` records portable hashes for all 147 active PNG, JSON and editable exports. Nine navy galleries under `docs/reviews/assets/2026-10-21-motion-library-*.png` show every cel in chronological order; row labels are in the audit. These establish source framing and phase integrity, not measured live browser performance.
+
 Aseprite export/API references: [command-line interface](https://www.aseprite.org/docs/cli/), [ExportSpriteSheet](https://www.aseprite.org/api/command/ExportSpriteSheet), [image operations](https://www.aseprite.org/api/image).
 
 ## Straight, stabilized bow

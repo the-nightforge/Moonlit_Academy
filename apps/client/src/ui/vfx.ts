@@ -81,7 +81,7 @@ export async function playAttack(look: AttackLook, from: Point, to: Point, opts:
       onImpact: () => {
         // A callback failure rejects the illustration through AnimationRuntime.tween.
         opts.onImpact?.();
-        impactTail = impactAnimation(rt, to, look.color, opts.blocked, 1);
+        impactTail = impactAnimation(rt, to, look.color, opts.blocked, 1, opts.illustrationMode);
         void impactTail.catch(() => {});
         if (!rt.reducedMotion) rt.shake(45, opts.blocked ? .0008 : .0015);
       },
@@ -91,20 +91,20 @@ export async function playAttack(look: AttackLook, from: Point, to: Point, opts:
 }
 
 export type SupportEffect = "hit" | "guard" | "heal" | "armor" | "armor_break" | "status_apply" | "status_remove" | "death" | "blood_moon" | "cast" | "moon_shift" | "reflect";
-export function playSupportEffect(rt: AnimationRuntime, kind: SupportEffect, at: Point, duration = 500): Promise<void> {
-  return playCombatIllustration(rt, `effect_${kind}`, { to: at, duration, impactAt: Math.min(150, duration * 3 / 7), width: 250, height: 280,
+export function playSupportEffect(rt: AnimationRuntime, kind: SupportEffect, at: Point, duration = 500, illustrationMode?: IllustrationMode): Promise<void> {
+  return playCombatIllustration(rt, `effect_${kind}`, { to: at, duration, impactAt: Math.min(150, duration * 3 / 7), width: 250, height: 280, illustrationMode,
     motion: elapsed => ({ x: at.x, y: at.y - Math.sin(elapsed / duration * Math.PI) * (kind === "heal" ? 14 : 4), scale: .94 + .06 * Math.sin(elapsed / duration * Math.PI) }) });
 }
-export function healBloom(rt: AnimationRuntime, at: Point): Promise<void> { return playSupportEffect(rt, "heal", at, 560); }
-export function armorWard(rt: AnimationRuntime, at: Point, removed = false): Promise<void> { return playSupportEffect(rt, removed ? "armor_break" : "armor", at, removed ? 450 : 520); }
+export function healBloom(rt: AnimationRuntime, at: Point, illustrationMode?: IllustrationMode): Promise<void> { return playSupportEffect(rt, "heal", at, 560, illustrationMode); }
+export function armorWard(rt: AnimationRuntime, at: Point, removed = false, illustrationMode?: IllustrationMode): Promise<void> { return playSupportEffect(rt, removed ? "armor_break" : "armor", at, removed ? 450 : 520, illustrationMode); }
 
 /** The clone is owned for the whole finite cast, including cancellation. */
-export async function castCard(rt: AnimationRuntime, view: Phaser.GameObjects.Container, stage: Point, _color: number, target?: Point): Promise<void> {
+export async function castCard(rt: AnimationRuntime, view: Phaser.GameObjects.Container, stage: Point, _color: number, target?: Point, illustrationMode?: IllustrationMode): Promise<void> {
   rt.assertActive(); rt.track(view);
   const from = { x: view.x, y: view.y }, alpha = view.alpha;
   view.parentContainer?.bringToTop(view);
   try {
-    await playCombatIllustration(rt, "effect_cast", { from: stage, to: target ?? stage, duration: 570, impactAt: 250, width: 250, height: 280,
+    await playCombatIllustration(rt, "effect_cast", { from: stage, to: target ?? stage, duration: 570, impactAt: 250, width: 250, height: 280, illustrationMode,
       motion: elapsed => { const p = smooth((elapsed - 220) / 200); return { x: stage.x + ((target?.x ?? stage.x) - stage.x) * p, y: stage.y + ((target?.y ?? stage.y) - stage.y) * p }; },
       onUpdate: elapsed => {
         if (view.active === false) return;
@@ -116,12 +116,12 @@ export async function castCard(rt: AnimationRuntime, view: Phaser.GameObjects.Co
 }
 
 /** The selected real moon icon settles into its badge; no synthetic wheel ornaments. */
-export async function moonWheel(rt: AnimationRuntime, stage: Point, badge: Point, phaseIds: readonly string[], _from: number, to: number, _color = 0xf4d35e, ms = 550): Promise<void> {
+export async function moonWheel(rt: AnimationRuntime, stage: Point, badge: Point, phaseIds: readonly string[], _from: number, to: number, _color = 0xf4d35e, ms = 550, illustrationMode?: IllustrationMode): Promise<void> {
   rt.assertActive();
   const key = `ui:moon_${phaseIds[to]}`, icon = rt.scene.textures.exists(key) ? rt.track(rt.scene.add.image(stage.x, stage.y, key).setDepth(99).setAlpha(0)) : undefined;
   if (icon) { const source = icon.texture?.getSourceImage?.() as { width?: number; height?: number } | undefined; icon.setScale(Math.min(42 / (source?.width || 42), 42 / (source?.height || 42))); }
   try {
-    await playCombatIllustration(rt, "effect_moon_shift", { to: badge, duration: ms, impactAt: ms * .58, width: 280, height: 300,
+    await playCombatIllustration(rt, "effect_moon_shift", { to: badge, duration: ms, impactAt: ms * .58, width: 280, height: 300, illustrationMode,
       motion: elapsed => { const p = smooth((elapsed / ms - .3) / .7); return { x: stage.x + (badge.x - stage.x) * p, y: stage.y + (badge.y - stage.y) * p }; },
       onUpdate: elapsed => {
         if (!icon) return;
@@ -133,35 +133,35 @@ export async function moonWheel(rt: AnimationRuntime, stage: Point, badge: Point
   } finally { icon?.destroy(); }
 }
 
-export async function statusPop(rt: AnimationRuntime, at: Point, iconKey: string, _color: number, removed = false): Promise<void> {
+export async function statusPop(rt: AnimationRuntime, at: Point, iconKey: string, _color: number, removed = false, illustrationMode?: IllustrationMode): Promise<void> {
   rt.assertActive();
   const pos = { x: at.x, y: at.y - 30 }, icon = rt.scene.textures.exists(iconKey) ? rt.track(rt.scene.add.image(pos.x, pos.y, iconKey).setDepth(99).setAlpha(0)) : undefined;
   if (icon) { const source = icon.texture?.getSourceImage?.() as { width?: number; height?: number } | undefined; icon.setScale(Math.min(34 / (source?.width || 34), 34 / (source?.height || 34))); }
   try {
-    await playCombatIllustration(rt, removed ? "effect_status_remove" : "effect_status_apply", { to: pos, duration: 420, impactAt: 150, width: 170, height: 190,
+    await playCombatIllustration(rt, removed ? "effect_status_remove" : "effect_status_apply", { to: pos, duration: 420, impactAt: 150, width: 170, height: 190, illustrationMode,
       onUpdate: elapsed => { icon?.setAlpha(Math.min(1, elapsed / 70, (420 - elapsed) / 160)); },
     });
   } finally { icon?.destroy(); }
 }
 
-export async function deathBurn(rt: AnimationRuntime, view: Phaser.GameObjects.Container | undefined, at: Point, boss = false): Promise<void> {
+export async function deathBurn(rt: AnimationRuntime, view: Phaser.GameObjects.Container | undefined, at: Point, boss = false, illustrationMode?: IllustrationMode): Promise<void> {
   rt.assertActive();
   const owner = view ? ownUnitPose(view) : undefined, duration = boss ? 820 : 650;
   try {
-    await playCombatIllustration(rt, "effect_death", { to: at, duration, impactAt: duration * .4, width: boss ? 320 : 250, height: boss ? 350 : 300,
+    await playCombatIllustration(rt, "effect_death", { to: at, duration, impactAt: duration * .4, width: boss ? 320 : 250, height: boss ? 350 : 300, illustrationMode,
       onUpdate: elapsed => { if (!view || !owner?.current()) return; const p = Math.sin(elapsed / duration * Math.PI); view.alpha = owner.base.alpha * (1 - .35 * p); if (!rt.reducedMotion) view.y = owner.base.y - p * 9; },
     });
   } finally { owner?.restore(); }
 }
-export function bloodMoonSurge(rt: AnimationRuntime, at: Point): Promise<void> {
-  return playCombatIllustration(rt, "effect_blood_moon", { to: at, duration: 760, impactAt: 250, width: 300, height: 320,
+export function bloodMoonSurge(rt: AnimationRuntime, at: Point, illustrationMode?: IllustrationMode): Promise<void> {
+  return playCombatIllustration(rt, "effect_blood_moon", { to: at, duration: 760, impactAt: 250, width: 300, height: 320, illustrationMode,
     onImpact: () => { if (!rt.reducedMotion) rt.shake(60, .0015); },
     motion: elapsed => ({ x: at.x, y: at.y, scale: .9 + .1 * Math.sin(elapsed / 760 * Math.PI) }),
   });
 }
-export function reflectStrike(rt: AnimationRuntime, from: Point, to: Point): Promise<void> {
+export function reflectStrike(rt: AnimationRuntime, from: Point, to: Point, illustrationMode?: IllustrationMode): Promise<void> {
   const duration = 590, impactAt = 290, angle = Math.atan2(to.y - from.y, to.x - from.x);
-  return playCombatIllustration(rt, "effect_reflect", { from, to, duration, impactAt, width: 245, height: 260, rotation: angle,
+  return playCombatIllustration(rt, "effect_reflect", { from, to, duration, impactAt, width: 245, height: 260, rotation: angle, illustrationMode,
     motion: elapsed => { const p = smooth((elapsed - 85) / (impactAt - 85)); return { x: from.x + (to.x - from.x) * p, y: from.y + (to.y - from.y) * p }; },
   });
 }

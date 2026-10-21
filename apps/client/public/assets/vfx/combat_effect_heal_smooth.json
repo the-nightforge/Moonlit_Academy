@@ -1,0 +1,94 @@
+{ "frames": [
+   {
+    "filename": "0",
+    "frame": { "x": 0, "y": 0, "w": 483, "h": 678 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 483, "h": 678 },
+    "sourceSize": { "w": 483, "h": 678 },
+    "duration": 105
+   },
+   {
+    "filename": "1",
+    "frame": { "x": 483, "y": 0, "w": 483, "h": 678 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 483, "h": 678 },
+    "sourceSize": { "w": 483, "h": 678 },
+    "duration": 60
+   },
+   {
+    "filename": "2",
+    "frame": { "x": 966, "y": 0, "w": 483, "h": 678 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 483, "h": 678 },
+    "sourceSize": { "w": 483, "h": 678 },
+    "duration": 75
+   },
+   {
+    "filename": "3",
+    "frame": { "x": 1449, "y": 0, "w": 483, "h": 678 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 483, "h": 678 },
+    "sourceSize": { "w": 483, "h": 678 },
+    "duration": 115
+   },
+   {
+    "filename": "4",
+    "frame": { "x": 0, "y": 678, "w": 483, "h": 678 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 483, "h": 678 },
+    "sourceSize": { "w": 483, "h": 678 },
+    "duration": 119
+   },
+   {
+    "filename": "5",
+    "frame": { "x": 483, "y": 678, "w": 483, "h": 678 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 483, "h": 678 },
+    "sourceSize": { "w": 483, "h": 678 },
+    "duration": 137
+   },
+   {
+    "filename": "6",
+    "frame": { "x": 966, "y": 678, "w": 483, "h": 678 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 483, "h": 678 },
+    "sourceSize": { "w": 483, "h": 678 },
+    "duration": 284
+   },
+   {
+    "filename": "7",
+    "frame": { "x": 1449, "y": 678, "w": 483, "h": 678 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 483, "h": 678 },
+    "sourceSize": { "w": 483, "h": 678 },
+    "duration": 1
+   }
+ ],
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.18.6-dev",
+  "image": "combat_effect_heal_smooth.png",
+  "format": "RGBA8888",
+  "size": { "w": 1932, "h": 1356 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "Preparation", "from": 0, "to": 2, "direction": "forward", "color": "#000000ff" },
+   { "name": "Impact", "from": 3, "to": 3, "direction": "forward", "color": "#000000ff" },
+   { "name": "Recovery", "from": 4, "to": 7, "direction": "forward", "color": "#000000ff" }
+  ],
+  "layers": [
+   { "name": "Illustrated frames", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+   { "name": "presentation", "keys": [{ "frame": 0, "bounds": {"x": 59, "y": 25, "w": 384, "h": 512 }, "pivot": {"x": 192, "y": 256 } }] }
+  ]
+ }
+}

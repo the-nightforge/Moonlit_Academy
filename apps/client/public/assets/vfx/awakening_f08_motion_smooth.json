@@ -1,0 +1,94 @@
+{ "frames": [
+   {
+    "filename": "0",
+    "frame": { "x": 0, "y": 0, "w": 464, "h": 655 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 464, "h": 655 },
+    "sourceSize": { "w": 464, "h": 655 },
+    "duration": 68
+   },
+   {
+    "filename": "1",
+    "frame": { "x": 464, "y": 0, "w": 464, "h": 655 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 464, "h": 655 },
+    "sourceSize": { "w": 464, "h": 655 },
+    "duration": 39
+   },
+   {
+    "filename": "2",
+    "frame": { "x": 928, "y": 0, "w": 464, "h": 655 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 464, "h": 655 },
+    "sourceSize": { "w": 464, "h": 655 },
+    "duration": 53
+   },
+   {
+    "filename": "3",
+    "frame": { "x": 1392, "y": 0, "w": 464, "h": 655 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 464, "h": 655 },
+    "sourceSize": { "w": 464, "h": 655 },
+    "duration": 103
+   },
+   {
+    "filename": "4",
+    "frame": { "x": 0, "y": 655, "w": 464, "h": 655 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 464, "h": 655 },
+    "sourceSize": { "w": 464, "h": 655 },
+    "duration": 116
+   },
+   {
+    "filename": "5",
+    "frame": { "x": 464, "y": 655, "w": 464, "h": 655 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 464, "h": 655 },
+    "sourceSize": { "w": 464, "h": 655 },
+    "duration": 141
+   },
+   {
+    "filename": "6",
+    "frame": { "x": 928, "y": 655, "w": 464, "h": 655 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 464, "h": 655 },
+    "sourceSize": { "w": 464, "h": 655 },
+    "duration": 311
+   },
+   {
+    "filename": "7",
+    "frame": { "x": 1392, "y": 655, "w": 464, "h": 655 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 464, "h": 655 },
+    "sourceSize": { "w": 464, "h": 655 },
+    "duration": 1
+   }
+ ],
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.18.6-dev",
+  "image": "awakening_f08_motion_smooth.png",
+  "format": "RGBA8888",
+  "size": { "w": 1856, "h": 1310 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "Preparation", "from": 0, "to": 2, "direction": "forward", "color": "#000000ff" },
+   { "name": "Impact", "from": 3, "to": 3, "direction": "forward", "color": "#000000ff" },
+   { "name": "Recovery", "from": 4, "to": 7, "direction": "forward", "color": "#000000ff" }
+  ],
+  "layers": [
+   { "name": "Illustrated frames", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+   { "name": "presentation", "keys": [{ "frame": 0, "bounds": {"x": 44, "y": 21, "w": 384, "h": 512 }, "pivot": {"x": 192, "y": 256 } }] }
+  ]
+ }
+}

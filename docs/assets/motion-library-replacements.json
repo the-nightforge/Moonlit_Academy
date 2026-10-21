@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-21",
+  "tool": "image_gen.imagegen",
+  "layout": {
+    "columns": 4,
+    "rows": 2,
+    "width": 1536,
+    "height": 1024,
+    "frames": 8
+  },
+  "assets": [
+    {
+      "stem": "combat_attack_blood",
+      "path": "art/animations/references/combat_attack_blood-v2.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "apps/client/public/assets/vfx/combat_attack_blood.webp",
+      "prompt": "Preserve ruby lotus, turquoise embroidered silk and faceted jewels in the supplied direct style reference. Recompose eight coherent chronological VFX phases on a transparent 1536x1024 four-by-two sheet, with complete motifs and generous transparent gutters, fixed physical lotus reference and no text/background.",
+      "sha256": "7dbb79205b3beda0f0ddac41a242e9095e82d0477bf0d9335faca1e273cdbd0a"
+    },
+    {
+      "stem": "combat_effect_reflect",
+      "path": "art/animations/references/combat_effect_reflect-v2.png",
+      "status": "rejected-overlapping-main-components",
+      "reference": "apps/client/public/assets/vfx/combat_effect_reflect.webp",
+      "prompt": "Preserve gold sapphire crystalline right-pointing bolt, white blossoms and blue ribbon trails; eight chronological transparent VFX frames. Requested safe cell padding; output still joined two solid motifs and was rejected.",
+      "sha256": "42ff4c8927911339611e7d3bdd4db13ca21c31c31657e4aaf1f8cd3ef4fc6745"
+    },
+    {
+      "stem": "combat_effect_reflect",
+      "path": "art/animations/references/combat_effect_reflect-v3.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "art/animations/references/combat_effect_reflect-v2.png",
+      "prompt": "Recompose all eight motifs much smaller, centered in their 384x512 source cells on transparent 1536x1024. Large transparent gutters, whole unclipped crystalline tips, no joining glow; retain sapphire jewel, dimensional blue ice, gold filigree and white blossoms. Same eight preparation, peak, follow-through and dissolution phases.",
+      "sha256": "107529546525b22b44d72ba14c580be0eb9355f721768c271550226bcff09c51"
+    },
+    {
+      "stem": "combat_attack_star",
+      "path": "art/animations/references/combat_attack_star-v2.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "apps/client/public/assets/vfx/combat_attack_star.webp",
+      "prompt": "Recreate this supplied direct reference as a polished hand-painted Chinese fantasy game animation sprite atlas, preserving its exact illustration style, materials, color palette and identity. A dark sapphire globe inside intricate gold astrolabe rings, bright gold pointed star facing right, little crescent charms, blue faceted crystals and pale blue silk trails. Crucial layout: transparent 1536x1024 PNG, exactly 4 columns by 2 rows, eight SMALL COMPLETELY ISOLATED subjects, reading order left to right then next row. Each source cell is384x512. Centers (192,256),(576,256),(960,256),(1344,256),(192,768),(576,768),(960,768),(1344,768). Shrink and recompose the old oversized reference subjects; each whole subject must fit within 200 pixels wide and 240 pixels tall, centered at its cell center, leaving HUGE transparent gutters on all sides, absolutely no glow or stray fragment crossing into neighboring cells. Whole unclipped extremities and trails. Eight coherent successive animation phases: gathering, forming, unfolding, peak, follow-through, dispersing, sparse remnants, faint final motes. Fixed camera, consistent physical center, flowing organic cloth with deliberate smooth successive poses. No rectangular frame, no background, no checkerboard, no text, no labels, no numbers, no person, no interface. True alpha transparency. Keep fine detailed painted artwork; not pixel art or geometric icons.",
+      "sha256": "d2b691824d2d4fa7a7e869f9605eb44a2d1cab1c61c93d426e7392834072b4c5"
+    },
+    {
+      "stem": "combat_effect_armor_break",
+      "path": "art/animations/references/combat_effect_armor_break-v2.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "apps/client/public/assets/vfx/combat_effect_armor_break.webp",
+      "prompt": "Recreate this supplied direct reference as a polished hand-painted Chinese fantasy game animation sprite atlas, preserving its exact illustration style, materials, color palette and identity. Black obsidian shield armor with intricate gold dragon engravings, red silk ribbons and blue gemstones, cracking then breaking into beautifully illustrated shards. Crucial layout: transparent 1536x1024 PNG, exactly 4 columns by 2 rows, eight SMALL COMPLETELY ISOLATED subjects, reading order left to right then next row. Each source cell is384x512. Centers (192,256),(576,256),(960,256),(1344,256),(192,768),(576,768),(960,768),(1344,768). Shrink and recompose the old oversized reference subjects; each whole subject must fit within 200 pixels wide and 240 pixels tall, centered at its cell center, leaving HUGE transparent gutters on all sides, absolutely no glow or stray fragment crossing into neighboring cells. Whole unclipped extremities and trails. Eight coherent successive animation phases: gathering, forming, unfolding, peak, follow-through, dispersing, sparse remnants, faint final motes. Fixed camera, consistent physical center, flowing organic cloth with deliberate smooth successive poses. No rectangular frame, no background, no checkerboard, no text, no labels, no numbers, no person, no interface. True alpha transparency. Keep fine detailed painted artwork; not pixel art or geometric icons.",
+      "sha256": "776d9b7c4c3d3a7e50c11dbfca2e6fbe0c9ca271890c92f1b116b4a582645f6d"
+    },
+    {
+      "stem": "awakening_f04_motion",
+      "path": "art/animations/references/awakening_f04_motion-v2.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "apps/client/public/assets/vfx/awakening_f04_motion.webp",
+      "prompt": "Recreate this supplied direct reference as a polished hand-painted Chinese fantasy game animation sprite atlas, preserving its exact illustration style, materials, color palette and identity. A herbal awakening wreath: emerald leaves, tiny white flowers, jade teardrops, gold botanical stems and translucent cream-green silk. Empty central space for a hero portrait, no person. Crucial layout: transparent 1536x1024 PNG, exactly 4 columns by 2 rows, eight SMALL COMPLETELY ISOLATED subjects, reading order left to right then next row. Each source cell is384x512. Centers (192,256),(576,256),(960,256),(1344,256),(192,768),(576,768),(960,768),(1344,768). Shrink and recompose the old oversized reference subjects; each whole subject must fit within 200 pixels wide and 300 pixels tall, centered at its cell center, leaving HUGE transparent gutters on all sides, absolutely no glow or stray fragment crossing into neighboring cells. Whole unclipped extremities and trails. Eight coherent successive animation phases: gathering, forming, unfolding, peak, follow-through, dispersing, sparse remnants, faint final motes. Fixed camera, consistent physical center, flowing organic cloth with deliberate smooth successive poses. No rectangular frame, no background, no checkerboard, no text, no labels, no numbers, no person, no interface. True alpha transparency. Keep fine detailed painted artwork; not pixel art or geometric icons.",
+      "sha256": "e3094753ab5eeef66070ebe90a7e8517d281a01fb22bc3f1f055af9f2856d27d"
+    },
+    {
+      "stem": "awakening_m02_motion",
+      "path": "art/animations/references/awakening_m02_motion-v2.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "apps/client/public/assets/vfx/awakening_m02_motion.webp",
+      "prompt": "Recreate this supplied direct reference as a polished hand-painted Chinese fantasy game animation sprite atlas, preserving its exact illustration style, materials, color palette and identity. A guardian awakening side wreath of black and gold shield halves, ornate armor plates, red silk, gold energy and sapphire jewels. Empty central space for hero portrait, no person. Crucial layout: transparent 1536x1024 PNG, exactly 4 columns by 2 rows, eight SMALL COMPLETELY ISOLATED subjects, reading order left to right then next row. Each source cell is384x512. Centers (192,256),(576,256),(960,256),(1344,256),(192,768),(576,768),(960,768),(1344,768). Shrink and recompose the old oversized reference subjects; each whole subject must fit within 200 pixels wide and 300 pixels tall, centered at its cell center, leaving HUGE transparent gutters on all sides, absolutely no glow or stray fragment crossing into neighboring cells. Whole unclipped extremities and trails. Eight coherent successive animation phases: gathering, forming, unfolding, peak, follow-through, dispersing, sparse remnants, faint final motes. Fixed camera, consistent physical center, flowing organic cloth with deliberate smooth successive poses. No rectangular frame, no background, no checkerboard, no text, no labels, no numbers, no person, no interface. True alpha transparency. Keep fine detailed painted artwork; not pixel art or geometric icons.",
+      "sha256": "bb3d2a8a202c09ac0fe3938bab877196633cd59d0ce17a8ee444198986b5bb74"
+    },
+    {
+      "stem": "awakening_f13_motion",
+      "path": "art/animations/references/awakening_f13_motion-v2.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "apps/client/public/assets/vfx/awakening_f13_motion.webp",
+      "prompt": "Recreate this supplied direct reference as a polished hand-painted Chinese fantasy game animation sprite atlas, preserving its exact illustration style, materials, color palette and identity. An oracle awakening wreath of pale lilac and ivory paper pages with gold celestial moons and stars, tassels, tiny white flowers, iridescent blue silk and thin golden pearl lines. Empty center for portrait, no person. Crucial layout: transparent 1536x1024 PNG, exactly 4 columns by 2 rows, eight SMALL COMPLETELY ISOLATED subjects, reading order left to right then next row. Each source cell is384x512. Centers (192,256),(576,256),(960,256),(1344,256),(192,768),(576,768),(960,768),(1344,768). Shrink and recompose the old oversized reference subjects; each whole subject must fit within 200 pixels wide and 300 pixels tall, centered at its cell center, leaving HUGE transparent gutters on all sides, absolutely no glow or stray fragment crossing into neighboring cells. Whole unclipped extremities and trails. Eight coherent successive animation phases: gathering, forming, unfolding, peak, follow-through, dispersing, sparse remnants, faint final motes. Fixed camera, consistent physical center, flowing organic cloth with deliberate smooth successive poses. No rectangular frame, no background, no checkerboard, no text, no labels, no numbers, no person, no interface. True alpha transparency. Keep fine detailed painted artwork; not pixel art or geometric icons.",
+      "sha256": "f0236ee3d171323d43d34dc509ae8013cfe015ceb6c8a1f9781b90df14887658"
+    },
+    {
+      "stem": "awakening_m05_motion",
+      "path": "art/animations/references/awakening_m05_motion-v2.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "apps/client/public/assets/vfx/awakening_m05_motion.webp",
+      "prompt": "Recreate this supplied direct reference as a polished hand-painted Chinese fantasy game animation sprite atlas, preserving its exact illustration style, materials, color palette and identity. A crimson gold fire phoenix side-wing awakening wreath, ornate dark golden spear and sapphire jewel on upper right, red silk tassels. Empty central space for portrait, no person. Crucial layout: transparent 1536x1024 PNG, exactly 4 columns by 2 rows, eight SMALL COMPLETELY ISOLATED subjects, reading order left to right then next row. Each source cell is384x512. Centers (192,256),(576,256),(960,256),(1344,256),(192,768),(576,768),(960,768),(1344,768). Shrink and recompose the old oversized reference subjects; each whole subject must fit within 200 pixels wide and 300 pixels tall, centered at its cell center, leaving HUGE transparent gutters on all sides, absolutely no glow or stray fragment crossing into neighboring cells. Whole unclipped extremities and trails. Eight coherent successive animation phases: gathering, forming, unfolding, peak, follow-through, dispersing, sparse remnants, faint final motes. Fixed camera, consistent physical center, flowing organic cloth with deliberate smooth successive poses. No rectangular frame, no background, no checkerboard, no text, no labels, no numbers, no person, no interface. True alpha transparency. Keep fine detailed painted artwork; not pixel art or geometric icons.",
+      "sha256": "81369b6eba281eaa0ec32ab3a622e03a11caaf5374e0a03ebf7f119a4013a264"
+    },
+    {
+      "stem": "combat_effect_guard",
+      "path": "art/animations/references/combat_effect_guard-v2.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "apps/client/public/assets/vfx/combat_effect_guard.webp",
+      "prompt": "Recreate supplied reference as polished painted Chinese fantasy game effect atlas, retaining the exact reference illustration style, materials, palette and motifs. A protection wreath of translucent blue white talisman plates with delicate gold dragon engravings, dimensional blue ribbon and sapphire shards. Center empty. Exactly EIGHT consecutive chronological poses on a TRUE TRANSPARENT1536x1024 PNG, FOUR COLUMNS TWO ROWS. Each cell384x512. Cell centers at x192,576,960,1344 and y256,768. Every complete subject is SMALL at most200wide x300high and centered in its cell, with very large transparent gutters, full intact tips, all glow within cell. Do not fill the cells with oversized shapes as in old reference. Never connect adjacent subjects. Eight stages: gathering/forming/unfolding/peak/follow-through/dispersing/sparse remnants/final faint wisps. Stable physical center and smooth coherent organic movement, fixed camera. Empty center within each wreath, no character. No text, labels, numbers, borders, background, checkerboard, or UI. True alpha. Finely painted, not pixel art.",
+      "sha256": "0d112e618cf1b39893adb3fd7456bab287b4b31361ede8281b040f675bb89a8d"
+    },
+    {
+      "stem": "combat_effect_death",
+      "path": "art/animations/references/combat_effect_death-v2.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "apps/client/public/assets/vfx/combat_effect_death.webp",
+      "prompt": "Recreate supplied reference as polished painted Chinese fantasy game effect atlas, retaining the exact reference illustration style, materials, palette and motifs. A dissolving crimson black ribbon wreath with red maple blossoms and leaves, black silver dagger charms with red beads and white tassels, dissolving to sparse crimson motes. Center empty. Exactly EIGHT consecutive chronological poses on a TRUE TRANSPARENT1536x1024 PNG, FOUR COLUMNS TWO ROWS. Each cell384x512. Cell centers at x192,576,960,1344 and y256,768. Every complete subject is SMALL at most200wide x300high and centered in its cell, with very large transparent gutters, full intact tips, all glow within cell. Do not fill the cells with oversized shapes as in old reference. Never connect adjacent subjects. Eight stages: gathering/forming/unfolding/peak/follow-through/dispersing/sparse remnants/final faint wisps. Stable physical center and smooth coherent organic movement, fixed camera. Empty center within each wreath, no character. No text, labels, numbers, borders, background, checkerboard, or UI. True alpha. Finely painted, not pixel art.",
+      "sha256": "7ca33572cc53d107a5e73d37796c2a7d7e57ea9ed17a421b2f8d2c66d87b7f51"
+    },
+    {
+      "stem": "awakening_f03_motion",
+      "path": "art/animations/references/awakening_f03_motion-v2.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "apps/client/public/assets/vfx/awakening_f03_motion.webp",
+      "prompt": "Recreate supplied reference as polished painted Chinese fantasy game effect atlas, retaining the exact reference illustration style, materials, palette and motifs. An icy awakening wreath: ornate sapphire crystal swords with gold blue jeweled hilts, tiny white blossoms, translucent ice blue embroidered silk winding around both sides. Empty center for portrait. Exactly EIGHT consecutive chronological poses on a TRUE TRANSPARENT1536x1024 PNG, FOUR COLUMNS TWO ROWS. Each cell384x512. Cell centers at x192,576,960,1344 and y256,768. Every complete subject is SMALL at most200wide x300high and centered in its cell, with very large transparent gutters, full intact tips, all glow within cell. Do not fill the cells with oversized shapes as in old reference. Never connect adjacent subjects. Eight stages: gathering/forming/unfolding/peak/follow-through/dispersing/sparse remnants/final faint wisps. Stable physical center and smooth coherent organic movement, fixed camera. Empty center within each wreath, no character. No text, labels, numbers, borders, background, checkerboard, or UI. True alpha. Finely painted, not pixel art.",
+      "sha256": "55de7254da5c9fdf255282caf6e35e179753201c666a1f939b3bff91d3b2fdae"
+    },
+    {
+      "stem": "awakening_f02_motion",
+      "path": "art/animations/references/awakening_f02_motion-v2.png",
+      "status": "accepted-after-source-ownership-recovery",
+      "reference": "apps/client/public/assets/vfx/awakening_f02_motion.webp",
+      "prompt": "Recreate supplied reference as polished painted Chinese fantasy game effect atlas, retaining the exact reference illustration style, materials, palette and motifs. A fox-spirit awakening wreath: white fox masks with red markings, exquisite gold and pink blossom hair jewelry, red pink silks with gold embroidery, golden fox flame leaf wisps and pink petals. Empty center for portrait. Exactly EIGHT consecutive chronological poses on a TRUE TRANSPARENT1536x1024 PNG, FOUR COLUMNS TWO ROWS. Each cell384x512. Cell centers at x192,576,960,1344 and y256,768. Every complete subject is SMALL at most200wide x300high and centered in its cell, with very large transparent gutters, full intact tips, all glow within cell. Do not fill the cells with oversized shapes as in old reference. Never connect adjacent subjects. Eight stages: gathering/forming/unfolding/peak/follow-through/dispersing/sparse remnants/final faint wisps. Stable physical center and smooth coherent organic movement, fixed camera. Empty center within each wreath, no character. No text, labels, numbers, borders, background, checkerboard, or UI. True alpha. Finely painted, not pixel art.",
+      "sha256": "393bb57f81c014ce205045ae487400e1a0c3e94b13d975770b07eacc94400e10"
+    }
+  ]
+}

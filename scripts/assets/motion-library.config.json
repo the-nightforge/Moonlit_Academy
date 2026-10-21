@@ -1,0 +1,495 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "sourceStem": "combat_attack_slash",
+      "source": "apps/client/public/assets/vfx/combat_attack_slash.webp",
+      "stem": "combat_attack_slash_smooth",
+      "duration": 656,
+      "impactAt": 152,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_spear",
+      "source": "apps/client/public/assets/vfx/combat_attack_spear.webp",
+      "stem": "combat_attack_spear_smooth",
+      "duration": 768,
+      "impactAt": 248,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_darts",
+      "source": "apps/client/public/assets/vfx/combat_attack_darts.webp",
+      "stem": "combat_attack_darts_smooth",
+      "duration": 944,
+      "impactAt": 432,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_herb",
+      "source": "apps/client/public/assets/vfx/combat_attack_herb.webp",
+      "stem": "combat_attack_herb_smooth",
+      "duration": 1200,
+      "impactAt": 576,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_fan",
+      "source": "apps/client/public/assets/vfx/combat_attack_fan.webp",
+      "stem": "combat_attack_fan_smooth",
+      "duration": 1088,
+      "impactAt": 472,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_ink",
+      "source": "apps/client/public/assets/vfx/combat_attack_ink.webp",
+      "stem": "combat_attack_ink_smooth",
+      "duration": 1152,
+      "impactAt": 528,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_music",
+      "source": "apps/client/public/assets/vfx/combat_attack_music.webp",
+      "stem": "combat_attack_music_smooth",
+      "duration": 1264,
+      "impactAt": 600,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_fire",
+      "source": "apps/client/public/assets/vfx/combat_attack_fire.webp",
+      "stem": "combat_attack_fire_smooth",
+      "duration": 1120,
+      "impactAt": 464,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_star",
+      "source": "apps/client/public/assets/vfx/combat_attack_star.webp",
+      "stem": "combat_attack_star_smooth",
+      "duration": 1376,
+      "impactAt": 656,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_moon",
+      "source": "apps/client/public/assets/vfx/combat_attack_moon.webp",
+      "stem": "combat_attack_moon_smooth",
+      "duration": 1280,
+      "impactAt": 584,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_talisman",
+      "source": "apps/client/public/assets/vfx/combat_attack_talisman.webp",
+      "stem": "combat_attack_talisman_smooth",
+      "duration": 1216,
+      "impactAt": 560,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_blood",
+      "source": "apps/client/public/assets/vfx/combat_attack_blood.webp",
+      "stem": "combat_attack_blood_smooth",
+      "duration": 1184,
+      "impactAt": 504,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_attack_spell",
+      "source": "apps/client/public/assets/vfx/combat_attack_spell.webp",
+      "stem": "combat_attack_spell_smooth",
+      "duration": 1296,
+      "impactAt": 624,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_hit",
+      "source": "apps/client/public/assets/vfx/combat_effect_hit.webp",
+      "stem": "combat_effect_hit_smooth",
+      "duration": 432,
+      "impactAt": 72,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_guard",
+      "source": "apps/client/public/assets/vfx/combat_effect_guard.webp",
+      "stem": "combat_effect_guard_smooth",
+      "duration": 432,
+      "impactAt": 72,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_heal",
+      "source": "apps/client/public/assets/vfx/combat_effect_heal.webp",
+      "stem": "combat_effect_heal_smooth",
+      "duration": 896,
+      "impactAt": 240,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_armor",
+      "source": "apps/client/public/assets/vfx/combat_effect_armor.webp",
+      "stem": "combat_effect_armor_smooth",
+      "duration": 832,
+      "impactAt": 240,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_armor_break",
+      "source": "apps/client/public/assets/vfx/combat_effect_armor_break.webp",
+      "stem": "combat_effect_armor_break_smooth",
+      "duration": 720,
+      "impactAt": 240,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_status_apply",
+      "source": "apps/client/public/assets/vfx/combat_effect_status_apply.webp",
+      "stem": "combat_effect_status_apply_smooth",
+      "duration": 672,
+      "impactAt": 240,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_status_remove",
+      "source": "apps/client/public/assets/vfx/combat_effect_status_remove.webp",
+      "stem": "combat_effect_status_remove_smooth",
+      "duration": 672,
+      "impactAt": 240,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_death",
+      "source": "apps/client/public/assets/vfx/combat_effect_death.webp",
+      "stem": "combat_effect_death_smooth",
+      "duration": 1040,
+      "impactAt": 416,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_blood_moon",
+      "source": "apps/client/public/assets/vfx/combat_effect_blood_moon.webp",
+      "stem": "combat_effect_blood_moon_smooth",
+      "duration": 1216,
+      "impactAt": 400,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_cast",
+      "source": "apps/client/public/assets/vfx/combat_effect_cast.webp",
+      "stem": "combat_effect_cast_smooth",
+      "duration": 912,
+      "impactAt": 400,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_moon_shift",
+      "source": "apps/client/public/assets/vfx/combat_effect_moon_shift.webp",
+      "stem": "combat_effect_moon_shift_smooth",
+      "duration": 880,
+      "impactAt": 510,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "combat_effect_reflect",
+      "source": "apps/client/public/assets/vfx/combat_effect_reflect.webp",
+      "stem": "combat_effect_reflect_smooth",
+      "duration": 944,
+      "impactAt": 464,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f08_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f08_motion.webp",
+      "stem": "awakening_f08_motion_smooth",
+      "duration": 832,
+      "impactAt": 160,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m05_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m05_motion.webp",
+      "stem": "awakening_m05_motion_smooth",
+      "duration": 832,
+      "impactAt": 160,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f04_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f04_motion.webp",
+      "stem": "awakening_f04_motion_smooth",
+      "duration": 832,
+      "impactAt": 224,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f03_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f03_motion.webp",
+      "stem": "awakening_f03_motion_smooth",
+      "duration": 832,
+      "impactAt": 128,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f02_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f02_motion.webp",
+      "stem": "awakening_f02_motion_smooth",
+      "duration": 832,
+      "impactAt": 224,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m01_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m01_motion.webp",
+      "stem": "awakening_m01_motion_smooth",
+      "duration": 832,
+      "impactAt": 208,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m02_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m02_motion.webp",
+      "stem": "awakening_m02_motion_smooth",
+      "duration": 832,
+      "impactAt": 256,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m03_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m03_motion.webp",
+      "stem": "awakening_m03_motion_smooth",
+      "duration": 832,
+      "impactAt": 160,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m04_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m04_motion.webp",
+      "stem": "awakening_m04_motion_smooth",
+      "duration": 832,
+      "impactAt": 176,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f01_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f01_motion.webp",
+      "stem": "awakening_f01_motion_smooth",
+      "duration": 832,
+      "impactAt": 224,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m06_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m06_motion.webp",
+      "stem": "awakening_m06_motion_smooth",
+      "duration": 832,
+      "impactAt": 128,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m07_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m07_motion.webp",
+      "stem": "awakening_m07_motion_smooth",
+      "duration": 832,
+      "impactAt": 256,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m08_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m08_motion.webp",
+      "stem": "awakening_m08_motion_smooth",
+      "duration": 832,
+      "impactAt": 192,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m10_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m10_motion.webp",
+      "stem": "awakening_m10_motion_smooth",
+      "duration": 832,
+      "impactAt": 224,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f05_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f05_motion.webp",
+      "stem": "awakening_f05_motion_smooth",
+      "duration": 832,
+      "impactAt": 112,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f07_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f07_motion.webp",
+      "stem": "awakening_f07_motion_smooth",
+      "duration": 832,
+      "impactAt": 192,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f09_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f09_motion.webp",
+      "stem": "awakening_f09_motion_smooth",
+      "duration": 832,
+      "impactAt": 160,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f10_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f10_motion.webp",
+      "stem": "awakening_f10_motion_smooth",
+      "duration": 832,
+      "impactAt": 256,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m09_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m09_motion.webp",
+      "stem": "awakening_m09_motion_smooth",
+      "duration": 832,
+      "impactAt": 192,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m11_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m11_motion.webp",
+      "stem": "awakening_m11_motion_smooth",
+      "duration": 832,
+      "impactAt": 128,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f11_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f11_motion.webp",
+      "stem": "awakening_f11_motion_smooth",
+      "duration": 832,
+      "impactAt": 176,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f12_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f12_motion.webp",
+      "stem": "awakening_f12_motion_smooth",
+      "duration": 832,
+      "impactAt": 144,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_m12_motion",
+      "source": "apps/client/public/assets/vfx/awakening_m12_motion.webp",
+      "stem": "awakening_m12_motion_smooth",
+      "duration": 832,
+      "impactAt": 192,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    },
+    {
+      "sourceStem": "awakening_f13_motion",
+      "source": "apps/client/public/assets/vfx/awakening_f13_motion.webp",
+      "stem": "awakening_f13_motion_smooth",
+      "duration": 832,
+      "impactAt": 192,
+      "peak": 3,
+      "count": 8,
+      "stretch": 1.6
+    }
+  ]
+}

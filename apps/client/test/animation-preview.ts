@@ -18,6 +18,8 @@ import { ATTACK_FLOWS, F06_FLOW, FLOW_PLAYBACK_STRETCH } from "../src/ui/illustr
 import type { IllustrationMode } from "../src/ui/illustrated-flow";
 import { registerCombatFrames } from "../src/ui/combat-illustration";
 import { registerAwakeningFrames } from "../src/ui/awakening-flipbook";
+import { HERO_AWAKENINGS } from "../src/ui/awakening-profiles";
+import { libraryMotion } from "../src/ui/motion-library";
 import "../src/ui/motion.css";
 
 const data = loadGameData();
@@ -33,8 +35,14 @@ const supports: [SupportEffect, string][] = [
   ["status_apply", "Nhận trạng thái"], ["status_remove", "Xóa trạng thái"], ["death", "Gục ngã"], ["blood_moon", "Huyết Nguyệt"],
   ["cast", "Thi triển bài"], ["moon_shift", "Chuyển pha Nguyệt"], ["reflect", "Phản Đòn"],
 ];
+type PreviewKind = "attack" | "awakening" | "support";
+const supportDurations: Record<SupportEffect, number> = { hit: 270, guard: 270, heal: 560, armor: 520, armor_break: 450,
+  status_apply: 420, status_remove: 420, death: 650, blood_moon: 760, cast: 570, moon_shift: 550, reflect: 590 };
 document.body.innerHTML = `<header><h1>Xem thử chuyển động</h1><p>Đòn đánh đi từ hàng nhân vật lên hàng đối thủ như trong trận đấu. Thức Tỉnh đổi hình ngay trên ô nhân vật.</p></header>
-  <section id="controls"><label>Mẫu <select id="sample"><option value="bow">Cung — Xuyên Vân Tiễn</option><option value="ribbon">Dải lụa — Kinh Hồng Vũ</option><option value="awakening">Thức Tỉnh — Kinh Hồng Vũ</option></select></label>
+  <section id="controls"><label>Mẫu <select id="sample"><optgroup label="Mẫu đã duyệt"><option value="bow">Cung — Xuyên Vân Tiễn</option><option value="ribbon">Dải lụa — Kinh Hồng Vũ</option><option value="awakening">Thức Tỉnh — Kinh Hồng Vũ</option></optgroup>
+  <optgroup label="Đòn đánh">${kinds.map(([key, label]) => `<option value="attack:${key}">${label}</option>`).join("")}</optgroup>
+  <optgroup label="Hiệu ứng">${supports.map(([key, label]) => `<option value="support:${key}">${label}</option>`).join("")}</optgroup>
+  <optgroup label="Thức Tỉnh">${heroIds.map(id => `<option value="awakening:${id}">${data.heroes[id]!.name}</option>`).join("")}</optgroup></select></label>
   <label>So sánh <select id="comparison"><option value="improved">Bản mới</option><option value="legacy">Bản trước</option></select></label>
   <label>Đòn đánh <select id="style">${kinds.map(([key, label]) => `<option value="${key}"${key === "bow" ? " selected" : ""}>${label}</option>`).join("")}</select></label>
   <label>Tốc độ <select id="speed"><option value="1">Thường</option><option value="2">Gấp đôi</option></select></label>
@@ -58,7 +66,8 @@ const sampleSelect = document.querySelector<HTMLSelectElement>("#sample")!;
 const comparison = document.querySelector<HTMLSelectElement>("#comparison")!;
 const sampleDetails = document.querySelector<HTMLElement>("#sample-details")!;
 // Explicit values also reset restored form state after reload or hot replacement.
-sampleSelect.value = "bow"; styleSelect.value = "bow"; heroSelect.value = "f05"; comparison.value = "improved";
+sampleSelect.value = "bow"; styleSelect.value = "bow"; heroSelect.value = "f05"; supportSelect.value = "heal"; comparison.value = "improved";
+let selectedKind: PreviewKind = "attack";
 const illustrationMode = () => comparison.value as IllustrationMode;
 const reduced = document.querySelector<HTMLInputElement>("#reduced")!;
 reduced.checked = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -116,6 +125,11 @@ class Preview extends Phaser.Scene {
       ready = false; setControls(); result.textContent = "Đang tải hình nhân vật và hiệu ứng đã chọn…";
       const flow = ATTACK_FLOWS[styleSelect.value as keyof typeof ATTACK_FLOWS];
       const optional = new Set([...(flow ? [`combat_attack_${styleSelect.value}_flow`, ...flow.layers] : []), ...(id === "f06" ? ["awakening_f06_flow", ...ATTACK_FLOWS.ribbon.layers] : [])]);
+      for (const key of [`vfx:combat_attack_${styleSelect.value}`, `vfx:combat_effect_${supportSelect.value}`,
+        "vfx:combat_effect_hit", "vfx:combat_effect_guard", `vfx:awakening_${id}_motion`]) {
+        const motion = libraryMotion(key);
+        if (motion) optional.add(motion.textureKey.replace(/^vfx:/, ""));
+      }
       const stems = new Set([`combat_attack_${styleSelect.value}`, "combat_effect_hit", "combat_effect_guard", `combat_effect_${supportSelect.value}`, ...awakeningEffectsFor(id).filter(stem => stem !== "awakening_f06_flow"), ...optional]);
       const files = [{ key: `heroes:${id}`, url: manifest.heroes![id]! }, { key: `heroes:${id}_up`, url: manifest.heroes![`${id}_up`]! },
         ...[...stems].flatMap(stem => manifest.vfx?.[stem] ? [{ key: `vfx:${stem}`, url: manifest.vfx[stem]! }] : []),
@@ -134,23 +148,53 @@ class Preview extends Phaser.Scene {
       releaseUnused();
       setControls();
       result.textContent = ready ? "Sẵn sàng. Chọn đòn đánh, hiệu ứng hoặc Thức Tỉnh để xem thử." : "Chưa tải đủ hình. Chọn lại nhân vật hoặc hiệu ứng để thử lại.";
-      describeSample(sampleSelect.value === "awakening" ? "awakening" : "attack");
+      describeSample(selectedKind);
     };
-    const describeSample = (kind: "attack" | "awakening" | "support") => {
-      if(kind==="support") { sampleDetails.textContent=`Hiệu ứng: ${supportSelect.options[supportSelect.selectedIndex]!.text}.`;return; }
-      const flow=ATTACK_FLOWS[styleSelect.value as keyof typeof ATTACK_FLOWS];
-      const improved=illustrationMode()!=="legacy" && (kind==="awakening" ? heroSelect.value==="f06" && !!registerAwakeningFrames(this,"vfx:awakening_f06_flow") : !!flow && !!registerCombatFrames(this,`vfx:combat_attack_${styleSelect.value}_flow`));
-      const count=kind==="awakening" ? improved?F06_FLOW.count:reduced.checked?1:8 : kind==="attack"&&improved?flow!.count:8;
-      const sourceDuration=kind==="awakening"?reduced.checked?180:520:ATTACK_MOTION[styleSelect.value as AttackKind].duration;
-      const duration=sourceDuration*(improved&&!reduced.checked?FLOW_PLAYBACK_STRETCH:1);
+    const describeSample = (kind: PreviewKind) => {
+      const originalKey = kind === "awakening" ? `vfx:awakening_${heroSelect.value}_motion`
+        : kind === "support" ? `vfx:combat_effect_${supportSelect.value}` : `vfx:combat_attack_${styleSelect.value}`;
+      const register = kind === "awakening" ? registerAwakeningFrames : registerCombatFrames;
+      const flow = kind === "attack" ? ATTACK_FLOWS[styleSelect.value as keyof typeof ATTACK_FLOWS] : kind === "awakening" && heroSelect.value === "f06" ? F06_FLOW : undefined;
+      const flowKey = kind === "awakening" ? "vfx:awakening_f06_flow" : `vfx:combat_attack_${styleSelect.value}_flow`;
+      const motion = libraryMotion(originalKey);
+      const improvedFlow = illustrationMode() !== "legacy" && !!flow && !!register(this, flowKey);
+      const improvedMotion = illustrationMode() !== "legacy" && !!motion && !!register(this, motion.textureKey);
+      const improved = improvedFlow || improvedMotion;
+      const profile = HERO_AWAKENINGS[heroSelect.value]!;
+      const legacyCount = kind === "awakening" && reduced.checked
+        ? Number(this.textures.exists(`vfx:${profile.texture}`)) : register(this, originalKey) ? 8 : kind === "awakening" ? Number(this.textures.exists(`vfx:${profile.texture}`)) : 0;
+      const sourceCount = improvedFlow ? flow!.count : improvedMotion ? motion!.count : legacyCount;
+      const count = reduced.checked && sourceCount ? 1 : sourceCount;
+      const sourceDuration = kind === "awakening" ? reduced.checked ? 180 : profile.motion.charge + profile.motion.blend + profile.motion.release
+        : kind === "support" ? supportDurations[supportSelect.value as SupportEffect] : ATTACK_MOTION[styleSelect.value as AttackKind].duration;
+      const duration = sourceDuration * (!reduced.checked ? improvedFlow ? FLOW_PLAYBACK_STRETCH : improvedMotion ? motion!.stretch : 1 : 1);
       const speed=Number(document.querySelector<HTMLSelectElement>("#speed")!.value), slow=document.querySelector<HTMLInputElement>("#slow")!.checked?5:1;
-      sampleDetails.textContent=`${comparison.options[comparison.selectedIndex]!.text}: ${count} khung hình nguồn${reduced.checked?", giữ khung hình đỉnh và chỉ mờ dần":""} · ${duration} mili giây gốc · ${Math.round(duration/speed*slow)} mili giây khi phát${!improved&&illustrationMode()!=="legacy"&&(kind==="awakening"?heroSelect.value==="f06":!!flow)?" · Dùng bản trước vì hình mới chưa sẵn sàng":""}.`;
+      const frameDescription = reduced.checked ? `${count} khung hình giữ yên, chỉ mờ dần` : `${count} khung hình nguồn${count > 1 ? ", nội suy chuyển động liên tục" : ""}`;
+      sampleDetails.textContent=`${comparison.options[comparison.selectedIndex]!.text}: ${frameDescription} · ${sourceDuration} mili giây gốc · ${Math.round(duration/speed*slow)} mili giây khi phát${!improved&&illustrationMode()!=="legacy"&&(flow||motion)?" · Dùng bản trước vì hình mới chưa sẵn sàng":""}.`;
     };
-    for (const select of [heroSelect, styleSelect, supportSelect]) select.onchange = () => { void loadSelection(); };
-    sampleSelect.onchange = () => { heroSelect.value=sampleSelect.value==="bow"?"f05":"f06";styleSelect.value=sampleSelect.value==="bow"?"bow":"ribbon";void loadSelection(); };
-    comparison.onchange = () => describeSample(sampleSelect.value==="awakening"?"awakening":"attack");
+    const choose = (kind: PreviewKind) => {
+      selectedKind = kind;
+      sampleSelect.value = `${kind}:${kind === "awakening" ? heroSelect.value : kind === "support" ? supportSelect.value : styleSelect.value}`;
+      void loadSelection();
+    };
+    heroSelect.onchange = () => choose("awakening");
+    styleSelect.onchange = () => choose("attack");
+    supportSelect.onchange = () => choose("support");
+    sampleSelect.onchange = () => {
+      const sample = sampleSelect.value;
+      if (sample === "bow" || sample === "ribbon" || sample === "awakening") {
+        heroSelect.value = sample === "bow" ? "f05" : "f06";
+        styleSelect.value = sample === "bow" ? "bow" : "ribbon";
+        selectedKind = sample === "awakening" ? "awakening" : "attack";
+      } else {
+        const [kind, key] = sample.split(":"); selectedKind = kind as PreviewKind;
+        (selectedKind === "awakening" ? heroSelect : selectedKind === "support" ? supportSelect : styleSelect).value = key!;
+      }
+      void loadSelection();
+    };
+    comparison.onchange = () => describeSample(selectedKind);
     for(const control of [reduced,document.querySelector<HTMLSelectElement>("#speed")!,document.querySelector<HTMLInputElement>("#slow")!])
-      control.onchange=()=>describeSample(sampleSelect.value==="awakening"?"awakening":"attack");
+      control.onchange=()=>describeSample(selectedKind);
     const root = this.add.container(0, 0);
     addButton(this, root, 360, 610, 230, "Xem popup", () => {
       void showModal(this, { title: "Chuyển động popup", message: "Popup dùng helper chung của game, giữ nguyên bố cục và vùng bấm.", actions: [{ label: "Đóng" }] });
@@ -162,8 +206,9 @@ class Preview extends Phaser.Scene {
       const render = () => view.render(data, stage.name, stage.before[index]!, index, stage.before.length, { stageId, part: "before" });
       render();
     });
-    const run = async (kind: "attack" | "awakening" | "support") => {
+    const run = async (kind: PreviewKind) => {
       if (controller || !ready || !alive) return;
+      selectedKind = kind;
       // Slow inspection affects only this preview, and all production clocks together.
       const scale = document.querySelector<HTMLInputElement>("#slow")!.checked ? 0.2 : 1;
       this.time.timeScale = scale; this.tweens.timeScale = scale; this.anims.globalTimeScale = scale;
@@ -188,18 +233,18 @@ class Preview extends Phaser.Scene {
         else {
           const support = supportSelect.value as SupportEffect;
           switch (support) {
-            case "hit": case "guard": await impactAnimation(runtime, to, 0xffffff, support === "guard", 1); break;
-            case "heal": await healBloom(runtime, to); break;
-            case "armor": case "armor_break": await armorWard(runtime, to, support === "armor_break"); break;
-            case "status_apply": case "status_remove": await statusPop(runtime, to, "ui:status_burn", 0xffffff, support === "status_remove"); break;
-            case "death": await deathBurn(runtime, defender, to); break;
-            case "blood_moon": await bloodMoonSurge(runtime, to); break;
-            case "moon_shift": await moonWheel(runtime, from, to, data.moonPhases.map(phase => phase.id), 0, 1); break;
-            case "reflect": await reflectStrike(runtime, to, from); break;
+            case "hit": case "guard": await impactAnimation(runtime, to, 0xffffff, support === "guard", 1, illustrationMode()); break;
+            case "heal": await healBloom(runtime, to, illustrationMode()); break;
+            case "armor": case "armor_break": await armorWard(runtime, to, support === "armor_break", illustrationMode()); break;
+            case "status_apply": case "status_remove": await statusPop(runtime, to, "ui:status_burn", 0xffffff, support === "status_remove", illustrationMode()); break;
+            case "death": await deathBurn(runtime, defender, to, false, illustrationMode()); break;
+            case "blood_moon": await bloodMoonSurge(runtime, to, illustrationMode()); break;
+            case "moon_shift": await moonWheel(runtime, from, to, data.moonPhases.map(phase => phase.id), 0, 1, 0xf4d35e, 550, illustrationMode()); break;
+            case "reflect": await reflectStrike(runtime, to, from, illustrationMode()); break;
             case "cast": {
               const image = this.add.image(0, 0, `heroes:${heroId}`).setScale(Math.min(portraitBox.width / this.textures.get(`heroes:${heroId}`).getSourceImage().width, portraitBox.height / this.textures.get(`heroes:${heroId}`).getSourceImage().height));
               const border = this.add.rectangle(0, 0, image.displayWidth + 1, image.displayHeight + 1, 0, 0).setStrokeStyle(1, 0xd4bd86);
-              await castCard(runtime, this.add.container(from.x, from.y, [image, border]), { x: from.x, y: from.y - 70 }, 0xffffff, to); break;
+              await castCard(runtime, this.add.container(from.x, from.y, [image, border]), { x: from.x, y: from.y - 70 }, 0xffffff, to, illustrationMode()); break;
             }
           }
         }

@@ -5,6 +5,7 @@ import manifest from "virtual:assets-manifest";
 import { queueTexture } from "./texture-queue";
 import { awakeningEffectsFor } from "./awakening-profiles";
 import { ATTACK_FLOWS } from "./illustrated-flow";
+import { libraryMotion, libraryMotions } from "./motion-library";
 
 /**
  * Combat art manifest (`home-ui-redesign` §7): every category a fight can
@@ -24,6 +25,7 @@ const flowFallbacks = new Map<string, readonly string[]>([
     ]]),
   ]),
   ["vfx:awakening_f06_flow", ["vfx:awakening_f06_motion"]],
+  ...libraryMotions.map((motion): [string, readonly string[]] => [motion.textureKey, [motion.sourceKey]]),
 ]);
 
 export interface CombatTextureEntry {
@@ -55,6 +57,10 @@ export function battleAssetSelection(state: CombatState): CombatAssetSelection {
 export function combatTextureEntries(files: Record<string, Record<string, string>>, selection: CombatAssetSelection = {}): CombatTextureEntry[] {
   const entries: CombatTextureEntry[] = [];
   const awakening = new Set((selection.heroIds ?? []).flatMap(awakeningEffectsFor));
+  for (const stem of [...awakening]) {
+    const motion = libraryMotion(`vfx:${stem}`);
+    if (motion) awakening.add(motion.textureKey.replace(/^vfx:/, ""));
+  }
   // Public ids cover every seat, reserve hero and equipped weapon even when hands
   // are hidden. Skills can cast spell; both rabbit summons use moon; unknown units slash.
   const attacks = selection.heroIds || selection.enemyIds || selection.weaponIds ? new Set([
@@ -71,7 +77,7 @@ export function combatTextureEntries(files: Record<string, Record<string, string
     for (const [stem, url] of Object.entries(files[category] ?? {})) {
       if (selected[category] && !selected[category].has(stem)) continue;
       if (category === "vfx" && stem.startsWith("awakening_") && !awakening.has(stem)) continue;
-      if (category === "vfx" && attacks && stem.startsWith("combat_attack_") && !attacks.has(stem.slice("combat_attack_".length).replace(/_flow$/, ""))) continue;
+      if (category === "vfx" && attacks && stem.startsWith("combat_attack_") && !attacks.has(stem.slice("combat_attack_".length).replace(/_(flow|smooth)$/, ""))) continue;
       if (category === "vfx" && attacks && stem.startsWith("combat_layer_") && !Object.entries(ATTACK_FLOWS).some(([style, flow]) => attacks.has(style) && (flow.layers as readonly string[]).includes(stem))) continue;
       entries.push({ key: `${category}:${stem}`, url });
     }
