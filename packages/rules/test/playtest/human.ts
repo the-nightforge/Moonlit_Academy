@@ -32,7 +32,7 @@ import type { CombatSetup, StorySetup, RunSetup } from "../../src/index";
 
 export type ReplayMode = "pve" | "pvp" | "coop" | "run" | "story";
 export type ActionSource = "human" | "bot" | "system";
-export type Termination = "combat" | "resign" | "timeout" | "disconnect" | "incomplete";
+export type Termination = "combat" | "deckOut" | "resign" | "timeout" | "disconnect" | "incomplete";
 
 export interface HumanReplay {
   schemaVersion: 1;

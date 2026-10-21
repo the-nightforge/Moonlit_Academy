@@ -68,7 +68,7 @@ const MODES: Record<string, HumanReplay["mode"]> = {
   coop_practice: "coop",
 };
 
-const TERMINATIONS = new Set(["combat", "resign", "timeout", "disconnect", "incomplete"]);
+const TERMINATIONS = new Set(["combat", "deckOut", "resign", "timeout", "disconnect", "incomplete"]);
 
 interface MatchResult {
   winner?: number | string;

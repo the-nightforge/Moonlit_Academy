@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "sustain-pool-v1",
+  "note": "Pool cho kiểm chứng cơ chế Hồi Phục cộng dồn (xem docs/playtest/buff-nerf-workflow.md §0). Mỗi cặp sustain/control giữ nguyên 2 Hero và chỉ đổi slot 3: f04 (Ôn Như Ý — Hồi Xuân Tán + Bách Thảo Hương, tức đúng bộ lá gây ra match m_c8adbe7e76f6_0) đối lập một Hero không có lá Hồi Phục nào. 4 entry xen kẽ để vòng ghép cặp của generateScenarios cho 4 block đầu đều là sustain-vs-control; 4 block sau là sustain-vs-sustain và control-vs-control, dùng làm đường nền để so delta. Vị trí Hero đảo giữa entry 1/2 và 3/4 để chặn bias hướng mục tiêu. Đội control tránh toàn bộ 5 Hero có lá hồi máu trong starter deck: f04, m04, m07, f09, f11.",
+  "entries": [
+    {
+      "id": "sustain_m05_f04_m06",
+      "label": "Hồi máu: m05 + f04 + m06",
+      "tags": ["sustain", "starter"],
+      "heroIds": ["m05", "f04", "m06"],
+      "deck": "starter"
+    },
+    {
+      "id": "control_m05_m10_m06",
+      "label": "Áp lực: m05 + m10 + m06",
+      "tags": ["control", "starter"],
+      "heroIds": ["m05", "m10", "m06"],
+      "deck": "starter"
+    },
+    {
+      "id": "sustain_m06_f04_m05",
+      "label": "Hồi máu: m06 + f04 + m05",
+      "tags": ["sustain", "starter"],
+      "heroIds": ["m06", "f04", "m05"],
+      "deck": "starter"
+    },
+    {
+      "id": "control_m06_m09_m05",
+      "label": "Kiểm soát: m06 + m09 + m05",
+      "tags": ["control", "starter"],
+      "heroIds": ["m06", "m09", "m05"],
+      "deck": "starter"
+    }
+  ]
+}

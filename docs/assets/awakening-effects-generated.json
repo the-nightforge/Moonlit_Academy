@@ -45,9 +45,13 @@
       "sourceSha256": "cf01d662f3c03d80f43fd1df59ee29ada9bca8f7c6c564c214f9f67f3c08e996",
       "outputSha256": "2246e0f7f999dc06f30ba4383001f349909d7a74e2c961253e7816ba2a0390e1",
       "referenceSha256": "b3a5925327aafed69d346e520555d9174c67ac66beb4be2d94821ce798d5fb6e"
-    },
+    }
+  ],
+  "retiredAssets": [
     {
       "id": "awakening_lunar_aura",
+      "removedFromRuntime": "2026-10-21",
+      "reason": "Unused shared aura; all heroes use their own awakening profile. Original generated sources are retained at the source and editReference paths below.",
       "source": "C:/Users/Hienq/.codex/generated_images/01a12e29-cf4f-76a0-b9db-8e6390c75c8a/exec-6f8edb5b-2142-4a86-b909-8ddf8ada8c04.png",
       "file": "apps/client/public/assets/vfx/awakening_lunar_aura.webp",
       "reference": "D:/Source/VongNguyet/apps/client/public/assets/heroes/f13_up.webp",

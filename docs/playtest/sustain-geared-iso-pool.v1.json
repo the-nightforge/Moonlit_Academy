@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "sustain-geared-iso-v1",
+  "note": "WEAPON-ISOLATION ONLY pool: entries 0 and 1 of sustain-geared-pool.v1 (identical m05/f04/m06 roster and gear, only f04's weapon differs: w_bach_hoa_tram+5 vs w_thiet_but_an+4). Pairs 0v1/1v0 isolate the heal-weapon effect; with |pool|=2 every 4th block is a mirror, which is discardead in pairing analysis but exercises profile rotation. Bars on any conclusion: see sustain-geared-pool.v1 note (harness forces loadout.pvp = true, so signature '+' upgrades at constellation >= 4 are off - applied equally to both sides).",
+  "entries": [
+    {
+      "id": "t6_sustain_weapon",
+      "label": "f04 Bách Hoa Trâm+5",
+      "tags": ["geared", "sustain"],
+      "heroIds": ["m05", "f04", "m06"],
+      "deck": "starter",
+      "loadout": {
+        "heroes": {
+          "m05": { "constellation": 2, "levelUpForm": "base", "weaponId": "w_xich_diem_thuong", "refinement": 1 },
+          "f04": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_bach_hoa_tram", "refinement": 5 },
+          "m06": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_anh_nguyet_chuy", "refinement": 2 }
+        },
+        "relics": [
+          { "id": "r_ngu_linh_chuong", "resonance": 2 },
+          { "id": "r_vong_nguyet_kinh", "resonance": 1 }
+        ]
+      }
+    },
+    {
+      "id": "t6_pressure_weapon",
+      "label": "f04 Thiết Bút Ấn+4",
+      "tags": ["geared", "pressure"],
+      "heroIds": ["m05", "f04", "m06"],
+      "deck": "starter",
+      "loadout": {
+        "heroes": {
+          "m05": { "constellation": 2, "levelUpForm": "base", "weaponId": "w_xich_diem_thuong", "refinement": 1 },
+          "f04": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_thiet_but_an", "refinement": 4 },
+          "m06": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_anh_nguyet_chuy", "refinement": 2 }
+        },
+        "relics": [
+          { "id": "r_ngu_linh_chuong", "resonance": 2 },
+          { "id": "r_vong_nguyet_kinh", "resonance": 1 }
+        ]
+      }
+    }
+  ]
+}

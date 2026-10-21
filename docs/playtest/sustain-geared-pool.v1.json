@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "id": "sustain-geared-v1",
+  "note": "Pool có trang bị thật, đóng lỗ hổng của sustain-pool.v1 (pool đó dùng starter deck, không loadout, nên không tái hiện được match m_c8adbe7e76f6_0). Entry 1 và 2 là HAI BÊN NGUYÊN VĂN của trận đó, chỉ khác vũ khí của f04: Bách Hoa Trâm+5 (hồi máu, hook +Hồi Phục mỗi 2 lượt) đối lập Thiết Bút Ấn+4 (suy yếu/dễ vỡ) — nhờ vậy ghép cặp 0v1 của generateScenarios đo riêng tác động của vũ khí hồi máu. Entry 3 và 4 là bên bot, đổi thứ tự vị trí để chặn bias hướng mục tiêu. Deck 'starter' trùng với deck đã lưu trong trận (6 lá mỗi Hero). LƯU Ý: harness ép loadout.pvp = true, nên lá signature dạng '+' ở Tinh Hồn ≥4 bị tắt — khác với trận thật, nhưng áp dụng đều cho cả hai bên nên vẫn công bằng.",
+  "entries": [
+    {
+      "id": "t6_sustain_weapon",
+      "label": "Bên người: f04 Bách Hoa Trâm+5",
+      "tags": ["geared", "sustain"],
+      "heroIds": ["m05", "f04", "m06"],
+      "deck": "starter",
+      "loadout": {
+        "heroes": {
+          "m05": { "constellation": 2, "levelUpForm": "base", "weaponId": "w_xich_diem_thuong", "refinement": 1 },
+          "f04": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_bach_hoa_tram", "refinement": 5 },
+          "m06": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_anh_nguyet_chuy", "refinement": 2 }
+        },
+        "relics": [
+          { "id": "r_ngu_linh_chuong", "resonance": 2 },
+          { "id": "r_vong_nguyet_kinh", "resonance": 1 }
+        ]
+      }
+    },
+    {
+      "id": "t6_pressure_weapon",
+      "label": "Cùng đội, f04 Thiết Bút Ấn+4",
+      "tags": ["geared", "pressure"],
+      "heroIds": ["m05", "f04", "m06"],
+      "deck": "starter",
+      "loadout": {
+        "heroes": {
+          "m05": { "constellation": 2, "levelUpForm": "base", "weaponId": "w_xich_diem_thuong", "refinement": 1 },
+          "f04": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_thiet_but_an", "refinement": 4 },
+          "m06": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_anh_nguyet_chuy", "refinement": 2 }
+        },
+        "relics": [
+          { "id": "r_ngu_linh_chuong", "resonance": 2 },
+          { "id": "r_vong_nguyet_kinh", "resonance": 1 }
+        ]
+      }
+    },
+    {
+      "id": "t6_bot_team",
+      "label": "Bên bot: m09/m10 + f04 Thiết Bút Ấn+4",
+      "tags": ["geared", "pressure"],
+      "heroIds": ["m09", "m10", "f04"],
+      "deck": "starter",
+      "loadout": {
+        "heroes": {
+          "m09": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_van_kim_dau", "refinement": 5 },
+          "m10": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_nam_chieu_quat", "refinement": 4 },
+          "f04": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_thiet_but_an", "refinement": 4 }
+        },
+        "relics": []
+      }
+    },
+    {
+      "id": "t6_bot_team_swapped",
+      "label": "Bên bot, đảo vị trí",
+      "tags": ["geared", "pressure"],
+      "heroIds": ["m10", "f04", "m09"],
+      "deck": "starter",
+      "loadout": {
+        "heroes": {
+          "m09": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_van_kim_dau", "refinement": 5 },
+          "m10": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_nam_chieu_quat", "refinement": 4 },
+          "f04": { "constellation": 6, "levelUpForm": "base", "weaponId": "w_thiet_but_an", "refinement": 4 }
+        },
+        "relics": []
+      }
+    }
+  ]
+}

@@ -280,6 +280,11 @@ export class MatchRoom {
     });
     this.armClock();
     this.push(events);
+    // Cạn Bài is its own ending: the engine ends the combat on an empty
+    // draw pile, so `combat` would mislabel every deck-out as a knockout.
+    // `finish()` still lets a forfeit reason win, but a forfeit ends the match
+    // on its own action — no deck-out can follow it.
+    if (events.some((event) => event.type === "deckedOut")) this.endReason = "deckOut";
     if (this.state.status === "won" || this.state.status === "lost") {
       // Settlement starts now — recovery reads "pending" until it lands.
       this.settlementStatus = "pending";

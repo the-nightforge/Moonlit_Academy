@@ -16,3 +16,5 @@ playwright-report/
 .sdd-work
 .worktrees/
 output/
+.tmp
+.playwright-mcp

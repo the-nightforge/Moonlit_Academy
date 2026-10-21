@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Action, CardDef, CombatState, CoopSide, GameData } from "../src/index";
+import type { Action, CardDef, CombatState, CoopSide, GameData, PvpSide } from "../src/index";
 import {
   applyAction,
   createCoopCombat,
@@ -118,6 +118,50 @@ describe("enumerateBotActions", () => {
       new Set([0, 1, 2]),
     );
     expect(moonActions.some((a) => a.type === "endTurn")).toBe(false);
+  });
+
+  it("enumerates weapon cards, which live in weapons.json and not cards.json", () => {
+    const data = testData();
+    withoutDecrees(data);
+    const geared = (heroIds: [string, string, string], weaponIds: (string | undefined)[]): PvpSide => ({
+      heroIds,
+      loadout: {
+        heroes: Object.fromEntries(heroIds.map((id, i) => [id, { constellation: 6, levelUpForm: "base", ...(weaponIds[i] ? { weaponId: weaponIds[i], refinement: 5 } : {}) }])),
+        pvp: true,
+      },
+    });
+    let state = createPvpCombat(data, {
+      seed: 3,
+      players: [
+        geared(["m05", "f04", "m06"], ["w_xich_diem_thuong", "w_bach_hoa_tram", "w_anh_nguyet_chuy"]),
+        geared(["f03", "f02", "m03"], ["w_liet_cung", "w_thanh_tam_binh", "w_thiet_thuan"]),
+      ],
+    }).state;
+    for (const seat of [0, 1]) {
+      const r = applyAction(data, state, { type: "mulligan", instanceIds: [], player: seat });
+      if (!r.ok) throw new Error(r.error);
+      state = r.state;
+    }
+    const active = state.activePlayer;
+    // Weapon cards must reach the seat's hand for the enumeration to see them.
+    const seat = state.players[active]!;
+    const weaponInstances = Object.values(state.cards).filter(
+      (c) => c.player === active && !data.cards[c.cardId],
+    );
+    expect(weaponInstances.length).toBeGreaterThan(0);
+    const weaponId = weaponInstances[0]!.instanceId;
+    seat.drawPile = seat.drawPile.filter((id) => id !== weaponId);
+    if (!seat.hand.includes(weaponId)) seat.hand.push(weaponId);
+    seat.moonPower = 9;
+
+    const actions = enumerateBotActions(data, obs(data, state, active, "pvp"));
+    const playableWeaponIds = new Set(
+      actions
+        .filter((a): a is Extract<Action, { type: "playCard" }> => a.type === "playCard")
+        .map((a) => state.cards[a.instanceId]!.cardId)
+        .filter((cardId) => !data.cards[cardId]),
+    );
+    expect(playableWeaponIds.size).toBeGreaterThan(0);
   });
 
   it("mulligan_has_empty_and_all_valid_subsets", () => {

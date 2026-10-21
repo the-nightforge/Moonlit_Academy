@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "id": "advanced-budget-only",
+  "note": "Only the max-search-budget profiles (2048/6/12/16). Section 0 signature test: if the sustain-weapon delta persists when BOTH seats run this tier, the plan classifies the finding as card-strength patience; if it vanishes, it is bot blindness under budget.",
+  "profiles": [
+    {
+      "id": "advanced-aggressive",
+      "version": "1",
+      "skill": "advanced",
+      "style": "aggressive",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": {
+        "damage": 3,
+        "lethal": 8,
+        "overkill": -1,
+        "heal": 0.8,
+        "overheal": -0.5,
+        "preventLethal": 3,
+        "control": 1.5,
+        "draw": 1,
+        "handCap": -0.5,
+        "reserve": 0.5,
+        "waste": -1,
+        "levelUp": 1,
+        "moon": 1,
+        "summon": 2,
+        "synergy": 1,
+        "cost": -0.1,
+        "selfDamage": -0.8,
+        "convert": 1,
+        "mulliganFix": 1
+      },
+      "search": {
+        "maxExpansions": 2048,
+        "depth": 6,
+        "beamWidth": 12,
+        "samples": 16
+      }
+    },
+    {
+      "id": "advanced-defensive",
+      "version": "1",
+      "skill": "advanced",
+      "style": "defensive",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": {
+        "damage": 1.5,
+        "lethal": 7,
+        "overkill": -1,
+        "heal": 3,
+        "overheal": -1,
+        "preventLethal": 8,
+        "control": 2,
+        "draw": 1,
+        "handCap": -0.5,
+        "reserve": 0.5,
+        "waste": -1,
+        "levelUp": 1,
+        "moon": 1,
+        "summon": 1.5,
+        "synergy": 0.8,
+        "cost": -0.1,
+        "selfDamage": -1.5,
+        "convert": 1,
+        "mulliganFix": 1
+      },
+      "search": {
+        "maxExpansions": 2048,
+        "depth": 6,
+        "beamWidth": 12,
+        "samples": 16
+      }
+    },
+    {
+      "id": "advanced-combo",
+      "version": "1",
+      "skill": "advanced",
+      "style": "combo",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": {
+        "damage": 1.8,
+        "lethal": 7,
+        "overkill": -1,
+        "heal": 1.2,
+        "overheal": -0.5,
+        "preventLethal": 4,
+        "control": 1.5,
+        "draw": 2,
+        "handCap": -0.5,
+        "reserve": 0.5,
+        "waste": -1,
+        "levelUp": 2.5,
+        "moon": 1.5,
+        "summon": 1.5,
+        "synergy": 4,
+        "cost": -0.1,
+        "selfDamage": -0.8,
+        "convert": 1,
+        "mulliganFix": 1
+      },
+      "search": {
+        "maxExpansions": 2048,
+        "depth": 6,
+        "beamWidth": 12,
+        "samples": 16
+      }
+    },
+    {
+      "id": "advanced-tempo",
+      "version": "1",
+      "skill": "advanced",
+      "style": "tempo",
+      "mistakeRate": 0,
+      "temperature": 0,
+      "weights": {
+        "damage": 2.5,
+        "lethal": 7,
+        "overkill": -1,
+        "heal": 1,
+        "overheal": -0.5,
+        "preventLethal": 4,
+        "control": 1.5,
+        "draw": 1.2,
+        "handCap": -1,
+        "reserve": 1.5,
+        "waste": -2,
+        "levelUp": 1,
+        "moon": 2.5,
+        "summon": 1.2,
+        "synergy": 1,
+        "cost": -0.3,
+        "selfDamage": -0.8,
+        "hold": 1,
+        "convert": 1,
+        "mulliganFix": 1
+      },
+      "search": {
+        "maxExpansions": 2048,
+        "depth": 6,
+        "beamWidth": 12,
+        "samples": 16
+      }
+    }
+  ]
+}

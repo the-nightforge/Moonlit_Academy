@@ -1,0 +1,36 @@
+Create a small executable Machinations diagram named "Vong Nguyet - Hoi Phuc - v1".
+This is an isolated regeneration diagnostic, NOT a full card battle simulator.
+Use supported Machinations components and math.js formulas. Do not invent imports, run JavaScript, or run an optimization yet.
+Use Vietnamese node labels below, and English variable identifiers as specified.
+
+Constants: math-expression Custom Variables:
+  regen_initial = 5
+  hp_initial = 26
+  hp_max = 56
+The initial health is a deliberately injured test hero. It is not the health at combat start.
+Assumptions: one regeneration application at time zero; no more applications, no incoming damage, healing multiplier 1, no moon effects, no fatigue, no level-up. Only a living hero is modeled.
+One step means one turn start of the hero's own side. Start at elapsed turns = 0. At each own turn start, heal by the current number of regeneration stacks, capped by max health, then remove one stack.
+
+Create these nodes:
+1. Automatic Source "Bắt đầu lượt": push exactly 1 resource each step through exactly one resource connection.
+2. Passive Pool "Số lượt đã qua": initial resources 0; receive the resource from node 1, never produce or pull extra resources; show in chart.
+3. Passive Register "Số lượt hồi": input State Connection from node 2 labeled a; formula min(a, regen_initial).
+4. Passive Register "Tổng hồi tiềm năng": input State Connection from node 3 labeled a; formula a * (2 * regen_initial - a + 1) / 2; show in chart.
+5. Passive Register "Máu hiện tại": input State Connection from node 4 labeled a; formula min(hp_max, hp_initial + a); show in chart.
+6. Passive Register "Máu thực hồi": input State Connection from node 5 labeled a; formula a - hp_initial; show in chart.
+7. Passive Register "Tầng Hồi Phục còn lại": input State Connection from node 2 labeled a; formula max(0, regen_initial - a); show in chart.
+
+The State Connection label a is local to each destination Register. Do not use Resource Connections for Register inputs.
+Do not mark any Register formula as an optimization influencer. Later, only the regen_initial custom variable may be optimized, and only over integers 2 through 5.
+Add a visible text note: "Kiểm tra Hồi Phục riêng lẻ; chưa mô phỏng trận đấu hoặc tỉ lệ thắng."
+Arrange left to right: time source and pool, active turns and remaining stacks, potential healing, health, actual healing. Keep labels readable and connections clear.
+Configure an 8-step prediction if supported, but do not run it automatically.
+
+Acceptance checks at elapsed own turns 0,1,2,3,4,5:
+remaining stacks: 5,4,3,2,1,0
+potential healing: 0,5,9,12,14,15
+current health: 26,31,35,38,40,41
+At turn 8 current health must still be 41 and actual healing 15.
+Change regen_initial to 4: by turn 8 actual healing must be 10 and health 36.
+Change hp_initial to 54 with hp_max 56 and regen_initial 5: actual healing must cap at 2 and health 56.
+If you cannot represent any requirement, explicitly identify the unsupported part instead of silently replacing it with a different model.

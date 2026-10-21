@@ -258,7 +258,6 @@ Derived from the Home logo with built-in `image_gen.imagegen` in edit mode, tran
 
 | Saved file | Dimensions | Use |
 | --- | --- | --- |
-| `apps/client/public/favicon-512.png` | 512×512 RGBA | Standalone brand mark |
 | `apps/client/public/favicon.png` | 32×32 RGBA | Modern browser tab |
 | `apps/client/public/favicon.ico` | 16×16, 32×32, 48×48 | Browser favicon compatibility |
 | `apps/client/public/apple-touch-icon.png` | 180×180 RGBA | Add to home screen |

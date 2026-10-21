@@ -134,6 +134,33 @@ it("disconnect removes a waiter and a reconnect starts a fresh 60s wait", async 
   expect(next.inbox.filter(message => message.type === "match.start")).toHaveLength(1);
 }, 30_000);
 
+it("records a deck-out as its own end reason, distinct from a knockout", async () => {
+  const server = await testServer();
+  const account = await register(server, "deckout_arena");
+  const id = await accountIdOf(server, account.token);
+  await giveStarterDeck(server, id, ["m05", "f04", "m06"]);
+  const ctx = createContext(server.deps, server.version);
+  const side = await resolvePvpSide(ctx, id, "d1");
+  if (!side.ok) throw new Error("test deck invalid");
+  const room = await startPvpMatch(ctx, "ranked_bot", 11, [
+    { accountId: id, username: "deckout_arena", side: side.side, rating: 1000 },
+    { accountId: null, username: "Bích Ngọc", side: side.side, rating: 1000 },
+  ], "deckout_ranked", () => {});
+  for (const player of [0, 1]) room.botAction(room.seats[player]!, { type: "mulligan", player, instanceIds: [] });
+  // Seat 1 must reach a turn start with an empty hand and an empty draw pile.
+  let guard = 0;
+  while (room.combatState.status === "playerTurn" && guard++ < 20) {
+    room.combatState.players[1]!.drawPile = [];
+    room.combatState.players[1]!.hand = [];
+    const player = room.combatState.activePlayer;
+    room.botAction(room.seats[player]!, { type: "endTurn", player });
+  }
+  for (let i = 0; i < 40; i++) await new Promise(resolve => setImmediate(resolve));
+  const row = (await server.db.prepare<[string], { result_json: string }>(
+    "SELECT result_json FROM matches WHERE id = ?").get(room.matchId))!;
+  expect(JSON.parse(row.result_json)).toMatchObject({ winner: 0, reason: "deckOut" });
+}, 30_000);
+
 it("fallback draws use the normal ranked draw result", async () => {
   const server = await testServer();
   server.data.pvpConfig.roundCap = 1;

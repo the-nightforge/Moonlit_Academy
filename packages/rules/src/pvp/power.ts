@@ -1,9 +1,21 @@
 import { applySignatureCards, bondCardsForTeam } from "../create-combat";
 import { relicAt, weaponAt, weaponHooks } from "../gear";
-import type { CardDef, Effect, GameData, PvpSide, Rarity } from "../types/index";
+import type { CardDef, DamageScale, Effect, GameData, PvpSide, Rarity } from "../types/index";
 
 const rarity: Record<Rarity, number> = { common: 0, rare: 1, epic: 2, legendary: 3 };
 const level = (n: number | undefined) => Math.min(5, Math.max(1, n ?? 1));
+
+/**
+ * `scaledDamage` reads a stat off the live board, which this estimator never
+ * sees, so each stat needs a stand-in. Only `alliesRegen` is fitted: a
+ * mid-combat team pool of Hồi Phục (vòng 9–12, e.g. a 15–21 stack on the carry
+ * plus 5–8 on each support). The other five keep the shared `3` — their
+ * measured swings flip sign depending on which constant is picked, so fitting
+ * them needs its own evidence pass, not a guess.
+ */
+const SCALED_DAMAGE_STAND_IN: Partial<Record<DamageScale, number>> = { alliesRegen: 24 };
+/** Hồi Phục held by the single unit a `burstRegen` typically cashes out. */
+const BURST_REGEN_POOL = 9;
 
 /** Static utility estimate, in damage-equivalent units; no combat simulation. */
 function effectPower(effect: Effect): number {
@@ -15,7 +27,8 @@ function effectPower(effect: Effect): number {
     case "loseHp": value = -effect.amount; break;
     case "applyStatus": value = effect.amount * 2; break;
     case "conditional": return Math.max(effectsPower(effect.then), effectsPower(effect.else ?? [])) * 0.7;
-    case "scaledDamage": value = Math.min(effect.max ?? 20, (effect.base ?? 0) + effect.amount * 3 / (effect.divisor ?? 1)); break;
+    case "scaledDamage": value = Math.min(effect.max ?? 20, (effect.base ?? 0) + effect.amount * (SCALED_DAMAGE_STAND_IN[effect.per] ?? 3) / (effect.divisor ?? 1)); break;
+    case "burstRegen": value = effect.multiplier * BURST_REGEN_POOL * 0.8; break;
     case "missingHpDamage": value = effect.ratio * 20 * (effect.hits ?? 1); break;
     case "drawCards": case "gainMoonPower": case "drainMoonPower": case "gainMoonPowerPerTurn": value = effect.amount * 4; break;
     case "chooseCard": value = 4 + effect.look; break;
@@ -37,7 +50,9 @@ const cardPower = (card: Pick<CardDef, "cost" | "effects">) => Math.max(0.5, eff
  * status ×2, resource/draw ×4, two effective targets for team-wide effects.
  * Weapon: 25 + rarity rank ×4 + (R−1)×12 + card utility ×2 + hook utility.
  * Relic: 25 + rarity rank ×4 + (resonance−1)×12 + modifiers ×5 + hook utility.
- * Hooks use their effects' utility / every. Values round to whole points.
+ * Hooks use their effects' utility / every. `scaledDamage` reads a per-stat
+ * stand-in (see `SCALED_DAMAGE_STAND_IN`); `burstRegen` values the Hồi Phục it
+ * cashes out. Values round to whole points.
  * Legacy normalized replay flags retain their historical bonus suppression.
  */
 export function measurePvpPower(data: GameData, side: PvpSide): number {

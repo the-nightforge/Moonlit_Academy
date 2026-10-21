@@ -1,4 +1,5 @@
 import { decreeModifier } from "../moon";
+import { cardDefOf } from "../gear";
 import { getValidTargets, isCardPlayable } from "../queries";
 import { heroesOf } from "../players";
 import type { Action, CombatState, GameData, PlayerState } from "../types/index";
@@ -50,7 +51,9 @@ export function enumerateBotActions(data: GameData, obs: BotObservation): readon
   for (const instanceId of seat.hand) {
     if (!isCardPlayable(data, state, instanceId, seat.index)) continue;
     const instance = state.cards[instanceId]!;
-    const card = data.cards[instance.cardId]!;
+    // Weapon cards carry a `weapons.json` id, so `data.cards` alone misses them.
+    const card = cardDefOf(data, state, instance);
+    if (card === undefined) continue;
     if (card.target === "none") {
       actions.push({ type: "playCard", instanceId, player: seat.index });
     } else {

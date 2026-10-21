@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "sustain-check",
+  "stage": "screen",
+  "seedStart": 1,
+  "blockCount": 128,
+  "mode": "pvp",
+  "poolPath": "../sustain-pool.v1.json",
+  "profilePath": "../profiles.v1.json"
+}
